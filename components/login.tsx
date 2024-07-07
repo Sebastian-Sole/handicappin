@@ -15,23 +15,40 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import { createClientComponentClient } from "@/utils/supabase/client";
+import { redirect, useRouter } from "next/navigation";
+import { revalidatePath } from "next/cache";
 
 export function Login() {
+  const supabase = createClientComponentClient();
+  const router = useRouter();
+
   const loginSchema = z.object({
-    username: z.string().min(2).max(50),
+    email: z.string().min(2).max(50),
     password: z.string().min(6).max(50),
   });
 
   const form = useForm<z.infer<typeof loginSchema>>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
-      username: "",
+      email: "",
       password: "",
     },
   });
 
-  const onSubmit = (values: z.infer<typeof loginSchema>) => {
-    console.log(values);
+  const onSubmit = async (values: z.infer<typeof loginSchema>) => {
+    const { error, data } = await supabase.auth.signInWithPassword({
+      email: values.email,
+      password: values.password,
+    });
+    console.log("DONE");
+
+    if (error) {
+      console.log(error);
+      router.push("/error");
+    }
+
+    router.push("/");
   };
 
   return (
@@ -48,7 +65,7 @@ export function Login() {
             <div className="space-y-2">
               <FormField
                 control={form.control}
-                name="username"
+                name="email"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Email</FormLabel>
@@ -119,7 +136,7 @@ export function Login() {
   );
 }
 
-function ChromeIcon(props) {
+function ChromeIcon(props: any) {
   return (
     <svg
       {...props}
@@ -142,7 +159,7 @@ function ChromeIcon(props) {
   );
 }
 
-function GithubIcon(props) {
+function GithubIcon(props: any) {
   return (
     <svg
       {...props}
