@@ -56,10 +56,12 @@ export function Signup() {
 
     if (signInError) {
       console.log(signInError);
-      redirect("/error");
+      router.push("/error");
+      router.refresh();
     }
 
     router.push("/");
+    router.refresh();
   };
 
   return (

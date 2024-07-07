@@ -41,14 +41,13 @@ export function Login() {
       email: values.email,
       password: values.password,
     });
-    console.log("DONE");
 
     if (error) {
       console.log(error);
       router.push("/error");
     }
-
     router.push("/");
+    router.refresh();
   };
 
   return (
