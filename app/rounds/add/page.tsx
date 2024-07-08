@@ -56,13 +56,14 @@ const AddRoundPage = () => {
 
   return (
     <div className="flex justify-center items-center h-full">
-      <Card className="w-[70%]">
+      <Card className="md:w-[70%] w-full">
         <CardHeader>
           <CardTitle>Add Round</CardTitle>
         </CardHeader>
+
         <CardContent>
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
               <FormField
                 control={form.control}
                 name="date"
@@ -165,72 +166,71 @@ const AddRoundPage = () => {
               {/* For each hole, add a form field to register the attributes of the hole (an input for hole number, par, hcp and strokes) */}
               {Array.from({ length: numberOfHoles }).map((_, index) => (
                 <>
-                  <div
-                    key={index}
-                    className="flex items-center justify-between"
-                  >
-                    <h2 className="flex-none text-xl font-bold w-auto px-4 mr-4">
-                      Hole {index + 1}
-                    </h2>
-                    <div className="flex-1 px-2">
-                      <FormField
-                        control={form.control}
-                        name={`holes.${index}.par`}
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Par</FormLabel>
-                            <FormControl>
-                              <Input type="number" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-                    <div className="flex-1 px-2 ">
-                      <FormField
-                        control={form.control}
-                        name={`holes.${index}.hcp`}
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Handicap (HCP)</FormLabel>
-                            <FormControl>
-                              <Input type="number" {...field} />
-                            </FormControl>
+                  <div key={index} className="space-y-1">
+                    <h2 className="text-xl font-bold">Hole {index + 1}</h2>
+                    <div className="flex space-x-4 items-center">
+                      <div className="flex-1">
+                        <FormField
+                          control={form.control}
+                          name={`holes.${index}.par`}
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Par</FormLabel>
+                              <FormControl>
+                                <Input
+                                  type="number"
+                                  {...field}
+                                  placeholder="3"
+                                />
+                              </FormControl>
 
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-                    <div className="flex-1 px-2">
-                      <FormField
-                        control={form.control}
-                        name={`holes.${index}.strokes`}
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Strokes</FormLabel>
-                            <FormControl>
-                              <Input type="number" {...field} />
-                            </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                      <div className="flex-1">
+                        <FormField
+                          control={form.control}
+                          name={`holes.${index}.hcp`}
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>HCP</FormLabel>
+                              <FormControl>
+                                <Input type="number" {...field} />
+                              </FormControl>
 
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                      <div className="flex-1">
+                        <FormField
+                          control={form.control}
+                          name={`holes.${index}.strokes`}
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Strokes</FormLabel>
+                              <FormControl>
+                                <Input type="number" {...field} />
+                              </FormControl>
+
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
                     </div>
                   </div>
-                  <Separator className="my-0" />
+                  <Separator />
                 </>
               ))}
 
-              <Button type="submit">Submit</Button>
+              <Button type="submit">Save Round</Button>
             </form>
           </Form>
         </CardContent>
-        <CardFooter>
-          <Button>Save</Button>
-        </CardFooter>
       </Card>
     </div>
   );
