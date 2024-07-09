@@ -7,8 +7,15 @@ export const holeSchema = z.object({
     strokes: z.number().min(1).max(10),
 })
 
+export const courseInfoSchema = z.object({
+    par: z.number().min(1).max(72),
+    courseRating: z.number().min(60).max(80),
+    slope: z.number().min(60).max(140),
+})
+
 export const roundSchema = z.object({
     numberOfHoles: z.number().min(1).max(18),
+    courseInfo: courseInfoSchema,
     holes: z.array(holeSchema),
     location: z.string(),
     date: z.date(),

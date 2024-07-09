@@ -12,7 +12,7 @@ const Navbar = async () => {
   const isAuthed = data?.user;
 
   return (
-    <div className="flex sm:grid sm:grid-cols-3 gap-4 mt-4 justify-center sm:justify-between flex-row">
+    <div className="flex sm:grid sm:grid-cols-3 gap-4 mt-4 justify-center sm:justify-between flex-row mb-12">
       <div className="hidden sm:flex items-center justify-center">
         <h1>Logo</h1>
       </div>
