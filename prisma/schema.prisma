@@ -15,10 +15,11 @@ datasource db {
 }
 
 model User {
-  id     Int     @id @default(autoincrement())
-  email  String  @unique
-  name   String?
-  rounds Round[]
+  id            Int     @id @default(autoincrement())
+  email         String  @unique
+  name          String?
+  rounds        Round[]
+  handicapIndex Float
 }
 
 model Course {
@@ -27,25 +28,27 @@ model Course {
   par          Int
   courseRating Float
   slopeRating  Float
-  Round        Round[]
+  rounds       Round[]
 }
 
 model Hole {
-  id      Int   @id @default(autoincrement())
-  score   Int
-  hcp     Int
-  strokes Int
-  roundId Int
-  round   Round @relation(fields: [roundId], references: [id])
+  id         Int   @id @default(autoincrement())
+  par        Int
+  holeNumber Int
+  hcp        Int
+  strokes    Int
+  roundId    Int
+  round      Round @relation(fields: [roundId], references: [id])
 }
 
 model Round {
   id        Int      @id @default(autoincrement())
+  teeTime   DateTime
   score     Int
-  holes     Hole[]
-  course    Course   @relation(fields: [courseId], references: [id])
   courseId  Int
-  createdAt DateTime @default(now())
+  course    Course   @relation(fields: [courseId], references: [id])
   userId    Int
   user      User     @relation(fields: [userId], references: [id])
+  holes     Hole[]
+  createdAt DateTime @default(now())
 }
