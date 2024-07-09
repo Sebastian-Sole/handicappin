@@ -21,13 +21,13 @@ model User {
   rounds Round[]
 }
 
-model Round {
-  id        Int      @id @default(autoincrement())
-  score     Int
-  holes     Hole[]
-  createdAt DateTime @default(now())
-  userId    Int
-  user      User     @relation(fields: [userId], references: [id])
+model Course {
+  id           Int     @id @default(autoincrement())
+  name         String
+  par          Int
+  courseRating Float
+  slopeRating  Float
+  Round        Round[]
 }
 
 model Hole {
@@ -37,4 +37,15 @@ model Hole {
   strokes Int
   roundId Int
   round   Round @relation(fields: [roundId], references: [id])
+}
+
+model Round {
+  id        Int      @id @default(autoincrement())
+  score     Int
+  holes     Hole[]
+  course    Course   @relation(fields: [courseId], references: [id])
+  courseId  Int
+  createdAt DateTime @default(now())
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id])
 }

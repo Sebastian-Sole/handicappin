@@ -34,6 +34,7 @@ import {
 import { useState } from "react";
 import { H2, H3, Large, P, Small } from "@/components/ui/typography";
 import { Separator } from "@/components/ui/separator";
+import { api } from "@/trpc/react";
 
 const AddRoundForm = () => {
   const [numberOfHoles, setNumberOfHoles] = useState(9); // Default to 9 holes
@@ -42,8 +43,19 @@ const AddRoundForm = () => {
     resolver: zodResolver(roundSchema),
   });
 
+  const { mutate } = api.round.create.useMutation({
+    onSuccess: () => {
+      console.log("Round created successfully");
+    },
+    onError: (e) => {
+      const errorMessage = e.data?.zodError?.fieldErrors.content;
+      console.error("Error creating investment:", errorMessage);
+    },
+  });
+
   function onSubmit(values: z.infer<typeof roundSchema>) {
     console.log(values);
+    mutate(values);
   }
 
   return (
