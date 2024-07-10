@@ -9,6 +9,8 @@ export const roundRouter = createTRPCRouter({
         throw new Error("Unauthorized");
       }
 
+      console.log("Starting round creation");
+
       const { courseInfo, date, holes, location, score, userId } = input;
 
       // Create course
@@ -26,6 +28,8 @@ export const roundRouter = createTRPCRouter({
           `Error checking if course exists: ${existingCourseError.message}`
         );
       }
+
+      console.log("Course exists: ", existingCourse);
 
       // If course exists, use existing course id
       let courseId = existingCourse?.id || null;

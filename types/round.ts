@@ -9,7 +9,7 @@ export const holeSchema = z.object({
 
 export const courseInfoSchema = z.object({
   par: z.number().min(1).max(72),
-  courseRating: z.number().min(60).max(80),
+  courseRating: z.number().min(0).max(100),
   slope: z.number().min(60).max(140),
 });
 

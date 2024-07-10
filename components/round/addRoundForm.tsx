@@ -31,7 +31,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Large, Small } from "@/components/ui/typography";
 import { Separator } from "@/components/ui/separator";
 import { api } from "@/trpc/react";
@@ -46,6 +46,13 @@ const AddRoundForm = () => {
 
   const form = useForm<z.infer<typeof roundSchema>>({
     resolver: zodResolver(roundSchema),
+    defaultValues: {
+      numberOfHoles: 9,
+      holes: Array.from({ length: 9 }).map(() => ({
+        par: 3,
+      })),
+      date: new Date(),
+    },
   });
 
   const { mutate } = api.round.create.useMutation({
@@ -59,6 +66,8 @@ const AddRoundForm = () => {
   });
 
   function onSubmit(values: z.infer<typeof roundSchema>) {
+    alert("Submitting form");
+    console.log("SUBMITTING FORM");
     console.log(values);
 
     const adjustedGrossScore = calculateAdjustedGrossScore(values.holes);
@@ -68,7 +77,18 @@ const AddRoundForm = () => {
       score: adjustedGrossScore,
     };
 
+    console.log("Mutating data values");
+
     mutate(dataValues);
+
+    console.log("Round mutated");
+  }
+
+  function handleNumericChange(field: any) {
+    return (event: React.ChangeEvent<HTMLInputElement>) => {
+      const value = event.target.value;
+      field.onChange(value === "" ? null : Number(value));
+    };
   }
 
   return (
@@ -79,7 +99,12 @@ const AddRoundForm = () => {
 
       <CardContent>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          <form
+            onSubmit={() => {
+              form.handleSubmit(onSubmit);
+            }}
+            className="space-y-6"
+          >
             <Large>Course Info</Large>
             <FormField
               control={form.control}
@@ -152,7 +177,11 @@ const AddRoundForm = () => {
                     <FormItem>
                       <FormLabel className="sm:block">Par</FormLabel>
                       <FormControl>
-                        <Input type="number" {...field} />
+                        <Input
+                          {...field}
+                          type="number"
+                          onChange={handleNumericChange(field)}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -172,7 +201,11 @@ const AddRoundForm = () => {
                       {/* <FormLabel>Course Rating</FormLabel> */}
 
                       <FormControl>
-                        <Input type="number" {...field} />
+                        <Input
+                          type="number"
+                          {...field}
+                          onChange={handleNumericChange(field)}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -187,7 +220,11 @@ const AddRoundForm = () => {
                     <FormItem>
                       <FormLabel className="sm:block">Slope</FormLabel>
                       <FormControl>
-                        <Input type="number" {...field} />
+                        <Input
+                          type="number"
+                          {...field}
+                          onChange={handleNumericChange(field)}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -245,7 +282,11 @@ const AddRoundForm = () => {
                           <FormItem>
                             <FormLabel>Par</FormLabel>
                             <FormControl>
-                              <Input type="number" {...field} placeholder="3" />
+                              <Input
+                                type="number"
+                                {...field}
+                                onChange={handleNumericChange(field)}
+                              />
                             </FormControl>
 
                             <FormMessage />
@@ -261,7 +302,11 @@ const AddRoundForm = () => {
                           <FormItem>
                             <FormLabel>HCP</FormLabel>
                             <FormControl>
-                              <Input type="number" {...field} />
+                              <Input
+                                type="number"
+                                {...field}
+                                onChange={handleNumericChange(field)}
+                              />
                             </FormControl>
 
                             <FormMessage />
@@ -277,7 +322,11 @@ const AddRoundForm = () => {
                           <FormItem>
                             <FormLabel>Strokes</FormLabel>
                             <FormControl>
-                              <Input type="number" {...field} />
+                              <Input
+                                type="number"
+                                {...field}
+                                onChange={handleNumericChange(field)}
+                              />
                             </FormControl>
 
                             <FormMessage />
@@ -291,7 +340,14 @@ const AddRoundForm = () => {
               </React.Fragment>
             ))}
 
-            <Button type="submit">Save Round</Button>
+            <Button
+              type="submit"
+              onClick={() => {
+                console.log("Clicked");
+              }}
+            >
+              Save Round
+            </Button>
           </form>
         </Form>
       </CardContent>
