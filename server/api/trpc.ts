@@ -11,6 +11,9 @@ import superjson from "superjson";
 import { ZodError } from "zod";
 
 import { db } from "@/server/db";
+import { createServerClient } from "@supabase/ssr";
+import { Database } from "@/types/supabase";
+import { createServerComponentClient } from "@/utils/supabase/server";
 
 /**
  * 1. CONTEXT
@@ -25,8 +28,16 @@ import { db } from "@/server/db";
  * @see https://trpc.io/docs/server/context
  */
 export const createTRPCContext = async (opts: { headers: Headers }) => {
+  const supabase = createServerComponentClient();
+  // Assuming you have a way to extract a session token from the headers
+  const token = opts.headers.get("Authorization")?.replace("Bearer ", "");
+  const {
+    data: { user },
+  } = await supabase.auth.getUser(token);
+
   return {
-    db,
+    supabase,
+    user,
     ...opts,
   };
 };

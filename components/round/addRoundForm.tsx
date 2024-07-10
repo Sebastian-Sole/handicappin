@@ -32,9 +32,14 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useState } from "react";
-import { H2, H3, Large, P, Small } from "@/components/ui/typography";
+import { Large, Small } from "@/components/ui/typography";
 import { Separator } from "@/components/ui/separator";
 import { api } from "@/trpc/react";
+import React from "react";
+import {
+  calculateAdjustedGrossScore,
+  calculateScoreDifferential,
+} from "@/utils/calculations/handicap";
 
 const AddRoundForm = () => {
   const [numberOfHoles, setNumberOfHoles] = useState(9); // Default to 9 holes
@@ -55,7 +60,15 @@ const AddRoundForm = () => {
 
   function onSubmit(values: z.infer<typeof roundSchema>) {
     console.log(values);
-    mutate(values);
+
+    const adjustedGrossScore = calculateAdjustedGrossScore(values.holes);
+
+    const dataValues = {
+      ...values,
+      score: adjustedGrossScore,
+    };
+
+    mutate(dataValues);
   }
 
   return (
@@ -220,10 +233,10 @@ const AddRoundForm = () => {
 
             {/* For each hole, add a form field to register the attributes of the hole (an input for hole number, par, hcp and strokes) */}
             {Array.from({ length: numberOfHoles }).map((_, index) => (
-              <>
-                <div key={index} className="space-y-1">
+              <React.Fragment key={index}>
+                <div className="space-y-1">
                   <Small className="text-xl font-bold">Hole {index + 1}</Small>
-                  <div className="flex space-x-4 items-center">
+                  <div className="flex space-x-4 items-start">
                     <div className="flex-1">
                       <FormField
                         control={form.control}
@@ -275,7 +288,7 @@ const AddRoundForm = () => {
                   </div>
                 </div>
                 <Separator />
-              </>
+              </React.Fragment>
             ))}
 
             <Button type="submit">Save Round</Button>
