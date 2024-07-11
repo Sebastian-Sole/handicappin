@@ -109,10 +109,6 @@ const AddRoundForm = ({ userId }: AddRoundFormProps) => {
     };
   }
 
-  useEffect(() => {
-    console.log(form.formState.errors);
-  }, [form.getValues()]);
-
   return (
     <Card className="md:w-[70%] w-full">
       <CardHeader>

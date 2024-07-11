@@ -19,6 +19,7 @@ model Profile {
   email         String  @unique
   name          String?
   rounds        Round[]
+  holes         Hole[]
   handicapIndex Float
 }
 
@@ -32,13 +33,15 @@ model Course {
 }
 
 model Hole {
-  id         Int   @id @default(autoincrement())
+  id         Int     @id @default(autoincrement())
   par        Int
   holeNumber Int
   hcp        Int
   strokes    Int
   roundId    Int
-  round      Round @relation(fields: [roundId], references: [id])
+  round      Round   @relation(fields: [roundId], references: [id])
+  userId     String  @db.Uuid
+  user       Profile @relation(fields: [userId], references: [id])
 }
 
 model Round {

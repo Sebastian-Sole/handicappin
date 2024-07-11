@@ -1,5 +1,6 @@
 import { createTRPCRouter, publicProcedure } from "@/server/api/trpc";
 import { roundSchema } from "@/types/round";
+import { z } from "zod";
 
 export const roundRouter = createTRPCRouter({
   create: publicProcedure
@@ -99,5 +100,19 @@ export const roundRouter = createTRPCRouter({
         message: "Round and holes inserted successfully",
         roundId: roundId,
       };
+    }),
+  getAllById: publicProcedure
+    .input(z.string().uuid())
+    .query(async ({ ctx, input }) => {
+      const { data: rounds, error } = await ctx.supabase
+        .from("Round")
+        .select("*")
+        .eq("userId", input);
+
+      if (error) {
+        throw new Error(`Error getting rounds: ${error.message}`);
+      }
+
+      return rounds;
     }),
 });

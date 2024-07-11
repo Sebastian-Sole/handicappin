@@ -19,9 +19,9 @@ import {
 } from "@/components/ui/form";
 import { createClientComponentClient } from "@/utils/supabase/client";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { api } from "@/trpc/react";
 
 export function Signup() {
-  const supabase = createClientComponentClient();
   const router = useRouter();
 
   const signupSchema = z.object({
@@ -39,29 +39,21 @@ export function Signup() {
     },
   });
 
-  const onSubmit = async (values: z.infer<typeof signupSchema>) => {
-    console.log(values);
-    let { data: signUpData, error: signUpError } = await supabase.auth.signUp({
-      email: values.email,
-      password: values.password,
-    });
-    if (signUpError) {
-      console.log(signUpError);
-    }
-    const { error: signInError, data: signInData } =
-      await supabase.auth.signInWithPassword({
-        email: values.email,
-        password: values.password,
-      });
-
-    if (signInError) {
-      console.log(signInError);
-      router.push("/error");
+  const { mutate } = api.auth.signup.useMutation({
+    onSuccess: () => {
+      console.log("Sign up mutation success");
+      router.push("/");
       router.refresh();
-    }
+    },
+    onError: (e) => {
+      const errorMessage = e.data?.zodError?.fieldErrors.content;
+      console.error("Error signing up");
+      console.log(e);
+    },
+  });
 
-    router.push("/");
-    router.refresh();
+  const onSubmit = async (values: z.infer<typeof signupSchema>) => {
+    mutate(values);
   };
 
   return (
