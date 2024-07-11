@@ -40,18 +40,40 @@ import {
   calculateAdjustedGrossScore,
   calculateScoreDifferential,
 } from "@/utils/calculations/handicap";
+import { useRouter } from "next/navigation";
 
-const AddRoundForm = () => {
+interface AddRoundFormProps {
+  userId: string | undefined;
+}
+
+const AddRoundForm = ({ userId }: AddRoundFormProps) => {
+  const router = useRouter();
+
+  if (!userId) {
+    router.push("/login");
+  }
+
   const [numberOfHoles, setNumberOfHoles] = useState(9); // Default to 9 holes
 
   const form = useForm<z.infer<typeof roundSchema>>({
     resolver: zodResolver(roundSchema),
     defaultValues: {
       numberOfHoles: 9,
-      holes: Array.from({ length: 9 }).map(() => ({
+      holes: Array.from({ length: 9 }).map((value, index) => ({
         par: 3,
+        hcp: 1,
+        strokes: 3,
+        holeNumber: index + 1,
       })),
       date: new Date(),
+      courseInfo: {
+        par: 27,
+        courseRating: 50.3,
+        slope: 82,
+      },
+      location: "",
+      score: 1,
+      userId: userId,
     },
   });
 
@@ -61,12 +83,12 @@ const AddRoundForm = () => {
     },
     onError: (e) => {
       const errorMessage = e.data?.zodError?.fieldErrors.content;
-      console.error("Error creating investment:", errorMessage);
+      console.error("Error creating round:");
+      console.log(e);
     },
   });
 
   function onSubmit(values: z.infer<typeof roundSchema>) {
-    alert("Submitting form");
     console.log("SUBMITTING FORM");
     console.log(values);
 
@@ -77,11 +99,7 @@ const AddRoundForm = () => {
       score: adjustedGrossScore,
     };
 
-    console.log("Mutating data values");
-
     mutate(dataValues);
-
-    console.log("Round mutated");
   }
 
   function handleNumericChange(field: any) {
@@ -91,6 +109,10 @@ const AddRoundForm = () => {
     };
   }
 
+  useEffect(() => {
+    console.log(form.formState.errors);
+  }, [form.getValues()]);
+
   return (
     <Card className="md:w-[70%] w-full">
       <CardHeader>
@@ -99,12 +121,7 @@ const AddRoundForm = () => {
 
       <CardContent>
         <Form {...form}>
-          <form
-            onSubmit={() => {
-              form.handleSubmit(onSubmit);
-            }}
-            className="space-y-6"
-          >
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             <Large>Course Info</Large>
             <FormField
               control={form.control}
@@ -340,14 +357,7 @@ const AddRoundForm = () => {
               </React.Fragment>
             ))}
 
-            <Button
-              type="submit"
-              onClick={() => {
-                console.log("Clicked");
-              }}
-            >
-              Save Round
-            </Button>
+            <Button type="submit">Save Round</Button>
           </form>
         </Form>
       </CardContent>

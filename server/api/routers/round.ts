@@ -21,9 +21,10 @@ export const roundRouter = createTRPCRouter({
           .from("Course")
           .select("id")
           .eq("name", location)
-          .single();
+          .maybeSingle();
 
       if (existingCourseError) {
+        console.log(existingCourseError);
         throw new Error(
           `Error checking if course exists: ${existingCourseError.message}`
         );
