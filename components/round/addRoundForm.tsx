@@ -31,15 +31,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useEffect, useState } from "react";
 import { Large, Small } from "@/components/ui/typography";
 import { Separator } from "@/components/ui/separator";
 import { api } from "@/trpc/react";
-import React from "react";
-import {
-  calculateAdjustedGrossScore,
-  calculateScoreDifferential,
-} from "@/utils/calculations/handicap";
+import React, { useState } from "react";
+import { calculateAdjustedGrossScore } from "@/utils/calculations/handicap";
 import { useRouter } from "next/navigation";
 
 interface AddRoundFormProps {
@@ -53,7 +49,7 @@ const AddRoundForm = ({ userId }: AddRoundFormProps) => {
     router.push("/login");
   }
 
-  const [numberOfHoles, setNumberOfHoles] = useState(9); // Default to 9 holes
+  const [numberOfHoles, setNumberOfHoles] = useState(9);
 
   const form = useForm<z.infer<typeof roundSchema>>({
     resolver: zodResolver(roundSchema),
@@ -85,6 +81,7 @@ const AddRoundForm = ({ userId }: AddRoundFormProps) => {
       const errorMessage = e.data?.zodError?.fieldErrors.content;
       console.error("Error creating round:");
       console.log(e);
+      console.log(errorMessage);
     },
   });
 
@@ -281,7 +278,6 @@ const AddRoundForm = ({ userId }: AddRoundFormProps) => {
 
             <Separator className="my-0" />
 
-            {/* For each hole, add a form field to register the attributes of the hole (an input for hole number, par, hcp and strokes) */}
             {Array.from({ length: numberOfHoles }).map((_, index) => (
               <React.Fragment key={index}>
                 <div className="space-y-1">
