@@ -89,6 +89,10 @@ const AddRoundForm = ({ userId }: AddRoundFormProps) => {
       console.error("Error creating round:");
       console.log(e);
       console.log(errorMessage);
+      toast({
+        title: "❌ Error creating round",
+        description: `${errorMessage}`,
+      });
     },
   });
 
