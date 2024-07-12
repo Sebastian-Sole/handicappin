@@ -37,6 +37,7 @@ import { api } from "@/trpc/react";
 import React, { useState } from "react";
 import { calculateAdjustedGrossScore } from "@/utils/calculations/handicap";
 import { useRouter } from "next/navigation";
+import { useToast } from "../ui/use-toast";
 
 interface AddRoundFormProps {
   userId: string | undefined;
@@ -44,6 +45,7 @@ interface AddRoundFormProps {
 
 const AddRoundForm = ({ userId }: AddRoundFormProps) => {
   const router = useRouter();
+  const { toast } = useToast();
 
   if (!userId) {
     router.push("/login");
@@ -76,6 +78,10 @@ const AddRoundForm = ({ userId }: AddRoundFormProps) => {
   const { mutate } = api.round.create.useMutation({
     onSuccess: () => {
       console.log("Round created successfully");
+      toast({
+        title: "✅ Round created successfully",
+        description: "Your round has been added to your profile!",
+      });
       router.push("/");
     },
     onError: (e) => {

@@ -102,7 +102,7 @@ export const roundRouter = createTRPCRouter({
         roundId: roundId,
       };
     }),
-  getAllById: publicProcedure
+  getAllByUserId: publicProcedure
     .input(z.string().uuid())
     .query(async ({ ctx, input }) => {
       const { data: rounds, error } = await ctx.supabase
