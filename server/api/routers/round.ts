@@ -86,6 +86,7 @@ export const roundRouter = createTRPCRouter({
         hcp: hole.hcp,
         strokes: hole.strokes,
         roundId: roundId,
+        userId: userId,
       }));
 
       const { error: holesError } = await ctx.supabase

@@ -76,6 +76,7 @@ const AddRoundForm = ({ userId }: AddRoundFormProps) => {
   const { mutate } = api.round.create.useMutation({
     onSuccess: () => {
       console.log("Round created successfully");
+      router.push("/");
     },
     onError: (e) => {
       const errorMessage = e.data?.zodError?.fieldErrors.content;
