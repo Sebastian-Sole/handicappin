@@ -1,22 +1,22 @@
-import { createTRPCRouter, publicProcedure } from "@/server/api/trpc";
+import {
+  authedProcedure,
+  createTRPCRouter,
+  publicProcedure,
+} from "@/server/api/trpc";
 import { roundSchema } from "@/types/round";
 import { z } from "zod";
 
 export const roundRouter = createTRPCRouter({
-  create: publicProcedure
+  create: authedProcedure
     .input(roundSchema)
     .mutation(async ({ ctx, input }) => {
       if (!ctx.user) {
         throw new Error("Unauthorized");
       }
-
       console.log("Starting round creation");
 
       const { courseInfo, date, holes, location, score, userId } = input;
 
-      // Create course
-
-      // Check if course exists by name
       const { data: existingCourse, error: existingCourseError } =
         await ctx.supabase
           .from("Course")

@@ -1,4 +1,5 @@
-import { createTRPCRouter, publicProcedure } from "../trpc";
+import { z } from "zod";
+import { authedProcedure, createTRPCRouter, publicProcedure } from "../trpc";
 import { loginSchema, signupSchema } from "@/types/auth";
 
 export const authRouter = createTRPCRouter({
@@ -51,6 +52,21 @@ export const authRouter = createTRPCRouter({
       }
 
       console.log("Profile created:", profileData);
+      return profileData;
+    }),
+  getProfileFromUserId: authedProcedure
+    .input(z.string())
+    .query(async ({ ctx, input }) => {
+      const { data: profileData, error: profileError } = await ctx.supabase
+        .from("Profile")
+        .select("*")
+        .eq("id", input)
+        .single();
+
+      if (profileError) {
+        throw new Error(`Error getting profile: ${profileError.message}`);
+      }
+
       return profileData;
     }),
 });

@@ -6,13 +6,10 @@
  * TL;DR - This is where all the tRPC server stuff is created and plugged in. The pieces you will
  * need to use are documented accordingly near the end.
  */
-import { initTRPC } from "@trpc/server";
+import { initTRPC, TRPCError } from "@trpc/server";
 import superjson from "superjson";
 import { ZodError } from "zod";
 
-import { db } from "@/server/db";
-import { createServerClient } from "@supabase/ssr";
-import { Database } from "@/types/supabase";
 import { createServerComponentClient } from "@/utils/supabase/server";
 
 /**
@@ -92,3 +89,17 @@ export const createTRPCRouter = t.router;
  * are logged in.
  */
 export const publicProcedure = t.procedure;
+
+export const authedProcedure = t.procedure.use(async function isAuthed(opts) {
+  const { ctx } = opts;
+  if (!ctx.user) {
+    throw new TRPCError({ code: "UNAUTHORIZED" });
+  }
+
+  return opts.next({
+    ctx: {
+      // ✅ user value is known to be non-null now
+      user: ctx.user,
+    },
+  });
+});
