@@ -14,27 +14,44 @@ datasource db {
   directUrl = env("DIRECT_URL")
 }
 
-model User {
-  id     Int     @id @default(autoincrement())
-  email  String  @unique
-  name   String?
-  rounds Round[]
+model Profile {
+  id            String  @id @db.Uuid
+  email         String  @unique
+  name          String?
+  rounds        Round[]
+  holes         Hole[]
+  handicapIndex Float
+}
+
+model Course {
+  id           Int     @id @default(autoincrement())
+  name         String
+  par          Int
+  courseRating Float
+  slopeRating  Float
+  rounds       Round[]
+}
+
+model Hole {
+  id         Int     @id @default(autoincrement())
+  par        Int
+  holeNumber Int
+  hcp        Int
+  strokes    Int
+  roundId    Int
+  round      Round   @relation(fields: [roundId], references: [id])
+  userId     String  @db.Uuid
+  user       Profile @relation(fields: [userId], references: [id])
 }
 
 model Round {
   id        Int      @id @default(autoincrement())
+  teeTime   DateTime
   score     Int
+  courseId  Int
+  course    Course   @relation(fields: [courseId], references: [id])
+  userId    String   @db.Uuid
+  user      Profile  @relation(fields: [userId], references: [id])
   holes     Hole[]
   createdAt DateTime @default(now())
-  userId    Int
-  user      User     @relation(fields: [userId], references: [id])
-}
-
-model Hole {
-  id      Int   @id @default(autoincrement())
-  score   Int
-  hcp     Int
-  strokes Int
-  roundId Int
-  round   Round @relation(fields: [roundId], references: [id])
 }

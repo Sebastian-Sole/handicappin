@@ -31,19 +31,90 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useState } from "react";
-import { H2, H3, Large, P, Small } from "@/components/ui/typography";
+import { Large, Small } from "@/components/ui/typography";
 import { Separator } from "@/components/ui/separator";
+import { api } from "@/trpc/react";
+import React, { useState } from "react";
+import { calculateAdjustedGrossScore } from "@/utils/calculations/handicap";
+import { useRouter } from "next/navigation";
+import { useToast } from "../ui/use-toast";
 
-const AddRoundForm = () => {
-  const [numberOfHoles, setNumberOfHoles] = useState(9); // Default to 9 holes
+interface AddRoundFormProps {
+  userId: string | undefined;
+}
+
+const AddRoundForm = ({ userId }: AddRoundFormProps) => {
+  const router = useRouter();
+  const { toast } = useToast();
+
+  if (!userId) {
+    router.push("/login");
+  }
+
+  const [numberOfHoles, setNumberOfHoles] = useState(9);
 
   const form = useForm<z.infer<typeof roundSchema>>({
     resolver: zodResolver(roundSchema),
+    defaultValues: {
+      numberOfHoles: 9,
+      holes: Array.from({ length: 9 }).map((value, index) => ({
+        par: 3,
+        hcp: 1,
+        strokes: 3,
+        holeNumber: index + 1,
+      })),
+      date: new Date(),
+      courseInfo: {
+        par: 27,
+        courseRating: 50.3,
+        slope: 82,
+      },
+      location: "",
+      score: 1,
+      userId: userId,
+    },
+  });
+
+  const { mutate } = api.round.create.useMutation({
+    onSuccess: () => {
+      console.log("Round created successfully");
+      toast({
+        title: "✅ Round created successfully",
+        description: "Your round has been added to your profile!",
+      });
+      router.push("/");
+    },
+    onError: (e) => {
+      const errorMessage = e.data?.zodError?.fieldErrors.content;
+      console.error("Error creating round:");
+      console.log(e);
+      console.log(errorMessage);
+      toast({
+        title: "❌ Error creating round",
+        description: `${errorMessage}`,
+      });
+    },
   });
 
   function onSubmit(values: z.infer<typeof roundSchema>) {
+    console.log("SUBMITTING FORM");
     console.log(values);
+
+    const adjustedGrossScore = calculateAdjustedGrossScore(values.holes);
+
+    const dataValues = {
+      ...values,
+      score: adjustedGrossScore,
+    };
+
+    mutate(dataValues);
+  }
+
+  function handleNumericChange(field: any) {
+    return (event: React.ChangeEvent<HTMLInputElement>) => {
+      const value = event.target.value;
+      field.onChange(value === "" ? null : Number(value));
+    };
   }
 
   return (
@@ -127,7 +198,11 @@ const AddRoundForm = () => {
                     <FormItem>
                       <FormLabel className="sm:block">Par</FormLabel>
                       <FormControl>
-                        <Input type="number" {...field} />
+                        <Input
+                          {...field}
+                          type="number"
+                          onChange={handleNumericChange(field)}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -147,7 +222,11 @@ const AddRoundForm = () => {
                       {/* <FormLabel>Course Rating</FormLabel> */}
 
                       <FormControl>
-                        <Input type="number" {...field} />
+                        <Input
+                          type="number"
+                          {...field}
+                          onChange={handleNumericChange(field)}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -162,7 +241,11 @@ const AddRoundForm = () => {
                     <FormItem>
                       <FormLabel className="sm:block">Slope</FormLabel>
                       <FormControl>
-                        <Input type="number" {...field} />
+                        <Input
+                          type="number"
+                          {...field}
+                          onChange={handleNumericChange(field)}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -206,12 +289,11 @@ const AddRoundForm = () => {
 
             <Separator className="my-0" />
 
-            {/* For each hole, add a form field to register the attributes of the hole (an input for hole number, par, hcp and strokes) */}
             {Array.from({ length: numberOfHoles }).map((_, index) => (
-              <>
-                <div key={index} className="space-y-1">
+              <React.Fragment key={index}>
+                <div className="space-y-1">
                   <Small className="text-xl font-bold">Hole {index + 1}</Small>
-                  <div className="flex space-x-4 items-center">
+                  <div className="flex space-x-4 items-start">
                     <div className="flex-1">
                       <FormField
                         control={form.control}
@@ -220,7 +302,11 @@ const AddRoundForm = () => {
                           <FormItem>
                             <FormLabel>Par</FormLabel>
                             <FormControl>
-                              <Input type="number" {...field} placeholder="3" />
+                              <Input
+                                type="number"
+                                {...field}
+                                onChange={handleNumericChange(field)}
+                              />
                             </FormControl>
 
                             <FormMessage />
@@ -236,7 +322,11 @@ const AddRoundForm = () => {
                           <FormItem>
                             <FormLabel>HCP</FormLabel>
                             <FormControl>
-                              <Input type="number" {...field} />
+                              <Input
+                                type="number"
+                                {...field}
+                                onChange={handleNumericChange(field)}
+                              />
                             </FormControl>
 
                             <FormMessage />
@@ -252,7 +342,11 @@ const AddRoundForm = () => {
                           <FormItem>
                             <FormLabel>Strokes</FormLabel>
                             <FormControl>
-                              <Input type="number" {...field} />
+                              <Input
+                                type="number"
+                                {...field}
+                                onChange={handleNumericChange(field)}
+                              />
                             </FormControl>
 
                             <FormMessage />
@@ -263,7 +357,7 @@ const AddRoundForm = () => {
                   </div>
                 </div>
                 <Separator />
-              </>
+              </React.Fragment>
             ))}
 
             <Button type="submit">Save Round</Button>

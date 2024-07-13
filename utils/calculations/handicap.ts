@@ -1,3 +1,5 @@
+import { Hole } from "@/types/round";
+
 export const calculateCourseHandicap = (
   handicapIndex: number,
   slopeRating: number,
@@ -13,6 +15,14 @@ export const calculateScoreDifferential = (
   slopeRating: number
 ) => {
   return ((adjustedGrossScore - courseRating) * 113) / slopeRating;
+};
+
+export const calculateAdjustedGrossScore = (holes: Hole[]) => {
+  const adjustedScores = holes.map((hole) => {
+    const adjustedScore = Math.min(hole.strokes, hole.par + 4);
+    return adjustedScore;
+  });
+  return adjustedScores.reduce((acc, cur) => acc + cur);
 };
 
 const getRelevantDifferentials = (scoreDifferentials: number[]) => {
