@@ -19,7 +19,7 @@ export const addRoundFormSchema = z.object({
   numberOfHoles: z.number().min(1).max(18),
   courseInfo: courseInfoSchema,
   holes: z.array(holeSchema),
-  date: z.date(),
+  date: z.date().optional(),
   notes: z.string().optional(),
 });
 

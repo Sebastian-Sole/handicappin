@@ -87,7 +87,7 @@ export const roundRouter = createTRPCRouter({
             scoreDifferential: scoreDifferential,
             totalStrokes: totalStrokes,
             existingHandicapIndex: existingHandicapIndex,
-            teeTime: date.toDateString(),
+            teeTime: date.toISOString(),
             parPlayed: courseInfo.par,
           },
         ])

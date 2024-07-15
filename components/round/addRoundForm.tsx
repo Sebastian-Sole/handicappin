@@ -11,19 +11,10 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
 import { addRoundFormSchema } from "@/types/round";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import { Calendar } from "@/components/ui/calendar";
-import { CalendarIcon } from "lucide-react";
-import { cn } from "@/lib/utils";
-import { format } from "date-fns";
 import {
   Select,
   SelectContent,
@@ -34,7 +25,7 @@ import {
 import { Large, Small } from "@/components/ui/typography";
 import { Separator } from "@/components/ui/separator";
 import { api } from "@/trpc/react";
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import {
   calculateAdjustedGrossScore,
   calculateAdjustedPlayedScore,
@@ -43,13 +34,18 @@ import {
 import { useRouter } from "next/navigation";
 import { useToast } from "../ui/use-toast";
 import { Tables } from "@/types/supabase";
-import type { FormRound, RoundMutation } from "@/types/round";
+import type { RoundMutation } from "@/types/round";
+import { DateTimePicker } from "../ui/datepicker";
+import useMounted from "@/hooks/useMounted";
+import FormSkeleton from "../formSkeleton";
 
 interface AddRoundFormProps {
   profile: Tables<"Profile">;
 }
 
 const AddRoundForm = ({ profile }: AddRoundFormProps) => {
+  const isMounted = useMounted();
+
   const router = useRouter();
   const { toast } = useToast();
 
@@ -69,12 +65,11 @@ const AddRoundForm = ({ profile }: AddRoundFormProps) => {
         strokes: 3,
         holeNumber: index + 1,
       })),
-      date: new Date(),
+      date: undefined,
       courseInfo: {
         par: 27,
         courseRating: 50.3,
         slope: 82,
-        location: "",
       },
       userId: profile.id,
     },
@@ -155,13 +150,15 @@ const AddRoundForm = ({ profile }: AddRoundFormProps) => {
       scoreDifferential: scoreDiff,
       totalStrokes: values.holes.reduce((acc, cur) => acc + cur.strokes, 0),
       existingHandicapIndex: profile.handicapIndex,
-      teeTime: values.date,
+      teeTime: values.date ?? new Date(),
       courseRating,
       slopeRating: slope,
       nineHolePar,
       eighteenHolePar,
       parPlayed: par,
     };
+
+    console.log("Data values: ", dataValues);
 
     mutate(dataValues);
   }
@@ -171,6 +168,10 @@ const AddRoundForm = ({ profile }: AddRoundFormProps) => {
       const value = event.target.value;
       field.onChange(value === "" ? null : Number(value));
     };
+  }
+
+  if (!isMounted) {
+    return <FormSkeleton />;
   }
 
   return (
@@ -190,37 +191,11 @@ const AddRoundForm = ({ profile }: AddRoundFormProps) => {
                 <FormItem className="flex flex-col">
                   <FormLabel>Tee Time</FormLabel>
                   <FormControl>
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <FormControl>
-                          <Button
-                            variant={"outline"}
-                            className={cn(
-                              "w-[240px] pl-3 text-left font-normal",
-                              !field.value && "text-muted-foreground"
-                            )}
-                          >
-                            {field.value ? (
-                              format(field.value, "PPP")
-                            ) : (
-                              <span>Pick a date</span>
-                            )}
-                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                          </Button>
-                        </FormControl>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0" align="start">
-                        <Calendar
-                          mode="single"
-                          selected={field.value}
-                          onSelect={field.onChange}
-                          disabled={(date: any) =>
-                            date > new Date() || date < new Date("1900-01-01")
-                          }
-                          initialFocus
-                        />
-                      </PopoverContent>
-                    </Popover>
+                    <DateTimePicker
+                      granularity="minute"
+                      value={field.value}
+                      onChange={field.onChange}
+                    />
                   </FormControl>
                   <FormDescription>
                     This is the date you played the round

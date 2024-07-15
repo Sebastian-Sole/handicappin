@@ -1,7 +1,6 @@
 import { Dashboard } from "@/components/dashboard";
 import { api } from "@/trpc/server";
 import { RoundWithCourse } from "@/types/database";
-import { Database, Tables } from "@/types/supabase";
 
 import { createServerComponentClient } from "@/utils/supabase/server";
 
