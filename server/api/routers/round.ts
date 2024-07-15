@@ -3,25 +3,41 @@ import {
   createTRPCRouter,
   publicProcedure,
 } from "@/server/api/trpc";
-import { roundSchema } from "@/types/round";
+import { RoundWithCourse } from "@/types/database";
+import { addRoundFormSchema, roundMutationSchema } from "@/types/round";
+import { Tables } from "@/types/supabase";
 import { z } from "zod";
 
 export const roundRouter = createTRPCRouter({
   create: authedProcedure
-    .input(roundSchema)
+    .input(roundMutationSchema)
     .mutation(async ({ ctx, input }) => {
       if (!ctx.user) {
         throw new Error("Unauthorized");
       }
       console.log("Starting round creation");
 
-      const { courseInfo, date, holes, location, score, userId } = input;
+      const {
+        courseInfo,
+        teeTime: date,
+        holes,
+        adjustedGrossScore,
+        userId,
+        existingHandicapIndex,
+        scoreDifferential,
+        totalStrokes,
+        adjustedPlayedScore,
+        courseRating,
+        slopeRating,
+        nineHolePar,
+        eighteenHolePar,
+      } = input;
 
       const { data: existingCourse, error: existingCourseError } =
         await ctx.supabase
           .from("Course")
           .select("id")
-          .eq("name", location)
+          .eq("name", courseInfo.location)
           .maybeSingle();
 
       if (existingCourseError) {
@@ -42,10 +58,11 @@ export const roundRouter = createTRPCRouter({
           .from("Course")
           .insert([
             {
-              par: courseInfo.par,
               courseRating: courseInfo.courseRating,
               slopeRating: courseInfo.slope,
-              name: location,
+              name: courseInfo.location,
+              eighteenHolePar,
+              nineHolePar,
             },
           ])
           .select("id")
@@ -64,10 +81,14 @@ export const roundRouter = createTRPCRouter({
         .from("Round")
         .insert([
           {
-            courseId: courseId,
-            score: score,
             userId: userId,
+            courseId: courseId,
+            adjustedGrossScore: adjustedGrossScore,
+            scoreDifferential: scoreDifferential,
+            totalStrokes: totalStrokes,
+            existingHandicapIndex: existingHandicapIndex,
             teeTime: date.toDateString(),
+            parPlayed: courseInfo.par,
           },
         ])
         .select("id")
@@ -107,13 +128,43 @@ export const roundRouter = createTRPCRouter({
     .query(async ({ ctx, input }) => {
       const { data: rounds, error } = await ctx.supabase
         .from("Round")
-        .select("*")
+        .select(
+          `
+    *,
+    Course (
+      *
+    )
+  `
+        )
         .eq("userId", input);
 
       if (error) {
         throw new Error(`Error getting rounds: ${error.message}`);
       }
 
-      return rounds;
+      const flattenRoundWithCourse = (
+        round: Tables<"Round">,
+        course: Tables<"Course"> | null
+      ): RoundWithCourse | null => {
+        if (course) {
+          return {
+            ...round,
+            courseName: course.name,
+            courseRating: course.courseRating,
+            courseSlope: course.slopeRating,
+            courseEighteenHolePar: course.eighteenHolePar,
+            courseNineHolePar: course.nineHolePar,
+          };
+        }
+        return null;
+      };
+
+      const roundsWithCourse = rounds
+        .map((round) => {
+          return flattenRoundWithCourse(round, round.Course);
+        })
+        .filter((round): round is RoundWithCourse => round !== null);
+
+      return roundsWithCourse;
     }),
 });

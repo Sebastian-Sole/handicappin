@@ -6,23 +6,82 @@ export const calculateCourseHandicap = (
   courseRating: number,
   par: number
 ) => {
+  // Todo: Number of holes
   return Math.round(handicapIndex * (slopeRating / 113) + (courseRating - par));
 };
 
+/**
+ * Calculates the score differential based on the adjusted gross score, course rating, and slope rating.
+ *
+ * @param adjustedGrossScore - The adjusted gross score of the player.
+ * @param courseRating - The course rating of the golf course.
+ * @param slopeRating - The slope rating of the golf course.
+ * @returns The score differential.
+ */
 export const calculateScoreDifferential = (
   adjustedGrossScore: number,
   courseRating: number,
   slopeRating: number
 ) => {
-  return ((adjustedGrossScore - courseRating) * 113) / slopeRating;
+  console.log("Adjusted Gross Score: ", adjustedGrossScore);
+  console.log("Course Rating: ", courseRating);
+  console.log("Slope Rating: ", slopeRating);
+  console.log(
+    "Differential: ",
+    (adjustedGrossScore - courseRating) * (113 / slopeRating)
+  );
+  return (adjustedGrossScore - courseRating) * (113 / slopeRating);
 };
 
-export const calculateAdjustedGrossScore = (holes: Hole[]) => {
+/**
+ * Calculates the adjusted played score based on the provided holes.
+ * The adjusted score for each hole is calculated as the minimum value between the strokes and the par + 4.
+ * The adjusted scores are then summed up to get the final adjusted played score.
+ *
+ * @param holes - An array of Hole objects representing the holes played.
+ * @returns The calculated adjusted played score.
+ */
+
+// Todo: Adjust calculation in accordance to hole handicap rules
+export const calculateAdjustedPlayedScore = (holes: Hole[]): number => {
   const adjustedScores = holes.map((hole) => {
     const adjustedScore = Math.min(hole.strokes, hole.par + 4);
     return adjustedScore;
   });
   return adjustedScores.reduce((acc, cur) => acc + cur);
+};
+
+export const calculateAdjustedGrossScore = (
+  holes: Hole[],
+  handicapIndex: number,
+  slopeRating?: number,
+  courseRating?: number,
+  par?: number
+): number | Error => {
+  const initialAdjust = calculateAdjustedPlayedScore(holes);
+
+  if (holes.length === 18) {
+    return initialAdjust;
+  } else {
+    if (!slopeRating || !courseRating || !par) {
+      throw new Error(
+        "Slope rating, course rating and par are required for calculating adjusted gross score for less than 18 holes"
+      );
+    }
+
+    // Calculate the predicted amount of strokes for the remaining holes based on the handicap index
+    const courseHandicap = calculateCourseHandicap(
+      handicapIndex,
+      slopeRating!,
+      courseRating!,
+      par!
+    );
+
+    const holesLeft = 18 - holes.length;
+    const predictedStrokes = Math.round((courseHandicap / 18) * holesLeft);
+    const parForRemainingHoles = holesLeft * (par / 18);
+    return initialAdjust + predictedStrokes + parForRemainingHoles;
+  }
 };
 
 const getRelevantDifferentials = (scoreDifferentials: number[]) => {

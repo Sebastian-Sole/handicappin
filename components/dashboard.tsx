@@ -10,7 +10,6 @@ import {
   SelectGroup,
   SelectItem,
 } from "@/components/ui/select";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
   Table,
@@ -26,72 +25,40 @@ import {
   ChartTooltip,
   ChartContainer,
 } from "@/components/ui/chart";
+import { RoundWithCourse } from "@/types/database";
+import { Tables } from "@/types/supabase";
 
 interface DashboardProps {
-  userId: string;
+  profile: Tables<"Profile">;
+  roundsList: RoundWithCourse[];
 }
 
-export function Dashboard({ userId }: DashboardProps) {
-  console.log(userId);
+export function Dashboard({ profile, roundsList }: DashboardProps) {
   const [searchTerm, setSearchTerm] = useState("");
-  const [sortColumn, setSortColumn] = useState("date");
+  const [sortColumn, setSortColumn] =
+    useState<keyof RoundWithCourse>("teeTime");
   const [sortDirection, setSortDirection] = useState("asc");
+
   const filteredAndSortedRounds = useMemo(() => {
-    return [
-      {
-        date: "2023-06-15",
-        course: "Pebble Beach",
-        score: 72,
-        par: 70,
-        differential: 2.4,
-      },
-      {
-        date: "2023-06-01",
-        course: "Torrey Pines",
-        score: 75,
-        par: 72,
-        differential: 3.0,
-      },
-      {
-        date: "2023-05-25",
-        course: "Spyglass Hill",
-        score: 68,
-        par: 68,
-        differential: 0.0,
-      },
-      {
-        date: "2023-05-18",
-        course: "Pebble Beach",
-        score: 71,
-        par: 70,
-        differential: 1.0,
-      },
-      {
-        date: "2023-05-11",
-        course: "Torrey Pines",
-        score: 74,
-        par: 72,
-        differential: 2.0,
-      },
-    ]
+    return roundsList
       .filter((round) => {
         return (
-          round.date.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          round.course.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          round.score.toString().includes(searchTerm) ||
-          round.par.toString().includes(searchTerm) ||
-          round.differential.toString().includes(searchTerm)
+          round.teeTime.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          round.courseName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          round.adjustedGrossScore.toString().includes(searchTerm) ||
+          round.parPlayed.toString().includes(searchTerm)
         );
       })
       .sort((a, b) => {
         const columnA = a[sortColumn];
         const columnB = b[sortColumn];
+        if (!columnA || !columnB) return 0;
         if (columnA < columnB) return sortDirection === "asc" ? -1 : 1;
         if (columnA > columnB) return sortDirection === "asc" ? 1 : -1;
         return 0;
       });
   }, [searchTerm, sortColumn, sortDirection]);
-  const handleSort = (column) => {
+  const handleSort = (column: keyof RoundWithCourse) => {
     if (sortColumn === column) {
       setSortDirection(sortDirection === "asc" ? "desc" : "asc");
     } else {
@@ -99,27 +66,17 @@ export function Dashboard({ userId }: DashboardProps) {
       setSortDirection("asc");
     }
   };
+
   return (
     <div className="bg-background text-foreground p-8 rounded-lg shadow-lg">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        <div className="bg-card rounded-lg p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-2xl font-bold">Recent Rounds</h2>
-            <Link
-              href={`/dashboard/${userId}/rounds`}
-              className="text-primary underline"
-              prefetch={false}
-            >
-              View all rounds
-            </Link>
-          </div>
-          <BarchartChart className="aspect-[16/9]" />
-        </div>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         <div className="bg-card rounded-lg p-6">
           <h2 className="text-2xl font-bold mb-4">Handicap</h2>
-          <div className="text-6xl font-bold text-primary">12.4</div>
+          <div className="text-6xl font-bold text-primary">
+            {profile.handicapIndex}
+          </div>
           <p className="text-muted-foreground">Current Handicap</p>
-          <div className="mt-4">
+          {/* <div className="mt-4">
             <Select>
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="Select Course" />
@@ -139,7 +96,20 @@ export function Dashboard({ userId }: DashboardProps) {
                 How is my handicap calculated?
               </Button>
             </div>
+          </div> */}
+        </div>
+        <div className="bg-card rounded-lg p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-2xl font-bold">Recent Rounds</h2>
+            <Link
+              href={`/dashboard/${profile.id}/rounds`}
+              className="text-primary underline"
+              prefetch={false}
+            >
+              View all rounds
+            </Link>
           </div>
+          <BarchartChart className="aspect-[16/9]" />
         </div>
       </div>
       <div className="bg-card rounded-lg p-6 mt-8">
@@ -158,10 +128,10 @@ export function Dashboard({ userId }: DashboardProps) {
             <TableRow>
               <TableHead
                 className="cursor-pointer"
-                onClick={() => handleSort("date")}
+                onClick={() => handleSort("teeTime")}
               >
                 Date{" "}
-                {sortColumn === "date" && (
+                {sortColumn === "teeTime" && (
                   <span className="ml-1">
                     {sortDirection === "asc" ? "\u2191" : "\u2193"}
                   </span>
@@ -169,10 +139,10 @@ export function Dashboard({ userId }: DashboardProps) {
               </TableHead>
               <TableHead
                 className="cursor-pointer"
-                onClick={() => handleSort("course")}
+                onClick={() => handleSort("courseName")}
               >
                 Course{" "}
-                {sortColumn === "course" && (
+                {sortColumn === "courseName" && (
                   <span className="ml-1">
                     {sortDirection === "asc" ? "\u2191" : "\u2193"}
                   </span>
@@ -180,10 +150,10 @@ export function Dashboard({ userId }: DashboardProps) {
               </TableHead>
               <TableHead
                 className="cursor-pointer"
-                onClick={() => handleSort("score")}
+                onClick={() => handleSort("adjustedGrossScore")}
               >
                 Score{" "}
-                {sortColumn === "score" && (
+                {sortColumn === "adjustedGrossScore" && (
                   <span className="ml-1">
                     {sortDirection === "asc" ? "\u2191" : "\u2193"}
                   </span>
@@ -191,10 +161,10 @@ export function Dashboard({ userId }: DashboardProps) {
               </TableHead>
               <TableHead
                 className="cursor-pointer"
-                onClick={() => handleSort("par")}
+                onClick={() => handleSort("parPlayed")}
               >
                 Par{" "}
-                {sortColumn === "par" && (
+                {sortColumn === "parPlayed" && (
                   <span className="ml-1">
                     {sortDirection === "asc" ? "\u2191" : "\u2193"}
                   </span>
@@ -202,10 +172,10 @@ export function Dashboard({ userId }: DashboardProps) {
               </TableHead>
               <TableHead
                 className="cursor-pointer"
-                onClick={() => handleSort("differential")}
+                onClick={() => handleSort("scoreDifferential")}
               >
                 Differential{" "}
-                {sortColumn === "differential" && (
+                {sortColumn === "scoreDifferential" && (
                   <span className="ml-1">
                     {sortDirection === "asc" ? "\u2191" : "\u2193"}
                   </span>
@@ -217,14 +187,17 @@ export function Dashboard({ userId }: DashboardProps) {
           <TableBody>
             {filteredAndSortedRounds.map((round, index) => (
               <TableRow key={index}>
-                <TableCell>{round.date}</TableCell>
-                <TableCell>{round.course}</TableCell>
-                <TableCell>{round.score}</TableCell>
-                <TableCell>{round.par}</TableCell>
-                <TableCell>{round.differential}</TableCell>
                 <TableCell>
-                  <Button variant="outline">View</Button>
-                  <Button variant="outline">Edit</Button>
+                  {new Date(round.teeTime).toLocaleString()}
+                </TableCell>
+                <TableCell>{round.courseName}</TableCell>
+                <TableCell>{round.adjustedGrossScore}</TableCell>
+                <TableCell>{round.parPlayed}</TableCell>
+                <TableCell>{round.scoreDifferential}</TableCell>
+                <TableCell>
+                  <Link href={`/rounds/${round.id}/calculation`}>
+                    View Calculation
+                  </Link>
                 </TableCell>
               </TableRow>
             ))}
@@ -245,7 +218,7 @@ function BarchartChart(props: any) {
             color: "hsl(var(--chart-1))",
           },
         }}
-        className="min-h-[300px]"
+        className="min-h-full"
       >
         <BarChart
           accessibilityLayer

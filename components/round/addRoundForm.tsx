@@ -16,7 +16,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { roundSchema } from "@/types/round";
+import { addRoundFormSchema } from "@/types/round";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -34,27 +34,33 @@ import {
 import { Large, Small } from "@/components/ui/typography";
 import { Separator } from "@/components/ui/separator";
 import { api } from "@/trpc/react";
-import React, { useState } from "react";
-import { calculateAdjustedGrossScore } from "@/utils/calculations/handicap";
+import React, { useEffect, useState } from "react";
+import {
+  calculateAdjustedGrossScore,
+  calculateAdjustedPlayedScore,
+  calculateScoreDifferential,
+} from "@/utils/calculations/handicap";
 import { useRouter } from "next/navigation";
 import { useToast } from "../ui/use-toast";
+import { Tables } from "@/types/supabase";
+import type { FormRound, RoundMutation } from "@/types/round";
 
 interface AddRoundFormProps {
-  userId: string | undefined;
+  profile: Tables<"Profile">;
 }
 
-const AddRoundForm = ({ userId }: AddRoundFormProps) => {
+const AddRoundForm = ({ profile }: AddRoundFormProps) => {
   const router = useRouter();
   const { toast } = useToast();
 
-  if (!userId) {
+  if (!profile) {
     router.push("/login");
   }
 
   const [numberOfHoles, setNumberOfHoles] = useState(9);
 
-  const form = useForm<z.infer<typeof roundSchema>>({
-    resolver: zodResolver(roundSchema),
+  const form = useForm<z.infer<typeof addRoundFormSchema>>({
+    resolver: zodResolver(addRoundFormSchema),
     defaultValues: {
       numberOfHoles: 9,
       holes: Array.from({ length: 9 }).map((value, index) => ({
@@ -68,10 +74,9 @@ const AddRoundForm = ({ userId }: AddRoundFormProps) => {
         par: 27,
         courseRating: 50.3,
         slope: 82,
+        location: "",
       },
-      location: "",
-      score: 1,
-      userId: userId,
+      userId: profile.id,
     },
   });
 
@@ -96,15 +101,66 @@ const AddRoundForm = ({ userId }: AddRoundFormProps) => {
     },
   });
 
-  function onSubmit(values: z.infer<typeof roundSchema>) {
+  function onSubmit(values: z.infer<typeof addRoundFormSchema>) {
     console.log("SUBMITTING FORM");
     console.log(values);
 
-    const adjustedGrossScore = calculateAdjustedGrossScore(values.holes);
+    const { courseRating, par, slope } = values.courseInfo;
 
-    const dataValues = {
-      ...values,
-      score: adjustedGrossScore,
+    const isInputParNine = values.holes.length === 9;
+
+    const getFirstNineHolesPar = values.holes
+      .slice(0, 9)
+      .reduce((acc, cur) => acc + cur.par, 0);
+
+    const nineHolePar = isInputParNine ? par : getFirstNineHolesPar;
+
+    const eighteenHolePar = isInputParNine ? par * 2 : par;
+
+    const adjustedPlayedScore = calculateAdjustedPlayedScore(values.holes);
+
+    console.log("Adjusted played score: ", adjustedPlayedScore);
+
+    // Todo: Input correct par for course with data for 18 holes
+    const adjustedGrossScore = calculateAdjustedGrossScore(
+      values.holes,
+      profile.handicapIndex,
+      slope,
+      courseRating,
+      eighteenHolePar
+    );
+
+    if (adjustedGrossScore instanceof Error) {
+      console.error("Error calculating adjusted gross score");
+      console.error(adjustedGrossScore);
+      toast({
+        title: "❌ Error calculating adjusted gross score",
+        description: "Please fill in all the required fields",
+      });
+      return;
+    }
+
+    const scoreDiff = calculateScoreDifferential(
+      adjustedGrossScore,
+      courseRating,
+      slope
+    );
+
+    const dataValues: RoundMutation = {
+      userId: values.userId,
+      courseInfo: values.courseInfo,
+      holes: values.holes,
+      adjustedPlayedScore,
+      adjustedGrossScore,
+      scoreDifferential: scoreDiff,
+      totalStrokes: values.holes.reduce((acc, cur) => acc + cur.strokes, 0),
+      existingHandicapIndex: profile.handicapIndex,
+      teeTime: values.date,
+      courseRating,
+      slopeRating: slope,
+      nineHolePar,
+      eighteenHolePar,
+      parPlayed: par,
     };
 
     mutate(dataValues);
@@ -175,7 +231,7 @@ const AddRoundForm = ({ userId }: AddRoundFormProps) => {
             />
             <FormField
               control={form.control}
-              name="location"
+              name="courseInfo.location"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Location</FormLabel>

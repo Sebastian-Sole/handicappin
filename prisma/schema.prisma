@@ -24,12 +24,13 @@ model Profile {
 }
 
 model Course {
-  id           Int     @id @default(autoincrement())
-  name         String
-  par          Int
-  courseRating Float
-  slopeRating  Float
-  rounds       Round[]
+  id              Int     @id @default(autoincrement())
+  name            String
+  nineHolePar     Int
+  eighteenHolePar Int
+  courseRating    Float
+  slopeRating     Float
+  rounds          Round[]
 }
 
 model Hole {
@@ -45,13 +46,18 @@ model Hole {
 }
 
 model Round {
-  id        Int      @id @default(autoincrement())
-  teeTime   DateTime
-  score     Int
-  courseId  Int
-  course    Course   @relation(fields: [courseId], references: [id])
-  userId    String   @db.Uuid
-  user      Profile  @relation(fields: [userId], references: [id])
-  holes     Hole[]
-  createdAt DateTime @default(now())
+  id                    Int      @id @default(autoincrement())
+  holes                 Hole[]
+  teeTime               DateTime
+  courseId              Int
+  course                Course   @relation(fields: [courseId], references: [id])
+  userId                String   @db.Uuid
+  user                  Profile  @relation(fields: [userId], references: [id])
+  existingHandicapIndex Float
+  scoreDifferential     Float
+  totalStrokes          Int
+  adjustedGrossScore    Int
+  createdAt             DateTime @default(now())
+  parPlayed             Int
+  notes                 String?
 }
