@@ -19,7 +19,15 @@ import {
   TableBody,
   TableCell,
 } from "@/components/ui/table";
-import { CartesianGrid, XAxis, Bar, BarChart, Line, LineChart } from "recharts";
+import {
+  CartesianGrid,
+  XAxis,
+  Bar,
+  BarChart,
+  Line,
+  LineChart,
+  YAxis,
+} from "recharts";
 import {
   ChartTooltipContent,
   ChartTooltip,
@@ -67,6 +75,17 @@ export function Dashboard({ profile, roundsList }: DashboardProps) {
     }
   };
 
+  const graphData = roundsList
+    .map((round) => ({
+      roundDate: new Date(round.teeTime).toLocaleDateString(),
+      score: round.adjustedGrossScore,
+    }))
+    .sort((a, b) => {
+      return new Date(a.roundDate).getTime() - new Date(b.roundDate).getTime();
+    });
+
+  console.log(graphData);
+
   return (
     <div className="bg-background text-foreground p-8 rounded-lg shadow-lg">
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -109,7 +128,7 @@ export function Dashboard({ profile, roundsList }: DashboardProps) {
               View all rounds
             </Link>
           </div>
-          <BarchartChart className="aspect-[16/9]" />
+          <BarchartChart className="aspect-[16/9]" data={graphData} />
         </div>
       </div>
       <div className="bg-card rounded-lg p-6 mt-8">
@@ -209,6 +228,7 @@ export function Dashboard({ profile, roundsList }: DashboardProps) {
 }
 
 function BarchartChart(props: any) {
+  const { data } = props;
   return (
     <div {...props}>
       <ChartContainer
@@ -220,30 +240,26 @@ function BarchartChart(props: any) {
         }}
         className="min-h-full"
       >
-        <BarChart
-          accessibilityLayer
-          data={[
-            { month: "January", desktop: 186 },
-            { month: "February", desktop: 305 },
-            { month: "March", desktop: 237 },
-            { month: "April", desktop: 73 },
-            { month: "May", desktop: 209 },
-            { month: "June", desktop: 214 },
-          ]}
-        >
+        <BarChart accessibilityLayer data={data}>
           <CartesianGrid vertical={false} />
           <XAxis
-            dataKey="month"
+            dataKey="roundDate"
             tickLine={false}
-            tickMargin={10}
+            tickMargin={8}
             axisLine={false}
-            tickFormatter={(value) => value.slice(0, 3)}
+            tickFormatter={(value) => value.slice(0, 4)}
           />
           <ChartTooltip
             cursor={false}
             content={<ChartTooltipContent hideLabel />}
           />
-          <Bar dataKey="desktop" fill="var(--color-desktop)" radius={8} />
+          <YAxis
+            dataKey="score"
+            tickLine={false}
+            tickMargin={8}
+            axisLine={false}
+          ></YAxis>
+          <Bar dataKey="score" fill="var(--color-desktop)" radius={8} />
         </BarChart>
       </ChartContainer>
     </div>
@@ -278,11 +294,11 @@ function LinechartChart(props: any) {
         >
           <CartesianGrid vertical={false} />
           <XAxis
-            dataKey="month"
+            dataKey="roundDate"
             tickLine={false}
             axisLine={false}
             tickMargin={8}
-            tickFormatter={(value) => value.slice(0, 3)}
+            tickFormatter={(value) => value.slice(0, 5)}
           />
           <ChartTooltip
             cursor={false}
