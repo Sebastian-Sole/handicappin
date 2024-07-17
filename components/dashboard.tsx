@@ -35,13 +35,23 @@ import {
 } from "@/components/ui/chart";
 import { RoundWithCourse } from "@/types/database";
 import { Tables } from "@/types/supabase";
+import { Button } from "./ui/button";
+import { calculateCourseHandicap } from "@/utils/calculations/handicap";
+import { H4, P } from "./ui/typography";
+import { getRandomHeader } from "@/utils/frivolities/headerGenerator";
+import useMounted from "@/hooks/useMounted";
+import { Skeleton } from "./ui/skeleton";
+import { Separator } from "@radix-ui/react-select";
 
 interface DashboardProps {
   profile: Tables<"Profile">;
   roundsList: RoundWithCourse[];
+  header: string;
 }
 
-export function Dashboard({ profile, roundsList }: DashboardProps) {
+export function Dashboard({ profile, roundsList, header }: DashboardProps) {
+  const isMounted = useMounted();
+  const [course, setCourse] = useState<string>("");
   const [searchTerm, setSearchTerm] = useState("");
   const [sortColumn, setSortColumn] =
     useState<keyof RoundWithCourse>("teeTime");
@@ -84,7 +94,7 @@ export function Dashboard({ profile, roundsList }: DashboardProps) {
       return new Date(a.roundDate).getTime() - new Date(b.roundDate).getTime();
     });
 
-  console.log(graphData);
+  if (!isMounted) return <Skeleton></Skeleton>;
 
   return (
     <div className="bg-background text-foreground p-8 rounded-lg shadow-lg">
@@ -95,27 +105,30 @@ export function Dashboard({ profile, roundsList }: DashboardProps) {
             {profile.handicapIndex}
           </div>
           <p className="text-muted-foreground">Current Handicap</p>
-          {/* <div className="mt-4">
-            <Select>
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Select Course" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectGroup>
-                  <SelectItem value="pebble-beach">Pebble Beach</SelectItem>
-                  <SelectItem value="torrey-pines">Torrey Pines</SelectItem>
-                  <SelectItem value="spyglass-hill">Spyglass Hill</SelectItem>
-                </SelectGroup>
-              </SelectContent>
-            </Select>
-            <div className="mt-2">
-              <p>Course Handicap: 14</p>
-              <p>Playing Handicap: 12</p>
-              <Button variant="link" className="text-primary underline">
-                How is my handicap calculated?
-              </Button>
-            </div>
-          </div> */}
+          <div className="mt-0">
+            <Button
+              variant="link"
+              className="text-primary underline px-0 mb-10"
+            >
+              How is my handicap calculated?{" "}
+            </Button>
+            <H4 className="!mb-2">{header}</H4>
+            <P className="!mt-4">
+              Handicappin&apos; believes in transparency and making golf
+              accessible. It can be difficult to find accurate and consistent
+              information on the calculations of scores, handicaps and the rules
+              of golf online. We aim to be a reliable source of information and
+              aim to ease the unnecessary confusion around golf.
+            </P>
+            <P>
+              An easy, interactive way to understand the calculations behind
+              handicaps and scoring can be viewed by clicking the button below,
+              or by viewing a specific round&apos;s calculation.
+            </P>
+            <Button variant="link" className="text-primary underline px-0 mb-6">
+              Click here to learn more
+            </Button>
+          </div>
         </div>
         <div className="bg-card rounded-lg p-6">
           <div className="flex items-center justify-between mb-4">
