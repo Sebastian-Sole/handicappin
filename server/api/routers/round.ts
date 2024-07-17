@@ -3,9 +3,11 @@ import {
   createTRPCRouter,
   publicProcedure,
 } from "@/server/api/trpc";
+import { api } from "@/trpc/server";
 import { RoundWithCourse } from "@/types/database";
 import { addRoundFormSchema, roundMutationSchema } from "@/types/round";
 import { Tables } from "@/types/supabase";
+import { calculateHandicapIndex } from "@/utils/calculations/handicap";
 import { z } from "zod";
 
 export const roundRouter = createTRPCRouter({
@@ -118,13 +120,64 @@ export const roundRouter = createTRPCRouter({
         throw new Error(`Error inserting holes: ${holesError.message}`);
       }
 
+      const { data: roundsData, error: roundsError } = await ctx.supabase
+        .from("Round")
+        .select("*")
+        .eq("userId", userId)
+        .range(0, 19);
+
+      if (roundsError) {
+        throw new Error(`Error getting rounds: ${roundsError.message}`);
+      }
+
+      const scoreDifferentials = roundsData
+        .sort(
+          (a, b) =>
+            new Date(b.teeTime).getTime() - new Date(a.teeTime).getTime()
+        )
+        .map((round) => round.scoreDifferential);
+
+      // For each score diff, if score diff is over 54, use 54
+      const cappedDifferentials = scoreDifferentials.map((diff) =>
+        diff > 54 ? 54 : diff
+      );
+
+      const handicapIndex = calculateHandicapIndex(cappedDifferentials);
+
+      const { error: updateError } = await ctx.supabase
+        .from("Profile")
+        .update({
+          handicapIndex: handicapIndex,
+        })
+        .eq("id", userId);
+
+      if (updateError) {
+        throw new Error(
+          `Error updating handicap index: ${updateError.message}`
+        );
+      }
+
+      console.log("--------------------");
+      console.log("Round Played:");
+      console.log("AGS: " + input.adjustedGrossScore);
+      console.log("Score Differential: " + input.scoreDifferential);
+      console.log("Total Strokes: " + input.totalStrokes);
+      console.log("Existing Handicap: " + input.existingHandicapIndex);
+      console.log("Handicap Now: " + handicapIndex);
+
       return {
         message: "Round and holes inserted successfully",
         roundId: roundId,
       };
     }),
   getAllByUserId: publicProcedure
-    .input(z.string().uuid())
+    .input(
+      z.object({
+        userId: z.string().uuid(),
+        startIndex: z.number().int().optional().default(0),
+        amount: z.number().int().optional().default(Number.MAX_SAFE_INTEGER),
+      })
+    )
     .query(async ({ ctx, input }) => {
       const { data: rounds, error } = await ctx.supabase
         .from("Round")
@@ -136,9 +189,11 @@ export const roundRouter = createTRPCRouter({
     )
   `
         )
-        .eq("userId", input);
+        .eq("userId", input.userId)
+        .range(input.startIndex, input.startIndex + input.amount - 1);
 
       if (error) {
+        console.log(error);
         throw new Error(`Error getting rounds: ${error.message}`);
       }
 
@@ -167,4 +222,5 @@ export const roundRouter = createTRPCRouter({
 
       return roundsWithCourse;
     }),
+  // A procedure which gets x number of rounds for a user
 });

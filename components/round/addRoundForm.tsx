@@ -34,10 +34,25 @@ import {
 import { useRouter } from "next/navigation";
 import { useToast } from "../ui/use-toast";
 import { Tables } from "@/types/supabase";
-import type { RoundMutation } from "@/types/round";
+import type { FormRound, RoundMutation } from "@/types/round";
 import { DateTimePicker } from "../ui/datepicker";
 import useMounted from "@/hooks/useMounted";
 import FormSkeleton from "../formSkeleton";
+import { translateRound } from "@/utils/round/addUtils";
+import {
+  roundEight,
+  roundFive,
+  roundFour,
+  roundNine,
+  roundOne,
+  rounds,
+  roundSeven,
+  roundSix,
+  roundTen,
+  roundThree,
+  roundTwo,
+  roundZero,
+} from "@/utils/populateDb";
 
 interface AddRoundFormProps {
   profile: Tables<"Profile">;
@@ -82,7 +97,7 @@ const AddRoundForm = ({ profile }: AddRoundFormProps) => {
         title: "✅ Round created successfully",
         description: "Your round has been added to your profile!",
       });
-      router.push("/");
+      // router.push("/");
     },
     onError: (e) => {
       const errorMessage = e.data?.zodError?.fieldErrors.content;
@@ -97,69 +112,10 @@ const AddRoundForm = ({ profile }: AddRoundFormProps) => {
   });
 
   function onSubmit(values: z.infer<typeof addRoundFormSchema>) {
-    console.log("SUBMITTING FORM");
-    console.log(values);
-
-    const { courseRating, par, slope } = values.courseInfo;
-
-    const isInputParNine = values.holes.length === 9;
-
-    const getFirstNineHolesPar = values.holes
-      .slice(0, 9)
-      .reduce((acc, cur) => acc + cur.par, 0);
-
-    const nineHolePar = isInputParNine ? par : getFirstNineHolesPar;
-
-    const eighteenHolePar = isInputParNine ? par * 2 : par;
-
-    const adjustedPlayedScore = calculateAdjustedPlayedScore(values.holes);
-
-    console.log("Adjusted played score: ", adjustedPlayedScore);
-
-    // Todo: Input correct par for course with data for 18 holes
-    const adjustedGrossScore = calculateAdjustedGrossScore(
-      values.holes,
-      profile.handicapIndex,
-      slope,
-      courseRating,
-      eighteenHolePar
-    );
-
-    if (adjustedGrossScore instanceof Error) {
-      console.error("Error calculating adjusted gross score");
-      console.error(adjustedGrossScore);
-      toast({
-        title: "❌ Error calculating adjusted gross score",
-        description: "Please fill in all the required fields",
-      });
+    const dataValues: RoundMutation | null = translateRound(values, profile);
+    if (!dataValues) {
       return;
     }
-
-    const scoreDiff = calculateScoreDifferential(
-      adjustedGrossScore,
-      courseRating,
-      slope
-    );
-
-    const dataValues: RoundMutation = {
-      userId: values.userId,
-      courseInfo: values.courseInfo,
-      holes: values.holes,
-      adjustedPlayedScore,
-      adjustedGrossScore,
-      scoreDifferential: scoreDiff,
-      totalStrokes: values.holes.reduce((acc, cur) => acc + cur.strokes, 0),
-      existingHandicapIndex: profile.handicapIndex,
-      teeTime: values.date ?? new Date(),
-      courseRating,
-      slopeRating: slope,
-      nineHolePar,
-      eighteenHolePar,
-      parPlayed: par,
-    };
-
-    console.log("Data values: ", dataValues);
-
     mutate(dataValues);
   }
 
@@ -170,6 +126,47 @@ const AddRoundForm = ({ profile }: AddRoundFormProps) => {
     };
   }
 
+  const handlePopulateDb = async () => {
+    const holeZero: RoundMutation = {
+      adjustedGrossScore: 128,
+      adjustedPlayedScore: 128,
+      courseInfo: {
+        courseRating: 72,
+        location: "Artificial",
+        par: 72,
+        slope: 113,
+      },
+      courseRating: 72,
+      eighteenHolePar: 72,
+      nineHolePar: 36,
+      existingHandicapIndex: 54,
+      holes: roundZero.holes,
+      parPlayed: 72,
+      scoreDifferential: 56,
+      slopeRating: 113,
+      teeTime: new Date("2021-09-01T12:00:00.000Z"),
+      totalStrokes: 128,
+      userId: profile.id,
+    };
+    mutate(holeZero);
+
+    const handleAddData = (roundToAdd: FormRound) => {
+      const dataValue = translateRound(roundToAdd, profile);
+      if (!dataValue) {
+        console.log("Data values invalid");
+        console.log(roundToAdd);
+        console.log(dataValue);
+        return;
+      }
+      mutate(dataValue);
+    };
+
+    const roundsToAdd = rounds;
+    roundsToAdd.forEach((round) => {
+      handleAddData(round);
+    });
+  };
+
   if (!isMounted) {
     return <FormSkeleton />;
   }
@@ -178,6 +175,7 @@ const AddRoundForm = ({ profile }: AddRoundFormProps) => {
     <Card className="md:w-[70%] w-full">
       <CardHeader>
         <CardTitle>Add Round</CardTitle>
+        <Button onClick={handlePopulateDb}>Populate DB</Button>
       </CardHeader>
 
       <CardContent>

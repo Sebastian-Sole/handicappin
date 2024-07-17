@@ -212,7 +212,9 @@ export function Dashboard({ profile, roundsList }: DashboardProps) {
                 <TableCell>{round.courseName}</TableCell>
                 <TableCell>{round.adjustedGrossScore}</TableCell>
                 <TableCell>{round.parPlayed}</TableCell>
-                <TableCell>{round.scoreDifferential}</TableCell>
+                <TableCell>
+                  {Math.round(round.scoreDifferential * 10) / 10}
+                </TableCell>
                 <TableCell>
                   <Link href={`/rounds/${round.id}/calculation`}>
                     View Calculation

@@ -25,7 +25,7 @@ model Profile {
 
 model Course {
   id              Int     @id @default(autoincrement())
-  name            String
+  name            String  @unique
   nineHolePar     Int
   eighteenHolePar Int
   courseRating    Float
@@ -40,9 +40,9 @@ model Hole {
   hcp        Int
   strokes    Int
   roundId    Int
-  round      Round   @relation(fields: [roundId], references: [id])
+  round      Round   @relation(fields: [roundId], references: [id], onDelete: Cascade)
   userId     String  @db.Uuid
-  user       Profile @relation(fields: [userId], references: [id])
+  user       Profile @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Round {
@@ -50,9 +50,9 @@ model Round {
   holes                 Hole[]
   teeTime               DateTime
   courseId              Int
-  course                Course   @relation(fields: [courseId], references: [id])
+  course                Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
   userId                String   @db.Uuid
-  user                  Profile  @relation(fields: [userId], references: [id])
+  user                  Profile  @relation(fields: [userId], references: [id], onDelete: Cascade)
   existingHandicapIndex Float
   scoreDifferential     Float
   totalStrokes          Int

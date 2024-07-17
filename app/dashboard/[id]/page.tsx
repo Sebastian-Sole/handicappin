@@ -22,7 +22,11 @@ const DashboardPage = async ({ params }: { params: { id: string } }) => {
     return <div>Invalid user, this is not your profile</div>;
   }
 
-  const roundsList: RoundWithCourse[] = await api.round.getAllByUserId(id);
+  const roundsList: RoundWithCourse[] = await api.round.getAllByUserId({
+    userId: id,
+    startIndex: 0,
+    amount: 20,
+  });
   const profile = await api.auth.getProfileFromUserId(id);
 
   return (

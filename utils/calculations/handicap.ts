@@ -118,14 +118,12 @@ const getRelevantDifferentials = (scoreDifferentials: number[]) => {
 
 export const calculateHandicapIndex = (scoreDifferentials: number[]) => {
   const sortedDifferentials = scoreDifferentials.sort((a, b) => a - b);
-  let differentials: number[] = [];
-  if (scoreDifferentials.length < 20) {
-    differentials = getRelevantDifferentials(sortedDifferentials);
-  } else {
-    differentials = sortedDifferentials.slice(0, 8);
-  }
-  return Math.round(
-    differentials.reduce((acc, cur) => acc + cur) / differentials.length
+  let differentials: number[] = getRelevantDifferentials(sortedDifferentials);
+  return (
+    Math.round(
+      (differentials.reduce((acc, cur) => acc + cur) / differentials.length) *
+        10
+    ) / 10
   );
 };
 

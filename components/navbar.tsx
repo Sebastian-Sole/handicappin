@@ -4,6 +4,7 @@ import SignupButton from "./authButtons/signupButton";
 import LoginButton from "./authButtons/loginButton";
 import LogoutButton from "./authButtons/logoutButton";
 import DashboardButton from "./authButtons/dashboardButton";
+import AddRoundButton from "./authButtons/addRoundButton";
 
 const Navbar = async () => {
   const supabase = createServerComponentClient();
@@ -30,6 +31,7 @@ const Navbar = async () => {
 
       {isAuthed && (
         <div className="items-center justify-end space-x-8 sm:space-x-4 hidden sm:flex mr-10 sm:mr-5">
+          <AddRoundButton />
           <DashboardButton userId={data.user.id} />
           <LogoutButton />
         </div>
