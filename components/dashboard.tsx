@@ -45,7 +45,7 @@ export function Dashboard({ profile, roundsList }: DashboardProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [sortColumn, setSortColumn] =
     useState<keyof RoundWithCourse>("teeTime");
-  const [sortDirection, setSortDirection] = useState("asc");
+  const [sortDirection, setSortDirection] = useState("desc");
 
   const filteredAndSortedRounds = useMemo(() => {
     return roundsList
@@ -83,8 +83,6 @@ export function Dashboard({ profile, roundsList }: DashboardProps) {
     .sort((a, b) => {
       return new Date(a.roundDate).getTime() - new Date(b.roundDate).getTime();
     });
-
-  console.log(graphData);
 
   return (
     <div className="bg-background text-foreground p-8 rounded-lg shadow-lg">
