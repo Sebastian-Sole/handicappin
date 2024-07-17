@@ -147,6 +147,7 @@ export type Database = {
           scoreDifferential: number
           teeTime: string
           totalStrokes: number
+          updatedHandicapIndex: number
           userId: string
         }
         Insert: {
@@ -160,6 +161,7 @@ export type Database = {
           scoreDifferential: number
           teeTime: string
           totalStrokes: number
+          updatedHandicapIndex?: number
           userId: string
         }
         Update: {
@@ -173,6 +175,7 @@ export type Database = {
           scoreDifferential?: number
           teeTime?: string
           totalStrokes?: number
+          updatedHandicapIndex?: number
           userId?: string
         }
         Relationships: [
