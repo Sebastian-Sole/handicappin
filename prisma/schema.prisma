@@ -54,6 +54,7 @@ model Round {
   userId                String   @db.Uuid
   user                  Profile  @relation(fields: [userId], references: [id], onDelete: Cascade)
   existingHandicapIndex Float
+  updatedHandicapIndex  Float    @default(0)
   scoreDifferential     Float
   totalStrokes          Int
   adjustedGrossScore    Int
