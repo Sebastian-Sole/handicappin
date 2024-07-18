@@ -11,27 +11,14 @@ import {
   TableBody,
   TableCell,
 } from "@/components/ui/table";
-import {
-  CartesianGrid,
-  XAxis,
-  Bar,
-  BarChart,
-  Line,
-  LineChart,
-  YAxis,
-} from "recharts";
-import {
-  ChartTooltipContent,
-  ChartTooltip,
-  ChartContainer,
-} from "@/components/ui/chart";
+
 import { RoundWithCourse } from "@/types/database";
 import { Tables } from "@/types/supabase";
 import { Button } from "./ui/button";
-import { H4, P } from "./ui/typography";
 import useMounted from "@/hooks/useMounted";
-import { Skeleton } from "./ui/skeleton";
-import DashboardSkeleton from "./skeletons/DashboardSkeleton";
+import DashboardInfo from "./dashboardInfo";
+import DashboardGraphDisplay from "./dashboardGraphDisplay";
+import DashboardSkeleton from "./skeletons/dashboardSkeleton";
 
 interface DashboardProps {
   profile: Tables<"Profile">;
@@ -88,66 +75,8 @@ export function Dashboard({ profile, roundsList, header }: DashboardProps) {
   return (
     <div className="bg-background text-foreground p-8 rounded-lg h-full">
       <div className="grid grid-cols-1 xl:grid-cols-3">
-        <div className="bg-card rounded-lg p-6">
-          <h2 className="text-2xl font-bold mb-4">Handicap</h2>
-          <div className="text-6xl font-bold text-primary">
-            {profile.handicapIndex}
-          </div>
-          <p className="text-muted-foreground">Current Handicap</p>
-          <div className="mt-0">
-            {/* Todo: Implement link */}
-            <Button
-              variant="link"
-              className="text-primary underline px-0 mb-10"
-            >
-              How is my handicap calculated?{" "}
-            </Button>
-            <H4 className="!mb-2">{header}</H4>
-            <P className="!mt-4">
-              Handicappin&apos; believes in transparency and making golf
-              accessible. It can be difficult to find accurate and consistent
-              information on the calculations of scores, handicaps and the rules
-              of golf online. We aim to be a reliable source of information and
-              aim to ease the unnecessary confusion around golf.
-            </P>
-            <P>
-              An easy, interactive way to understand the calculations behind
-              handicaps and scoring can be viewed by clicking the button below,
-              or by viewing a specific round&apos;s calculation.
-            </P>
-            {/* Todo: Implement link */}
-            <Button variant="link" className="text-primary underline px-0 mb-6">
-              Click here to learn more
-            </Button>
-          </div>
-        </div>
-        <div className="bg-card rounded-lg p-6 col-span-2">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-2xl font-bold">Recent Rounds</h2>
-            <Link
-              href={`/rounds/add`}
-              className="text-primary underline"
-              prefetch={false}
-            >
-              Add a round
-            </Link>
-          </div>
-          {graphData.length !== 0 && (
-            <BarchartChart className="aspect-[16/9]" data={graphData} />
-          )}
-          {graphData.length === 0 && (
-            <div className="flex items-center justify-center h-full border border-gray-100 flex-col">
-              <H4>No rounds found</H4>
-              <Link
-                href={`/rounds/add`}
-                className="text-primary underline mt-4"
-                prefetch={false}
-              >
-                <Button variant={"secondary"}>Add a round here</Button>
-              </Link>
-            </div>
-          )}
-        </div>
+        <DashboardInfo handicapIndex={profile.handicapIndex} header={header} />
+        <DashboardGraphDisplay graphData={graphData} />
       </div>
       {filteredAndSortedRounds.length !== 0 && (
         <div className="bg-card rounded-lg p-6 mt-8">
@@ -252,102 +181,6 @@ export function Dashboard({ profile, roundsList, header }: DashboardProps) {
           </Table>
         </div>
       )}
-    </div>
-  );
-}
-
-function BarchartChart(props: any) {
-  const { data } = props;
-  return (
-    <div {...props}>
-      <ChartContainer
-        config={{
-          desktop: {
-            label: "Desktop",
-            color: "hsl(var(--chart-1))",
-          },
-        }}
-        className="min-h-full"
-      >
-        <BarChart accessibilityLayer data={data}>
-          <CartesianGrid vertical={false} />
-          <XAxis
-            dataKey="roundDate"
-            tickLine={false}
-            tickMargin={8}
-            axisLine={false}
-            tickFormatter={(value) => {
-              const dateParts = value.split(/[-\/.\s]/);
-              return `${dateParts[0]}/${dateParts[1]}`;
-            }}
-          />
-          <ChartTooltip
-            cursor={false}
-            content={<ChartTooltipContent hideLabel />}
-          />
-          <YAxis
-            dataKey="score"
-            tickLine={false}
-            tickMargin={8}
-            axisLine={false}
-          ></YAxis>
-          <Bar dataKey="score" fill="var(--color-desktop)" radius={8} />
-        </BarChart>
-      </ChartContainer>
-    </div>
-  );
-}
-
-function LinechartChart(props: any) {
-  return (
-    <div {...props}>
-      <ChartContainer
-        config={{
-          desktop: {
-            label: "Desktop",
-            color: "hsl(var(--chart-1))",
-          },
-        }}
-      >
-        <LineChart
-          accessibilityLayer
-          data={[
-            { month: "January", desktop: 186 },
-            { month: "February", desktop: 305 },
-            { month: "March", desktop: 237 },
-            { month: "April", desktop: 73 },
-            { month: "May", desktop: 209 },
-            { month: "June", desktop: 214 },
-          ]}
-          margin={{
-            left: 12,
-            right: 12,
-          }}
-        >
-          <CartesianGrid vertical={false} />
-          <XAxis
-            dataKey="roundDate"
-            tickLine={false}
-            axisLine={false}
-            tickMargin={8}
-            tickFormatter={(value) => {
-              const dateParts = value.split(/[-\/.\s]/);
-              return `${dateParts[0]}/${dateParts[1]}`;
-            }}
-          />
-          <ChartTooltip
-            cursor={false}
-            content={<ChartTooltipContent hideLabel />}
-          />
-          <Line
-            dataKey="desktop"
-            type="natural"
-            stroke="var(--color-desktop)"
-            strokeWidth={2}
-            dot={false}
-          />
-        </LineChart>
-      </ChartContainer>
     </div>
   );
 }
