@@ -8,7 +8,6 @@ import DashboardGraphDisplay from "./dashboardGraphDisplay";
 import useMounted from "@/hooks/useMounted";
 import { RoundWithCourse } from "@/types/database";
 import { Tables } from "@/types/supabase";
-import DashboardSkeleton from "../skeletons/dashboardSkeleton";
 import { Input } from "../ui/input";
 import {
   TableHeader,
@@ -19,6 +18,7 @@ import {
   Table,
 } from "../ui/table";
 import { Button } from "../ui/button";
+import DashboardSkeleton from "../skeletons/dashboardSkeleton";
 
 interface DashboardProps {
   profile: Tables<"Profile">;
