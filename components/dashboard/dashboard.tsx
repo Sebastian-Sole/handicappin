@@ -18,7 +18,7 @@ import {
   Table,
 } from "../ui/table";
 import { Button } from "../ui/button";
-import DashboardSkeleton from "../skeletons/dashboardSkeleton";
+import DashboardSkeleton from "./dashboardSkeleton";
 
 interface DashboardProps {
   profile: Tables<"Profile">;
