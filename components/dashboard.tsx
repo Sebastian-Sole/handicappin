@@ -95,6 +95,7 @@ export function Dashboard({ profile, roundsList, header }: DashboardProps) {
           </div>
           <p className="text-muted-foreground">Current Handicap</p>
           <div className="mt-0">
+            {/* Todo: Implement link */}
             <Button
               variant="link"
               className="text-primary underline px-0 mb-10"
@@ -114,6 +115,7 @@ export function Dashboard({ profile, roundsList, header }: DashboardProps) {
               handicaps and scoring can be viewed by clicking the button below,
               or by viewing a specific round&apos;s calculation.
             </P>
+            {/* Todo: Implement link */}
             <Button variant="link" className="text-primary underline px-0 mb-6">
               Click here to learn more
             </Button>
