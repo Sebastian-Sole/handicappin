@@ -98,7 +98,7 @@ export function Dashboard({ profile, roundsList, header }: DashboardProps) {
 
   return (
     <div className="bg-background text-foreground p-8 rounded-lg shadow-lg">
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+      <div className="grid grid-cols-1 xl:grid-cols-3">
         <div className="bg-card rounded-lg p-6">
           <h2 className="text-2xl font-bold mb-4">Handicap</h2>
           <div className="text-6xl font-bold text-primary">
@@ -130,15 +130,16 @@ export function Dashboard({ profile, roundsList, header }: DashboardProps) {
             </Button>
           </div>
         </div>
-        <div className="bg-card rounded-lg p-6">
+        <div className="bg-card rounded-lg p-6 col-span-2">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-2xl font-bold">Recent Rounds</h2>
             <Link
-              href={`/dashboard/${profile.id}/rounds`}
+              href={`/rounds/add`}
               className="text-primary underline"
               prefetch={false}
+              scroll={true}
             >
-              View all rounds
+              Add a round
             </Link>
           </div>
           <BarchartChart className="aspect-[16/9]" data={graphData} />
@@ -146,7 +147,7 @@ export function Dashboard({ profile, roundsList, header }: DashboardProps) {
       </div>
       <div className="bg-card rounded-lg p-6 mt-8">
         <h2 className="text-2xl font-bold mb-4">Rounds History</h2>
-        <div className="mb-4">
+        <div className="mb-4" id="table">
           <Input
             type="search"
             placeholder="Search rounds..."
@@ -230,7 +231,13 @@ export function Dashboard({ profile, roundsList, header }: DashboardProps) {
                 </TableCell>
                 <TableCell>
                   <Link href={`/rounds/${round.id}/calculation`}>
-                    View Calculation
+                    <Button
+                      variant="link"
+                      className="text-primary underline px-0"
+                    >
+                      {" "}
+                      View Calculation
+                    </Button>
                   </Link>
                 </TableCell>
               </TableRow>
@@ -262,7 +269,10 @@ function BarchartChart(props: any) {
             tickLine={false}
             tickMargin={8}
             axisLine={false}
-            tickFormatter={(value) => value.slice(0, 4)}
+            tickFormatter={(value) => {
+              const dateParts = value.split(/[-\/.\s]/);
+              return `${dateParts[0]}/${dateParts[1]}`;
+            }}
           />
           <ChartTooltip
             cursor={false}
@@ -313,7 +323,10 @@ function LinechartChart(props: any) {
             tickLine={false}
             axisLine={false}
             tickMargin={8}
-            tickFormatter={(value) => value.slice(0, 5)}
+            tickFormatter={(value) => {
+              const dateParts = value.split(/[-\/.\s]/);
+              return `${dateParts[0]}/${dateParts[1]}`;
+            }}
           />
           <ChartTooltip
             cursor={false}
