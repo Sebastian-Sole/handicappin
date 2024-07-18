@@ -86,7 +86,7 @@ export function Dashboard({ profile, roundsList, header }: DashboardProps) {
   if (!isMounted) return <DashboardSkeleton />;
 
   return (
-    <div className="bg-background text-foreground p-8 rounded-lg shadow-lg h-[100vh]">
+    <div className="bg-background text-foreground p-8 rounded-lg h-full">
       <div className="grid grid-cols-1 xl:grid-cols-3">
         <div className="bg-card rounded-lg p-6">
           <h2 className="text-2xl font-bold mb-4">Handicap</h2>
