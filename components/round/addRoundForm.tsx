@@ -275,7 +275,7 @@ const AddRoundForm = ({ profile }: AddRoundFormProps) => {
                     <Select
                       onValueChange={(value) => {
                         field.onChange(Number(value));
-                        setNumberOfHoles(Number(value)); // Update the number of holes
+                        setNumberOfHoles(Number(value));
                       }}
                       defaultValue={
                         (field.value && field.value.toString()) || "9"
