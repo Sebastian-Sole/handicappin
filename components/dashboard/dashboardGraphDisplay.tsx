@@ -1,7 +1,7 @@
 import Link from "next/link";
-import { H4 } from "./ui/typography";
-import { Button } from "./ui/button";
-import { BarchartChart } from "./charts";
+import { H4 } from "../ui/typography";
+import { Button } from "../ui/button";
+import { BarchartChart } from "../charts";
 
 interface DashboardGraphDisplayProps {
   graphData: any;

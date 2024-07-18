@@ -2,23 +2,23 @@
 
 import { useState, useMemo } from "react";
 import Link from "next/link";
-import { Input } from "@/components/ui/input";
+
+import DashboardInfo from "./dashboardInfo";
+import DashboardGraphDisplay from "./dashboardGraphDisplay";
+import useMounted from "@/hooks/useMounted";
+import { RoundWithCourse } from "@/types/database";
+import { Tables } from "@/types/supabase";
+import DashboardSkeleton from "../skeletons/dashboardSkeleton";
+import { Input } from "../ui/input";
 import {
-  Table,
   TableHeader,
   TableRow,
   TableHead,
   TableBody,
   TableCell,
-} from "@/components/ui/table";
-
-import { RoundWithCourse } from "@/types/database";
-import { Tables } from "@/types/supabase";
-import { Button } from "./ui/button";
-import useMounted from "@/hooks/useMounted";
-import DashboardInfo from "./dashboardInfo";
-import DashboardGraphDisplay from "./dashboardGraphDisplay";
-import DashboardSkeleton from "./skeletons/dashboardSkeleton";
+  Table,
+} from "../ui/table";
+import { Button } from "../ui/button";
 
 interface DashboardProps {
   profile: Tables<"Profile">;

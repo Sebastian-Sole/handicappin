@@ -1,4 +1,4 @@
-import { Dashboard } from "@/components/dashboard";
+import { Dashboard } from "@/components/dashboard/dashboard";
 import { api } from "@/trpc/server";
 import { RoundWithCourse } from "@/types/database";
 import { getRandomHeader } from "@/utils/frivolities/headerGenerator";

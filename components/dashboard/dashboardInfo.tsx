@@ -1,5 +1,5 @@
-import { Button } from "./ui/button";
-import { H4, P } from "./ui/typography";
+import { Button } from "../ui/button";
+import { H4, P } from "../ui/typography";
 
 interface DashboardIndexProps {
   handicapIndex: number;
