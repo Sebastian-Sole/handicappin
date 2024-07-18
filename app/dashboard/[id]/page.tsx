@@ -1,6 +1,7 @@
-import { Dashboard } from "@/components/dashboard";
+import { Dashboard } from "@/components/dashboard/dashboard";
 import { api } from "@/trpc/server";
 import { RoundWithCourse } from "@/types/database";
+import { getRandomHeader } from "@/utils/frivolities/headerGenerator";
 
 import { createServerComponentClient } from "@/utils/supabase/server";
 
@@ -29,9 +30,11 @@ const DashboardPage = async ({ params }: { params: { id: string } }) => {
   });
   const profile = await api.auth.getProfileFromUserId(id);
 
+  const header = getRandomHeader();
+
   return (
     <div>
-      <Dashboard profile={profile} roundsList={roundsList} />
+      <Dashboard profile={profile} roundsList={roundsList} header={header} />
     </div>
   );
 };

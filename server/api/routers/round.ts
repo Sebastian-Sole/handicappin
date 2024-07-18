@@ -3,9 +3,8 @@ import {
   createTRPCRouter,
   publicProcedure,
 } from "@/server/api/trpc";
-import { api } from "@/trpc/server";
 import { RoundWithCourse } from "@/types/database";
-import { addRoundFormSchema, roundMutationSchema } from "@/types/round";
+import { roundMutationSchema } from "@/types/round";
 import { Tables } from "@/types/supabase";
 import { calculateHandicapIndex } from "@/utils/calculations/handicap";
 import { flattenRoundWithCourse } from "@/utils/trpc/round";
@@ -18,7 +17,6 @@ export const roundRouter = createTRPCRouter({
       if (!ctx.user) {
         throw new Error("Unauthorized");
       }
-      console.log("Starting round creation");
 
       const {
         courseInfo,
@@ -29,9 +27,6 @@ export const roundRouter = createTRPCRouter({
         existingHandicapIndex,
         scoreDifferential,
         totalStrokes,
-        adjustedPlayedScore,
-        courseRating,
-        slopeRating,
         nineHolePar,
         eighteenHolePar,
       } = input;
@@ -49,8 +44,6 @@ export const roundRouter = createTRPCRouter({
           `Error checking if course exists: ${existingCourseError.message}`
         );
       }
-
-      console.log("Course exists: ", existingCourse);
 
       // If course exists, use existing course id
       let courseId = existingCourse?.id || null;
@@ -78,8 +71,6 @@ export const roundRouter = createTRPCRouter({
         courseId = course.id;
       }
 
-      // Add data to database for holes and round with corresponding ids
-      // Step 1: Insert round data and get the round ID
       const { data: round, error: roundError } = await ctx.supabase
         .from("Round")
         .insert([
@@ -103,7 +94,6 @@ export const roundRouter = createTRPCRouter({
 
       const roundId = round.id;
 
-      // Step 2: Insert holes data with the retrieved round ID
       const holesData = holes.map((hole) => ({
         par: hole.par,
         holeNumber: hole.holeNumber,
@@ -138,7 +128,6 @@ export const roundRouter = createTRPCRouter({
         )
         .map((round) => round.scoreDifferential);
 
-      // For each score diff, if score diff is over 54, use 54
       const cappedDifferentials = scoreDifferentials.map((diff) =>
         diff > 54 ? 54 : diff
       );

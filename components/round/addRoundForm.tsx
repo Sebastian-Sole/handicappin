@@ -26,11 +26,6 @@ import { Large, Small } from "@/components/ui/typography";
 import { Separator } from "@/components/ui/separator";
 import { api } from "@/trpc/react";
 import React, { useState } from "react";
-import {
-  calculateAdjustedGrossScore,
-  calculateAdjustedPlayedScore,
-  calculateScoreDifferential,
-} from "@/utils/calculations/handicap";
 import { useRouter } from "next/navigation";
 import { useToast } from "../ui/use-toast";
 import { Tables } from "@/types/supabase";
@@ -39,20 +34,7 @@ import { DateTimePicker } from "../ui/datepicker";
 import useMounted from "@/hooks/useMounted";
 import FormSkeleton from "../formSkeleton";
 import { translateRound } from "@/utils/round/addUtils";
-import {
-  roundEight,
-  roundFive,
-  roundFour,
-  roundNine,
-  roundOne,
-  rounds,
-  roundSeven,
-  roundSix,
-  roundTen,
-  roundThree,
-  roundTwo,
-  roundZero,
-} from "@/utils/populateDb";
+import { rounds, roundZero } from "@/utils/populateDb";
 
 interface AddRoundFormProps {
   profile: Tables<"Profile">;
@@ -97,7 +79,7 @@ const AddRoundForm = ({ profile }: AddRoundFormProps) => {
         title: "✅ Round created successfully",
         description: "Your round has been added to your profile!",
       });
-      // router.push("/");
+      router.push("/");
     },
     onError: (e) => {
       const errorMessage = e.data?.zodError?.fieldErrors.content;
@@ -293,7 +275,7 @@ const AddRoundForm = ({ profile }: AddRoundFormProps) => {
                     <Select
                       onValueChange={(value) => {
                         field.onChange(Number(value));
-                        setNumberOfHoles(Number(value)); // Update the number of holes
+                        setNumberOfHoles(Number(value));
                       }}
                       defaultValue={
                         (field.value && field.value.toString()) || "9"
