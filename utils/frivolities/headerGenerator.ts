@@ -6,7 +6,7 @@ const headers = [
   "Man, #$@! this handicap stuff...",
   "I can't be bothered to learn how handicap's work...",
   "God, I hate handicap's...",
-  "Understanding how handicap's will surely improve mine... right?",
+  "Understanding handicap's will surely improve mine... right?",
 ];
 
 export const getRandomHeader = () => {

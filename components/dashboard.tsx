@@ -2,14 +2,6 @@
 
 import { useState, useMemo } from "react";
 import Link from "next/link";
-import {
-  Select,
-  SelectTrigger,
-  SelectValue,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-} from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import {
   Table,
@@ -36,12 +28,10 @@ import {
 import { RoundWithCourse } from "@/types/database";
 import { Tables } from "@/types/supabase";
 import { Button } from "./ui/button";
-import { calculateCourseHandicap } from "@/utils/calculations/handicap";
 import { H4, P } from "./ui/typography";
-import { getRandomHeader } from "@/utils/frivolities/headerGenerator";
 import useMounted from "@/hooks/useMounted";
 import { Skeleton } from "./ui/skeleton";
-import { Separator } from "@radix-ui/react-select";
+import DashboardSkeleton from "./skeletons/DashboardSkeleton";
 
 interface DashboardProps {
   profile: Tables<"Profile">;
@@ -51,11 +41,10 @@ interface DashboardProps {
 
 export function Dashboard({ profile, roundsList, header }: DashboardProps) {
   const isMounted = useMounted();
-  const [course, setCourse] = useState<string>("");
   const [searchTerm, setSearchTerm] = useState("");
   const [sortColumn, setSortColumn] =
     useState<keyof RoundWithCourse>("teeTime");
-  const [sortDirection, setSortDirection] = useState("asc");
+  const [sortDirection, setSortDirection] = useState("desc");
 
   const filteredAndSortedRounds = useMemo(() => {
     return roundsList
@@ -94,10 +83,10 @@ export function Dashboard({ profile, roundsList, header }: DashboardProps) {
       return new Date(a.roundDate).getTime() - new Date(b.roundDate).getTime();
     });
 
-  if (!isMounted) return <Skeleton></Skeleton>;
+  if (!isMounted) return <DashboardSkeleton />;
 
   return (
-    <div className="bg-background text-foreground p-8 rounded-lg shadow-lg">
+    <div className="bg-background text-foreground p-8 rounded-lg shadow-lg h-[100vh]">
       <div className="grid grid-cols-1 xl:grid-cols-3">
         <div className="bg-card rounded-lg p-6">
           <h2 className="text-2xl font-bold mb-4">Handicap</h2>
@@ -137,114 +126,130 @@ export function Dashboard({ profile, roundsList, header }: DashboardProps) {
               href={`/rounds/add`}
               className="text-primary underline"
               prefetch={false}
-              scroll={true}
             >
               Add a round
             </Link>
           </div>
-          <BarchartChart className="aspect-[16/9]" data={graphData} />
+          {graphData.length !== 0 && (
+            <BarchartChart className="aspect-[16/9]" data={graphData} />
+          )}
+          {graphData.length === 0 && (
+            <div className="flex items-center justify-center h-full border border-gray-100 flex-col">
+              <H4>No rounds found</H4>
+              <Link
+                href={`/rounds/add`}
+                className="text-primary underline mt-4"
+                prefetch={false}
+              >
+                <Button variant={"secondary"}>Add a round here</Button>
+              </Link>
+            </div>
+          )}
         </div>
       </div>
-      <div className="bg-card rounded-lg p-6 mt-8">
-        <h2 className="text-2xl font-bold mb-4">Rounds History</h2>
-        <div className="mb-4" id="table">
-          <Input
-            type="search"
-            placeholder="Search rounds..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full rounded-lg bg-background pl-8"
-          />
-        </div>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead
-                className="cursor-pointer"
-                onClick={() => handleSort("teeTime")}
-              >
-                Date{" "}
-                {sortColumn === "teeTime" && (
-                  <span className="ml-1">
-                    {sortDirection === "asc" ? "\u2191" : "\u2193"}
-                  </span>
-                )}
-              </TableHead>
-              <TableHead
-                className="cursor-pointer"
-                onClick={() => handleSort("courseName")}
-              >
-                Course{" "}
-                {sortColumn === "courseName" && (
-                  <span className="ml-1">
-                    {sortDirection === "asc" ? "\u2191" : "\u2193"}
-                  </span>
-                )}
-              </TableHead>
-              <TableHead
-                className="cursor-pointer"
-                onClick={() => handleSort("adjustedGrossScore")}
-              >
-                Score{" "}
-                {sortColumn === "adjustedGrossScore" && (
-                  <span className="ml-1">
-                    {sortDirection === "asc" ? "\u2191" : "\u2193"}
-                  </span>
-                )}
-              </TableHead>
-              <TableHead
-                className="cursor-pointer"
-                onClick={() => handleSort("parPlayed")}
-              >
-                Par{" "}
-                {sortColumn === "parPlayed" && (
-                  <span className="ml-1">
-                    {sortDirection === "asc" ? "\u2191" : "\u2193"}
-                  </span>
-                )}
-              </TableHead>
-              <TableHead
-                className="cursor-pointer"
-                onClick={() => handleSort("scoreDifferential")}
-              >
-                Differential{" "}
-                {sortColumn === "scoreDifferential" && (
-                  <span className="ml-1">
-                    {sortDirection === "asc" ? "\u2191" : "\u2193"}
-                  </span>
-                )}
-              </TableHead>
-              <TableHead>Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {filteredAndSortedRounds.map((round, index) => (
-              <TableRow key={index}>
-                <TableCell>
-                  {new Date(round.teeTime).toLocaleString()}
-                </TableCell>
-                <TableCell>{round.courseName}</TableCell>
-                <TableCell>{round.adjustedGrossScore}</TableCell>
-                <TableCell>{round.parPlayed}</TableCell>
-                <TableCell>
-                  {Math.round(round.scoreDifferential * 10) / 10}
-                </TableCell>
-                <TableCell>
-                  <Link href={`/rounds/${round.id}/calculation`}>
-                    <Button
-                      variant="link"
-                      className="text-primary underline px-0"
-                    >
-                      {" "}
-                      View Calculation
-                    </Button>
-                  </Link>
-                </TableCell>
+      {filteredAndSortedRounds.length !== 0 && (
+        <div className="bg-card rounded-lg p-6 mt-8">
+          <h2 className="text-2xl font-bold mb-4">Rounds History</h2>
+          <div className="mb-4" id="table">
+            <Input
+              type="search"
+              placeholder="Search rounds..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full rounded-lg bg-background pl-8"
+            />
+          </div>
+
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead
+                  className="cursor-pointer"
+                  onClick={() => handleSort("teeTime")}
+                >
+                  Date{" "}
+                  {sortColumn === "teeTime" && (
+                    <span className="ml-1">
+                      {sortDirection === "asc" ? "\u2191" : "\u2193"}
+                    </span>
+                  )}
+                </TableHead>
+                <TableHead
+                  className="cursor-pointer"
+                  onClick={() => handleSort("courseName")}
+                >
+                  Course{" "}
+                  {sortColumn === "courseName" && (
+                    <span className="ml-1">
+                      {sortDirection === "asc" ? "\u2191" : "\u2193"}
+                    </span>
+                  )}
+                </TableHead>
+                <TableHead
+                  className="cursor-pointer"
+                  onClick={() => handleSort("adjustedGrossScore")}
+                >
+                  Score{" "}
+                  {sortColumn === "adjustedGrossScore" && (
+                    <span className="ml-1">
+                      {sortDirection === "asc" ? "\u2191" : "\u2193"}
+                    </span>
+                  )}
+                </TableHead>
+                <TableHead
+                  className="cursor-pointer"
+                  onClick={() => handleSort("parPlayed")}
+                >
+                  Par{" "}
+                  {sortColumn === "parPlayed" && (
+                    <span className="ml-1">
+                      {sortDirection === "asc" ? "\u2191" : "\u2193"}
+                    </span>
+                  )}
+                </TableHead>
+                <TableHead
+                  className="cursor-pointer"
+                  onClick={() => handleSort("scoreDifferential")}
+                >
+                  Differential{" "}
+                  {sortColumn === "scoreDifferential" && (
+                    <span className="ml-1">
+                      {sortDirection === "asc" ? "\u2191" : "\u2193"}
+                    </span>
+                  )}
+                </TableHead>
+                <TableHead>Actions</TableHead>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </div>
+            </TableHeader>
+            <TableBody>
+              {filteredAndSortedRounds.map((round, index) => (
+                <TableRow key={index}>
+                  <TableCell>
+                    {new Date(round.teeTime).toLocaleString()}
+                  </TableCell>
+                  <TableCell>{round.courseName}</TableCell>
+                  <TableCell>{round.adjustedGrossScore}</TableCell>
+                  <TableCell>{round.parPlayed}</TableCell>
+                  <TableCell>
+                    {Math.round(round.scoreDifferential * 10) / 10}
+                  </TableCell>
+                  <TableCell>
+                    <Link href={`/rounds/${round.id}/calculation`}>
+                      <Button
+                        variant="link"
+                        className="text-primary underline px-0"
+                      >
+                        {" "}
+                        View Calculation
+                      </Button>
+                    </Link>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+      )}
     </div>
   );
 }
