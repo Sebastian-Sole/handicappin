@@ -15,6 +15,7 @@ import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { RoundWithCourse } from "@/types/database";
 import { Tables } from "@/types/supabase";
+import { calculateHoleAdjustedScore } from "@/utils/calculations/handicap";
 
 interface RoundCalculationProps {
   round: RoundWithCourse;
@@ -22,13 +23,6 @@ interface RoundCalculationProps {
 }
 
 export function RoundCalculation({ round, holes }: RoundCalculationProps) {
-  const [fairwaysHit, setFairwaysHit] = useState(12);
-  const [fairwaysTotal, setFairwaysTotal] = useState(14);
-  const [greensInReg, setGreensInReg] = useState(14);
-  const [greensTotal, setGreensTotal] = useState(18);
-  const [putts, setPutts] = useState(30);
-  const [sandSaves, setSandSaves] = useState(2);
-  const [sandSavesTotal, setSandSavesTotal] = useState(3);
   const [par, setPar] = useState(72);
   const [score, setScore] = useState(90);
   const [adjustedHoleScore, setAdjustedHoleScore] = useState(90);
@@ -39,15 +33,7 @@ export function RoundCalculation({ round, holes }: RoundCalculationProps) {
   const [adjustedPlayedScore, setAdjustedPlayedScore] = useState(90);
   const [courseHandicap, setCourseHandicap] = useState(12);
   const [holesPlayed, setHolesPlayed] = useState(18);
-  const fairwaysHitPercentage = useMemo(() => {
-    return ((fairwaysHit / fairwaysTotal) * 100).toFixed(2);
-  }, [fairwaysHit, fairwaysTotal]);
-  const greensInRegPercentage = useMemo(() => {
-    return ((greensInReg / greensTotal) * 100).toFixed(2);
-  }, [greensInReg, greensTotal]);
-  const sandSavePercentage = useMemo(() => {
-    return ((sandSaves / sandSavesTotal) * 100).toFixed(2);
-  }, [sandSaves, sandSavesTotal]);
+
   const courseHandicapCalculation = useMemo(() => {
     if (isNineHoles) {
       return Math.round(
@@ -62,6 +48,7 @@ export function RoundCalculation({ round, holes }: RoundCalculationProps) {
       adjustedPlayedScore + courseHandicap + (par * (holesPlayed - 18)) / 18
     );
   }, [adjustedPlayedScore, courseHandicap, par, holesPlayed]);
+
   return (
     <div className="container mx-auto px-4 sm:px-6 md:px-8 py-8 space-y-8">
       <section className="space-y-4">
@@ -77,65 +64,21 @@ export function RoundCalculation({ round, holes }: RoundCalculationProps) {
               <TableRow>
                 <TableHead>Hole</TableHead>
                 <TableHead>Par</TableHead>
-                <TableHead>Score</TableHead>
-                <TableHead>Adjusted Hole Score</TableHead>
+                <TableHead>Strokes</TableHead>
+                <TableHead>Adjusted Score</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              <TableRow>
-                <TableCell>1</TableCell>
-                <TableCell>4</TableCell>
-                <TableCell>5</TableCell>
-                <TableCell>5</TableCell>
-              </TableRow>
-              <TableRow>
-                <TableCell>2</TableCell>
-                <TableCell>3</TableCell>
-                <TableCell>4</TableCell>
-                <TableCell>4</TableCell>
-              </TableRow>
-              <TableRow>
-                <TableCell>3</TableCell>
-                <TableCell>5</TableCell>
-                <TableCell>6</TableCell>
-                <TableCell>6</TableCell>
-              </TableRow>
-              <TableRow>
-                <TableCell>4</TableCell>
-                <TableCell>4</TableCell>
-                <TableCell>4</TableCell>
-                <TableCell>4</TableCell>
-              </TableRow>
-              <TableRow>
-                <TableCell>5</TableCell>
-                <TableCell>3</TableCell>
-                <TableCell>3</TableCell>
-                <TableCell>3</TableCell>
-              </TableRow>
-              <TableRow>
-                <TableCell>6</TableCell>
-                <TableCell>4</TableCell>
-                <TableCell>5</TableCell>
-                <TableCell>5</TableCell>
-              </TableRow>
-              <TableRow>
-                <TableCell>7</TableCell>
-                <TableCell>4</TableCell>
-                <TableCell>4</TableCell>
-                <TableCell>4</TableCell>
-              </TableRow>
-              <TableRow>
-                <TableCell>8</TableCell>
-                <TableCell>3</TableCell>
-                <TableCell>3</TableCell>
-                <TableCell>3</TableCell>
-              </TableRow>
-              <TableRow>
-                <TableCell>9</TableCell>
-                <TableCell>5</TableCell>
-                <TableCell>5</TableCell>
-                <TableCell>5</TableCell>
-              </TableRow>
+              {holes.map((hole) => {
+                return (
+                  <TableRow key={hole.id}>
+                    <TableCell>{hole.holeNumber}</TableCell>
+                    <TableCell>{hole.par}</TableCell>
+                    <TableCell>{hole.strokes}</TableCell>
+                    <TableCell>{calculateHoleAdjustedScore(hole)}</TableCell>
+                  </TableRow>
+                );
+              })}
             </TableBody>
           </Table>
         </div>
@@ -147,34 +90,22 @@ export function RoundCalculation({ round, holes }: RoundCalculationProps) {
         <div className="bg-background rounded-lg border p-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <h4 className="text-lg font-medium mb-2">Fairways Hit</h4>
-            <p>
-              {fairwaysHit}/{fairwaysTotal} ({fairwaysHitPercentage}%)
-            </p>
-            <p className="text-sm text-muted-foreground">
-              Fairways Hit / Total Fairways = {fairwaysHitPercentage}%
-            </p>
+            <p>Title</p>
+            <p className="text-sm text-muted-foreground">Description</p>
           </div>
           <div>
             <h4 className="text-lg font-medium mb-2">Greens in Regulation</h4>
-            <p>
-              {greensInReg}/{greensTotal} ({greensInRegPercentage}%)
-            </p>
-            <p className="text-sm text-muted-foreground">
-              Greens in Regulation / Total Greens = {greensInRegPercentage}%
-            </p>
+            <p>Description</p>
+            <p className="text-sm text-muted-foreground">Description</p>
           </div>
           <div>
             <h4 className="text-lg font-medium mb-2">Putts</h4>
-            <p>{putts}</p>
+            <p>Description</p>
           </div>
           <div>
             <h4 className="text-lg font-medium mb-2">Sand Saves</h4>
-            <p>
-              {sandSaves}/{sandSavesTotal} ({sandSavePercentage}%)
-            </p>
-            <p className="text-sm text-muted-foreground">
-              Sand Saves / Total Sand Shots = {sandSavePercentage}%
-            </p>
+            <p>Description</p>
+            <p className="text-sm text-muted-foreground">Description</p>
           </div>
         </div>
       </section>

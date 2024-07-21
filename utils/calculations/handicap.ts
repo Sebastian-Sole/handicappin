@@ -34,6 +34,20 @@ export const calculateScoreDifferential = (
 };
 
 /**
+ * Calculates the hole-adjusted score for a given hole.
+ *
+ * @param hole - The hole object containing information about the hole.
+ * @param handicapStrokes - The number of handicap strokes for the player (optional).
+ * @returns The hole-adjusted score.
+ */
+export const calculateHoleAdjustedScore = (
+  hole: Hole,
+  handicapStrokes?: number
+): number => {
+  return Math.min(hole.strokes, hole.par + 4);
+};
+
+/**
  * Calculates the adjusted played score based on the provided holes.
  * The adjusted score for each hole is calculated as the minimum value between the strokes and the par + 4.
  * The adjusted scores are then summed up to get the final adjusted played score.
@@ -45,8 +59,7 @@ export const calculateScoreDifferential = (
 // Todo: Adjust calculation in accordance to hole handicap rules
 export const calculateAdjustedPlayedScore = (holes: Hole[]): number => {
   const adjustedScores = holes.map((hole) => {
-    const adjustedScore = Math.min(hole.strokes, hole.par + 4);
-    return adjustedScore;
+    return calculateHoleAdjustedScore(hole);
   });
   return adjustedScores.reduce((acc, cur) => acc + cur);
 };
