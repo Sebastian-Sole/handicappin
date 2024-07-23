@@ -16,6 +16,13 @@ import { Switch } from "@/components/ui/switch";
 import { RoundWithCourse } from "@/types/database";
 import { Tables } from "@/types/supabase";
 import { calculateHoleAdjustedScore } from "@/utils/calculations/handicap";
+import { InfoIcon } from "lucide-react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "./ui/tooltip";
 
 interface RoundCalculationProps {
   round: RoundWithCourse;
@@ -65,7 +72,20 @@ export function RoundCalculation({ round, holes }: RoundCalculationProps) {
                 <TableHead>Hole</TableHead>
                 <TableHead>Par</TableHead>
                 <TableHead>Strokes</TableHead>
-                <TableHead>Adjusted Score</TableHead>
+                <TableHead className="flex flex-row items-center">
+                  Adjusted Score{" "}
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger>
+                        {" "}
+                        <InfoIcon className="h-6 w-6 text-gray-500 dark:text-gray-400 ml-4" />{" "}
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>Par + net double bogey (incl. handicap)</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
