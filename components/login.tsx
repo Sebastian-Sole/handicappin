@@ -18,8 +18,11 @@ import {
 import { createClientComponentClient } from "@/utils/supabase/client";
 import { redirect, useRouter } from "next/navigation";
 import { revalidatePath } from "next/cache";
+import useMounted from "@/hooks/useMounted";
+import { Skeleton } from "./ui/skeleton";
 
 export function Login() {
+  const isMounted = useMounted();
   const supabase = createClientComponentClient();
   const router = useRouter();
 
@@ -49,6 +52,11 @@ export function Login() {
     router.push("/");
     router.refresh();
   };
+
+  if (!isMounted) {
+    // Todo: Add a login form skeleton
+    return <Skeleton />;
+  }
 
   return (
     <div className="mx-auto max-w-sm space-y-6">

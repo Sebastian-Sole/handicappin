@@ -15,7 +15,10 @@ import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { RoundWithCourse } from "@/types/database";
 import { Tables } from "@/types/supabase";
-import { calculateHoleAdjustedScore } from "@/utils/calculations/handicap";
+import {
+  calculateHoleAdjustedScore,
+  calculateInputAdjustedGrossScore,
+} from "@/utils/calculations/handicap";
 import { InfoIcon } from "lucide-react";
 import {
   Tooltip,
@@ -30,31 +33,34 @@ interface RoundCalculationProps {
 }
 
 export function RoundCalculation({ round, holes }: RoundCalculationProps) {
-  const [par, setPar] = useState(72);
-  const [score, setScore] = useState(90);
-  const [adjustedHoleScore, setAdjustedHoleScore] = useState(90);
-  const [handicapIndex, setHandicapIndex] = useState(18);
-  const [slope, setSlope] = useState(120);
-  const [courseRating, setCourseRating] = useState(72);
-  const [isNineHoles, setIsNineHoles] = useState(false);
-  const [adjustedPlayedScore, setAdjustedPlayedScore] = useState(90);
+  const [par, setPar] = useState(54);
+  const [score, setScore] = useState(40);
+  const [adjustedHoleScore, setAdjustedHoleScore] = useState(6);
+  const [handicapIndex, setHandicapIndex] = useState(54);
+  const [slope, setSlope] = useState(82);
+  const [courseRating, setCourseRating] = useState(50.3);
+  const [isNineHoles, setIsNineHoles] = useState(true);
+  const [adjustedPlayedScore, setAdjustedPlayedScore] = useState(40);
   const [courseHandicap, setCourseHandicap] = useState(12);
-  const [holesPlayed, setHolesPlayed] = useState(18);
+  const [holesPlayed, setHolesPlayed] = useState(9);
 
   const courseHandicapCalculation = useMemo(() => {
     if (isNineHoles) {
-      return Math.round(
-        (handicapIndex / 2) * (slope / 113) + (courseRating - par) / 2
-      );
+      return (handicapIndex / 2) * (slope / 113) + (courseRating - par) / 2;
     } else {
-      return Math.round(handicapIndex * (slope / 113) + (courseRating - par));
+      return handicapIndex * (slope / 113) + (courseRating - par);
     }
   }, [handicapIndex, slope, courseRating, par, isNineHoles]);
   const adjustedGrossScoreCalculation = useMemo(() => {
-    return (
-      adjustedPlayedScore + courseHandicap + (par * (holesPlayed - 18)) / 18
+    return calculateInputAdjustedGrossScore(
+      adjustedPlayedScore,
+      handicapIndex,
+      slope,
+      courseRating,
+      par,
+      holesPlayed
     );
-  }, [adjustedPlayedScore, courseHandicap, par, holesPlayed]);
+  }, [adjustedPlayedScore, courseHandicapCalculation, par, holesPlayed]);
 
   return (
     <div className="container mx-auto px-4 sm:px-6 md:px-8 py-8 space-y-8">
@@ -139,7 +145,7 @@ export function RoundCalculation({ round, holes }: RoundCalculationProps) {
             <Label>Par:</Label>
             <Input
               placeholder="Par"
-              value={par}
+              value={par !== 0 ? par : ""}
               onChange={(e) => setPar(Number(e.target.value))}
             />
           </div>
@@ -147,7 +153,7 @@ export function RoundCalculation({ round, holes }: RoundCalculationProps) {
             <Label>Score:</Label>
             <Input
               placeholder="Score"
-              value={score}
+              value={score !== 0 ? score : ""}
               onChange={(e) => setScore(Number(e.target.value))}
             />
           </div>
@@ -155,7 +161,7 @@ export function RoundCalculation({ round, holes }: RoundCalculationProps) {
             <Label>Adjusted Hole Score:</Label>
             <Input
               placeholder="Adjusted Hole Score"
-              value={adjustedHoleScore}
+              value={adjustedHoleScore !== 0 ? adjustedHoleScore : ""}
               onChange={(e) => setAdjustedHoleScore(Number(e.target.value))}
             />
           </div>
@@ -179,42 +185,48 @@ export function RoundCalculation({ round, holes }: RoundCalculationProps) {
             <Label>Handicap Index:</Label>
             <Input
               placeholder="Handicap Index"
-              value={handicapIndex}
-              onChange={(e) => setHandicapIndex(Number(e.target.value))}
+              value={handicapIndex !== 0 ? handicapIndex : ""}
+              type="number"
+              onChange={(e) =>
+                setHandicapIndex(Number.parseFloat(e.target.value) || 0)
+              }
             />
           </div>
           <div>
             <Label>Slope:</Label>
             <Input
               placeholder="Slope"
-              value={slope}
-              onChange={(e) => setSlope(Number(e.target.value))}
+              value={slope !== 0 ? slope : ""}
+              onChange={(e) => setSlope(Number.parseFloat(e.target.value) || 0)}
             />
           </div>
           <div>
             <Label>Course Rating:</Label>
             <Input
               placeholder="Course Rating"
-              value={courseRating}
-              onChange={(e) => setCourseRating(Number(e.target.value))}
+              value={courseRating !== 0 ? courseRating : ""}
+              type="number"
+              onChange={(e) => {
+                setCourseRating(Number.parseFloat(e.target.value) || 0);
+              }}
             />
           </div>
           <div>
             <Label>Par:</Label>
             <Input
               placeholder="Par"
-              value={par}
+              value={par !== 0 ? par : ""}
               onChange={(e) => setPar(Number(e.target.value))}
             />
           </div>
           <div className="flex items-center space-x-2">
-            <Label>9 holes</Label>
+            <Label>18 holes</Label>
             <Switch
               id="holes"
               checked={isNineHoles}
               onCheckedChange={setIsNineHoles}
             />
-            <Label>18 holes</Label>
+            <Label>9 holes</Label>
           </div>
         </div>
         <div>
@@ -242,7 +254,7 @@ export function RoundCalculation({ round, holes }: RoundCalculationProps) {
             <Label>Adjusted Played Score:</Label>
             <Input
               placeholder="Adjusted Played Score"
-              value={adjustedPlayedScore}
+              value={adjustedPlayedScore !== 0 ? adjustedPlayedScore : ""}
               onChange={(e) => setAdjustedPlayedScore(Number(e.target.value))}
             />
           </div>
@@ -258,7 +270,7 @@ export function RoundCalculation({ round, holes }: RoundCalculationProps) {
             <Label>Par (18 holes):</Label>
             <Input
               placeholder="Par (18 holes)"
-              value={par}
+              value={par !== 0 ? par : ""}
               onChange={(e) => setPar(Number(e.target.value))}
             />
           </div>
@@ -266,18 +278,23 @@ export function RoundCalculation({ round, holes }: RoundCalculationProps) {
             <Label>Holes Played:</Label>
             <Input
               placeholder="Holes Played"
-              value={holesPlayed}
+              value={holesPlayed !== 0 ? holesPlayed : ""}
               onChange={(e) => setHolesPlayed(Number(e.target.value))}
             />
           </div>
         </div>
         <div>
           <Label>Adjusted Gross Score:</Label>
-          <Input
+          {/* <Input
             placeholder="Adjusted Gross Score"
             value={adjustedGrossScoreCalculation}
             readOnly
-          />
+          /> */}
+          <p>
+            Adjuted Gross Score = {adjustedPlayedScore} +{" "}
+            {courseHandicapCalculation} + ({par}*(18 - {holesPlayed}) / 18) ={" "}
+            {adjustedGrossScoreCalculation}
+          </p>
         </div>
         <p className="text-sm text-muted-foreground">
           Adjusted Gross Score = Adjusted Played Score + Course Handicap + (Par

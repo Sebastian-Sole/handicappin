@@ -97,6 +97,27 @@ export const calculateAdjustedGrossScore = (
   }
 };
 
+export const calculateInputAdjustedGrossScore = (
+  initialAdjust: number,
+  handicapIndex: number,
+  slopeRating: number,
+  courseRating: number,
+  par: number,
+  holesPlayed: number
+) => {
+  const courseHandicap = calculateCourseHandicap(
+    handicapIndex,
+    slopeRating,
+    courseRating,
+    par
+  );
+
+  const holesLeft = 18 - holesPlayed;
+  const predictedStrokes = Math.round((courseHandicap / 18) * holesLeft);
+  const parForRemainingHoles = holesLeft * (par / 18);
+  return initialAdjust + predictedStrokes + parForRemainingHoles;
+};
+
 const getRelevantDifferentials = (scoreDifferentials: number[]) => {
   if (scoreDifferentials.length <= 5) {
     return scoreDifferentials.slice(0, 1);
