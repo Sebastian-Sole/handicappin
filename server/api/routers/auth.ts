@@ -51,7 +51,6 @@ export const authRouter = createTRPCRouter({
         throw new Error(`Error logging in: ${loginError.message}`);
       }
 
-      console.log("Profile created:", profileData);
       return profileData;
     }),
   getProfileFromUserId: authedProcedure

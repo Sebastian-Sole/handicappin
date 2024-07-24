@@ -11,19 +11,10 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { roundSchema } from "@/types/round";
+import { addRoundFormSchema } from "@/types/round";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import { Calendar } from "@/components/ui/calendar";
-import { CalendarIcon } from "lucide-react";
-import { cn } from "@/lib/utils";
-import { format } from "date-fns";
 import {
   Select,
   SelectContent,
@@ -35,26 +26,34 @@ import { Large, Small } from "@/components/ui/typography";
 import { Separator } from "@/components/ui/separator";
 import { api } from "@/trpc/react";
 import React, { useState } from "react";
-import { calculateAdjustedGrossScore } from "@/utils/calculations/handicap";
 import { useRouter } from "next/navigation";
 import { useToast } from "../ui/use-toast";
+import { Tables } from "@/types/supabase";
+import type { FormRound, RoundMutation } from "@/types/round";
+import { DateTimePicker } from "../ui/datepicker";
+import useMounted from "@/hooks/useMounted";
+import FormSkeleton from "../formSkeleton";
+import { translateRound } from "@/utils/round/addUtils";
+import { rounds, roundZero } from "@/utils/populateDb";
 
 interface AddRoundFormProps {
-  userId: string | undefined;
+  profile: Tables<"Profile">;
 }
 
-const AddRoundForm = ({ userId }: AddRoundFormProps) => {
+const AddRoundForm = ({ profile }: AddRoundFormProps) => {
+  const isMounted = useMounted();
+
   const router = useRouter();
   const { toast } = useToast();
 
-  if (!userId) {
+  if (!profile) {
     router.push("/login");
   }
 
   const [numberOfHoles, setNumberOfHoles] = useState(9);
 
-  const form = useForm<z.infer<typeof roundSchema>>({
-    resolver: zodResolver(roundSchema),
+  const form = useForm<z.infer<typeof addRoundFormSchema>>({
+    resolver: zodResolver(addRoundFormSchema),
     defaultValues: {
       numberOfHoles: 9,
       holes: Array.from({ length: 9 }).map((value, index) => ({
@@ -63,15 +62,13 @@ const AddRoundForm = ({ userId }: AddRoundFormProps) => {
         strokes: 3,
         holeNumber: index + 1,
       })),
-      date: new Date(),
+      date: undefined,
       courseInfo: {
         par: 27,
         courseRating: 50.3,
         slope: 82,
       },
-      location: "",
-      score: 1,
-      userId: userId,
+      userId: profile.id,
     },
   });
 
@@ -96,17 +93,11 @@ const AddRoundForm = ({ userId }: AddRoundFormProps) => {
     },
   });
 
-  function onSubmit(values: z.infer<typeof roundSchema>) {
-    console.log("SUBMITTING FORM");
-    console.log(values);
-
-    const adjustedGrossScore = calculateAdjustedGrossScore(values.holes);
-
-    const dataValues = {
-      ...values,
-      score: adjustedGrossScore,
-    };
-
+  function onSubmit(values: z.infer<typeof addRoundFormSchema>) {
+    const dataValues: RoundMutation | null = translateRound(values, profile);
+    if (!dataValues) {
+      return;
+    }
     mutate(dataValues);
   }
 
@@ -117,10 +108,56 @@ const AddRoundForm = ({ userId }: AddRoundFormProps) => {
     };
   }
 
+  const handlePopulateDb = async () => {
+    const holeZero: RoundMutation = {
+      adjustedGrossScore: 128,
+      adjustedPlayedScore: 128,
+      courseInfo: {
+        courseRating: 72,
+        location: "Artificial",
+        par: 72,
+        slope: 113,
+      },
+      courseRating: 72,
+      eighteenHolePar: 72,
+      nineHolePar: 36,
+      existingHandicapIndex: 54,
+      holes: roundZero.holes,
+      parPlayed: 72,
+      scoreDifferential: 56,
+      slopeRating: 113,
+      teeTime: new Date("2021-09-01T12:00:00.000Z"),
+      totalStrokes: 128,
+      userId: profile.id,
+    };
+    mutate(holeZero);
+
+    const handleAddData = (roundToAdd: FormRound) => {
+      const dataValue = translateRound(roundToAdd, profile);
+      if (!dataValue) {
+        console.log("Data values invalid");
+        console.log(roundToAdd);
+        console.log(dataValue);
+        return;
+      }
+      mutate(dataValue);
+    };
+
+    const roundsToAdd = rounds;
+    roundsToAdd.forEach((round) => {
+      handleAddData(round);
+    });
+  };
+
+  if (!isMounted) {
+    return <FormSkeleton />;
+  }
+
   return (
     <Card className="md:w-[70%] w-full">
       <CardHeader>
         <CardTitle>Add Round</CardTitle>
+        <Button onClick={handlePopulateDb}>Populate DB</Button>
       </CardHeader>
 
       <CardContent>
@@ -134,37 +171,11 @@ const AddRoundForm = ({ userId }: AddRoundFormProps) => {
                 <FormItem className="flex flex-col">
                   <FormLabel>Tee Time</FormLabel>
                   <FormControl>
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <FormControl>
-                          <Button
-                            variant={"outline"}
-                            className={cn(
-                              "w-[240px] pl-3 text-left font-normal",
-                              !field.value && "text-muted-foreground"
-                            )}
-                          >
-                            {field.value ? (
-                              format(field.value, "PPP")
-                            ) : (
-                              <span>Pick a date</span>
-                            )}
-                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                          </Button>
-                        </FormControl>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0" align="start">
-                        <Calendar
-                          mode="single"
-                          selected={field.value}
-                          onSelect={field.onChange}
-                          disabled={(date: any) =>
-                            date > new Date() || date < new Date("1900-01-01")
-                          }
-                          initialFocus
-                        />
-                      </PopoverContent>
-                    </Popover>
+                    <DateTimePicker
+                      granularity="minute"
+                      value={field.value}
+                      onChange={field.onChange}
+                    />
                   </FormControl>
                   <FormDescription>
                     This is the date you played the round
@@ -175,7 +186,7 @@ const AddRoundForm = ({ userId }: AddRoundFormProps) => {
             />
             <FormField
               control={form.control}
-              name="location"
+              name="courseInfo.location"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Location</FormLabel>
@@ -264,7 +275,7 @@ const AddRoundForm = ({ userId }: AddRoundFormProps) => {
                     <Select
                       onValueChange={(value) => {
                         field.onChange(Number(value));
-                        setNumberOfHoles(Number(value)); // Update the number of holes
+                        setNumberOfHoles(Number(value));
                       }}
                       defaultValue={
                         (field.value && field.value.toString()) || "9"

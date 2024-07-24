@@ -1,4 +1,5 @@
 import AddRoundForm from "@/components/round/addRoundForm";
+import { api } from "@/trpc/server";
 import { createServerComponentClient } from "@/utils/supabase/server";
 
 const AddRoundPage = async () => {
@@ -7,9 +8,15 @@ const AddRoundPage = async () => {
 
   const userId = data.user?.id;
 
+  if (!userId) {
+    return <div>Invalid user</div>;
+  }
+
+  const profile = await api.auth.getProfileFromUserId(userId);
+
   return (
     <div className="flex justify-center items-center h-full">
-      <AddRoundForm userId={userId} />
+      <AddRoundForm profile={profile} />
     </div>
   );
 };

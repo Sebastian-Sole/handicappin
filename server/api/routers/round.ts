@@ -3,25 +3,38 @@ import {
   createTRPCRouter,
   publicProcedure,
 } from "@/server/api/trpc";
-import { roundSchema } from "@/types/round";
+import { RoundWithCourse } from "@/types/database";
+import { roundMutationSchema } from "@/types/round";
+import { Tables } from "@/types/supabase";
+import { calculateHandicapIndex } from "@/utils/calculations/handicap";
 import { z } from "zod";
 
 export const roundRouter = createTRPCRouter({
   create: authedProcedure
-    .input(roundSchema)
+    .input(roundMutationSchema)
     .mutation(async ({ ctx, input }) => {
       if (!ctx.user) {
         throw new Error("Unauthorized");
       }
-      console.log("Starting round creation");
 
-      const { courseInfo, date, holes, location, score, userId } = input;
+      const {
+        courseInfo,
+        teeTime: date,
+        holes,
+        adjustedGrossScore,
+        userId,
+        existingHandicapIndex,
+        scoreDifferential,
+        totalStrokes,
+        nineHolePar,
+        eighteenHolePar,
+      } = input;
 
       const { data: existingCourse, error: existingCourseError } =
         await ctx.supabase
           .from("Course")
           .select("id")
-          .eq("name", location)
+          .eq("name", courseInfo.location)
           .maybeSingle();
 
       if (existingCourseError) {
@@ -30,8 +43,6 @@ export const roundRouter = createTRPCRouter({
           `Error checking if course exists: ${existingCourseError.message}`
         );
       }
-
-      console.log("Course exists: ", existingCourse);
 
       // If course exists, use existing course id
       let courseId = existingCourse?.id || null;
@@ -42,10 +53,11 @@ export const roundRouter = createTRPCRouter({
           .from("Course")
           .insert([
             {
-              par: courseInfo.par,
               courseRating: courseInfo.courseRating,
               slopeRating: courseInfo.slope,
-              name: location,
+              name: courseInfo.location,
+              eighteenHolePar,
+              nineHolePar,
             },
           ])
           .select("id")
@@ -58,16 +70,18 @@ export const roundRouter = createTRPCRouter({
         courseId = course.id;
       }
 
-      // Add data to database for holes and round with corresponding ids
-      // Step 1: Insert round data and get the round ID
       const { data: round, error: roundError } = await ctx.supabase
         .from("Round")
         .insert([
           {
-            courseId: courseId,
-            score: score,
             userId: userId,
-            teeTime: date.toDateString(),
+            courseId: courseId,
+            adjustedGrossScore: adjustedGrossScore,
+            scoreDifferential: scoreDifferential,
+            totalStrokes: totalStrokes,
+            existingHandicapIndex: existingHandicapIndex,
+            teeTime: date.toISOString(),
+            parPlayed: courseInfo.par,
           },
         ])
         .select("id")
@@ -79,7 +93,6 @@ export const roundRouter = createTRPCRouter({
 
       const roundId = round.id;
 
-      // Step 2: Insert holes data with the retrieved round ID
       const holesData = holes.map((hole) => ({
         par: hole.par,
         holeNumber: hole.holeNumber,
@@ -97,23 +110,97 @@ export const roundRouter = createTRPCRouter({
         throw new Error(`Error inserting holes: ${holesError.message}`);
       }
 
+      const { data: roundsData, error: roundsError } = await ctx.supabase
+        .from("Round")
+        .select("*")
+        .eq("userId", userId)
+        .range(0, 19);
+
+      if (roundsError) {
+        throw new Error(`Error getting rounds: ${roundsError.message}`);
+      }
+
+      const scoreDifferentials = roundsData
+        .sort(
+          (a, b) =>
+            new Date(b.teeTime).getTime() - new Date(a.teeTime).getTime()
+        )
+        .map((round) => round.scoreDifferential);
+
+      const cappedDifferentials = scoreDifferentials.map((diff) =>
+        diff > 54 ? 54 : diff
+      );
+
+      const handicapIndex = calculateHandicapIndex(cappedDifferentials);
+
+      const { error: updateError } = await ctx.supabase
+        .from("Profile")
+        .update({
+          handicapIndex: handicapIndex,
+        })
+        .eq("id", userId);
+
+      if (updateError) {
+        throw new Error(
+          `Error updating handicap index: ${updateError.message}`
+        );
+      }
+
       return {
         message: "Round and holes inserted successfully",
         roundId: roundId,
       };
     }),
   getAllByUserId: publicProcedure
-    .input(z.string().uuid())
+    .input(
+      z.object({
+        userId: z.string().uuid(),
+        startIndex: z.number().int().optional().default(0),
+        amount: z.number().int().optional().default(Number.MAX_SAFE_INTEGER),
+      })
+    )
     .query(async ({ ctx, input }) => {
       const { data: rounds, error } = await ctx.supabase
         .from("Round")
-        .select("*")
-        .eq("userId", input);
+        .select(
+          `
+    *,
+    Course (
+      *
+    )
+  `
+        )
+        .eq("userId", input.userId)
+        .range(input.startIndex, input.startIndex + input.amount - 1);
 
       if (error) {
+        console.log(error);
         throw new Error(`Error getting rounds: ${error.message}`);
       }
 
-      return rounds;
+      const flattenRoundWithCourse = (
+        round: Tables<"Round">,
+        course: Tables<"Course"> | null
+      ): RoundWithCourse | null => {
+        if (course) {
+          return {
+            ...round,
+            courseName: course.name,
+            courseRating: course.courseRating,
+            courseSlope: course.slopeRating,
+            courseEighteenHolePar: course.eighteenHolePar,
+            courseNineHolePar: course.nineHolePar,
+          };
+        }
+        return null;
+      };
+
+      const roundsWithCourse = rounds
+        .map((round) => {
+          return flattenRoundWithCourse(round, round.Course);
+        })
+        .filter((round): round is RoundWithCourse => round !== null);
+
+      return roundsWithCourse;
     }),
 });
