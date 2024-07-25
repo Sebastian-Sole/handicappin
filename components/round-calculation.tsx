@@ -60,7 +60,13 @@ export function RoundCalculation({ round, holes }: RoundCalculationProps) {
       par,
       holesPlayed
     );
-  }, [adjustedPlayedScore, courseHandicapCalculation, par, holesPlayed]);
+  }, [
+    adjustedPlayedScore,
+    courseHandicapCalculation,
+    par,
+    holesPlayed,
+    isNineHoles,
+  ]);
 
   return (
     <div className="container mx-auto px-4 sm:px-6 md:px-8 py-8 space-y-8">
@@ -135,7 +141,7 @@ export function RoundCalculation({ round, holes }: RoundCalculationProps) {
           </div>
         </div>
       </section>
-      <section className="space-y-4">
+      {/* <section className="space-y-4">
         <h3 className="text-lg font-medium">Adjusted Played Score</h3>
         <p className="mb-2">
           Adjust each hole score so the max score is par + net double bogey
@@ -169,7 +175,7 @@ export function RoundCalculation({ round, holes }: RoundCalculationProps) {
         <p className="text-sm text-muted-foreground">
           Adjusted Hole Score = min(Score, Par + 2)
         </p>
-      </section>
+      </section> */}
       <section className="space-y-4">
         <h3 className="text-lg font-medium">Course Handicap</h3>
         <p className="mb-2">
@@ -216,7 +222,7 @@ export function RoundCalculation({ round, holes }: RoundCalculationProps) {
             <Input
               placeholder="Par"
               value={par !== 0 ? par : ""}
-              onChange={(e) => setPar(Number(e.target.value))}
+              onChange={(e) => setPar(Number(e.target.value) || par)}
             />
           </div>
           <div className="flex items-center space-x-2">
@@ -224,7 +230,10 @@ export function RoundCalculation({ round, holes }: RoundCalculationProps) {
             <Switch
               id="holes"
               checked={isNineHoles}
-              onCheckedChange={setIsNineHoles}
+              onCheckedChange={(e) => {
+                setIsNineHoles(e);
+                setHolesPlayed(e ? 9 : 18);
+              }}
             />
             <Label>9 holes</Label>
           </div>
@@ -255,7 +264,11 @@ export function RoundCalculation({ round, holes }: RoundCalculationProps) {
             <Input
               placeholder="Adjusted Played Score"
               value={adjustedPlayedScore !== 0 ? adjustedPlayedScore : ""}
-              onChange={(e) => setAdjustedPlayedScore(Number(e.target.value))}
+              onChange={(e) =>
+                setAdjustedPlayedScore(
+                  Number(e.target.value) || adjustedPlayedScore
+                )
+              }
             />
           </div>
           <div>
@@ -271,25 +284,20 @@ export function RoundCalculation({ round, holes }: RoundCalculationProps) {
             <Input
               placeholder="Par (18 holes)"
               value={par !== 0 ? par : ""}
-              onChange={(e) => setPar(Number(e.target.value))}
+              onChange={(e) => setPar(Number(e.target.value) || par)}
             />
           </div>
           <div>
             <Label>Holes Played:</Label>
             <Input
               placeholder="Holes Played"
-              value={holesPlayed !== 0 ? holesPlayed : ""}
-              onChange={(e) => setHolesPlayed(Number(e.target.value))}
+              value={isNineHoles ? 9 : 18}
+              readOnly
             />
           </div>
         </div>
         <div>
           <Label>Adjusted Gross Score:</Label>
-          {/* <Input
-            placeholder="Adjusted Gross Score"
-            value={adjustedGrossScoreCalculation}
-            readOnly
-          /> */}
           <p>
             Adjuted Gross Score = {adjustedPlayedScore} +{" "}
             {courseHandicapCalculation} + ({par}*(18 - {holesPlayed}) / 18) ={" "}
