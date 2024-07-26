@@ -2,33 +2,15 @@
 
 import { useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
-import {
-  Table,
-  TableHeader,
-  TableRow,
-  TableHead,
-  TableBody,
-  TableCell,
-} from "@/components/ui/table";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { RoundWithCourse } from "@/types/database";
 import { Tables } from "@/types/supabase";
-import {
-  calculateHoleAdjustedScore,
-  calculateInputAdjustedGrossScore,
-  calculateScoreDifferential,
-} from "@/utils/calculations/handicap";
-import { InfoIcon } from "lucide-react";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "./ui/tooltip";
+import { calculateInputAdjustedGrossScore } from "@/utils/calculations/handicap";
 import { H3, H4 } from "./ui/typography";
-import { rounds } from "@/utils/populateDb";
+import Link from "next/link";
+import HolesTable from "./holesTable";
 
 interface RoundCalculationProps {
   round: RoundWithCourse;
@@ -78,41 +60,7 @@ export function RoundCalculation({ round, holes }: RoundCalculationProps) {
         </h2>
         <h3 className="text-lg font-medium">Hole-by-hole results</h3>
         <div className="bg-background rounded-lg border">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Hole</TableHead>
-                <TableHead>Par</TableHead>
-                <TableHead>Strokes</TableHead>
-                <TableHead className="flex flex-row items-center">
-                  Adjusted Score{" "}
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger>
-                        {" "}
-                        <InfoIcon className="h-6 w-6 text-gray-500 dark:text-gray-400 ml-4" />{" "}
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p>Par + net double bogey (incl. handicap)</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                </TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {holes.map((hole) => {
-                return (
-                  <TableRow key={hole.id}>
-                    <TableCell>{hole.holeNumber}</TableCell>
-                    <TableCell>{hole.par}</TableCell>
-                    <TableCell>{hole.strokes}</TableCell>
-                    <TableCell>{calculateHoleAdjustedScore(hole)}</TableCell>
-                  </TableRow>
-                );
-              })}
-            </TableBody>
-          </Table>
+          <HolesTable holes={holes} />
         </div>
       </section>
       <section className="space-y-4">
@@ -362,9 +310,19 @@ export function RoundCalculation({ round, holes }: RoundCalculationProps) {
           Your new handicap index after this round: {round.updatedHandicapIndex}
         </p>
         <p>
-          Your handicap index updates if the round registered is one of your 8
+          Your handicap index adjusts if the round registered is one of your 8
           best rounds in your last 20 played. If you&apos;ve played less than 20
           rounds, there is a different calculation which can be viewed here:{" "}
+          <Link
+            href={
+              "https://www.usga.org/handicapping/roh/Content/rules/5%202%20Calculation%20of%20a%20Handicap%20Index.htm"
+            }
+            target="_blank"
+          >
+            <Button className="p-0" variant="link">
+              UGSA Handicap Rules
+            </Button>
+          </Link>
         </p>
       </section>
     </div>
