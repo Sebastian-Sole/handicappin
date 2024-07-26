@@ -18,6 +18,7 @@ import { Tables } from "@/types/supabase";
 import {
   calculateHoleAdjustedScore,
   calculateInputAdjustedGrossScore,
+  calculateScoreDifferential,
 } from "@/utils/calculations/handicap";
 import { InfoIcon } from "lucide-react";
 import {
@@ -26,6 +27,8 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "./ui/tooltip";
+import { H3, H4 } from "./ui/typography";
+import { rounds } from "@/utils/populateDb";
 
 interface RoundCalculationProps {
   round: RoundWithCourse;
@@ -34,14 +37,11 @@ interface RoundCalculationProps {
 
 export function RoundCalculation({ round, holes }: RoundCalculationProps) {
   const [par, setPar] = useState(54);
-  const [score, setScore] = useState(40);
-  const [adjustedHoleScore, setAdjustedHoleScore] = useState(6);
   const [handicapIndex, setHandicapIndex] = useState(54);
   const [slope, setSlope] = useState(82);
   const [courseRating, setCourseRating] = useState(50.3);
   const [isNineHoles, setIsNineHoles] = useState(true);
   const [adjustedPlayedScore, setAdjustedPlayedScore] = useState(40);
-  const [courseHandicap, setCourseHandicap] = useState(12);
   const [holesPlayed, setHolesPlayed] = useState(9);
 
   const courseHandicapCalculation = useMemo(() => {
@@ -121,23 +121,20 @@ export function RoundCalculation({ round, holes }: RoundCalculationProps) {
         </h3>
         <div className="bg-background rounded-lg border p-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <h4 className="text-lg font-medium mb-2">Fairways Hit</h4>
-            <p>Title</p>
-            <p className="text-sm text-muted-foreground">Description</p>
+            <h4 className="text-lg font-medium mb-2">Course Handicap</h4>
+            <p>Course HCP: {courseHandicapCalculation}</p>
           </div>
           <div>
-            <h4 className="text-lg font-medium mb-2">Greens in Regulation</h4>
-            <p>Description</p>
-            <p className="text-sm text-muted-foreground">Description</p>
+            <h4 className="text-lg font-medium mb-2">Adjusted Played Score</h4>
+            <p>APS: {adjustedPlayedScore}</p>
           </div>
           <div>
-            <h4 className="text-lg font-medium mb-2">Putts</h4>
-            <p>Description</p>
+            <h4 className="text-lg font-medium mb-2">Adjusted Gross Score</h4>
+            <p>AGS: {adjustedGrossScoreCalculation}</p>
           </div>
           <div>
-            <h4 className="text-lg font-medium mb-2">Sand Saves</h4>
-            <p>Description</p>
-            <p className="text-sm text-muted-foreground">Description</p>
+            <h4 className="text-lg font-medium mb-2">Score Differential</h4>
+            <p>Score Differential: {round.scoreDifferential}</p>
           </div>
         </div>
       </section>
@@ -265,9 +262,7 @@ export function RoundCalculation({ round, holes }: RoundCalculationProps) {
               placeholder="Adjusted Played Score"
               value={adjustedPlayedScore !== 0 ? adjustedPlayedScore : ""}
               onChange={(e) =>
-                setAdjustedPlayedScore(
-                  Number(e.target.value) || adjustedPlayedScore
-                )
+                setAdjustedPlayedScore(Number(e.target.value) || 0)
               }
             />
           </div>
@@ -307,6 +302,69 @@ export function RoundCalculation({ round, holes }: RoundCalculationProps) {
         <p className="text-sm text-muted-foreground">
           Adjusted Gross Score = Adjusted Played Score + Course Handicap + (Par
           * (Holes Played - 18) / 18)
+        </p>
+      </section>
+      <section className="space-y-4">
+        <H3>Score Differential</H3>
+        <p className="mb-2">
+          Score Differential = (Adjusted Gross Score - Course Rating) * (113 /
+          Slope)
+        </p>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div>
+            <Label>Adjusted Gross Score:</Label>
+            <Input
+              placeholder="Adjusted Gross Score"
+              value={adjustedGrossScoreCalculation}
+              readOnly
+            />
+          </div>
+          <div>
+            <Label>Course Rating:</Label>
+            <Input
+              placeholder="Course Rating"
+              value={courseRating !== 0 ? courseRating : ""}
+              type="number"
+              onChange={(e) =>
+                setCourseRating(Number.parseFloat(e.target.value) || 0)
+              }
+            />
+          </div>
+          <div>
+            <Label>Slope:</Label>
+            <Input
+              placeholder="Slope"
+              value={slope !== 0 ? slope : ""}
+              onChange={(e) => setSlope(Number(e.target.value) || 0)}
+            />
+          </div>
+        </div>
+        <div>
+          <Label>Calculated Score Differential:</Label>
+          <Input
+            placeholder="Calculated Score Differential"
+            value={
+              ((adjustedGrossScoreCalculation - courseRating) * 113) / slope
+            }
+            readOnly
+          />
+        </div>
+        <p className="text-sm text-muted-foreground">
+          Score Differential = (Adjusted Gross Score - Course Rating) * 113 /
+          Slope
+        </p>
+        <H4>How did this affect my handicap?</H4>
+        <p>
+          Your handicap index at the time this round was registered:{" "}
+          {round.existingHandicapIndex}
+        </p>
+        <p>
+          Your new handicap index after this round: {round.updatedHandicapIndex}
+        </p>
+        <p>
+          Your handicap index updates if the round registered is one of your 8
+          best rounds in your last 20 played. If you&apos;ve played less than 20
+          rounds, there is a different calculation which can be viewed here:{" "}
         </p>
       </section>
     </div>
