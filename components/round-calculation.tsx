@@ -7,10 +7,15 @@ import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { RoundWithCourse } from "@/types/database";
 import { Tables } from "@/types/supabase";
-import { calculateInputAdjustedGrossScore } from "@/utils/calculations/handicap";
-import { H3, H4 } from "./ui/typography";
+import {
+  calculateAdjustedPlayedScore,
+  calculateCourseHandicap,
+  calculateInputAdjustedGrossScore,
+} from "@/utils/calculations/handicap";
+import { H3, H4, Muted } from "./ui/typography";
 import Link from "next/link";
 import HolesTable from "./holesTable";
+import { InfoIcon } from "lucide-react";
 
 interface RoundCalculationProps {
   round: RoundWithCourse;
@@ -18,27 +23,41 @@ interface RoundCalculationProps {
 }
 
 export function RoundCalculation({ round, holes }: RoundCalculationProps) {
-  const [par, setPar] = useState(54);
-  const [handicapIndex, setHandicapIndex] = useState(54);
-  const [slope, setSlope] = useState(82);
-  const [courseRating, setCourseRating] = useState(50.3);
-  const [isNineHoles, setIsNineHoles] = useState(true);
-  const [adjustedPlayedScore, setAdjustedPlayedScore] = useState(40);
-  const [holesPlayed, setHolesPlayed] = useState(9);
+  const {
+    existingHandicapIndex,
+    courseRating,
+    courseSlope,
+    adjustedGrossScore,
+    parPlayed,
+    scoreDifferential,
+    updatedHandicapIndex,
+    totalStrokes,
+    courseEighteenHolePar,
+  } = round;
+
+  const [par, setPar] = useState(round.parPlayed);
+  const [holesPlayed, setHolesPlayed] = useState(holes.length);
+  const [handicapIndex, setHandicapIndex] = useState(
+    round.existingHandicapIndex
+  );
+  const [slope, setSlope] = useState(round.courseSlope);
+  const [rating, setRating] = useState(round.courseRating);
+  const [isNineHoles, setIsNineHoles] = useState(holesPlayed === 9);
+  const [adjustedPlayedScore, setAdjustedPlayedScore] = useState(0);
 
   const courseHandicapCalculation = useMemo(() => {
     if (isNineHoles) {
-      return (handicapIndex / 2) * (slope / 113) + (courseRating - par) / 2;
+      return (handicapIndex / 2) * (slope / 113) + (rating - par) / 2;
     } else {
-      return handicapIndex * (slope / 113) + (courseRating - par);
+      return handicapIndex * (slope / 113) + (rating - par);
     }
-  }, [handicapIndex, slope, courseRating, par, isNineHoles]);
+  }, [handicapIndex, slope, rating, par, isNineHoles]);
   const adjustedGrossScoreCalculation = useMemo(() => {
     return calculateInputAdjustedGrossScore(
       adjustedPlayedScore,
       handicapIndex,
       slope,
-      courseRating,
+      rating,
       par,
       holesPlayed
     );
@@ -49,6 +68,15 @@ export function RoundCalculation({ round, holes }: RoundCalculationProps) {
     holesPlayed,
     isNineHoles,
   ]);
+
+  const courseHcpStat = calculateCourseHandicap(
+    existingHandicapIndex,
+    courseSlope,
+    courseRating,
+    courseEighteenHolePar
+  );
+
+  const apsStat = calculateAdjustedPlayedScore(holes);
 
   return (
     <div className="container mx-auto px-4 sm:px-6 md:px-8 py-8 space-y-8">
@@ -70,67 +98,39 @@ export function RoundCalculation({ round, holes }: RoundCalculationProps) {
         <div className="bg-background rounded-lg border p-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <h4 className="text-lg font-medium mb-2">Course Handicap</h4>
-            <p>Course HCP: {courseHandicapCalculation}</p>
+            <p>
+              Course HCP:{" "}
+              {holesPlayed === 9
+                ? Math.round(courseHcpStat / 2)
+                : Math.round(courseHcpStat)}
+            </p>
           </div>
           <div>
             <h4 className="text-lg font-medium mb-2">Adjusted Played Score</h4>
-            <p>APS: {adjustedPlayedScore}</p>
+            <p>APS: {apsStat}</p>
           </div>
           <div>
             <h4 className="text-lg font-medium mb-2">Adjusted Gross Score</h4>
-            <p>AGS: {adjustedGrossScoreCalculation}</p>
+            <p>AGS: {adjustedGrossScore}</p>
           </div>
           <div>
             <h4 className="text-lg font-medium mb-2">Score Differential</h4>
-            <p>Score Differential: {round.scoreDifferential}</p>
+            <p>
+              Score Differential:{" "}
+              {Math.round(round.scoreDifferential * 10) / 10}
+            </p>
           </div>
         </div>
       </section>
-      {/* <section className="space-y-4">
-        <h3 className="text-lg font-medium">Adjusted Played Score</h3>
-        <p className="mb-2">
-          Adjust each hole score so the max score is par + net double bogey
-        </p>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <div>
-            <Label>Par:</Label>
-            <Input
-              placeholder="Par"
-              value={par !== 0 ? par : ""}
-              onChange={(e) => setPar(Number(e.target.value))}
-            />
-          </div>
-          <div>
-            <Label>Score:</Label>
-            <Input
-              placeholder="Score"
-              value={score !== 0 ? score : ""}
-              onChange={(e) => setScore(Number(e.target.value))}
-            />
-          </div>
-          <div>
-            <Label>Adjusted Hole Score:</Label>
-            <Input
-              placeholder="Adjusted Hole Score"
-              value={adjustedHoleScore !== 0 ? adjustedHoleScore : ""}
-              onChange={(e) => setAdjustedHoleScore(Number(e.target.value))}
-            />
-          </div>
-        </div>
-        <p className="text-sm text-muted-foreground">
-          Adjusted Hole Score = min(Score, Par + 2)
-        </p>
-      </section> */}
       <section className="space-y-4">
         <h3 className="text-lg font-medium">Course Handicap</h3>
-        <p className="mb-2">
+        <Muted className="mb-2">
           Course Handicap 18 holes = handicap index * (slope/113) + (course
           rating - par)
-        </p>
-        <p className="mb-2">
-          Course Handicap 9 holes = handicap index/2 * (slope/113) + (course
-          rating - par)/2
-        </p>
+        </Muted>
+        <Muted className="mb-2">
+          Course Handicap 9 holes = Course Handicap 18 holes&#247;2
+        </Muted>
         <div className="grid grid-cols-1 sm:grid-cols-5 gap-4">
           <div>
             <Label>Handicap Index:</Label>
@@ -155,10 +155,10 @@ export function RoundCalculation({ round, holes }: RoundCalculationProps) {
             <Label>Course Rating:</Label>
             <Input
               placeholder="Course Rating"
-              value={courseRating !== 0 ? courseRating : ""}
+              value={rating !== 0 ? rating : ""}
               type="number"
               onChange={(e) => {
-                setCourseRating(Number.parseFloat(e.target.value) || 0);
+                setRating(Number.parseFloat(e.target.value) || 0);
               }}
             />
           </div>
@@ -271,10 +271,10 @@ export function RoundCalculation({ round, holes }: RoundCalculationProps) {
             <Label>Course Rating:</Label>
             <Input
               placeholder="Course Rating"
-              value={courseRating !== 0 ? courseRating : ""}
+              value={rating !== 0 ? rating : ""}
               type="number"
               onChange={(e) =>
-                setCourseRating(Number.parseFloat(e.target.value) || 0)
+                setRating(Number.parseFloat(e.target.value) || 0)
               }
             />
           </div>
@@ -291,9 +291,7 @@ export function RoundCalculation({ round, holes }: RoundCalculationProps) {
           <Label>Calculated Score Differential:</Label>
           <Input
             placeholder="Calculated Score Differential"
-            value={
-              ((adjustedGrossScoreCalculation - courseRating) * 113) / slope
-            }
+            value={((adjustedGrossScoreCalculation - rating) * 113) / slope}
             readOnly
           />
         </div>

@@ -37,7 +37,7 @@ const HolesTable = ({ holes }: HolesTableProps) => {
                   <InfoIcon className="h-6 w-6 text-gray-500 dark:text-gray-400 ml-4" />{" "}
                 </TooltipTrigger>
                 <TooltipContent>
-                  <p>Par + net double bogey (incl. handicap)</p>
+                  <p>Max: par + net double bogey (incl. handicap)</p>
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
