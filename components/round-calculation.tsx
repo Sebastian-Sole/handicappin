@@ -11,8 +11,19 @@ import {
   calculateAdjustedPlayedScore,
   calculateCourseHandicap,
   calculateInputAdjustedGrossScore,
+  calculateScoreDifferential,
 } from "@/utils/calculations/handicap";
-import { H2, H3, H4, Large, Lead, Muted, P, Small } from "./ui/typography";
+import {
+  Blockquote,
+  H2,
+  H3,
+  H4,
+  Large,
+  Lead,
+  Muted,
+  P,
+  Small,
+} from "./ui/typography";
 import Link from "next/link";
 import HolesTable from "./holesTable";
 import { InfoIcon } from "lucide-react";
@@ -22,6 +33,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "./ui/tooltip";
+import { Separator } from "./ui/separator";
 
 interface RoundCalculationProps {
   round: RoundWithCourse;
@@ -76,6 +88,14 @@ export function RoundCalculation({ round, holes }: RoundCalculationProps) {
     holesPlayed,
     isNineHoles,
   ]);
+
+  const scoreDifferentialCalculation = useMemo(() => {
+    return calculateScoreDifferential(
+      adjustedGrossScoreCalculation,
+      rating,
+      slope
+    );
+  }, [adjustedGrossScoreCalculation, rating, slope]);
 
   const courseHcpStat = calculateCourseHandicap(
     existingHandicapIndex,
@@ -141,7 +161,6 @@ export function RoundCalculation({ round, holes }: RoundCalculationProps) {
       <section className="space-y-4">
         <div className="flex flex-row">
           <H3>Course Handicap</H3>
-
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger>
@@ -154,7 +173,7 @@ export function RoundCalculation({ round, holes }: RoundCalculationProps) {
             </Tooltip>
           </TooltipProvider>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-5 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
           <div>
             <Label>Handicap Index:</Label>
             <Input
@@ -200,7 +219,7 @@ export function RoundCalculation({ round, holes }: RoundCalculationProps) {
             />
           </div>
           <div className="flex items-center space-x-2">
-            <Label>18 holes</Label>
+            <Label>18 hole hcp</Label>
             <Switch
               id="holes"
               checked={isNineHoles}
@@ -209,39 +228,43 @@ export function RoundCalculation({ round, holes }: RoundCalculationProps) {
                 setHolesPlayed(e ? 9 : 18);
               }}
             />
-            <Label>9 holes</Label>
+            <Label>9 hole hcp</Label>
           </div>
         </div>
-        <div>
-          <Label>Calculated Course Handicap:</Label>
-          <Input
-            placeholder="Calculated Course Handicap"
-            value={Math.round(courseHandicapCalculation)}
-            readOnly
-          />
-        </div>
         <Muted className="mb-2">
-          {isNineHoles
-            ? `Course Handicap 9 holes = handicap index/2 * (slope/113) + (course rating - par)/2`
-            : `Course Handicap 18 holes = handicap index * (slope/113) + (course
-          rating - par)`}
+          {isNineHoles ? (
+            <span>
+              Course Handicap 9 holes = handicap index &#247; 2 &times; (slope
+              &#247; 113) + (course rating - par) &#247; 2
+            </span>
+          ) : (
+            <span>
+              Course Handicap 18 holes = handicap index &times; (slope &#247;
+              113) + (course rating - par)
+            </span>
+          )}
         </Muted>
+        <div className="flex flex-row items-center mt-4">
+          <P>Course Handicap =</P>
+          <Muted className="mx-2">
+            {handicapIndex} + ({slope} &#247; 113) + ({rating} - {par})
+          </Muted>
+          <P className="!mt-0">=</P>
+          <u className="ml-2">{Math.round(courseHandicapCalculation)}</u>
+        </div>
       </section>
+      <Separator />
+
       <section className="space-y-4">
-        <H3 className="text-lg font-medium">Adjusted Gross Score</H3>
-        <p className="mb-2">
-          Score Differential = adjusted played score + course handicap for
-          remaining holes + par for remaining holes
-        </p>
-        <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
-          <div>
+        <H3>Adjusted Gross Score</H3>
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
+          <div className="flex flex-col justify-end">
             <div className="flex flex-row items-center">
-              <Label>Adjusted Played Score:</Label>
+              <Label className="mr-2">Adjusted Played Score:</Label>
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger>
-                    {" "}
-                    <InfoIcon className="h-5 w-5 text-gray-500 dark:text-gray-400 ml-2" />{" "}
+                    <InfoIcon className="h-5 w-5 text-gray-500 dark:text-gray-400" />{" "}
                   </TooltipTrigger>
                   <TooltipContent>
                     <p>Max: par + net double bogey (incl. handicap)</p>
@@ -262,11 +285,12 @@ export function RoundCalculation({ round, holes }: RoundCalculationProps) {
             />
           </div>
           <div>
-            <Label>Course Handicap (total):</Label>
+            <Label>Course Handicap</Label>
             <Input
-              placeholder="Course Handicap (total)"
+              placeholder="Course Handicap"
               value={Math.round(courseHandicapCalculation)}
               readOnly
+              disabled
             />
           </div>
           <div>
@@ -289,36 +313,37 @@ export function RoundCalculation({ round, holes }: RoundCalculationProps) {
               placeholder="Holes Played"
               value={isNineHoles ? 9 : 18}
               readOnly
+              disabled
             />
           </div>
         </div>
         <div>
-          <Label>Adjusted Gross Score:</Label>
-          {/* TODO: Update this damn formula */}
-          <p>
-            Adjuted Gross Score = {adjustedPlayedScore} +{" "}
-            {Math.round(courseHandicapCalculation)} + ({par}*(18 - {holesPlayed}
-            ) / 18) = {adjustedGrossScoreCalculation}
-          </p>
+          <Muted>
+            Adjusted Gross Score = Adjusted Played Score + Course Handicap +
+            (Par &times; (18 - Holes Played) &#247; 18)
+          </Muted>
+          <div className="flex flex-row items-center mt-4">
+            <P>Adjusted Gross Score =</P>
+            <Muted className="mx-2">
+              {adjustedPlayedScore} + {Math.round(courseHandicapCalculation)} +
+              ({par} &times; (18 - {holesPlayed}) &#247; 18)
+            </Muted>
+            <P className="!mt-0">=</P>
+            <u className="ml-2">{adjustedGrossScoreCalculation}</u>
+          </div>
         </div>
-        <p className="text-sm text-muted-foreground">
-          Adjusted Gross Score = Adjusted Played Score + Course Handicap + (Par
-          * (18 - Holes Played) / 18)
-        </p>
       </section>
+      <Separator />
       <section className="space-y-4">
         <H3>Score Differential</H3>
-        <p className="mb-2">
-          Score Differential = (Adjusted Gross Score - Course Rating) * (113 /
-          Slope)
-        </p>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
           <div>
             <Label>Adjusted Gross Score:</Label>
             <Input
               placeholder="Adjusted Gross Score"
               value={adjustedGrossScoreCalculation}
               readOnly
+              disabled
             />
           </div>
           <div>
@@ -341,31 +366,33 @@ export function RoundCalculation({ round, holes }: RoundCalculationProps) {
             />
           </div>
         </div>
-        <div>
-          <Label>Calculated Score Differential:</Label>
-          <Input
-            placeholder="Calculated Score Differential"
-            value={
-              Math.round(
-                (((adjustedGrossScoreCalculation - rating) * 113) / slope) * 10
-              ) / 10
-            }
-            readOnly
-          />
+
+        <Muted>
+          Score Differential = (Adjusted Gross Score - Course Rating) &times;
+          113 &#247; Slope
+        </Muted>
+
+        <div className="flex flex-row items-center mt-4">
+          <P>Score Differential =</P>
+          <Muted className="mx-2">
+            ({adjustedGrossScoreCalculation} - {rating}) &times; (113 &#247;{" "}
+            {slope})
+          </Muted>
+          <P className="!mt-0">=</P>
+          <u className="ml-2">
+            {Math.round(scoreDifferentialCalculation * 10) / 10}
+          </u>
         </div>
-        <p className="text-sm text-muted-foreground">
-          Score Differential = (Adjusted Gross Score - Course Rating) * 113 /
-          Slope
-        </p>
-        <H4>How did this affect my handicap?</H4>
+
+        <Large>How did this affect my handicap?</Large>
         <p>
           Your handicap index at the time this round was registered:{" "}
           {round.existingHandicapIndex}
         </p>
         <p>
-          Your new handicap index after this round: {round.updatedHandicapIndex}
+          Your handicap index after this round: {round.updatedHandicapIndex}
         </p>
-        <p>
+        <Blockquote className="not-italic border-r-2 pr-2">
           Your handicap index adjusts if the round registered is one of your 8
           best rounds in your last 20 played. If you&apos;ve played less than 20
           rounds, there is a different calculation which can be viewed here:{" "}
@@ -375,11 +402,11 @@ export function RoundCalculation({ round, holes }: RoundCalculationProps) {
             }
             target="_blank"
           >
-            <Button className="p-0" variant="link">
+            <Button className="p-0 h-0" variant="link">
               UGSA Handicap Rules
             </Button>
           </Link>
-        </p>
+        </Blockquote>
       </section>
     </div>
   );
