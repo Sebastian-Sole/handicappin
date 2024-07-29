@@ -158,24 +158,15 @@ export function RoundCalculation({ round, holes }: RoundCalculationProps) {
           </div>
         </div>
       </section>
+      <Separator />
       <section className="space-y-4">
-        <div className="flex flex-row">
+        <div className="flex flex-row items-center">
           <H3>Course Handicap</H3>
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger>
-                {" "}
-                <InfoIcon className="h-5 w-5 text-gray-950 dark:text-gray-400 ml-2" />{" "}
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Enter 18 hole values</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
         </div>
+        <Muted>Enter 18 hole values</Muted>
         <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
           <div>
-            <Label>Handicap Index:</Label>
+            <Label>Handicap Index</Label>
             <Input
               placeholder="Handicap Index"
               value={handicapIndex !== 0 ? handicapIndex : ""}
@@ -186,7 +177,7 @@ export function RoundCalculation({ round, holes }: RoundCalculationProps) {
             />
           </div>
           <div>
-            <Label>Slope:</Label>
+            <Label>Slope</Label>
             <Input
               placeholder="Slope"
               value={slope !== 0 ? slope : ""}
@@ -194,7 +185,7 @@ export function RoundCalculation({ round, holes }: RoundCalculationProps) {
             />
           </div>
           <div>
-            <Label>Course Rating:</Label>
+            <Label>Course Rating</Label>
             <Input
               placeholder="Course Rating"
               value={rating !== 0 ? rating : ""}
@@ -205,7 +196,7 @@ export function RoundCalculation({ round, holes }: RoundCalculationProps) {
             />
           </div>
           <div>
-            <Label>Par:</Label>
+            <Label>Par</Label>
             <Input
               placeholder="Par"
               value={par !== 0 ? par : ""}
@@ -258,20 +249,8 @@ export function RoundCalculation({ round, holes }: RoundCalculationProps) {
       <section className="space-y-4">
         <H3>Adjusted Gross Score</H3>
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
-          <div className="flex flex-col justify-end">
-            <div className="flex flex-row items-center">
-              <Label className="mr-2">Adjusted Played Score:</Label>
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger>
-                    <InfoIcon className="h-5 w-5 text-gray-500 dark:text-gray-400" />{" "}
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>Max: par + net double bogey (incl. handicap)</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            </div>
+          <div>
+            <Label className="mr-2">Adjusted Played Score:</Label>
             <Input
               placeholder="Adjusted Played Score"
               value={adjustedPlayedScore !== 0 ? adjustedPlayedScore : ""}

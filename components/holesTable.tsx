@@ -55,6 +55,24 @@ const HolesTable = ({ holes }: HolesTableProps) => {
             </TableRow>
           );
         })}
+        <TableRow key={"total"} className="bg-slate-100">
+          <TableCell>Total</TableCell>
+          <TableCell>
+            {holes.reduce((acc, hole) => {
+              return acc + hole.par;
+            }, 0)}
+          </TableCell>
+          <TableCell>
+            {holes.reduce((acc, hole) => {
+              return acc + hole.strokes;
+            }, 0)}
+          </TableCell>
+          <TableCell>
+            {holes.reduce((acc, hole) => {
+              return acc + calculateHoleAdjustedScore(hole);
+            }, 0)}
+          </TableCell>
+        </TableRow>
       </TableBody>
     </Table>
   );
