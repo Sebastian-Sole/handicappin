@@ -7,6 +7,7 @@ import { RoundWithCourse } from "@/types/database";
 import { roundMutationSchema } from "@/types/round";
 import { Tables } from "@/types/supabase";
 import { calculateHandicapIndex } from "@/utils/calculations/handicap";
+import { flattenRoundWithCourse } from "@/utils/trpc/round";
 import { z } from "zod";
 
 export const roundRouter = createTRPCRouter({
@@ -133,17 +134,33 @@ export const roundRouter = createTRPCRouter({
 
       const handicapIndex = calculateHandicapIndex(cappedDifferentials);
 
-      const { error: updateError } = await ctx.supabase
-        .from("Profile")
-        .update({
-          handicapIndex: handicapIndex,
-        })
-        .eq("id", userId);
+      if (handicapIndex !== existingHandicapIndex) {
+        const { error: updateError } = await ctx.supabase
+          .from("Profile")
+          .update({
+            handicapIndex: handicapIndex,
+          })
+          .eq("id", userId);
 
-      if (updateError) {
-        throw new Error(
-          `Error updating handicap index: ${updateError.message}`
-        );
+        if (updateError) {
+          throw new Error(
+            `Error updating handicap index: ${updateError.message}`
+          );
+        }
+
+        // Add new handicap index to the added round
+        const { error: updateRoundError } = await ctx.supabase
+          .from("Round")
+          .update({
+            updatedHandicapIndex: handicapIndex,
+          })
+          .eq("id", roundId);
+
+        if (updateRoundError) {
+          throw new Error(
+            `Error updating round with new handicap index: ${updateRoundError.message}`
+          );
+        }
       }
 
       return {
@@ -178,23 +195,6 @@ export const roundRouter = createTRPCRouter({
         throw new Error(`Error getting rounds: ${error.message}`);
       }
 
-      const flattenRoundWithCourse = (
-        round: Tables<"Round">,
-        course: Tables<"Course"> | null
-      ): RoundWithCourse | null => {
-        if (course) {
-          return {
-            ...round,
-            courseName: course.name,
-            courseRating: course.courseRating,
-            courseSlope: course.slopeRating,
-            courseEighteenHolePar: course.eighteenHolePar,
-            courseNineHolePar: course.nineHolePar,
-          };
-        }
-        return null;
-      };
-
       const roundsWithCourse = rounds
         .map((round) => {
           return flattenRoundWithCourse(round, round.Course);
@@ -202,5 +202,24 @@ export const roundRouter = createTRPCRouter({
         .filter((round): round is RoundWithCourse => round !== null);
 
       return roundsWithCourse;
+    }),
+  // A procedure which returns round if round with roundId has userId, or null if not
+  getRound: publicProcedure
+    .input(z.object({ roundId: z.string() }))
+    .query(async ({ ctx, input }) => {
+      const { data: round, error } = await ctx.supabase
+        .from("Round")
+        .select(`*, Course (*)`)
+        .eq("id", input.roundId)
+        .single();
+
+      if (error) {
+        console.log(error);
+        throw new Error(`Error getting round: ${error.message}`);
+      }
+
+      const roundWithCourse = flattenRoundWithCourse(round, round.Course);
+
+      return roundWithCourse;
     }),
 });
