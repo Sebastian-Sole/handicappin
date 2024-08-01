@@ -56,6 +56,7 @@ function BarchartChart(props: any) {
 }
 
 function LinechartChart(props: any) {
+  const { data } = props;
   return (
     <div {...props}>
       <ChartContainer
@@ -68,14 +69,7 @@ function LinechartChart(props: any) {
       >
         <LineChart
           accessibilityLayer
-          data={[
-            { month: "January", desktop: 186 },
-            { month: "February", desktop: 305 },
-            { month: "March", desktop: 237 },
-            { month: "April", desktop: 73 },
-            { month: "May", desktop: 209 },
-            { month: "June", desktop: 214 },
-          ]}
+          data={data}
           margin={{
             left: 12,
             right: 12,
