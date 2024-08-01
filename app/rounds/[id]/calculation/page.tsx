@@ -1,6 +1,5 @@
 import { RoundCalculation } from "@/components/round-calculation";
 import { api } from "@/trpc/server";
-import { RoundWithCourse } from "@/types/database";
 import { createServerComponentClient } from "@/utils/supabase/server";
 
 const RoundCalculationPage = async ({ params }: { params: { id: string } }) => {
