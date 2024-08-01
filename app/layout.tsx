@@ -4,6 +4,7 @@ import "./globals.css";
 import Navbar from "@/components/navbar";
 import { TRPCReactProvider } from "@/trpc/react";
 import { Toaster } from "@/components/ui/toaster";
+import { ThemeProvider } from "@/components/theme-provider";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -21,9 +22,16 @@ export default function RootLayout({
     <html lang="en">
       <body className={inter.className}>
         <TRPCReactProvider>
-          <Navbar />
-          {children}
-          <Toaster />
+          <ThemeProvider
+            attribute="class"
+            defaultTheme="system"
+            enableSystem
+            disableTransitionOnChange
+          >
+            <Navbar />
+            {children}
+            <Toaster />
+          </ThemeProvider>
         </TRPCReactProvider>
       </body>
     </html>
