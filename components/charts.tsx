@@ -19,9 +19,9 @@ function BarchartChart(props: any) {
     <div {...props}>
       <ChartContainer
         config={{
-          desktop: {
+          round: {
             label: "Desktop",
-            color: "hsl(var(--chart-1))",
+            color: "hsl(var(--primary))",
           },
         }}
         className="min-h-full"
@@ -48,7 +48,7 @@ function BarchartChart(props: any) {
             tickMargin={8}
             axisLine={false}
           ></YAxis>
-          <Bar dataKey="score" fill="var(--color-desktop)" radius={8} />
+          <Bar dataKey="score" fill="var(--color-round)" radius={8} />
         </BarChart>
       </ChartContainer>
     </div>

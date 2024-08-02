@@ -3,6 +3,7 @@ import { H1 } from "./ui/typography";
 import LogoutButton from "./logoutButton";
 import Link from "next/link";
 import { Button } from "./ui/button";
+import ThemeButton from "./themeButton";
 
 const Navbar = async () => {
   const supabase = createServerComponentClient();
@@ -11,13 +12,13 @@ const Navbar = async () => {
   const isAuthed = data?.user;
 
   return (
-    <div className="flex sm:grid sm:grid-cols-3 gap-4 mt-4 justify-center sm:justify-between flex-row mb-12">
+    <div className="flex sm:grid sm:grid-cols-3 gap-4 pt-4 justify-center sm:justify-between flex-row pb-12">
       <div className="hidden sm:flex items-center justify-center">
         <h1>Logo</h1>
       </div>
 
       <div className="flex items-center justify-center">
-        <H1>Handicappin&apos;</H1>
+        <H1 className="text-primary">Handicappin&apos;</H1>
       </div>
 
       {!isAuthed && (
@@ -28,6 +29,7 @@ const Navbar = async () => {
           <Link href={"/signup"}>
             <Button>Signup</Button>
           </Link>
+          <ThemeButton />
         </div>
       )}
 
@@ -41,6 +43,7 @@ const Navbar = async () => {
             <Button>Dashboard</Button>
           </Link>
           <LogoutButton />
+          <ThemeButton />
         </div>
       )}
     </div>
