@@ -1,5 +1,7 @@
+import { Button } from "@/components/ui/button";
 import { H3, Large, Muted } from "@/components/ui/typography";
 import { useRoundCalculationContext } from "@/contexts/roundCalculationContext";
+import Link from "next/link";
 
 const StatCalculationDisplay = () => {
   const { round, holesPlayed, courseHcpStat, apsStat } =
@@ -41,6 +43,29 @@ const StatCalculationDisplay = () => {
             of the course that was played, i.e. the handicap you played to.
           </Muted>
         </div>
+        {round.exceptionalScoreAdjustment !== 0 && (
+          <div>
+            <Large>
+              ✨ Exceptional Score Adjustment:{" "}
+              {round.exceptionalScoreAdjustment} ✨
+            </Large>
+            <Muted>
+              This round was under the threshold for an exceptional round, and
+              therefore will more positively impact your handicap. For more
+              information on how this is calculated, click{" "}
+              <Link
+                href={
+                  "https://www.usga.org/content/usga/home-page/handicapping/world-handicap-system/topics/exceptional-score-reduction.html"
+                }
+                target="_blank"
+              >
+                <Button variant={"link"} className="p-0 items-start">
+                  here
+                </Button>
+              </Link>
+            </Muted>
+          </div>
+        )}
       </div>
     </section>
   );

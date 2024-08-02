@@ -156,6 +156,17 @@ export function Dashboard({ profile, roundsList, header }: DashboardProps) {
                     </span>
                   )}
                 </TableHead>
+                <TableHead
+                  className="cursor-pointer"
+                  onClick={() => handleSort("exceptionalScoreAdjustment")}
+                >
+                  Adjustment{" "}
+                  {sortColumn === "exceptionalScoreAdjustment" && (
+                    <span className="ml-1">
+                      {sortDirection === "asc" ? "\u2191" : "\u2193"}
+                    </span>
+                  )}
+                </TableHead>
                 <TableHead>Actions</TableHead>
               </TableRow>
             </TableHeader>
@@ -170,6 +181,11 @@ export function Dashboard({ profile, roundsList, header }: DashboardProps) {
                   <TableCell>{round.parPlayed}</TableCell>
                   <TableCell>
                     {Math.round(round.scoreDifferential * 10) / 10}
+                  </TableCell>
+                  <TableCell>
+                    {round.exceptionalScoreAdjustment
+                      ? Math.round(round.exceptionalScoreAdjustment * 10) / 10
+                      : 0}
                   </TableCell>
                   <TableCell>
                     <Link href={`/rounds/${round.id}/calculation`}>
