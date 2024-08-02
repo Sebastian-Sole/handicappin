@@ -9,7 +9,7 @@ interface DashboardGraphDisplayProps {
 
 const DashboardGraphDisplay = ({ graphData }: DashboardGraphDisplayProps) => {
   return (
-    <div className="bg-card rounded-lg p-6 col-span-2">
+    <div className="bg-card rounded-lg p-6 col-span-2 rounded-l-none">
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-2xl font-bold">Recent Rounds</h2>
         <Link

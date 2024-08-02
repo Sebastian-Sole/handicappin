@@ -8,7 +8,7 @@ interface DashboardIndexProps {
 
 const DashboardIndex = ({ handicapIndex, header }: DashboardIndexProps) => {
   return (
-    <div className="bg-card rounded-lg p-6">
+    <div className="bg-card rounded-lg p-6 rounded-r-none	">
       <h2 className="text-2xl font-bold mb-4">Handicap</h2>
       <div className="text-6xl font-bold text-primary">{handicapIndex}</div>
       <p className="text-muted-foreground">Current Handicap</p>
