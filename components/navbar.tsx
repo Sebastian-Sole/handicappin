@@ -18,7 +18,7 @@ const Navbar = async () => {
       </div>
 
       <div className="flex items-center justify-center">
-        <H1>Handicappin&apos;</H1>
+        <H1 className="text-primary">Handicappin&apos;</H1>
       </div>
 
       {!isAuthed && (
