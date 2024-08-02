@@ -19,6 +19,7 @@ import {
 } from "../ui/table";
 import { Button } from "../ui/button";
 import DashboardSkeleton from "./dashboardSkeleton";
+import RoundTablePagination from "./roundTablePagination";
 
 interface DashboardProps {
   profile: Tables<"Profile">;
@@ -53,7 +54,7 @@ export function Dashboard({ profile, roundsList, header }: DashboardProps) {
         return 0;
       });
     return filteredRounds.slice(page * 20, page * 20 + 20);
-  }, [searchTerm, sortColumn, sortDirection]);
+  }, [searchTerm, sortColumn, sortDirection, page]);
   const handleSort = (column: keyof RoundWithCourse) => {
     if (sortColumn === column) {
       setSortDirection(sortDirection === "asc" ? "desc" : "asc");
@@ -186,25 +187,11 @@ export function Dashboard({ profile, roundsList, header }: DashboardProps) {
             </TableBody>
           </Table>
           {roundsList.length > 20 && (
-            <div className="flex justify-between mt-4">
-              <Button
-                variant="default"
-                disabled={page === 0}
-                onClick={() => setPage(page - 1)}
-              >
-                Previous
-              </Button>
-
-              {page * 20 + 20 < roundsList.length && (
-                <Button
-                  disabled={roundsList.length < 20}
-                  onClick={() => setPage(page + 1)}
-                  variant="default"
-                >
-                  Next
-                </Button>
-              )}
-            </div>
+            <RoundTablePagination
+              page={page}
+              setPage={setPage}
+              roundsList={roundsList}
+            />
           )}
         </div>
       )}
