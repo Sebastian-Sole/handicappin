@@ -3,6 +3,7 @@ import { H1 } from "./ui/typography";
 import LogoutButton from "./logoutButton";
 import Link from "next/link";
 import { Button } from "./ui/button";
+import ThemeButton from "./themeButton";
 
 const Navbar = async () => {
   const supabase = createServerComponentClient();
@@ -28,6 +29,7 @@ const Navbar = async () => {
           <Link href={"/signup"}>
             <Button>Signup</Button>
           </Link>
+          <ThemeButton />
         </div>
       )}
 
@@ -41,6 +43,7 @@ const Navbar = async () => {
             <Button>Dashboard</Button>
           </Link>
           <LogoutButton />
+          <ThemeButton />
         </div>
       )}
     </div>
