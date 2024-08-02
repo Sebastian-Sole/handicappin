@@ -5,8 +5,8 @@ import {
 } from "@/server/api/trpc";
 import { RoundWithCourse } from "@/types/database";
 import { roundMutationSchema } from "@/types/round";
-import { Tables } from "@/types/supabase";
 import { calculateHandicapIndex } from "@/utils/calculations/handicap";
+import { calculateAdjustment } from "@/utils/round/addUtils";
 import { flattenRoundWithCourse } from "@/utils/trpc/round";
 import { z } from "zod";
 
@@ -25,11 +25,12 @@ export const roundRouter = createTRPCRouter({
         adjustedGrossScore,
         userId,
         existingHandicapIndex,
-        scoreDifferential,
         totalStrokes,
         nineHolePar,
         eighteenHolePar,
       } = input;
+
+      let { scoreDifferential, exceptionalScoreAdjustment } = input;
 
       const { data: existingCourse, error: existingCourseError } =
         await ctx.supabase
@@ -45,10 +46,8 @@ export const roundRouter = createTRPCRouter({
         );
       }
 
-      // If course exists, use existing course id
       let courseId = existingCourse?.id || null;
 
-      // If course does not exist, create new course
       if (!courseId) {
         const { data: course, error: courseError } = await ctx.supabase
           .from("Course")
@@ -69,6 +68,46 @@ export const roundRouter = createTRPCRouter({
         }
 
         courseId = course.id;
+      }
+
+      const difference = existingHandicapIndex - scoreDifferential;
+      const isExceptionalRound = difference >= 7;
+
+      if (isExceptionalRound) {
+        const adjustmentAmount = calculateAdjustment(difference);
+        exceptionalScoreAdjustment =
+          exceptionalScoreAdjustment - adjustmentAmount;
+        scoreDifferential = scoreDifferential - adjustmentAmount;
+
+        const { data: prevRoundsData, error: prevRoundsError } =
+          await ctx.supabase
+            .from("Round")
+            .select("*")
+            .eq("userId", userId)
+            .range(0, 18);
+
+        if (prevRoundsError) {
+          throw new Error(
+            `Error getting previous rounds: ${prevRoundsError.message}`
+          );
+        }
+
+        // Update score differentials and adjustment for previous rounds
+        prevRoundsData.forEach(async (round) => {
+          const { error: updateRoundError } = await ctx.supabase
+            .from("Round")
+            .update({
+              scoreDifferential: round.scoreDifferential - adjustmentAmount,
+              adjustment: round.exceptionalScoreAdjustment - adjustmentAmount,
+            })
+            .eq("id", round.id);
+
+          if (updateRoundError) {
+            throw new Error(
+              `Error updating previous rounds: ${updateRoundError.message}`
+            );
+          }
+        });
       }
 
       const { data: round, error: roundError } = await ctx.supabase
@@ -203,7 +242,6 @@ export const roundRouter = createTRPCRouter({
 
       return roundsWithCourse;
     }),
-  // A procedure which returns round if round with roundId has userId, or null if not
   getRound: publicProcedure
     .input(z.object({ roundId: z.string() }))
     .query(async ({ ctx, input }) => {
