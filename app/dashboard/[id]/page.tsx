@@ -25,8 +25,6 @@ const DashboardPage = async ({ params }: { params: { id: string } }) => {
 
   const roundsList: RoundWithCourse[] = await api.round.getAllByUserId({
     userId: id,
-    startIndex: 0,
-    amount: 20,
   });
   const profile = await api.auth.getProfileFromUserId(id);
 

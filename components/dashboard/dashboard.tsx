@@ -19,6 +19,7 @@ import {
 } from "../ui/table";
 import { Button } from "../ui/button";
 import DashboardSkeleton from "./dashboardSkeleton";
+import RoundTablePagination from "./roundTablePagination";
 
 interface DashboardProps {
   profile: Tables<"Profile">;
@@ -32,9 +33,10 @@ export function Dashboard({ profile, roundsList, header }: DashboardProps) {
   const [sortColumn, setSortColumn] =
     useState<keyof RoundWithCourse>("teeTime");
   const [sortDirection, setSortDirection] = useState("desc");
+  const [page, setPage] = useState(0);
 
   const filteredAndSortedRounds = useMemo(() => {
-    return roundsList
+    const filteredRounds = roundsList
       .filter((round) => {
         return (
           round.teeTime.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -51,7 +53,8 @@ export function Dashboard({ profile, roundsList, header }: DashboardProps) {
         if (columnA > columnB) return sortDirection === "asc" ? 1 : -1;
         return 0;
       });
-  }, [searchTerm, sortColumn, sortDirection]);
+    return filteredRounds.slice(page * 20, page * 20 + 20);
+  }, [searchTerm, sortColumn, sortDirection, page]);
   const handleSort = (column: keyof RoundWithCourse) => {
     if (sortColumn === column) {
       setSortDirection(sortDirection === "asc" ? "desc" : "asc");
@@ -68,7 +71,8 @@ export function Dashboard({ profile, roundsList, header }: DashboardProps) {
     }))
     .sort((a, b) => {
       return new Date(a.roundDate).getTime() - new Date(b.roundDate).getTime();
-    });
+    })
+    .slice(-21, -1);
 
   if (!isMounted) return <DashboardSkeleton />;
 
@@ -86,7 +90,10 @@ export function Dashboard({ profile, roundsList, header }: DashboardProps) {
               type="search"
               placeholder="Search rounds..."
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              onChange={(e) => {
+                setSearchTerm(e.target.value);
+                setPage(0); // Reset to the first page when the search term changes
+              }}
               className="w-full rounded-lg bg-background pl-8"
             />
           </div>
@@ -179,6 +186,13 @@ export function Dashboard({ profile, roundsList, header }: DashboardProps) {
               ))}
             </TableBody>
           </Table>
+          {roundsList.length > 20 && (
+            <RoundTablePagination
+              page={page}
+              setPage={setPage}
+              roundsList={roundsList}
+            />
+          )}
         </div>
       )}
     </div>
