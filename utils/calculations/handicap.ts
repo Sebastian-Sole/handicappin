@@ -1,4 +1,5 @@
 import { Hole } from "@/types/round";
+import { SupabaseClient } from "@supabase/supabase-js";
 
 export const calculateCourseHandicap = (
   handicapIndex: number,
@@ -163,4 +164,57 @@ export const calculateHandicapIndex = (scoreDifferentials: number[]) => {
 
 export const calculatePlayingHandicap = (courseHandicap: number) => {
   return Math.round(courseHandicap * 0.95);
+};
+
+export async function getLowestHandicapIndex(
+  userId: string,
+  supabase: SupabaseClient
+): Promise<number> {
+  const { data: rounds, error } = await supabase
+    .from("Round")
+    .select("updatedHandicapIndex, teeTime")
+    .eq("userId", userId)
+    .gte(
+      "teeTime",
+      new Date(
+        new Date().setFullYear(new Date().getFullYear() - 1)
+      ).toISOString()
+    )
+    .order("updatedHandicapIndex", { ascending: true });
+
+  if (error) {
+    throw new Error(
+      `Error fetching historical handicap indices: ${error.message}`
+    );
+  }
+
+  if (!rounds.length) {
+    throw new Error("No rounds found in the past 12 months");
+  }
+
+  return rounds[0].updatedHandicapIndex;
+}
+
+export const calculateCappedHandicapIndex = (
+  newHandicapIndex: number,
+  lowestHandicapIndex: number
+): number => {
+  const SOFT_CAP_THRESHOLD = 3.0;
+  const HARD_CAP_THRESHOLD = 5.0;
+
+  const increase = newHandicapIndex - lowestHandicapIndex;
+
+  if (increase <= SOFT_CAP_THRESHOLD) {
+    return newHandicapIndex;
+  }
+
+  if (increase > SOFT_CAP_THRESHOLD && increase <= HARD_CAP_THRESHOLD) {
+    return (
+      lowestHandicapIndex +
+      SOFT_CAP_THRESHOLD +
+      (increase - SOFT_CAP_THRESHOLD) / 2
+    );
+  }
+
+  return lowestHandicapIndex + HARD_CAP_THRESHOLD;
 };

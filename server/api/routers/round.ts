@@ -5,7 +5,11 @@ import {
 } from "@/server/api/trpc";
 import { RoundWithCourse } from "@/types/database";
 import { roundMutationSchema } from "@/types/round";
-import { calculateHandicapIndex } from "@/utils/calculations/handicap";
+import {
+  calculateCappedHandicapIndex,
+  calculateHandicapIndex,
+  getLowestHandicapIndex,
+} from "@/utils/calculations/handicap";
 import { calculateAdjustment } from "@/utils/round/addUtils";
 import { flattenRoundWithCourse } from "@/utils/trpc/round";
 import { z } from "zod";
@@ -154,6 +158,11 @@ export const roundRouter = createTRPCRouter({
         throw new Error(`Error inserting holes: ${holesError.message}`);
       }
 
+      const lowestHandicapIndex = await getLowestHandicapIndex(
+        userId,
+        ctx.supabase
+      );
+
       const roundsData = [round, ...prevRoundsData];
 
       const scoreDifferentials = roundsData
@@ -167,7 +176,12 @@ export const roundRouter = createTRPCRouter({
         diff > MAX_SCORE_DIFFERENTIAL ? MAX_SCORE_DIFFERENTIAL : diff
       );
 
-      const handicapIndex = calculateHandicapIndex(cappedDifferentials);
+      let handicapIndex = calculateHandicapIndex(cappedDifferentials);
+
+      handicapIndex = calculateCappedHandicapIndex(
+        handicapIndex,
+        lowestHandicapIndex
+      );
 
       if (handicapIndex !== existingHandicapIndex) {
         const { error: updateError } = await ctx.supabase
