@@ -69,6 +69,11 @@ export const translateRound = (
   };
 };
 
+/**
+ * Calculates the adjustment based on the difference.
+ * @param difference - The difference value.
+ * @returns The absolute number of the adjustment.
+ */
 export const calculateAdjustment = (difference: number) => {
   if (difference < 7) {
     return 0;
