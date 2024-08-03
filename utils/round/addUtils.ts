@@ -12,9 +12,6 @@ export const translateRound = (
   values: z.infer<typeof addRoundFormSchema>,
   profile: Tables<"Profile">
 ): RoundMutation | null => {
-  console.log("SUBMITTING FORM");
-  console.log(values);
-
   const { courseRating, par, slope } = values.courseInfo;
 
   const isInputParNine = values.holes.length === 9;
@@ -29,9 +26,6 @@ export const translateRound = (
 
   const adjustedPlayedScore = calculateAdjustedPlayedScore(values.holes);
 
-  console.log("Adjusted played score: ", adjustedPlayedScore);
-
-  // Todo: Input correct par for course with data for 18 holes
   const adjustedGrossScore = calculateAdjustedGrossScore(
     values.holes,
     profile.handicapIndex,
@@ -71,5 +65,22 @@ export const translateRound = (
     nineHolePar,
     eighteenHolePar,
     parPlayed: par,
+    exceptionalScoreAdjustment: 0,
   };
+};
+
+/**
+ * Calculates the adjustment based on the difference.
+ * @param difference - The difference value.
+ * @returns The absolute number of the adjustment.
+ */
+export const calculateAdjustment = (difference: number) => {
+  if (difference < 7) {
+    return 0;
+  }
+  if (difference >= 7 && difference < 10) {
+    return 1;
+  } else {
+    return 2;
+  }
 };

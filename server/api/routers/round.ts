@@ -5,10 +5,13 @@ import {
 } from "@/server/api/trpc";
 import { RoundWithCourse } from "@/types/database";
 import { roundMutationSchema } from "@/types/round";
-import { Tables } from "@/types/supabase";
 import { calculateHandicapIndex } from "@/utils/calculations/handicap";
+import { calculateAdjustment } from "@/utils/round/addUtils";
 import { flattenRoundWithCourse } from "@/utils/trpc/round";
 import { z } from "zod";
+
+const EXCEPTIONAL_ROUND_THRESHOLD = 7;
+const MAX_SCORE_DIFFERENTIAL = 54;
 
 export const roundRouter = createTRPCRouter({
   create: authedProcedure
@@ -25,11 +28,12 @@ export const roundRouter = createTRPCRouter({
         adjustedGrossScore,
         userId,
         existingHandicapIndex,
-        scoreDifferential,
         totalStrokes,
         nineHolePar,
         eighteenHolePar,
       } = input;
+
+      let { scoreDifferential, exceptionalScoreAdjustment } = input;
 
       const { data: existingCourse, error: existingCourseError } =
         await ctx.supabase
@@ -45,10 +49,8 @@ export const roundRouter = createTRPCRouter({
         );
       }
 
-      // If course exists, use existing course id
       let courseId = existingCourse?.id || null;
 
-      // If course does not exist, create new course
       if (!courseId) {
         const { data: course, error: courseError } = await ctx.supabase
           .from("Course")
@@ -71,6 +73,47 @@ export const roundRouter = createTRPCRouter({
         courseId = course.id;
       }
 
+      const { data: prevRoundsData, error: prevRoundsError } =
+        await ctx.supabase
+          .from("Round")
+          .select("*")
+          .eq("userId", userId)
+          .order("teeTime", { ascending: false })
+          .range(0, 18);
+
+      if (prevRoundsError) {
+        throw new Error(
+          `Error getting previous rounds: ${prevRoundsError.message}`
+        );
+      }
+
+      const difference = existingHandicapIndex - scoreDifferential;
+      const isExceptionalRound = difference >= EXCEPTIONAL_ROUND_THRESHOLD;
+
+      if (isExceptionalRound) {
+        const adjustmentAmount = calculateAdjustment(difference);
+        exceptionalScoreAdjustment =
+          exceptionalScoreAdjustment - adjustmentAmount;
+        scoreDifferential = scoreDifferential - adjustmentAmount;
+
+        // Update score differentials and adjustment for previous rounds
+        prevRoundsData.slice(1).forEach(async (round) => {
+          const { error: updateRoundError } = await ctx.supabase
+            .from("Round")
+            .update({
+              scoreDifferential: round.scoreDifferential - adjustmentAmount,
+              adjustment: round.exceptionalScoreAdjustment - adjustmentAmount,
+            })
+            .eq("id", round.id);
+
+          if (updateRoundError) {
+            throw new Error(
+              `Error updating previous rounds: ${updateRoundError.message}`
+            );
+          }
+        });
+      }
+
       const { data: round, error: roundError } = await ctx.supabase
         .from("Round")
         .insert([
@@ -85,7 +128,7 @@ export const roundRouter = createTRPCRouter({
             parPlayed: courseInfo.par,
           },
         ])
-        .select("id")
+        .select("*")
         .single();
 
       if (roundError) {
@@ -111,15 +154,7 @@ export const roundRouter = createTRPCRouter({
         throw new Error(`Error inserting holes: ${holesError.message}`);
       }
 
-      const { data: roundsData, error: roundsError } = await ctx.supabase
-        .from("Round")
-        .select("*")
-        .eq("userId", userId)
-        .range(0, 19);
-
-      if (roundsError) {
-        throw new Error(`Error getting rounds: ${roundsError.message}`);
-      }
+      const roundsData = [round, ...prevRoundsData];
 
       const scoreDifferentials = roundsData
         .sort(
@@ -129,7 +164,7 @@ export const roundRouter = createTRPCRouter({
         .map((round) => round.scoreDifferential);
 
       const cappedDifferentials = scoreDifferentials.map((diff) =>
-        diff > 54 ? 54 : diff
+        diff > MAX_SCORE_DIFFERENTIAL ? MAX_SCORE_DIFFERENTIAL : diff
       );
 
       const handicapIndex = calculateHandicapIndex(cappedDifferentials);
@@ -203,7 +238,6 @@ export const roundRouter = createTRPCRouter({
 
       return roundsWithCourse;
     }),
-  // A procedure which returns round if round with roundId has userId, or null if not
   getRound: publicProcedure
     .input(z.object({ roundId: z.string() }))
     .query(async ({ ctx, input }) => {

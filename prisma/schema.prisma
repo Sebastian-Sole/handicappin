@@ -46,19 +46,20 @@ model Hole {
 }
 
 model Round {
-  id                    Int      @id @default(autoincrement())
-  holes                 Hole[]
-  teeTime               DateTime
-  courseId              Int
-  course                Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
-  userId                String   @db.Uuid
-  user                  Profile  @relation(fields: [userId], references: [id], onDelete: Cascade)
-  existingHandicapIndex Float
-  updatedHandicapIndex  Float    @default(0)
-  scoreDifferential     Float
-  totalStrokes          Int
-  adjustedGrossScore    Int
-  createdAt             DateTime @default(now())
-  parPlayed             Int
-  notes                 String?
+  id                         Int      @id @default(autoincrement())
+  holes                      Hole[]
+  teeTime                    DateTime
+  courseId                   Int
+  course                     Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  userId                     String   @db.Uuid
+  user                       Profile  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  existingHandicapIndex      Float
+  updatedHandicapIndex       Float    @default(0)
+  scoreDifferential          Float
+  totalStrokes               Int
+  adjustedGrossScore         Int
+  createdAt                  DateTime @default(now())
+  parPlayed                  Int
+  notes                      String?
+  exceptionalScoreAdjustment Int      @default(0)
 }

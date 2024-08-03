@@ -96,7 +96,7 @@ const AddRoundForm = ({ profile }: AddRoundFormProps) => {
   function onSubmit(values: z.infer<typeof addRoundFormSchema>) {
     const dataValues: RoundMutation | null = translateRound(values, profile);
     if (!dataValues) {
-      return;
+      return; // Todo: handle error with toast
     }
     mutate(dataValues);
   }
@@ -129,6 +129,7 @@ const AddRoundForm = ({ profile }: AddRoundFormProps) => {
       teeTime: new Date("2021-09-01T12:00:00.000Z"),
       totalStrokes: 128,
       userId: profile.id,
+      exceptionalScoreAdjustment: 0,
     };
     mutate(holeZero);
 

@@ -41,6 +41,7 @@ export const roundMutationSchema = z.object({
   nineHolePar: z.number().min(27),
   eighteenHolePar: z.number().min(54),
   parPlayed: z.number().min(9),
+  exceptionalScoreAdjustment: z.number().default(0),
 });
 
 export type RoundMutation = z.infer<typeof roundMutationSchema>;
