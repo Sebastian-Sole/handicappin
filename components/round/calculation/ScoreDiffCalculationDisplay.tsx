@@ -59,7 +59,7 @@ const ScoreDiffCalculationDisplay = () => {
           {slope})
         </Muted>
         <P className="!mt-0">=</P>
-        <u className="ml-2">
+        <u className="ml-2 text-primary font-bold">
           {Math.round(scoreDifferentialCalculation * 10) / 10}
         </u>
       </div>

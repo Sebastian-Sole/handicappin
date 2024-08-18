@@ -64,15 +64,19 @@ export function Dashboard({ profile, roundsList, header }: DashboardProps) {
     }
   };
 
-  const graphData = roundsList
+  const sortedGraphData = roundsList
     .map((round) => ({
       roundDate: new Date(round.teeTime).toLocaleDateString(),
       score: round.adjustedGrossScore,
     }))
     .sort((a, b) => {
       return new Date(a.roundDate).getTime() - new Date(b.roundDate).getTime();
-    })
-    .slice(-21, -1);
+    });
+
+  const graphData =
+    sortedGraphData.length >= 21
+      ? sortedGraphData.slice(-21, -1)
+      : sortedGraphData;
 
   if (!isMounted) return <DashboardSkeleton />;
 
@@ -92,7 +96,7 @@ export function Dashboard({ profile, roundsList, header }: DashboardProps) {
               value={searchTerm}
               onChange={(e) => {
                 setSearchTerm(e.target.value);
-                setPage(0); // Reset to the first page when the search term changes
+                setPage(0);
               }}
               className="w-full rounded-lg bg-background pl-8"
             />

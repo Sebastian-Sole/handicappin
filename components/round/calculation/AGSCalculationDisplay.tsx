@@ -77,7 +77,9 @@ const AGSCalculationDisplay = () => {
             {par} &times; (18 - {holesPlayed}) &#247; 18)
           </Muted>
           <P className="!mt-0">=</P>
-          <u className="ml-2">{adjustedGrossScoreCalculation}</u>
+          <u className="ml-2 text-primary font-bold">
+            {adjustedGrossScoreCalculation}
+          </u>
         </div>
       </div>
     </section>
