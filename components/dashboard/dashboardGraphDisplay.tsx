@@ -24,7 +24,7 @@ const DashboardGraphDisplay = ({ graphData }: DashboardGraphDisplayProps) => {
         <BarchartChart className="aspect-[16/9]" data={graphData} />
       )}
       {graphData.length === 0 && (
-        <div className="flex items-center justify-center h-full border border-gray-100 flex-col">
+        <div className="flex items-center justify-center h-64 xl:h-[90%] border border-gray-100 flex-col">
           <H4>No rounds found</H4>
           <Link
             href={`/rounds/add`}
