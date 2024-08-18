@@ -102,7 +102,9 @@ const CourseHandicapCalculationDisplay = () => {
           {handicapIndex} + ({slope} &#247; 113) + ({rating} - {par})
         </Muted>
         <P className="!mt-0">=</P>
-        <u className="ml-2">{Math.round(courseHandicapCalculation)}</u>
+        <u className="ml-2 text-primary font-bold">
+          {Math.round(courseHandicapCalculation)}
+        </u>
       </div>
     </section>
   );

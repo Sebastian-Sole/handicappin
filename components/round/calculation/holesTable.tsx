@@ -35,7 +35,7 @@ const HolesTable = () => {
                     <InfoIcon className="h-6 w-6 text-gray-500 dark:text-gray-400 ml-4" />{" "}
                   </TooltipTrigger>
                   <TooltipContent>
-                    <p>Max: par + net double bogey (incl. handicap)</p>
+                    <p>Max: par + net double bogey (incl. handicap strokes)</p>
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
@@ -53,19 +53,21 @@ const HolesTable = () => {
               </TableRow>
             );
           })}
-          <TableRow key={"total"} className="bg-slate-100">
-            <TableCell>Total</TableCell>
-            <TableCell>
+          <TableRow key={"total"} className="bg-secondary dark:bg-ring">
+            <TableCell className="first:rounded-l-lg last:rounded-r-lg bg-secondary dark:bg-ring">
+              Total
+            </TableCell>
+            <TableCell className="bg-secondary dark:bg-ring">
               {holes.reduce((acc, hole) => {
                 return acc + hole.par;
               }, 0)}
             </TableCell>
-            <TableCell>
+            <TableCell className="bg-secondary dark:bg-ring">
               {holes.reduce((acc, hole) => {
                 return acc + hole.strokes;
               }, 0)}
             </TableCell>
-            <TableCell>
+            <TableCell className="first:rounded-l-lg last:rounded-r-lg bg-secondary dark:bg-ring">
               {holes.reduce((acc, hole) => {
                 return acc + calculateHoleAdjustedScore(hole);
               }, 0)}
