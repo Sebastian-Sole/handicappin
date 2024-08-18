@@ -34,7 +34,7 @@ import { DateTimePicker } from "../ui/datepicker";
 import useMounted from "@/hooks/useMounted";
 import FormSkeleton from "../formSkeleton";
 import { translateRound } from "@/utils/round/addUtils";
-import { rounds, roundZero } from "@/utils/populateDb";
+import { roundOne, rounds, roundZero } from "@/utils/populateDb";
 
 interface AddRoundFormProps {
   profile: Tables<"Profile">;
@@ -54,22 +54,24 @@ const AddRoundForm = ({ profile }: AddRoundFormProps) => {
 
   const form = useForm<z.infer<typeof addRoundFormSchema>>({
     resolver: zodResolver(addRoundFormSchema),
-    defaultValues: {
-      numberOfHoles: 9,
-      holes: Array.from({ length: 9 }).map((value, index) => ({
-        par: 3,
-        hcp: 1,
-        strokes: 3,
-        holeNumber: index + 1,
-      })),
-      date: undefined,
-      courseInfo: {
-        par: 27,
-        courseRating: 50.3,
-        slope: 82,
-      },
-      userId: profile.id,
-    },
+    // defaultValues: {
+    //   numberOfHoles: 9,
+    //   holes: Array.from({ length: 9 }).map((value, index) => ({
+    //     par: 3,
+    //     hcp: 1,
+    //     strokes: 3,
+    //     holeNumber: index + 1,
+    //     hcpStrokes: 0,
+    //   })),
+    //   date: undefined,
+    //   courseInfo: {
+    //     par: 27,
+    //     courseRating: 50.3,
+    //     slope: 82,
+    //   },
+    //   userId: profile.id,
+    // },
+    defaultValues: roundOne,
   });
 
   const { mutate } = api.round.create.useMutation({
