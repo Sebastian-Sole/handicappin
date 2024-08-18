@@ -50,7 +50,7 @@ export const calculateHoleAdjustedScore = (
 
 /**
  * Calculates the adjusted played score based on the provided holes.
- * The adjusted score for each hole is calculated as the minimum value between the strokes and the par + 4.
+ * The adjusted score for each hole is calculated as the minimum value between the strokes played, and net double bogey (incl. handicap)
  * The adjusted scores are then summed up to get the final adjusted played score.
  *
  * @param holes - An array of Hole objects representing the holes played.
@@ -65,6 +65,7 @@ export const calculateAdjustedPlayedScore = (holes: Hole[]): number => {
   return adjustedScores.reduce((acc, cur) => acc + cur);
 };
 
+// Todo: Can these attributes be manditory?
 export const calculateAdjustedGrossScore = (
   holes: Hole[],
   handicapIndex: number,
@@ -119,7 +120,7 @@ export const calculateInputAdjustedGrossScore = (
   return initialAdjust + predictedStrokes + parForRemainingHoles;
 };
 
-const getRelevantDifferentials = (scoreDifferentials: number[]) => {
+export const getRelevantDifferentials = (scoreDifferentials: number[]) => {
   if (scoreDifferentials.length <= 5) {
     return scoreDifferentials.slice(0, 1);
   } else if (scoreDifferentials.length >= 6 && scoreDifferentials.length <= 8) {
