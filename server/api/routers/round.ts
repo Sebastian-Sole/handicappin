@@ -106,7 +106,8 @@ export const roundRouter = createTRPCRouter({
             .from("Round")
             .update({
               scoreDifferential: round.scoreDifferential - adjustmentAmount,
-              adjustment: round.exceptionalScoreAdjustment - adjustmentAmount,
+              exceptionalScoreAdjustment:
+                round.exceptionalScoreAdjustment - adjustmentAmount,
             })
             .eq("id", round.id);
 
@@ -130,6 +131,7 @@ export const roundRouter = createTRPCRouter({
             existingHandicapIndex: existingHandicapIndex,
             teeTime: date.toISOString(),
             parPlayed: courseInfo.par,
+            updatedHandicapIndex: existingHandicapIndex,
           },
         ])
         .select("*")
