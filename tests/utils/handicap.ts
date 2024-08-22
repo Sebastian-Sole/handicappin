@@ -58,11 +58,6 @@ export const HOLES_MOCK: Hole[] = [
 ];
 
 export const TWENTY_SCORE_DIFFERENTIALS: number[] = [
-  // TODO: Fill in
-  20.3,
-];
-
-export const FIVE_SCORE_DIFFERENTIALS: number[] = [
-  // TODO: Fill in
-  20.3,
+  20.3, 21.4, 22.5, 23.6, 24.7, 25.8, 26.9, 28.0, 29.1, 30.2, 31.3, 32.4, 33.5,
+  34.6, 35.7, 36.8, 37.9, 39.0, 40.1, 41.2,
 ];

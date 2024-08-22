@@ -11,11 +11,7 @@ import {
   getRelevantDifferentials,
 } from "../../utils/calculations/handicap";
 import { expect, test } from "vitest";
-import {
-  FIVE_SCORE_DIFFERENTIALS,
-  HOLES_MOCK,
-  TWENTY_SCORE_DIFFERENTIALS,
-} from "../utils/handicap";
+import { HOLES_MOCK, TWENTY_SCORE_DIFFERENTIALS } from "../utils/handicap";
 
 const HANDICAP_INDEX = 54;
 const COURSE_RATING = 50.3;
@@ -88,15 +84,73 @@ test("calculate adjusted gross score", () => {
 });
 
 test("extracts relevant score differentials for handicap index calculation purposes", () => {
-  // TODO: Implement
-  expect(getRelevantDifferentials(TWENTY_SCORE_DIFFERENTIALS)).toBeTruthy();
-  expect(getRelevantDifferentials(FIVE_SCORE_DIFFERENTIALS)).toBeTruthy();
+  expect(
+    getRelevantDifferentials(TWENTY_SCORE_DIFFERENTIALS.slice(0, 3))
+  ).toStrictEqual([20.3]);
+  expect(
+    getRelevantDifferentials(TWENTY_SCORE_DIFFERENTIALS.slice(0, 4))
+  ).toStrictEqual([20.3]);
+  expect(
+    getRelevantDifferentials(TWENTY_SCORE_DIFFERENTIALS.slice(0, 5))
+  ).toStrictEqual([20.3]);
+  expect(
+    getRelevantDifferentials(TWENTY_SCORE_DIFFERENTIALS.slice(0, 6))
+  ).toStrictEqual([20.3, 21.4]);
+  expect(
+    getRelevantDifferentials(TWENTY_SCORE_DIFFERENTIALS.slice(0, 7))
+  ).toStrictEqual([20.3, 21.4]);
+  expect(
+    getRelevantDifferentials(TWENTY_SCORE_DIFFERENTIALS.slice(0, 9))
+  ).toStrictEqual([20.3, 21.4, 22.5]);
+  expect(
+    getRelevantDifferentials(TWENTY_SCORE_DIFFERENTIALS.slice(0, 12))
+  ).toStrictEqual([20.3, 21.4, 22.5, 23.6]);
+  expect(
+    getRelevantDifferentials(TWENTY_SCORE_DIFFERENTIALS.slice(0, 15))
+  ).toStrictEqual([20.3, 21.4, 22.5, 23.6, 24.7]);
+  expect(
+    getRelevantDifferentials(TWENTY_SCORE_DIFFERENTIALS.slice(0, 17))
+  ).toStrictEqual([20.3, 21.4, 22.5, 23.6, 24.7, 25.8]);
+  expect(
+    getRelevantDifferentials(TWENTY_SCORE_DIFFERENTIALS.slice(0, 19))
+  ).toStrictEqual([20.3, 21.4, 22.5, 23.6, 24.7, 25.8, 26.9]);
+  expect(getRelevantDifferentials(TWENTY_SCORE_DIFFERENTIALS)).toStrictEqual([
+    20.3, 21.4, 22.5, 23.6, 24.7, 25.8, 26.9, 28.0,
+  ]);
 });
 
 test("test handicap index calculation", () => {
-  // TODO: Implement
-  expect(calculateHandicapIndex(TWENTY_SCORE_DIFFERENTIALS)).toBeTruthy();
-  expect(calculateHandicapIndex(FIVE_SCORE_DIFFERENTIALS)).toBeTruthy();
+  expect(calculateHandicapIndex(TWENTY_SCORE_DIFFERENTIALS.slice(0, 3))).toBe(
+    20.3 - 2
+  );
+  expect(calculateHandicapIndex(TWENTY_SCORE_DIFFERENTIALS.slice(0, 4))).toBe(
+    20.3 - 1
+  );
+  expect(calculateHandicapIndex(TWENTY_SCORE_DIFFERENTIALS.slice(0, 5))).toBe(
+    20.3
+  );
+  expect(calculateHandicapIndex(TWENTY_SCORE_DIFFERENTIALS.slice(0, 6))).toBe(
+    19.9
+  );
+  expect(calculateHandicapIndex(TWENTY_SCORE_DIFFERENTIALS.slice(0, 7))).toBe(
+    20.9
+  );
+  expect(calculateHandicapIndex(TWENTY_SCORE_DIFFERENTIALS.slice(0, 9))).toBe(
+    21.4
+  );
+  expect(calculateHandicapIndex(TWENTY_SCORE_DIFFERENTIALS.slice(0, 12))).toBe(
+    22
+  );
+  expect(calculateHandicapIndex(TWENTY_SCORE_DIFFERENTIALS.slice(0, 15))).toBe(
+    22.5
+  );
+  expect(calculateHandicapIndex(TWENTY_SCORE_DIFFERENTIALS.slice(0, 17))).toBe(
+    23.1
+  );
+  expect(calculateHandicapIndex(TWENTY_SCORE_DIFFERENTIALS.slice(0, 19))).toBe(
+    23.6
+  );
+  expect(calculateHandicapIndex(TWENTY_SCORE_DIFFERENTIALS)).toBe(24.2);
 });
 
 test("test playing handicap calculation", () => {

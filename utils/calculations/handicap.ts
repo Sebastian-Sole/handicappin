@@ -152,15 +152,21 @@ export const getRelevantDifferentials = (scoreDifferentials: number[]) => {
   }
 };
 
+/**
+ * Calculates the handicap index based on the given score differentials.
+ *
+ * @param scoreDifferentials - An array of score differentials relevant to the handicap index calculation.
+ * @returns The calculated handicap index, in accordance to USGA.
+ */
 export const calculateHandicapIndex = (scoreDifferentials: number[]) => {
   const sortedDifferentials = scoreDifferentials.sort((a, b) => a - b);
   let differentials: number[] = getRelevantDifferentials(sortedDifferentials);
-  return (
+  const handicapCalculation =
     Math.round(
       (differentials.reduce((acc, cur) => acc + cur) / differentials.length) *
         10
-    ) / 10
-  );
+    ) / 10;
+  return applyHandicapAdjustement(handicapCalculation, scoreDifferentials);
 };
 
 export const calculatePlayingHandicap = (courseHandicap: number) => {
@@ -219,3 +225,23 @@ export const calculateCappedHandicapIndex = (
 
   return lowestHandicapIndex + HARD_CAP_THRESHOLD;
 };
+
+/**
+ * Applies handicap adjustment based on the length of a calculation in accordance to USGA.
+ * @param handicapCalculation - The original handicap calculation.
+ * @param scoreDifferentials - The score differentials relevant to the handicap calculation.
+ * @returns The adjusted handicap calculation.
+ */
+function applyHandicapAdjustement(
+  handicapCalculation: number,
+  scoreDifferentials: number[]
+) {
+  const numberOfDifferentials = scoreDifferentials.length;
+  if (numberOfDifferentials <= 3) {
+    return handicapCalculation - 2;
+  }
+  if (numberOfDifferentials == 4 || numberOfDifferentials == 6) {
+    return handicapCalculation - 1;
+  }
+  return handicapCalculation;
+}
