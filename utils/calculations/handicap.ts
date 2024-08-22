@@ -50,7 +50,7 @@ export const calculateHoleAdjustedScore = (
 
 /**
  * Calculates the adjusted played score based on the provided holes.
- * The adjusted score for each hole is calculated as the minimum value between the strokes and the par + 4.
+ * The adjusted score for each hole is calculated as the minimum value between the strokes played, and net double bogey (incl. handicap)
  * The adjusted scores are then summed up to get the final adjusted played score.
  *
  * @param holes - An array of Hole objects representing the holes played.
@@ -65,6 +65,7 @@ export const calculateAdjustedPlayedScore = (holes: Hole[]): number => {
   return adjustedScores.reduce((acc, cur) => acc + cur);
 };
 
+// Todo: Can these attributes be manditory?
 export const calculateAdjustedGrossScore = (
   holes: Hole[],
   handicapIndex: number,
@@ -119,7 +120,7 @@ export const calculateInputAdjustedGrossScore = (
   return initialAdjust + predictedStrokes + parForRemainingHoles;
 };
 
-const getRelevantDifferentials = (scoreDifferentials: number[]) => {
+export const getRelevantDifferentials = (scoreDifferentials: number[]) => {
   if (scoreDifferentials.length <= 5) {
     return scoreDifferentials.slice(0, 1);
   } else if (scoreDifferentials.length >= 6 && scoreDifferentials.length <= 8) {
@@ -151,15 +152,21 @@ const getRelevantDifferentials = (scoreDifferentials: number[]) => {
   }
 };
 
+/**
+ * Calculates the handicap index based on the given score differentials.
+ *
+ * @param scoreDifferentials - An array of score differentials relevant to the handicap index calculation.
+ * @returns The calculated handicap index, in accordance to USGA.
+ */
 export const calculateHandicapIndex = (scoreDifferentials: number[]) => {
   const sortedDifferentials = scoreDifferentials.sort((a, b) => a - b);
   let differentials: number[] = getRelevantDifferentials(sortedDifferentials);
-  return (
+  const handicapCalculation =
     Math.round(
       (differentials.reduce((acc, cur) => acc + cur) / differentials.length) *
         10
-    ) / 10
-  );
+    ) / 10;
+  return applyHandicapAdjustement(handicapCalculation, scoreDifferentials);
 };
 
 export const calculatePlayingHandicap = (courseHandicap: number) => {
@@ -218,3 +225,23 @@ export const calculateCappedHandicapIndex = (
 
   return lowestHandicapIndex + HARD_CAP_THRESHOLD;
 };
+
+/**
+ * Applies handicap adjustment based on the length of a calculation in accordance to USGA.
+ * @param handicapCalculation - The original handicap calculation.
+ * @param scoreDifferentials - The score differentials relevant to the handicap calculation.
+ * @returns The adjusted handicap calculation.
+ */
+function applyHandicapAdjustement(
+  handicapCalculation: number,
+  scoreDifferentials: number[]
+) {
+  const numberOfDifferentials = scoreDifferentials.length;
+  if (numberOfDifferentials <= 3) {
+    return handicapCalculation - 2;
+  }
+  if (numberOfDifferentials == 4 || numberOfDifferentials == 6) {
+    return handicapCalculation - 1;
+  }
+  return handicapCalculation;
+}

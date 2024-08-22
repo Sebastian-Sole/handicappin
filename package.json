@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "gen-types": "pnpx supabase gen types typescript --project-id \"lssnaapatrurmhbbqadb\" --schema public > types/supabase.ts && pnpx prisma generate"
+    "gen-types": "pnpx supabase gen types typescript --project-id \"lssnaapatrurmhbbqadb\" --schema public > types/supabase.ts && pnpx prisma generate",
+    "test": "vitest"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.0",
@@ -58,6 +59,7 @@
     "postcss": "^8",
     "prisma": "^5.16.2",
     "tailwindcss": "^3.4.1",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^2.0.5"
   }
 }
