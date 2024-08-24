@@ -41,11 +41,9 @@ export const calculateScoreDifferential = (
  * @param handicapStrokes - The number of handicap strokes for the player (optional).
  * @returns The hole-adjusted score.
  */
-export const calculateHoleAdjustedScore = (
-  hole: Hole,
-  handicapStrokes?: number
-): number => {
-  return Math.min(hole.strokes, hole.par + 4);
+export const calculateHoleAdjustedScore = (hole: Hole): number => {
+  const maxScore = Math.min(hole.par + 5, hole.par + 2 + hole.hcpStrokes);
+  return Math.min(hole.strokes, maxScore);
 };
 
 /**
@@ -160,6 +158,8 @@ export const getRelevantDifferentials = (scoreDifferentials: number[]) => {
  */
 export const calculateHandicapIndex = (scoreDifferentials: number[]) => {
   const sortedDifferentials = scoreDifferentials.sort((a, b) => a - b);
+  console.log("Sorted Differentials: ", sortedDifferentials);
+
   let differentials: number[] = getRelevantDifferentials(sortedDifferentials);
   const handicapCalculation =
     Math.round(
@@ -194,6 +194,9 @@ export async function getLowestHandicapIndex(
       `Error fetching historical handicap indices: ${error.message}`
     );
   }
+  console.log("-----------------Lowest Handicap Index-----------------");
+  console.log("Rounds: " + rounds[0].updatedHandicapIndex);
+  console.log(rounds);
 
   if (!rounds.length) {
     throw new Error("No rounds found in the past 12 months");
@@ -206,23 +209,39 @@ export const calculateCappedHandicapIndex = (
   newHandicapIndex: number,
   lowestHandicapIndex: number
 ): number => {
+  console.log("-------Calculating Capped Handicap Index-------");
+  console.log("New Handicap Index: ", newHandicapIndex);
+  console.log("Lowest Handicap Index: ", lowestHandicapIndex);
   const SOFT_CAP_THRESHOLD = 3.0;
   const HARD_CAP_THRESHOLD = 5.0;
 
   const increase = newHandicapIndex - lowestHandicapIndex;
+  console.log("Increase: ", increase);
 
   if (increase <= SOFT_CAP_THRESHOLD) {
+    console.log(
+      "Increase less than or equal to soft cap threshold, returning new handicap index"
+    );
     return newHandicapIndex;
   }
 
   if (increase > SOFT_CAP_THRESHOLD && increase <= HARD_CAP_THRESHOLD) {
-    return (
+    console.log(
+      "Increase greater than soft cap threshold and less than or equal to hard cap threshold"
+    );
+    const x =
       lowestHandicapIndex +
       SOFT_CAP_THRESHOLD +
-      (increase - SOFT_CAP_THRESHOLD) / 2
-    );
+      (increase - SOFT_CAP_THRESHOLD) / 2;
+    console.log("New Handicap Index Calc: ", x);
+    return x;
   }
 
+  console.log("Increase greater than hard cap threshold");
+  console.log(
+    "New Handicap Index Calc: ",
+    lowestHandicapIndex + HARD_CAP_THRESHOLD
+  );
   return lowestHandicapIndex + HARD_CAP_THRESHOLD;
 };
 

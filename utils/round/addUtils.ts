@@ -1,5 +1,5 @@
 import { toast } from "@/components/ui/use-toast";
-import { addRoundFormSchema, RoundMutation } from "@/types/round";
+import { addRoundFormSchema, Hole, RoundMutation } from "@/types/round";
 import { z } from "zod";
 import {
   calculateAdjustedPlayedScore,
@@ -7,6 +7,23 @@ import {
   calculateScoreDifferential,
 } from "../calculations/handicap";
 import { Tables } from "@/types/supabase";
+
+export const addHcpStrokesToHoles = (
+  holes: Hole[],
+  courseHandicap: number
+): Hole[] => {
+  const fullDivision = courseHandicap / holes.length;
+  const remainder = courseHandicap % holes.length;
+
+  holes.forEach((hole) => {
+    hole.hcpStrokes + fullDivision;
+    if (hole.hcp <= remainder) {
+      hole.hcpStrokes++;
+    }
+  });
+
+  return holes;
+};
 
 export const translateRound = (
   values: z.infer<typeof addRoundFormSchema>,
@@ -24,10 +41,15 @@ export const translateRound = (
 
   const eighteenHolePar = isInputParNine ? par * 2 : par;
 
-  const adjustedPlayedScore = calculateAdjustedPlayedScore(values.holes);
+  const holesWithHCP = addHcpStrokesToHoles(
+    values.holes,
+    profile.handicapIndex
+  );
+
+  const adjustedPlayedScore = calculateAdjustedPlayedScore(holesWithHCP);
 
   const adjustedGrossScore = calculateAdjustedGrossScore(
-    values.holes,
+    holesWithHCP,
     profile.handicapIndex,
     slope,
     courseRating,
@@ -53,7 +75,7 @@ export const translateRound = (
   return {
     userId: values.userId,
     courseInfo: values.courseInfo,
-    holes: values.holes,
+    holes: holesWithHCP,
     adjustedPlayedScore,
     adjustedGrossScore,
     scoreDifferential: scoreDiff,

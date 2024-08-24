@@ -11,32 +11,22 @@ import {
   getRelevantDifferentials,
 } from "../../utils/calculations/handicap";
 import { expect, test } from "vitest";
-import { HOLES_MOCK, TWENTY_SCORE_DIFFERENTIALS } from "../utils/handicap";
-
-const HANDICAP_INDEX = 54;
-const COURSE_RATING = 50.3;
-const SLOPE_RATING = 82;
-const PAR_VALUE = 54;
-const COURSE_HANDICAP_ANSWER = 35.485840708;
-
-const ADJUSTED_GROSS_SCORE = 82;
-const SCORE_DIFFERENTIAL_ANSWER = 43.68414634146342;
-
-const PLAYING_HANDICAP_MULTIPLIER = 0.95;
-
-const UNADJUSTED_HOLE: Hole = {
-  hcp: 1,
-  holeNumber: 1,
-  par: 3,
-  strokes: 5,
-};
-
-const ADJUSTED_HOLE: Hole = {
-  hcp: 1,
-  holeNumber: 1,
-  par: 3,
-  strokes: 5,
-};
+import {
+  ADJUSTED_GROSS_SCORE,
+  ADJUSTED_SCORE_ANSWER,
+  COURSE_HANDICAP_ANSWER,
+  COURSE_RATING,
+  HANDICAP_INDEX,
+  HOLE_WITH_HCP_OVER_MAX,
+  HOLES_MOCK,
+  PAR_VALUE,
+  PLAYING_HANDICAP_MULTIPLIER,
+  SCORE_DIFFERENTIAL_ANSWER,
+  SLOPE_RATING,
+  TWENTY_SCORE_DIFFERENTIALS,
+  UNADJUSTED_HOLE,
+  UNADJUSTED_HOLE_OVER_MAX,
+} from "../utils/handicap";
 
 test("calculates course handicap", () => {
   expect(
@@ -60,18 +50,16 @@ test("calculates score differential", () => {
 });
 
 test("calculates adjusted hole score", () => {
-  // TODO: Correct tests
-  expect(calculateHoleAdjustedScore(UNADJUSTED_HOLE)).toBeTruthy();
-  expect(calculateHoleAdjustedScore(ADJUSTED_HOLE)).toBeTruthy();
+  expect(calculateHoleAdjustedScore(UNADJUSTED_HOLE)).toBe(5);
+  expect(calculateHoleAdjustedScore(UNADJUSTED_HOLE_OVER_MAX)).toBe(7);
+  expect(calculateHoleAdjustedScore(HOLE_WITH_HCP_OVER_MAX)).toBe(8);
 });
 
 test("calculates adjusted played score", () => {
-  // TODO: Correct tests
-  expect(calculateAdjustedPlayedScore(HOLES_MOCK)).toBeTruthy();
+  expect(calculateAdjustedPlayedScore(HOLES_MOCK)).toBe(45);
 });
 
 test("calculate adjusted gross score", () => {
-  // Todo: Correct tests
   expect(
     calculateAdjustedGrossScore(
       HOLES_MOCK,
@@ -80,7 +68,7 @@ test("calculate adjusted gross score", () => {
       COURSE_RATING,
       PAR_VALUE
     )
-  ).toBeTruthy();
+  ).toBe(ADJUSTED_SCORE_ANSWER);
 });
 
 test("extracts relevant score differentials for handicap index calculation purposes", () => {
