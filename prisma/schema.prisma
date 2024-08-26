@@ -39,6 +39,7 @@ model Hole {
   holeNumber Int
   hcp        Int
   strokes    Int
+  hcpStrokes Int     @default(0)
   roundId    Int
   round      Round   @relation(fields: [roundId], references: [id], onDelete: Cascade)
   userId     String  @db.Uuid

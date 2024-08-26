@@ -5,6 +5,7 @@ export const holeSchema = z.object({
   par: z.number().min(1).max(5),
   hcp: z.number().min(1).max(18),
   strokes: z.number().min(1).max(10),
+  hcpStrokes: z.number().min(0).max(4),
 });
 
 export const courseInfoSchema = z.object({

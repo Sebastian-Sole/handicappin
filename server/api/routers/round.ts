@@ -52,10 +52,11 @@ export const roundRouter = createTRPCRouter({
           `Error checking if course exists: ${existingCourseError.message}`
         );
       }
+      console.log(existingCourse);
 
       let courseId = existingCourse?.id || null;
 
-      if (!courseId) {
+      if (courseId === null) {
         const { data: course, error: courseError } = await ctx.supabase
           .from("Course")
           .insert([
@@ -71,6 +72,8 @@ export const roundRouter = createTRPCRouter({
           .single();
 
         if (courseError) {
+          console.log("ID: " + courseId);
+          console.log("Course Name: " + courseInfo.location);
           throw new Error(`Error inserting course: ${courseError.message}`);
         }
 
@@ -91,14 +94,22 @@ export const roundRouter = createTRPCRouter({
         );
       }
 
+      console.log("Score Differential: " + scoreDifferential);
+
       const difference = existingHandicapIndex - scoreDifferential;
       const isExceptionalRound = difference >= EXCEPTIONAL_ROUND_THRESHOLD;
 
       if (isExceptionalRound) {
+        console.log("Difference: " + difference);
         const adjustmentAmount = calculateAdjustment(difference);
+        console.log("Adjustment: " + adjustmentAmount);
         exceptionalScoreAdjustment =
           exceptionalScoreAdjustment - adjustmentAmount;
         scoreDifferential = scoreDifferential - adjustmentAmount;
+        console.log("New score differential: " + scoreDifferential);
+        console.log(
+          "New exceptional score adjustment: " + exceptionalScoreAdjustment
+        );
 
         // Update score differentials and adjustment for previous rounds
         prevRoundsData.slice(1).forEach(async (round) => {
@@ -106,7 +117,8 @@ export const roundRouter = createTRPCRouter({
             .from("Round")
             .update({
               scoreDifferential: round.scoreDifferential - adjustmentAmount,
-              adjustment: round.exceptionalScoreAdjustment - adjustmentAmount,
+              exceptionalScoreAdjustment:
+                round.exceptionalScoreAdjustment - adjustmentAmount,
             })
             .eq("id", round.id);
 
@@ -130,6 +142,7 @@ export const roundRouter = createTRPCRouter({
             existingHandicapIndex: existingHandicapIndex,
             teeTime: date.toISOString(),
             parPlayed: courseInfo.par,
+            updatedHandicapIndex: existingHandicapIndex,
           },
         ])
         .select("*")
@@ -146,6 +159,7 @@ export const roundRouter = createTRPCRouter({
         holeNumber: hole.holeNumber,
         hcp: hole.hcp,
         strokes: hole.strokes,
+        hcpStrokes: hole.hcpStrokes,
         roundId: roundId,
         userId: userId,
       }));
@@ -182,6 +196,8 @@ export const roundRouter = createTRPCRouter({
         handicapIndex,
         lowestHandicapIndex
       );
+      console.log("Handicap index: " + handicapIndex);
+      console.log("Lowest Handicap Index:" + lowestHandicapIndex);
 
       if (handicapIndex !== existingHandicapIndex) {
         const { error: updateError } = await ctx.supabase

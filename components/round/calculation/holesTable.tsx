@@ -18,6 +18,7 @@ import { useRoundCalculationContext } from "@/contexts/roundCalculationContext";
 
 const HolesTable = () => {
   const { holes } = useRoundCalculationContext();
+
   return (
     <div className="bg-background rounded-lg border">
       <Table>
@@ -26,6 +27,7 @@ const HolesTable = () => {
             <TableHead>Hole</TableHead>
             <TableHead>Par</TableHead>
             <TableHead>Strokes</TableHead>
+            <TableHead>HCP Strokes</TableHead>
             <TableHead className="flex flex-row items-center">
               Adjusted Score{" "}
               <TooltipProvider>
@@ -49,6 +51,7 @@ const HolesTable = () => {
                 <TableCell>{hole.holeNumber}</TableCell>
                 <TableCell>{hole.par}</TableCell>
                 <TableCell>{hole.strokes}</TableCell>
+                <TableCell>{hole.hcpStrokes}</TableCell>
                 <TableCell>{calculateHoleAdjustedScore(hole)}</TableCell>
               </TableRow>
             );
@@ -65,6 +68,11 @@ const HolesTable = () => {
             <TableCell className="bg-secondary dark:bg-ring">
               {holes.reduce((acc, hole) => {
                 return acc + hole.strokes;
+              }, 0)}
+            </TableCell>
+            <TableCell className="bg-secondary dark:bg-ring">
+              {holes.reduce((acc, hole) => {
+                return acc + hole.hcpStrokes;
               }, 0)}
             </TableCell>
             <TableCell className="first:rounded-l-lg last:rounded-r-lg bg-secondary dark:bg-ring">

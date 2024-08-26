@@ -41,16 +41,14 @@ export const calculateScoreDifferential = (
  * @param handicapStrokes - The number of handicap strokes for the player (optional).
  * @returns The hole-adjusted score.
  */
-export const calculateHoleAdjustedScore = (
-  hole: Hole,
-  handicapStrokes?: number
-): number => {
-  return Math.min(hole.strokes, hole.par + 4);
+export const calculateHoleAdjustedScore = (hole: Hole): number => {
+  const maxScore = Math.min(hole.par + 5, hole.par + 2 + hole.hcpStrokes);
+  return Math.min(hole.strokes, maxScore);
 };
 
 /**
  * Calculates the adjusted played score based on the provided holes.
- * The adjusted score for each hole is calculated as the minimum value between the strokes and the par + 4.
+ * The adjusted score for each hole is calculated as the minimum value between the strokes played, and net double bogey (incl. handicap)
  * The adjusted scores are then summed up to get the final adjusted played score.
  *
  * @param holes - An array of Hole objects representing the holes played.
@@ -65,6 +63,7 @@ export const calculateAdjustedPlayedScore = (holes: Hole[]): number => {
   return adjustedScores.reduce((acc, cur) => acc + cur);
 };
 
+// Todo: Can these attributes be manditory?
 export const calculateAdjustedGrossScore = (
   holes: Hole[],
   handicapIndex: number,
@@ -119,7 +118,7 @@ export const calculateInputAdjustedGrossScore = (
   return initialAdjust + predictedStrokes + parForRemainingHoles;
 };
 
-const getRelevantDifferentials = (scoreDifferentials: number[]) => {
+export const getRelevantDifferentials = (scoreDifferentials: number[]) => {
   if (scoreDifferentials.length <= 5) {
     return scoreDifferentials.slice(0, 1);
   } else if (scoreDifferentials.length >= 6 && scoreDifferentials.length <= 8) {
@@ -151,15 +150,23 @@ const getRelevantDifferentials = (scoreDifferentials: number[]) => {
   }
 };
 
+/**
+ * Calculates the handicap index based on the given score differentials.
+ *
+ * @param scoreDifferentials - An array of score differentials relevant to the handicap index calculation.
+ * @returns The calculated handicap index, in accordance to USGA.
+ */
 export const calculateHandicapIndex = (scoreDifferentials: number[]) => {
   const sortedDifferentials = scoreDifferentials.sort((a, b) => a - b);
+  console.log("Sorted Differentials: ", sortedDifferentials);
+
   let differentials: number[] = getRelevantDifferentials(sortedDifferentials);
-  return (
+  const handicapCalculation =
     Math.round(
       (differentials.reduce((acc, cur) => acc + cur) / differentials.length) *
         10
-    ) / 10
-  );
+    ) / 10;
+  return applyHandicapAdjustement(handicapCalculation, scoreDifferentials);
 };
 
 export const calculatePlayingHandicap = (courseHandicap: number) => {
@@ -187,6 +194,9 @@ export async function getLowestHandicapIndex(
       `Error fetching historical handicap indices: ${error.message}`
     );
   }
+  console.log("-----------------Lowest Handicap Index-----------------");
+  console.log("Rounds: " + rounds[0].updatedHandicapIndex);
+  console.log(rounds);
 
   if (!rounds.length) {
     throw new Error("No rounds found in the past 12 months");
@@ -199,22 +209,58 @@ export const calculateCappedHandicapIndex = (
   newHandicapIndex: number,
   lowestHandicapIndex: number
 ): number => {
+  console.log("-------Calculating Capped Handicap Index-------");
+  console.log("New Handicap Index: ", newHandicapIndex);
+  console.log("Lowest Handicap Index: ", lowestHandicapIndex);
   const SOFT_CAP_THRESHOLD = 3.0;
   const HARD_CAP_THRESHOLD = 5.0;
 
   const increase = newHandicapIndex - lowestHandicapIndex;
+  console.log("Increase: ", increase);
 
   if (increase <= SOFT_CAP_THRESHOLD) {
+    console.log(
+      "Increase less than or equal to soft cap threshold, returning new handicap index"
+    );
     return newHandicapIndex;
   }
 
   if (increase > SOFT_CAP_THRESHOLD && increase <= HARD_CAP_THRESHOLD) {
-    return (
+    console.log(
+      "Increase greater than soft cap threshold and less than or equal to hard cap threshold"
+    );
+    const x =
       lowestHandicapIndex +
       SOFT_CAP_THRESHOLD +
-      (increase - SOFT_CAP_THRESHOLD) / 2
-    );
+      (increase - SOFT_CAP_THRESHOLD) / 2;
+    console.log("New Handicap Index Calc: ", x);
+    return x;
   }
 
+  console.log("Increase greater than hard cap threshold");
+  console.log(
+    "New Handicap Index Calc: ",
+    lowestHandicapIndex + HARD_CAP_THRESHOLD
+  );
   return lowestHandicapIndex + HARD_CAP_THRESHOLD;
 };
+
+/**
+ * Applies handicap adjustment based on the length of a calculation in accordance to USGA.
+ * @param handicapCalculation - The original handicap calculation.
+ * @param scoreDifferentials - The score differentials relevant to the handicap calculation.
+ * @returns The adjusted handicap calculation.
+ */
+function applyHandicapAdjustement(
+  handicapCalculation: number,
+  scoreDifferentials: number[]
+) {
+  const numberOfDifferentials = scoreDifferentials.length;
+  if (numberOfDifferentials <= 3) {
+    return handicapCalculation - 2;
+  }
+  if (numberOfDifferentials == 4 || numberOfDifferentials == 6) {
+    return handicapCalculation - 1;
+  }
+  return handicapCalculation;
+}
