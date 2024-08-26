@@ -159,6 +159,7 @@ export const roundRouter = createTRPCRouter({
         holeNumber: hole.holeNumber,
         hcp: hole.hcp,
         strokes: hole.strokes,
+        hcpStrokes: hole.hcpStrokes,
         roundId: roundId,
         userId: userId,
       }));

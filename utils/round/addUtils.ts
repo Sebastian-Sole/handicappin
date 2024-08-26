@@ -5,6 +5,7 @@ import {
   calculateAdjustedPlayedScore,
   calculateAdjustedGrossScore,
   calculateScoreDifferential,
+  calculateCourseHandicap,
 } from "../calculations/handicap";
 import { Tables } from "@/types/supabase";
 
@@ -12,13 +13,14 @@ export const addHcpStrokesToHoles = (
   holes: Hole[],
   courseHandicap: number
 ): Hole[] => {
-  const fullDivision = courseHandicap / holes.length;
-  const remainder = courseHandicap % holes.length;
+  const fullDivision = Math.floor(courseHandicap / 18);
+  const remainder = courseHandicap % 18;
+  const sortedHoles = [...holes].sort((a, b) => a.hcp - b.hcp);
 
-  holes.forEach((hole) => {
-    hole.hcpStrokes + fullDivision;
-    if (hole.hcp <= remainder) {
-      hole.hcpStrokes++;
+  sortedHoles.forEach((hole, index) => {
+    hole.hcpStrokes = fullDivision;
+    if (index < remainder) {
+      hole.hcpStrokes += 1;
     }
   });
 
@@ -41,10 +43,14 @@ export const translateRound = (
 
   const eighteenHolePar = isInputParNine ? par * 2 : par;
 
-  const holesWithHCP = addHcpStrokesToHoles(
-    values.holes,
-    profile.handicapIndex
+  const courseHandicap = calculateCourseHandicap(
+    profile.handicapIndex,
+    slope,
+    courseRating,
+    eighteenHolePar
   );
+
+  const holesWithHCP = addHcpStrokesToHoles(values.holes, courseHandicap);
 
   const adjustedPlayedScore = calculateAdjustedPlayedScore(holesWithHCP);
 
