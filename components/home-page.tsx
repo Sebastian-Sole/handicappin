@@ -8,15 +8,13 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { BarChart, Flag, ArrowUp, ArrowDown } from "lucide-react";
+import { Flag, ArrowUp, ArrowDown } from "lucide-react";
 import Link from "next/link";
-import { H1, H3, Large, P, Small } from "./ui/typography";
+import { H1, H3, Large } from "./ui/typography";
 import { Tables } from "@/types/supabase";
 import { api } from "@/trpc/server";
-import { BarchartChart, LinechartChart } from "./charts";
-import DashboardGraphDisplay from "./dashboard/dashboardGraphDisplay";
-import HomePageLineGraph from "./HomePageLineGraph";
-import HomePageBarChart from "./HomePageBarChart";
+import HandicapTrendChart from "./charts/handicap-trend-chart";
+import ScoreBarChart from "./charts/score-bar-chart";
 
 interface HomepageProps {
   profile: Tables<"Profile">;
@@ -110,8 +108,8 @@ export const HomePage = async ({ profile }: HomepageProps) => {
                   </div>
                 </CardHeader>
                 <CardContent className="p-0 md:min-h-[300px]">
-                  <div className="flex items-center justify-center bg-muted">
-                    <HomePageLineGraph
+                  <div className="w-full h-full pt-8 pr-8">
+                    <HandicapTrendChart
                       previousHandicaps={previousHandicaps}
                       isPositive={percentageChange > 0}
                     />
@@ -131,12 +129,12 @@ export const HomePage = async ({ profile }: HomepageProps) => {
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle>Previous Scores</CardTitle>
                 </CardHeader>
-                <CardContent>
-                  <div className="flex items-center justify-center bg-muted">
-                    <HomePageBarChart previousScores={previousScores} />
+                <CardContent className="p-0 md:min-h-[300px]">
+                  <div className="w-full h-full pt-8 pr-8">
+                    <ScoreBarChart scores={previousScores} />
                   </div>
                 </CardContent>
-                <CardFooter className="pt-2">
+                <CardFooter className="pt-4">
                   <Link
                     href="/score-details"
                     className="text-sm text-center w-full text-primary hover:underline"
