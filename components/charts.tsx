@@ -55,14 +55,18 @@ function BarchartChart(props: any) {
   );
 }
 
-function LinechartChart(props: any) {
-  const { data } = props;
+interface LinechartChartProps {
+  data: any;
+  className?: string;
+  isPositive?: string;
+}
+function LinechartChart({ data, className, isPositive }: LinechartChartProps) {
   return (
-    <div {...props}>
+    <div className={className}>
       <ChartContainer
         config={{
           desktop: {
-            label: "Desktop",
+            label: "Score",
             color: "hsl(var(--chart-1))",
           },
         }}
@@ -86,16 +90,25 @@ function LinechartChart(props: any) {
               return `${dateParts[0]}/${dateParts[1]}`;
             }}
           />
+          <YAxis
+            dataKey="handicap"
+            tickLine={false}
+            tickMargin={8}
+            axisLine={false}
+            domain={[18, 54]}
+          ></YAxis>
           <ChartTooltip
             cursor={false}
             content={<ChartTooltipContent hideLabel />}
           />
           <Line
-            dataKey="desktop"
+            dataKey="handicap"
             type="natural"
-            stroke="var(--color-desktop)"
+            stroke={
+              isPositive ? "hsl(var(--destructive))" : "hsl(var(--primary))"
+            }
             strokeWidth={2}
-            dot={false}
+            dot={true}
           />
         </LineChart>
       </ChartContainer>

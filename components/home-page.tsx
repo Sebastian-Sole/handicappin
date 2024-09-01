@@ -1,5 +1,3 @@
-"use client";
-
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -10,11 +8,53 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { BarChart, LineChart, Flag, ArrowUp, ArrowDown } from "lucide-react";
+import { BarChart, Flag, ArrowUp, ArrowDown } from "lucide-react";
 import Link from "next/link";
 import { H1, H3, Large, P, Small } from "./ui/typography";
+import { Tables } from "@/types/supabase";
+import { api } from "@/trpc/server";
+import { BarchartChart, LinechartChart } from "./charts";
+import DashboardGraphDisplay from "./dashboard/dashboardGraphDisplay";
+import HomePageLineGraph from "./HomePageLineGraph";
+import HomePageBarChart from "./HomePageBarChart";
 
-export function HomePage() {
+interface HomepageProps {
+  profile: Tables<"Profile">;
+}
+
+export const HomePage = async ({ profile }: HomepageProps) => {
+  const { id, email, name, handicapIndex } = profile;
+
+  const rounds = await api.round.getAllByUserId({
+    userId: id,
+    amount: 10,
+  });
+
+  const previousHandicaps = rounds
+    .map((round) => ({
+      roundDate: new Date(round.teeTime).toLocaleDateString(),
+      handicap: round.updatedHandicapIndex,
+    }))
+    .sort((a, b) => {
+      return new Date(a.roundDate).getTime() - new Date(b.roundDate).getTime();
+    });
+
+  const previousScores = rounds
+    .map((round) => ({
+      roundDate: new Date(round.teeTime).toLocaleDateString(),
+      score: round.adjustedGrossScore,
+    }))
+    .sort((a, b) => {
+      return new Date(a.roundDate).getTime() - new Date(b.roundDate).getTime();
+    });
+
+  const percentageChange = Number.parseFloat(
+    (
+      (handicapIndex - previousHandicaps[0].handicap) /
+      previousHandicaps[0].handicap
+    ).toFixed(2)
+  );
+
   return (
     <div className="flex flex-col min-h-screen">
       <main className="flex-1">
@@ -31,7 +71,9 @@ export function HomePage() {
                 </Large>
               </div>
               <div className="space-x-4 pt-20">
-                <H3 className="text-primary-foreground">Your Handicap: 12.4</H3>
+                <H3 className="text-primary-foreground">
+                  Your Handicap: {handicapIndex}
+                </H3>
               </div>
               {/* <div className="pt-20 pb-24 text-primary-foreground">
                 Created by:{" "}
@@ -53,22 +95,30 @@ export function HomePage() {
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle>Handicap Trend</CardTitle>
                   <div className="flex items-center space-x-2">
-                    <span className="text-2xl font-bold">12.4</span>
-                    <span className="flex items-center text-sm text-green-500">
-                      <ArrowUp className="h-4 w-4 mr-1" />
-                      0.3
-                    </span>
+                    <span className="text-2xl font-bold">{handicapIndex}</span>
+                    {percentageChange < 0 && (
+                      <span className="flex items-center text-sm text-green-500">
+                        <ArrowDown className="h-4 w-4 mr-1" />
+                        {percentageChange}%
+                      </span>
+                    )}
+                    {percentageChange >= 0 && (
+                      <span className="flex items-center text-sm text-red-500">
+                        <ArrowUp className="h-4 w-4 mr-1" />+{percentageChange}%
+                      </span>
+                    )}
                   </div>
                 </CardHeader>
-                <CardContent>
-                  <div className="h-[300px] flex items-center justify-center bg-muted">
-                    <LineChart className="h-16 w-16 text-muted-foreground" />
-                    <span className="ml-2 text-muted-foreground">
-                      Line Chart Placeholder
-                    </span>
+                <CardContent className="p-0 md:min-h-[300px]">
+                  <div className="flex items-center justify-center bg-muted">
+                    <HomePageLineGraph
+                      previousHandicaps={previousHandicaps}
+                      isPositive={percentageChange > 0}
+                    />
                   </div>
                 </CardContent>
-                <CardFooter className="pt-2">
+                <CardFooter className="pt-4">
+                  {/* TODO: Change to button variant link */}
                   <Link
                     href="/handicap-details"
                     className="text-sm text-center w-full text-primary hover:underline"
@@ -79,21 +129,11 @@ export function HomePage() {
               </Card>
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle>Score Distribution</CardTitle>
-                  <div className="flex items-center space-x-2">
-                    <span className="text-2xl font-bold">82</span>
-                    <span className="flex items-center text-sm text-red-500">
-                      <ArrowDown className="h-4 w-4 mr-1" />
-                      1.2%
-                    </span>
-                  </div>
+                  <CardTitle>Previous Scores</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="h-[300px] flex items-center justify-center bg-muted">
-                    <BarChart className="h-16 w-16 text-muted-foreground" />
-                    <span className="ml-2 text-muted-foreground">
-                      Bar Chart Placeholder
-                    </span>
+                  <div className="flex items-center justify-center bg-muted">
+                    <HomePageBarChart previousScores={previousScores} />
                   </div>
                 </CardContent>
                 <CardFooter className="pt-2">
@@ -114,13 +154,15 @@ export function HomePage() {
             <div className="grid gap-10 mx-auto max-w-[800px]">
               <div className="space-y-4">
                 <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl">
-                  Improve Your Game
+                  Making Golf Accessible
                 </h2>
                 <p className="text-muted-foreground">
-                  Our advanced golf statistics tracking system helps you
-                  identify areas for improvement in your game. By analyzing your
-                  performance data, you can make informed decisions about your
-                  practice routine and strategy on the course.
+                  We found that other golf services overcomplicated golfing,
+                  whether it be keeping scores, or hiding the calculations
+                  behind *cough* ugly *cough* UI&apos;s. We put user experience
+                  first, and aim to make keeping track of your golf game
+                  effortless, all while helping golfers understand the
+                  calculations behind the scenes.
                 </p>
               </div>
               <div className="space-y-4">
@@ -128,13 +170,29 @@ export function HomePage() {
                   Key Features
                 </h3>
                 <ul className="list-disc list-inside space-y-2 text-muted-foreground">
-                  <li>Accurate handicap calculation based on USGA standards</li>
-                  <li>Detailed statistics for every aspect of your game</li>
-                  <li>Trend analysis to track your progress over time</li>
-                  <li>Course management tools to plan your strategy</li>
+                  <li>Round-tracking</li>
+                  <li>
+                    Real-time, <b>accurate</b> handicap index updates according
+                    to <b>2024 USGA rules</b>
+                  </li>
+                  <li>
+                    Interactive statistic <b>calculators</b>
+                  </li>
+                  <li>
+                    Detailed <b>explanations</b> of how your played rounds
+                    affected your handicap
+                  </li>
+                  <li>
+                    Frivolities - Find virtually any statistic you could want{" "}
+                    <b>(Coming Soon)</b>
+                  </li>
+                  <li>
+                    Guaranteed the <b>easiest</b> golf application to use on the
+                    market
+                  </li>
                 </ul>
               </div>
-              <div className="space-y-4">
+              {/* <div className="space-y-4">
                 <p className="text-muted-foreground">
                   Ready to take your game to the next level? Explore our{" "}
                   <Link
@@ -152,7 +210,7 @@ export function HomePage() {
                   </Link>
                   .
                 </p>
-              </div>
+              </div> */}
             </div>
           </div>
         </section>
@@ -245,4 +303,4 @@ export function HomePage() {
       </footer>
     </div>
   );
-}
+};
