@@ -15,6 +15,7 @@ import { Tables } from "@/types/supabase";
 import { api } from "@/trpc/server";
 import HandicapTrendChart from "./charts/handicap-trend-chart";
 import ScoreBarChart from "./charts/score-bar-chart";
+import Hero from "./hero";
 
 interface HomepageProps {
   profile: Tables<"Profile">;
@@ -56,34 +57,13 @@ export const HomePage = async ({ profile }: HomepageProps) => {
   return (
     <div className="flex flex-col min-h-screen">
       <main className="flex-1">
-        <section className="w-full py-10 md:py-20 lg:py-30 xl:py-40 bg-primary">
-          <div className="container px-4 md:px-6">
-            <div className="flex flex-col items-center space-y-4 text-center">
-              <div className="space-y-2">
-                <H1 className="text-primary-foreground">
-                  Handicappin&apos; - Golf Made Easy
-                </H1>
-                <Large className="text-primary-foreground">
-                  Golfing is hard enough... so we make everything else as smooth
-                  as putter 🤭
-                </Large>
-              </div>
-              <div className="space-x-4 pt-20">
-                <H3 className="text-primary-foreground">
-                  Your Handicap: {handicapIndex}
-                </H3>
-              </div>
-              {/* <div className="pt-20 pb-24 text-primary-foreground">
-                Created by:{" "}
-                <Link
-                  href="https://soleinnovations.com"
-                  className="text-sm text-primary-foreground hover:underline"
-                >
-                  SoleInnovations
-                </Link>
-              </div> */}
-            </div>
-          </div>
+        <section className="w-full py-4 md:py-4 lg:py-4 xl:py-4 bg-primary">
+          <Hero
+            profile={profile}
+            previousScores={previousScores.map((entry) => {
+              return entry.score;
+            })}
+          />
         </section>
 
         <section className="w-full py-12 md:py-24 lg:py-32">

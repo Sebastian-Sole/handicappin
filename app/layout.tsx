@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
-import Navbar from "@/components/navbar";
 import { TRPCReactProvider } from "@/trpc/react";
 import { Toaster } from "@/components/ui/toaster";
 import { ThemeProvider } from "@/components/theme-provider";
+import { Navbar } from "@/components/navbar";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -29,7 +29,7 @@ export default function RootLayout({
             disableTransitionOnChange
           >
             <Navbar />
-            {children}
+            <section className="pt-16">{children}</section>
             <Toaster />
           </ThemeProvider>
         </TRPCReactProvider>
