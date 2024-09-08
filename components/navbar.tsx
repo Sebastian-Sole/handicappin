@@ -6,6 +6,21 @@ import { createServerComponentClient } from "@/utils/supabase/server";
 import ThemeButton from "./themeButton";
 import LogoutButton from "./logoutButton";
 import { Large } from "./ui/typography";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "./ui/dropdown-menu";
+import {
+  CirclePlus,
+  LayoutDashboardIcon,
+  LogOutIcon,
+  SettingsIcon,
+  UserIcon,
+} from "lucide-react";
+import { Separator } from "./ui/separator";
 
 export async function Navbar() {
   const supabase = createServerComponentClient();
@@ -18,7 +33,7 @@ export async function Navbar() {
       <div className="container flex h-16 items-center justify-between px-4 md:px-6 m-0 max-w-full">
         <Link
           href="/"
-          className="flex items-center gap-2 lg:w-1/3"
+          className="flex items-center gap-2 w-1/3"
           prefetch={false}
         >
           <Large>Handicappin&apos;</Large>
@@ -41,14 +56,14 @@ export async function Navbar() {
                 About
               </Link>
               <Link
-                href="#"
+                href="/calculators"
                 className="hover:underline hover:underline-offset-4"
                 prefetch={false}
               >
                 Calculators
               </Link>
               <Link
-                href="#"
+                href={`/dashboard/${data.user.id}`}
                 className="hover:underline hover:underline-offset-4"
                 prefetch={false}
               >
@@ -56,20 +71,55 @@ export async function Navbar() {
               </Link>
             </nav>
             <div className="flex items-center gap-4 sm:w-1/3 justify-end">
-              <Link href={"/rounds/add"} className="md:block hidden">
+              <Link href={"/rounds/add"} className="">
                 <Button>Add Round</Button>
               </Link>
-              <ThemeButton size="icon" />
-              <Link
-                href="#"
-                className="rounded-full bg-muted p-2 hover:bg-muted-foreground"
-                prefetch={false}
-              >
-                <Avatar className="h-8 w-8">
-                  <AvatarImage src="/placeholder-user.jpg" alt="@shadcn" />
-                  <AvatarFallback>JD</AvatarFallback>
-                </Avatar>
-              </Link>
+              <ThemeButton size="icon" className="md:flex hidden" />
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Link
+                    href="#"
+                    className="rounded-full bg-muted p-2 hover:bg-muted-foreground"
+                    prefetch={false}
+                  >
+                    <Avatar className="h-8 w-8">
+                      <AvatarImage src="/placeholder-user.jpg" alt="@shadcn" />
+                      <AvatarFallback>JD</AvatarFallback>
+                    </Avatar>
+                  </Link>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <Link href={`/profile/${data.user.id}`}>
+                    <DropdownMenuItem>
+                      <UserIcon className="h-4 w-4 mr-2" />
+                      Profile
+                    </DropdownMenuItem>
+                  </Link>
+                  <Link href={"/settings"}>
+                    <DropdownMenuItem>
+                      <SettingsIcon className="h-4 w-4 mr-2" />
+                      Settings
+                    </DropdownMenuItem>
+                  </Link>
+                  <Link href={`/dashboard/${data.user.id}`}>
+                    <DropdownMenuItem>
+                      <LayoutDashboardIcon className="h-4 w-4 mr-2" />
+                      Dashboard
+                    </DropdownMenuItem>
+                  </Link>
+                  <DropdownMenuSeparator />
+                  <Link href={"/rounds/add"}>
+                    <DropdownMenuItem>
+                      <CirclePlus className="h-4 w-4 mr-2" />
+                      Add Round
+                    </DropdownMenuItem>
+                  </Link>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem>
+                    <LogoutButton />
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
               <div className="flex items-center gap-4 sm:hidden">
                 <Sheet>
                   <SheetTrigger asChild>
@@ -122,72 +172,93 @@ export async function Navbar() {
         )}
         {!isAuthed && (
           <>
-            <div className="flex items-center gap-4">
-              <Button>Get Started</Button>
-              <Link href={"/signup"}>
-                <Button>Signup</Button>
+            <nav className="hidden w-1/3 items-center justify-center gap-6 text-sm font-medium sm:flex">
+              <Link
+                href="/"
+                className="hover:underline hover:underline-offset-4"
+                prefetch={false}
+              >
+                Home
               </Link>
-              <Link href={"/login"}>
+              <Link
+                href="/about"
+                className="hover:underline hover:underline-offset-4"
+                prefetch={false}
+              >
+                About
+              </Link>
+              <Link
+                href="/calculators"
+                className="hover:underline hover:underline-offset-4"
+                prefetch={false}
+              >
+                Calculators
+              </Link>
+            </nav>
+            <div className="flex items-center gap-4 sm:w-1/3 justify-end">
+              <Link href={"/signup"} className="">
+                <Button>Sign Up</Button>
+              </Link>
+              <Link href={"/login"} className="">
                 <Button>Login</Button>
               </Link>
-              <ThemeButton size="icon" />
-            </div>
-            <div className="flex items-center gap-4 md:hidden">
-              <Sheet>
-                <SheetTrigger asChild>
-                  <Button variant="ghost" size="icon" className="rounded-full">
-                    <MenuIcon className="h-6 w-6" />
-                  </Button>
-                </SheetTrigger>
-                <SheetContent side="right" className="sm:w-64">
-                  <div className="flex flex-col gap-4 p-4">
-                    <Link
-                      href="#"
-                      className="hover:underline hover:underline-offset-4"
-                      prefetch={false}
+              <ThemeButton size="icon" className="md:flex hidden" />
+
+              <div className="flex items-center gap-4 sm:hidden">
+                <Sheet>
+                  <SheetTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="rounded-full"
                     >
-                      Home
-                    </Link>
-                    <Link
-                      href="#"
-                      className="hover:underline hover:underline-offset-4"
-                      prefetch={false}
-                    >
-                      About
-                    </Link>
-                    <Link
-                      href="#"
-                      className="hover:underline hover:underline-offset-4"
-                      prefetch={false}
-                    >
-                      Services
-                    </Link>
-                    <Link
-                      href="#"
-                      className="hover:underline hover:underline-offset-4"
-                      prefetch={false}
-                    >
-                      Contact
-                    </Link>
-                    <Button>Get Started</Button>
-                    <ThemeButton size="lg" />
-                    <LogoutButton />
-                    <Link
-                      href="#"
-                      className="rounded-full bg-muted p-2 hover:bg-muted-foreground"
-                      prefetch={false}
-                    >
-                      <Avatar className="h-8 w-8">
-                        <AvatarImage
-                          src="/placeholder-user.jpg"
-                          alt="@shadcn"
-                        />
-                        <AvatarFallback>JD</AvatarFallback>
-                      </Avatar>
-                    </Link>
-                  </div>
-                </SheetContent>
-              </Sheet>
+                      <MenuIcon className="h-6 w-6" />
+                    </Button>
+                  </SheetTrigger>
+                  <SheetContent side="right" className="sm:w-64">
+                    <div className="flex flex-col gap-4 p-4">
+                      <Link
+                        href="/"
+                        className="hover:underline hover:underline-offset-4"
+                        prefetch={false}
+                      >
+                        Home
+                      </Link>
+                      <Link
+                        href="/about"
+                        className="hover:underline hover:underline-offset-4"
+                        prefetch={false}
+                      >
+                        About
+                      </Link>
+                      <Link
+                        href="/calculators"
+                        className="hover:underline hover:underline-offset-4"
+                        prefetch={false}
+                      >
+                        Calculators
+                      </Link>
+                      <Link
+                        href="/contact"
+                        className="hover:underline hover:underline-offset-4"
+                        prefetch={false}
+                      >
+                        Contact
+                      </Link>
+                      <LogoutButton />
+                      <Separator />
+                      <div className="flex flex-col">
+                        <Link href={"/signup"} className="">
+                          <Button className="w-full mb-4">Sign Up</Button>
+                        </Link>
+                        <Link href={"/login"} className="">
+                          <Button className="w-full">Login</Button>
+                        </Link>
+                      </div>
+                    </div>
+                  </SheetContent>
+                </Sheet>
+              </div>
             </div>
           </>
         )}

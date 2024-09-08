@@ -1,7 +1,7 @@
 "use client";
 import { useRouter } from "next/navigation";
-import { Button } from "./ui/button";
 import { createClientComponentClient } from "@/utils/supabase/client";
+import { LogOutIcon } from "lucide-react";
 
 interface LogoutButtonProps {
   className?: string;
@@ -18,10 +18,10 @@ const LogoutButton = ({ className }: LogoutButtonProps) => {
   };
 
   return (
-    <Button onClick={onClick} className={className}>
-      {" "}
-      Logout{" "}
-    </Button>
+    <div onClick={onClick} className="flex flex-row items-center">
+      <LogOutIcon className="h-4 w-4 mr-2" />
+      Logout
+    </div>
   );
 };
 
