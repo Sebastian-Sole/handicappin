@@ -1,5 +1,4 @@
 "use client";
-import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { Input } from "./ui/input";
@@ -9,22 +8,23 @@ import { useForm } from "react-hook-form";
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
 import { createClientComponentClient } from "@/utils/supabase/client";
-import { redirect, useRouter } from "next/navigation";
-import { revalidatePath } from "next/cache";
+import { useRouter } from "next/navigation";
 import useMounted from "@/hooks/useMounted";
 import { Skeleton } from "./ui/skeleton";
+import { FacebookIcon } from "lucide-react";
+import { useToast } from "./ui/use-toast";
 
 export function Login() {
   const isMounted = useMounted();
   const supabase = createClientComponentClient();
   const router = useRouter();
+  const { toast } = useToast();
 
   const loginSchema = z.object({
     email: z.string().min(2).max(50),
@@ -47,6 +47,10 @@ export function Login() {
 
     if (error) {
       console.log(error);
+      toast({
+        title: "Error logging in",
+        description: error.message,
+      });
       router.push("/error");
     }
     router.push("/");
@@ -59,7 +63,7 @@ export function Login() {
   }
 
   return (
-    <div className="mx-auto max-w-sm space-y-6 py-4 md:py-4 lg:py-4 xl:py-4">
+    <div className="mx-auto max-w-sm space-y-6 py-4 md:py-4 lg:py-4 xl:py-4 min-w-[40%]">
       <div className="space-y-2 text-center">
         <h1 className="text-3xl font-bold">Welcome Back</h1>
         <p className="text-muted-foreground">
@@ -85,9 +89,7 @@ export function Login() {
                         {...field}
                       />
                     </FormControl>
-                    <FormDescription>
-                      This is your public display name.
-                    </FormDescription>
+
                     <FormMessage />
                   </FormItem>
                 )}
@@ -108,7 +110,6 @@ export function Login() {
                         {...field}
                       />
                     </FormControl>
-                    <FormDescription>Enter a password</FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -117,23 +118,21 @@ export function Login() {
             <Button type="submit" className="w-full">
               Sign In
             </Button>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-2">
-                <Button variant="outline" className="w-full">
-                  <GithubIcon className="mr-2 h-4 w-4" />
-                  Sign in with GitHub
-                </Button>
-                <Button variant="outline" className="w-full">
-                  <ChromeIcon className="mr-2 h-4 w-4" />
-                  Sign in with Google
-                </Button>
-              </div>
-              <Link
-                href="#"
-                className="text-sm text-primary-foreground underline underline-offset-4"
-                prefetch={false}
-              >
-                Forgot password?
+            <div className="flex flex-col items-center justify-between space-y-2 ">
+              <Button variant="outline" className="w-full">
+                <FacebookIcon className="mr-2 h-4 w-4" />
+                Sign in with Facebook
+              </Button>
+              <Button variant="outline" className="w-full">
+                <ChromeIcon className="mr-2 h-4 w-4" />
+                Sign in with Google
+              </Button>
+              <Button variant="outline" className="w-full">
+                <GithubIcon className="mr-2 h-4 w-4" />
+                Sign in with GitHub
+              </Button>
+              <Link href="#" className="" prefetch={false}>
+                <Button variant={"link"}> Forgot password?</Button>
               </Link>
             </div>
           </form>
