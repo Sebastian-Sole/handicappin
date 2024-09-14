@@ -20,15 +20,15 @@ interface HeroProps {
 
 const Hero = ({ profile, previousScores }: HeroProps) => {
   return (
-    <section className="w-full py-4 md:py-8 lg:py-12 xl:py-24 bg-cover bg-center">
-      <div className="container px-4 md:px-6">
-        <div className="grid gap-6 lg:grid-cols-[1fr_460px] lg:gap-12 xl:grid-cols-[1fr_600px]">
+    <section className="w-full py-4 lg:py-8 xl:py-12 2xl:py-24 bg-cover bg-center">
+      <div className="sm:container px-4 lg:px-6">
+        <div className="grid gap-6 xl:grid-cols-[1fr_460px] xl:gap-12 2xl:grid-cols-[1fr_600px]">
           <div className="flex flex-col justify-between space-y-4 bg-background/90 backdrop-blur-sm p-8 rounded-xl shadow-lg h-full">
             <div className="space-y-4">
-              <h1 className="text-3xl font-bold tracking-tighter sm:text-5xl xl:text-6xl/none text-primary">
+              <h1 className="text-3xl font-bold tracking-tighter md:text-5xl 2xl:text-6xl/none text-primary">
                 Welcome back, {profile.name}!
               </h1>
-              <p className="max-w-[600px] text-muted-foreground md:text-xl">
+              <p className="max-w-[600px] text-muted-foreground lg:text-xl">
                 {/* TODO: Update this */}
                 Here&apos;s a quick overview of your golf performance. Keep up
                 the good work!
@@ -50,7 +50,7 @@ const Hero = ({ profile, previousScores }: HeroProps) => {
                 </Button>
               </div>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-6">
               <div className="flex flex-col items-center space-y-2 bg-primary/10 p-4 rounded-lg">
                 <BarChart2 className="h-8 w-8 text-primary" />
                 <span className="text-sm font-medium text-center">
@@ -79,7 +79,7 @@ const Hero = ({ profile, previousScores }: HeroProps) => {
             </div>
             {/* <div className="pt-6 border-t border-zinc-200">
               <h3 className="text-lg font-semibold mb-2">Upcoming Events</h3>
-              <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <ul className="grid grid-cols-1 md:grid-cols-2 gap-2">
                 <li className="flex items-center space-x-2">
                   <Calendar className="h-5 w-5 text-blue-500" />
                   <span className="text-sm">Local Tournament - June 15</span>
@@ -101,7 +101,7 @@ const Hero = ({ profile, previousScores }: HeroProps) => {
               </ul>
             </div> */}
           </div>
-          {/* <div className="hidden lg:flex items-center justify-center">
+          {/* <div className="hidden xl:flex items-center justify-center">
             <div className="relative w-full h-full max-w-[500px] max-h-[600px]">
               <div className="absolute inset-0 bg-gradient-to-r from-primary to-primary-foreground rounded-full blur-3xl opacity-30 animate-pulse"></div>
               <div className="relative w-full h-full bg-white bg-opacity-50 backdrop-blur-md rounded-3xl shadow-2xl p-8 flex flex-col justify-between">
@@ -182,7 +182,7 @@ const Hero = ({ profile, previousScores }: HeroProps) => {
             </div>
           </div>
         </div> */}
-          <div className="hidden lg:flex items-center justify-center">
+          <div className="hidden xl:flex items-center justify-center">
             <div className="relative w-full h-full max-w-[500px] max-h-[600px]">
               <div className="absolute inset-0 bg-gradient-to-r from-primary to-primary-foreground rounded-full blur-3xl opacity-30 animate-pulse"></div>
               <div className="relative w-full h-full bg-background/50 bg-opacity-50 backdrop-blur-md rounded-3xl shadow-2xl p-8 flex flex-col justify-between">

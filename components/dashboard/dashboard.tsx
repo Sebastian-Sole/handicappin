@@ -82,7 +82,7 @@ export function Dashboard({ profile, roundsList, header }: DashboardProps) {
 
   return (
     <div className="bg-background text-foreground p-8 rounded-lg h-full">
-      <div className="grid grid-cols-1 xl:grid-cols-3">
+      <div className="grid grid-cols-1 2xl:grid-cols-3">
         <DashboardInfo handicapIndex={profile.handicapIndex} header={header} />
         <DashboardGraphDisplay graphData={graphData} />
       </div>

@@ -23,6 +23,15 @@ const config = {
         "3xl": "1400px",
       },
     },
+    screens: {
+      xs: "320px",
+      sm: "480px",
+      md: "640px",
+      lg: "768px",
+      xl: "1024px",
+      "2xl": "1280px",
+      "3xl": "1400px",
+    },
     extend: {
       colors: {
         border: "hsl(var(--border))",

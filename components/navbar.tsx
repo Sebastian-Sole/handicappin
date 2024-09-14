@@ -30,7 +30,7 @@ export async function Navbar() {
 
   return (
     <header className="fixed top-0 z-50 w-full bg-background shadow-sm">
-      <div className="container flex h-16 items-center justify-between px-4 md:px-6 m-0 max-w-full">
+      <div className="container flex h-16 items-center justify-between px-4 sm:px-6 m-0 max-w-full">
         <Link
           href="/"
           className="flex items-center gap-2 w-1/3"
@@ -40,10 +40,10 @@ export async function Navbar() {
         </Link>
         {isAuthed && (
           <>
-            <nav className="hidden w-1/3 items-center justify-center gap-6 text-sm font-medium sm:flex">
+            <nav className="hidden w-1/3 items-center justify-center gap-6 text-sm font-medium md:flex ">
               <Link
                 href="/"
-                className="hover:underline hover:underline-offset-4"
+                className="hover:underline hover:underline-offset-4 "
                 prefetch={false}
               >
                 Home
@@ -70,8 +70,8 @@ export async function Navbar() {
                 Dashboard
               </Link>
             </nav>
-            <div className="flex items-center gap-4 sm:w-1/3 justify-end">
-              <Link href={"/rounds/add"} className="">
+            <div className="flex items-center gap-4 xs:w-1/3 justify-end">
+              <Link href={"/rounds/add"} className="xl:block hidden">
                 <Button>Add Round</Button>
               </Link>
               <ThemeButton size="icon" className="md:flex hidden" />
@@ -120,7 +120,7 @@ export async function Navbar() {
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
-              <div className="flex items-center gap-4 sm:hidden">
+              <div className="flex items-center gap-4 md:hidden">
                 <Sheet>
                   <SheetTrigger asChild>
                     <Button
@@ -131,31 +131,38 @@ export async function Navbar() {
                       <MenuIcon className="h-6 w-6" />
                     </Button>
                   </SheetTrigger>
-                  <SheetContent side="right" className="sm:w-64">
+                  <SheetContent side="right" className="xs:w-64">
                     <div className="flex flex-col gap-4 p-4">
                       <Link
-                        href="#"
+                        href="/"
                         className="hover:underline hover:underline-offset-4"
                         prefetch={false}
                       >
                         Home
                       </Link>
                       <Link
-                        href="#"
+                        href="/about"
                         className="hover:underline hover:underline-offset-4"
                         prefetch={false}
                       >
                         About
                       </Link>
                       <Link
-                        href="#"
+                        href="/services"
                         className="hover:underline hover:underline-offset-4"
                         prefetch={false}
                       >
-                        Services
+                        Calculators
                       </Link>
                       <Link
-                        href="#"
+                        href={`/dashboard/${data.user.id}`}
+                        className="hover:underline hover:underline-offset-4"
+                        prefetch={false}
+                      >
+                        Dashboard
+                      </Link>
+                      <Link
+                        href="/contact"
                         className="hover:underline hover:underline-offset-4"
                         prefetch={false}
                       >
@@ -172,7 +179,7 @@ export async function Navbar() {
         )}
         {!isAuthed && (
           <>
-            <nav className="hidden w-1/3 items-center justify-center gap-6 text-sm font-medium sm:flex">
+            <nav className="hidden w-1/3 items-center justify-center gap-6 text-sm font-medium md:flex">
               <Link
                 href="/"
                 className="hover:underline hover:underline-offset-4"
@@ -195,16 +202,16 @@ export async function Navbar() {
                 Calculators
               </Link>
             </nav>
-            <div className="flex items-center gap-4 sm:w-1/3 justify-end">
-              <Link href={"/signup"} className="">
+            <div className="flex items-center gap-4 xs:w-1/3 justify-end">
+              <Link href={"/signup"} className="lg:block hidden">
                 <Button>Sign Up</Button>
               </Link>
-              <Link href={"/login"} className="">
+              <Link href={"/login"} className="lg:block hidden">
                 <Button>Login</Button>
               </Link>
-              <ThemeButton size="icon" className="md:flex hidden" />
+              <ThemeButton size="icon" className="lg:flex hidden" />
 
-              <div className="flex items-center gap-4 sm:hidden">
+              <div className="flex items-center gap-4 lg:hidden">
                 <Sheet>
                   <SheetTrigger asChild>
                     <Button
@@ -215,7 +222,7 @@ export async function Navbar() {
                       <MenuIcon className="h-6 w-6" />
                     </Button>
                   </SheetTrigger>
-                  <SheetContent side="right" className="sm:w-64">
+                  <SheetContent side="right" className="xs:w-64">
                     <div className="flex flex-col gap-4 p-4">
                       <Link
                         href="/"
@@ -245,7 +252,6 @@ export async function Navbar() {
                       >
                         Contact
                       </Link>
-                      <LogoutButton />
                       <Separator />
                       <div className="flex flex-col">
                         <Link href={"/signup"} className="">

@@ -16,6 +16,7 @@ import { api } from "@/trpc/server";
 import HandicapTrendChart from "./charts/handicap-trend-chart";
 import ScoreBarChart from "./charts/score-bar-chart";
 import Hero from "./hero";
+import React from "react";
 
 interface HomepageProps {
   profile: Tables<"Profile">;
@@ -57,7 +58,7 @@ export const HomePage = async ({ profile }: HomepageProps) => {
   return (
     <div className="flex flex-col min-h-screen">
       <main className="flex-1">
-        <section className="w-full py-4 md:py-4 lg:py-4 xl:py-4 bg-primary">
+        <section className="w-full py-4 lg:py-4 xl:py-4 2xl:py-4 bg-primary">
           <Hero
             profile={profile}
             previousScores={previousScores.map((entry) => {
@@ -66,28 +67,40 @@ export const HomePage = async ({ profile }: HomepageProps) => {
           />
         </section>
 
-        <section className="w-full py-12 md:py-24 lg:py-32">
-          <div className="container px-4 md:px-6">
-            <div className="grid gap-6 lg:grid-cols-2 lg:gap-12">
+        <section className="w-full py-12 lg:py-24 xl:py-32">
+          <div className="sm:container px-4 lg:px-6">
+            <div className="grid gap-6 xl:grid-cols-2 xl:gap-12">
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle>Handicap Trend</CardTitle>
+                  <React.Fragment>
+                    <CardTitle className="sm:text-2xl text-xl min-[400px]:hidden">
+                      HCP Trend
+                    </CardTitle>
+                    <CardTitle className="sm:text-2xl text-xl min-[400px]:block hidden">
+                      Handicap Trend
+                    </CardTitle>
+                  </React.Fragment>
                   <div className="flex items-center space-x-2">
-                    <span className="text-2xl font-bold">{handicapIndex}</span>
-                    {percentageChange < 0 && (
-                      <span className="flex items-center text-sm text-green-500">
-                        <ArrowDown className="h-4 w-4 mr-1" />
-                        {percentageChange}%
-                      </span>
-                    )}
-                    {percentageChange >= 0 && (
-                      <span className="flex items-center text-sm text-red-500">
-                        <ArrowUp className="h-4 w-4 mr-1" />+{percentageChange}%
-                      </span>
-                    )}
+                    <span className="sm:text-2xl text-xl font-bold">
+                      {handicapIndex}
+                    </span>
+                    <div className="min-[340px]:block hidden">
+                      {percentageChange < 0 && (
+                        <span className="flex items-center text-sm text-green-500">
+                          <ArrowDown className="h-4 w-4 mr-1" />
+                          {percentageChange}%
+                        </span>
+                      )}
+                      {percentageChange >= 0 && (
+                        <span className="flex items-center text-sm text-red-500">
+                          <ArrowUp className="h-4 w-4 mr-1" />+
+                          {percentageChange}%
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </CardHeader>
-                <CardContent className="p-0 md:min-h-[300px]">
+                <CardContent className="p-0 lg:min-h-[300px]">
                   <div className="w-full h-full pt-8 pr-8">
                     <HandicapTrendChart
                       previousHandicaps={previousHandicaps}
@@ -107,9 +120,11 @@ export const HomePage = async ({ profile }: HomepageProps) => {
               </Card>
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle>Previous Scores</CardTitle>
+                  <CardTitle className="sm:text-2xl text-xl">
+                    Previous Scores
+                  </CardTitle>
                 </CardHeader>
-                <CardContent className="p-0 md:min-h-[300px]">
+                <CardContent className="p-0 lg:min-h-[300px]">
                   <div className="w-full h-full pt-8 pr-8">
                     <ScoreBarChart scores={previousScores} />
                   </div>
@@ -127,11 +142,11 @@ export const HomePage = async ({ profile }: HomepageProps) => {
           </div>
         </section>
 
-        <section className="w-full py-12 md:py-24 lg:py-32 bg-muted">
-          <div className="container px-4 md:px-6">
+        <section className="w-full py-12 lg:py-24 xl:py-32 bg-muted">
+          <div className="container px-4 lg:px-6">
             <div className="grid gap-10 mx-auto max-w-[800px]">
               <div className="space-y-4">
-                <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl">
+                <h2 className="text-3xl font-bold tracking-tighter md:text-4xl lg:text-5xl">
                   Making Golf Accessible
                 </h2>
                 <p className="text-muted-foreground">
@@ -193,8 +208,8 @@ export const HomePage = async ({ profile }: HomepageProps) => {
           </div>
         </section>
 
-        <section className="w-full py-12 md:py-24 lg:py-32">
-          <div className="container px-4 md:px-6">
+        <section className="w-full py-12 lg:py-24 xl:py-32">
+          <div className="container px-4 lg:px-6">
             <Card className="mx-auto max-w-[600px]">
               <CardHeader>
                 <CardTitle className="text-2xl font-bold">
@@ -236,15 +251,15 @@ export const HomePage = async ({ profile }: HomepageProps) => {
       </main>
 
       <footer className="w-full border-t py-6">
-        <div className="container px-4 md:px-6">
-          <div className="flex flex-col items-center justify-between gap-4 md:flex-row">
-            <div className="text-center md:text-left flex flex-row">
+        <div className="container px-4 lg:px-6">
+          <div className="flex flex-col items-center justify-between gap-4 lg:flex-row">
+            <div className="text-center lg:text-left flex flex-row">
               <p className="text-sm text-muted-foreground">
                 © 2024 Handicappin&apos;. All rights reserved. Developed By:{" "}
                 <a href="https://www.soleinnovations.com">SoleInnovations</a>
               </p>
             </div>
-            <nav className="flex gap-4 sm:gap-6">
+            <nav className="flex gap-4 md:gap-6">
               <Link
                 className="text-sm font-medium hover:underline underline-offset-4"
                 href="/"
