@@ -1,9 +1,13 @@
 "use client";
 import { useRouter } from "next/navigation";
-import { Button } from "./ui/button";
 import { createClientComponentClient } from "@/utils/supabase/client";
+import { LogOutIcon } from "lucide-react";
 
-const LogoutButton = () => {
+interface LogoutButtonProps {
+  className?: string;
+}
+
+const LogoutButton = ({ className }: LogoutButtonProps) => {
   const router = useRouter();
   const supabase = createClientComponentClient();
 
@@ -13,7 +17,12 @@ const LogoutButton = () => {
     router.refresh();
   };
 
-  return <Button onClick={onClick}> Logout </Button>;
+  return (
+    <div onClick={onClick} className="flex flex-row items-center">
+      <LogOutIcon className="h-4 w-4 mr-2" />
+      Logout
+    </div>
+  );
 };
 
 export default LogoutButton;

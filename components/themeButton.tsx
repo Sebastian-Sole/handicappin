@@ -9,15 +9,19 @@ import {
 } from "./ui/dropdown-menu";
 import { useTheme } from "next-themes";
 
-const ThemeButton = () => {
+interface ThemeButtonProps {
+  size: "icon" | "sm" | "lg";
+  className?: string;
+}
+
+const ThemeButton = ({ size, className }: ThemeButtonProps) => {
   const { setTheme } = useTheme();
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="secondary" size="icon">
+        <Button variant="secondary" size={size} className={className}>
           <Sun className="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
           <Moon className="absolute h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
-          <span className="sr-only">Toggle theme</span>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">

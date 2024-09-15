@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { H4 } from "../ui/typography";
 import { Button } from "../ui/button";
-import { BarchartChart } from "../charts";
+import ScoreBarChart from "../charts/score-bar-chart";
+import { Separator } from "../ui/separator";
 
 interface DashboardGraphDisplayProps {
   graphData: any;
@@ -12,17 +13,14 @@ const DashboardGraphDisplay = ({ graphData }: DashboardGraphDisplayProps) => {
     <div className="bg-card rounded-lg p-6 col-span-2 rounded-l-none">
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-2xl font-bold">Recent Rounds</h2>
-        <Link
-          href={`/rounds/add`}
-          className="text-primary underline"
-          prefetch={false}
-        >
-          Add a round
+        <Link href={`/rounds/add`} prefetch={false}>
+          <Button variant={"link"} className="underline">
+            Add a round
+          </Button>
         </Link>
       </div>
-      {graphData.length !== 0 && (
-        <BarchartChart className="aspect-[16/9]" data={graphData} />
-      )}
+      <Separator className="mb-8" />
+      {graphData.length !== 0 && <ScoreBarChart scores={graphData} />}
       {graphData.length === 0 && (
         <div className="flex items-center justify-center h-64 xl:h-[90%] border border-gray-100 flex-col">
           <H4>No rounds found</H4>
