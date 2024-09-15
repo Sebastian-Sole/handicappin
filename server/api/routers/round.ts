@@ -286,4 +286,38 @@ export const roundRouter = createTRPCRouter({
 
       return roundWithCourse;
     }),
+  getBestRound: publicProcedure
+    .input(
+      z.object({
+        userId: z.string().uuid(),
+      })
+    )
+    .query(async ({ ctx, input }) => {
+      const { data: rounds, error } = await ctx.supabase
+        .from("Round")
+        .select(
+          `
+    *,
+    Course (
+      *
+    )
+  `
+        )
+        .eq("userId", input.userId)
+        .order("scoreDifferential", { ascending: true })
+        .range(0, 1);
+
+      if (error) {
+        console.log(error);
+        throw new Error(`Error getting best round: ${error.message}`);
+      }
+
+      const roundsWithCourse = rounds
+        .map((round) => {
+          return flattenRoundWithCourse(round, round.Course);
+        })
+        .filter((round): round is RoundWithCourse => round !== null);
+
+      return roundsWithCourse[0];
+    }),
 });

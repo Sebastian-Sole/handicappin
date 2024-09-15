@@ -6,20 +6,31 @@ import {
   TrendingDown,
   Award,
   Target,
-  Clock,
-  Calendar,
   Info,
 } from "lucide-react";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "./ui/hover-card";
 import { P } from "./ui/typography";
 import Link from "next/link";
+import { RoundWithCourse } from "@/types/database";
 
 interface HeroProps {
   profile: Tables<"Profile">;
   previousScores: number[];
+  bestRound: RoundWithCourse;
 }
 
-const Hero = ({ profile, previousScores }: HeroProps) => {
+const Hero = ({ profile, previousScores, bestRound }: HeroProps) => {
+  const calculatePlusMinusScore = (): string => {
+    console.log(bestRound.adjustedGrossScore);
+    console.log(bestRound.courseEighteenHolePar);
+    const calculatedScore =
+      bestRound.adjustedGrossScore - bestRound.courseEighteenHolePar;
+    console.log(calculatedScore);
+    if (calculatedScore > 0) {
+      return `+${calculatedScore}`;
+    }
+    return calculatedScore.toString();
+  };
   return (
     <section className="w-full py-4 lg:py-8 xl:py-12 2xl:py-24 bg-cover bg-center">
       <div className="sm:container px-4 lg:px-6">
@@ -58,7 +69,9 @@ const Hero = ({ profile, previousScores }: HeroProps) => {
                 <span className="text-sm font-medium text-center">
                   <P className="text-primary">Handicap Index</P>
                 </span>
-                <P className="text-primary">{profile.handicapIndex}</P>
+                <P className="text-2xl font-bold text-primary">
+                  {profile.handicapIndex}
+                </P>
               </div>
               <div className="flex flex-col items-center space-y-2 bg-primary/10 p-4 rounded-lg">
                 <TrendingDown className="h-8 w-8 text-primary" />
@@ -76,7 +89,9 @@ const Hero = ({ profile, previousScores }: HeroProps) => {
                   <P className="text-primary">Best Round</P>
                 </span>
                 {/* TODO: Query best round */}
-                <p className="text-2xl font-bold text-primary">N/A</p>
+                <p className="text-2xl font-bold text-primary">
+                  {calculatePlusMinusScore()}
+                </p>
               </div>
             </div>
             {/* <div className="pt-6 border-t border-zinc-200">
@@ -103,87 +118,7 @@ const Hero = ({ profile, previousScores }: HeroProps) => {
               </ul>
             </div> */}
           </div>
-          {/* <div className="hidden xl:flex items-center justify-center">
-            <div className="relative w-full h-full max-w-[500px] max-h-[600px]">
-              <div className="absolute inset-0 bg-gradient-to-r from-primary to-primary-foreground rounded-full blur-3xl opacity-30 animate-pulse"></div>
-              <div className="relative w-full h-full bg-white bg-opacity-50 backdrop-blur-md rounded-3xl shadow-2xl p-8 flex flex-col justify-between">
-                <div className="space-y-2">
-                  <h3 className="text-2xl font-bold text-zinc-800">
-                    Performance Breakdown
-                  </h3>
-                  <p className="text-zinc-600">Last 5 Rounds</p>
-                </div>
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <div className="flex justify-between text-sm">
-                      <span>Driving Accuracy</span>
-                      <span className="font-medium">68%</span>
-                    </div>
-                    <div className="h-2 bg-primary/20 rounded-full">
-                      <div
-                        className="h-full bg-primary rounded-full"
-                        style={{ width: "68%" }}
-                      ></div>
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <div className="flex justify-between text-sm">
-                      <span>Greens in Regulation</span>
-                      <span className="font-medium">52%</span>
-                    </div>
-                    <div className="h-2 bg-primary/20 rounded-full">
-                      <div
-                        className="h-full bg-primary rounded-full"
-                        style={{ width: "52%" }}
-                      ></div>
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <div className="flex justify-between text-sm">
-                      <span>Putts per Round</span>
-                      <span className="font-medium">31.2</span>
-                    </div>
-                    <div className="h-2 bg-primary/20 rounded-full">
-                      <div
-                        className="h-full bg-primary rounded-full"
-                        style={{ width: "70%" }}
-                      ></div>
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <div className="flex justify-between text-sm">
-                      <span>Sand Saves</span>
-                      <span className="font-medium">40%</span>
-                    </div>
-                    <div className="h-2 bg-primary/20 rounded-full">
-                      <div
-                        className="h-full bg-primary rounded-full"
-                        style={{ width: "40%" }}
-                      ></div>
-                    </div>
-                  </div>
-                </div>
-                <div className="mt-6 pt-6 border-t border-zinc-200">
-                  <h4 className="text-lg font-semibold mb-2">Focus Areas</h4>
-                  <ul className="space-y-2">
-                    <li className="flex items-center space-x-2">
-                      <Target className="h-5 w-5 text-red-500" />
-                      <span className="text-sm">
-                        Improve sand play technique
-                      </span>
-                    </li>
-                    <li className="flex items-center space-x-2">
-                      <Target className="h-5 w-5 text-yellow-500" />
-                      <span className="text-sm">
-                        Work on approach shots accuracy
-                      </span>
-                    </li>
-                  </ul>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div> */}
+
           <div className="hidden xl:flex items-center justify-center">
             <div className="relative w-full h-full max-w-[500px] max-h-[600px]">
               <div className="absolute inset-0 bg-gradient-to-r from-primary to-primary-foreground rounded-full blur-3xl opacity-30 animate-pulse"></div>

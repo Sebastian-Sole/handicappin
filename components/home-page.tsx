@@ -19,17 +19,22 @@ import React from "react";
 import CourseHandicapCalculator from "./calculators/course-handicap";
 import ScoreDifferentialCalculator from "./calculators/score-differential";
 import { H2, Large } from "./ui/typography";
+import { RoundWithCourse } from "@/types/database";
 
 interface HomepageProps {
   profile: Tables<"Profile">;
 }
 
 export const HomePage = async ({ profile }: HomepageProps) => {
-  const { id, email, name, handicapIndex } = profile;
+  const { id, handicapIndex } = profile;
 
   const rounds = await api.round.getAllByUserId({
     userId: id,
     amount: 10,
+  });
+
+  const bestRound: RoundWithCourse = await api.round.getBestRound({
+    userId: id,
   });
 
   const previousHandicaps = rounds
@@ -66,6 +71,7 @@ export const HomePage = async ({ profile }: HomepageProps) => {
             previousScores={previousScores.map((entry) => {
               return entry.score;
             })}
+            bestRound={bestRound}
           />
         </section>
 
@@ -113,10 +119,10 @@ export const HomePage = async ({ profile }: HomepageProps) => {
                 <CardFooter className="pt-4">
                   {/* TODO: Change to button variant link */}
                   <Link
-                    href="/handicap-details"
+                    href={`/stats/${profile.id}`}
                     className="text-sm text-center w-full text-primary hover:underline"
                   >
-                    View more
+                    View stats
                   </Link>
                 </CardFooter>
               </Card>
@@ -133,10 +139,10 @@ export const HomePage = async ({ profile }: HomepageProps) => {
                 </CardContent>
                 <CardFooter className="pt-4">
                   <Link
-                    href="/score-details"
+                    href={`/stats/${profile.id}`}
                     className="text-sm text-center w-full text-primary hover:underline"
                   >
-                    View more
+                    View stats
                   </Link>
                 </CardFooter>
               </Card>
@@ -212,10 +218,9 @@ export const HomePage = async ({ profile }: HomepageProps) => {
 
         <section className="w-full py-6 lg:py-12 xl:py-16 flex flex-col items-center">
           <span className="max-w-[800px] flex flex-col items-center space-y-8">
-            <h2 className="text-3xl font-bold tracking-tighter md:text-4xl lg:text-5xl">
+            <h2 className="text-3xl font-bold tracking-tighter md:text-4xl lg:text-5xl mt-4">
               Calculators
             </h2>
-
             <p className="text-muted-foreground text-center	max-w-[80%]">
               We found that other golf services overcomplicated golfing, whether
               it be keeping scores, or hiding the calculations behind *cough*
@@ -245,7 +250,11 @@ export const HomePage = async ({ profile }: HomepageProps) => {
             <div className="text-center lg:text-left flex flex-row">
               <p className="text-sm text-muted-foreground">
                 © 2024 Handicappin&apos;. All rights reserved. Developed By:{" "}
-                <a href="https://www.soleinnovations.com">SoleInnovations</a>
+                <Link href="https://www.soleinnovations.com">
+                  <Button variant={"link"} className="p-0 m-0">
+                    SoleInnovations
+                  </Button>
+                </Link>
               </p>
             </div>
             <nav className="flex gap-4 md:gap-6">
