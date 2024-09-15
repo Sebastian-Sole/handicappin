@@ -10,13 +10,15 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Flag, ArrowUp, ArrowDown } from "lucide-react";
 import Link from "next/link";
-import { H1, H3, Large } from "./ui/typography";
 import { Tables } from "@/types/supabase";
 import { api } from "@/trpc/server";
 import HandicapTrendChart from "./charts/handicap-trend-chart";
 import ScoreBarChart from "./charts/score-bar-chart";
 import Hero from "./hero";
 import React from "react";
+import CourseHandicapCalculator from "./calculators/course-handicap";
+import ScoreDifferentialCalculator from "./calculators/score-differential";
+import { H2, Large } from "./ui/typography";
 
 interface HomepageProps {
   profile: Tables<"Profile">;
@@ -208,45 +210,32 @@ export const HomePage = async ({ profile }: HomepageProps) => {
           </div>
         </section>
 
-        <section className="w-full py-12 lg:py-24 xl:py-32">
-          <div className="container px-4 lg:px-6">
-            <Card className="mx-auto max-w-[600px]">
-              <CardHeader>
-                <CardTitle className="text-2xl font-bold">
-                  Register a Round
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <form className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="date">Date</Label>
-                    <Input id="date" type="date" required />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="course">Course</Label>
-                    <Input
-                      id="course"
-                      placeholder="Enter course name"
-                      required
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="score">Score</Label>
-                    <Input
-                      id="score"
-                      type="number"
-                      placeholder="Enter your score"
-                      required
-                    />
-                  </div>
-                  <Button type="submit" className="w-full">
-                    <Flag className="mr-2 h-4 w-4" />
-                    Submit Round
-                  </Button>
-                </form>
-              </CardContent>
-            </Card>
-          </div>
+        <section className="w-full py-6 lg:py-12 xl:py-16 flex flex-col items-center">
+          <span className="max-w-[800px] flex flex-col items-center space-y-8">
+            <h2 className="text-3xl font-bold tracking-tighter md:text-4xl lg:text-5xl">
+              Calculators
+            </h2>
+
+            <p className="text-muted-foreground text-center	max-w-[80%]">
+              We found that other golf services overcomplicated golfing, whether
+              it be keeping scores, or hiding the calculations behind *cough*
+              ugly *cough* UI&apos;s. We put user experience first, and aim to
+              make keeping track of your golf game effortless, all while helping
+              golfers understand the calculations behind the scenes.
+            </p>
+            <Link href={"/calculators"}>
+              <Button variant={"link"}>View all calculators</Button>
+            </Link>
+          </span>
+
+          <span className="flex flex-row justify-between pt-16 w-full">
+            <div className="container px-4 lg:px-6">
+              <div className="grid gap-6 xl:grid-cols-2 xl:gap-12">
+                <CourseHandicapCalculator handicapIndex={handicapIndex} />
+                <ScoreDifferentialCalculator />
+              </div>
+            </div>
+          </span>
         </section>
       </main>
 

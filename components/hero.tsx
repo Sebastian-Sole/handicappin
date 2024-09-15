@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "./ui/hover-card";
 import { P } from "./ui/typography";
+import Link from "next/link";
 
 interface HeroProps {
   profile: Tables<"Profile">;
@@ -30,24 +31,25 @@ const Hero = ({ profile, previousScores }: HeroProps) => {
               </h1>
               <p className="max-w-[600px] text-muted-foreground lg:text-xl">
                 {/* TODO: Update this */}
-                Here&apos;s a quick overview of your golf performance. Keep up
-                the good work!
+                Log a new round, view your stats, or check out our calculators
+                to improve your game!
               </p>
               <div className="flex flex-col gap-2 min-[460px]:flex-row">
-                <Button
-                  size="lg"
-                  className="bg-primary text-primary-foreground hover:bg-primary/90"
-                >
-                  Log New Round
-                  <ChevronRight className="ml-2 h-4 w-4" />
-                </Button>
-                <Button
-                  size="lg"
-                  variant="outline"
-                  className="border-primary text-primary hover:bg-primary/10"
-                >
-                  View Full Stats
-                </Button>
+                <Link href={"/rounds/add"}>
+                  <Button size="lg" className="w-full">
+                    Log New Round
+                    <ChevronRight className="ml-2 h-4 w-4" />
+                  </Button>
+                </Link>
+                <Link href={`/stats/${profile.id}`}>
+                  <Button
+                    size="lg"
+                    variant="outline"
+                    className="border-primary text-primary hover:bg-primary/10 w-full"
+                  >
+                    View Full Stats
+                  </Button>
+                </Link>
               </div>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-6">

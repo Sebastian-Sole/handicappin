@@ -15,6 +15,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { useRoundCalculationContext } from "@/contexts/roundCalculationContext";
+import TooltipIcon from "@/components/tooltip-icon";
 
 const HolesTable = () => {
   const { holes } = useRoundCalculationContext();
@@ -30,17 +31,9 @@ const HolesTable = () => {
             <TableHead>HCP Strokes</TableHead>
             <TableHead className="flex flex-row items-center">
               Adjusted Score{" "}
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger>
-                    {" "}
-                    <InfoIcon className="h-6 w-6 text-gray-500 dark:text-gray-400 ml-4" />{" "}
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>Max: par + net double bogey (incl. handicap strokes)</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
+              <TooltipIcon>
+                <p>Max: par + net double bogey (incl. handicap strokes)</p>
+              </TooltipIcon>
             </TableHead>
           </TableRow>
         </TableHeader>
