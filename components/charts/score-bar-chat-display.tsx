@@ -1,0 +1,44 @@
+import Link from "next/link";
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardContent,
+  CardFooter,
+} from "../ui/card";
+import ScoreBarChart from "./score-bar-chart";
+import { Tables } from "@/types/supabase";
+import { Button } from "../ui/button";
+
+interface ScoreBarChartDisplayProps {
+  previousScores: {
+    roundDate: string;
+    score: number;
+  }[];
+  profile: Tables<"Profile">;
+}
+
+const ScoreBarChartDisplay = ({
+  previousScores,
+  profile,
+}: ScoreBarChartDisplayProps) => {
+  return (
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+        <CardTitle className="sm:text-2xl text-xl">Previous Scores</CardTitle>
+      </CardHeader>
+      <CardContent className="p-0 lg:min-h-[300px]">
+        <div className="w-full h-full pt-8 pr-8">
+          <ScoreBarChart scores={previousScores} />
+        </div>
+      </CardContent>
+      <CardFooter className="pt-4 flex justify-center">
+        <Link href={`/stats/${profile.id}`}>
+          <Button variant={"link"}>View stats</Button>
+        </Link>
+      </CardFooter>
+    </Card>
+  );
+};
+
+export default ScoreBarChartDisplay;

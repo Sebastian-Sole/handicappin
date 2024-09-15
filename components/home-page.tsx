@@ -1,25 +1,14 @@
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardFooter,
-} from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Flag, ArrowUp, ArrowDown } from "lucide-react";
 import Link from "next/link";
 import { Tables } from "@/types/supabase";
 import { api } from "@/trpc/server";
-import HandicapTrendChart from "./charts/handicap-trend-chart";
-import ScoreBarChart from "./charts/score-bar-chart";
 import Hero from "./hero";
 import React from "react";
 import CourseHandicapCalculator from "./calculators/course-handicap";
 import ScoreDifferentialCalculator from "./calculators/score-differential";
-import { H2, Large } from "./ui/typography";
 import { RoundWithCourse } from "@/types/database";
+import HandicapTrendChartDisplay from "./charts/handicap-trend-chart-display";
+import ScoreBarChartDisplay from "./charts/score-bar-chat-display";
 
 interface HomepageProps {
   profile: Tables<"Profile">;
@@ -78,74 +67,16 @@ export const HomePage = async ({ profile }: HomepageProps) => {
         <section className="w-full py-12 lg:py-24 xl:py-32">
           <div className="sm:container px-4 lg:px-6">
             <div className="grid gap-6 xl:grid-cols-2 xl:gap-12">
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <React.Fragment>
-                    <CardTitle className="sm:text-2xl text-xl min-[400px]:hidden">
-                      HCP Trend
-                    </CardTitle>
-                    <CardTitle className="sm:text-2xl text-xl min-[400px]:block hidden">
-                      Handicap Trend
-                    </CardTitle>
-                  </React.Fragment>
-                  <div className="flex items-center space-x-2">
-                    <span className="sm:text-2xl text-xl font-bold">
-                      {handicapIndex}
-                    </span>
-                    <div className="min-[340px]:block hidden">
-                      {percentageChange < 0 && (
-                        <span className="flex items-center text-sm text-green-500">
-                          <ArrowDown className="h-4 w-4 mr-1" />
-                          {percentageChange}%
-                        </span>
-                      )}
-                      {percentageChange >= 0 && (
-                        <span className="flex items-center text-sm text-red-500">
-                          <ArrowUp className="h-4 w-4 mr-1" />+
-                          {percentageChange}%
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent className="p-0 lg:min-h-[300px]">
-                  <div className="w-full h-full pt-8 pr-8">
-                    <HandicapTrendChart
-                      previousHandicaps={previousHandicaps}
-                      isPositive={percentageChange > 0}
-                    />
-                  </div>
-                </CardContent>
-                <CardFooter className="pt-4">
-                  {/* TODO: Change to button variant link */}
-                  <Link
-                    href={`/stats/${profile.id}`}
-                    className="text-sm text-center w-full text-primary hover:underline"
-                  >
-                    View stats
-                  </Link>
-                </CardFooter>
-              </Card>
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="sm:text-2xl text-xl">
-                    Previous Scores
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="p-0 lg:min-h-[300px]">
-                  <div className="w-full h-full pt-8 pr-8">
-                    <ScoreBarChart scores={previousScores} />
-                  </div>
-                </CardContent>
-                <CardFooter className="pt-4">
-                  <Link
-                    href={`/stats/${profile.id}`}
-                    className="text-sm text-center w-full text-primary hover:underline"
-                  >
-                    View stats
-                  </Link>
-                </CardFooter>
-              </Card>
+              <HandicapTrendChartDisplay
+                handicapIndex={handicapIndex}
+                percentageChange={percentageChange}
+                previousHandicaps={previousHandicaps}
+                profile={profile}
+              />
+              <ScoreBarChartDisplay
+                previousScores={previousScores}
+                profile={profile}
+              ></ScoreBarChartDisplay>
             </div>
           </div>
         </section>
@@ -193,25 +124,6 @@ export const HomePage = async ({ profile }: HomepageProps) => {
                   </li>
                 </ul>
               </div>
-              {/* <div className="space-y-4">
-                <p className="text-muted-foreground">
-                  Ready to take your game to the next level? Explore our{" "}
-                  <Link
-                    href="/features"
-                    className="text-primary hover:underline"
-                  >
-                    full feature set
-                  </Link>{" "}
-                  or{" "}
-                  <Link
-                    href="/pricing"
-                    className="text-primary hover:underline"
-                  >
-                    check out our pricing plans
-                  </Link>
-                  .
-                </p>
-              </div> */}
             </div>
           </div>
         </section>
@@ -243,55 +155,6 @@ export const HomePage = async ({ profile }: HomepageProps) => {
           </span>
         </section>
       </main>
-
-      <footer className="w-full border-t py-6">
-        <div className="container px-4 lg:px-6">
-          <div className="flex flex-col items-center justify-between gap-4 lg:flex-row">
-            <div className="text-center lg:text-left flex flex-row">
-              <p className="text-sm text-muted-foreground">
-                © 2024 Handicappin&apos;. All rights reserved. Developed By:{" "}
-                <Link href="https://www.soleinnovations.com">
-                  <Button variant={"link"} className="p-0 m-0">
-                    SoleInnovations
-                  </Button>
-                </Link>
-              </p>
-            </div>
-            <nav className="flex gap-4 md:gap-6">
-              <Link
-                className="text-sm font-medium hover:underline underline-offset-4"
-                href="/"
-              >
-                Home
-              </Link>
-              <Link
-                className="text-sm font-medium hover:underline underline-offset-4"
-                href="/features"
-              >
-                Features
-              </Link>
-              <Link
-                className="text-sm font-medium hover:underline underline-offset-4"
-                href="/pricing"
-              >
-                Pricing
-              </Link>
-              <Link
-                className="text-sm font-medium hover:underline underline-offset-4"
-                href="/about"
-              >
-                About
-              </Link>
-              <Link
-                className="text-sm font-medium hover:underline underline-offset-4"
-                href="/contact"
-              >
-                Contact
-              </Link>
-            </nav>
-          </div>
-        </div>
-      </footer>
     </div>
   );
 };

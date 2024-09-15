@@ -21,11 +21,8 @@ interface HeroProps {
 
 const Hero = ({ profile, previousScores, bestRound }: HeroProps) => {
   const calculatePlusMinusScore = (): string => {
-    console.log(bestRound.adjustedGrossScore);
-    console.log(bestRound.courseEighteenHolePar);
     const calculatedScore =
       bestRound.adjustedGrossScore - bestRound.courseEighteenHolePar;
-    console.log(calculatedScore);
     if (calculatedScore > 0) {
       return `+${calculatedScore}`;
     }
@@ -41,7 +38,6 @@ const Hero = ({ profile, previousScores, bestRound }: HeroProps) => {
                 Welcome back, {profile.name}!
               </h1>
               <p className="max-w-[600px] text-muted-foreground lg:text-xl">
-                {/* TODO: Update this */}
                 Log a new round, view your stats, or check out our calculators
                 to improve your game!
               </p>
@@ -88,7 +84,6 @@ const Hero = ({ profile, previousScores, bestRound }: HeroProps) => {
                 <span className="text-sm font-medium text-center">
                   <P className="text-primary">Best Round</P>
                 </span>
-                {/* TODO: Query best round */}
                 <p className="text-2xl font-bold text-primary">
                   {calculatePlusMinusScore()}
                 </p>
@@ -230,14 +225,6 @@ const Hero = ({ profile, previousScores, bestRound }: HeroProps) => {
             </div>
           </div>
         </div>
-        {/* <div className="mt-12 text-center">
-          <Link
-            href="/training-plan"
-            className="text-sm text-white hover:underline bg-primary/80 px-4 py-2 rounded-full backdrop-blur-sm"
-          >
-            View Personalized Training Plan
-          </Link>
-        </div> */}
       </div>
     </section>
   );
