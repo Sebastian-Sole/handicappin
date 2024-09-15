@@ -26,30 +26,49 @@ export const HomePage = async ({ profile }: HomepageProps) => {
     userId: id,
   });
 
-  const previousHandicaps = rounds
-    .map((round) => ({
-      roundDate: new Date(round.teeTime).toLocaleDateString(),
-      handicap: round.updatedHandicapIndex,
-    }))
-    .sort((a, b) => {
-      return new Date(a.roundDate).getTime() - new Date(b.roundDate).getTime();
-    });
+  console.log(bestRound);
 
-  const previousScores = rounds
-    .map((round) => ({
-      roundDate: new Date(round.teeTime).toLocaleDateString(),
-      score: round.adjustedGrossScore,
-    }))
-    .sort((a, b) => {
-      return new Date(a.roundDate).getTime() - new Date(b.roundDate).getTime();
-    });
+  let userHasRounds = true;
+  let previousHandicaps: {
+    roundDate: string;
+    handicap: number;
+  }[] = [];
+  let previousScores: {
+    roundDate: string;
+    score: number;
+  }[] = [];
+  let percentageChange = 0;
 
-  const percentageChange = Number.parseFloat(
-    (
-      (handicapIndex - previousHandicaps[0].handicap) /
-      previousHandicaps[0].handicap
-    ).toFixed(2)
-  );
+  if (bestRound !== undefined) {
+    previousHandicaps = rounds
+      .map((round) => ({
+        roundDate: new Date(round.teeTime).toLocaleDateString(),
+        handicap: round.updatedHandicapIndex,
+      }))
+      .sort((a, b) => {
+        return (
+          new Date(a.roundDate).getTime() - new Date(b.roundDate).getTime()
+        );
+      });
+
+    previousScores = rounds
+      .map((round) => ({
+        roundDate: new Date(round.teeTime).toLocaleDateString(),
+        score: round.adjustedGrossScore,
+      }))
+      .sort((a, b) => {
+        return (
+          new Date(a.roundDate).getTime() - new Date(b.roundDate).getTime()
+        );
+      });
+
+    percentageChange = Number.parseFloat(
+      (
+        (handicapIndex - previousHandicaps[0].handicap) /
+        previousHandicaps[0].handicap
+      ).toFixed(2)
+    );
+  }
 
   return (
     <div className="flex flex-col min-h-screen">

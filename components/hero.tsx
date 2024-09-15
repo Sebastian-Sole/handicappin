@@ -21,6 +21,9 @@ interface HeroProps {
 
 const Hero = ({ profile, previousScores, bestRound }: HeroProps) => {
   const calculatePlusMinusScore = (): string => {
+    if (bestRound === undefined) {
+      return "N/A";
+    }
     const calculatedScore =
       bestRound.adjustedGrossScore - bestRound.courseEighteenHolePar;
     if (calculatedScore > 0) {
@@ -75,8 +78,10 @@ const Hero = ({ profile, previousScores, bestRound }: HeroProps) => {
                   <P className="text-primary">Avg. Score (Last 10)</P>
                 </span>
                 <p className="text-2xl font-bold text-primary">
-                  {previousScores.reduce((a, b) => a + b, 0) /
-                    previousScores.length}
+                  {previousScores.length > 0
+                    ? previousScores.reduce((a, b) => a + b, 0) /
+                      previousScores.length
+                    : "N/A"}
                 </p>
               </div>
               <div className="flex flex-col items-center space-y-2 bg-primary/10 p-4 rounded-lg">

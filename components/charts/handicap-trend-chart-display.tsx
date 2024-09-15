@@ -48,21 +48,35 @@ const HandicapTrendChartDisplay = ({
                 {percentageChange}%
               </span>
             )}
-            {percentageChange >= 0 && (
+            {percentageChange > 0 && (
               <span className="flex items-center text-sm text-red-500">
                 <ArrowUp className="h-4 w-4 mr-1" />+{percentageChange}%
+              </span>
+            )}
+            {percentageChange === 0 && (
+              <span className="flex items-center text-sm text-gray-500">
+                +{percentageChange}%
               </span>
             )}
           </div>
         </div>
       </CardHeader>
-      <CardContent className="p-0 lg:min-h-[300px]">
-        <div className="w-full h-full pt-8 pr-8">
-          <HandicapTrendChart
-            previousHandicaps={previousHandicaps}
-            isPositive={percentageChange > 0}
-          />
-        </div>
+      <CardContent className="p-0 lg:min-h-[300px] flex justify-center items-center">
+        {previousHandicaps.length <= 5 && (
+          <div className="flex justify-center items-center h-full">
+            <span className="text-muted-foreground">
+              Play at least 5 rounds to see your scores
+            </span>
+          </div>
+        )}
+        {previousHandicaps.length > 5 && (
+          <div className="w-full h-full pt-8 pr-8">
+            <HandicapTrendChart
+              previousHandicaps={previousHandicaps}
+              isPositive={percentageChange > 0}
+            />
+          </div>
+        )}
       </CardContent>
       <CardFooter className="pt-4 flex justify-center">
         <Link href={`/stats/${profile.id}`}>
