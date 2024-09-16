@@ -1,11 +1,9 @@
 "use client";
 
-import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { Input } from "./ui/input";
-import { redirect, useRouter } from "next/navigation";
-import { revalidatePath } from "next/cache";
+import { useRouter } from "next/navigation";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import {
@@ -21,9 +19,11 @@ import { createClientComponentClient } from "@/utils/supabase/client";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { api } from "@/trpc/react";
 import { FacebookIcon } from "lucide-react";
+import { toast } from "./ui/use-toast";
 
 export function Signup() {
   const router = useRouter();
+  const supabase = createClientComponentClient();
 
   const signupSchema = z.object({
     name: z.string().min(2).max(50),
@@ -42,7 +42,6 @@ export function Signup() {
 
   const { mutate } = api.auth.signup.useMutation({
     onSuccess: () => {
-      console.log("Sign up mutation success");
       router.push("/");
       router.refresh();
     },
@@ -55,6 +54,21 @@ export function Signup() {
 
   const onSubmit = async (values: z.infer<typeof signupSchema>) => {
     mutate(values);
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email: values.email,
+      password: values.password,
+    });
+
+    if (error) {
+      console.log(error);
+      toast({
+        title: "Error logging in",
+        description: error.message,
+      });
+      router.push("/error");
+    }
+    router.push("/");
+    router.refresh();
   };
 
   return (
