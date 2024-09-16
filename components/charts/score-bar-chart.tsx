@@ -4,7 +4,15 @@ import Link from "next/link";
 import { H4 } from "../ui/typography";
 import { Button } from "../ui/button";
 
-import { CartesianGrid, XAxis, Bar, BarChart, YAxis } from "recharts";
+import {
+  CartesianGrid,
+  XAxis,
+  Bar,
+  BarChart,
+  YAxis,
+  Legend,
+  Cell,
+} from "recharts";
 import {
   ChartTooltipContent,
   ChartTooltip,
@@ -15,6 +23,7 @@ interface ScoreBarChartProps {
   scores: {
     roundDate: string;
     score: number;
+    influencesHcp?: boolean;
   }[];
 }
 
@@ -33,7 +42,6 @@ const ScoreBarChart = ({ scores }: ScoreBarChartProps) => {
             className="min-h-full"
           >
             <BarChart accessibilityLayer data={scores}>
-              <CartesianGrid vertical={false} />
               <XAxis
                 dataKey="roundDate"
                 tickLine={false}
@@ -51,10 +59,25 @@ const ScoreBarChart = ({ scores }: ScoreBarChartProps) => {
               <YAxis
                 dataKey="score"
                 tickLine={false}
+                tickCount={7}
                 tickMargin={8}
                 axisLine={false}
+                domain={["dataMin - 10", "dataMax + 5"]}
               ></YAxis>
-              <Bar dataKey="score" fill="var(--color-round)" radius={8} />
+              <CartesianGrid strokeDasharray="5 5" />
+
+              <Bar dataKey="score" radius={8}>
+                {scores.map((entry, index) => (
+                  <Cell
+                    key={`cell-${index}`}
+                    fill={
+                      entry.influencesHcp
+                        ? "hsl(var(--primary))"
+                        : "hsl(var(--border))"
+                    }
+                  />
+                ))}
+              </Bar>
             </BarChart>
           </ChartContainer>
         </div>

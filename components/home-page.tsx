@@ -9,6 +9,7 @@ import ScoreDifferentialCalculator from "./calculators/score-differential";
 import { RoundWithCourse } from "@/types/database";
 import HandicapTrendChartDisplay from "./charts/handicap-trend-chart-display";
 import ScoreBarChartDisplay from "./charts/score-bar-chat-display";
+import { getRelevantRounds } from "@/utils/calculations/handicap";
 
 interface HomepageProps {
   profile: Tables<"Profile">;
@@ -19,7 +20,7 @@ export const HomePage = async ({ profile }: HomepageProps) => {
 
   const rounds = await api.round.getAllByUserId({
     userId: id,
-    amount: 10,
+    amount: 20,
   });
 
   const bestRound: RoundWithCourse = await api.round.getBestRound({
@@ -38,26 +39,27 @@ export const HomePage = async ({ profile }: HomepageProps) => {
 
   if (bestRound !== undefined) {
     previousHandicaps = rounds
+      .sort((a, b) => {
+        return new Date(a.teeTime).getTime() - new Date(b.teeTime).getTime();
+      })
+      .slice(10, 20)
       .map((round) => ({
         roundDate: new Date(round.teeTime).toLocaleDateString(),
         handicap: round.updatedHandicapIndex,
-      }))
-      .sort((a, b) => {
-        return (
-          new Date(a.roundDate).getTime() - new Date(b.roundDate).getTime()
-        );
-      });
+      }));
+
+    const relevantRoundsList = getRelevantRounds(rounds);
 
     previousScores = rounds
+      .sort((a, b) => {
+        return new Date(a.teeTime).getTime() - new Date(b.teeTime).getTime();
+      })
+      .slice(10, 20)
       .map((round) => ({
         roundDate: new Date(round.teeTime).toLocaleDateString(),
         score: round.adjustedGrossScore,
-      }))
-      .sort((a, b) => {
-        return (
-          new Date(a.roundDate).getTime() - new Date(b.roundDate).getTime()
-        );
-      });
+        influencesHcp: relevantRoundsList.includes(round),
+      }));
 
     percentageChange = Number.parseFloat(
       (
