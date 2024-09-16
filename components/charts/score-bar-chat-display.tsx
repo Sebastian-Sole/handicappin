@@ -14,6 +14,7 @@ interface ScoreBarChartDisplayProps {
   previousScores: {
     roundDate: string;
     score: number;
+    influencesHcp?: boolean;
   }[];
   profile: Tables<"Profile">;
 }

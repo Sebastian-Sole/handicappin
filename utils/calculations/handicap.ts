@@ -1,3 +1,4 @@
+import { RoundWithCourse } from "@/types/database";
 import { Hole } from "@/types/round";
 import { SupabaseClient } from "@supabase/supabase-js";
 
@@ -142,6 +143,40 @@ export const getRelevantDifferentials = (scoreDifferentials: number[]) => {
     return scoreDifferentials.slice(0, 8);
   }
 };
+
+export function getRelevantRounds(rounds: RoundWithCourse[]) {
+  if (rounds.length <= 5) {
+    return rounds.sort((a, b) => a.scoreDifferential - b.scoreDifferential);
+  } else if (rounds.length >= 6 && rounds.length <= 8) {
+    return rounds
+      .sort((a, b) => a.scoreDifferential - b.scoreDifferential)
+      .slice(0, 2);
+  } else if (rounds.length >= 9 && rounds.length <= 11) {
+    return rounds
+      .sort((a, b) => a.scoreDifferential - b.scoreDifferential)
+      .slice(0, 3);
+  } else if (rounds.length >= 12 && rounds.length <= 14) {
+    return rounds
+      .sort((a, b) => a.scoreDifferential - b.scoreDifferential)
+      .slice(0, 4);
+  } else if (rounds.length >= 15 && rounds.length <= 16) {
+    return rounds
+      .sort((a, b) => a.scoreDifferential - b.scoreDifferential)
+      .slice(0, 5);
+  } else if (rounds.length >= 17 && rounds.length <= 18) {
+    return rounds
+      .sort((a, b) => a.scoreDifferential - b.scoreDifferential)
+      .slice(0, 6);
+  } else if (rounds.length === 19) {
+    return rounds
+      .sort((a, b) => a.scoreDifferential - b.scoreDifferential)
+      .slice(0, 7);
+  } else {
+    return rounds
+      .sort((a, b) => a.scoreDifferential - b.scoreDifferential)
+      .slice(0, 8);
+  }
+}
 
 /**
  * Calculates the handicap index based on the given score differentials.

@@ -20,6 +20,10 @@ import {
 import { Button } from "../ui/button";
 import DashboardSkeleton from "./dashboardSkeleton";
 import RoundTablePagination from "./roundTablePagination";
+import {
+  getRelevantDifferentials,
+  getRelevantRounds,
+} from "@/utils/calculations/handicap";
 
 interface DashboardProps {
   profile: Tables<"Profile">;
@@ -64,10 +68,13 @@ export function Dashboard({ profile, roundsList, header }: DashboardProps) {
     }
   };
 
+  const relevantRoundsList = getRelevantRounds(roundsList);
+
   const sortedGraphData = roundsList
     .map((round) => ({
       roundDate: new Date(round.teeTime).toLocaleDateString(),
       score: round.adjustedGrossScore,
+      influencesHcp: relevantRoundsList.includes(round),
     }))
     .sort((a, b) => {
       return new Date(a.roundDate).getTime() - new Date(b.roundDate).getTime();
