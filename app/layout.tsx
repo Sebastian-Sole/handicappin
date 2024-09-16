@@ -22,19 +22,21 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={inter.className}>
-        <TRPCReactProvider>
-          <ThemeProvider
-            attribute="class"
-            defaultTheme="system"
-            enableSystem
-            disableTransitionOnChange
-          >
-            <Navbar />
-            <section className="pt-16">{children}</section>
-            <Footer />
-            <Toaster />
-          </ThemeProvider>
-        </TRPCReactProvider>
+        <div className="flex flex-col min-h-screen">
+          <TRPCReactProvider>
+            <ThemeProvider
+              attribute="class"
+              defaultTheme="system"
+              enableSystem
+              disableTransitionOnChange
+            >
+              <Navbar />
+              <section className="pt-16 flex-grow">{children}</section>
+              <Footer />
+              <Toaster />
+            </ThemeProvider>
+          </TRPCReactProvider>
+        </div>
       </body>
     </html>
   );

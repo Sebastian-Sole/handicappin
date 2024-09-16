@@ -20,6 +20,7 @@ import {
 import { createClientComponentClient } from "@/utils/supabase/client";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { api } from "@/trpc/react";
+import { FacebookIcon } from "lucide-react";
 
 export function Signup() {
   const router = useRouter();
@@ -57,7 +58,7 @@ export function Signup() {
   };
 
   return (
-    <div className="mx-auto max-w-sm space-y-6">
+    <div className="mx-auto max-w-sm space-y-6 py-4 md:py-4 lg:py-4 xl:py-4 min-w-[40%]">
       <div className="space-y-2 text-center">
         <h1 className="text-3xl font-bold">Sign Up</h1>
         <p className="text-muted-foreground">
@@ -77,7 +78,7 @@ export function Signup() {
                     <FormControl>
                       <Input id="name" type="name" required {...field} />
                     </FormControl>
-                    <FormDescription>This is your full name.</FormDescription>
+                    <FormDescription>Enter your full name.</FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -99,9 +100,7 @@ export function Signup() {
                         {...field}
                       />
                     </FormControl>
-                    <FormDescription>
-                      This is your public display name.
-                    </FormDescription>
+
                     <FormMessage />
                   </FormItem>
                 )}
@@ -132,25 +131,28 @@ export function Signup() {
               Sign Up
             </Button>
 
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-2">
-                <Button variant="outline" className="w-full">
-                  <GithubIcon className="mr-2 h-4 w-4" />
-                  Sign up with GitHub
-                </Button>
-                <Button variant="outline" className="w-full">
-                  <ChromeIcon className="mr-2 h-4 w-4" />
-                  Sign up with Google
-                </Button>
+            <div className="flex flex-col items-center justify-between space-y-2 ">
+              <Button variant="outline" className="w-full">
+                <FacebookIcon className="mr-2 h-4 w-4" />
+                Sign in with Facebook
+              </Button>
+              <Button variant="outline" className="w-full">
+                <ChromeIcon className="mr-2 h-4 w-4" />
+                Sign in with Google
+              </Button>
+              <Button variant="outline" className="w-full">
+                <GithubIcon className="mr-2 h-4 w-4" />
+                Sign in with GitHub
+              </Button>
+              <div className="flex items-center justify-between">
+                <Link href="/forgot-password" className="" prefetch={false}>
+                  <Button variant={"link"}>Forgot password?</Button>
+                </Link>
+                <Link href="/login" prefetch={false}>
+                  <Button variant={"link"}>Already have an account?</Button>
+                </Link>
               </div>
             </div>
-            <Link
-              href="#"
-              className="text-sm text-primary-foreground underline underline-offset-4 text-slate-950 flex justify-center"
-              prefetch={false}
-            >
-              Already have an account?
-            </Link>
           </form>
         </Form>
       </div>

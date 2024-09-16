@@ -63,7 +63,7 @@ export function Login() {
   }
 
   return (
-    <div className="mx-auto max-w-sm space-y-6 py-4 md:py-4 lg:py-4 xl:py-4 min-w-[40%]">
+    <div className="mx-auto max-w-sm space-y-6 py-4 md:py-4 lg:py-4 xl:py-4 min-w-[40%] min-h-full">
       <div className="space-y-2 text-center">
         <h1 className="text-3xl font-bold">Welcome Back</h1>
         <p className="text-muted-foreground">
@@ -131,9 +131,14 @@ export function Login() {
                 <GithubIcon className="mr-2 h-4 w-4" />
                 Sign in with GitHub
               </Button>
-              <Link href="#" className="" prefetch={false}>
-                <Button variant={"link"}> Forgot password?</Button>
-              </Link>
+              <div>
+                <Link href="/forgot-password" className="" prefetch={false}>
+                  <Button variant={"link"}> Forgot password?</Button>
+                </Link>
+                <Link href="/register" className="" prefetch={false}>
+                  <Button variant={"link"}>Don&apos;t have an account?</Button>
+                </Link>
+              </div>
             </div>
           </form>
         </Form>
