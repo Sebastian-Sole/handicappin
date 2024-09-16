@@ -144,6 +144,12 @@ export const getRelevantDifferentials = (scoreDifferentials: number[]) => {
   }
 };
 
+/**
+ * Retrieves the rounds which contribute to the handicap index calculation based on the number of rounds provided.
+ *
+ * @param rounds - An array of rounds with course information.
+ * @returns An array of handicap contributing rounds based on the number of rounds provided.
+ */
 export function getRelevantRounds(rounds: RoundWithCourse[]) {
   if (rounds.length <= 5) {
     return rounds.sort((a, b) => a.scoreDifferential - b.scoreDifferential);
