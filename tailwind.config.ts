@@ -42,6 +42,7 @@ const config = {
         primary: {
           DEFAULT: "hsl(var(--primary))",
           foreground: "hsl(var(--primary-foreground))",
+          alternate: "hsl(var(--primary-alternate))",
         },
         secondary: {
           DEFAULT: "hsl(var(--secondary))",
@@ -66,6 +67,10 @@ const config = {
         card: {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
+        },
+        bar: {
+          DEFAULT: "hsl(var(--bar-regular))",
+          active: "hsl(var(--bar-active))",
         },
       },
       borderRadius: {

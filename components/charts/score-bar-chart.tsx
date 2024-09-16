@@ -72,8 +72,8 @@ const ScoreBarChart = ({ scores }: ScoreBarChartProps) => {
                     key={`cell-${index}`}
                     fill={
                       entry.influencesHcp
-                        ? "hsl(var(--primary))"
-                        : "hsl(var(--border))"
+                        ? "hsl(var(--bar-active))"
+                        : "hsl(var(--bar-regular))"
                     }
                   />
                 ))}

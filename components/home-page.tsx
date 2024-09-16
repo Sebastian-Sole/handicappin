@@ -72,7 +72,7 @@ export const HomePage = async ({ profile }: HomepageProps) => {
   return (
     <div className="flex flex-col min-h-screen">
       <main className="flex-1">
-        <section className="w-full py-4 lg:py-4 xl:py-4 2xl:py-4 bg-primary">
+        <section className="w-full py-4 lg:py-4 xl:py-4 2xl:py-4 bg-primary-alternate">
           <Hero
             profile={profile}
             previousScores={previousScores.map((entry) => {
@@ -99,14 +99,14 @@ export const HomePage = async ({ profile }: HomepageProps) => {
           </div>
         </section>
 
-        <section className="w-full py-12 lg:py-24 xl:py-32 bg-muted">
+        <section className="w-full py-12 lg:py-24 xl:py-32 bg-secondary dark:bg-primary-alternate text-muted">
           <div className="container px-4 lg:px-6">
             <div className="grid gap-10 mx-auto max-w-[800px]">
               <div className="space-y-4">
                 <h2 className="text-3xl font-bold tracking-tighter md:text-4xl lg:text-5xl">
                   Making Golf Accessible
                 </h2>
-                <p className="text-muted-foreground">
+                <p className="text-muted">
                   We found that other golf services overcomplicated golfing,
                   whether it be keeping scores, or hiding the calculations
                   behind *cough* ugly *cough* UI&apos;s. We put user experience
@@ -119,7 +119,7 @@ export const HomePage = async ({ profile }: HomepageProps) => {
                 <h3 className="text-2xl font-bold tracking-tighter">
                   Key Features
                 </h3>
-                <ul className="list-disc list-inside space-y-2 text-muted-foreground">
+                <ul className="list-disc list-inside space-y-2 text-muted">
                   <li>Round-tracking</li>
                   <li>
                     Real-time, <b>accurate</b> handicap index updates according
@@ -148,10 +148,10 @@ export const HomePage = async ({ profile }: HomepageProps) => {
 
         <section className="w-full py-6 lg:py-12 xl:py-16 flex flex-col items-center">
           <span className="max-w-[800px] flex flex-col items-center space-y-8">
-            <h2 className="text-3xl font-bold tracking-tighter md:text-4xl lg:text-5xl mt-4">
+            <h2 className="text-3xl font-bold tracking-tighter md:text-4xl lg:text-5xl mt-4 text-accent">
               Calculators
             </h2>
-            <p className="text-muted-foreground text-center	max-w-[80%]">
+            <p className="text-center	max-w-[80%] text-muted">
               We found that other golf services overcomplicated golfing, whether
               it be keeping scores, or hiding the calculations behind *cough*
               ugly *cough* UI&apos;s. We put user experience first, and aim to
