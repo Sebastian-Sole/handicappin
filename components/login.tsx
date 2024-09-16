@@ -135,7 +135,7 @@ export function Login() {
                 <Link href="/forgot-password" className="" prefetch={false}>
                   <Button variant={"link"}> Forgot password?</Button>
                 </Link>
-                <Link href="/register" className="" prefetch={false}>
+                <Link href="/signup" className="" prefetch={false}>
                   <Button variant={"link"}>Don&apos;t have an account?</Button>
                 </Link>
               </div>

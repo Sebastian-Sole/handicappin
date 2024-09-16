@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { authedProcedure, createTRPCRouter, publicProcedure } from "../trpc";
-import { loginSchema, signupSchema } from "@/types/auth";
+import { signupSchema } from "@/types/auth";
 
 export const authRouter = createTRPCRouter({
   signup: publicProcedure
@@ -24,34 +24,7 @@ export const authRouter = createTRPCRouter({
         throw new Error("No user returned");
       }
 
-      const { data: profileData, error: profileError } = await ctx.supabase
-        .from("Profile")
-        .insert([
-          {
-            email: input.email,
-            name: input.name,
-            handicapIndex: 54,
-            id: authData?.user?.id,
-          },
-        ])
-        .select("id")
-        .single();
-
-      if (profileError) {
-        throw new Error(`Error creating profile: ${profileError.message}`);
-      }
-
-      const { data: loginData, error: loginError } =
-        await ctx.supabase.auth.signInWithPassword({
-          email: input.email,
-          password: input.password,
-        });
-
-      if (loginError) {
-        throw new Error(`Error logging in: ${loginError.message}`);
-      }
-
-      return profileData;
+      return authData;
     }),
   getProfileFromUserId: authedProcedure
     .input(z.string())
