@@ -90,7 +90,13 @@ export function Signup() {
                   <FormItem>
                     <FormLabel>Name</FormLabel>
                     <FormControl>
-                      <Input id="name" type="name" required {...field} />
+                      <Input
+                        id="name"
+                        type="name"
+                        required
+                        {...field}
+                        placeholder="Birdie Mulligan"
+                      />
                     </FormControl>
                     <FormDescription>Enter your full name.</FormDescription>
                     <FormMessage />
@@ -109,7 +115,7 @@ export function Signup() {
                       <Input
                         id="email"
                         type="email"
-                        placeholder="m@example.com"
+                        placeholder="double@bogey.com"
                         required
                         {...field}
                       />
@@ -145,27 +151,13 @@ export function Signup() {
               Sign Up
             </Button>
 
-            <div className="flex flex-col items-center justify-between space-y-2 ">
-              <Button variant="outline" className="w-full">
-                <FacebookIcon className="mr-2 h-4 w-4" />
-                Sign in with Facebook
-              </Button>
-              <Button variant="outline" className="w-full">
-                <ChromeIcon className="mr-2 h-4 w-4" />
-                Sign in with Google
-              </Button>
-              <Button variant="outline" className="w-full">
-                <GithubIcon className="mr-2 h-4 w-4" />
-                Sign in with GitHub
-              </Button>
-              <div className="flex items-center justify-between">
-                <Link href="/forgot-password" className="" prefetch={false}>
-                  <Button variant={"link"}>Forgot password?</Button>
-                </Link>
-                <Link href="/login" prefetch={false}>
-                  <Button variant={"link"}>Already have an account?</Button>
-                </Link>
-              </div>
+            <div className="flex items-center justify-between">
+              <Link href="/forgot-password" className="" prefetch={false}>
+                <Button variant={"link"}>Forgot password?</Button>
+              </Link>
+              <Link href="/login" prefetch={false}>
+                <Button variant={"link"}>Already have an account?</Button>
+              </Link>
             </div>
           </form>
         </Form>

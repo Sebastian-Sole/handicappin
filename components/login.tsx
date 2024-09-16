@@ -118,27 +118,14 @@ export function Login() {
             <Button type="submit" className="w-full">
               Sign In
             </Button>
-            <div className="flex flex-col items-center justify-between space-y-2 ">
-              <Button variant="outline" className="w-full">
-                <FacebookIcon className="mr-2 h-4 w-4" />
-                Sign in with Facebook
-              </Button>
-              <Button variant="outline" className="w-full">
-                <ChromeIcon className="mr-2 h-4 w-4" />
-                Sign in with Google
-              </Button>
-              <Button variant="outline" className="w-full">
-                <GithubIcon className="mr-2 h-4 w-4" />
-                Sign in with GitHub
-              </Button>
-              <div>
-                <Link href="/forgot-password" className="" prefetch={false}>
-                  <Button variant={"link"}> Forgot password?</Button>
-                </Link>
-                <Link href="/signup" className="" prefetch={false}>
-                  <Button variant={"link"}>Don&apos;t have an account?</Button>
-                </Link>
-              </div>
+
+            <div>
+              <Link href="/forgot-password" className="" prefetch={false}>
+                <Button variant={"link"}> Forgot password?</Button>
+              </Link>
+              <Link href="/signup" className="" prefetch={false}>
+                <Button variant={"link"}>Don&apos;t have an account?</Button>
+              </Link>
             </div>
           </form>
         </Form>
