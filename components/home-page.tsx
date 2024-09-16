@@ -26,9 +26,6 @@ export const HomePage = async ({ profile }: HomepageProps) => {
     userId: id,
   });
 
-  console.log(bestRound);
-
-  let userHasRounds = true;
   let previousHandicaps: {
     roundDate: string;
     handicap: number;

@@ -246,13 +246,14 @@ export const roundRouter = createTRPCRouter({
         .from("Round")
         .select(
           `
-    *,
-    Course (
-      *
-    )
-  `
+        *,
+        Course (
+          *
+        )
+      `
         )
         .eq("userId", input.userId)
+        .order("teeTime", { ascending: false }) // Order by teeTime in descending order
         .range(input.startIndex, input.startIndex + input.amount - 1);
 
       if (error) {
