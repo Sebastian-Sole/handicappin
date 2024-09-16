@@ -2,7 +2,6 @@ import Link from "next/link";
 import { H4 } from "../ui/typography";
 import { Button } from "../ui/button";
 import ScoreBarChart from "../charts/score-bar-chart";
-import { Separator } from "../ui/separator";
 
 interface DashboardGraphDisplayProps {
   graphData: any;
@@ -19,7 +18,6 @@ const DashboardGraphDisplay = ({ graphData }: DashboardGraphDisplayProps) => {
           </Button>
         </Link>
       </div>
-      <Separator className="mb-8" />
       {graphData.length !== 0 && <ScoreBarChart scores={graphData} />}
       {graphData.length === 0 && (
         <div className="flex items-center justify-center h-64 xl:h-[90%] border border-gray-100 flex-col">

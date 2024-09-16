@@ -41,7 +41,7 @@ const ScoreBarChart = ({ scores }: ScoreBarChartProps) => {
                 axisLine={false}
                 tickFormatter={(value) => {
                   const dateParts = value.split(/[-\/.\s]/);
-                  return `${dateParts[0]}/${dateParts[1]}`;
+                  return `${dateParts[1]}/${dateParts[0]}`;
                 }}
               />
               <ChartTooltip
