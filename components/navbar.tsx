@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar } from "@/components/ui/avatar";
 import { Sheet, SheetTrigger, SheetContent } from "@/components/ui/sheet";
 import { createServerComponentClient } from "@/utils/supabase/server";
 import ThemeButton from "./themeButton";
@@ -16,9 +16,9 @@ import {
 import {
   CirclePlus,
   LayoutDashboardIcon,
-  LogOutIcon,
   SettingsIcon,
   UserIcon,
+  UserRound,
 } from "lucide-react";
 import { Separator } from "./ui/separator";
 
@@ -72,19 +72,21 @@ export async function Navbar() {
             </nav>
             <div className="flex items-center gap-4 xs:w-1/3 justify-end">
               <Link href={"/rounds/add"} className="xl:block hidden">
-                <Button>Add Round</Button>
+                <Button variant={"default"}>Add Round</Button>
               </Link>
               <ThemeButton size="icon" className="md:flex hidden" />
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Link
                     href="#"
-                    className="rounded-full bg-muted p-2 hover:bg-muted-foreground"
+                    className="rounded-full bg-primary p-1 hover:bg-primary/80"
                     prefetch={false}
                   >
-                    <Avatar className="h-8 w-8">
-                      <AvatarImage src="/placeholder-user.jpg" alt="@shadcn" />
-                      <AvatarFallback>JD</AvatarFallback>
+                    <Avatar className="h-8 w-8 flex items-center justify-center">
+                      <UserRound
+                        strokeWidth={1.5}
+                        className="h-6 w-6 text-black"
+                      ></UserRound>
                     </Avatar>
                   </Link>
                 </DropdownMenuTrigger>

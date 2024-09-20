@@ -37,11 +37,15 @@ const config = {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",
-        background: "hsl(var(--background))",
+        background: {
+          DEFAULT: "hsl(var(--background))",
+          alternate: "hsl(var(--background-alternate))",
+        },
         foreground: "hsl(var(--foreground))",
         primary: {
           DEFAULT: "hsl(var(--primary))",
           foreground: "hsl(var(--primary-foreground))",
+          alternate: "hsl(var(--primary-alternate))",
         },
         secondary: {
           DEFAULT: "hsl(var(--secondary))",
@@ -66,6 +70,10 @@ const config = {
         card: {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
+        },
+        bar: {
+          DEFAULT: "hsl(var(--bar-inactive))",
+          active: "hsl(var(--bar-active))",
         },
       },
       borderRadius: {
