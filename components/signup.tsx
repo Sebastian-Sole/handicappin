@@ -72,7 +72,7 @@ export function Signup() {
   };
 
   return (
-    <div className="mx-auto max-w-sm space-y-6 py-4 md:py-4 lg:py-4 xl:py-4 min-w-[40%]">
+    <div className="mx-auto max-w-sm space-y-6 py-4 md:py-4 lg:py-4 xl:py-4 sm:min-w-[40%] min-h-full w-[90%]">
       <div className="space-y-2 text-center">
         <h1 className="text-3xl font-bold">Sign Up</h1>
         <p className="text-muted-foreground">
@@ -102,7 +102,7 @@ export function Signup() {
                     <FormMessage />
                   </FormItem>
                 )}
-              ></FormField>
+              />
             </div>
             <div className="space-y-2">
               <FormField
@@ -124,7 +124,7 @@ export function Signup() {
                     <FormMessage />
                   </FormItem>
                 )}
-              ></FormField>
+              />
             </div>
             <div className="space-y-2">
               <FormField
@@ -151,7 +151,7 @@ export function Signup() {
               Sign Up
             </Button>
 
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-center flex-wrap">
               <Link href="/forgot-password" className="" prefetch={false}>
                 <Button variant={"link"}>Forgot password?</Button>
               </Link>
