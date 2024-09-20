@@ -4,15 +4,7 @@ import Link from "next/link";
 import { H4 } from "../ui/typography";
 import { Button } from "../ui/button";
 
-import {
-  CartesianGrid,
-  XAxis,
-  Bar,
-  BarChart,
-  YAxis,
-  Legend,
-  Cell,
-} from "recharts";
+import { CartesianGrid, XAxis, Bar, BarChart, YAxis, Cell } from "recharts";
 import {
   ChartTooltipContent,
   ChartTooltip,
