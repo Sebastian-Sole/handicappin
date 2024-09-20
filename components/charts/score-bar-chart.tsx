@@ -73,7 +73,7 @@ const ScoreBarChart = ({ scores }: ScoreBarChartProps) => {
                     fill={
                       entry.influencesHcp
                         ? "hsl(var(--bar-active))"
-                        : "hsl(var(--bar-regular))"
+                        : "hsl(var(--bar-inactive)/0.5)"
                     }
                   />
                 ))}

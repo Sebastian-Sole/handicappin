@@ -55,7 +55,7 @@ const Hero = ({ profile, previousScores, bestRound }: HeroProps) => {
                   <Button
                     size="lg"
                     variant="outline"
-                    className="border-primary text-primary hover:bg-primary/10 w-full"
+                    className="border-primary text-primary hover:bg-primary/10 hover:text-muted-foreground w-full"
                   >
                     View Full Stats
                   </Button>
