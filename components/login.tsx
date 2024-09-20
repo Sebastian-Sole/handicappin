@@ -63,7 +63,7 @@ export function Login() {
   }
 
   return (
-    <div className="mx-auto max-w-sm space-y-6 py-4 md:py-4 lg:py-4 xl:py-4 min-w-[40%] min-h-full">
+    <div className="mx-auto max-w-sm space-y-6 py-4 md:py-4 lg:py-4 xl:py-4 sm:min-w-[40%] min-h-full w-[90%]">
       <div className="space-y-2 text-center">
         <h1 className="text-3xl font-bold">Welcome Back</h1>
         <p className="text-muted-foreground">
@@ -93,7 +93,7 @@ export function Login() {
                     <FormMessage />
                   </FormItem>
                 )}
-              ></FormField>
+              />
             </div>
             <div className="space-y-2">
               <FormField
@@ -113,13 +113,13 @@ export function Login() {
                     <FormMessage />
                   </FormItem>
                 )}
-              ></FormField>
+              />
             </div>
             <Button type="submit" className="w-full">
               Sign In
             </Button>
 
-            <div>
+            <div className="flex items-center justify-center flex-wrap">
               <Link href="/forgot-password" className="" prefetch={false}>
                 <Button variant={"link"}> Forgot password?</Button>
               </Link>
