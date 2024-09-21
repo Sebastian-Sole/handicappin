@@ -40,11 +40,20 @@ export function Signup() {
   });
 
   const { mutate } = api.auth.signup.useMutation({
-    onSuccess: (data) => {
-      supabase.auth.setSession(data);
-      console.log("Signed up successfully");
-      router.push("/");
-      router.refresh();
+    onSuccess: async (data) => {
+      try {
+        await supabase.auth.setSession(data);
+        console.log("Signed up successfully");
+        router.push("/");
+      } catch (error) {
+        console.error("Error setting session:", error);
+        toast({
+          title: "Error setting session",
+          description:
+            "There was an issue establishing your session. Please try logging in again.",
+        });
+        router.push("/login");
+      }
     },
     onError: (e) => {
       console.error("Error signing up");
