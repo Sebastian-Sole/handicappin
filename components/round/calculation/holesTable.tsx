@@ -50,7 +50,7 @@ const HolesTable = () => {
             );
           })}
           <TableRow key={"total"} className="bg-secondary dark:bg-ring">
-            <TableCell className="first:rounded-l-lg last:rounded-r-lg bg-secondary dark:bg-ring">
+            <TableCell className="first:rounded-l-lg !rounded-tl-none last:rounded-r-lg bg-secondary dark:bg-ring">
               Total
             </TableCell>
             <TableCell className="bg-secondary dark:bg-ring">
@@ -68,7 +68,7 @@ const HolesTable = () => {
                 return acc + hole.hcpStrokes;
               }, 0)}
             </TableCell>
-            <TableCell className="first:rounded-l-lg last:rounded-r-lg bg-secondary dark:bg-ring">
+            <TableCell className="first:rounded-l-lg last:rounded-r-lg !rounded-tr-none bg-secondary dark:bg-ring">
               {holes.reduce((acc, hole) => {
                 return acc + calculateHoleAdjustedScore(hole);
               }, 0)}
