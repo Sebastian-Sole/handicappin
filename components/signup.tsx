@@ -18,7 +18,6 @@ import {
 import { createClientComponentClient } from "@/utils/supabase/client";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { api } from "@/trpc/react";
-import { FacebookIcon } from "lucide-react";
 import { toast } from "./ui/use-toast";
 
 export function Signup() {
@@ -41,34 +40,25 @@ export function Signup() {
   });
 
   const { mutate } = api.auth.signup.useMutation({
-    onSuccess: () => {
+    onSuccess: (data) => {
+      supabase.auth.setSession(data);
+      console.log("Signed up successfully");
       router.push("/");
       router.refresh();
     },
     onError: (e) => {
-      const errorMessage = e.data?.zodError?.fieldErrors.content;
       console.error("Error signing up");
       console.log(e);
+      toast({
+        title: "Error logging in",
+        description: e.message,
+      });
+      router.push("/error");
     },
   });
 
   const onSubmit = async (values: z.infer<typeof signupSchema>) => {
     mutate(values);
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email: values.email,
-      password: values.password,
-    });
-
-    if (error) {
-      console.log(error);
-      toast({
-        title: "Error logging in",
-        description: error.message,
-      });
-      router.push("/error");
-    }
-    router.push("/");
-    router.refresh();
   };
 
   return (

@@ -6,25 +6,48 @@ export const authRouter = createTRPCRouter({
   signup: publicProcedure
     .input(signupSchema)
     .mutation(async ({ ctx, input }) => {
-      const { data: authData, error: authError } =
+      const { data: signupData, error: signupError } =
         await ctx.supabase.auth.signUp({
           email: input.email,
           password: input.password,
         });
 
-      if (authError) {
-        throw new Error(`Error signing up: ${authError.message}`);
+      if (signupError) {
+        throw new Error(`Error signing up: ${signupError.message}`);
       }
 
-      if (!authData) {
-        throw new Error("No auth data returned");
+      if (!signupData?.user?.id) {
+        throw new Error("User ID is undefined after signup.");
       }
 
-      if (authData.user === null) {
-        throw new Error("No user returned");
+      const { data: profileData, error: profileError } = await ctx.supabase
+        .from("Profile")
+        .insert([
+          {
+            email: input.email,
+            name: input.name,
+            handicapIndex: 54,
+            id: signupData.user.id,
+          },
+        ])
+        .select("id")
+        .single();
+
+      if (profileError) {
+        throw new Error(`Error creating profile: ${profileError.message}`);
       }
 
-      return authData;
+      const { data: loginData, error: loginError } =
+        await ctx.supabase.auth.signInWithPassword({
+          email: input.email,
+          password: input.password,
+        });
+
+      if (loginError) {
+        throw new Error(`Error logging in after signup: ${loginError.message}`);
+      }
+
+      return loginData.session; // Return the session data for the client
     }),
   getProfileFromUserId: authedProcedure
     .input(z.string())
