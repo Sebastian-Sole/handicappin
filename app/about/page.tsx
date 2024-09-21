@@ -104,7 +104,7 @@ export default function AboutPage() {
       </section>
       <section className="w-full py-12 md:py-24 lg:py-32 bg-primary-alternate">
         <div className="container px-4 md:px-6">
-          <Badge className="bg-background text-muted-foreground">
+          <Badge className="dark:bg-background dark:text-muted-foreground bg-black text-white">
             Why Choose Us?
           </Badge>
           <div className="grid gap-10 pt-8 md:gap-20 md:grid-cols-2">
@@ -122,7 +122,7 @@ export default function AboutPage() {
 
             <div className="mt-8 grid grid-cols-2 gap-4">
               <div className="flex flex-col items-start gap-3">
-                <div className="rounded-md bg-background p-2 text-muted-foreground">
+                <div className="rounded-md p-2 dark:bg-background dark:text-muted-foreground bg-black text-white">
                   <Scale className="h-6 w-6" />
                 </div>
                 <div>
@@ -137,7 +137,7 @@ export default function AboutPage() {
                 </div>
               </div>
               <div className="flex flex-col items-start gap-3">
-                <div className="rounded-md bg-background p-2 text-muted-foreground">
+                <div className="rounded-md p-2 dark:bg-background dark:text-muted-foreground bg-black text-white">
                   <Earth className="h-6 w-6" />
                 </div>
                 <div>
@@ -155,7 +155,7 @@ export default function AboutPage() {
             <div className="flex flex-col items-start space-y-8">
               <div className="mt-8 grid grid-cols-2 gap-4">
                 <div className="flex flex-col items-start gap-3">
-                  <div className="rounded-md bg-background p-2 text-muted-foreground">
+                  <div className="rounded-md p-2 dark:bg-background dark:text-muted-foreground bg-black text-white">
                     <Gauge className="h-6 w-6" />
                   </div>
                   <div>
@@ -167,7 +167,7 @@ export default function AboutPage() {
                   </div>
                 </div>
                 <div className="flex flex-col items-start gap-3">
-                  <div className="rounded-md bg-background p-2 text-muted-foreground">
+                  <div className="rounded-md p-2 dark:bg-background dark:text-muted-foreground bg-black text-white">
                     <Trophy className="h-6 w-6" />
                   </div>
                   <div>
