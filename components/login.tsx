@@ -81,13 +81,7 @@ export function Login() {
                   <FormItem>
                     <FormLabel>Email</FormLabel>
                     <FormControl>
-                      <Input
-                        id="email"
-                        type="email"
-                        placeholder="m@example.com"
-                        required
-                        {...field}
-                      />
+                      <Input id="email" type="email" required {...field} />
                     </FormControl>
 
                     <FormMessage />
