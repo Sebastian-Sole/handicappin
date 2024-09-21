@@ -19,8 +19,11 @@ import { createClientComponentClient } from "@/utils/supabase/client";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { api } from "@/trpc/react";
 import { toast } from "./ui/use-toast";
+import { useState } from "react";
 
 export function Signup() {
+  const [loading, setLoading] = useState(false);
+
   const router = useRouter();
   const supabase = createClientComponentClient();
 
@@ -39,7 +42,7 @@ export function Signup() {
     },
   });
 
-  const { mutate } = api.auth.signup.useMutation({
+  const { mutate, isPending } = api.auth.signup.useMutation({
     onSuccess: async (data) => {
       try {
         await supabase.auth.setSession(data);
@@ -67,7 +70,78 @@ export function Signup() {
   });
 
   const onSubmit = async (values: z.infer<typeof signupSchema>) => {
-    mutate(values);
+    setLoading(true);
+    try {
+      // Sign up the user
+      const { data: signupData, error: signupError } =
+        await supabase.auth.signUp({
+          email: values.email,
+          password: values.password,
+        });
+
+      if (signupError) {
+        throw signupError;
+      }
+
+      if (!signupData.user?.id) {
+        throw new Error("User ID is undefined after signup.");
+      }
+
+      // Create user profile
+      const { error: profileError } = await supabase.from("Profile").insert([
+        {
+          email: values.email,
+          name: values.name,
+          handicapIndex: 54,
+          id: signupData.user.id,
+        },
+      ]);
+
+      if (profileError) {
+        throw profileError;
+      }
+
+      // Log in the user
+      const { data: loginData, error: loginError } =
+        await supabase.auth.signInWithPassword({
+          email: values.email,
+          password: values.password,
+        });
+
+      if (loginError) {
+        throw loginError;
+      }
+
+      if (!loginData.session) {
+        throw new Error("Session data is undefined after login.");
+      }
+
+      // Set the session client-side
+      const { error: setSessionError } = await supabase.auth.setSession(
+        loginData.session
+      );
+
+      if (setSessionError) {
+        throw setSessionError;
+      }
+
+      toast({
+        title: "Signed up successfully!",
+        description: "You have been signed up and logged in.",
+      });
+
+      // Force a full page reload to ensure server-side components recognize the session
+      window.location.href = "/";
+    } catch (error: any) {
+      console.error("Error during sign up:", error);
+      toast({
+        title: "Error signing up",
+        description: error.message || "An error occurred during sign up.",
+      });
+      // Optionally, redirect to an error page or handle the error appropriately
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -146,8 +220,8 @@ export function Signup() {
                 )}
               ></FormField>
             </div>
-            <Button type="submit" className="w-full">
-              Sign Up
+            <Button type="submit" className="w-full" disabled={isPending}>
+              {isPending ? "Loading..." : "Sign Up"}
             </Button>
 
             <div className="flex items-center justify-center flex-wrap">
