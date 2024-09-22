@@ -20,10 +20,7 @@ import {
 import { Button } from "../ui/button";
 import DashboardSkeleton from "./dashboardSkeleton";
 import RoundTablePagination from "./roundTablePagination";
-import {
-  getRelevantDifferentials,
-  getRelevantRounds,
-} from "@/utils/calculations/handicap";
+import { getRelevantRounds } from "@/utils/calculations/handicap";
 
 interface DashboardProps {
   profile: Tables<"Profile">;
@@ -111,9 +108,9 @@ export function Dashboard({ profile, roundsList, header }: DashboardProps) {
 
           <Table>
             <TableHeader>
-              <TableRow>
+              <TableRow className="hover:bg-inherit">
                 <TableHead
-                  className="cursor-pointer"
+                  className="cursor-pointer whitespace-nowrap font-bold text-primary"
                   onClick={() => handleSort("teeTime")}
                 >
                   Date{" "}
@@ -124,7 +121,7 @@ export function Dashboard({ profile, roundsList, header }: DashboardProps) {
                   )}
                 </TableHead>
                 <TableHead
-                  className="cursor-pointer"
+                  className="cursor-pointer whitespace-nowrap font-bold text-primary"
                   onClick={() => handleSort("courseName")}
                 >
                   Course{" "}
@@ -135,7 +132,7 @@ export function Dashboard({ profile, roundsList, header }: DashboardProps) {
                   )}
                 </TableHead>
                 <TableHead
-                  className="cursor-pointer"
+                  className="cursor-pointer whitespace-nowrap font-bold text-primary"
                   onClick={() => handleSort("adjustedGrossScore")}
                 >
                   Score{" "}
@@ -146,7 +143,7 @@ export function Dashboard({ profile, roundsList, header }: DashboardProps) {
                   )}
                 </TableHead>
                 <TableHead
-                  className="cursor-pointer"
+                  className="cursor-pointer whitespace-nowrap font-bold text-primary"
                   onClick={() => handleSort("parPlayed")}
                 >
                   Par{" "}
@@ -157,7 +154,7 @@ export function Dashboard({ profile, roundsList, header }: DashboardProps) {
                   )}
                 </TableHead>
                 <TableHead
-                  className="cursor-pointer"
+                  className="cursor-pointer whitespace-nowrap font-bold text-primary"
                   onClick={() => handleSort("scoreDifferential")}
                 >
                   Differential{" "}
@@ -168,7 +165,7 @@ export function Dashboard({ profile, roundsList, header }: DashboardProps) {
                   )}
                 </TableHead>
                 <TableHead
-                  className="cursor-pointer"
+                  className="cursor-pointer whitespace-nowrap font-bold text-primary"
                   onClick={() => handleSort("exceptionalScoreAdjustment")}
                 >
                   Adjustment{" "}
@@ -178,12 +175,14 @@ export function Dashboard({ profile, roundsList, header }: DashboardProps) {
                     </span>
                   )}
                 </TableHead>
-                <TableHead>Actions</TableHead>
+                <TableHead className="font-bold text-primary">
+                  Actions
+                </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {filteredAndSortedRounds.map((round, index) => (
-                <TableRow key={index}>
+                <TableRow key={index} className="hover:bg-accent/20">
                   <TableCell>
                     {new Date(round.teeTime).toLocaleString()}
                   </TableCell>

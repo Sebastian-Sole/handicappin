@@ -33,7 +33,7 @@ const Footer = () => {
               className="text-sm font-medium hover:underline underline-offset-4"
               href="/calculators"
             >
-              Pricing
+              Calculators
             </Link>
             <Link
               className="text-sm font-medium hover:underline underline-offset-4"
