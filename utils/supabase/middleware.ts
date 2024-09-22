@@ -38,13 +38,14 @@ export async function updateSession(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  if (
-    !user &&
-    !request.nextUrl.pathname.startsWith("/signup") &&
-    !request.nextUrl.pathname.startsWith("/login") &&
-    !request.nextUrl.pathname.startsWith("/api")
-  ) {
-    // no user, potentially respond by redirecting the user to the login page
+  const { pathname } = request.nextUrl;
+
+  const publicPaths = ["/login", "/signup", "/api"];
+
+  const isPublic = publicPaths.some((path) => pathname.startsWith(path));
+
+  if (!user && !isPublic) {
+    // Redirect unauthenticated user to login
     const url = request.nextUrl.clone();
     url.pathname = "/login";
     return NextResponse.redirect(url);
@@ -52,10 +53,9 @@ export async function updateSession(request: NextRequest) {
 
   if (
     user &&
-    (request.nextUrl.pathname.startsWith("/signup") ||
-      request.nextUrl.pathname.startsWith("/login"))
+    (pathname.startsWith("/login") || pathname.startsWith("/signup"))
   ) {
-    // user is logged in, potentially respond by redirecting the user to the home page
+    // Redirect authenticated user away from login/signup
     const url = request.nextUrl.clone();
     url.pathname = "/";
     return NextResponse.redirect(url);
