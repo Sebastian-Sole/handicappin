@@ -56,6 +56,7 @@ export function Dashboard({ profile, roundsList, header }: DashboardProps) {
       });
     return filteredRounds.slice(page * 20, page * 20 + 20);
   }, [searchTerm, sortColumn, sortDirection, page]);
+
   const handleSort = (column: keyof RoundWithCourse) => {
     if (sortColumn === column) {
       setSortDirection(sortDirection === "asc" ? "desc" : "asc");
@@ -90,22 +91,23 @@ export function Dashboard({ profile, roundsList, header }: DashboardProps) {
         <DashboardInfo handicapIndex={profile.handicapIndex} header={header} />
         <DashboardGraphDisplay graphData={graphData} />
       </div>
-      {filteredAndSortedRounds.length !== 0 && (
-        <div className="bg-card rounded-lg p-6 mt-8">
-          <h2 className="text-2xl font-bold mb-4">Rounds History</h2>
-          <div className="mb-4" id="table">
-            <Input
-              type="search"
-              placeholder="Search rounds..."
-              value={searchTerm}
-              onChange={(e) => {
-                setSearchTerm(e.target.value);
-                setPage(0);
-              }}
-              className="w-full rounded-lg bg-background pl-8"
-            />
-          </div>
 
+      <div className="bg-card rounded-lg p-6 mt-8">
+        <h2 className="text-2xl font-bold mb-4">Rounds History</h2>
+        <div className="mb-4" id="table">
+          <Input
+            type="search"
+            placeholder="Search rounds..."
+            value={searchTerm}
+            onChange={(e) => {
+              setSearchTerm(e.target.value);
+              setPage(0);
+            }}
+            className="w-full rounded-lg bg-background pl-4"
+          />
+        </div>
+
+        {filteredAndSortedRounds.length > 0 ? (
           <Table>
             <TableHeader>
               <TableRow className="hover:bg-inherit">
@@ -212,15 +214,20 @@ export function Dashboard({ profile, roundsList, header }: DashboardProps) {
               ))}
             </TableBody>
           </Table>
-          {roundsList.length > 20 && (
-            <RoundTablePagination
-              page={page}
-              setPage={setPage}
-              roundsList={roundsList}
-            />
-          )}
-        </div>
-      )}
+        ) : (
+          <div className="mt-4 text-center">
+            <p>No rounds found for search: &quot;{searchTerm}&quot;</p>
+          </div>
+        )}
+
+        {roundsList.length > 20 && (
+          <RoundTablePagination
+            page={page}
+            setPage={setPage}
+            roundsList={roundsList}
+          />
+        )}
+      </div>
     </div>
   );
 }
