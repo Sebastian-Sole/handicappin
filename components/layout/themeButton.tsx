@@ -1,13 +1,14 @@
 "use client";
 import { Moon, Sun } from "lucide-react";
-import { Button } from "./ui/button";
+
+import { useTheme } from "next-themes";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "./ui/dropdown-menu";
-import { useTheme } from "next-themes";
+} from "../ui/dropdown-menu";
+import { Button } from "../ui/button";
 
 interface ThemeButtonProps {
   size: "icon" | "sm" | "lg";

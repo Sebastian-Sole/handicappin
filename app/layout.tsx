@@ -4,8 +4,8 @@ import "./globals.css";
 import { TRPCReactProvider } from "@/trpc/react";
 import { Toaster } from "@/components/ui/toaster";
 import { ThemeProvider } from "@/components/theme-provider";
-import { Navbar } from "@/components/navbar";
-import Footer from "@/components/footer";
+import { Navbar } from "@/components/layout/navbar";
+import Footer from "@/components/layout/footer";
 
 const inter = Inter({ subsets: ["latin"] });
 

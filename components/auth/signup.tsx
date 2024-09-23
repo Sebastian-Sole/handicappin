@@ -2,7 +2,6 @@
 
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { Input } from "./ui/input";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import {
@@ -15,10 +14,11 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { toast } from "./ui/use-toast";
 import { useState } from "react";
 import { signupSchema } from "@/types/auth";
 import { signUpAndLogin } from "@/utils/auth/helpers";
+import { toast } from "../ui/use-toast";
+import { Input } from "../ui/input";
 
 export function Signup() {
   const [loading, setLoading] = useState(false);
