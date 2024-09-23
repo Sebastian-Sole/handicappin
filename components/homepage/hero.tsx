@@ -8,20 +8,24 @@ import {
   Target,
   Info,
 } from "lucide-react";
-import { HoverCard, HoverCardContent, HoverCardTrigger } from "./ui/hover-card";
-import { P } from "./ui/typography";
 import Link from "next/link";
 import { RoundWithCourse } from "@/types/database";
+import { P } from "../ui/typography";
+import {
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger,
+} from "../ui/hover-card";
 
 interface HeroProps {
   profile: Tables<"Profile">;
   previousScores: number[];
-  bestRound: RoundWithCourse;
+  bestRound: RoundWithCourse | null;
 }
 
 const Hero = ({ profile, previousScores, bestRound }: HeroProps) => {
   const calculatePlusMinusScore = (): string => {
-    if (bestRound === undefined) {
+    if (bestRound === undefined || bestRound === null) {
       return "N/A";
     }
     const calculatedScore =
@@ -194,7 +198,6 @@ const Hero = ({ profile, previousScores, bestRound }: HeroProps) => {
                     </li>
                   </ul>
                 </div>
-                {/* TODO: Add a "hover card" for "What's this?" */}
                 <div className="absolute inset-0 bg-background/80 backdrop-blur-sm flex flex-col items-center justify-center rounded-3xl">
                   <p className="text-2xl font-bold text-primary mb-2">
                     Coming Soon

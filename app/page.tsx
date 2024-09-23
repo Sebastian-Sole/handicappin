@@ -1,4 +1,4 @@
-import { HomePage } from "@/components/home-page";
+import { HomePage } from "@/components/homepage/home-page";
 import { api } from "@/trpc/server";
 import { createServerComponentClient } from "@/utils/supabase/server";
 import { redirect } from "next/navigation";

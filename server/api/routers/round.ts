@@ -130,6 +130,8 @@ export const roundRouter = createTRPCRouter({
         });
       }
 
+      console.log(userId);
+
       const { data: round, error: roundError } = await ctx.supabase
         .from("Round")
         .insert([
@@ -294,7 +296,7 @@ export const roundRouter = createTRPCRouter({
       })
     )
     .query(async ({ ctx, input }) => {
-      const { data: rounds, error } = await ctx.supabase
+      const { data: round, error } = await ctx.supabase
         .from("Round")
         .select(
           `
@@ -306,19 +308,14 @@ export const roundRouter = createTRPCRouter({
         )
         .eq("userId", input.userId)
         .order("scoreDifferential", { ascending: true })
-        .range(0, 1);
+        .limit(1)
+        .single();
 
       if (error) {
         console.log(error);
         throw new Error(`Error getting best round: ${error.message}`);
       }
 
-      const roundsWithCourse = rounds
-        .map((round) => {
-          return flattenRoundWithCourse(round, round.Course);
-        })
-        .filter((round): round is RoundWithCourse => round !== null);
-
-      return roundsWithCourse[0];
+      return flattenRoundWithCourse(round, round.Course);
     }),
 });

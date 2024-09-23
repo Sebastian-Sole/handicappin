@@ -1,4 +1,4 @@
-import { Login } from "@/components/login";
+import { Login } from "@/components/auth/login";
 import { createServerComponentClient } from "@/utils/supabase/server";
 import { redirect } from "next/navigation";
 

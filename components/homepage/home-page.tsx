@@ -4,12 +4,12 @@ import { Tables } from "@/types/supabase";
 import { api } from "@/trpc/server";
 import Hero from "./hero";
 import React from "react";
-import CourseHandicapCalculator from "./calculators/course-handicap";
-import ScoreDifferentialCalculator from "./calculators/score-differential";
 import { RoundWithCourse } from "@/types/database";
-import HandicapTrendChartDisplay from "./charts/handicap-trend-chart-display";
-import ScoreBarChartDisplay from "./charts/score-bar-chat-display";
 import { getRelevantRounds } from "@/utils/calculations/handicap";
+import CourseHandicapCalculator from "../calculators/course-handicap";
+import ScoreDifferentialCalculator from "../calculators/score-differential";
+import HandicapTrendChartDisplay from "../charts/handicap-trend-chart-display";
+import ScoreBarChartDisplay from "../charts/score-bar-chat-display";
 
 interface HomepageProps {
   profile: Tables<"Profile">;
@@ -23,7 +23,7 @@ export const HomePage = async ({ profile }: HomepageProps) => {
     amount: 20,
   });
 
-  const bestRound: RoundWithCourse = await api.round.getBestRound({
+  const bestRound: RoundWithCourse | null = await api.round.getBestRound({
     userId: id,
   });
 
@@ -37,12 +37,12 @@ export const HomePage = async ({ profile }: HomepageProps) => {
   }[] = [];
   let percentageChange = 0;
 
-  if (bestRound !== undefined) {
+  if (bestRound !== null) {
     previousHandicaps = rounds
       .sort((a, b) => {
         return new Date(a.teeTime).getTime() - new Date(b.teeTime).getTime();
       })
-      .slice(10, 20)
+      .slice(-10)
       .map((round) => ({
         roundDate: new Date(round.teeTime).toLocaleDateString(),
         handicap: round.updatedHandicapIndex,
@@ -94,7 +94,7 @@ export const HomePage = async ({ profile }: HomepageProps) => {
               <ScoreBarChartDisplay
                 previousScores={previousScores}
                 profile={profile}
-              ></ScoreBarChartDisplay>
+              />
             </div>
           </div>
         </section>

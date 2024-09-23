@@ -8,7 +8,7 @@ export function Page404() {
         <h1 className="mt-4 text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
           Oops, looks like you&apos;ve landed in a bunker!
         </h1>
-        <p className="mt-4 text-muted-foreground">
+        <p className="mt-4 dark:text-muted-foreground text-muted">
           It seems the page you&apos;re looking for is not where it should be.
           Don&apos;t worry, we&apos;ll get you back on the fairway and in under
           par.

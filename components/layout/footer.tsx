@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Button } from "./ui/button";
+import { Button } from "../ui/button";
 
 const Footer = () => {
   return (
@@ -33,7 +33,7 @@ const Footer = () => {
               className="text-sm font-medium hover:underline underline-offset-4"
               href="/calculators"
             >
-              Pricing
+              Calculators
             </Link>
             <Link
               className="text-sm font-medium hover:underline underline-offset-4"

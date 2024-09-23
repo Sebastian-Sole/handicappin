@@ -54,24 +54,24 @@ const AddRoundForm = ({ profile }: AddRoundFormProps) => {
 
   const form = useForm<z.infer<typeof addRoundFormSchema>>({
     resolver: zodResolver(addRoundFormSchema),
-    // defaultValues: {
-    //   numberOfHoles: 9,
-    //   holes: Array.from({ length: 9 }).map((value, index) => ({
-    //     par: 3,
-    //     hcp: 1,
-    //     strokes: 3,
-    //     holeNumber: index + 1,
-    //     hcpStrokes: 0,
-    //   })),
-    //   date: undefined,
-    //   courseInfo: {
-    //     par: 27,
-    //     courseRating: 50.3,
-    //     slope: 82,
-    //   },
-    //   userId: profile.id,
-    // },
-    defaultValues: roundOne,
+    defaultValues: {
+      numberOfHoles: 9,
+      holes: Array.from({ length: 9 }).map((value, index) => ({
+        par: 3,
+        hcp: 1,
+        strokes: 3,
+        holeNumber: index + 1,
+        hcpStrokes: 0,
+      })),
+      date: undefined,
+      courseInfo: {
+        par: 27,
+        courseRating: 50.3,
+        slope: 82,
+      },
+      userId: profile.id,
+    },
+    // defaultValues: roundOne,
   });
 
   const { mutate } = api.round.create.useMutation({

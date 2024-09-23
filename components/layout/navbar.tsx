@@ -3,16 +3,15 @@ import { Button } from "@/components/ui/button";
 import { Avatar } from "@/components/ui/avatar";
 import { Sheet, SheetTrigger, SheetContent } from "@/components/ui/sheet";
 import { createServerComponentClient } from "@/utils/supabase/server";
-import ThemeButton from "./themeButton";
-import LogoutButton from "./logoutButton";
-import { Large } from "./ui/typography";
+import LogoutButton from "../auth/logoutButton";
+import { Large } from "../ui/typography";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "./ui/dropdown-menu";
+} from "../ui/dropdown-menu";
 import {
   CirclePlus,
   LayoutDashboardIcon,
@@ -20,7 +19,8 @@ import {
   UserIcon,
   UserRound,
 } from "lucide-react";
-import { Separator } from "./ui/separator";
+import { Separator } from "../ui/separator";
+import ThemeButton from "./themeButton";
 
 export async function Navbar() {
   const supabase = createServerComponentClient();
