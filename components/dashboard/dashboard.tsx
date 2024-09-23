@@ -216,7 +216,7 @@ export function Dashboard({ profile, roundsList, header }: DashboardProps) {
           </Table>
         ) : (
           <div className="mt-4 text-center">
-            <p>No rounds found for search: "{searchTerm}"</p>
+            <p>No rounds found for search: &quot;{searchTerm}&quot;</p>
           </div>
         )}
 
