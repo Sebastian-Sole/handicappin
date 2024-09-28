@@ -20,7 +20,15 @@ import { signUpAndLogin } from "@/utils/auth/helpers";
 import { toast } from "../ui/use-toast";
 import { Input } from "../ui/input";
 
-export function Signup() {
+interface SignupProps {
+  description?: string;
+  notify?: boolean;
+}
+
+export function Signup({
+  description = "Create a new account to get started",
+  notify = false,
+}: SignupProps) {
   const [loading, setLoading] = useState(false);
 
   const form = useForm<z.infer<typeof signupSchema>>({
@@ -49,6 +57,9 @@ export function Signup() {
         description: error.message || "An error occurred during sign up.",
       });
     }
+    if (notify) {
+      // TODO: Implement notification logic
+    }
     setLoading(false);
   };
 
@@ -56,9 +67,7 @@ export function Signup() {
     <div className="mx-auto max-w-sm space-y-6 py-4 md:py-4 lg:py-4 xl:py-4 sm:min-w-[40%] min-h-full w-[90%]">
       <div className="space-y-2 text-center">
         <h1 className="text-3xl font-bold">Sign Up</h1>
-        <p className="text-muted-foreground">
-          Create a new account to get started
-        </p>
+        <p className="text-muted-foreground">{description}</p>
       </div>
       <div className="space-y-4">
         <Form {...form}>
