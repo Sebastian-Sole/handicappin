@@ -29,14 +29,14 @@ const ScoreBarChartDisplay = ({
         <CardTitle className="sm:text-2xl text-xl">Previous Scores</CardTitle>
       </CardHeader>
       <CardContent className="p-0 lg:min-h-[300px] justify-center flex items-center">
-        {previousScores.length <= 5 && (
+        {previousScores.length < 5 && (
           <div className="flex justify-center items-center h-full">
             <span className="text-primary">
               Play at least 5 rounds to see your scores
             </span>
           </div>
         )}
-        {previousScores.length > 5 && (
+        {previousScores.length >= 5 && (
           <div className="w-full h-full pt-8 pr-8">
             <ScoreBarChart scores={previousScores} />
           </div>

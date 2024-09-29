@@ -54,7 +54,7 @@ export const HomePage = async ({ profile }: HomepageProps) => {
       .sort((a, b) => {
         return new Date(a.teeTime).getTime() - new Date(b.teeTime).getTime();
       })
-      .slice(10, 20)
+      .slice(-10)
       .map((round) => ({
         roundDate: new Date(round.teeTime).toLocaleDateString(),
         score: round.adjustedGrossScore,
