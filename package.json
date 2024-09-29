@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "gen-types": "pnpx supabase gen types typescript --project-id \"lssnaapatrurmhbbqadb\" --schema public > types/supabase.ts && pnpx prisma generate",
+    "gen:types": "pnpx supabase gen types typescript --project-id \"lssnaapatrurmhbbqadb\" --schema public > types/supabase.ts && pnpx prisma generate",
     "test": "vitest"
   },
   "dependencies": {
