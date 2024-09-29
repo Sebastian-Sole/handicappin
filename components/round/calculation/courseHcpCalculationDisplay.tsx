@@ -25,7 +25,7 @@ const CourseHandicapCalculationDisplay = () => {
         <H3>Course Handicap</H3>
       </div>
       <Muted>Enter 18 hole values</Muted>
-      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-5 gap-4 md:flex items-end">
         <div>
           <Label>Handicap Index</Label>
           <Input

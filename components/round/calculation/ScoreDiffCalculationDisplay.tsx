@@ -18,7 +18,7 @@ const ScoreDiffCalculationDisplay = () => {
   return (
     <section className="space-y-4">
       <H3>Score Differential</H3>
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div>
           <Label>Adjusted Gross Score:</Label>
           <Input
