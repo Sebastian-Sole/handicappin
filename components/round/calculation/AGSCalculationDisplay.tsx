@@ -17,7 +17,7 @@ const AGSCalculationDisplay = () => {
   return (
     <section className="space-y-4">
       <H3>Adjusted Gross Score</H3>
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 lg:flex items-end">
         <div>
           <Label className="mr-2">Adjusted Played Score:</Label>
           <Input
