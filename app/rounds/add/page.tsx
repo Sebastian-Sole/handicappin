@@ -15,7 +15,7 @@ const AddRoundPage = async () => {
   const profile = await api.auth.getProfileFromUserId(userId);
 
   return (
-    <div className="flex justify-center items-center h-full">
+    <div className="flex justify-center items-center h-full py-8">
       <AddRoundForm profile={profile} />
     </div>
   );

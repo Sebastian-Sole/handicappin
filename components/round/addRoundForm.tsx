@@ -71,7 +71,6 @@ const AddRoundForm = ({ profile }: AddRoundFormProps) => {
       },
       userId: profile.id,
     },
-    // defaultValues: roundOne,
   });
 
   const { mutate } = api.round.create.useMutation({
@@ -98,7 +97,12 @@ const AddRoundForm = ({ profile }: AddRoundFormProps) => {
   function onSubmit(values: z.infer<typeof addRoundFormSchema>) {
     const dataValues: RoundMutation | null = translateRound(values, profile);
     if (!dataValues) {
-      return; // Todo: handle error with toast
+      toast({
+        title: "❌ Error creating round",
+        description:
+          "There was an error creating the round, could not convert data. Please hard refresh and try again, or contact support",
+      });
+      return;
     }
     mutate(dataValues);
   }
@@ -110,48 +114,6 @@ const AddRoundForm = ({ profile }: AddRoundFormProps) => {
     };
   }
 
-  const handlePopulateDb = async () => {
-    const holeZero: RoundMutation = {
-      adjustedGrossScore: 128,
-      adjustedPlayedScore: 128,
-      courseInfo: {
-        courseRating: 72,
-        location: "Artificial",
-        par: 72,
-        slope: 113,
-      },
-      courseRating: 72,
-      eighteenHolePar: 72,
-      nineHolePar: 36,
-      existingHandicapIndex: 54,
-      holes: roundZero.holes,
-      parPlayed: 72,
-      scoreDifferential: 56,
-      slopeRating: 113,
-      teeTime: new Date("2021-09-01T12:00:00.000Z"),
-      totalStrokes: 128,
-      userId: profile.id,
-      exceptionalScoreAdjustment: 0,
-    };
-    mutate(holeZero);
-
-    const handleAddData = (roundToAdd: FormRound) => {
-      const dataValue = translateRound(roundToAdd, profile);
-      if (!dataValue) {
-        console.log("Data values invalid");
-        console.log(roundToAdd);
-        console.log(dataValue);
-        return;
-      }
-      mutate(dataValue);
-    };
-
-    const roundsToAdd = rounds;
-    roundsToAdd.forEach((round) => {
-      handleAddData(round);
-    });
-  };
-
   if (!isMounted) {
     return <FormSkeleton />;
   }
@@ -160,10 +122,10 @@ const AddRoundForm = ({ profile }: AddRoundFormProps) => {
     <Card className="md:w-[70%] w-full">
       <CardHeader>
         <CardTitle>Add Round</CardTitle>
-        <Button onClick={handlePopulateDb}>Populate DB</Button>
       </CardHeader>
+      <Separator />
 
-      <CardContent>
+      <CardContent className="mt-6">
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             <Large>Course Info</Large>
