@@ -313,7 +313,7 @@ export const roundRouter = createTRPCRouter({
 
       if (error) {
         console.log(error);
-        throw new Error(`Error getting best round: ${error.message}`);
+        return null;
       }
 
       return flattenRoundWithCourse(round, round.Course);
