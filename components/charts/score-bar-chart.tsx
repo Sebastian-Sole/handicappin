@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { H4 } from "../ui/typography";
+import { H4, Muted } from "../ui/typography";
 import { Button } from "../ui/button";
 
 import { CartesianGrid, XAxis, Bar, BarChart, YAxis, Cell } from "recharts";
@@ -10,6 +10,7 @@ import {
   ChartTooltip,
   ChartContainer,
 } from "@/components/ui/chart";
+import { RefreshCcw } from "lucide-react";
 
 interface ScoreBarChartProps {
   scores: {
@@ -17,13 +18,14 @@ interface ScoreBarChartProps {
     score: number;
     influencesHcp?: boolean;
   }[];
+  className?: string;
 }
 
-const ScoreBarChart = ({ scores }: ScoreBarChartProps) => {
+const ScoreBarChart = ({ scores, className }: ScoreBarChartProps) => {
   return (
     <>
       {scores.length !== 0 && (
-        <div className="aspect-[16/9]">
+        <div className={`aspect-[16/9] ${className}`}>
           <ChartContainer
             config={{
               round: {
@@ -72,6 +74,14 @@ const ScoreBarChart = ({ scores }: ScoreBarChartProps) => {
               </Bar>
             </BarChart>
           </ChartContainer>
+        </div>
+      )}
+      {className === "hidden sm:block" && scores.length !== 0 && (
+        <div className={`flex justify-center mt-4 sm:hidden p-8`}>
+          <Muted className="flex items-center">
+            <RefreshCcw className="mr-2" />
+            Rotate your device to view the chart
+          </Muted>
         </div>
       )}
 

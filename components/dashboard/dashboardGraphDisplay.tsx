@@ -18,19 +18,7 @@ const DashboardGraphDisplay = ({ graphData }: DashboardGraphDisplayProps) => {
           </Button>
         </Link>
       </div>
-      {graphData.length !== 0 && <ScoreBarChart scores={graphData} />}
-      {graphData.length === 0 && (
-        <div className="flex items-center justify-center h-64 xl:h-[90%] border border-gray-100 flex-col">
-          <H4>No rounds found</H4>
-          <Link
-            href={`/rounds/add`}
-            className="text-primary underline mt-4"
-            prefetch={false}
-          >
-            <Button variant={"secondary"}>Add a round here</Button>
-          </Link>
-        </div>
-      )}
+      <ScoreBarChart scores={graphData} className="hidden sm:block" />
     </div>
   );
 };

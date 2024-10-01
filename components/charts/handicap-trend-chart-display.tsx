@@ -62,14 +62,14 @@ const HandicapTrendChartDisplay = ({
         </div>
       </CardHeader>
       <CardContent className="p-0 lg:min-h-[300px] flex justify-center items-center">
-        {previousHandicaps.length <= 5 && (
+        {previousHandicaps.length < 5 && (
           <div className="flex justify-center items-center h-full">
             <span className="text-primary">
               Play at least 5 rounds to see your scores
             </span>
           </div>
         )}
-        {previousHandicaps.length > 5 && (
+        {previousHandicaps.length >= 5 && (
           <div className="w-full h-full pt-8 pr-8">
             <HandicapTrendChart
               previousHandicaps={previousHandicaps}
