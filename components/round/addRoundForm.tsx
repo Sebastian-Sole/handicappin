@@ -22,19 +22,25 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Large, Small } from "@/components/ui/typography";
+import { Small } from "@/components/ui/typography";
 import { Separator } from "@/components/ui/separator";
 import { api } from "@/trpc/react";
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useToast } from "../ui/use-toast";
 import { Tables } from "@/types/supabase";
-import type { FormRound, RoundMutation } from "@/types/round";
+import type { RoundMutation } from "@/types/round";
 import { DateTimePicker } from "../ui/datepicker";
 import useMounted from "@/hooks/useMounted";
-import FormSkeleton from "../formSkeleton";
 import { translateRound } from "@/utils/round/addUtils";
-import { roundOne, rounds, roundZero } from "@/utils/populateDb";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "../ui/tooltip";
+import { InfoIcon } from "lucide-react";
+import AddRoundFormSkeleton from "./add-round-form-skeleton";
 
 interface AddRoundFormProps {
   profile: Tables<"Profile">;
@@ -45,6 +51,9 @@ const AddRoundForm = ({ profile }: AddRoundFormProps) => {
 
   const router = useRouter();
   const { toast } = useToast();
+
+  const [loading, setLoading] = useState(false);
+  const [isSaveButtonLocked, setIsSaveButtonLocked] = useState(false);
 
   if (!profile) {
     router.push("/login");
@@ -71,7 +80,6 @@ const AddRoundForm = ({ profile }: AddRoundFormProps) => {
       },
       userId: profile.id,
     },
-    // defaultValues: roundOne,
   });
 
   const { mutate } = api.round.create.useMutation({
@@ -82,6 +90,7 @@ const AddRoundForm = ({ profile }: AddRoundFormProps) => {
         description: "Your round has been added to your profile!",
       });
       router.push("/");
+      setLoading(false);
     },
     onError: (e) => {
       const errorMessage = e.data?.zodError?.fieldErrors.content;
@@ -92,13 +101,22 @@ const AddRoundForm = ({ profile }: AddRoundFormProps) => {
         title: "❌ Error creating round",
         description: `${errorMessage}`,
       });
+      setLoading(false);
+      setIsSaveButtonLocked(false);
     },
   });
 
   function onSubmit(values: z.infer<typeof addRoundFormSchema>) {
+    setLoading(true);
+    setIsSaveButtonLocked(true);
     const dataValues: RoundMutation | null = translateRound(values, profile);
     if (!dataValues) {
-      return; // Todo: handle error with toast
+      toast({
+        title: "❌ Error creating round",
+        description:
+          "There was an error creating the round, could not convert data. Please hard refresh and try again, or contact support",
+      });
+      return;
     }
     mutate(dataValues);
   }
@@ -110,63 +128,44 @@ const AddRoundForm = ({ profile }: AddRoundFormProps) => {
     };
   }
 
-  const handlePopulateDb = async () => {
-    const holeZero: RoundMutation = {
-      adjustedGrossScore: 128,
-      adjustedPlayedScore: 128,
-      courseInfo: {
-        courseRating: 72,
-        location: "Artificial",
-        par: 72,
-        slope: 113,
-      },
-      courseRating: 72,
-      eighteenHolePar: 72,
-      nineHolePar: 36,
-      existingHandicapIndex: 54,
-      holes: roundZero.holes,
-      parPlayed: 72,
-      scoreDifferential: 56,
-      slopeRating: 113,
-      teeTime: new Date("2021-09-01T12:00:00.000Z"),
-      totalStrokes: 128,
-      userId: profile.id,
-      exceptionalScoreAdjustment: 0,
-    };
-    mutate(holeZero);
-
-    const handleAddData = (roundToAdd: FormRound) => {
-      const dataValue = translateRound(roundToAdd, profile);
-      if (!dataValue) {
-        console.log("Data values invalid");
-        console.log(roundToAdd);
-        console.log(dataValue);
-        return;
-      }
-      mutate(dataValue);
-    };
-
-    const roundsToAdd = rounds;
-    roundsToAdd.forEach((round) => {
-      handleAddData(round);
-    });
-  };
-
   if (!isMounted) {
-    return <FormSkeleton />;
+    return <AddRoundFormSkeleton />;
   }
 
   return (
-    <Card className="md:w-[70%] w-full">
-      <CardHeader>
-        <CardTitle>Add Round</CardTitle>
-        <Button onClick={handlePopulateDb}>Populate DB</Button>
-      </CardHeader>
+    <Form {...form}>
+      <form
+        onSubmit={form.handleSubmit(onSubmit)}
+        className="space-y-8 mx-auto p-6"
+      >
+        <Card className="w-full">
+          <CardHeader className="flex justify-between items-center flex-row">
+            <CardTitle>Course Information</CardTitle>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger className="flex flex-row">
+                  {" "}
+                  <InfoIcon
+                    className={`h-6 w-6 text-gray-500 dark:text-gray-400 mr-2`}
+                  />{" "}
+                  <p className="text-gray-500 md:block hidden">Need help?</p>
+                </TooltipTrigger>
+                <TooltipContent className="max-w-80">
+                  <p>
+                    You can find the <b>course rating</b>, <b>slope</b> and{" "}
+                    <b>par</b> on the scorecard of the course you played. If
+                    you&apos;re unsure, you can ask the pro shop or check the
+                    course&apos;s website.
+                  </p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </CardHeader>
 
-      <CardContent>
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            <Large>Course Info</Large>
+          <Separator />
+
+          <CardContent className="space-y-6 pt-6">
+            {" "}
             <FormField
               control={form.control}
               name="date"
@@ -178,6 +177,7 @@ const AddRoundForm = ({ profile }: AddRoundFormProps) => {
                       granularity="minute"
                       value={field.value}
                       onChange={field.onChange}
+                      disabled={loading}
                     />
                   </FormControl>
                   <FormDescription>
@@ -192,9 +192,9 @@ const AddRoundForm = ({ profile }: AddRoundFormProps) => {
               name="courseInfo.location"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Location</FormLabel>
+                  <FormLabel>Course Name</FormLabel>
                   <FormControl>
-                    <Input {...field} />
+                    <Input {...field} disabled={loading} />
                   </FormControl>
                   <FormDescription>
                     Where did you play the round?
@@ -214,8 +214,8 @@ const AddRoundForm = ({ profile }: AddRoundFormProps) => {
                       <FormControl>
                         <Input
                           {...field}
-                          type="number"
                           onChange={handleNumericChange(field)}
+                          disabled={loading}
                         />
                       </FormControl>
                       <FormMessage />
@@ -233,13 +233,11 @@ const AddRoundForm = ({ profile }: AddRoundFormProps) => {
                         Course Rating
                       </FormLabel>
                       <FormLabel className="flex sm:hidden">CR</FormLabel>
-                      {/* <FormLabel>Course Rating</FormLabel> */}
-
                       <FormControl>
                         <Input
-                          type="number"
                           {...field}
                           onChange={handleNumericChange(field)}
+                          disabled={loading}
                         />
                       </FormControl>
                       <FormMessage />
@@ -256,9 +254,9 @@ const AddRoundForm = ({ profile }: AddRoundFormProps) => {
                       <FormLabel className="sm:block">Slope</FormLabel>
                       <FormControl>
                         <Input
-                          type="number"
                           {...field}
                           onChange={handleNumericChange(field)}
+                          disabled={loading}
                         />
                       </FormControl>
                       <FormMessage />
@@ -267,7 +265,6 @@ const AddRoundForm = ({ profile }: AddRoundFormProps) => {
                 />
               </div>
             </div>
-
             <FormField
               control={form.control}
               name="numberOfHoles"
@@ -283,6 +280,7 @@ const AddRoundForm = ({ profile }: AddRoundFormProps) => {
                       defaultValue={
                         (field.value && field.value.toString()) || "9"
                       }
+                      disabled={loading}
                     >
                       <FormControl>
                         <SelectTrigger>
@@ -290,8 +288,12 @@ const AddRoundForm = ({ profile }: AddRoundFormProps) => {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="9">9 holes</SelectItem>
-                        <SelectItem value="18">18 holes</SelectItem>
+                        <SelectItem value="9" disabled={loading}>
+                          9 holes
+                        </SelectItem>
+                        <SelectItem value="18" disabled={loading}>
+                          18 holes
+                        </SelectItem>
                       </SelectContent>
                     </Select>
                   </FormControl>
@@ -300,12 +302,18 @@ const AddRoundForm = ({ profile }: AddRoundFormProps) => {
                 </FormItem>
               )}
             />
+          </CardContent>
+        </Card>
 
-            <Separator className="my-0" />
-
+        <Card>
+          <CardHeader>
+            <CardTitle>Holes Played</CardTitle>
+          </CardHeader>
+          <Separator />
+          <CardContent>
             {Array.from({ length: numberOfHoles }).map((_, index) => (
               <React.Fragment key={index}>
-                <div className="space-y-1">
+                <div className="space-y-2 py-4">
                   <Small className="text-xl font-bold">Hole {index + 1}</Small>
                   <div className="flex space-x-4 items-start">
                     <div className="flex-1">
@@ -319,7 +327,9 @@ const AddRoundForm = ({ profile }: AddRoundFormProps) => {
                               <Input
                                 type="number"
                                 {...field}
+                                value={field.value === 0 ? "" : field.value}
                                 onChange={handleNumericChange(field)}
+                                disabled={loading}
                               />
                             </FormControl>
 
@@ -339,7 +349,9 @@ const AddRoundForm = ({ profile }: AddRoundFormProps) => {
                               <Input
                                 type="number"
                                 {...field}
+                                value={field.value === 0 ? "" : field.value}
                                 onChange={handleNumericChange(field)}
+                                disabled={loading}
                               />
                             </FormControl>
 
@@ -359,7 +371,9 @@ const AddRoundForm = ({ profile }: AddRoundFormProps) => {
                               <Input
                                 type="number"
                                 {...field}
+                                value={field.value === 0 ? "" : field.value}
                                 onChange={handleNumericChange(field)}
+                                disabled={loading}
                               />
                             </FormControl>
 
@@ -370,15 +384,22 @@ const AddRoundForm = ({ profile }: AddRoundFormProps) => {
                     </div>
                   </div>
                 </div>
-                <Separator />
               </React.Fragment>
             ))}
 
-            <Button type="submit">Save Round</Button>
-          </form>
-        </Form>
-      </CardContent>
-    </Card>
+            <Button
+              type="submit"
+              className="mt-4"
+              disabled={isSaveButtonLocked}
+            >
+              {loading && "Saving..."}
+              {!loading && !isSaveButtonLocked && "Save Round"}
+              {isSaveButtonLocked && !loading && "Saved!"}
+            </Button>
+          </CardContent>
+        </Card>
+      </form>
+    </Form>
   );
 };
 
