@@ -17,4 +17,28 @@ export const authRouter = createTRPCRouter({
 
       return profileData;
     }),
+  updateProfile: authedProcedure
+    .input(
+      z.object({
+        id: z.string(),
+        name: z.string(),
+        email: z.string(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const { data: profileData, error: profileError } = await ctx.supabase
+        .from("Profile")
+        .update({
+          name: input.name,
+          email: input.email,
+        })
+        .eq("id", input.id)
+        .single();
+
+      if (profileError) {
+        throw new Error(`Error updating profile: ${profileError.message}`);
+      }
+
+      return profileData;
+    }),
 });

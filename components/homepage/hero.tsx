@@ -83,8 +83,10 @@ const Hero = ({ profile, previousScores, bestRound }: HeroProps) => {
                 </span>
                 <p className="text-2xl font-bold text-primary">
                   {previousScores.length > 0
-                    ? previousScores.reduce((a, b) => a + b, 0) /
-                      previousScores.length
+                    ? (
+                        previousScores.reduce((a, b) => a + b, 0) /
+                        previousScores.length
+                      ).toFixed(1)
                     : "N/A"}
                 </p>
               </div>
