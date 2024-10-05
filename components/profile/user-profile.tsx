@@ -1,18 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
-import { Mail, Flag, Calendar, Trophy } from "lucide-react";
 import { Input } from "../ui/input";
 import { Button } from "../ui/button";
-import { Separator } from "../ui/separator";
-import { Label } from "../ui/label";
 import { Tables } from "@/types/supabase";
-import { Signup } from "../auth/signup";
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -33,10 +27,9 @@ interface UserProfileProps {
 }
 
 const UserProfile = ({ profile, authUser }: UserProfileProps) => {
-  const { email: profileEmail, handicapIndex, id, name: profileName } = profile;
+  const { id, name: profileName } = profile;
   const [email, setEmail] = useState<string>(authUser.email || "");
   const [name, setName] = useState<string>(profileName || "");
-  const [phone, setPhone] = useState<string>(authUser.phone || "");
   const [loading, setLoading] = useState(false);
   const supabase = createClientComponentClient();
 
@@ -59,18 +52,26 @@ const UserProfile = ({ profile, authUser }: UserProfileProps) => {
   });
 
   const handleSubmit = async (values: z.infer<typeof updateProfileSchema>) => {
+    console.log("Submitting");
     setLoading(true);
     const { data, error } = await supabase.auth.updateUser({
-      email: email,
-      phone: phone,
+      email: values.email,
     });
 
-    // Todo: Error handling
+    if (error) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+      setLoading(false);
+      return;
+    }
 
     mutate({
       id,
-      name,
-      email,
+      name: values.name,
+      email: values.email,
     });
   };
 
@@ -78,22 +79,21 @@ const UserProfile = ({ profile, authUser }: UserProfileProps) => {
     id: z.string(),
     name: z.string(),
     email: z.string(),
-    phone: z.string(),
   });
 
   const form = useForm<z.infer<typeof updateProfileSchema>>({
     resolver: zodResolver(updateProfileSchema),
     defaultValues: {
+      id: id,
       name: name,
       email: email,
     },
   });
 
   return (
-    <div className="mx-auto max-w-sm space-y-6 py-4 md:py-4 lg:py-4 xl:py-4 sm:min-w-[40%] min-h-full w-[90%]">
+    <div className="mx-auto max-w-sm space-y-6 py-8 sm:min-w-[40%] min-h-full w-[90%]">
       <div className="space-y-2 text-center">
-        <h1 className="text-3xl font-bold">Update Profile</h1>
-        <p className="text-muted-foreground">{}</p>
+        <h1 className="text-3xl font-bold">Edit Profile</h1>
       </div>
       <div className="space-y-4">
         <Form {...form}>
@@ -114,12 +114,13 @@ const UserProfile = ({ profile, authUser }: UserProfileProps) => {
                         type="name"
                         required
                         {...field}
-                        placeholder="Birdie Mulligan"
                         value={name}
-                        onChange={(e) => setName(e.target.value)}
+                        onChange={(e) => {
+                          setName(e.target.value);
+                          form.setValue("name", e.target.value);
+                        }}
                       />
                     </FormControl>
-                    <FormDescription>Enter your full name</FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -136,34 +137,27 @@ const UserProfile = ({ profile, authUser }: UserProfileProps) => {
                       <Input
                         id="email"
                         type="email"
-                        placeholder="double@bogey.com"
                         required
                         {...field}
                         value={email}
-                        onChange={(e) => setEmail(e.target.value)}
+                        onChange={(e) => {
+                          setEmail(e.target.value);
+                          form.setValue("email", e.target.value);
+                        }}
                       />
                     </FormControl>
-
                     <FormMessage />
                   </FormItem>
                 )}
               />
             </div>
-            <div className="space-y-2">
+
+            <Button type="submit" className="w-full" disabled={loading}>
+              {loading ? "Updating..." : "Update profile"}
+            </Button>
+            <div className="flex items-center justify-center flex-wrap">
               <Link href={"/forgot-password"}>
                 <Button variant={"link"}>Change password?</Button>
-              </Link>
-            </div>
-            <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? "Signing up..." : "Sign Up"}
-            </Button>
-
-            <div className="flex items-center justify-center flex-wrap">
-              <Link href="/forgot-password" className="" prefetch={false}>
-                <Button variant={"link"}>Forgot password?</Button>
-              </Link>
-              <Link href="/login" prefetch={false}>
-                <Button variant={"link"}>Already have an account?</Button>
               </Link>
             </div>
           </form>

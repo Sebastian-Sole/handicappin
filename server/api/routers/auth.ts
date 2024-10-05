@@ -26,6 +26,7 @@ export const authRouter = createTRPCRouter({
       })
     )
     .mutation(async ({ ctx, input }) => {
+      console.log("User ID: " + input.id);
       const { data: profileData, error: profileError } = await ctx.supabase
         .from("Profile")
         .update({
@@ -33,9 +34,16 @@ export const authRouter = createTRPCRouter({
           email: input.email,
         })
         .eq("id", input.id)
-        .single();
+        .select();
+
+      console.log("---------Profile Data: ----------");
+      console.log("\n");
+      console.log(profileData);
 
       if (profileError) {
+        console.log("------------Profile Error: -----------");
+        console.log("\n");
+        console.log(profileError);
         throw new Error(`Error updating profile: ${profileError.message}`);
       }
 
