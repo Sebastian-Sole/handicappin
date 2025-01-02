@@ -19,20 +19,6 @@ export const signUpAndLogin = async (values: signupSchema) => {
     throw new Error("User ID is undefined after signup.");
   }
 
-  // Create user profile
-  const { error: profileError } = await supabase.from("Profile").insert([
-    {
-      email: values.email,
-      name: values.name,
-      handicapIndex: 54,
-      id: signupData.user.id,
-    },
-  ]);
-
-  if (profileError) {
-    throw profileError;
-  }
-
   // Log in the user
   const { data: loginData, error: loginError } =
     await supabase.auth.signInWithPassword({
@@ -55,6 +41,20 @@ export const signUpAndLogin = async (values: signupSchema) => {
 
   if (setSessionError) {
     throw setSessionError;
+  }
+
+  // Create user profile
+  const { error: profileError } = await supabase.from("Profile").insert([
+    {
+      email: values.email,
+      name: values.name,
+      handicapIndex: 54,
+      id: signupData.user.id,
+    },
+  ]);
+
+  if (profileError) {
+    throw profileError;
   }
 
   return loginData;
