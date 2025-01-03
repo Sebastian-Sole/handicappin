@@ -19,21 +19,41 @@ export const signUpAndLogin = async (values: signupSchema) => {
     throw new Error("User ID is undefined after signup.");
   }
 
-  console.log("User id:");
-  console.log(signupData.user.id);
+  const PROJECT_ID = process.env.NEXT_PUBLIC_SUPABASE_URL;
 
-  // Create user profile
-  const { error: profileError } = await supabase.from("Profile").insert([
-    {
+  const URL = `${PROJECT_ID}/functions/v1/create-profile`;
+
+  const response = await fetch(URL, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY}`,
+    },
+    body: JSON.stringify({
       email: values.email,
       name: values.name,
       handicapIndex: 54,
-      id: signupData.user.id,
-      verified: false,
-    },
-  ]);
+      userId: signupData.user.id,
+    }),
+  });
 
-  if (profileError) {
-    throw profileError;
+  if (!response.ok) {
+    const { error } = await response.json();
+    throw new Error(error || "Failed to create profile.");
   }
+
+  // // Create user profile
+  // const { error: profileError } = await supabase.from("Profile").insert([
+  //   {
+  //     email: values.email,
+  //     name: values.name,
+  //     handicapIndex: 54,
+  //     id: signupData.user.id,
+  //     verified: false,
+  //   },
+  // ]);
+
+  // if (profileError) {
+  //   throw profileError;
+  // }
 };
