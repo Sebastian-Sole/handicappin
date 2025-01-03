@@ -9,12 +9,9 @@ export default async function Home() {
 
   const userId = data.user?.id;
 
-  console.log("User ID: " + userId);
-
   if (!userId) {
     console.log("Redirecting to login because no userId");
-    // redirect("/login");
-    return <div>No user id</div>;
+    redirect("/login");
   }
 
   const profile = await api.auth.getProfileFromUserId(userId);

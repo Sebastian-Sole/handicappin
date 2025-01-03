@@ -52,7 +52,6 @@ export async function updateSession(request: NextRequest) {
   const isPublic = publicPaths.some((path) => pathname.startsWith(path));
 
   if (!user && !isPublic) {
-    // Redirect unauthenticated user to login
     const url = request.nextUrl.clone();
     url.pathname = "/login";
     return NextResponse.redirect(url);

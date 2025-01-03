@@ -16,7 +16,7 @@ import {
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useState } from "react";
 import { signupSchema } from "@/types/auth";
-import { signUpAndLogin } from "@/utils/auth/helpers";
+import { signUpUser } from "@/utils/auth/helpers";
 import { toast } from "../ui/use-toast";
 import { Input } from "../ui/input";
 
@@ -43,7 +43,7 @@ export function Signup({
   const onSubmit = async (values: z.infer<typeof signupSchema>) => {
     setLoading(true);
     try {
-      await signUpAndLogin(values);
+      await signUpUser(values);
       window.location.href = "/";
     } catch (error: any) {
       console.error("Error during sign up:", error);

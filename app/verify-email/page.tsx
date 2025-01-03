@@ -22,28 +22,16 @@ const VerifyLoginPage = async ({
     redirect("/login");
   }
 
-  console.log("Code exchanged for session");
-
-  if (exchangeData.session) {
-    const { error: setSessionError } = await supabase.auth.setSession(
-      exchangeData.session
-    );
-    if (setSessionError) {
-      console.error("Error setting session:", setSessionError.message);
-      redirect("/login");
-    }
+  if (!exchangeData) {
+    console.error("No data returned from exchangeCodeForSession");
+    redirect("/login");
   }
 
-  console.log("Session set");
+  if (exchangeData.session) {
+    // TODO: Session not being set, supabase bug?
+  }
 
-  // Get the logged-in user
-  const { data: sessionData } = await supabase.auth.getSession();
-  const user = sessionData?.session?.user;
-
-  console.log("--------USER--------");
-  console.log(user);
-  console.log("--------USER--------");
-
+  const user = exchangeData?.user;
   if (user) {
     // Check if the profile exists
     const { data: profileData, error: profileError } = await supabase
@@ -51,10 +39,6 @@ const VerifyLoginPage = async ({
       .select("*")
       .eq("id", user.id)
       .maybeSingle();
-
-    console.log("--------PROFILE--------");
-    console.log(profileData);
-    console.log("--------PROFILE--------");
 
     if (profileError) {
       console.error("Error fetching profile:", profileError.message);
@@ -73,13 +57,10 @@ const VerifyLoginPage = async ({
       redirect("/login");
     }
 
-    // Redirect to dashboard or homepage
-    console.log("Success, redirecting to homepage");
-    redirect("/");
+    redirect(`/`);
   }
 
-  // If session is invalid, redirect to login
-  redirect("/login");
+  return <div>Failed to verify email, try again</div>;
 };
 
 export default VerifyLoginPage;

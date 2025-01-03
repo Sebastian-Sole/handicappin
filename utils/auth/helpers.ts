@@ -2,7 +2,7 @@
 import { signupSchema } from "@/types/auth";
 import { createClientComponentClient } from "../supabase/client";
 
-export const signUpAndLogin = async (values: signupSchema) => {
+export const signUpUser = async (values: signupSchema) => {
   const supabase = createClientComponentClient();
 
   // Sign up the user
