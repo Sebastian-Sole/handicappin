@@ -20,6 +20,7 @@ const ProfilePage = async ({ params }: { params: { id: string } }) => {
   }
 
   if (data.user.id !== profileId) {
+    // TODO: Is this the correct instantiation of the toast?
     toast({
       title: "Unauthorized",
       description: "You do not have permission to view this profile",

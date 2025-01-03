@@ -21,6 +21,7 @@ model Profile {
   rounds        Round[]
   holes         Hole[]
   handicapIndex Float
+  verified      Boolean @default(false)
 }
 
 model Course {

@@ -19,29 +19,8 @@ export const signUpAndLogin = async (values: signupSchema) => {
     throw new Error("User ID is undefined after signup.");
   }
 
-  // Log in the user
-  const { data: loginData, error: loginError } =
-    await supabase.auth.signInWithPassword({
-      email: values.email,
-      password: values.password,
-    });
-
-  if (loginError) {
-    throw loginError;
-  }
-
-  if (!loginData.session) {
-    throw new Error("Session data is undefined after login.");
-  }
-
-  // Set the session client-side
-  const { error: setSessionError } = await supabase.auth.setSession(
-    loginData.session
-  );
-
-  if (setSessionError) {
-    throw setSessionError;
-  }
+  console.log("User id:");
+  console.log(signupData.user.id);
 
   // Create user profile
   const { error: profileError } = await supabase.from("Profile").insert([
@@ -50,12 +29,11 @@ export const signUpAndLogin = async (values: signupSchema) => {
       name: values.name,
       handicapIndex: 54,
       id: signupData.user.id,
+      verified: false,
     },
   ]);
 
   if (profileError) {
     throw profileError;
   }
-
-  return loginData;
 };

@@ -10,8 +10,6 @@ const LoginPage = async () => {
     redirect("/");
   }
 
-  console.log(data);
-
   return (
     <div className="flex justify-center items-center h-full">
       <Login />

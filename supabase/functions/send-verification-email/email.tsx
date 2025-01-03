@@ -35,7 +35,7 @@ export const Email = ({
         <Container style={container}>
           <Heading style={h1}>Login</Heading>
           <Link
-            href={`${supabase_url}/auth/v1/verify?token=${token_hash}&type=${email_action_type}&redirect_to=${redirect_to}`}
+            href={`${supabase_url}/auth/v1/verify?token=${token_hash}&type=${email_action_type}&redirect_to=${redirect_to}verify-email`}
             target="_blank"
             style={{
               ...link,

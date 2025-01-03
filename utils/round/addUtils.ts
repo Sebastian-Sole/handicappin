@@ -65,6 +65,7 @@ export const translateRound = (
   if (adjustedGrossScore instanceof Error) {
     console.error("Error calculating adjusted gross score");
     console.error(adjustedGrossScore);
+    // TODO: Is this the correct instantiation of the toast?
     toast({
       title: "❌ Error calculating adjusted gross score",
       description: "Please fill in all the required fields",

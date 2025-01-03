@@ -44,11 +44,6 @@ export function Signup({
     setLoading(true);
     try {
       await signUpAndLogin(values);
-      toast({
-        title: "Signed up successfully!",
-        description:
-          "You have been signed up and will be redirected to the home page.",
-      });
       window.location.href = "/";
     } catch (error: any) {
       console.error("Error during sign up:", error);
