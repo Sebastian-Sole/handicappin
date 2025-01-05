@@ -19,6 +19,7 @@ import { signupSchema } from "@/types/auth";
 import { signUpUser } from "@/utils/auth/helpers";
 import { toast } from "../ui/use-toast";
 import { Input } from "../ui/input";
+import { useRouter } from "next/navigation";
 
 interface SignupProps {
   description?: string;
@@ -30,6 +31,7 @@ export function Signup({
   notify = false,
 }: SignupProps) {
   const [loading, setLoading] = useState(false);
+  const router = useRouter();
 
   const form = useForm<z.infer<typeof signupSchema>>({
     resolver: zodResolver(signupSchema),
@@ -44,7 +46,12 @@ export function Signup({
     setLoading(true);
     try {
       await signUpUser(values);
-      window.location.href = "/";
+      toast({
+        title: "Verification email sent",
+        description:
+          "Please check your email to verify your account before logging in.",
+      });
+      router.push("/login");
     } catch (error: any) {
       console.error("Error during sign up:", error);
       toast({

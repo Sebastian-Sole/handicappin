@@ -57,7 +57,7 @@ const VerifyLoginPage = async ({
       redirect("/login");
     }
 
-    redirect(`/`);
+    redirect(`/login?verified=true`);
   }
 
   return <div>Failed to verify email, try again</div>;

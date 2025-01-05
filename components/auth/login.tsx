@@ -13,17 +13,20 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { createClientComponentClient } from "@/utils/supabase/client";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import useMounted from "@/hooks/useMounted";
 import { Skeleton } from "../ui/skeleton";
 import { Input } from "../ui/input";
 import { useToast } from "../ui/use-toast";
+import { VerificationBox } from "./verification-box";
 
 export function Login() {
   const isMounted = useMounted();
   const supabase = createClientComponentClient();
   const router = useRouter();
   const { toast } = useToast();
+  const searchParams = useSearchParams();
+  const isVerified = searchParams.get("verified");
 
   const loginSchema = z.object({
     email: z.string().min(2).max(50),
@@ -49,6 +52,7 @@ export function Login() {
       toast({
         title: "Error logging in",
         description: error.message,
+        variant: "destructive",
       });
       router.push("/error");
     }
@@ -63,6 +67,7 @@ export function Login() {
 
   return (
     <div className="mx-auto max-w-sm space-y-6 py-4 md:py-4 lg:py-4 xl:py-4 sm:min-w-[40%] min-h-full w-[90%]">
+      {isVerified && <VerificationBox />}
       <div className="space-y-2 text-center">
         <h1 className="text-3xl font-bold">Welcome Back</h1>
         <p className="text-muted-foreground">
