@@ -10,6 +10,7 @@ export default async function Home() {
   const userId = data.user?.id;
 
   if (!userId) {
+    console.log("Redirecting to login because no userId");
     redirect("/login");
   }
 

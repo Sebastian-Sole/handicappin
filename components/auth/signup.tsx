@@ -16,9 +16,10 @@ import {
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useState } from "react";
 import { signupSchema } from "@/types/auth";
-import { signUpAndLogin } from "@/utils/auth/helpers";
+import { signUpUser } from "@/utils/auth/helpers";
 import { toast } from "../ui/use-toast";
 import { Input } from "../ui/input";
+import { useRouter } from "next/navigation";
 
 interface SignupProps {
   description?: string;
@@ -30,6 +31,7 @@ export function Signup({
   notify = false,
 }: SignupProps) {
   const [loading, setLoading] = useState(false);
+  const router = useRouter();
 
   const form = useForm<z.infer<typeof signupSchema>>({
     resolver: zodResolver(signupSchema),
@@ -43,13 +45,13 @@ export function Signup({
   const onSubmit = async (values: z.infer<typeof signupSchema>) => {
     setLoading(true);
     try {
-      await signUpAndLogin(values);
+      await signUpUser(values);
       toast({
-        title: "Signed up successfully!",
+        title: "Verification email sent",
         description:
-          "You have been signed up and will be redirected to the home page.",
+          "Please check your email to verify your account before logging in.",
       });
-      window.location.href = "/";
+      router.push("/login");
     } catch (error: any) {
       console.error("Error during sign up:", error);
       toast({

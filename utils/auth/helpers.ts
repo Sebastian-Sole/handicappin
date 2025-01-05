@@ -2,7 +2,7 @@
 import { signupSchema } from "@/types/auth";
 import { createClientComponentClient } from "../supabase/client";
 
-export const signUpAndLogin = async (values: signupSchema) => {
+export const signUpUser = async (values: signupSchema) => {
   const supabase = createClientComponentClient();
 
   // Sign up the user
@@ -19,43 +19,41 @@ export const signUpAndLogin = async (values: signupSchema) => {
     throw new Error("User ID is undefined after signup.");
   }
 
-  // Create user profile
-  const { error: profileError } = await supabase.from("Profile").insert([
-    {
+  const PROJECT_ID = process.env.NEXT_PUBLIC_SUPABASE_URL;
+
+  const URL = `${PROJECT_ID}/functions/v1/create-profile`;
+
+  const response = await fetch(URL, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY}`,
+    },
+    body: JSON.stringify({
       email: values.email,
       name: values.name,
       handicapIndex: 54,
-      id: signupData.user.id,
-    },
-  ]);
+      userId: signupData.user.id,
+    }),
+  });
 
-  if (profileError) {
-    throw profileError;
+  if (!response.ok) {
+    const { error } = await response.json();
+    throw new Error(error || "Failed to create profile.");
   }
 
-  // Log in the user
-  const { data: loginData, error: loginError } =
-    await supabase.auth.signInWithPassword({
-      email: values.email,
-      password: values.password,
-    });
+  // // Create user profile
+  // const { error: profileError } = await supabase.from("Profile").insert([
+  //   {
+  //     email: values.email,
+  //     name: values.name,
+  //     handicapIndex: 54,
+  //     id: signupData.user.id,
+  //     verified: false,
+  //   },
+  // ]);
 
-  if (loginError) {
-    throw loginError;
-  }
-
-  if (!loginData.session) {
-    throw new Error("Session data is undefined after login.");
-  }
-
-  // Set the session client-side
-  const { error: setSessionError } = await supabase.auth.setSession(
-    loginData.session
-  );
-
-  if (setSessionError) {
-    throw setSessionError;
-  }
-
-  return loginData;
+  // if (profileError) {
+  //   throw profileError;
+  // }
 };
