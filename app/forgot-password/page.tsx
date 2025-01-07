@@ -20,9 +20,11 @@ import { CardDescription } from "@/components/ui/card";
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState<string>("");
   const [loading, setLoading] = useState(false);
+  const [submitButtonText, setSubmitButtonText] = useState("Request link");
 
   const handleSubmit = async (values: z.infer<typeof forgotPasswordSchema>) => {
     setLoading(true);
+    setSubmitButtonText("Checking email exists...");
 
     try {
       const checkEmailResponse = await fetch(
@@ -46,10 +48,9 @@ export default function ForgotPasswordPage() {
           variant: "destructive",
         });
         setLoading(false);
+        setSubmitButtonText("Requeset link");
         return;
       }
-
-      setLoading(false);
     } catch (error) {
       toast({
         title: "Error",
@@ -58,9 +59,11 @@ export default function ForgotPasswordPage() {
         variant: "destructive",
       });
       setLoading(false);
+      setSubmitButtonText("Requeset link");
     }
 
     try {
+      setSubmitButtonText("Sending email...");
       const PROJECT_ID = process.env.NEXT_PUBLIC_SUPABASE_URL;
       const URL = `${PROJECT_ID}/functions/v1/reset-password`;
 
@@ -84,6 +87,7 @@ export default function ForgotPasswordPage() {
       });
 
       setLoading(false);
+      setSubmitButtonText("Request link");
     } catch (error) {
       toast({
         title: "Error",
@@ -94,6 +98,7 @@ export default function ForgotPasswordPage() {
       setLoading(false);
     }
     setLoading(false);
+    setSubmitButtonText("Request link");
   };
 
   const forgotPasswordSchema = z.object({
