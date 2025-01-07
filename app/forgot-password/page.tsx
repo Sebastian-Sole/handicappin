@@ -16,66 +16,83 @@ import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { CardDescription } from "@/components/ui/card";
-import { createClientComponentClient } from "@/utils/supabase/client";
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState<string>("");
   const [loading, setLoading] = useState(false);
-  const supabase = createClientComponentClient();
 
   const handleSubmit = async (values: z.infer<typeof forgotPasswordSchema>) => {
     setLoading(true);
 
-    const { error } = await supabase
-      .from("Profile")
-      .select("email")
-      .eq("email", values.email)
-      .single();
+    try {
+      const checkEmailResponse = await fetch(
+        `${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/check-email`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY}`,
+          },
+          body: JSON.stringify({ email: values.email }),
+        }
+      );
 
-    if (error) {
-      toast({
-        title: "No user found",
-        description:
-          "We could not find a user with that email, try a different email or contact us for help.",
-        variant: "destructive",
-      });
+      const { exists } = await checkEmailResponse.json();
+
+      if (!exists) {
+        toast({
+          title: "No user found",
+          description: "We could not find a user with that email.",
+          variant: "destructive",
+        });
+        setLoading(false);
+        return;
+      }
+
       setLoading(false);
-      return;
-    }
-
-    const PROJECT_ID = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const URL = `${PROJECT_ID}/functions/v1/reset-password`;
-
-    const resetLink = `${process.env.NEXT_PUBLIC_APP_URL}/update-password`;
-
-    const response = await fetch(URL, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY}`,
-      },
-      body: JSON.stringify({
-        email: values.email,
-        resetLinkBase: resetLink,
-      }),
-    });
-
-    toast({
-      title: "✅ Password reset requested",
-      description: "An email has been sent to you to reset your password",
-    });
-
-    if (!response.ok) {
-      const { error } = await response.json();
+    } catch (error) {
       toast({
         title: "Error",
-        description: error || "Failed to send password reset link.",
+        description:
+          "An error occurred when checking the email exists. Contact support.",
         variant: "destructive",
       });
       setLoading(false);
-      throw new Error(error || "Failed to call edge function.");
     }
 
+    try {
+      const PROJECT_ID = process.env.NEXT_PUBLIC_SUPABASE_URL;
+      const URL = `${PROJECT_ID}/functions/v1/reset-password`;
+
+      const resetLink = `${process.env.NEXT_PUBLIC_APP_URL}/update-password`;
+
+      await fetch(URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY}`,
+        },
+        body: JSON.stringify({
+          email: values.email,
+          resetLinkBase: resetLink,
+        }),
+      });
+
+      toast({
+        title: "✅ Password reset requested",
+        description: "An email has been sent to reset your password.",
+      });
+
+      setLoading(false);
+    } catch (error) {
+      toast({
+        title: "Error",
+        description:
+          "An error occurred with the reset password email. Contact support",
+        variant: "destructive",
+      });
+      setLoading(false);
+    }
     setLoading(false);
   };
 
