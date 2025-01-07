@@ -16,15 +16,32 @@ import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { CardDescription } from "@/components/ui/card";
+import { createClientComponentClient } from "@/utils/supabase/client";
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState<string>("");
   const [loading, setLoading] = useState(false);
+  const supabase = createClientComponentClient();
 
   const handleSubmit = async (values: z.infer<typeof forgotPasswordSchema>) => {
     setLoading(true);
 
-    // TODO: Check is email is registered
+    const { error } = await supabase
+      .from("Profile")
+      .select("email")
+      .eq("email", values.email)
+      .single();
+
+    if (error) {
+      toast({
+        title: "No user found",
+        description:
+          "We could not find a user with that email, try a different email or contact us for help.",
+        variant: "destructive",
+      });
+      setLoading(false);
+      return;
+    }
 
     const PROJECT_ID = process.env.NEXT_PUBLIC_SUPABASE_URL;
     const URL = `${PROJECT_ID}/functions/v1/reset-password`;
