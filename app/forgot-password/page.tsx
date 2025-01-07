@@ -67,7 +67,11 @@ export default function ForgotPasswordPage() {
       const PROJECT_ID = process.env.NEXT_PUBLIC_SUPABASE_URL;
       const URL = `${PROJECT_ID}/functions/v1/reset-password`;
 
-      const resetLink = `${process.env.NEXT_PUBLIC_APP_URL}/update-password`;
+      console.log(process.env.VERCEL_ENV);
+      console.log(process.env.NEXT_PUBLIC_VERCEL_URL);
+      console.log(process.env.VERCEL_URL);
+
+      const resetLink = `${process.env.NEXT_PUBLIC_VERCEL_URL}/update-password`;
 
       await fetch(URL, {
         method: "POST",
