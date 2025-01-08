@@ -58,6 +58,7 @@ serve(async (req) => {
       const payload = {
         user_id: user.id,
         exp: getNumericDate(60 * 60), // 1 hour expiration
+        type: "password-reset",
       };
 
       token = await create({ alg: "HS256", typ: "JWT" }, payload, key);

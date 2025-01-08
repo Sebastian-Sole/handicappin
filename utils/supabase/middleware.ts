@@ -1,6 +1,7 @@
 import { Database } from "@/types/supabase";
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+var jwt = require("jsonwebtoken");
 
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({
@@ -51,6 +52,34 @@ export async function updateSession(request: NextRequest) {
   ];
 
   const isPublic = publicPaths.some((path) => pathname.startsWith(path));
+
+  console.log(user);
+  console.log(pathname);
+
+  if (!user && pathname === "/update-password") {
+    console.log("No user found, and pathname is /update-password");
+    const resetToken = request.nextUrl.searchParams.get("token");
+    if (!resetToken) {
+      const url = request.nextUrl.clone();
+      url.pathname = "/login";
+      return NextResponse.redirect(url);
+    }
+
+    try {
+      // Verify JWT token
+      const decoded = jwt.verify(resetToken, process.env.JWT_SECRET!); // Match with Edge function's secret and algorithm
+      if (decoded?.type === "password-reset") {
+        // Attach decoded user info to request for further usage
+        request.headers.set("x-reset-email", decoded.email);
+        return supabaseResponse;
+      }
+    } catch (err) {
+      console.error("Invalid reset token:", err);
+      const url = request.nextUrl.clone();
+      url.pathname = "/login";
+      return NextResponse.redirect(url);
+    }
+  }
 
   if (!user && !isPublic) {
     const url = request.nextUrl.clone();

@@ -10,7 +10,9 @@ const UpdatePasswordPage = async ({
   const supabase = createServerComponentClient();
 
   const token = searchParams.token;
+  console.log(token);
   if (!token) {
+    console.log("Invalid token");
     redirect("/forgot-password");
   }
 
@@ -20,12 +22,14 @@ const UpdatePasswordPage = async ({
   } = await supabase.auth.getUser();
 
   if (!user) {
+    console.log("No user found");
     redirect("/forgot-password");
   }
 
   const email = user?.email;
 
   if (!email) {
+    console.log("No email found");
     redirect("/forgot-password");
   }
 
