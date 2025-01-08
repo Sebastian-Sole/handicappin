@@ -2,6 +2,7 @@ import { Database } from "@/types/supabase";
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { jwtVerify } from "jose"; // Import the `jose` library
+import { PasswordResetPayload } from "@/types/auth";
 
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({
@@ -64,9 +65,12 @@ export async function updateSession(request: NextRequest) {
     try {
       // Verify JWT token
       const secret = new TextEncoder().encode(process.env.RESET_TOKEN_SECRET);
-      const { payload } = await jwtVerify(resetToken, secret);
+      const { payload } = await jwtVerify<PasswordResetPayload>(
+        resetToken,
+        secret
+      );
 
-      if (payload.metadata?.type === "password-reset") {
+      if (payload.metadata.type === "password-reset") {
         // Attach decoded user info to request for further usage
         const url = request.nextUrl.clone();
         url.searchParams.set("email", payload.email);
