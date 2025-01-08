@@ -1,5 +1,4 @@
 "use client";
-import { createClientComponentClient } from "@/utils/supabase/client";
 import { useState } from "react";
 import { toast } from "../ui/use-toast";
 import { z } from "zod";
@@ -24,7 +23,6 @@ interface UpdatePasswordProps {
 
 const UpdatePassword = ({ token, email }: UpdatePasswordProps) => {
   const [loading, setLoading] = useState(false);
-  const supabase = createClientComponentClient();
   const [password, setPassword] = useState<string>("");
   const [confirmPassword, setConfirmPassword] = useState<string>("");
 
@@ -51,23 +49,24 @@ const UpdatePassword = ({ token, email }: UpdatePasswordProps) => {
       return;
     }
 
+    const URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
     try {
-      const { error } = await supabase.auth.updateUser({
-        password: values.password,
+      const response = await fetch(`${URL}/functions/v1/update-password`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token, password }),
       });
 
-      if (error) {
+      const data = await response.json();
+
+      if (!response.ok) {
         toast({
           title: "Error",
-          description: error.message,
+          description: response.statusText,
           variant: "destructive",
         });
-      } else {
-        toast({
-          title: "✅ Success",
-          description: "Password updated successfully!",
-        });
         setLoading(false);
+        throw new Error(data.error || "Failed to update password");
       }
     } catch (err: any) {
       toast({
@@ -75,7 +74,12 @@ const UpdatePassword = ({ token, email }: UpdatePasswordProps) => {
         description: err.message,
         variant: "destructive",
       });
+      throw new Error(err);
     }
+    toast({
+      title: "✅ Success",
+      description: "Password updated successfully!",
+    });
     setLoading(false);
   };
 
@@ -101,7 +105,10 @@ const UpdatePassword = ({ token, email }: UpdatePasswordProps) => {
       <div className="space-y-4">
         <Form {...form}>
           <form
-            onSubmit={form.handleSubmit(handleSubmit)}
+            onSubmit={(event) => {
+              event.preventDefault();
+              form.handleSubmit(handleSubmit)();
+            }}
             className="space-y-8"
           >
             <div className="space-y-2">
