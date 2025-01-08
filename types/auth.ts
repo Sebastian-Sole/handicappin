@@ -11,4 +11,15 @@ export const loginSchema = z.object({
   password: z.string().min(6),
 });
 
+export const passwordResetPayloadSchema = z.object({
+  metadata: z.object({
+    type: z.literal("password-reset"),
+  }),
+  email: z.string().email(),
+  user_id: z.string(),
+  exp: z.number(),
+});
+
+export type PasswordResetPayload = z.infer<typeof passwordResetPayloadSchema>;
+
 export type signupSchema = z.infer<typeof signupSchema>;

@@ -1,6 +1,8 @@
 import { Database } from "@/types/supabase";
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { jwtVerify } from "jose"; // Import the `jose` library
+import { PasswordResetPayload } from "@/types/auth";
 
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({
@@ -47,9 +49,40 @@ export async function updateSession(request: NextRequest) {
     "/about",
     "/api",
     "/verify-email",
+    "/forgot-password",
   ];
 
   const isPublic = publicPaths.some((path) => pathname.startsWith(path));
+
+  if (!user && pathname === "/update-password") {
+    const resetToken = request.nextUrl.searchParams.get("token");
+    if (!resetToken) {
+      const url = request.nextUrl.clone();
+      url.pathname = "/login";
+      return NextResponse.redirect(url);
+    }
+
+    try {
+      // Verify JWT token
+      const secret = new TextEncoder().encode(process.env.RESET_TOKEN_SECRET);
+      const { payload } = await jwtVerify<PasswordResetPayload>(
+        resetToken,
+        secret
+      );
+
+      if (payload.metadata.type === "password-reset") {
+        // Attach decoded user info to request for further usage
+        const url = request.nextUrl.clone();
+        url.searchParams.set("email", payload.email);
+        return NextResponse.rewrite(url); // Rewrite the request with the email in the query
+      }
+    } catch (err) {
+      console.error("Invalid reset token:", err);
+      const url = request.nextUrl.clone();
+      url.pathname = "/login";
+      return NextResponse.redirect(url);
+    }
+  }
 
   if (!user && !isPublic) {
     const url = request.nextUrl.clone();
