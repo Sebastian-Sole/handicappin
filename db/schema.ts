@@ -9,7 +9,6 @@ import {
   boolean,
   serial,
   integer,
-  varchar,
   timestamp,
   pgSchema,
 } from "drizzle-orm/pg-core";
@@ -63,26 +62,10 @@ export const profile = pgTable(
       as: "permissive",
       for: "select",
       to: ["authenticated"],
-      withCheck: sql`(auth.uid() = id)`,
+      using: sql`(auth.uid() = id)`,
     }),
   ]
 );
-
-export const prismaMigrations = pgTable("_prisma_migrations", {
-  id: varchar({ length: 36 }).primaryKey().notNull(),
-  checksum: varchar({ length: 64 }).notNull(),
-  finishedAt: timestamp("finished_at", { withTimezone: true, mode: "string" }),
-  migrationName: varchar("migration_name", { length: 255 }).notNull(),
-  logs: text(),
-  rolledBackAt: timestamp("rolled_back_at", {
-    withTimezone: true,
-    mode: "string",
-  }),
-  startedAt: timestamp("started_at", { withTimezone: true, mode: "string" })
-    .defaultNow()
-    .notNull(),
-  appliedStepsCount: integer("applied_steps_count").default(0).notNull(),
-});
 
 export const course = pgTable(
   "Course",
@@ -126,6 +109,9 @@ export const teeInfo = pgTable(
     outDistance: integer().notNull(),
     inDistance: integer().notNull(),
     distanceMeasurement: text().notNull(),
+    handicaps: integer().array().notNull(),
+    distances: integer().array().notNull(),
+    pars: integer().array().notNull(),
     isApproved: boolean().default(false).notNull(),
     isArchived: boolean().default(false).notNull(),
     version: integer().default(1).notNull(),
@@ -230,13 +216,13 @@ export const round = pgTable(
       as: "permissive",
       for: "insert",
       to: ["authenticated"],
-      withCheck: sql`(( SELECT auth.uid() AS uid) = "userId")`,
+      withCheck: sql`(( SELECT auth.uid()) = "userId")`,
     }),
     pgPolicy("Enable users to view their own data only", {
       as: "permissive",
       for: "select",
       to: ["authenticated"],
-      withCheck: sql`(( SELECT auth.uid() AS uid) = "userId")`,
+      using: sql`(( SELECT auth.uid()) = "userId")`,
     }),
   ]
 );
@@ -249,6 +235,7 @@ export const score = pgTable(
     holeId: integer().notNull(),
     strokes: integer().notNull(),
     hcpStrokes: integer().default(0).notNull(),
+    userId: uuid().notNull(),
   },
   (table) => [
     foreignKey({
@@ -265,17 +252,24 @@ export const score = pgTable(
     })
       .onUpdate("cascade")
       .onDelete("cascade"),
+    foreignKey({
+      columns: [table.userId],
+      foreignColumns: [profile.id],
+      name: "Score_userId_fkey",
+    })
+      .onUpdate("cascade")
+      .onDelete("cascade"),
     pgPolicy("Enable insert for users based on userId", {
       as: "permissive",
       for: "insert",
       to: ["authenticated"],
-      withCheck: sql`(( SELECT auth.uid() AS uid) = "userId")`,
+      withCheck: sql`(( SELECT auth.uid()) = "userId")`,
     }),
     pgPolicy("Enable users to view their own data only", {
       as: "permissive",
       for: "select",
       to: ["authenticated"],
-      withCheck: sql`(( SELECT auth.uid() AS uid) = "userId")`,
+      using: sql`(auth.uid() = "userId")`,
     }),
   ]
 );

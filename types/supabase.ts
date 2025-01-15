@@ -9,110 +9,55 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      _prisma_migrations: {
-        Row: {
-          applied_steps_count: number
-          checksum: string
-          finished_at: string | null
-          id: string
-          logs: string | null
-          migration_name: string
-          rolled_back_at: string | null
-          started_at: string
-        }
-        Insert: {
-          applied_steps_count?: number
-          checksum: string
-          finished_at?: string | null
-          id: string
-          logs?: string | null
-          migration_name: string
-          rolled_back_at?: string | null
-          started_at?: string
-        }
-        Update: {
-          applied_steps_count?: number
-          checksum?: string
-          finished_at?: string | null
-          id?: string
-          logs?: string | null
-          migration_name?: string
-          rolled_back_at?: string | null
-          started_at?: string
-        }
-        Relationships: []
-      }
       Course: {
         Row: {
-          courseRating: number
-          eighteenHolePar: number
           id: number
+          isApproved: boolean
           name: string
-          nineHolePar: number
-          slopeRating: number
         }
         Insert: {
-          courseRating: number
-          eighteenHolePar: number
           id?: number
+          isApproved?: boolean
           name: string
-          nineHolePar: number
-          slopeRating: number
         }
         Update: {
-          courseRating?: number
-          eighteenHolePar?: number
           id?: number
+          isApproved?: boolean
           name?: string
-          nineHolePar?: number
-          slopeRating?: number
         }
         Relationships: []
       }
       Hole: {
         Row: {
           hcp: number
-          hcpStrokes: number
           holeNumber: number
           id: number
+          length: number
           par: number
-          roundId: number
-          strokes: number
-          userId: string
+          teeId: number
         }
         Insert: {
           hcp: number
-          hcpStrokes?: number
           holeNumber: number
           id?: number
+          length: number
           par: number
-          roundId: number
-          strokes: number
-          userId: string
+          teeId: number
         }
         Update: {
           hcp?: number
-          hcpStrokes?: number
           holeNumber?: number
           id?: number
+          length?: number
           par?: number
-          roundId?: number
-          strokes?: number
-          userId?: string
+          teeId?: number
         }
         Relationships: [
           {
-            foreignKeyName: "Hole_roundId_fkey"
-            columns: ["roundId"]
+            foreignKeyName: "Hole_teeId_fkey"
+            columns: ["teeId"]
             isOneToOne: false
-            referencedRelation: "Round"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "Hole_userId_fkey"
-            columns: ["userId"]
-            isOneToOne: false
-            referencedRelation: "Profile"
+            referencedRelation: "TeeInfo"
             referencedColumns: ["id"]
           },
         ]
@@ -152,6 +97,7 @@ export type Database = {
           notes: string | null
           parPlayed: number
           scoreDifferential: number
+          teeId: number
           teeTime: string
           totalStrokes: number
           updatedHandicapIndex: number
@@ -167,6 +113,7 @@ export type Database = {
           notes?: string | null
           parPlayed: number
           scoreDifferential: number
+          teeId: number
           teeTime: string
           totalStrokes: number
           updatedHandicapIndex?: number
@@ -182,6 +129,7 @@ export type Database = {
           notes?: string | null
           parPlayed?: number
           scoreDifferential?: number
+          teeId?: number
           teeTime?: string
           totalStrokes?: number
           updatedHandicapIndex?: number
@@ -196,10 +144,140 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "Round_teeId_fkey"
+            columns: ["teeId"]
+            isOneToOne: false
+            referencedRelation: "TeeInfo"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "Round_userId_fkey"
             columns: ["userId"]
             isOneToOne: false
             referencedRelation: "Profile"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      Score: {
+        Row: {
+          hcpStrokes: number
+          holeId: number
+          id: number
+          roundId: number
+          strokes: number
+          userId: string
+        }
+        Insert: {
+          hcpStrokes?: number
+          holeId: number
+          id?: number
+          roundId: number
+          strokes: number
+          userId: string
+        }
+        Update: {
+          hcpStrokes?: number
+          holeId?: number
+          id?: number
+          roundId?: number
+          strokes?: number
+          userId?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "Score_holeId_fkey"
+            columns: ["holeId"]
+            isOneToOne: false
+            referencedRelation: "Hole"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "Score_roundId_fkey"
+            columns: ["roundId"]
+            isOneToOne: false
+            referencedRelation: "Round"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "Score_userId_fkey"
+            columns: ["userId"]
+            isOneToOne: false
+            referencedRelation: "Profile"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      TeeInfo: {
+        Row: {
+          courseId: number
+          courseRating: number
+          distanceMeasurement: string
+          distances: number[]
+          gender: string
+          handicaps: number[]
+          id: number
+          inDistance: number
+          inPar: number
+          isApproved: boolean
+          isArchived: boolean
+          name: string
+          outDistance: number
+          outPar: number
+          pars: number[]
+          slopeRating: number
+          totalDistance: number
+          totalPar: number
+          version: number
+        }
+        Insert: {
+          courseId: number
+          courseRating: number
+          distanceMeasurement: string
+          distances: number[]
+          gender: string
+          handicaps: number[]
+          id?: number
+          inDistance: number
+          inPar: number
+          isApproved?: boolean
+          isArchived?: boolean
+          name: string
+          outDistance: number
+          outPar: number
+          pars: number[]
+          slopeRating: number
+          totalDistance: number
+          totalPar: number
+          version?: number
+        }
+        Update: {
+          courseId?: number
+          courseRating?: number
+          distanceMeasurement?: string
+          distances?: number[]
+          gender?: string
+          handicaps?: number[]
+          id?: number
+          inDistance?: number
+          inPar?: number
+          isApproved?: boolean
+          isArchived?: boolean
+          name?: string
+          outDistance?: number
+          outPar?: number
+          pars?: number[]
+          slopeRating?: number
+          totalDistance?: number
+          totalPar?: number
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "TeeInfo_courseId_fkey"
+            columns: ["courseId"]
+            isOneToOne: false
+            referencedRelation: "Course"
             referencedColumns: ["id"]
           },
         ]
