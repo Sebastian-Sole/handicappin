@@ -47,61 +47,23 @@ export const profile = pgTable(
       to: ["public"],
       using: sql`(auth.uid() = id)`,
     }),
-    pgPolicy("Enable delete for users based on user_id", {
+    pgPolicy("Enable delete for users based on their own user_id", {
       as: "permissive",
       for: "delete",
       to: ["public"],
+      using: sql`(auth.uid() = id)`,
     }),
     pgPolicy("Enable insert for authenticated users only", {
       as: "permissive",
       for: "insert",
       to: ["authenticated"],
+      withCheck: sql`true`,
     }),
     pgPolicy("Enable users to view their own data only", {
       as: "permissive",
       for: "select",
       to: ["authenticated"],
-    }),
-  ]
-);
-
-export const hole = pgTable(
-  "Hole",
-  {
-    id: serial().primaryKey().notNull(),
-    hcp: integer().notNull(),
-    strokes: integer().notNull(),
-    roundId: integer().notNull(),
-    holeNumber: integer().notNull(),
-    par: integer().notNull(),
-    userId: uuid().notNull(),
-    hcpStrokes: integer().default(0).notNull(),
-  },
-  (table) => [
-    foreignKey({
-      columns: [table.roundId],
-      foreignColumns: [round.id],
-      name: "Hole_roundId_fkey",
-    })
-      .onUpdate("cascade")
-      .onDelete("cascade"),
-    foreignKey({
-      columns: [table.userId],
-      foreignColumns: [profile.id],
-      name: "Hole_userId_fkey",
-    })
-      .onUpdate("cascade")
-      .onDelete("cascade"),
-    pgPolicy("Enable insert for users based on userId", {
-      as: "permissive",
-      for: "insert",
-      to: ["authenticated"],
-      withCheck: sql`(( SELECT auth.uid() AS uid) = "userId")`,
-    }),
-    pgPolicy("Enable users to view their own data only", {
-      as: "permissive",
-      for: "select",
-      to: ["authenticated"],
+      withCheck: sql`(auth.uid() = id)`,
     }),
   ]
 );
@@ -122,23 +84,124 @@ export const prismaMigrations = pgTable("_prisma_migrations", {
   appliedStepsCount: integer("applied_steps_count").default(0).notNull(),
 });
 
+export const course = pgTable(
+  "Course",
+  {
+    id: serial().primaryKey().notNull(),
+    name: text().notNull(),
+    isApproved: boolean().default(false).notNull(),
+  },
+  (table) => [
+    uniqueIndex("Course_name_key").using(
+      "btree",
+      table.name.asc().nullsLast().op("text_ops")
+    ),
+    pgPolicy("Enable insert for authenticated users only", {
+      as: "permissive",
+      for: "insert",
+      to: ["authenticated"],
+      withCheck: sql`true`,
+    }),
+    pgPolicy("Enable read access for all users", {
+      as: "permissive",
+      for: "select",
+      to: ["authenticated"],
+    }),
+  ]
+);
+
+export const teeInfo = pgTable(
+  "TeeInfo",
+  {
+    id: serial().primaryKey().notNull(),
+    courseId: integer().notNull(),
+    name: text().notNull(),
+    gender: text().notNull(),
+    courseRating: doublePrecision().notNull(),
+    slopeRating: doublePrecision().notNull(),
+    totalPar: integer().notNull(),
+    outPar: integer().notNull(),
+    inPar: integer().notNull(),
+    totalDistance: integer().notNull(),
+    outDistance: integer().notNull(),
+    inDistance: integer().notNull(),
+    distanceMeasurement: text().notNull(),
+    isApproved: boolean().default(false).notNull(),
+    isArchived: boolean().default(false).notNull(),
+    version: integer().default(1).notNull(),
+  },
+  (table) => [
+    foreignKey({
+      columns: [table.courseId],
+      foreignColumns: [course.id],
+      name: "TeeInfo_courseId_fkey",
+    })
+      .onUpdate("cascade")
+      .onDelete("cascade"),
+    pgPolicy("Enable insert for authenticated users only", {
+      as: "permissive",
+      for: "insert",
+      to: ["authenticated"],
+      withCheck: sql`true`,
+    }),
+    pgPolicy("Enable read access for all users", {
+      as: "permissive",
+      for: "select",
+      to: ["authenticated"],
+    }),
+  ]
+);
+
+export const hole = pgTable(
+  "Hole",
+  {
+    id: serial().primaryKey().notNull(),
+    teeId: integer().notNull(),
+    holeNumber: integer().notNull(),
+    par: integer().notNull(),
+    hcp: integer().notNull(),
+    length: integer().notNull(),
+  },
+  (table) => [
+    foreignKey({
+      columns: [table.teeId],
+      foreignColumns: [teeInfo.id],
+      name: "Hole_teeId_fkey",
+    })
+      .onUpdate("cascade")
+      .onDelete("cascade"),
+    pgPolicy("Enable insert for authenticated users only", {
+      as: "permissive",
+      for: "insert",
+      to: ["authenticated"],
+      withCheck: sql`true`,
+    }),
+    pgPolicy("Enable read access for all users", {
+      as: "permissive",
+      for: "select",
+      to: ["authenticated"],
+    }),
+  ]
+);
+
 export const round = pgTable(
   "Round",
   {
     id: serial().primaryKey().notNull(),
-    createdAt: timestamp({ precision: 3, mode: "string" })
-      .default(sql`CURRENT_TIMESTAMP`)
-      .notNull(),
+    teeTime: timestamp().notNull(),
     courseId: integer().notNull(),
-    teeTime: timestamp({ precision: 3, mode: "string" }).notNull(),
     userId: uuid().notNull(),
-    adjustedGrossScore: integer().notNull(),
+    teeId: integer().notNull(),
     existingHandicapIndex: doublePrecision().notNull(),
+    updatedHandicapIndex: doublePrecision().default(0).notNull(),
     scoreDifferential: doublePrecision().notNull(),
     totalStrokes: integer().notNull(),
-    notes: text(),
+    adjustedGrossScore: integer().notNull(),
+    createdAt: timestamp()
+      .default(sql`CURRENT_TIMESTAMP`)
+      .notNull(),
     parPlayed: integer().notNull(),
-    updatedHandicapIndex: doublePrecision().default(0).notNull(),
+    notes: text(),
     exceptionalScoreAdjustment: integer().default(0).notNull(),
   },
   (table) => [
@@ -156,6 +219,13 @@ export const round = pgTable(
     })
       .onUpdate("cascade")
       .onDelete("cascade"),
+    foreignKey({
+      columns: [table.teeId],
+      foreignColumns: [teeInfo.id],
+      name: "Round_teeId_fkey",
+    })
+      .onUpdate("cascade")
+      .onDelete("cascade"),
     pgPolicy("Enable insert for users based on userId", {
       as: "permissive",
       for: "insert",
@@ -166,35 +236,46 @@ export const round = pgTable(
       as: "permissive",
       for: "select",
       to: ["authenticated"],
+      withCheck: sql`(( SELECT auth.uid() AS uid) = "userId")`,
     }),
   ]
 );
 
-export const course = pgTable(
-  "Course",
+export const score = pgTable(
+  "Score",
   {
     id: serial().primaryKey().notNull(),
-    name: text().notNull(),
-    courseRating: doublePrecision().notNull(),
-    slopeRating: doublePrecision().notNull(),
-    eighteenHolePar: integer().notNull(),
-    nineHolePar: integer().notNull(),
+    roundId: integer().notNull(),
+    holeId: integer().notNull(),
+    strokes: integer().notNull(),
+    hcpStrokes: integer().default(0).notNull(),
   },
   (table) => [
-    uniqueIndex("Course_name_key").using(
-      "btree",
-      table.name.asc().nullsLast().op("text_ops")
-    ),
-    pgPolicy("Enable insert for authenticated users only", {
+    foreignKey({
+      columns: [table.roundId],
+      foreignColumns: [round.id],
+      name: "Score_roundId_fkey",
+    })
+      .onUpdate("cascade")
+      .onDelete("cascade"),
+    foreignKey({
+      columns: [table.holeId],
+      foreignColumns: [hole.id],
+      name: "Score_holeId_fkey",
+    })
+      .onUpdate("cascade")
+      .onDelete("cascade"),
+    pgPolicy("Enable insert for users based on userId", {
       as: "permissive",
       for: "insert",
       to: ["authenticated"],
-      withCheck: sql`true`,
+      withCheck: sql`(( SELECT auth.uid() AS uid) = "userId")`,
     }),
-    pgPolicy("Enable read access for all users", {
+    pgPolicy("Enable users to view their own data only", {
       as: "permissive",
       for: "select",
       to: ["authenticated"],
+      withCheck: sql`(( SELECT auth.uid() AS uid) = "userId")`,
     }),
   ]
 );
