@@ -78,7 +78,7 @@ ALTER TABLE "TeeInfo" ENABLE ROW LEVEL SECURITY;--> statement-breakpoint
 CREATE TABLE IF NOT EXISTS "auth"."users" (
 	"id" uuid PRIMARY KEY NOT NULL
 );
-> statement-breakpoint
+--> statement-breakpoint
 ALTER TABLE "Hole" ADD CONSTRAINT "Hole_teeId_fkey" FOREIGN KEY ("teeId") REFERENCES "public"."TeeInfo"("id") ON DELETE cascade ON UPDATE cascade;--> statement-breakpoint
 ALTER TABLE "Profile" ADD CONSTRAINT "Profile_id_fkey" FOREIGN KEY ("id") REFERENCES "auth"."users"("id") ON DELETE cascade ON UPDATE cascade;--> statement-breakpoint
 ALTER TABLE "Round" ADD CONSTRAINT "Round_courseId_fkey" FOREIGN KEY ("courseId") REFERENCES "public"."Course"("id") ON DELETE cascade ON UPDATE cascade;--> statement-breakpoint

@@ -100,18 +100,26 @@ export const teeInfo = pgTable(
     courseId: integer().notNull(),
     name: text().notNull(),
     gender: text().notNull(),
-    courseRating: doublePrecision().notNull(),
-    slopeRating: doublePrecision().notNull(),
-    totalPar: integer().notNull(),
+
+    /* Number of Holes: 9 or 18 */
+    numberOfHoles: integer().notNull(), // 9 or 18
+
+    /* Course & Slope Ratings */
+    courseRating18: doublePrecision().notNull(),
+    slopeRating18: integer().notNull(),
+    courseRatingFront9: doublePrecision().notNull(),
+    slopeRatingFront9: integer().notNull(),
+    courseRatingBack9: doublePrecision().notNull(),
+    slopeRatingBack9: integer().notNull(),
+
+    /* Auto-Calculated Values */
     outPar: integer().notNull(),
-    inPar: integer().notNull(),
-    totalDistance: integer().notNull(),
+    inPar: integer(), // NULL if 9 holes
+    totalPar: integer().notNull(),
     outDistance: integer().notNull(),
-    inDistance: integer().notNull(),
-    distanceMeasurement: text().notNull(),
-    handicaps: integer().array().notNull(),
-    distances: integer().array().notNull(),
-    pars: integer().array().notNull(),
+    inDistance: integer(),
+    totalDistance: integer().notNull(),
+
     isApproved: boolean().default(false).notNull(),
     isArchived: boolean().default(false).notNull(),
     version: integer().default(1).notNull(),
@@ -146,7 +154,7 @@ export const hole = pgTable(
     holeNumber: integer().notNull(),
     par: integer().notNull(),
     hcp: integer().notNull(),
-    length: integer().notNull(),
+    distance: integer().notNull(),
   },
   (table) => [
     foreignKey({
