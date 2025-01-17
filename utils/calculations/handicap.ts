@@ -1,5 +1,5 @@
 import { RoundWithCourse } from "@/types/database";
-import { Hole } from "@/types/round";
+import { Hole } from "@/types/scorecard";
 import { SupabaseClient } from "@supabase/supabase-js";
 
 export const calculateCourseHandicap = (

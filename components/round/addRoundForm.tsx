@@ -11,7 +11,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { addRoundFormSchema } from "@/types/round";
+import { addRoundFormSchema } from "@/types/scorecard";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -29,7 +29,7 @@ import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useToast } from "../ui/use-toast";
 import { Tables } from "@/types/supabase";
-import type { RoundMutation } from "@/types/round";
+import type { RoundMutation } from "@/types/scorecard";
 import { DateTimePicker } from "../ui/datepicker";
 import useMounted from "@/hooks/useMounted";
 import { translateRound } from "@/utils/round/addUtils";

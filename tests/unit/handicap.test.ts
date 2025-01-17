@@ -1,4 +1,4 @@
-import { Hole } from "@/types/round";
+import { Hole } from "@/types/scorecard";
 import {
   calculateAdjustedGrossScore,
   calculateAdjustedPlayedScore,

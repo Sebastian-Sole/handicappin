@@ -1,5 +1,5 @@
 import { toast } from "@/components/ui/use-toast";
-import { addRoundFormSchema, Hole, RoundMutation } from "@/types/round";
+import { addRoundFormSchema, Hole, RoundMutation } from "@/types/scorecard";
 import { z } from "zod";
 import {
   calculateAdjustedPlayedScore,

@@ -1,4 +1,4 @@
-import { Hole } from "@/types/round";
+import { Hole } from "@/types/scorecard";
 
 export const HOLES_MOCK: Hole[] = [
   {

@@ -1,4 +1,4 @@
-import { FormRound } from "@/types/round";
+import { FormRound } from "@/types/scorecard";
 
 export const roundZero: FormRound = {
   courseInfo: {

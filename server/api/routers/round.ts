@@ -4,7 +4,7 @@ import {
   publicProcedure,
 } from "@/server/api/trpc";
 import { RoundWithCourse } from "@/types/database";
-import { roundMutationSchema } from "@/types/round";
+import { roundMutationSchema } from "@/types/scorecard";
 import {
   calculateCappedHandicapIndex,
   calculateHandicapIndex,
