@@ -11,7 +11,6 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { addRoundFormSchema } from "@/types/scorecard";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -29,10 +28,8 @@ import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useToast } from "../ui/use-toast";
 import { Tables } from "@/types/supabase";
-import type { RoundMutation } from "@/types/scorecard";
 import { DateTimePicker } from "../ui/datepicker";
 import useMounted from "@/hooks/useMounted";
-import { translateRound } from "@/utils/round/addUtils";
 import {
   Tooltip,
   TooltipContent,
@@ -41,6 +38,7 @@ import {
 } from "../ui/tooltip";
 import { InfoIcon } from "lucide-react";
 import AddRoundFormSkeleton from "./add-round-form-skeleton";
+import { scorecardSchema } from "@/types/scorecard";
 
 interface AddRoundFormProps {
   profile: Tables<"Profile">;
@@ -61,64 +59,34 @@ const AddRoundForm = ({ profile }: AddRoundFormProps) => {
 
   const [numberOfHoles, setNumberOfHoles] = useState(9);
 
-  const form = useForm<z.infer<typeof addRoundFormSchema>>({
-    resolver: zodResolver(addRoundFormSchema),
-    defaultValues: {
-      numberOfHoles: 9,
-      holes: Array.from({ length: 9 }).map((value, index) => ({
-        par: 3,
-        hcp: 1,
-        strokes: 3,
-        holeNumber: index + 1,
-        hcpStrokes: 0,
-      })),
-      date: undefined,
-      courseInfo: {
-        par: 27,
-        courseRating: 50.3,
-        slope: 82,
-      },
-      userId: profile.id,
-    },
+  const form = useForm<z.infer<typeof scorecardSchema>>({
+    resolver: zodResolver(scorecardSchema),
+    // defaultValues: {
+    //   teeTime: undefined,
+    //   userId: profile.id,
+    //   courseId: undefined,
+    //   courseName: "",
+    //   holes: Array.from({ length: 18 }).map(() => ({
+    //     par: 0,
+    //     hcp: 0,
+    //     strokes: 0,
+    //   })),
+    //   scores: [],
+    //   teeInfo: {
+    //     courseRating18: 0,
+    //     courseRatingBack9: 0,
+    //     courseRatingFront9: 0,
+    //     gender: "",
+
+    //   }
+    // },
   });
 
-  const { mutate } = api.round.create.useMutation({
-    onSuccess: () => {
-      console.log("Round created successfully");
-      toast({
-        title: "✅ Round created successfully",
-        description: "Your round has been added to your profile!",
-      });
-      router.push("/");
-      setLoading(false);
-    },
-    onError: (e) => {
-      const errorMessage = e.data?.zodError?.fieldErrors.content;
-      console.error("Error creating round:");
-      console.log(e);
-      console.log(errorMessage);
-      toast({
-        title: "❌ Error creating round",
-        description: `${errorMessage}`,
-      });
-      setLoading(false);
-      setIsSaveButtonLocked(false);
-    },
-  });
-
-  function onSubmit(values: z.infer<typeof addRoundFormSchema>) {
+  function onSubmit(values: z.infer<typeof scorecardSchema>) {
     setLoading(true);
     setIsSaveButtonLocked(true);
-    const dataValues: RoundMutation | null = translateRound(values, profile);
-    if (!dataValues) {
-      toast({
-        title: "❌ Error creating round",
-        description:
-          "There was an error creating the round, could not convert data. Please hard refresh and try again, or contact support",
-      });
-      return;
-    }
-    mutate(dataValues);
+
+    // Todo: Call Supabase Edge Functions
   }
 
   function handleNumericChange(field: any) {

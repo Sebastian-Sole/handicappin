@@ -1,240 +1,230 @@
-import {
-  authedProcedure,
-  createTRPCRouter,
-  publicProcedure,
-} from "@/server/api/trpc";
+import { createTRPCRouter, publicProcedure } from "@/server/api/trpc";
 import { RoundWithCourse } from "@/types/database";
-import { roundMutationSchema } from "@/types/scorecard";
-import {
-  calculateCappedHandicapIndex,
-  calculateHandicapIndex,
-  getLowestHandicapIndex,
-} from "@/utils/calculations/handicap";
-import { calculateAdjustment } from "@/utils/round/addUtils";
+
 import { flattenRoundWithCourse } from "@/utils/trpc/round";
 import { z } from "zod";
 
-const EXCEPTIONAL_ROUND_THRESHOLD = 7;
-const MAX_SCORE_DIFFERENTIAL = 54;
+// const EXCEPTIONAL_ROUND_THRESHOLD = 7;
+// const MAX_SCORE_DIFFERENTIAL = 54;
 
 export const roundRouter = createTRPCRouter({
-  create: authedProcedure
-    .input(roundMutationSchema)
-    .mutation(async ({ ctx, input }) => {
-      if (!ctx.user) {
-        throw new Error("Unauthorized");
-      }
+  // create: authedProcedure
+  //   .input(roundMutationSchema)
+  //   .mutation(async ({ ctx, input }) => {
+  //     if (!ctx.user) {
+  //       throw new Error("Unauthorized");
+  //     }
 
-      const {
-        courseInfo,
-        teeTime: date,
-        holes,
-        adjustedGrossScore,
-        userId,
-        existingHandicapIndex,
-        totalStrokes,
-        nineHolePar,
-        eighteenHolePar,
-      } = input;
+  //     const {
+  //       courseInfo,
+  //       teeTime: date,
+  //       holes,
+  //       adjustedGrossScore,
+  //       userId,
+  //       existingHandicapIndex,
+  //       totalStrokes,
+  //       nineHolePar,
+  //       eighteenHolePar,
+  //     } = input;
 
-      let { scoreDifferential, exceptionalScoreAdjustment } = input;
+  //     let { scoreDifferential, exceptionalScoreAdjustment } = input;
 
-      const { data: existingCourse, error: existingCourseError } =
-        await ctx.supabase
-          .from("Course")
-          .select("id")
-          .eq("name", courseInfo.location)
-          .maybeSingle();
+  //     const { data: existingCourse, error: existingCourseError } =
+  //       await ctx.supabase
+  //         .from("Course")
+  //         .select("id")
+  //         .eq("name", courseInfo.location)
+  //         .maybeSingle();
 
-      if (existingCourseError) {
-        console.log(existingCourseError);
-        throw new Error(
-          `Error checking if course exists: ${existingCourseError.message}`
-        );
-      }
-      console.log(existingCourse);
+  //     if (existingCourseError) {
+  //       console.log(existingCourseError);
+  //       throw new Error(
+  //         `Error checking if course exists: ${existingCourseError.message}`
+  //       );
+  //     }
+  //     console.log(existingCourse);
 
-      let courseId = existingCourse?.id || null;
+  //     let courseId = existingCourse?.id || null;
 
-      if (courseId === null) {
-        const { data: course, error: courseError } = await ctx.supabase
-          .from("Course")
-          .insert([
-            {
-              courseRating: courseInfo.courseRating,
-              slopeRating: courseInfo.slope,
-              name: courseInfo.location,
-              eighteenHolePar,
-              nineHolePar,
-            },
-          ])
-          .select("id")
-          .single();
+  //     if (courseId === null) {
+  //       const { data: course, error: courseError } = await ctx.supabase
+  //         .from("Course")
+  //         .insert([
+  //           {
+  //             courseRating: courseInfo.courseRating,
+  //             slopeRating: courseInfo.slope,
+  //             name: courseInfo.location,
+  //             eighteenHolePar,
+  //             nineHolePar,
+  //           },
+  //         ])
+  //         .select("id")
+  //         .single();
 
-        if (courseError) {
-          console.log("ID: " + courseId);
-          console.log("Course Name: " + courseInfo.location);
-          throw new Error(`Error inserting course: ${courseError.message}`);
-        }
+  //       if (courseError) {
+  //         console.log("ID: " + courseId);
+  //         console.log("Course Name: " + courseInfo.location);
+  //         throw new Error(`Error inserting course: ${courseError.message}`);
+  //       }
 
-        courseId = course.id;
-      }
+  //       courseId = course.id;
+  //     }
 
-      const { data: prevRoundsData, error: prevRoundsError } =
-        await ctx.supabase
-          .from("Round")
-          .select("*")
-          .eq("userId", userId)
-          .order("teeTime", { ascending: false })
-          .range(0, 18);
+  //     const { data: prevRoundsData, error: prevRoundsError } =
+  //       await ctx.supabase
+  //         .from("Round")
+  //         .select("*")
+  //         .eq("userId", userId)
+  //         .order("teeTime", { ascending: false })
+  //         .range(0, 18);
 
-      if (prevRoundsError) {
-        throw new Error(
-          `Error getting previous rounds: ${prevRoundsError.message}`
-        );
-      }
+  //     if (prevRoundsError) {
+  //       throw new Error(
+  //         `Error getting previous rounds: ${prevRoundsError.message}`
+  //       );
+  //     }
 
-      console.log("Score Differential: " + scoreDifferential);
+  //     console.log("Score Differential: " + scoreDifferential);
 
-      const difference = existingHandicapIndex - scoreDifferential;
-      const isExceptionalRound = difference >= EXCEPTIONAL_ROUND_THRESHOLD;
+  //     const difference = existingHandicapIndex - scoreDifferential;
+  //     const isExceptionalRound = difference >= EXCEPTIONAL_ROUND_THRESHOLD;
 
-      if (isExceptionalRound) {
-        console.log("Difference: " + difference);
-        const adjustmentAmount = calculateAdjustment(difference);
-        console.log("Adjustment: " + adjustmentAmount);
-        exceptionalScoreAdjustment =
-          exceptionalScoreAdjustment - adjustmentAmount;
-        scoreDifferential = scoreDifferential - adjustmentAmount;
-        console.log("New score differential: " + scoreDifferential);
-        console.log(
-          "New exceptional score adjustment: " + exceptionalScoreAdjustment
-        );
+  //     if (isExceptionalRound) {
+  //       console.log("Difference: " + difference);
+  //       const adjustmentAmount = calculateAdjustment(difference);
+  //       console.log("Adjustment: " + adjustmentAmount);
+  //       exceptionalScoreAdjustment =
+  //         exceptionalScoreAdjustment - adjustmentAmount;
+  //       scoreDifferential = scoreDifferential - adjustmentAmount;
+  //       console.log("New score differential: " + scoreDifferential);
+  //       console.log(
+  //         "New exceptional score adjustment: " + exceptionalScoreAdjustment
+  //       );
 
-        // Update score differentials and adjustment for previous rounds
-        prevRoundsData.slice(1).forEach(async (round) => {
-          const { error: updateRoundError } = await ctx.supabase
-            .from("Round")
-            .update({
-              scoreDifferential: round.scoreDifferential - adjustmentAmount,
-              exceptionalScoreAdjustment:
-                round.exceptionalScoreAdjustment - adjustmentAmount,
-            })
-            .eq("id", round.id);
+  //       // Update score differentials and adjustment for previous rounds
+  //       prevRoundsData.slice(1).forEach(async (round) => {
+  //         const { error: updateRoundError } = await ctx.supabase
+  //           .from("Round")
+  //           .update({
+  //             scoreDifferential: round.scoreDifferential - adjustmentAmount,
+  //             exceptionalScoreAdjustment:
+  //               round.exceptionalScoreAdjustment - adjustmentAmount,
+  //           })
+  //           .eq("id", round.id);
 
-          if (updateRoundError) {
-            throw new Error(
-              `Error updating previous rounds: ${updateRoundError.message}`
-            );
-          }
-        });
-      }
+  //         if (updateRoundError) {
+  //           throw new Error(
+  //             `Error updating previous rounds: ${updateRoundError.message}`
+  //           );
+  //         }
+  //       });
+  //     }
 
-      console.log(userId);
+  //     console.log(userId);
 
-      const { data: round, error: roundError } = await ctx.supabase
-        .from("Round")
-        .insert([
-          {
-            userId: userId,
-            courseId: courseId,
-            adjustedGrossScore: adjustedGrossScore,
-            scoreDifferential: scoreDifferential,
-            totalStrokes: totalStrokes,
-            existingHandicapIndex: existingHandicapIndex,
-            teeTime: date.toISOString(),
-            parPlayed: courseInfo.par,
-            updatedHandicapIndex: existingHandicapIndex,
-          },
-        ])
-        .select("*")
-        .single();
+  //     const { data: round, error: roundError } = await ctx.supabase
+  //       .from("Round")
+  //       .insert([
+  //         {
+  //           userId: userId,
+  //           courseId: courseId,
+  //           adjustedGrossScore: adjustedGrossScore,
+  //           scoreDifferential: scoreDifferential,
+  //           totalStrokes: totalStrokes,
+  //           existingHandicapIndex: existingHandicapIndex,
+  //           teeTime: date.toISOString(),
+  //           parPlayed: courseInfo.par,
+  //           updatedHandicapIndex: existingHandicapIndex,
+  //         },
+  //       ])
+  //       .select("*")
+  //       .single();
 
-      if (roundError) {
-        throw new Error(`Error inserting round: ${roundError.message}`);
-      }
+  //     if (roundError) {
+  //       throw new Error(`Error inserting round: ${roundError.message}`);
+  //     }
 
-      const roundId = round.id;
+  //     const roundId = round.id;
 
-      const holesData = holes.map((hole) => ({
-        par: hole.par,
-        holeNumber: hole.holeNumber,
-        hcp: hole.hcp,
-        strokes: hole.strokes,
-        hcpStrokes: hole.hcpStrokes,
-        roundId: roundId,
-        userId: userId,
-      }));
+  //     const holesData = holes.map((hole) => ({
+  //       par: hole.par,
+  //       holeNumber: hole.holeNumber,
+  //       hcp: hole.hcp,
+  //       strokes: hole.strokes,
+  //       hcpStrokes: hole.hcpStrokes,
+  //       roundId: roundId,
+  //       userId: userId,
+  //     }));
 
-      const { error: holesError } = await ctx.supabase
-        .from("Hole")
-        .insert(holesData);
+  //     const { error: holesError } = await ctx.supabase
+  //       .from("Hole")
+  //       .insert(holesData);
 
-      if (holesError) {
-        throw new Error(`Error inserting holes: ${holesError.message}`);
-      }
+  //     if (holesError) {
+  //       throw new Error(`Error inserting holes: ${holesError.message}`);
+  //     }
 
-      const lowestHandicapIndex = await getLowestHandicapIndex(
-        userId,
-        ctx.supabase
-      );
+  //     const lowestHandicapIndex = await getLowestHandicapIndex(
+  //       userId,
+  //       ctx.supabase
+  //     );
 
-      const roundsData = [round, ...prevRoundsData];
+  //     const roundsData = [round, ...prevRoundsData];
 
-      const scoreDifferentials = roundsData
-        .sort(
-          (a, b) =>
-            new Date(b.teeTime).getTime() - new Date(a.teeTime).getTime()
-        )
-        .map((round) => round.scoreDifferential);
+  //     const scoreDifferentials = roundsData
+  //       .sort(
+  //         (a, b) =>
+  //           new Date(b.teeTime).getTime() - new Date(a.teeTime).getTime()
+  //       )
+  //       .map((round) => round.scoreDifferential);
 
-      const cappedDifferentials = scoreDifferentials.map((diff) =>
-        diff > MAX_SCORE_DIFFERENTIAL ? MAX_SCORE_DIFFERENTIAL : diff
-      );
+  //     const cappedDifferentials = scoreDifferentials.map((diff) =>
+  //       diff > MAX_SCORE_DIFFERENTIAL ? MAX_SCORE_DIFFERENTIAL : diff
+  //     );
 
-      let handicapIndex = calculateHandicapIndex(cappedDifferentials);
+  //     let handicapIndex = calculateHandicapIndex(cappedDifferentials);
 
-      handicapIndex = calculateCappedHandicapIndex(
-        handicapIndex,
-        lowestHandicapIndex
-      );
-      console.log("Handicap index: " + handicapIndex);
-      console.log("Lowest Handicap Index:" + lowestHandicapIndex);
+  //     handicapIndex = calculateCappedHandicapIndex(
+  //       handicapIndex,
+  //       lowestHandicapIndex
+  //     );
+  //     console.log("Handicap index: " + handicapIndex);
+  //     console.log("Lowest Handicap Index:" + lowestHandicapIndex);
 
-      if (handicapIndex !== existingHandicapIndex) {
-        const { error: updateError } = await ctx.supabase
-          .from("Profile")
-          .update({
-            handicapIndex: handicapIndex,
-          })
-          .eq("id", userId);
+  //     if (handicapIndex !== existingHandicapIndex) {
+  //       const { error: updateError } = await ctx.supabase
+  //         .from("Profile")
+  //         .update({
+  //           handicapIndex: handicapIndex,
+  //         })
+  //         .eq("id", userId);
 
-        if (updateError) {
-          throw new Error(
-            `Error updating handicap index: ${updateError.message}`
-          );
-        }
+  //       if (updateError) {
+  //         throw new Error(
+  //           `Error updating handicap index: ${updateError.message}`
+  //         );
+  //       }
 
-        // Add new handicap index to the added round
-        const { error: updateRoundError } = await ctx.supabase
-          .from("Round")
-          .update({
-            updatedHandicapIndex: handicapIndex,
-          })
-          .eq("id", roundId);
+  //       // Add new handicap index to the added round
+  //       const { error: updateRoundError } = await ctx.supabase
+  //         .from("Round")
+  //         .update({
+  //           updatedHandicapIndex: handicapIndex,
+  //         })
+  //         .eq("id", roundId);
 
-        if (updateRoundError) {
-          throw new Error(
-            `Error updating round with new handicap index: ${updateRoundError.message}`
-          );
-        }
-      }
+  //       if (updateRoundError) {
+  //         throw new Error(
+  //           `Error updating round with new handicap index: ${updateRoundError.message}`
+  //         );
+  //       }
+  //     }
 
-      return {
-        message: "Round and holes inserted successfully",
-        roundId: roundId,
-      };
-    }),
+  //     return {
+  //       message: "Round and holes inserted successfully",
+  //       roundId: roundId,
+  //     };
+  //   }),
   getAllByUserId: publicProcedure
     .input(
       z.object({

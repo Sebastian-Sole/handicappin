@@ -1,4 +1,4 @@
-import AddRoundForm from "@/components/round/addRoundForm";
+import GolfScorecard from "@/components/scorecard/golf-scorecard";
 import { api } from "@/trpc/server";
 import { createServerComponentClient } from "@/utils/supabase/server";
 
@@ -16,7 +16,7 @@ const AddRoundPage = async () => {
 
   return (
     <div className="flex justify-center items-center flex-col h-full py-8">
-      <AddRoundForm profile={profile} />
+      <GolfScorecard profile={profile} />
     </div>
   );
 };

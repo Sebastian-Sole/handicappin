@@ -72,7 +72,7 @@ export const course = pgTable(
   {
     id: serial().primaryKey().notNull(),
     name: text().notNull(),
-    isApproved: boolean().default(false).notNull(),
+    approvalStatus: text().default("pending").notNull(),
   },
   (table) => [
     uniqueIndex("Course_name_key").using(
@@ -101,9 +101,6 @@ export const teeInfo = pgTable(
     name: text().notNull(),
     gender: text().notNull(),
 
-    /* Number of Holes: 9 or 18 */
-    numberOfHoles: integer().notNull(), // 9 or 18
-
     /* Course & Slope Ratings */
     courseRating18: doublePrecision().notNull(),
     slopeRating18: integer().notNull(),
@@ -114,13 +111,14 @@ export const teeInfo = pgTable(
 
     /* Auto-Calculated Values */
     outPar: integer().notNull(),
-    inPar: integer(), // NULL if 9 holes
+    inPar: integer().notNull(),
     totalPar: integer().notNull(),
     outDistance: integer().notNull(),
-    inDistance: integer(),
+    inDistance: integer().notNull(),
     totalDistance: integer().notNull(),
+    distanceMeasurement: text().notNull().default("meters"),
 
-    isApproved: boolean().default(false).notNull(),
+    approvalStatus: text().default("pending").notNull(),
     isArchived: boolean().default(false).notNull(),
     version: integer().default(1).notNull(),
   },

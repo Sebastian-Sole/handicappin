@@ -29,26 +29,26 @@ export type Database = {
       }
       Hole: {
         Row: {
+          distance: number
           hcp: number
           holeNumber: number
           id: number
-          length: number
           par: number
           teeId: number
         }
         Insert: {
+          distance: number
           hcp: number
           holeNumber: number
           id?: number
-          length: number
           par: number
           teeId: number
         }
         Update: {
+          distance?: number
           hcp?: number
           holeNumber?: number
           id?: number
-          length?: number
           par?: number
           teeId?: number
         }
@@ -211,63 +211,69 @@ export type Database = {
       TeeInfo: {
         Row: {
           courseId: number
-          courseRating: number
+          courseRating18: number
+          courseRatingBack9: number
+          courseRatingFront9: number
           distanceMeasurement: string
-          distances: number[]
           gender: string
-          handicaps: number[]
           id: number
-          inDistance: number
-          inPar: number
+          inDistance: number | null
+          inPar: number | null
           isApproved: boolean
           isArchived: boolean
           name: string
+          numberOfHoles: number
           outDistance: number
           outPar: number
-          pars: number[]
-          slopeRating: number
+          slopeRating18: number
+          slopeRatingBack9: number
+          slopeRatingFront9: number
           totalDistance: number
           totalPar: number
           version: number
         }
         Insert: {
           courseId: number
-          courseRating: number
-          distanceMeasurement: string
-          distances: number[]
+          courseRating18: number
+          courseRatingBack9: number
+          courseRatingFront9: number
+          distanceMeasurement?: string
           gender: string
-          handicaps: number[]
           id?: number
-          inDistance: number
-          inPar: number
+          inDistance?: number | null
+          inPar?: number | null
           isApproved?: boolean
           isArchived?: boolean
           name: string
+          numberOfHoles: number
           outDistance: number
           outPar: number
-          pars: number[]
-          slopeRating: number
+          slopeRating18: number
+          slopeRatingBack9: number
+          slopeRatingFront9: number
           totalDistance: number
           totalPar: number
           version?: number
         }
         Update: {
           courseId?: number
-          courseRating?: number
+          courseRating18?: number
+          courseRatingBack9?: number
+          courseRatingFront9?: number
           distanceMeasurement?: string
-          distances?: number[]
           gender?: string
-          handicaps?: number[]
           id?: number
-          inDistance?: number
-          inPar?: number
+          inDistance?: number | null
+          inPar?: number | null
           isApproved?: boolean
           isArchived?: boolean
           name?: string
+          numberOfHoles?: number
           outDistance?: number
           outPar?: number
-          pars?: number[]
-          slopeRating?: number
+          slopeRating18?: number
+          slopeRatingBack9?: number
+          slopeRatingFront9?: number
           totalDistance?: number
           totalPar?: number
           version?: number

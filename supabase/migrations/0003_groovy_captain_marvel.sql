@@ -1,0 +1,1 @@
+ALTER TABLE "TeeInfo" DROP COLUMN "numberOfHoles";

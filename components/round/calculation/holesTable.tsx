@@ -15,7 +15,6 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { useRoundCalculationContext } from "@/contexts/roundCalculationContext";
-import TooltipIcon from "@/components/tooltip-icon";
 
 const HolesTable = () => {
   const { holes } = useRoundCalculationContext();

@@ -15,6 +15,34 @@
       "when": 1737038799052,
       "tag": "0001_omniscient_photon",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1737203675023,
+      "tag": "0002_strange_silver_surfer",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1737224523948,
+      "tag": "0003_groovy_captain_marvel",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1737224724377,
+      "tag": "0004_ambiguous_jazinda",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1737282126502,
+      "tag": "0005_furry_matthew_murdock",
+      "breakpoints": true
     }
   ]
 }
