@@ -13,7 +13,6 @@ import { Label } from "@/components/ui/label";
 import { Plus, TriangleAlert } from "lucide-react";
 import { useEffect, useState } from "react";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { TeeInfo } from "@/types/scorecard";
 import { Large } from "../ui/typography";
 import {
   Table,
@@ -25,177 +24,16 @@ import {
 } from "../ui/table";
 import { Alert, AlertDescription, AlertTitle } from "../ui/alert";
 import { Separator } from "../ui/separator";
+import { Hole, Tee } from "@/types/scorecard";
+import { defaultTee } from "@/utils/scorecard/tee";
 
 interface AddTeeDialogProps {
-  onAdd: (newTee: TeeInfo) => void;
+  onAdd: (newTee: Tee) => void;
 }
 
 export function AddTeeDialog({ onAdd }: AddTeeDialogProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const [newTee, setNewTee] = useState<TeeInfo>({
-    name: "",
-    courseRating18: 120,
-    slopeRating18: 0,
-    courseRatingFront9: 0,
-    slopeRatingFront9: 0,
-    courseRatingBack9: 0,
-    slopeRatingBack9: 0,
-    outPar: 0,
-    inPar: 0,
-    totalPar: 0,
-    outDistance: 0,
-    inDistance: 0,
-    totalDistance: 0,
-    gender: "mens",
-    numberOfHoles: 18,
-    distanceMeasurement: "meters",
-    holes: [
-      {
-        id: "",
-        teeId: "",
-        holeNumber: 1,
-        par: 4,
-        hcp: 1,
-        distance: 3500,
-      },
-      {
-        id: "",
-        teeId: "",
-        holeNumber: 2,
-        par: 4,
-        hcp: 2,
-        distance: 350,
-      },
-      {
-        id: "",
-        teeId: "",
-        holeNumber: 3,
-        par: 4,
-        hcp: 3,
-        distance: 350,
-      },
-      {
-        id: "",
-        teeId: "",
-        holeNumber: 4,
-        par: 4,
-        hcp: 4,
-        distance: 350,
-      },
-      {
-        id: "",
-        teeId: "",
-        holeNumber: 5,
-        par: 4,
-        hcp: 5,
-        distance: 350,
-      },
-      {
-        id: "",
-        teeId: "",
-        holeNumber: 6,
-        par: 4,
-        hcp: 6,
-        distance: 350,
-      },
-      {
-        id: "",
-        teeId: "",
-        holeNumber: 7,
-        par: 4,
-        hcp: 7,
-        distance: 350,
-      },
-      {
-        id: "",
-        teeId: "",
-        holeNumber: 8,
-        par: 4,
-        hcp: 8,
-        distance: 350,
-      },
-      {
-        id: "",
-        teeId: "",
-        holeNumber: 9,
-        par: 4,
-        hcp: 9,
-        distance: 350,
-      },
-      {
-        id: "",
-        teeId: "",
-        holeNumber: 10,
-        par: 4,
-        hcp: 10,
-        distance: 350,
-      },
-      {
-        id: "",
-        teeId: "",
-        holeNumber: 11,
-        par: 4,
-        hcp: 11,
-        distance: 350,
-      },
-      {
-        id: "",
-        teeId: "",
-        holeNumber: 12,
-        par: 4,
-        hcp: 12,
-        distance: 350,
-      },
-      {
-        id: "",
-        teeId: "",
-        holeNumber: 13,
-        par: 4,
-        hcp: 13,
-        distance: 350,
-      },
-      {
-        id: "",
-        teeId: "",
-        holeNumber: 14,
-        par: 4,
-        hcp: 14,
-        distance: 350,
-      },
-      {
-        id: "",
-        teeId: "",
-        holeNumber: 15,
-        par: 4,
-        hcp: 15,
-        distance: 350,
-      },
-      {
-        id: "",
-        teeId: "",
-        holeNumber: 16,
-        par: 4,
-        hcp: 16,
-        distance: 350,
-      },
-      {
-        id: "",
-        teeId: "",
-        holeNumber: 17,
-        par: 4,
-        hcp: 17,
-        distance: 350,
-      },
-      {
-        id: "",
-        teeId: "",
-        holeNumber: 18,
-        par: 4,
-        hcp: 18,
-        distance: 350,
-      },
-    ],
-  });
+  const [newTee, setNewTee] = useState<Tee>(defaultTee);
 
   const handleAdd = () => {
     console.log(newTee);
@@ -271,7 +109,7 @@ export function AddTeeDialog({ onAdd }: AddTeeDialogProps) {
               </RadioGroup>
             </div>
             <div>
-              <Label>Men's/Ladies</Label>
+              <Label>Men&apos;s/Ladies</Label>
               <RadioGroup
                 defaultValue="mens"
                 onValueChange={() => {
@@ -449,13 +287,13 @@ export function AddTeeDialog({ onAdd }: AddTeeDialogProps) {
                 <TableBody>
                   <TableRow>
                     <TableCell className="font-medium">Distance</TableCell>
-                    {newTee.holes.map(({ distance }, index) => (
+                    {newTee?.holes?.map(({ distance }, index) => (
                       <TableCell key={index} className="p-0 min-w-[50px]">
                         <Input
                           type="number"
                           value={distance || ""}
                           onChange={(e) => {
-                            const newHoles = [...newTee.holes];
+                            const newHoles = [...newTee.holes!];
                             newHoles[index] = {
                               ...newHoles[index],
                               distance: parseInt(e.target.value) || 0,
@@ -481,30 +319,30 @@ export function AddTeeDialog({ onAdd }: AddTeeDialogProps) {
                       </TableCell>
                     ))}
                     <TableCell>
-                      {newTee.holes
-                        .slice(0, 9)
+                      {newTee?.holes
+                        ?.slice(0, 9)
                         .reduce((acc, { distance }) => acc + distance, 0)}
                     </TableCell>
                     <TableCell>
                       {newTee.holes
-                        .slice(9, 18)
+                        ?.slice(9, 18)
                         .reduce((acc, { distance }) => acc + distance, 0)}
                     </TableCell>
                     <TableCell>
                       {newTee.holes
-                        .slice(0, 18)
+                        ?.slice(0, 18)
                         .reduce((acc, { distance }) => acc + distance, 0)}
                     </TableCell>
                   </TableRow>
                   <TableRow>
                     <TableCell className="font-medium">Par</TableCell>
-                    {newTee.holes.map(({ par }, index) => (
+                    {newTee.holes?.map(({ par }, index) => (
                       <TableCell key={index} className="p-0">
                         <Input
                           type="number"
                           value={par || ""}
                           onChange={(e) => {
-                            const newHoles = [...newTee.holes];
+                            const newHoles = [...newTee.holes!];
                             newHoles[index] = {
                               ...newHoles[index],
                               par: parseInt(e.target.value) || 0,
@@ -535,27 +373,27 @@ export function AddTeeDialog({ onAdd }: AddTeeDialogProps) {
                     ))}
                     <TableCell>
                       {newTee.holes
-                        .slice(0, 9)
+                        ?.slice(0, 9)
                         .reduce((acc, { par }) => acc + par, 0)}
                     </TableCell>
                     <TableCell>
                       {newTee.holes
-                        .slice(9, 18)
+                        ?.slice(9, 18)
                         .reduce((acc, { par }) => acc + par, 0)}
                     </TableCell>
                     <TableCell>
-                      {newTee.holes.reduce((acc, { par }) => acc + par, 0)}
+                      {newTee.holes?.reduce((acc, { par }) => acc + par, 0)}
                     </TableCell>
                   </TableRow>
                   <TableRow>
                     <TableCell className="font-medium">Handicap</TableCell>
-                    {newTee.holes.map(({ hcp }, index) => (
+                    {newTee.holes?.map(({ hcp }, index) => (
                       <TableCell key={index} className="p-0">
                         <Input
                           type="number"
                           value={hcp || ""}
                           onChange={(e) => {
-                            const newHoles = [...newTee.holes];
+                            const newHoles = [...newTee.holes!];
                             newHoles[index] = {
                               ...newHoles[index],
                               hcp: parseInt(e.target.value) || 0,

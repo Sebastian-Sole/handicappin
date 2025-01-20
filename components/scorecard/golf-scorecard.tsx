@@ -143,8 +143,16 @@ export default function GolfScorecard({ profile }: GolfScorecardProps) {
   const { data: holesData, isLoading: isLoadingHolesData } =
     api.hole.fetchHoles.useQuery(
       { teeId: selectedTee?.id! },
-      { enabled: !!selectedTee }
+      {
+        enabled: !!selectedTee?.id && selectedTee.approvalStatus === "approved",
+      }
     );
+
+  useEffect(() => {
+    if (selectedTee && holesData) {
+      setSelectedTee({ ...selectedTee, holes: holesData });
+    }
+  }, [holesData]);
 
   const handleCourseSearch = (searchString: string) => {
     setSearchTerm(searchString);
@@ -186,7 +194,7 @@ export default function GolfScorecard({ profile }: GolfScorecardProps) {
   //   console.log("Add");
   // };
 
-  const normalizeHcpForNineHoles = (holes: typeof holesData) => {
+  const normalizeHcpForNineHoles = (holes: Hole[] | undefined) => {
     if (holes === undefined) return [];
     if (holes.length === 18) return holes;
 
@@ -206,7 +214,7 @@ export default function GolfScorecard({ profile }: GolfScorecardProps) {
   };
 
   const displayedHoles = normalizeHcpForNineHoles(
-    holesData?.slice(0, holeCount)
+    selectedTee?.holes?.slice(0, holeCount)
   );
 
   const onSubmit = () => {

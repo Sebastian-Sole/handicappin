@@ -77,8 +77,7 @@ export const MultiPageDialog: React.FC<MultiPageDialogProps> = ({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>{trigger}</DialogTrigger>
-      <DialogContent className="sm:max-w-[425px]">
-        <ProgressDots total={pages.length} current={currentPage} />
+      <DialogContent className="max-h-[90vh] overflow-y-auto">
         {pages[currentPage]}
         <div className="flex justify-between mt-4">
           <Button
@@ -88,6 +87,7 @@ export const MultiPageDialog: React.FC<MultiPageDialogProps> = ({
           >
             Previous
           </Button>
+          <ProgressDots total={pages.length} current={currentPage} />
           <Button onClick={handleNext} disabled={isNextButtonDisabled}>
             {currentPage === pages.length - 1 ? "Save" : "Next"}
           </Button>
