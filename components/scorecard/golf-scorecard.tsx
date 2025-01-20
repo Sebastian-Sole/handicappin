@@ -75,7 +75,7 @@ export default function GolfScorecard({ profile }: GolfScorecardProps) {
   const [player, setPlayer] = useState<PlayerScore>({
     name: profile.name || "",
     scores: Array(18).fill(0),
-  });
+  }); // TODO: Change to get this as a prop
 
   const [searchTerm, setSearchTerm] = useState("");
   const [debouncedSearchTerm] = useDebounce(searchTerm, 300); // Debounce user input
@@ -255,14 +255,18 @@ export default function GolfScorecard({ profile }: GolfScorecardProps) {
                                   <CommandList
                                     key={searchedCourses?.length ?? 0}
                                   >
-                                    {/* ✅ Forces re-render */}
                                     {searchedCourses?.length === 0 &&
                                       !isLoading && (
                                         <CommandEmpty>
-                                          No courses found.
+                                          <AddCourseDialog
+                                            onAdd={() =>
+                                              console.log("Implement Add")
+                                            }
+                                          />
                                         </CommandEmpty>
                                       )}
-                                    {searchedCourses?.length &&
+                                    {Array.isArray(searchedCourses) &&
+                                      searchedCourses.length > 0 &&
                                       searchedCourses?.map((course) => (
                                         <CommandItem
                                           key={course.id}
