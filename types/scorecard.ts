@@ -28,6 +28,7 @@ export const teeSchema = z.object({
   distanceMeasurement: z.literal("meters").or(z.literal("yards")),
   approvalStatus: z.literal("approved").or(z.literal("pending")),
   holes: z.array(holeSchema).or(z.undefined()),
+  courseId: z.number().or(z.undefined()),
 });
 
 export const courseSchema = z.object({

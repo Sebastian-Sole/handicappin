@@ -1,6 +1,7 @@
-import { Course } from "@/types/scorecard";
+import { Course, Tee } from "@/types/scorecard";
 
-export const defaultTee = {
+export const defaultTee: Tee = {
+  id: -1,
   name: "",
   courseRating18: 0,
   slopeRating18: 0,
@@ -132,8 +133,11 @@ export const defaultTee = {
 export const validCourse: Course = {
   name: "Ballerud",
   approvalStatus: "pending",
+  id: -1,
   tees: [
     {
+      id: -1,
+      courseId: -1,
       name: "RED",
       courseRating18: 131.2,
       slopeRating18: 126,

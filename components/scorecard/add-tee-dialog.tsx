@@ -39,10 +39,6 @@ export function AddTeeDialog({ onAdd }: AddTeeDialogProps) {
     console.log(newTee);
   };
 
-  useEffect(() => {
-    console.log(newTee);
-  }, [newTee]);
-
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>

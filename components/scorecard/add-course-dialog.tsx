@@ -1,6 +1,5 @@
 "use client";
 
-import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Plus, TriangleAlert } from "lucide-react";
@@ -29,17 +28,21 @@ import {
   FormLabel,
   FormMessage,
 } from "../ui/form";
+import { toast } from "../ui/use-toast";
+import { useState } from "react";
 
 interface AddCourseDialogProps {
   onAdd: (newCourse: Course) => void;
 }
 
 export function AddCourseDialog({ onAdd }: AddCourseDialogProps) {
+  const [open, setOpen] = useState(false);
   const form = useForm<Course>({
     resolver: zodResolver(courseSchema),
     // defaultValues: {
     //   name: "",
     //   approvalStatus: "pending",
+    //   id: "-1",
     //   tees: [{ ...defaultTee }],
     // },
     defaultValues: validCourse,
@@ -56,15 +59,9 @@ export function AddCourseDialog({ onAdd }: AddCourseDialogProps) {
   const watchName = watch("name");
   const watchTees = watch("tees");
 
-  useEffect(() => {
-    const subscription = form.watch((value) => {
-      console.log("Form values updated:", value);
-    });
-    return () => subscription.unsubscribe();
-  }, [form]);
-
   const onSubmit = (values: Course) => {
-    console.log(values);
+    onAdd(values);
+    setOpen(false);
   };
 
   return (
@@ -72,16 +69,28 @@ export function AddCourseDialog({ onAdd }: AddCourseDialogProps) {
       <form onSubmit={(e) => e.preventDefault()}>
         <MultiPageDialog
           trigger={
-            <Button variant="ghost" size="sm" className="w-full">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="w-full"
+              onClick={() => setOpen(true)}
+            >
               <Plus className="h-4 w-4 mr-2" />
               Add New Course
             </Button>
           }
           isNextButtonDisabled={!watchName}
           handleSave={handleSubmit(onSubmit, (errors) => {
-            console.log(form.getValues());
-            console.error("Validation failed:", errors);
+            console.log(errors);
+            toast({
+              title: "Failed to add course",
+              description:
+                "Please check the form for errors/missing data, or contact support",
+              variant: "destructive",
+            });
           })}
+          open={open}
+          setOpen={setOpen}
         >
           <DialogPage title="Add New Course">
             <FormField

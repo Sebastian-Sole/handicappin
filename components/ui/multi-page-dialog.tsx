@@ -30,6 +30,8 @@ interface MultiPageDialogProps {
   isNextButtonDisabled: boolean;
   children: ReactElement<DialogPageProps> | ReactElement<DialogPageProps>[];
   handleSave: () => void;
+  open: boolean;
+  setOpen: (open: boolean) => void;
 }
 
 const ProgressDots: React.FC<{ total: number; current: number }> = ({
@@ -54,8 +56,9 @@ export const MultiPageDialog: React.FC<MultiPageDialogProps> = ({
   isNextButtonDisabled = false,
   children,
   handleSave,
+  open,
+  setOpen,
 }) => {
-  const [open, setOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(0);
   const pages = React.Children.toArray(
     children

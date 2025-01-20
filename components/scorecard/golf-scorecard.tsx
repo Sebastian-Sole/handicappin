@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import {
   Select,
@@ -67,63 +67,27 @@ interface GolfScorecardProps {
 }
 
 export default function GolfScorecard({ profile }: GolfScorecardProps) {
+  const [userCourses, setUserCourses] = useState<Course[]>([]);
+  const [userTees, setUserTees] = useState<Tee[]>([]);
   const [selectedCourse, setSelectedCourse] = useState<Course>();
   const [selectedTee, setSelectedTee] = useState<Tee>();
   const [date, setDate] = useState("");
   const [holeCount, setHoleCount] = useState<number>(18);
   const [notes, setNotes] = useState("");
+
   const [player, setPlayer] = useState<PlayerScore>({
     name: profile.name || "",
     scores: Array(18).fill(0),
-  }); // TODO: Change to get this as a prop
+  });
 
   const [searchTerm, setSearchTerm] = useState("");
-  const [debouncedSearchTerm] = useDebounce(searchTerm, 300); // Debounce user input
-
+  const [debouncedSearchTerm] = useDebounce(searchTerm, 300);
   const [openCourseSelect, setOpenCourseSelect] = useState(false);
 
   const form = useForm<Scorecard>({
     resolver: zodResolver(scorecardSchema),
-    // defaultValues: {
-    //   teeTime: undefined,
-    //   userId: profile.id,
-    //   courseId: undefined,
-    //   courseName: "",
-    //   holes: Array.from({ length: 18 }).map(() => ({
-    //     par: 0,
-    //     hcp: 0,
-    //     strokes: 0,
-    //   })),
-    //   scores: [],
-    //   teeInfo: {
-    //     courseRating18: 0,
-    //     courseRatingBack9: 0,
-    //     courseRatingFront9: 0,
-    //     gender: "",
-
-    //   }
-    // },
+    // defaultValues: { ... },
   });
-
-  const calculateTotal = (scores: number[], start: number, end: number) =>
-    scores.slice(start, end).reduce((sum, score) => sum + score, 0);
-
-  const handleUpdateTee = () => {
-    // const newCourses = courses.map((course) => {
-    //   if (course.id === selectedCourseId) {
-    //     return {
-    //       ...course,
-    //       tees: course.tees.map((tee) =>
-    //         tee.name === updatedTee.name ? updatedTee : tee
-    //       ),
-    //     };
-    //   }
-    //   return course;
-    // });
-    // setCourses(newCourses);
-    // TODO: Implement
-    console.log("Update Tee");
-  };
 
   const {
     data: searchedCourses,
@@ -131,13 +95,18 @@ export default function GolfScorecard({ profile }: GolfScorecardProps) {
     error: searchedCoursesError,
   } = api.course.searchCourses.useQuery(
     { query: debouncedSearchTerm },
-    { enabled: !!debouncedSearchTerm } // Only fetch if there's input
+    {
+      enabled: !!debouncedSearchTerm,
+    }
   );
 
   const { data: teesData, isLoading: isLoadingTeesData } =
     api.tee.fetchTees.useQuery(
       { courseId: selectedCourse?.id! },
-      { enabled: !!selectedCourse }
+      {
+        enabled:
+          !!selectedCourse?.id && selectedCourse.approvalStatus === "approved",
+      }
     );
 
   const { data: holesData, isLoading: isLoadingHolesData } =
@@ -154,22 +123,60 @@ export default function GolfScorecard({ profile }: GolfScorecardProps) {
     }
   }, [holesData]);
 
+  const combinedCourses = useMemo(() => {
+    return [...(searchedCourses || []), ...userCourses];
+  }, [searchedCourses, userCourses]);
+
+  const combinedTees = useMemo(() => {
+    if (!selectedCourse?.id) return [];
+    const serverTees = teesData ?? [];
+    const localTees = userTees.filter(
+      (tee) => tee.courseId === selectedCourse.id
+    );
+    return [...serverTees, ...localTees];
+  }, [teesData, userTees, selectedCourse?.id]);
+
   const handleCourseSearch = (searchString: string) => {
     setSearchTerm(searchString);
   };
 
-  const handleAddTee = () => {
-    // const newCourses = courses.map((course) => {
-    //   if (course.id === selectedCourseId) {
-    //     return {
-    //       ...course,
-    //       tees: [...course.tees, newTee],
-    //     };
-    //   }
-    //   return course;
-    // });
-    // setCourses(newCourses);
-    console.log("Handle Add Tee");
+  const handleAddCourse = (course: Course) => {
+    setOpenCourseSelect(false);
+
+    if (!course.tees || course.tees.length === 0) {
+      toast({
+        title: "Error",
+        description: "Course must have at least one tee",
+        variant: "destructive",
+      });
+      return;
+    }
+    setUserCourses((prev) => [...prev, course]);
+    setUserTees((prevTees) => [...prevTees, ...course.tees!]);
+    setSelectedCourse(course);
+    setSelectedTee(course.tees![0]);
+  };
+
+  const handleAddTee = (newTee: Tee) => {
+    // if (!selectedCourse) {
+    //   toast({
+    //     title: "Error",
+    //     description:
+    //       "No course selected. Cannot create tee without a course. Contact support.",
+    //     variant: "destructive",
+    //   });
+    //   return;
+    // }
+
+    // setUserTees((prev) => [...prev, newTee]);
+    // setSelectedTee(newTee);
+    // form.setValue("teePlayed", newTee);
+    console.log("Implement add tee");
+  };
+
+  const handleUpdateTee = () => {
+    // TODO: Implement tee-update logic
+    console.log("Update Tee");
   };
 
   const handlePlayerScoreChange = (holeIndex: number, score: number) => {
@@ -178,34 +185,16 @@ export default function GolfScorecard({ profile }: GolfScorecardProps) {
     setPlayer({ ...player, scores: newScores });
   };
 
-  // const handleAddTee = (newTee: TeeInfo) => {
-  //   // Add a tee to the tee's of the selected course
-  //   // const newCourses = courses.map((course) => {
-  //   //   if (course.id === selectedCourseId) {
-  //   //     return {
-  //   //       ...course,
-  //   //       tees: [...course.tees, newTee],
-  //   //     };
-  //   //   }
-  //   //   return course;
-  //   // });
-  //   // setCourses(newCourses);
-
-  //   console.log("Add");
-  // };
+  const calculateTotal = (scores: number[], start: number, end: number) =>
+    scores.slice(start, end).reduce((sum, score) => sum + score, 0);
 
   const normalizeHcpForNineHoles = (holes: Hole[] | undefined) => {
-    if (holes === undefined) return [];
+    if (!holes) return [];
     if (holes.length === 18) return holes;
 
     const uniqueHcps = holes.map((hole) => hole.hcp);
-
     uniqueHcps.sort((a, b) => a - b);
-    console.log(uniqueHcps);
-
-    const hcpMapping = new Map(
-      uniqueHcps.map((hcp, index) => [hcp, index + 1])
-    );
+    const hcpMapping = new Map(uniqueHcps.map((hcp, idx) => [hcp, idx + 1]));
 
     return holes.map((hole) => ({
       ...hole,
@@ -218,7 +207,8 @@ export default function GolfScorecard({ profile }: GolfScorecardProps) {
   );
 
   const onSubmit = () => {
-    console.log("submit");
+    console.log("Form is being submitted with data:");
+    console.log(form.getValues());
   };
 
   return (
@@ -258,26 +248,21 @@ export default function GolfScorecard({ profile }: GolfScorecardProps) {
                                 <Command>
                                   <CommandInput
                                     placeholder="Search course..."
-                                    onValueChange={(e) => handleCourseSearch(e)}
+                                    onValueChange={handleCourseSearch}
                                   />
-                                  <CommandList
-                                    key={searchedCourses?.length ?? 0}
-                                  >
-                                    {searchedCourses?.length === 0 &&
+                                  <CommandList>
+                                    {combinedCourses.length === 0 &&
                                       !isLoading && (
                                         <CommandEmpty>
                                           <AddCourseDialog
-                                            onAdd={() =>
-                                              console.log("Implement Add")
-                                            }
+                                            onAdd={handleAddCourse}
                                           />
                                         </CommandEmpty>
                                       )}
-                                    {Array.isArray(searchedCourses) &&
-                                      searchedCourses.length > 0 &&
-                                      searchedCourses?.map((course) => (
+                                    {combinedCourses.length > 0 &&
+                                      combinedCourses.map((course) => (
                                         <CommandItem
-                                          key={course.id}
+                                          key={course.id || course.name}
                                           onSelect={() => {
                                             setSelectedCourse(course);
                                             setOpenCourseSelect(false);
@@ -308,36 +293,32 @@ export default function GolfScorecard({ profile }: GolfScorecardProps) {
                     render={({ field }) => (
                       <FormItem>
                         <FormControl>
-                          <div className="space-y-4">
+                          <div className="space-y-4 mt-4">
                             <div className="space-y-2">
                               <Label htmlFor="tee">Tee</Label>
                               <Select
                                 value={selectedTee?.name}
                                 onValueChange={(value) => {
-                                  const selectedTee = teesData?.find(
+                                  const foundTee = combinedTees.find(
                                     (tee) => tee.name === value
                                   );
-                                  if (!selectedTee) {
-                                    toast({
-                                      title: "Error",
-                                      description:
-                                        "Invalid tee selected, contact support",
-                                      variant: "destructive",
-                                    });
+                                  if (!foundTee) {
                                     return;
                                   }
-                                  setSelectedTee(selectedTee);
-                                  form.setValue("teePlayed", selectedTee);
+                                  setSelectedTee(foundTee);
+                                  form.setValue("teePlayed", foundTee);
                                 }}
                               >
                                 <SelectTrigger
                                   id="tee"
-                                  disabled={!selectedCourse || !teesData}
+                                  disabled={
+                                    !selectedCourse || combinedTees.length === 0
+                                  }
                                 >
                                   <SelectValue placeholder="Select Tee" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                  {teesData?.map((tee) => (
+                                  {combinedTees.map((tee) => (
                                     <SelectItem key={tee.name} value={tee.name}>
                                       {tee.name}
                                     </SelectItem>
@@ -359,9 +340,9 @@ export default function GolfScorecard({ profile }: GolfScorecardProps) {
 
                             <div className="flex justify-between">
                               {/* <EditTeeDialog
-                            tee={selectedTeeData}
-                            onSave={handleUpdateTee}
-                          /> */}
+                                tee={selectedTee}
+                                onSave={handleUpdateTee}
+                              /> */}
                             </div>
                           </div>
                         </FormControl>
@@ -411,7 +392,7 @@ export default function GolfScorecard({ profile }: GolfScorecardProps) {
                 </CardContent>
               </Card>
             </div>
-            {selectedTee && (
+            {selectedTee ? (
               <div className="overflow-x-auto rounded-lg border">
                 <Table className="w-full">
                   <TableHeader>
@@ -447,12 +428,11 @@ export default function GolfScorecard({ profile }: GolfScorecardProps) {
                       <TableCell className="font-medium bg-secondary dark:bg-accent truncate text-ellipsis whitespace-nowrap">
                         {selectedTee.name.toUpperCase()} TEE
                       </TableCell>
-                      {displayedHoles &&
-                        displayedHoles.slice(0, holeCount).map((hole, i) => (
-                          <TableCell key={i} className="text-center">
-                            {hole.distance}
-                          </TableCell>
-                        ))}
+                      {displayedHoles.map((hole, i) => (
+                        <TableCell key={i} className="text-center">
+                          {hole.distance}
+                        </TableCell>
+                      ))}
                       {holeCount === 18 && (
                         <>
                           <TableCell className="text-center font-medium bg-background">
@@ -461,30 +441,26 @@ export default function GolfScorecard({ profile }: GolfScorecardProps) {
                           <TableCell className="text-center font-medium bg-background">
                             {selectedTee.inDistance}
                           </TableCell>
-                          <TableCell className="text-center font-medium bg-background">
-                            {selectedTee.totalDistance}
-                          </TableCell>
                         </>
                       )}
-                      {holeCount === 9 && (
-                        <TableCell className="text-center font-medium bg-background">
-                          {selectedTee.outDistance}
-                        </TableCell>
-                      )}
+                      <TableCell className="text-center font-medium bg-background">
+                        {holeCount === 18
+                          ? selectedTee.totalDistance
+                          : selectedTee.outDistance}
+                      </TableCell>
                     </TableRow>
                     <TableRow className="hover:bg-inherit">
                       <TableCell className="font-medium bg-secondary dark:bg-accent">
                         PAR
                       </TableCell>
-                      {displayedHoles &&
-                        displayedHoles.slice(0, holeCount).map((hole, i) => (
-                          <TableCell
-                            key={i}
-                            className="text-center bg-background-alternate dark:bg-bar"
-                          >
-                            {hole.par}
-                          </TableCell>
-                        ))}
+                      {displayedHoles.map((hole, i) => (
+                        <TableCell
+                          key={i}
+                          className="text-center bg-background-alternate dark:bg-bar"
+                        >
+                          {hole.par}
+                        </TableCell>
+                      ))}
                       {holeCount === 18 && (
                         <>
                           <TableCell className="text-center font-medium bg-background-alternate dark:bg-bar">
@@ -493,32 +469,29 @@ export default function GolfScorecard({ profile }: GolfScorecardProps) {
                           <TableCell className="text-center font-medium bg-background-alternate dark:bg-bar">
                             {selectedTee.inPar}
                           </TableCell>
-                          <TableCell className="text-center font-medium bg-background-alternate dark:bg-bar">
-                            {selectedTee.totalPar}
-                          </TableCell>
                         </>
                       )}
-                      {holeCount === 9 && (
-                        <TableCell className="text-center font-medium bg-background-alternate dark:bg-bar">
-                          {selectedTee.outPar}
-                        </TableCell>
-                      )}
+                      <TableCell className="text-center font-medium bg-background-alternate dark:bg-bar">
+                        {holeCount === 18
+                          ? selectedTee.totalPar
+                          : selectedTee.outPar}
+                      </TableCell>
                     </TableRow>
                     <TableRow className="hover:bg-inherit">
                       <TableCell className="font-medium bg-secondary dark:bg-accent">
                         HANDICAP
                       </TableCell>
-                      {displayedHoles &&
-                        displayedHoles.slice(0, holeCount).map((hole, i) => (
-                          <TableCell key={i} className="text-center">
-                            {hole.hcp}
-                          </TableCell>
-                        ))}
+                      {displayedHoles.map((hole, i) => (
+                        <TableCell key={i} className="text-center">
+                          {hole.hcp}
+                        </TableCell>
+                      ))}
                       {holeCount === 18 ? (
-                        <TableCell className="bg-background" colSpan={3} />
+                        <TableCell className="bg-background" colSpan={2} />
                       ) : (
                         <TableCell className="bg-background" />
                       )}
+                      <TableCell className="bg-background" />
                     </TableRow>
                     <TableRow className="hover:bg-inherit">
                       <TableCell className="font-medium bg-secondary dark:bg-accent truncate text-ellipsis whitespace-nowrap">
@@ -537,18 +510,16 @@ export default function GolfScorecard({ profile }: GolfScorecardProps) {
                               if (e.target.value.length > 2) {
                                 return;
                               }
-                              if (parseInt(e.target.value) < 0) {
-                                e.target.value = "0";
+                              let parsed = parseInt(e.target.value) || 0;
+                              if (parsed < 0) {
+                                parsed = 0;
                                 toast({
                                   title: "Invalid score",
                                   description: "Score cannot be negative",
                                   variant: "destructive",
                                 });
                               }
-                              handlePlayerScoreChange(
-                                i,
-                                parseInt(e.target.value) || 0
-                              );
+                              handlePlayerScoreChange(i, parsed);
                             }}
                           />
                         </TableCell>
@@ -570,8 +541,7 @@ export default function GolfScorecard({ profile }: GolfScorecardProps) {
                   </TableBody>
                 </Table>
               </div>
-            )}
-            {!selectedTee && (
+            ) : (
               <div className="flex justify-center items-center h-48">
                 <span className="text-2xl text-gray-400">Select a tee</span>
               </div>
