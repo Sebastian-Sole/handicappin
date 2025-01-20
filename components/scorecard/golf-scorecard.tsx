@@ -306,62 +306,67 @@ export default function GolfScorecard({ profile }: GolfScorecardProps) {
                     control={form.control}
                     name="course.tees"
                     render={({ field }) => (
-                      <div className="space-y-4">
-                        <div className="space-y-2">
-                          <Label htmlFor="tee">Tee</Label>
-                          <Select
-                            value={selectedTee?.name}
-                            onValueChange={(value) => {
-                              const selectedTee = teesData?.find(
-                                (tee) => tee.name === value
-                              );
-                              if (!selectedTee) {
-                                toast({
-                                  title: "Error",
-                                  description:
-                                    "Invalid tee selected, contact support",
-                                  variant: "destructive",
-                                });
-                                return;
-                              }
-                              setSelectedTee(selectedTee);
-                              form.setValue("teePlayed", selectedTee);
-                            }}
-                          >
-                            <SelectTrigger
-                              id="tee"
-                              disabled={!selectedCourse || !teesData}
-                            >
-                              <SelectValue placeholder="Select Tee" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {teesData?.map((tee) => (
-                                <SelectItem key={tee.name} value={tee.name}>
-                                  {tee.name}
-                                </SelectItem>
-                              ))}
-                              <AddTeeDialog onAdd={handleAddTee} />
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        {selectedTee && (
-                          <div className="flex justify-between text-sm">
-                            <span>
-                              Course Rating: {selectedTee?.courseRating18}
-                            </span>
-                            <span>
-                              Slope Rating: {selectedTee?.slopeRating18}
-                            </span>
-                          </div>
-                        )}
+                      <FormItem>
+                        <FormControl>
+                          <div className="space-y-4">
+                            <div className="space-y-2">
+                              <Label htmlFor="tee">Tee</Label>
+                              <Select
+                                value={selectedTee?.name}
+                                onValueChange={(value) => {
+                                  const selectedTee = teesData?.find(
+                                    (tee) => tee.name === value
+                                  );
+                                  if (!selectedTee) {
+                                    toast({
+                                      title: "Error",
+                                      description:
+                                        "Invalid tee selected, contact support",
+                                      variant: "destructive",
+                                    });
+                                    return;
+                                  }
+                                  setSelectedTee(selectedTee);
+                                  form.setValue("teePlayed", selectedTee);
+                                }}
+                              >
+                                <SelectTrigger
+                                  id="tee"
+                                  disabled={!selectedCourse || !teesData}
+                                >
+                                  <SelectValue placeholder="Select Tee" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {teesData?.map((tee) => (
+                                    <SelectItem key={tee.name} value={tee.name}>
+                                      {tee.name}
+                                    </SelectItem>
+                                  ))}
+                                  <AddTeeDialog onAdd={handleAddTee} />
+                                </SelectContent>
+                              </Select>
+                            </div>
+                            {selectedTee && (
+                              <div className="flex justify-between text-sm">
+                                <span>
+                                  Course Rating: {selectedTee?.courseRating18}
+                                </span>
+                                <span>
+                                  Slope Rating: {selectedTee?.slopeRating18}
+                                </span>
+                              </div>
+                            )}
 
-                        <div className="flex justify-between">
-                          {/* <EditTeeDialog
+                            <div className="flex justify-between">
+                              {/* <EditTeeDialog
                             tee={selectedTeeData}
                             onSave={handleUpdateTee}
                           /> */}
-                        </div>
-                      </div>
+                            </div>
+                          </div>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
                     )}
                   />
                 </CardContent>
