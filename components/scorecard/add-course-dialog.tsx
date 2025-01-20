@@ -22,6 +22,7 @@ export function AddCourseDialog({ onAdd }: AddCourseDialogProps) {
           Add New Course
         </Button>
       }
+      isNextButtonDisabled={!courseName}
     >
       <DialogPage title="Add New Course">
         <div className="space-y-4 py-4">
