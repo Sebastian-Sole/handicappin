@@ -110,7 +110,10 @@ export function AddCourseDialog({ onAdd }: AddCourseDialogProps) {
             />
           </DialogPage>
 
-          <DialogPage title="Add New Tee">
+          <DialogPage
+            title="Add New Tee"
+            className="max-w-[250px] sm:max-w-[350px] md:max-w-[550px] lg:max-w-[650px] xl:max-w-[850px] 2xl:max-w-[1150px] 3xl:max-w-[1390px]"
+          >
             <>
               <Alert>
                 <TriangleAlert className="h-4 w-4" />{" "}
@@ -124,6 +127,7 @@ export function AddCourseDialog({ onAdd }: AddCourseDialogProps) {
                 </AlertDescription>
               </Alert>
               <div className="space-y-2 py-4">
+                {/* Tee Information */}
                 <div className="space-y-4 pb-4">
                   <Separator />
                   <Large>Tee Information</Large>
@@ -206,10 +210,11 @@ export function AddCourseDialog({ onAdd }: AddCourseDialogProps) {
                   />
                 </div>
 
+                {/* Course Rating */}
                 <div className="space-y-4 pb-4">
                   <Separator />
                   <Large>Course Rating</Large>
-                  <div className="grid grid-cols-3 gap-4 ">
+                  <div className="grid grid-cols-3 gap-4">
                     <FormField
                       control={control}
                       name="tees.0.courseRatingFront9"
@@ -351,7 +356,6 @@ export function AddCourseDialog({ onAdd }: AddCourseDialogProps) {
                         );
                       }}
                     />
-
                     <FormField
                       control={control}
                       name="tees.0.slopeRatingBack9"
@@ -427,211 +431,234 @@ export function AddCourseDialog({ onAdd }: AddCourseDialogProps) {
                   </div>
                 </div>
 
+                {/* Hole Information */}
                 <div className="space-y-4">
                   <Separator />
                   <Large>Hole Information</Large>
-
-                  <div className="overflow-x-auto max-w-[450px]">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead className="w-[100px]">Hole</TableHead>
-                          {Array.from({ length: 18 }, (_, i) => (
-                            <TableHead key={i} className="text-center">
-                              {i + 1}
-                            </TableHead>
-                          ))}
-                          <TableHead>Out</TableHead>
-                          <TableHead className="text-center">In</TableHead>
-                          <TableHead>Total</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        <TableRow>
-                          <TableCell className="font-medium">
-                            Distance
-                          </TableCell>
-                          {watchTees?.[0]?.holes?.map(({ distance }, index) => (
-                            <TableCell key={index} className="p-0 min-w-[50px]">
-                              <FormField
-                                control={control}
-                                name={`tees.0.holes.${index}.distance`}
-                                render={({ field }) => {
-                                  return (
-                                    <FormItem>
-                                      <FormControl>
-                                        <Input
-                                          type="number"
-                                          value={field.value || ""}
-                                          onChange={(e) => {
-                                            const newValue =
-                                              parseInt(e.target.value) || 0;
-                                            const newHoles = [
-                                              ...(watchTees?.[0]?.holes || []),
-                                            ];
-                                            newHoles[index] = {
-                                              ...newHoles[index],
-                                              distance: newValue,
-                                            };
-
-                                            const outDistance = newHoles
-                                              .slice(0, 9)
-                                              .reduce(
-                                                (acc, h) =>
-                                                  acc + (h.distance || 0),
-                                                0
-                                              );
-                                            const inDistance = newHoles
-                                              .slice(9, 18)
-                                              .reduce(
-                                                (acc, h) =>
-                                                  acc + (h.distance || 0),
-                                                0
-                                              );
-                                            const totalDistance =
-                                              outDistance + inDistance;
-
-                                            setValue("tees.0.holes", newHoles);
-                                            setValue(
-                                              "tees.0.outDistance",
-                                              outDistance
-                                            );
-                                            setValue(
-                                              "tees.0.inDistance",
-                                              inDistance
-                                            );
-                                            setValue(
-                                              "tees.0.totalDistance",
-                                              totalDistance
-                                            );
-                                          }}
-                                          className="border-0 text-center w-16 mx-1"
-                                        />
-                                      </FormControl>
-                                      <FormMessage />
-                                    </FormItem>
-                                  );
-                                }}
-                              />
+                  <div className="rounded-lg border max-w-[270px] sm:max-w-[350px] md:max-w-[600px] lg:max-w-[725px] xl:max-w-[975px] 2xl:max-w-[1225px] 3xl:max-w-[1600px]">
+                    <div className="overflow-x-auto max-w-full">
+                      <Table className="max-w-[200px]">
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead className="w-[100px]">Hole</TableHead>
+                            {Array.from({ length: 18 }, (_, i) => (
+                              <TableHead key={i} className="text-center">
+                                {i + 1}
+                              </TableHead>
+                            ))}
+                            <TableHead>Out</TableHead>
+                            <TableHead className="text-center">In</TableHead>
+                            <TableHead>Total</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          <TableRow>
+                            <TableCell className="font-medium">
+                              Distance
                             </TableCell>
-                          ))}
-                          <TableCell>
-                            {watch("tees.0.outDistance") || 0}
-                          </TableCell>
-                          <TableCell>
-                            {watch("tees.0.inDistance") || 0}
-                          </TableCell>
-                          <TableCell>
-                            {watch("tees.0.totalDistance") || 0}
-                          </TableCell>
-                        </TableRow>
+                            {watchTees?.[0]?.holes?.map(
+                              ({ distance }, index) => (
+                                <TableCell
+                                  key={index}
+                                  className="p-0 min-w-[50px]"
+                                >
+                                  <FormField
+                                    control={control}
+                                    name={`tees.0.holes.${index}.distance`}
+                                    render={({ field }) => {
+                                      return (
+                                        <FormItem>
+                                          <FormControl>
+                                            <Input
+                                              type="number"
+                                              value={field.value || ""}
+                                              onChange={(e) => {
+                                                const newValue =
+                                                  parseInt(e.target.value) || 0;
+                                                const newHoles = [
+                                                  ...(watchTees?.[0]?.holes ||
+                                                    []),
+                                                ];
+                                                newHoles[index] = {
+                                                  ...newHoles[index],
+                                                  distance: newValue,
+                                                };
 
-                        <TableRow>
-                          <TableCell className="font-medium">Par</TableCell>
-                          {watchTees?.[0]?.holes?.map(({ par }, index) => (
-                            <TableCell key={index} className="p-0">
-                              <FormField
-                                control={control}
-                                name={`tees.0.holes.${index}.par`}
-                                render={({ field }) => {
-                                  return (
-                                    <FormItem>
-                                      <FormControl>
-                                        <Input
-                                          type="number"
-                                          value={field.value || ""}
-                                          onChange={(e) => {
-                                            const newValue =
-                                              parseInt(e.target.value) || 0;
-                                            const newHoles = [
-                                              ...(watchTees?.[0]?.holes || []),
-                                            ];
-                                            newHoles[index] = {
-                                              ...newHoles[index],
-                                              par: newValue,
-                                            };
+                                                const outDistance = newHoles
+                                                  .slice(0, 9)
+                                                  .reduce(
+                                                    (acc, h) =>
+                                                      acc + (h.distance || 0),
+                                                    0
+                                                  );
+                                                const inDistance = newHoles
+                                                  .slice(9, 18)
+                                                  .reduce(
+                                                    (acc, h) =>
+                                                      acc + (h.distance || 0),
+                                                    0
+                                                  );
+                                                const totalDistance =
+                                                  outDistance + inDistance;
 
-                                            const outPar = newHoles
-                                              .slice(0, 9)
-                                              .reduce(
-                                                (acc, h) => acc + (h.par || 0),
-                                                0
-                                              );
-                                            const inPar = newHoles
-                                              .slice(9, 18)
-                                              .reduce(
-                                                (acc, h) => acc + (h.par || 0),
-                                                0
-                                              );
-                                            const totalPar = outPar + inPar;
-
-                                            setValue("tees.0.holes", newHoles);
-                                            setValue("tees.0.outPar", outPar);
-                                            setValue("tees.0.inPar", inPar);
-                                            setValue(
-                                              "tees.0.totalPar",
-                                              totalPar
-                                            );
-                                          }}
-                                          className="border-0 text-center w-16 mx-1"
-                                        />
-                                      </FormControl>
-                                      <FormMessage />
-                                    </FormItem>
-                                  );
-                                }}
-                              />
+                                                setValue(
+                                                  "tees.0.holes",
+                                                  newHoles
+                                                );
+                                                setValue(
+                                                  "tees.0.outDistance",
+                                                  outDistance
+                                                );
+                                                setValue(
+                                                  "tees.0.inDistance",
+                                                  inDistance
+                                                );
+                                                setValue(
+                                                  "tees.0.totalDistance",
+                                                  totalDistance
+                                                );
+                                              }}
+                                              className="border-0 text-center w-16 mx-1"
+                                            />
+                                          </FormControl>
+                                          <FormMessage />
+                                        </FormItem>
+                                      );
+                                    }}
+                                  />
+                                </TableCell>
+                              )
+                            )}
+                            <TableCell>
+                              {watch("tees.0.outDistance") || 0}
                             </TableCell>
-                          ))}
-                          <TableCell>{watch("tees.0.outPar") || 0}</TableCell>
-                          <TableCell>{watch("tees.0.inPar") || 0}</TableCell>
-                          <TableCell>{watch("tees.0.totalPar") || 0}</TableCell>
-                        </TableRow>
-
-                        <TableRow>
-                          <TableCell className="font-medium">
-                            Handicap
-                          </TableCell>
-                          {watchTees?.[0]?.holes?.map(({ hcp }, index) => (
-                            <TableCell key={index} className="p-0">
-                              <FormField
-                                control={control}
-                                name={`tees.0.holes.${index}.hcp`}
-                                render={({ field }) => {
-                                  return (
-                                    <FormItem>
-                                      <FormControl>
-                                        <Input
-                                          type="number"
-                                          value={field.value || ""}
-                                          onChange={(e) => {
-                                            const newValue =
-                                              parseInt(e.target.value) || 0;
-                                            const newHoles = [
-                                              ...(watchTees?.[0]?.holes || []),
-                                            ];
-                                            newHoles[index] = {
-                                              ...newHoles[index],
-                                              hcp: newValue,
-                                            };
-                                            setValue("tees.0.holes", newHoles);
-                                          }}
-                                          className="border-0 text-center w-16 mx-1"
-                                        />
-                                      </FormControl>
-                                      <FormMessage />
-                                    </FormItem>
-                                  );
-                                }}
-                              />
+                            <TableCell>
+                              {watch("tees.0.inDistance") || 0}
                             </TableCell>
-                          ))}
-                          <TableCell>N/A</TableCell>
-                          <TableCell>N/A</TableCell>
-                          <TableCell>N/A</TableCell>
-                        </TableRow>
-                      </TableBody>
-                    </Table>
+                            <TableCell>
+                              {watch("tees.0.totalDistance") || 0}
+                            </TableCell>
+                          </TableRow>
+
+                          <TableRow>
+                            <TableCell className="font-medium">Par</TableCell>
+                            {watchTees?.[0]?.holes?.map(({ par }, index) => (
+                              <TableCell key={index} className="p-0">
+                                <FormField
+                                  control={control}
+                                  name={`tees.0.holes.${index}.par`}
+                                  render={({ field }) => {
+                                    return (
+                                      <FormItem>
+                                        <FormControl>
+                                          <Input
+                                            type="number"
+                                            value={field.value || ""}
+                                            onChange={(e) => {
+                                              const newValue =
+                                                parseInt(e.target.value) || 0;
+                                              const newHoles = [
+                                                ...(watchTees?.[0]?.holes ||
+                                                  []),
+                                              ];
+                                              newHoles[index] = {
+                                                ...newHoles[index],
+                                                par: newValue,
+                                              };
+
+                                              const outPar = newHoles
+                                                .slice(0, 9)
+                                                .reduce(
+                                                  (acc, h) =>
+                                                    acc + (h.par || 0),
+                                                  0
+                                                );
+                                              const inPar = newHoles
+                                                .slice(9, 18)
+                                                .reduce(
+                                                  (acc, h) =>
+                                                    acc + (h.par || 0),
+                                                  0
+                                                );
+                                              const totalPar = outPar + inPar;
+
+                                              setValue(
+                                                "tees.0.holes",
+                                                newHoles
+                                              );
+                                              setValue("tees.0.outPar", outPar);
+                                              setValue("tees.0.inPar", inPar);
+                                              setValue(
+                                                "tees.0.totalPar",
+                                                totalPar
+                                              );
+                                            }}
+                                            className="border-0 text-center w-16 mx-1"
+                                          />
+                                        </FormControl>
+                                        <FormMessage />
+                                      </FormItem>
+                                    );
+                                  }}
+                                />
+                              </TableCell>
+                            ))}
+                            <TableCell>{watch("tees.0.outPar") || 0}</TableCell>
+                            <TableCell>{watch("tees.0.inPar") || 0}</TableCell>
+                            <TableCell>
+                              {watch("tees.0.totalPar") || 0}
+                            </TableCell>
+                          </TableRow>
+
+                          <TableRow>
+                            <TableCell className="font-medium">
+                              Handicap
+                            </TableCell>
+                            {watchTees?.[0]?.holes?.map(({ hcp }, index) => (
+                              <TableCell key={index} className="p-0">
+                                <FormField
+                                  control={control}
+                                  name={`tees.0.holes.${index}.hcp`}
+                                  render={({ field }) => {
+                                    return (
+                                      <FormItem>
+                                        <FormControl>
+                                          <Input
+                                            type="number"
+                                            value={field.value || ""}
+                                            onChange={(e) => {
+                                              const newValue =
+                                                parseInt(e.target.value) || 0;
+                                              const newHoles = [
+                                                ...(watchTees?.[0]?.holes ||
+                                                  []),
+                                              ];
+                                              newHoles[index] = {
+                                                ...newHoles[index],
+                                                hcp: newValue,
+                                              };
+                                              setValue(
+                                                "tees.0.holes",
+                                                newHoles
+                                              );
+                                            }}
+                                            className="border-0 text-center w-16 mx-1"
+                                          />
+                                        </FormControl>
+                                        <FormMessage />
+                                      </FormItem>
+                                    );
+                                  }}
+                                />
+                              </TableCell>
+                            ))}
+                            <TableCell>N/A</TableCell>
+                            <TableCell>N/A</TableCell>
+                            <TableCell>N/A</TableCell>
+                          </TableRow>
+                        </TableBody>
+                      </Table>
+                    </div>
                   </div>
                 </div>
               </div>

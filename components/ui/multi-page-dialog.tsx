@@ -14,14 +14,19 @@ import { cn } from "@/lib/utils";
 interface DialogPageProps {
   title: string;
   children: React.ReactNode;
+  className?: string;
 }
 
-export const DialogPage: React.FC<DialogPageProps> = ({ title, children }) => (
+export const DialogPage: React.FC<DialogPageProps> = ({
+  title,
+  children,
+  className,
+}) => (
   <div>
     <DialogHeader>
       <DialogTitle>{title}</DialogTitle>
     </DialogHeader>
-    <div className="py-4">{children}</div>
+    <div className={`py-4 ${className}`}>{children}</div>
   </div>
 );
 
@@ -32,6 +37,7 @@ interface MultiPageDialogProps {
   handleSave: () => void;
   open: boolean;
   setOpen: (open: boolean) => void;
+  className?: string;
 }
 
 const ProgressDots: React.FC<{ total: number; current: number }> = ({
@@ -58,6 +64,7 @@ export const MultiPageDialog: React.FC<MultiPageDialogProps> = ({
   handleSave,
   open,
   setOpen,
+  className,
 }) => {
   const [currentPage, setCurrentPage] = useState(0);
   const pages = React.Children.toArray(
@@ -82,7 +89,7 @@ export const MultiPageDialog: React.FC<MultiPageDialogProps> = ({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>{trigger}</DialogTrigger>
-      <DialogContent className="max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-[300px] sm:max-w-[400px] md:max-w-[600px] lg:max-w-[700px] xl:max-w-[900px] 2xl:max-w-[1200px] 3xl:max-w-[1440px] max-h-[90vh] overflow-y-auto">
         {pages[currentPage]}
         <div className="flex justify-between mt-4">
           <Button

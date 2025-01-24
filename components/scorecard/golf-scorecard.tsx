@@ -158,24 +158,10 @@ export default function GolfScorecard({ profile }: GolfScorecardProps) {
   };
 
   const handleAddTee = (newTee: Tee) => {
-    // if (!selectedCourse) {
-    //   toast({
-    //     title: "Error",
-    //     description:
-    //       "No course selected. Cannot create tee without a course. Contact support.",
-    //     variant: "destructive",
-    //   });
-    //   return;
-    // }
-
-    // setUserTees((prev) => [...prev, newTee]);
-    // setSelectedTee(newTee);
-    // form.setValue("teePlayed", newTee);
     console.log("Implement add tee");
   };
 
   const handleUpdateTee = () => {
-    // TODO: Implement tee-update logic
     console.log("Update Tee");
   };
 
@@ -259,24 +245,33 @@ export default function GolfScorecard({ profile }: GolfScorecardProps) {
                                           />
                                         </CommandEmpty>
                                       )}
-                                    {combinedCourses.length > 0 &&
-                                      combinedCourses.map((course) => (
-                                        <CommandItem
-                                          key={course.id || course.name}
-                                          onSelect={() => {
-                                            setSelectedCourse(course);
-                                            setOpenCourseSelect(false);
-                                            form.setValue("course", {
-                                              id: course.id,
-                                              name: course.name,
-                                              approvalStatus:
-                                                course.approvalStatus,
-                                            });
-                                          }}
-                                        >
-                                          {course.name}
-                                        </CommandItem>
-                                      ))}
+                                    <CommandGroup className="py-6">
+                                      {combinedCourses.length > 0 &&
+                                        !isLoading &&
+                                        combinedCourses.map((course) => (
+                                          <CommandItem
+                                            key={course.id || course.name}
+                                            onSelect={() => {
+                                              setSelectedCourse(course);
+                                              setOpenCourseSelect(false);
+                                              form.setValue("course", {
+                                                id: course.id,
+                                                name: course.name,
+                                                approvalStatus:
+                                                  course.approvalStatus,
+                                              });
+                                            }}
+                                          >
+                                            {course.name}
+                                          </CommandItem>
+                                        ))}
+                                    </CommandGroup>
+
+                                    {isLoading && (
+                                      <CommandEmpty>
+                                        <span>Loading...</span>
+                                      </CommandEmpty>
+                                    )}
                                   </CommandList>
                                 </Command>
                               </PopoverContent>
@@ -393,153 +388,156 @@ export default function GolfScorecard({ profile }: GolfScorecardProps) {
               </Card>
             </div>
             {selectedTee ? (
-              <div className="overflow-x-auto rounded-lg border">
-                <Table className="w-full">
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="bg-secondary dark:bg-accent text-primary-foreground dark:text-foreground w-20">
-                        HOLE
-                      </TableHead>
-                      {[...Array(holeCount)].map((_, i) => (
-                        <TableHead
-                          key={i}
-                          className="bg-secondary dark:bg-accent text-primary-foreground dark:text-foreground text-center min-w-[40px]"
-                        >
-                          {i + 1}
+              // Wrap the table in a container with overflow-x-auto + a fixed max-width
+              <div className="rounded-lg border max-w-[270px] sm:max-w-[350px] md:max-w-[600px] lg:max-w-[725px] xl:max-w-[975px] 2xl:max-w-[1225px] 3xl:max-w-[1600px]">
+                <div className="overflow-x-auto max-w-full">
+                  <Table className="w-full">
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="bg-secondary dark:bg-accent text-primary-foreground dark:text-foreground w-20">
+                          HOLE
                         </TableHead>
-                      ))}
-                      {holeCount === 18 && (
-                        <>
-                          <TableHead className="bg-secondary dark:bg-accent dark:text-foreground text-primary-foreground text-center min-w-[50px]">
-                            OUT
+                        {[...Array(holeCount)].map((_, i) => (
+                          <TableHead
+                            key={i}
+                            className="bg-secondary dark:bg-accent text-primary-foreground dark:text-foreground text-center min-w-[40px]"
+                          >
+                            {i + 1}
                           </TableHead>
-                          <TableHead className="bg-secondary dark:bg-accent dark:text-foreground text-primary-foreground text-center min-w-[50px]">
-                            IN
-                          </TableHead>
-                        </>
-                      )}
-                      <TableHead className="bg-secondary dark:bg-accent dark:text-foreground text-primary-foreground text-center min-w-[50px]">
-                        TOT
-                      </TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    <TableRow className="hover:bg-inherit">
-                      <TableCell className="font-medium bg-secondary dark:bg-accent truncate text-ellipsis whitespace-nowrap">
-                        {selectedTee.name.toUpperCase()} TEE
-                      </TableCell>
-                      {displayedHoles.map((hole, i) => (
-                        <TableCell key={i} className="text-center">
-                          {hole.distance}
+                        ))}
+                        {holeCount === 18 && (
+                          <>
+                            <TableHead className="bg-secondary dark:bg-accent dark:text-foreground text-primary-foreground text-center min-w-[50px]">
+                              OUT
+                            </TableHead>
+                            <TableHead className="bg-secondary dark:bg-accent dark:text-foreground text-primary-foreground text-center min-w-[50px]">
+                              IN
+                            </TableHead>
+                          </>
+                        )}
+                        <TableHead className="bg-secondary dark:bg-accent dark:text-foreground text-primary-foreground text-center min-w-[50px]">
+                          TOT
+                        </TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      <TableRow className="hover:bg-inherit">
+                        <TableCell className="font-medium bg-secondary dark:bg-accent truncate text-ellipsis whitespace-nowrap">
+                          {selectedTee.name.toUpperCase()} TEE
                         </TableCell>
-                      ))}
-                      {holeCount === 18 && (
-                        <>
-                          <TableCell className="text-center font-medium bg-background">
-                            {selectedTee.outDistance}
+                        {displayedHoles.map((hole, i) => (
+                          <TableCell key={i} className="text-center">
+                            {hole.distance}
                           </TableCell>
-                          <TableCell className="text-center font-medium bg-background">
-                            {selectedTee.inDistance}
-                          </TableCell>
-                        </>
-                      )}
-                      <TableCell className="text-center font-medium bg-background">
-                        {holeCount === 18
-                          ? selectedTee.totalDistance
-                          : selectedTee.outDistance}
-                      </TableCell>
-                    </TableRow>
-                    <TableRow className="hover:bg-inherit">
-                      <TableCell className="font-medium bg-secondary dark:bg-accent">
-                        PAR
-                      </TableCell>
-                      {displayedHoles.map((hole, i) => (
-                        <TableCell
-                          key={i}
-                          className="text-center bg-background-alternate dark:bg-bar"
-                        >
-                          {hole.par}
+                        ))}
+                        {holeCount === 18 && (
+                          <>
+                            <TableCell className="text-center font-medium bg-background">
+                              {selectedTee.outDistance}
+                            </TableCell>
+                            <TableCell className="text-center font-medium bg-background">
+                              {selectedTee.inDistance}
+                            </TableCell>
+                          </>
+                        )}
+                        <TableCell className="text-center font-medium bg-background">
+                          {holeCount === 18
+                            ? selectedTee.totalDistance
+                            : selectedTee.outDistance}
                         </TableCell>
-                      ))}
-                      {holeCount === 18 && (
-                        <>
-                          <TableCell className="text-center font-medium bg-background-alternate dark:bg-bar">
-                            {selectedTee.outPar}
-                          </TableCell>
-                          <TableCell className="text-center font-medium bg-background-alternate dark:bg-bar">
-                            {selectedTee.inPar}
-                          </TableCell>
-                        </>
-                      )}
-                      <TableCell className="text-center font-medium bg-background-alternate dark:bg-bar">
-                        {holeCount === 18
-                          ? selectedTee.totalPar
-                          : selectedTee.outPar}
-                      </TableCell>
-                    </TableRow>
-                    <TableRow className="hover:bg-inherit">
-                      <TableCell className="font-medium bg-secondary dark:bg-accent">
-                        HANDICAP
-                      </TableCell>
-                      {displayedHoles.map((hole, i) => (
-                        <TableCell key={i} className="text-center">
-                          {hole.hcp}
+                      </TableRow>
+                      <TableRow className="hover:bg-inherit">
+                        <TableCell className="font-medium bg-secondary dark:bg-accent">
+                          PAR
                         </TableCell>
-                      ))}
-                      {holeCount === 18 ? (
-                        <TableCell className="bg-background" colSpan={2} />
-                      ) : (
+                        {displayedHoles.map((hole, i) => (
+                          <TableCell
+                            key={i}
+                            className="text-center bg-background-alternate dark:bg-bar"
+                          >
+                            {hole.par}
+                          </TableCell>
+                        ))}
+                        {holeCount === 18 && (
+                          <>
+                            <TableCell className="text-center font-medium bg-background-alternate dark:bg-bar">
+                              {selectedTee.outPar}
+                            </TableCell>
+                            <TableCell className="text-center font-medium bg-background-alternate dark:bg-bar">
+                              {selectedTee.inPar}
+                            </TableCell>
+                          </>
+                        )}
+                        <TableCell className="text-center font-medium bg-background-alternate dark:bg-bar">
+                          {holeCount === 18
+                            ? selectedTee.totalPar
+                            : selectedTee.outPar}
+                        </TableCell>
+                      </TableRow>
+                      <TableRow className="hover:bg-inherit">
+                        <TableCell className="font-medium bg-secondary dark:bg-accent">
+                          HANDICAP
+                        </TableCell>
+                        {displayedHoles.map((hole, i) => (
+                          <TableCell key={i} className="text-center">
+                            {hole.hcp}
+                          </TableCell>
+                        ))}
+                        {holeCount === 18 ? (
+                          <TableCell className="bg-background" colSpan={2} />
+                        ) : (
+                          <TableCell className="bg-background" />
+                        )}
                         <TableCell className="bg-background" />
-                      )}
-                      <TableCell className="bg-background" />
-                    </TableRow>
-                    <TableRow className="hover:bg-inherit">
-                      <TableCell className="font-medium bg-secondary dark:bg-accent truncate text-ellipsis whitespace-nowrap">
-                        {player.name.toUpperCase()}
-                      </TableCell>
-                      {player.scores.slice(0, holeCount).map((score, i) => (
-                        <TableCell
-                          key={i}
-                          className="p-2 bg-background-alternate dark:bg-bar"
-                        >
-                          <Input
-                            className="border-0 h-full text-center w-full"
-                            type="number"
-                            value={score || ""}
-                            onChange={(e) => {
-                              if (e.target.value.length > 2) {
-                                return;
-                              }
-                              let parsed = parseInt(e.target.value) || 0;
-                              if (parsed < 0) {
-                                parsed = 0;
-                                toast({
-                                  title: "Invalid score",
-                                  description: "Score cannot be negative",
-                                  variant: "destructive",
-                                });
-                              }
-                              handlePlayerScoreChange(i, parsed);
-                            }}
-                          />
+                      </TableRow>
+                      <TableRow className="hover:bg-inherit">
+                        <TableCell className="font-medium bg-secondary dark:bg-accent truncate text-ellipsis whitespace-nowrap">
+                          SCORE
                         </TableCell>
-                      ))}
-                      {holeCount === 18 && (
-                        <>
-                          <TableCell className="text-center bg-background-alternate dark:bg-bar">
-                            {calculateTotal(player.scores, 0, 9)}
+                        {player.scores.slice(0, holeCount).map((score, i) => (
+                          <TableCell
+                            key={i}
+                            className="p-2 bg-background-alternate dark:bg-bar"
+                          >
+                            <Input
+                              className="border-0 h-full text-center w-full"
+                              type="number"
+                              value={score || ""}
+                              onChange={(e) => {
+                                if (e.target.value.length > 2) {
+                                  return;
+                                }
+                                let parsed = parseInt(e.target.value) || 0;
+                                if (parsed < 0) {
+                                  parsed = 0;
+                                  toast({
+                                    title: "Invalid score",
+                                    description: "Score cannot be negative",
+                                    variant: "destructive",
+                                  });
+                                }
+                                handlePlayerScoreChange(i, parsed);
+                              }}
+                            />
                           </TableCell>
-                          <TableCell className="text-center bg-background-alternate dark:bg-bar">
-                            {calculateTotal(player.scores, 9, 18)}
-                          </TableCell>
-                        </>
-                      )}
-                      <TableCell className="text-center bg-background-alternate dark:bg-bar">
-                        {calculateTotal(player.scores, 0, holeCount)}
-                      </TableCell>
-                    </TableRow>
-                  </TableBody>
-                </Table>
+                        ))}
+                        {holeCount === 18 && (
+                          <>
+                            <TableCell className="text-center bg-background-alternate dark:bg-bar">
+                              {calculateTotal(player.scores, 0, 9)}
+                            </TableCell>
+                            <TableCell className="text-center bg-background-alternate dark:bg-bar">
+                              {calculateTotal(player.scores, 9, 18)}
+                            </TableCell>
+                          </>
+                        )}
+                        <TableCell className="text-center bg-background-alternate dark:bg-bar">
+                          {calculateTotal(player.scores, 0, holeCount)}
+                        </TableCell>
+                      </TableRow>
+                    </TableBody>
+                  </Table>
+                </div>
               </div>
             ) : (
               <div className="flex justify-center items-center h-48">
