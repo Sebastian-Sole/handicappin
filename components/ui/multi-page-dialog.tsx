@@ -89,7 +89,7 @@ export const MultiPageDialog: React.FC<MultiPageDialogProps> = ({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>{trigger}</DialogTrigger>
-      <DialogContent className="max-w-[300px] sm:max-w-[400px] md:max-w-[600px] lg:max-w-[700px] xl:max-w-[900px] 2xl:max-w-[1200px] 3xl:max-w-[1440px] max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-[300px] sm:max-w-[400px] md:max-w-[600px] max-h-[90vh] overflow-y-auto">
         {pages[currentPage]}
         <div className="flex justify-between mt-4">
           <Button

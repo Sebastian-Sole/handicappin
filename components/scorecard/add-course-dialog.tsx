@@ -112,7 +112,7 @@ export function AddCourseDialog({ onAdd }: AddCourseDialogProps) {
 
           <DialogPage
             title="Add New Tee"
-            className="max-w-[250px] sm:max-w-[350px] md:max-w-[550px] lg:max-w-[650px] xl:max-w-[850px] 2xl:max-w-[1150px] 3xl:max-w-[1390px]"
+            className="max-w-[250px] sm:max-w-[350px] md:max-w-[550px]"
           >
             <>
               <Alert>
