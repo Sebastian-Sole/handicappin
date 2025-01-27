@@ -249,21 +249,28 @@ export default function GolfScorecard({ profile }: GolfScorecardProps) {
                                       {combinedCourses.length > 0 &&
                                         !isLoading &&
                                         combinedCourses.map((course) => (
-                                          <CommandItem
-                                            key={course.id || course.name}
-                                            onSelect={() => {
-                                              setSelectedCourse(course);
-                                              setOpenCourseSelect(false);
-                                              form.setValue("course", {
-                                                id: course.id,
-                                                name: course.name,
-                                                approvalStatus:
-                                                  course.approvalStatus,
-                                              });
-                                            }}
-                                          >
-                                            {course.name}
-                                          </CommandItem>
+                                          <>
+                                            <CommandItem
+                                              key={course.id || course.name}
+                                              onSelect={() => {
+                                                setSelectedCourse(course);
+                                                setOpenCourseSelect(false);
+                                                form.setValue("course", {
+                                                  id: course.id,
+                                                  name: course.name,
+                                                  approvalStatus:
+                                                    course.approvalStatus,
+                                                });
+                                              }}
+                                            >
+                                              {course.name}
+                                            </CommandItem>
+                                            <CommandItem>
+                                              <AddCourseDialog
+                                                onAdd={handleAddCourse}
+                                              />
+                                            </CommandItem>
+                                          </>
                                         ))}
                                     </CommandGroup>
 
