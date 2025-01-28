@@ -370,6 +370,7 @@ export default function GolfScorecard({ profile }: GolfScorecardProps) {
                                 selectedTee.holes &&
                                 selectedTee.holes.length > 0 && (
                                   <EditTeeDialog
+                                    key={`${selectedTee.courseId}-${selectedTee.name}`}
                                     existingTee={selectedTee}
                                     onSave={handleEditTee}
                                   />
