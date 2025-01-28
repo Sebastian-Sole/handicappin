@@ -27,25 +27,12 @@ export function AddCourseDialog({ onAdd }: AddCourseDialogProps) {
   const [open, setOpen] = useState(false);
   const form = useForm<Course>({
     resolver: zodResolver(courseSchema),
-    // defaultValues: {
-    //   name: "",
-    //   approvalStatus: "pending",
-    //   id: "-1",
-    //   tees: [{ ...defaultTee }],
-    // },
     defaultValues: validCourse,
   });
 
-  const {
-    control,
-    handleSubmit,
-    watch,
-    setValue,
-    formState: { isSubmitting },
-  } = form;
+  const { control, handleSubmit, watch } = form;
 
   const watchName = watch("name");
-  const watchTees = watch("tees");
 
   const onSubmit = (values: Course) => {
     onAdd(values);
@@ -102,7 +89,16 @@ export function AddCourseDialog({ onAdd }: AddCourseDialogProps) {
             title="Add New Tee"
             className="max-w-[250px] sm:max-w-[350px] md:max-w-[550px]"
           >
-            <TeeFormContent />
+            <FormField
+              control={form.control}
+              name="tees.0" // <--- references first tee
+              render={({ field }) => (
+                <TeeFormContent
+                  tee={field.value}
+                  onTeeChange={field.onChange}
+                />
+              )}
+            />
           </DialogPage>
         </MultiPageDialog>
       </form>

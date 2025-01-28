@@ -1,10 +1,8 @@
+// tee-form-content.tsx
 "use client";
-
 import React from "react";
-import { useFormContext } from "react-hook-form";
 import { TriangleAlert } from "lucide-react";
 
-import { Course } from "@/types/scorecard";
 import { Alert, AlertTitle, AlertDescription } from "../ui/alert";
 import { Separator } from "../ui/separator";
 import { Large } from "../ui/typography";
@@ -17,16 +15,15 @@ import {
   TableHeader,
   TableRow,
 } from "../ui/table";
-import {
-  FormField,
-  FormItem,
-  FormLabel,
-  FormControl,
-  FormMessage,
-} from "../ui/form";
 import { Input } from "@/components/ui/input";
+import { Tee } from "@/types/scorecard";
 
-export function TeeFormContent() {
+interface TeeFormContentProps {
+  tee: Tee; // The entire tee we are editing
+  onTeeChange: (updated: Tee) => void; // Callback any time a field changes
+}
+
+export function TeeFormContent({ tee, onTeeChange }: TeeFormContentProps) {
   return (
     <>
       <Alert>
@@ -41,105 +38,132 @@ export function TeeFormContent() {
       </Alert>
 
       <div className="space-y-2 py-4">
-        <TeeInfoFields />
-        <TeeRatingFields />
-        <TeeHoleTable />
+        <TeeInfoFields tee={tee} onTeeChange={onTeeChange} />
+        <TeeRatingFields tee={tee} onTeeChange={onTeeChange} />
+        <TeeHoleTable tee={tee} onTeeChange={onTeeChange} />
       </div>
     </>
   );
 }
 
-function TeeInfoFields() {
-  const { control } = useFormContext<Course>();
-
+function TeeInfoFields({ tee, onTeeChange }: TeeFormContentProps) {
   return (
     <div className="space-y-4 pb-4">
       <Separator />
       <Large>Tee Information</Large>
 
-      <FormField
-        control={control}
-        name="tees.0.name"
-        render={({ field }) => (
-          <div className="space-y-2">
-            <FormLabel htmlFor="newTeeName">Name</FormLabel>
-            <FormItem>
-              <FormControl>
-                <Input {...field} placeholder="e.g., RED" />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
+      {/* Name */}
+      <div className="space-y-2">
+        <label htmlFor="teeName" className="font-semibold">
+          Name
+        </label>
+        <Input
+          id="teeName"
+          placeholder="e.g., RED"
+          value={tee.name}
+          onChange={(e) => onTeeChange({ ...tee, name: e.target.value })}
+        />
+      </div>
+
+      {/* Distance Measurement */}
+      <div className="space-y-2">
+        <label className="font-semibold">Distance Measurement</label>
+        <RadioGroup
+          value={tee.distanceMeasurement}
+          onValueChange={(val) =>
+            onTeeChange({
+              ...tee,
+              distanceMeasurement: val as Tee["distanceMeasurement"],
+            })
+          }
+        >
+          <div className="flex items-center space-x-2">
+            <RadioGroupItem value="meters" />
+            <label className="!mt-0">meters</label>
           </div>
-        )}
-      />
+          <div className="flex items-center space-x-2">
+            <RadioGroupItem value="yards" />
+            <label className="!mt-0">yards</label>
+          </div>
+        </RadioGroup>
+      </div>
 
-      <FormField
-        control={control}
-        name="tees.0.distanceMeasurement"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>Distance Measurement</FormLabel>
-            <FormControl>
-              <RadioGroup
-                defaultValue="meters"
-                className="mt-2"
-                onValueChange={field.onChange}
-              >
-                <FormItem className="flex items-center space-x-2">
-                  <FormControl>
-                    <RadioGroupItem value="meters" />
-                  </FormControl>
-                  <FormLabel className="!mt-0">meters</FormLabel>
-                </FormItem>
-                <FormItem className="flex items-center space-x-2">
-                  <FormControl>
-                    <RadioGroupItem value="yards" />
-                  </FormControl>
-                  <FormLabel className="!mt-0">yards</FormLabel>
-                </FormItem>
-              </RadioGroup>
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
-
-      <FormField
-        control={control}
-        name="tees.0.gender"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>Men&apos;s/Ladies</FormLabel>
-            <FormControl>
-              <RadioGroup
-                defaultValue="mens"
-                onValueChange={field.onChange}
-                className="mt-2"
-              >
-                <FormItem className="flex items-center space-x-2">
-                  <FormControl>
-                    <RadioGroupItem value="mens" />
-                  </FormControl>
-                  <FormLabel className="!mt-0">mens</FormLabel>
-                </FormItem>
-                <FormItem className="flex items-center space-x-2">
-                  <FormControl>
-                    <RadioGroupItem value="ladies" />
-                  </FormControl>
-                  <FormLabel className="!mt-0">ladies</FormLabel>
-                </FormItem>
-              </RadioGroup>
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
+      {/* Gender */}
+      <div className="space-y-2">
+        <label className="font-semibold">Men&apos;s/Ladies</label>
+        <RadioGroup
+          value={tee.gender}
+          onValueChange={(val) =>
+            onTeeChange({ ...tee, gender: val as Tee["gender"] })
+          }
+        >
+          <div className="flex items-center space-x-2">
+            <RadioGroupItem value="mens" />
+            <label className="!mt-0">mens</label>
+          </div>
+          <div className="flex items-center space-x-2">
+            <RadioGroupItem value="ladies" />
+            <label className="!mt-0">ladies</label>
+          </div>
+        </RadioGroup>
+      </div>
     </div>
   );
 }
 
-function TeeRatingFields() {
-  const { control, watch, setValue } = useFormContext<Course>();
+function TeeRatingFields({ tee, onTeeChange }: TeeFormContentProps) {
+  const handleFront9RatingChange = (val: number) => {
+    const newTee = { ...tee, courseRatingFront9: val };
+    const back9 = tee.courseRatingBack9 || 0;
+    newTee.courseRating18 = val + back9;
+    onTeeChange(newTee);
+  };
+
+  const handleBack9RatingChange = (val: number) => {
+    const newTee = { ...tee, courseRatingBack9: val };
+    const front9 = tee.courseRatingFront9 || 0;
+    newTee.courseRating18 = val + front9;
+    onTeeChange(newTee);
+  };
+
+  const handleTotalRatingChange = (val: number) => {
+    // Example logic that splits front/back 9 in half
+    const half = val / 2;
+    const newTee = {
+      ...tee,
+      courseRating18: val,
+      courseRatingFront9: half,
+      courseRatingBack9: half,
+    };
+    onTeeChange(newTee);
+  };
+
+  const handleFront9SlopeChange = (val: number) => {
+    const newTee = { ...tee, slopeRatingFront9: val };
+    const back9 = tee.slopeRatingBack9 || 0;
+    newTee.slopeRating18 = Math.ceil((val + back9) / 2);
+    onTeeChange(newTee);
+  };
+
+  const handleBack9SlopeChange = (val: number) => {
+    const newTee = { ...tee, slopeRatingBack9: val };
+    const front9 = tee.slopeRatingFront9 || 0;
+    newTee.slopeRating18 = Math.ceil((front9 + val) / 2);
+    onTeeChange(newTee);
+  };
+
+  const handleTotalSlopeChange = (val: number) => {
+    // Example logic splitting into front/back
+    const halfFront = Math.floor(val / 2);
+    const halfBack = Math.ceil(val / 2);
+    const newTee = {
+      ...tee,
+      slopeRating18: val,
+      slopeRatingFront9: halfFront,
+      slopeRatingBack9: halfBack,
+    };
+    onTeeChange(newTee);
+  };
 
   return (
     <div className="space-y-4 pb-4">
@@ -148,206 +172,159 @@ function TeeRatingFields() {
 
       <div className="grid grid-cols-3 gap-4">
         {/* FRONT 9 */}
-        <FormField
-          control={control}
-          name="tees.0.courseRatingFront9"
-          render={({ field }) => {
-            const back9 = watch("tees.0.courseRatingBack9") || 0;
-            return (
-              <div className="space-y-2">
-                <FormItem>
-                  <FormLabel htmlFor="courseRatingFrontNine">Front 9</FormLabel>
-                  <FormControl>
-                    <Input
-                      id="courseRatingFrontNine"
-                      type="number"
-                      step="0.1"
-                      value={field.value || ""}
-                      onChange={(e) => {
-                        const value = parseFloat(e.target.value) || 0;
-                        setValue("tees.0.courseRatingFront9", value);
-                        setValue("tees.0.courseRating18", value + back9);
-                      }}
-                      placeholder="e.g., 39.5"
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              </div>
-            );
-          }}
-        />
+        <div className="space-y-2">
+          <label className="font-semibold" htmlFor="courseRatingFrontNine">
+            Front 9
+          </label>
+          <Input
+            id="courseRatingFrontNine"
+            type="number"
+            step="0.1"
+            value={tee.courseRatingFront9 ?? ""}
+            onChange={(e) =>
+              handleFront9RatingChange(parseFloat(e.target.value) || 0)
+            }
+            placeholder="e.g., 39.5"
+          />
+        </div>
 
         {/* BACK 9 */}
-        <FormField
-          control={control}
-          name="tees.0.courseRatingBack9"
-          render={({ field }) => {
-            const front9 = watch("tees.0.courseRatingFront9") || 0;
-            return (
-              <div className="space-y-2">
-                <FormLabel htmlFor="courseRatingBack9">Back 9</FormLabel>
-                <FormItem>
-                  <FormControl>
-                    <Input
-                      id="courseRatingBack9"
-                      type="number"
-                      step="0.1"
-                      value={field.value || ""}
-                      onChange={(e) => {
-                        const value = parseFloat(e.target.value) || 0;
-                        setValue("tees.0.courseRatingBack9", value);
-                        setValue("tees.0.courseRating18", front9 + value);
-                      }}
-                      placeholder="e.g., 40.3"
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              </div>
-            );
-          }}
-        />
+        <div className="space-y-2">
+          <label className="font-semibold" htmlFor="courseRatingBack9">
+            Back 9
+          </label>
+          <Input
+            id="courseRatingBack9"
+            type="number"
+            step="0.1"
+            value={tee.courseRatingBack9 ?? ""}
+            onChange={(e) =>
+              handleBack9RatingChange(parseFloat(e.target.value) || 0)
+            }
+            placeholder="e.g., 40.3"
+          />
+        </div>
 
         {/* TOTAL */}
-        <FormField
-          control={control}
-          name="tees.0.courseRating18"
-          render={({ field }) => {
-            return (
-              <div className="space-y-2">
-                <FormLabel htmlFor="courseRating18">Total</FormLabel>
-                <FormItem>
-                  <FormControl>
-                    <Input
-                      id="courseRating18"
-                      type="number"
-                      step="0.1"
-                      value={field.value || ""}
-                      onChange={(e) => {
-                        const value = parseFloat(e.target.value) || 0;
-                        setValue("tees.0.courseRating18", value);
-
-                        // Example logic to split front/back9 if user changes total
-                        const half = value / 2;
-                        setValue("tees.0.courseRatingFront9", half);
-                        setValue("tees.0.courseRatingBack9", half);
-                      }}
-                      placeholder="e.g., 79.8"
-                    />
-                  </FormControl>
-                </FormItem>
-              </div>
-            );
-          }}
-        />
+        <div className="space-y-2">
+          <label className="font-semibold" htmlFor="courseRating18">
+            Total
+          </label>
+          <Input
+            id="courseRating18"
+            type="number"
+            step="0.1"
+            value={tee.courseRating18 ?? ""}
+            onChange={(e) =>
+              handleTotalRatingChange(parseFloat(e.target.value) || 0)
+            }
+            placeholder="e.g., 79.8"
+          />
+        </div>
       </div>
 
       <Large>Slope Rating</Large>
       <div className="grid grid-cols-3 gap-4">
         {/* FRONT 9 */}
-        <FormField
-          control={control}
-          name="tees.0.slopeRatingFront9"
-          render={({ field }) => {
-            const back9 = watch("tees.0.slopeRatingBack9") || 0;
-            return (
-              <div className="space-y-2">
-                <FormLabel htmlFor="slopeRatingFront9">Front 9</FormLabel>
-                <FormItem>
-                  <FormControl>
-                    <Input
-                      id="slopeRatingFront9"
-                      type="number"
-                      value={field.value || ""}
-                      onChange={(e) => {
-                        const value = parseInt(e.target.value) || 0;
-                        setValue("tees.0.slopeRatingFront9", value);
-                        const total = Math.ceil((value + back9) / 2);
-                        setValue("tees.0.slopeRating18", total);
-                      }}
-                      placeholder="e.g., 147"
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              </div>
-            );
-          }}
-        />
+        <div className="space-y-2">
+          <label className="font-semibold" htmlFor="slopeRatingFront9">
+            Front 9
+          </label>
+          <Input
+            id="slopeRatingFront9"
+            type="number"
+            value={tee.slopeRatingFront9 ?? ""}
+            onChange={(e) =>
+              handleFront9SlopeChange(parseInt(e.target.value) || 0)
+            }
+            placeholder="e.g., 147"
+          />
+        </div>
 
         {/* BACK 9 */}
-        <FormField
-          control={control}
-          name="tees.0.slopeRatingBack9"
-          render={({ field }) => {
-            const front9 = watch("tees.0.slopeRatingFront9") || 0;
-            return (
-              <div className="space-y-2">
-                <FormLabel htmlFor="slopeRatingBack9">Back 9</FormLabel>
-                <FormItem>
-                  <FormControl>
-                    <Input
-                      id="slopeRatingBack9"
-                      type="number"
-                      value={field.value || ""}
-                      onChange={(e) => {
-                        const value = parseInt(e.target.value) || 0;
-                        setValue("tees.0.slopeRatingBack9", value);
-                        const total = Math.ceil((front9 + value) / 2);
-                        setValue("tees.0.slopeRating18", total);
-                      }}
-                      placeholder="e.g., 149"
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              </div>
-            );
-          }}
-        />
+        <div className="space-y-2">
+          <label className="font-semibold" htmlFor="slopeRatingBack9">
+            Back 9
+          </label>
+          <Input
+            id="slopeRatingBack9"
+            type="number"
+            value={tee.slopeRatingBack9 ?? ""}
+            onChange={(e) =>
+              handleBack9SlopeChange(parseInt(e.target.value) || 0)
+            }
+            placeholder="e.g., 149"
+          />
+        </div>
 
         {/* TOTAL */}
-        <FormField
-          control={control}
-          name="tees.0.slopeRating18"
-          render={({ field }) => {
-            const front9 = watch("tees.0.slopeRatingFront9") || 0;
-            const back9 = watch("tees.0.slopeRatingBack9") || 0;
-            return (
-              <div className="space-y-2">
-                <FormLabel htmlFor="slopeRating18">Total</FormLabel>
-                <FormItem>
-                  <FormControl>
-                    <Input
-                      id="slopeRating18"
-                      type="number"
-                      value={field.value || ""}
-                      onChange={(e) => {
-                        const value = parseInt(e.target.value) || 0;
-                        setValue("tees.0.slopeRating18", value);
-                        const halfFront = Math.floor(value / 2);
-                        const halfBack = Math.ceil(value / 2);
-                        setValue("tees.0.slopeRatingFront9", halfFront);
-                        setValue("tees.0.slopeRatingBack9", halfBack);
-                      }}
-                      placeholder="e.g., 148"
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              </div>
-            );
-          }}
-        />
+        <div className="space-y-2">
+          <label className="font-semibold" htmlFor="slopeRating18">
+            Total
+          </label>
+          <Input
+            id="slopeRating18"
+            type="number"
+            value={tee.slopeRating18 ?? ""}
+            onChange={(e) =>
+              handleTotalSlopeChange(parseInt(e.target.value) || 0)
+            }
+            placeholder="e.g., 148"
+          />
+        </div>
       </div>
     </div>
   );
 }
 
-function TeeHoleTable() {
-  const { watch, setValue } = useFormContext<Course>();
-  const watchTees = watch("tees");
+function TeeHoleTable({ tee, onTeeChange }: TeeFormContentProps) {
+  const holes = tee.holes || [];
+
+  const handleDistanceChange = (index: number, newDistance: number) => {
+    const newHoles = [...holes];
+    newHoles[index] = { ...newHoles[index], distance: newDistance };
+
+    const outSum = newHoles
+      .slice(0, 9)
+      .reduce((acc, h) => acc + (h.distance || 0), 0);
+    const inSum = newHoles
+      .slice(9, 18)
+      .reduce((acc, h) => acc + (h.distance || 0), 0);
+
+    onTeeChange({
+      ...tee,
+      holes: newHoles,
+      outDistance: outSum,
+      inDistance: inSum,
+      totalDistance: outSum + inSum,
+    });
+  };
+
+  const handleParChange = (index: number, newPar: number) => {
+    const newHoles = [...holes];
+    newHoles[index] = { ...newHoles[index], par: newPar };
+
+    const outPar = newHoles
+      .slice(0, 9)
+      .reduce((acc, h) => acc + (h.par || 0), 0);
+    const inPar = newHoles
+      .slice(9, 18)
+      .reduce((acc, h) => acc + (h.par || 0), 0);
+
+    onTeeChange({
+      ...tee,
+      holes: newHoles,
+      outPar,
+      inPar,
+      totalPar: outPar + inPar,
+    });
+  };
+
+  const handleHandicapChange = (index: number, newHcp: number) => {
+    const newHoles = [...holes];
+    newHoles[index] = { ...newHoles[index], hcp: newHcp };
+    onTeeChange({ ...tee, holes: newHoles });
+  };
 
   return (
     <div className="space-y-4">
@@ -355,7 +332,7 @@ function TeeHoleTable() {
       <Large>Hole Information</Large>
       <div className="rounded-lg border max-w-[270px] sm:max-w-[350px] md:max-w-[600px] lg:max-w-[725px] xl:max-w-[975px] 2xl:max-w-[1225px] 3xl:max-w-[1600px]">
         <div className="overflow-x-auto max-w-full">
-          <Table className="max-w-[200px]">
+          <Table>
             <TableHeader>
               <TableRow>
                 <TableHead className="w-[100px]">Hole</TableHead>
@@ -369,144 +346,65 @@ function TeeHoleTable() {
                 <TableHead>Total</TableHead>
               </TableRow>
             </TableHeader>
-
             <TableBody>
               {/* Distance row */}
               <TableRow>
                 <TableCell className="font-medium">Distance</TableCell>
-                {watchTees?.[0]?.holes?.map((_hole, index) => (
+                {holes.map((hole, index) => (
                   <TableCell key={index} className="p-0 min-w-[50px]">
-                    <FormField
-                      name={`tees.0.holes.${index}.distance`}
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormControl>
-                            <Input
-                              type="number"
-                              value={field.value || ""}
-                              onChange={(e) => {
-                                const newValue = parseInt(e.target.value) || 0;
-                                const newHoles = [
-                                  ...(watchTees?.[0]?.holes || []),
-                                ];
-                                newHoles[index] = {
-                                  ...newHoles[index],
-                                  distance: newValue,
-                                };
-
-                                const outDistance = newHoles
-                                  .slice(0, 9)
-                                  .reduce(
-                                    (acc, h) => acc + (h.distance || 0),
-                                    0
-                                  );
-                                const inDistance = newHoles
-                                  .slice(9, 18)
-                                  .reduce(
-                                    (acc, h) => acc + (h.distance || 0),
-                                    0
-                                  );
-                                const totalDistance = outDistance + inDistance;
-
-                                setValue("tees.0.holes", newHoles);
-                                setValue("tees.0.outDistance", outDistance);
-                                setValue("tees.0.inDistance", inDistance);
-                                setValue("tees.0.totalDistance", totalDistance);
-                              }}
-                              className="border-0 text-center w-16 mx-1"
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
+                    <Input
+                      type="number"
+                      className="border-0 text-center w-16 mx-1"
+                      value={hole.distance ?? ""}
+                      onChange={(e) =>
+                        handleDistanceChange(
+                          index,
+                          parseInt(e.target.value) || 0
+                        )
+                      }
                     />
                   </TableCell>
                 ))}
-                <TableCell>{watch("tees.0.outDistance") || 0}</TableCell>
-                <TableCell>{watch("tees.0.inDistance") || 0}</TableCell>
-                <TableCell>{watch("tees.0.totalDistance") || 0}</TableCell>
+                <TableCell>{tee.outDistance ?? 0}</TableCell>
+                <TableCell>{tee.inDistance ?? 0}</TableCell>
+                <TableCell>{tee.totalDistance ?? 0}</TableCell>
               </TableRow>
 
               {/* Par row */}
               <TableRow>
                 <TableCell className="font-medium">Par</TableCell>
-                {watchTees?.[0]?.holes?.map(({ par }, index) => (
+                {holes.map((hole, index) => (
                   <TableCell key={index} className="p-0">
-                    <FormField
-                      name={`tees.0.holes.${index}.par`}
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormControl>
-                            <Input
-                              type="number"
-                              value={field.value || ""}
-                              onChange={(e) => {
-                                const newValue = parseInt(e.target.value) || 0;
-                                const newHoles = [
-                                  ...(watchTees?.[0]?.holes || []),
-                                ];
-                                newHoles[index] = {
-                                  ...newHoles[index],
-                                  par: newValue,
-                                };
-
-                                const outPar = newHoles
-                                  .slice(0, 9)
-                                  .reduce((acc, h) => acc + (h.par || 0), 0);
-                                const inPar = newHoles
-                                  .slice(9, 18)
-                                  .reduce((acc, h) => acc + (h.par || 0), 0);
-                                const totalPar = outPar + inPar;
-
-                                setValue("tees.0.holes", newHoles);
-                                setValue("tees.0.outPar", outPar);
-                                setValue("tees.0.inPar", inPar);
-                                setValue("tees.0.totalPar", totalPar);
-                              }}
-                              className="border-0 text-center w-16 mx-1"
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
+                    <Input
+                      type="number"
+                      className="border-0 text-center w-16 mx-1"
+                      value={hole.par ?? ""}
+                      onChange={(e) =>
+                        handleParChange(index, parseInt(e.target.value) || 0)
+                      }
                     />
                   </TableCell>
                 ))}
-                <TableCell>{watch("tees.0.outPar") || 0}</TableCell>
-                <TableCell>{watch("tees.0.inPar") || 0}</TableCell>
-                <TableCell>{watch("tees.0.totalPar") || 0}</TableCell>
+                <TableCell>{tee.outPar ?? 0}</TableCell>
+                <TableCell>{tee.inPar ?? 0}</TableCell>
+                <TableCell>{tee.totalPar ?? 0}</TableCell>
               </TableRow>
 
               {/* Handicap row */}
               <TableRow>
                 <TableCell className="font-medium">Handicap</TableCell>
-                {watchTees?.[0]?.holes?.map(({ hcp }, index) => (
+                {holes.map((hole, index) => (
                   <TableCell key={index} className="p-0">
-                    <FormField
-                      name={`tees.0.holes.${index}.hcp`}
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormControl>
-                            <Input
-                              type="number"
-                              value={field.value || ""}
-                              onChange={(e) => {
-                                const newValue = parseInt(e.target.value) || 0;
-                                const newHoles = [
-                                  ...(watchTees?.[0]?.holes || []),
-                                ];
-                                newHoles[index] = {
-                                  ...newHoles[index],
-                                  hcp: newValue,
-                                };
-                                setValue("tees.0.holes", newHoles);
-                              }}
-                              className="border-0 text-center w-16 mx-1"
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
+                    <Input
+                      type="number"
+                      className="border-0 text-center w-16 mx-1"
+                      value={hole.hcp ?? ""}
+                      onChange={(e) =>
+                        handleHandicapChange(
+                          index,
+                          parseInt(e.target.value) || 0
+                        )
+                      }
                     />
                   </TableCell>
                 ))}

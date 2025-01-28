@@ -57,11 +57,6 @@ import {
 } from "../ui/table";
 import { toast } from "../ui/use-toast";
 
-interface PlayerScore {
-  name: string;
-  scores: number[];
-}
-
 interface GolfScorecardProps {
   profile: Tables<"Profile">;
 }
@@ -75,10 +70,7 @@ export default function GolfScorecard({ profile }: GolfScorecardProps) {
   const [holeCount, setHoleCount] = useState<number>(18);
   const [notes, setNotes] = useState("");
 
-  const [player, setPlayer] = useState<PlayerScore>({
-    name: profile.name || "",
-    scores: Array(18).fill(0),
-  });
+  const [scores, setScores] = useState<number[]>(Array(18).fill(0));
 
   const [searchTerm, setSearchTerm] = useState("");
   const [debouncedSearchTerm] = useDebounce(searchTerm, 300);
@@ -86,7 +78,11 @@ export default function GolfScorecard({ profile }: GolfScorecardProps) {
 
   const form = useForm<Scorecard>({
     resolver: zodResolver(scorecardSchema),
-    // defaultValues: { ... },
+    defaultValues: {
+      userId: profile.id,
+      teeTime: new Date().toISOString(), // TODO: No default value
+      approvalStatus: "pending", // TODO: Set this to approved if course and tee are approved
+    },
   });
 
   const {
@@ -155,20 +151,41 @@ export default function GolfScorecard({ profile }: GolfScorecardProps) {
     setUserTees((prevTees) => [...prevTees, ...course.tees!]);
     setSelectedCourse(course);
     setSelectedTee(course.tees![0]);
+
+    // Update form values
+    form.setValue("course", {
+      id: course.id,
+      name: course.name,
+      approvalStatus: course.approvalStatus,
+    });
+    form.setValue("teePlayed", course.tees![0]);
   };
 
   const handleAddTee = (newTee: Tee) => {
     console.log("Implement add tee");
   };
 
-  const handleUpdateTee = () => {
-    console.log("Update Tee");
+  const handleEditTee = (updatedTee: Tee) => {
+    const editedTee = {
+      ...updatedTee,
+      id: -1,
+      approvalStatus: "pending" as const,
+    };
+
+    // setUserTees((prevTees) => [...prevTees, editedTee]);
+
+    // 2) Update the currently selected tee so the UI updates
+    setSelectedTee(editedTee);
+
+    // Update form value
+    form.setValue("teePlayed", editedTee);
   };
 
-  const handlePlayerScoreChange = (holeIndex: number, score: number) => {
-    const newScores = [...player.scores];
+  const handleScoreChange = (holeIndex: number, score: number) => {
+    const newScores = [...scores];
     newScores[holeIndex] = score;
-    setPlayer({ ...player, scores: newScores });
+    setScores(newScores);
+    form.setValue("scores", newScores);
   };
 
   const calculateTotal = (scores: number[], start: number, end: number) =>
@@ -192,14 +209,22 @@ export default function GolfScorecard({ profile }: GolfScorecardProps) {
     selectedTee?.holes?.slice(0, holeCount)
   );
 
-  const onSubmit = () => {
-    console.log("Form is being submitted with data:");
-    console.log(form.getValues());
+  const onSubmit = (data: Scorecard) => {
+    console.log("Form is being submitted with data:", data);
+  };
+
+  const onError = (errors: any) => {
+    console.error("Form validation errors:", errors);
+    toast({
+      title: "Validation Error",
+      description: "Please check all required fields are filled correctly",
+      variant: "destructive",
+    });
   };
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)}>
+      <form onSubmit={form.handleSubmit(onSubmit, onError)}>
         <Card className="w-full mx-auto">
           <CardContent className="p-6">
             <div className="mb-6 grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -341,10 +366,14 @@ export default function GolfScorecard({ profile }: GolfScorecardProps) {
                             )}
 
                             <div className="flex justify-between">
-                              {/* <EditTeeDialog
-                                tee={selectedTee}
-                                onSave={handleUpdateTee}
-                              /> */}
+                              {selectedTee &&
+                                selectedTee.holes &&
+                                selectedTee.holes.length > 0 && (
+                                  <EditTeeDialog
+                                    existingTee={selectedTee}
+                                    onSave={handleEditTee}
+                                  />
+                                )}
                             </div>
                           </div>
                         </FormControl>
@@ -501,7 +530,7 @@ export default function GolfScorecard({ profile }: GolfScorecardProps) {
                         <TableCell className="font-medium bg-secondary dark:bg-accent truncate text-ellipsis whitespace-nowrap">
                           SCORE
                         </TableCell>
-                        {player.scores.slice(0, holeCount).map((score, i) => (
+                        {scores.slice(0, holeCount).map((score, i) => (
                           <TableCell
                             key={i}
                             className="p-2 bg-background-alternate dark:bg-bar"
@@ -523,7 +552,7 @@ export default function GolfScorecard({ profile }: GolfScorecardProps) {
                                     variant: "destructive",
                                   });
                                 }
-                                handlePlayerScoreChange(i, parsed);
+                                handleScoreChange(i, parsed);
                               }}
                             />
                           </TableCell>
@@ -531,15 +560,15 @@ export default function GolfScorecard({ profile }: GolfScorecardProps) {
                         {holeCount === 18 && (
                           <>
                             <TableCell className="text-center bg-background-alternate dark:bg-bar">
-                              {calculateTotal(player.scores, 0, 9)}
+                              {calculateTotal(scores, 0, 9)}
                             </TableCell>
                             <TableCell className="text-center bg-background-alternate dark:bg-bar">
-                              {calculateTotal(player.scores, 9, 18)}
+                              {calculateTotal(scores, 9, 18)}
                             </TableCell>
                           </>
                         )}
                         <TableCell className="text-center bg-background-alternate dark:bg-bar">
-                          {calculateTotal(player.scores, 0, holeCount)}
+                          {calculateTotal(scores, 0, holeCount)}
                         </TableCell>
                       </TableRow>
                     </TableBody>
@@ -549,6 +578,11 @@ export default function GolfScorecard({ profile }: GolfScorecardProps) {
             ) : (
               <div className="flex justify-center items-center h-48">
                 <span className="text-2xl text-gray-400">Select a tee</span>
+              </div>
+            )}
+            {selectedTee && (
+              <div className="mt-4 flex justify-end">
+                <Button type="submit">Submit Scorecard</Button>
               </div>
             )}
           </CardContent>

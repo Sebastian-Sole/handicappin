@@ -267,3 +267,37 @@ export const validCourse: Course = {
     },
   ],
 };
+
+export const blankTee: Tee = {
+  name: "",
+  courseId: -1,
+  approvalStatus: "pending",
+  id: -1,
+  courseRating18: 0,
+  slopeRating18: 0,
+  courseRatingFront9: 0,
+  slopeRatingFront9: 0,
+  courseRatingBack9: 0,
+  slopeRatingBack9: 0,
+  outPar: 0,
+  inPar: 0,
+  totalPar: 0,
+  outDistance: 0,
+  inDistance: 0,
+  totalDistance: 0,
+  gender: "mens",
+  distanceMeasurement: "meters",
+  holes: Array.from({ length: 18 }, (_, index) => ({
+    holeNumber: index + 1,
+    par: 0,
+    hcp: 0,
+    distance: 0,
+  })),
+};
+
+export const blankCourse: Course = {
+  name: "",
+  approvalStatus: "pending",
+  id: -1,
+  tees: [blankTee],
+};
