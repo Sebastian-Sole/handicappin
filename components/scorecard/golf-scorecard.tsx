@@ -274,29 +274,27 @@ export default function GolfScorecard({ profile }: GolfScorecardProps) {
                                       {combinedCourses.length > 0 &&
                                         !isLoading &&
                                         combinedCourses.map((course) => (
-                                          <>
-                                            <CommandItem
-                                              key={course.id || course.name}
-                                              onSelect={() => {
-                                                setSelectedCourse(course);
-                                                setOpenCourseSelect(false);
-                                                form.setValue("course", {
-                                                  id: course.id,
-                                                  name: course.name,
-                                                  approvalStatus:
-                                                    course.approvalStatus,
-                                                });
-                                              }}
-                                            >
-                                              {course.name}
-                                            </CommandItem>
-                                            <CommandItem>
-                                              <AddCourseDialog
-                                                onAdd={handleAddCourse}
-                                              />
-                                            </CommandItem>
-                                          </>
+                                          <CommandItem
+                                            key={course.id || course.name}
+                                            onSelect={() => {
+                                              setSelectedCourse(course);
+                                              setOpenCourseSelect(false);
+                                              form.setValue("course", {
+                                                id: course.id,
+                                                name: course.name,
+                                                approvalStatus:
+                                                  course.approvalStatus,
+                                              });
+                                            }}
+                                          >
+                                            {course.name}
+                                          </CommandItem>
                                         ))}
+                                      <CommandItem>
+                                        <AddCourseDialog
+                                          onAdd={handleAddCourse}
+                                        />
+                                      </CommandItem>
                                     </CommandGroup>
 
                                     {isLoading && (
@@ -424,7 +422,7 @@ export default function GolfScorecard({ profile }: GolfScorecardProps) {
                 </CardContent>
               </Card>
             </div>
-            {selectedTee ? (
+            {selectedTee && selectedTee.holes && displayedHoles ? (
               // Wrap the table in a container with overflow-x-auto + a fixed max-width
               <div className="rounded-lg border max-w-[270px] sm:max-w-[350px] md:max-w-[600px] lg:max-w-[725px] xl:max-w-[975px] 2xl:max-w-[1225px] 3xl:max-w-[1600px]">
                 <div className="overflow-x-auto max-w-full">

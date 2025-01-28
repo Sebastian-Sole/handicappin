@@ -180,7 +180,7 @@ function TeeRatingFields({ tee, onTeeChange }: TeeFormContentProps) {
             id="courseRatingFrontNine"
             type="number"
             step="0.1"
-            value={tee.courseRatingFront9 ?? ""}
+            value={tee.courseRatingFront9 === 0 ? "" : tee.courseRatingFront9}
             onChange={(e) =>
               handleFront9RatingChange(parseFloat(e.target.value) || 0)
             }
@@ -197,7 +197,7 @@ function TeeRatingFields({ tee, onTeeChange }: TeeFormContentProps) {
             id="courseRatingBack9"
             type="number"
             step="0.1"
-            value={tee.courseRatingBack9 ?? ""}
+            value={tee.courseRatingBack9 === 0 ? "" : tee.courseRatingBack9}
             onChange={(e) =>
               handleBack9RatingChange(parseFloat(e.target.value) || 0)
             }
@@ -214,7 +214,7 @@ function TeeRatingFields({ tee, onTeeChange }: TeeFormContentProps) {
             id="courseRating18"
             type="number"
             step="0.1"
-            value={tee.courseRating18 ?? ""}
+            value={tee.courseRating18 === 0 ? "" : tee.courseRating18}
             onChange={(e) =>
               handleTotalRatingChange(parseFloat(e.target.value) || 0)
             }
@@ -233,7 +233,7 @@ function TeeRatingFields({ tee, onTeeChange }: TeeFormContentProps) {
           <Input
             id="slopeRatingFront9"
             type="number"
-            value={tee.slopeRatingFront9 ?? ""}
+            value={tee.slopeRatingFront9 === 0 ? "" : tee.slopeRatingFront9}
             onChange={(e) =>
               handleFront9SlopeChange(parseInt(e.target.value) || 0)
             }
@@ -249,7 +249,7 @@ function TeeRatingFields({ tee, onTeeChange }: TeeFormContentProps) {
           <Input
             id="slopeRatingBack9"
             type="number"
-            value={tee.slopeRatingBack9 ?? ""}
+            value={tee.slopeRatingBack9 === 0 ? "" : tee.slopeRatingBack9}
             onChange={(e) =>
               handleBack9SlopeChange(parseInt(e.target.value) || 0)
             }
@@ -265,7 +265,7 @@ function TeeRatingFields({ tee, onTeeChange }: TeeFormContentProps) {
           <Input
             id="slopeRating18"
             type="number"
-            value={tee.slopeRating18 ?? ""}
+            value={tee.slopeRating18 === 0 ? "" : tee.slopeRating18}
             onChange={(e) =>
               handleTotalSlopeChange(parseInt(e.target.value) || 0)
             }
@@ -355,7 +355,7 @@ function TeeHoleTable({ tee, onTeeChange }: TeeFormContentProps) {
                     <Input
                       type="number"
                       className="border-0 text-center w-16 mx-1"
-                      value={hole.distance ?? ""}
+                      value={hole.distance === 0 ? "" : hole.distance}
                       onChange={(e) =>
                         handleDistanceChange(
                           index,
@@ -378,7 +378,7 @@ function TeeHoleTable({ tee, onTeeChange }: TeeFormContentProps) {
                     <Input
                       type="number"
                       className="border-0 text-center w-16 mx-1"
-                      value={hole.par ?? ""}
+                      value={hole.par === 0 ? "" : hole.par}
                       onChange={(e) =>
                         handleParChange(index, parseInt(e.target.value) || 0)
                       }
@@ -398,7 +398,7 @@ function TeeHoleTable({ tee, onTeeChange }: TeeFormContentProps) {
                     <Input
                       type="number"
                       className="border-0 text-center w-16 mx-1"
-                      value={hole.hcp ?? ""}
+                      value={hole.hcp === 0 ? "" : hole.hcp}
                       onChange={(e) =>
                         handleHandicapChange(
                           index,

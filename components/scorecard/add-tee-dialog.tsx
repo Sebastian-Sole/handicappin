@@ -43,10 +43,14 @@ export function AddTeeDialog({ onAdd }: AddTeeDialogProps) {
     teeForm.reset(updated);
   };
 
-  const onSubmit = (values: Tee) => {
-    // If you need to recalc totals, do it here or rely on the watchers in TeeFormContent
-    onAdd(values);
-    setIsOpen(false);
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault(); // Prevent the event from bubbling up
+    e.stopPropagation(); // Extra safety to stop propagation
+
+    teeForm.handleSubmit((data) => {
+      onAdd(data);
+      setIsOpen(false);
+    })(e);
   };
 
   return (
@@ -58,19 +62,20 @@ export function AddTeeDialog({ onAdd }: AddTeeDialogProps) {
         </Button>
       </DialogTrigger>
 
-      <DialogContent className="max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-[300px] sm:max-w-[400px] md:max-w-[600px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Add New Tee</DialogTitle>
         </DialogHeader>
-        <Form {...teeForm}>
-          <form onSubmit={teeForm.handleSubmit(onSubmit)}>
-            <TeeFormContent tee={tee} onTeeChange={handleTeeChange} />
-
-            <div className="flex justify-end mt-4">
-              <Button type="submit">Add Tee</Button>
-            </div>
-          </form>
-        </Form>
+        <div className="max-w-[250px] sm:max-w-[350px] md:max-w-[550px]">
+          <Form {...teeForm}>
+            <form onSubmit={handleSubmit}>
+              <TeeFormContent tee={tee} onTeeChange={handleTeeChange} />
+              <div className="flex justify-end mt-4">
+                <Button type="submit">Add Tee</Button>
+              </div>
+            </form>
+          </Form>
+        </div>
       </DialogContent>
     </Dialog>
   );
