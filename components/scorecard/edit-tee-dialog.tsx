@@ -37,10 +37,15 @@ export function EditTeeDialog({ existingTee, onSave }: EditTeeDialogProps) {
     form.reset(updated);
   };
 
-  const handleSubmit = form.handleSubmit((data) => {
-    onSave({ ...data, approvalStatus: "pending" });
-    setIsOpen(false);
-  });
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault(); // Prevent the event from bubbling up
+    e.stopPropagation(); // Extra safety to stop propagation
+
+    form.handleSubmit((data) => {
+      onSave({ ...data, approvalStatus: "pending" });
+      setIsOpen(false);
+    })(e);
+  };
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
