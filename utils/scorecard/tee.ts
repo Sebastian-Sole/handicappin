@@ -292,6 +292,8 @@ export const blankTee: Tee = {
     par: 0,
     hcp: 0,
     distance: 0,
+    teeId: -1,
+    id: -1,
   })),
 };
 

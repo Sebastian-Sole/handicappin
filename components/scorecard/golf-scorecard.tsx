@@ -10,7 +10,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
-import { AddTeeDialog } from "./add-tee-dialog";
 import { Tables } from "@/types/supabase";
 import { Button } from "../ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
@@ -22,7 +21,7 @@ import {
   CommandItem,
   CommandList,
 } from "@/components/ui/command";
-import { Check, ChevronsUpDown } from "lucide-react";
+import { Check, ChevronsUpDown, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { AddCourseDialog } from "./add-course-dialog";
 import { useForm } from "react-hook-form";
@@ -46,7 +45,6 @@ import {
 } from "@/types/scorecard";
 import { Input } from "../ui/input";
 import { Textarea } from "../ui/textarea";
-import { EditTeeDialog } from "./edit-tee-dialog";
 import {
   Table,
   TableBody,
@@ -56,6 +54,7 @@ import {
   TableRow,
 } from "../ui/table";
 import { toast } from "../ui/use-toast";
+import { TeeDialog } from "./tee-dialog";
 
 interface GolfScorecardProps {
   profile: Tables<"Profile">;
@@ -162,7 +161,14 @@ export default function GolfScorecard({ profile }: GolfScorecardProps) {
   };
 
   const handleAddTee = (newTee: Tee) => {
-    console.log("Implement add tee");
+    const newTeeWithId = {
+      ...newTee,
+      id: -1,
+      approvalStatus: "pending" as const,
+    };
+    setUserTees((prevTees) => [...prevTees, newTeeWithId]);
+    setSelectedTee(newTeeWithId);
+    form.setValue("teePlayed", newTeeWithId);
   };
 
   const handleEditTee = (updatedTee: Tee) => {
@@ -321,36 +327,41 @@ export default function GolfScorecard({ profile }: GolfScorecardProps) {
                           <div className="space-y-4 mt-4">
                             <div className="space-y-2">
                               <Label htmlFor="tee">Tee</Label>
-                              <Select
-                                value={selectedTee?.name}
-                                onValueChange={(value) => {
-                                  const foundTee = combinedTees.find(
-                                    (tee) => tee.name === value
-                                  );
-                                  if (!foundTee) {
-                                    return;
-                                  }
-                                  setSelectedTee(foundTee);
-                                  form.setValue("teePlayed", foundTee);
-                                }}
-                              >
-                                <SelectTrigger
-                                  id="tee"
-                                  disabled={
-                                    !selectedCourse || combinedTees.length === 0
-                                  }
+                              <div className="space-y-2">
+                                <Select
+                                  value={selectedTee?.name}
+                                  onValueChange={(value) => {
+                                    const foundTee = combinedTees.find(
+                                      (tee) => tee.name === value
+                                    );
+                                    if (!foundTee) {
+                                      return;
+                                    }
+                                    setSelectedTee(foundTee);
+                                    form.setValue("teePlayed", foundTee);
+                                  }}
                                 >
-                                  <SelectValue placeholder="Select Tee" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  {combinedTees.map((tee) => (
-                                    <SelectItem key={tee.name} value={tee.name}>
-                                      {tee.name}
-                                    </SelectItem>
-                                  ))}
-                                  <AddTeeDialog onAdd={handleAddTee} />
-                                </SelectContent>
-                              </Select>
+                                  <SelectTrigger
+                                    id="tee"
+                                    disabled={
+                                      !selectedCourse ||
+                                      combinedTees.length === 0
+                                    }
+                                  >
+                                    <SelectValue placeholder="Select Tee" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    {combinedTees.map((tee) => (
+                                      <SelectItem
+                                        key={tee.name}
+                                        value={tee.name}
+                                      >
+                                        {tee.name}
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                              </div>
                             </div>
                             {selectedTee && (
                               <div className="flex justify-between text-sm">
@@ -364,10 +375,19 @@ export default function GolfScorecard({ profile }: GolfScorecardProps) {
                             )}
 
                             <div className="flex justify-between">
+                              {selectedCourse && (
+                                <TeeDialog
+                                  key={`${selectedCourse?.id}-${selectedCourse?.name}-new`}
+                                  mode="add"
+                                  onSave={handleAddTee}
+                                />
+                              )}
+
                               {selectedTee &&
                                 selectedTee.holes &&
                                 selectedTee.holes.length > 0 && (
-                                  <EditTeeDialog
+                                  <TeeDialog
+                                    mode="edit"
                                     key={`${selectedTee.courseId}-${selectedTee.name}`}
                                     existingTee={selectedTee}
                                     onSave={handleEditTee}
