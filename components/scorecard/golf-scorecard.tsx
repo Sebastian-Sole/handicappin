@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useCallback } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import {
   Select,
@@ -21,8 +21,7 @@ import {
   CommandItem,
   CommandList,
 } from "@/components/ui/command";
-import { Check, ChevronsUpDown, Plus } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { ChevronsUpDown } from "lucide-react";
 import { AddCourseDialog } from "./add-course-dialog";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -55,81 +54,125 @@ import {
 } from "../ui/table";
 import { toast } from "../ui/use-toast";
 import { TeeDialog } from "./tee-dialog";
+import { getTeeKey, useTeeManagement } from "@/hooks/useTeeManagement";
 
 interface GolfScorecardProps {
   profile: Tables<"Profile">;
 }
 
 export default function GolfScorecard({ profile }: GolfScorecardProps) {
-  const [userCourses, setUserCourses] = useState<Course[]>([]);
-  const [userTees, setUserTees] = useState<Tee[]>([]);
-  const [selectedCourse, setSelectedCourse] = useState<Course>();
-  const [selectedTee, setSelectedTee] = useState<Tee>();
+  // Use the tee management hook
+  const {
+    fetchedTees,
+    modifications,
+    getEffectiveTees,
+    updateFetchedTees,
+    addCourse,
+    addTee,
+    editTee,
+  } = useTeeManagement();
+
+  // Core state
+  const [fetchedCourses, setFetchedCourses] = useState<Course[]>([]);
+  const [selectedCourseId, setSelectedCourseId] = useState<number | undefined>(
+    undefined
+  );
+  const [selectedTeeKey, setSelectedTeeKey] = useState<string | undefined>(
+    undefined
+  );
+  const [isLoading, setIsLoading] = useState(false);
+
+  // Additional state for the form
   const [date, setDate] = useState("");
   const [holeCount, setHoleCount] = useState<number>(18);
   const [notes, setNotes] = useState("");
-
   const [scores, setScores] = useState<number[]>(Array(18).fill(0));
-
   const [searchTerm, setSearchTerm] = useState("");
   const [debouncedSearchTerm] = useDebounce(searchTerm, 300);
   const [openCourseSelect, setOpenCourseSelect] = useState(false);
 
+  // Form setup
   const form = useForm<Scorecard>({
     resolver: zodResolver(scorecardSchema),
     defaultValues: {
       userId: profile.id,
-      teeTime: new Date().toISOString(), // TODO: No default value
-      approvalStatus: "pending", // TODO: Set this to approved if course and tee are approved
+      teeTime: new Date().toISOString(),
+      approvalStatus: "pending",
     },
   });
 
-  const {
-    data: searchedCourses,
-    isLoading,
-    error: searchedCoursesError,
-  } = api.course.searchCourses.useQuery(
-    { query: debouncedSearchTerm },
-    {
-      enabled: !!debouncedSearchTerm,
-    }
-  );
+  // Fetch data queries
+  const { data: searchedCourses, isLoading: isSearchLoading } =
+    api.course.searchCourses.useQuery(
+      { query: debouncedSearchTerm },
+      { enabled: !!debouncedSearchTerm }
+    );
 
-  const { data: teesData, isLoading: isLoadingTeesData } =
+  const { data: courseTees, isLoading: isTeesLoading } =
     api.tee.fetchTees.useQuery(
-      { courseId: selectedCourse?.id! },
+      { courseId: selectedCourseId || 0 },
       {
         enabled:
-          !!selectedCourse?.id && selectedCourse.approvalStatus === "approved",
+          selectedCourseId !== undefined &&
+          selectedCourseId > 0 &&
+          !modifications.courses[selectedCourseId],
       }
     );
 
-  const { data: holesData, isLoading: isLoadingHolesData } =
-    api.hole.fetchHoles.useQuery(
-      { teeId: selectedTee?.id! },
-      {
-        enabled: !!selectedTee?.id && selectedTee.approvalStatus === "approved",
-      }
+  // Get the currently selected tee
+  const selectedTee = useMemo(() => {
+    if (!selectedTeeKey || !selectedCourseId) return undefined;
+    return getEffectiveTees(selectedCourseId)?.find(
+      (tee) => getTeeKey(selectedCourseId, tee.name) === selectedTeeKey
     );
+  }, [selectedTeeKey, selectedCourseId, getEffectiveTees]);
 
+  // Update loading state
   useEffect(() => {
-    if (selectedTee && holesData) {
-      setSelectedTee({ ...selectedTee, holes: holesData });
+    setIsLoading(isSearchLoading || isTeesLoading);
+  }, [isSearchLoading, isTeesLoading]);
+
+  // Update fetched data when queries return results
+  useEffect(() => {
+    if (searchedCourses) {
+      setFetchedCourses((prev) => {
+        const newCourses = searchedCourses.filter(
+          (course) => !prev.some((p) => p.id === course.id)
+        );
+        return [...prev, ...newCourses];
+      });
     }
-  }, [holesData]);
+  }, [searchedCourses]);
 
-  const combinedCourses = useMemo(() => {
-    return [...(searchedCourses || []), ...userCourses];
-  }, [searchedCourses, userCourses]);
+  // Update fetched tees when they arrive
+  useEffect(() => {
+    if (courseTees && selectedCourseId && selectedCourseId > 0) {
+      updateFetchedTees(selectedCourseId, courseTees);
+    }
+  }, [courseTees, selectedCourseId, updateFetchedTees]);
 
-  const combinedTees = useMemo(() => {
-    if (!selectedCourse?.id) return [];
-    const serverTees = teesData ?? [];
-    const localTees = userTees.filter(
-      (tee) => tee.courseId === selectedCourse.id
+  // Select first tee when course changes and tees are available
+  useEffect(() => {
+    if (selectedCourseId && !selectedTeeKey) {
+      const tees = getEffectiveTees(selectedCourseId);
+      if (tees && tees.length > 0) {
+        const firstTee = tees[0];
+        const teeKey = getTeeKey(selectedCourseId, firstTee.name);
+        setSelectedTeeKey(teeKey);
+        form.setValue("teePlayed", firstTee);
+      }
+    }
+  }, [selectedCourseId, getEffectiveTees, form]);
+
+  const effectiveCourses = useMemo(() => {
+    const unmodifiedCourses = fetchedCourses.filter(
+      (course) =>
+        course.id !== undefined &&
+        course.id !== null &&
+        !modifications.courses[course.id]
     );
-    return [...serverTees, ...localTees];
-  }, [teesData, userTees, selectedCourse?.id]);
+    return [...unmodifiedCourses, ...Object.values(modifications.courses)];
+  }, [fetchedCourses, modifications.courses]);
 
   const handleCourseSearch = (searchString: string) => {
     setSearchTerm(searchString);
@@ -138,53 +181,64 @@ export default function GolfScorecard({ profile }: GolfScorecardProps) {
   const handleAddCourse = (course: Course) => {
     setOpenCourseSelect(false);
 
-    if (!course.tees || course.tees.length === 0) {
+    try {
+      const { course: newCourse, tee: firstTee, teeKey } = addCourse(course);
+      setSelectedCourseId(newCourse.id);
+      setSelectedTeeKey(teeKey);
+
+      // Update form values
+      form.setValue("course", { ...newCourse, tees: undefined });
+      form.setValue("teePlayed", {
+        ...firstTee,
+        id: undefined,
+        courseId: undefined,
+      });
+    } catch (error) {
       toast({
         title: "Error",
-        description: "Course must have at least one tee",
+        description:
+          error instanceof Error ? error.message : "Failed to add course",
         variant: "destructive",
       });
-      return;
     }
-    setUserCourses((prev) => [...prev, course]);
-    setUserTees((prevTees) => [...prevTees, ...course.tees!]);
-    setSelectedCourse(course);
-    setSelectedTee(course.tees![0]);
-
-    // Update form values
-    form.setValue("course", {
-      id: course.id,
-      name: course.name,
-      approvalStatus: course.approvalStatus,
-    });
-    form.setValue("teePlayed", course.tees![0]);
   };
 
   const handleAddTee = (newTee: Tee) => {
-    const newTeeWithId = {
-      ...newTee,
-      id: -1,
-      approvalStatus: "pending" as const,
-    };
-    setUserTees((prevTees) => [...prevTees, newTeeWithId]);
-    setSelectedTee(newTeeWithId);
-    form.setValue("teePlayed", newTeeWithId);
+    if (selectedCourseId === undefined) return;
+
+    const { tee: teeWithId, teeKey } = addTee(selectedCourseId, newTee);
+    setSelectedTeeKey(teeKey);
+    form.setValue("teePlayed", {
+      ...teeWithId,
+      id: undefined,
+      courseId: undefined,
+    });
   };
 
   const handleEditTee = (updatedTee: Tee) => {
-    const editedTee = {
-      ...updatedTee,
-      id: -1,
-      approvalStatus: "pending" as const,
-    };
+    if (selectedCourseId === undefined) return;
 
-    // setUserTees((prevTees) => [...prevTees, editedTee]);
+    const { tee: editedTee, teeKey } = editTee(
+      selectedCourseId,
+      selectedTeeKey,
+      updatedTee
+    );
 
-    // 2) Update the currently selected tee so the UI updates
-    setSelectedTee(editedTee);
+    // Update form value with the edited tee (excluding id and courseId as they're managed internally)
+    form.setValue("teePlayed", {
+      ...editedTee,
+      id: undefined,
+      courseId: undefined,
+    });
 
-    // Update form value
-    form.setValue("teePlayed", editedTee);
+    // Update form's course tees to include the edited tee
+    form.setValue("course.tees", getEffectiveTees(selectedCourseId));
+
+    // Set the selected tee key to the new tee key
+    // We need to do this after the state updates to ensure proper rendering
+    setTimeout(() => {
+      setSelectedTeeKey(teeKey);
+    }, 0);
   };
 
   const handleScoreChange = (holeIndex: number, score: number) => {
@@ -211,9 +265,48 @@ export default function GolfScorecard({ profile }: GolfScorecardProps) {
     }));
   };
 
-  const displayedHoles = normalizeHcpForNineHoles(
-    selectedTee?.holes?.slice(0, holeCount)
-  );
+  const displayedHoles = useMemo(() => {
+    if (!selectedTee?.holes) return [];
+    return (
+      normalizeHcpForNineHoles(selectedTee.holes)?.slice(0, holeCount) || []
+    );
+  }, [selectedTee?.holes, holeCount]);
+
+  // Get the complete tee data for editing
+  const getCompleteEditTee = useMemo(() => {
+    if (!selectedTee || !selectedCourseId) return undefined;
+
+    // For fetched tees
+    if (selectedCourseId > 0) {
+      // Get the tee with its holes from fetchedTees
+      const fetchedTee = fetchedTees[selectedCourseId]?.find(
+        (tee) => tee.name === selectedTee.name
+      );
+
+      // Check if this tee has been modified
+      const teeKey = getTeeKey(selectedCourseId, selectedTee.name);
+      const modifiedTee = modifications.tees[teeKey];
+
+      // If the tee has been modified, use that data
+      if (modifiedTee) {
+        return modifiedTee;
+      }
+
+      // Otherwise use the fetched tee data
+      if (fetchedTee) {
+        return fetchedTee;
+      }
+    }
+
+    // For user-created tees
+    const teeKey = getTeeKey(selectedCourseId, selectedTee.name);
+    const modifiedTee = modifications.tees[teeKey];
+    if (modifiedTee) {
+      return modifiedTee;
+    }
+
+    return undefined;
+  }, [selectedTee, selectedCourseId, fetchedTees, modifications.tees]);
 
   const onSubmit = (data: Scorecard) => {
     console.log("Form is being submitted with data:", data);
@@ -227,6 +320,26 @@ export default function GolfScorecard({ profile }: GolfScorecardProps) {
       variant: "destructive",
     });
   };
+
+  // Update the course selection button display
+  const getSelectedCourseName = useCallback(() => {
+    if (!selectedCourseId) return "Select course...";
+
+    // Check modifications first
+    if (selectedCourseId < 0 && modifications.courses[selectedCourseId]) {
+      return modifications.courses[selectedCourseId].name;
+    }
+
+    // Then check fetched courses
+    const fetchedCourse = fetchedCourses.find(
+      (course) => course.id === selectedCourseId
+    );
+    if (fetchedCourse) {
+      return fetchedCourse.name;
+    }
+
+    return "Select course...";
+  }, [selectedCourseId, modifications.courses, fetchedCourses]);
 
   return (
     <Form {...form}>
@@ -255,9 +368,7 @@ export default function GolfScorecard({ profile }: GolfScorecardProps) {
                                   aria-expanded={openCourseSelect}
                                   className="w-full justify-between"
                                 >
-                                  {selectedCourse
-                                    ? selectedCourse.name
-                                    : "Select course..."}
+                                  {getSelectedCourseName()}
                                   <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                                 </Button>
                               </PopoverTrigger>
@@ -268,7 +379,7 @@ export default function GolfScorecard({ profile }: GolfScorecardProps) {
                                     onValueChange={handleCourseSearch}
                                   />
                                   <CommandList>
-                                    {combinedCourses.length === 0 &&
+                                    {effectiveCourses.length === 0 &&
                                       !isLoading && (
                                         <CommandEmpty>
                                           <AddCourseDialog
@@ -277,20 +388,18 @@ export default function GolfScorecard({ profile }: GolfScorecardProps) {
                                         </CommandEmpty>
                                       )}
                                     <CommandGroup className="py-6">
-                                      {combinedCourses.length > 0 &&
+                                      {effectiveCourses.length > 0 &&
                                         !isLoading &&
-                                        combinedCourses.map((course) => (
+                                        effectiveCourses.map((course) => (
                                           <CommandItem
                                             key={course.id || course.name}
                                             onSelect={() => {
-                                              setSelectedCourse(course);
+                                              // Clear the selected tee first
+                                              setSelectedTeeKey(undefined);
+                                              // Then set the new course
+                                              setSelectedCourseId(course.id);
                                               setOpenCourseSelect(false);
-                                              form.setValue("course", {
-                                                id: course.id,
-                                                name: course.name,
-                                                approvalStatus:
-                                                  course.approvalStatus,
-                                              });
+                                              form.setValue("course", course);
                                             }}
                                           >
                                             {course.name}
@@ -329,41 +438,56 @@ export default function GolfScorecard({ profile }: GolfScorecardProps) {
                               <Label htmlFor="tee">Tee</Label>
                               <div className="space-y-2">
                                 <Select
-                                  value={selectedTee?.name}
+                                  value={selectedTeeKey}
                                   onValueChange={(value) => {
-                                    const foundTee = combinedTees.find(
-                                      (tee) => tee.name === value
+                                    const foundTee = getEffectiveTees(
+                                      selectedCourseId
+                                    )?.find(
+                                      (tee) =>
+                                        getTeeKey(
+                                          selectedCourseId || 0,
+                                          tee.name
+                                        ) === value
                                     );
                                     if (!foundTee) {
                                       return;
                                     }
-                                    setSelectedTee(foundTee);
+                                    setSelectedTeeKey(value);
                                     form.setValue("teePlayed", foundTee);
                                   }}
                                 >
                                   <SelectTrigger
                                     id="tee"
                                     disabled={
-                                      !selectedCourse ||
-                                      combinedTees.length === 0
+                                      !selectedCourseId ||
+                                      getEffectiveTees(selectedCourseId)
+                                        ?.length === 0
                                     }
                                   >
                                     <SelectValue placeholder="Select Tee" />
                                   </SelectTrigger>
                                   <SelectContent>
-                                    {combinedTees.map((tee) => (
-                                      <SelectItem
-                                        key={tee.name}
-                                        value={tee.name}
-                                      >
-                                        {tee.name}
-                                      </SelectItem>
-                                    ))}
+                                    {getEffectiveTees(selectedCourseId)?.map(
+                                      (tee) => (
+                                        <SelectItem
+                                          key={getTeeKey(
+                                            selectedCourseId || 0,
+                                            tee.name
+                                          )}
+                                          value={getTeeKey(
+                                            selectedCourseId || 0,
+                                            tee.name
+                                          )}
+                                        >
+                                          {tee.name}
+                                        </SelectItem>
+                                      )
+                                    )}
                                   </SelectContent>
                                 </Select>
                               </div>
                             </div>
-                            {selectedTee && (
+                            {selectedTeeKey && (
                               <div className="flex justify-between text-sm">
                                 <span>
                                   Course Rating: {selectedTee?.courseRating18}
@@ -375,21 +499,22 @@ export default function GolfScorecard({ profile }: GolfScorecardProps) {
                             )}
 
                             <div className="flex justify-between">
-                              {selectedCourse && (
+                              {selectedCourseId && (
                                 <TeeDialog
-                                  key={`${selectedCourse?.id}-${selectedCourse?.name}-new`}
+                                  key={`${selectedCourseId}-${selectedCourseId}-new`}
                                   mode="add"
                                   onSave={handleAddTee}
                                 />
                               )}
 
-                              {selectedTee &&
-                                selectedTee.holes &&
-                                selectedTee.holes.length > 0 && (
+                              {selectedTeeKey &&
+                                getEffectiveTees(selectedCourseId) &&
+                                getEffectiveTees(selectedCourseId).length >
+                                  0 && (
                                   <TeeDialog
                                     mode="edit"
-                                    key={`${selectedTee.courseId}-${selectedTee.name}`}
-                                    existingTee={selectedTee}
+                                    key={`${selectedCourseId}-${selectedTeeKey}`}
+                                    existingTee={getCompleteEditTee}
                                     onSave={handleEditTee}
                                   />
                                 )}
@@ -442,7 +567,9 @@ export default function GolfScorecard({ profile }: GolfScorecardProps) {
                 </CardContent>
               </Card>
             </div>
-            {selectedTee && selectedTee.holes && displayedHoles ? (
+            {selectedTeeKey &&
+            getEffectiveTees(selectedCourseId) &&
+            displayedHoles ? (
               // Wrap the table in a container with overflow-x-auto + a fixed max-width
               <div className="rounded-lg border max-w-[270px] sm:max-w-[350px] md:max-w-[600px] lg:max-w-[725px] xl:max-w-[975px] 2xl:max-w-[1225px] 3xl:max-w-[1600px]">
                 <div className="overflow-x-auto max-w-full">
@@ -478,7 +605,7 @@ export default function GolfScorecard({ profile }: GolfScorecardProps) {
                     <TableBody>
                       <TableRow className="hover:bg-inherit">
                         <TableCell className="font-medium bg-secondary dark:bg-accent truncate text-ellipsis whitespace-nowrap">
-                          {selectedTee.name.toUpperCase()} TEE
+                          {selectedTee?.name.toUpperCase()} TEE
                         </TableCell>
                         {displayedHoles.map((hole, i) => (
                           <TableCell key={i} className="text-center">
@@ -488,17 +615,17 @@ export default function GolfScorecard({ profile }: GolfScorecardProps) {
                         {holeCount === 18 && (
                           <>
                             <TableCell className="text-center font-medium bg-background">
-                              {selectedTee.outDistance}
+                              {selectedTee?.outDistance}
                             </TableCell>
                             <TableCell className="text-center font-medium bg-background">
-                              {selectedTee.inDistance}
+                              {selectedTee?.inDistance}
                             </TableCell>
                           </>
                         )}
                         <TableCell className="text-center font-medium bg-background">
                           {holeCount === 18
-                            ? selectedTee.totalDistance
-                            : selectedTee.outDistance}
+                            ? selectedTee?.totalDistance
+                            : selectedTee?.outDistance}
                         </TableCell>
                       </TableRow>
                       <TableRow className="hover:bg-inherit">
@@ -516,17 +643,17 @@ export default function GolfScorecard({ profile }: GolfScorecardProps) {
                         {holeCount === 18 && (
                           <>
                             <TableCell className="text-center font-medium bg-background-alternate dark:bg-bar">
-                              {selectedTee.outPar}
+                              {selectedTee?.outPar}
                             </TableCell>
                             <TableCell className="text-center font-medium bg-background-alternate dark:bg-bar">
-                              {selectedTee.inPar}
+                              {selectedTee?.inPar}
                             </TableCell>
                           </>
                         )}
                         <TableCell className="text-center font-medium bg-background-alternate dark:bg-bar">
                           {holeCount === 18
-                            ? selectedTee.totalPar
-                            : selectedTee.outPar}
+                            ? selectedTee?.totalPar
+                            : selectedTee?.outPar}
                         </TableCell>
                       </TableRow>
                       <TableRow className="hover:bg-inherit">
@@ -599,7 +726,7 @@ export default function GolfScorecard({ profile }: GolfScorecardProps) {
                 <span className="text-2xl text-gray-400">Select a tee</span>
               </div>
             )}
-            {selectedTee && (
+            {selectedTeeKey && (
               <div className="mt-4 flex justify-end">
                 <Button type="submit">Submit Scorecard</Button>
               </div>

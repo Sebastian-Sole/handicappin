@@ -1,6 +1,6 @@
 // tee-form-content.tsx
 "use client";
-import React from "react";
+import React, { useMemo } from "react";
 import { TriangleAlert } from "lucide-react";
 
 import { Alert, AlertTitle, AlertDescription } from "../ui/alert";
@@ -278,11 +278,29 @@ function TeeRatingFields({ tee, onTeeChange }: TeeFormContentProps) {
 }
 
 function TeeHoleTable({ tee, onTeeChange }: TeeFormContentProps) {
-  const holes = tee.holes || [];
+  // Initialize holes array if it doesn't exist or has less than 18 holes
+  const holes = useMemo(() => {
+    const existingHoles = tee.holes || [];
+    if (existingHoles.length === 18) return existingHoles;
+
+    // Create an array of 18 holes, using existing holes where available
+    return Array(18)
+      .fill(null)
+      .map((_, index) => ({
+        holeNumber: index + 1,
+        par: existingHoles[index]?.par || 0,
+        hcp: existingHoles[index]?.hcp || 0,
+        distance: existingHoles[index]?.distance || 0,
+      }));
+  }, [tee.holes]);
 
   const handleDistanceChange = (index: number, newDistance: number) => {
     const newHoles = [...holes];
-    newHoles[index] = { ...newHoles[index], distance: newDistance };
+    newHoles[index] = {
+      ...newHoles[index],
+      distance: newDistance,
+      holeNumber: index + 1,
+    };
 
     const outSum = newHoles
       .slice(0, 9)
@@ -302,7 +320,11 @@ function TeeHoleTable({ tee, onTeeChange }: TeeFormContentProps) {
 
   const handleParChange = (index: number, newPar: number) => {
     const newHoles = [...holes];
-    newHoles[index] = { ...newHoles[index], par: newPar };
+    newHoles[index] = {
+      ...newHoles[index],
+      par: newPar,
+      holeNumber: index + 1,
+    };
 
     const outPar = newHoles
       .slice(0, 9)
@@ -322,8 +344,16 @@ function TeeHoleTable({ tee, onTeeChange }: TeeFormContentProps) {
 
   const handleHandicapChange = (index: number, newHcp: number) => {
     const newHoles = [...holes];
-    newHoles[index] = { ...newHoles[index], hcp: newHcp };
-    onTeeChange({ ...tee, holes: newHoles });
+    newHoles[index] = {
+      ...newHoles[index],
+      hcp: newHcp,
+      holeNumber: index + 1,
+    };
+
+    onTeeChange({
+      ...tee,
+      holes: newHoles,
+    });
   };
 
   return (
@@ -336,7 +366,7 @@ function TeeHoleTable({ tee, onTeeChange }: TeeFormContentProps) {
             <TableHeader>
               <TableRow>
                 <TableHead className="w-[100px]">Hole</TableHead>
-                {Array.from({ length: 18 }, (_, i) => (
+                {holes.map((_, i) => (
                   <TableHead key={i} className="text-center">
                     {i + 1}
                   </TableHead>
