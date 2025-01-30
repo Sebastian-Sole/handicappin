@@ -1,5 +1,5 @@
-import { useState, useCallback } from "react";
-import { Course, Tee, Hole } from "@/types/scorecard";
+import { useState, useCallback, useMemo } from "react";
+import { Course, Tee } from "@/types/scorecard";
 
 // Helper function to create a unique key for tees
 export const getTeeKey = (courseId: number, teeName: string) =>
@@ -15,6 +15,8 @@ export interface TeeState {
     courses: { [courseId: number]: Course };
     tees: { [key: string]: Tee };
   };
+  selectedTeeKey?: string;
+  selectedCourseId?: number;
 }
 
 export function useTeeManagement() {
@@ -25,6 +27,10 @@ export function useTeeManagement() {
       tees: {},
     }
   );
+  const [selectedTeeKey, setSelectedTeeKey] = useState<string | undefined>();
+  const [selectedCourseId, setSelectedCourseId] = useState<
+    number | undefined
+  >();
 
   const getEffectiveTees = useCallback(
     (courseId: number | undefined) => {
@@ -153,13 +159,72 @@ export function useTeeManagement() {
     [getEffectiveTees]
   );
 
+  // Get the currently selected tee
+  const selectedTee = useMemo(() => {
+    if (!selectedTeeKey || !selectedCourseId) return undefined;
+    return getEffectiveTees(selectedCourseId)?.find(
+      (tee) => getTeeKey(selectedCourseId, tee.name) === selectedTeeKey
+    );
+  }, [selectedTeeKey, selectedCourseId, getEffectiveTees]);
+
+  // Get the complete tee data for editing
+  const getCompleteEditTee = useMemo(() => {
+    if (!selectedTee || !selectedCourseId) return undefined;
+
+    // For fetched tees
+    if (selectedCourseId > 0) {
+      // Get the tee with its holes from fetchedTees
+      const fetchedTee = fetchedTees[selectedCourseId]?.find(
+        (tee) => tee.name === selectedTee.name
+      );
+
+      // Check if this tee has been modified
+      const teeKey = getTeeKey(selectedCourseId, selectedTee.name);
+      const modifiedTee = modifications.tees[teeKey];
+
+      // If the tee has been modified, use that data
+      if (modifiedTee) {
+        return modifiedTee;
+      }
+
+      // Otherwise use the fetched tee data
+      if (fetchedTee) {
+        return fetchedTee;
+      }
+    }
+
+    // For user-created tees
+    const teeKey = getTeeKey(selectedCourseId, selectedTee.name);
+    const modifiedTee = modifications.tees[teeKey];
+    if (modifiedTee) {
+      return modifiedTee;
+    }
+
+    return undefined;
+  }, [selectedTee, selectedCourseId, fetchedTees, modifications.tees]);
+
+  const selectCourse = useCallback((courseId: number | undefined) => {
+    setSelectedCourseId(courseId);
+    setSelectedTeeKey(undefined); // Clear tee selection when course changes
+  }, []);
+
+  const selectTee = useCallback((teeKey: string | undefined) => {
+    setSelectedTeeKey(teeKey);
+  }, []);
+
   return {
     fetchedTees,
     modifications,
+    selectedTeeKey,
+    selectedCourseId,
+    selectedTee,
+    getCompleteEditTee,
     getEffectiveTees,
     updateFetchedTees,
     addCourse,
     addTee,
     editTee,
+    selectCourse,
+    selectTee,
   };
 }

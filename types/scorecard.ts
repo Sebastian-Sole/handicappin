@@ -48,6 +48,7 @@ export const scorecardSchema = z.object({
   scores: z.array(z.number().min(1).max(99)),
   teeTime: z.string().datetime(),
   approvalStatus: z.literal("pending").or(z.literal("approved")),
+  notes: z.string().optional(),
 });
 
 export type Hole = z.infer<typeof holeSchema>;
