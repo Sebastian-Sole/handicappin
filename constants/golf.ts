@@ -10,15 +10,3 @@ export const CONSTANTS = {
   MIN_DISTANCE: 1,
   MAX_DISTANCE: 700,
 } as const;
-
-export const BREAKPOINTS = {
-  TABLE_WIDTH: {
-    DEFAULT: "270px",
-    SM: "350px",
-    MD: "600px",
-    LG: "725px",
-    XL: "975px",
-    "2XL": "1225px",
-    "3XL": "1600px",
-  },
-} as const;

@@ -64,15 +64,37 @@ export function TeeDialog({
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
         {mode === "edit" ? (
-          <Button variant="outline" size="sm">
-            <Pencil className="h-4 w-4 mr-2" />
-            Edit Tee
-          </Button>
+          <div className="flex gap-2 justify-between flex-wrap sm:flex-row flex-col">
+            <Button variant="outline" size="sm" className="h-10 hidden md:flex">
+              <Pencil className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="outline"
+              size="lg"
+              className="h-10 sm:flex md:hidden "
+            >
+              <Pencil className="h-4 w-4 mr-2" />
+              Edit Tee
+            </Button>
+          </div>
         ) : (
-          <Button id={id} variant="outline" size="sm">
-            <Plus className="h-4 w-4 mr-2" />
-            Add New Tee
-          </Button>
+          <div className="flex gap-2 justify-between flex-wrap sm:flex-row flex-col">
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-10 hidden  md:flex"
+            >
+              <Plus className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="outline"
+              size="lg"
+              className="h-10  sm:flex md:hidden"
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Add Tee
+            </Button>
+          </div>
         )}
       </DialogTrigger>
       <DialogContent className="max-w-[300px] sm:max-w-[400px] md:max-w-[600px] max-h-[90vh] overflow-y-auto">

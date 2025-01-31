@@ -43,6 +43,8 @@ import { TeeDialog } from "./tee-dialog";
 import { getTeeKey, useTeeManagement } from "@/hooks/useTeeManagement";
 import { ScorecardTable } from "./scorecard-table";
 import { getDisplayedHoles } from "@/utils/scorecard/scorecardUtils";
+import { Lead } from "../ui/typography";
+import { Badge } from "../ui/badge";
 
 interface GolfScorecardProps {
   profile: Tables<"Profile">;
@@ -358,89 +360,90 @@ export default function GolfScorecard({ profile }: GolfScorecardProps) {
                           <div className="space-y-4 mt-4">
                             <div className="space-y-2">
                               <Label htmlFor="tee">Tee</Label>
-                              <div className="space-y-2">
-                                <Select
-                                  value={selectedTeeKey}
-                                  onValueChange={(value) => {
-                                    const foundTee = getEffectiveTees(
-                                      selectedCourseId
-                                    )?.find(
-                                      (tee) =>
-                                        getTeeKey(
-                                          selectedCourseId || 0,
-                                          tee.name
-                                        ) === value
-                                    );
-                                    if (!foundTee) {
-                                      return;
-                                    }
-                                    selectTee(value);
-                                    form.setValue("teePlayed", foundTee);
-                                  }}
-                                >
-                                  <SelectTrigger
-                                    id="tee"
-                                    disabled={
-                                      !selectedCourseId ||
-                                      getEffectiveTees(selectedCourseId)
-                                        ?.length === 0
-                                    }
+                              <div className="flex flex-col md:flex-row gap-2">
+                                <div className="flex-1">
+                                  <Select
+                                    value={selectedTeeKey}
+                                    onValueChange={(value) => {
+                                      const foundTee = getEffectiveTees(
+                                        selectedCourseId
+                                      )?.find(
+                                        (tee) =>
+                                          getTeeKey(
+                                            selectedCourseId || 0,
+                                            tee.name
+                                          ) === value
+                                      );
+                                      if (!foundTee) {
+                                        return;
+                                      }
+                                      selectTee(value);
+                                      form.setValue("teePlayed", foundTee);
+                                    }}
                                   >
-                                    <SelectValue placeholder="Select Tee" />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    {getEffectiveTees(selectedCourseId)?.map(
-                                      (tee) => (
-                                        <SelectItem
-                                          key={getTeeKey(
-                                            selectedCourseId || 0,
-                                            tee.name
-                                          )}
-                                          value={getTeeKey(
-                                            selectedCourseId || 0,
-                                            tee.name
-                                          )}
-                                        >
-                                          {tee.name}
-                                        </SelectItem>
-                                      )
+                                    <SelectTrigger
+                                      id="tee"
+                                      disabled={
+                                        !selectedCourseId ||
+                                        getEffectiveTees(selectedCourseId)
+                                          ?.length === 0
+                                      }
+                                    >
+                                      <SelectValue placeholder="Select Tee" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      {getEffectiveTees(selectedCourseId)?.map(
+                                        (tee) => (
+                                          <SelectItem
+                                            key={getTeeKey(
+                                              selectedCourseId || 0,
+                                              tee.name
+                                            )}
+                                            value={getTeeKey(
+                                              selectedCourseId || 0,
+                                              tee.name
+                                            )}
+                                          >
+                                            {tee.name}
+                                          </SelectItem>
+                                        )
+                                      )}
+                                    </SelectContent>
+                                  </Select>
+                                </div>
+                                <div className="flex gap-2 justify-between lg:justify-start w-full md:w-auto sm:flex-row flex-col">
+                                  {selectedTeeKey &&
+                                    getEffectiveTees(selectedCourseId) &&
+                                    getEffectiveTees(selectedCourseId).length >
+                                      0 && (
+                                      <TeeDialog
+                                        mode="edit"
+                                        key={`${selectedCourseId}-${selectedTeeKey}`}
+                                        existingTee={getCompleteEditTee}
+                                        onSave={handleEditTee}
+                                      />
                                     )}
-                                  </SelectContent>
-                                </Select>
+
+                                  {selectedCourseId && (
+                                    <TeeDialog
+                                      key={`${selectedCourseId}-${selectedCourseId}-new`}
+                                      mode="add"
+                                      onSave={handleAddTee}
+                                    />
+                                  )}
+                                </div>
                               </div>
                             </div>
                             {selectedTeeKey && (
-                              <div className="flex justify-between text-sm">
-                                <span>
+                              <div className="flex gap-2 justify-between w-full flex-wrap sm:flex-row flex-col">
+                                <Badge className="flex justify-center">
                                   Course Rating: {selectedTee?.courseRating18}
-                                </span>
-                                <span>
+                                </Badge>
+                                <Badge className="flex justify-center">
                                   Slope Rating: {selectedTee?.slopeRating18}
-                                </span>
+                                </Badge>
                               </div>
                             )}
-
-                            <div className="flex justify-between">
-                              {selectedCourseId && (
-                                <TeeDialog
-                                  key={`${selectedCourseId}-${selectedCourseId}-new`}
-                                  mode="add"
-                                  onSave={handleAddTee}
-                                />
-                              )}
-
-                              {selectedTeeKey &&
-                                getEffectiveTees(selectedCourseId) &&
-                                getEffectiveTees(selectedCourseId).length >
-                                  0 && (
-                                  <TeeDialog
-                                    mode="edit"
-                                    key={`${selectedCourseId}-${selectedTeeKey}`}
-                                    existingTee={getCompleteEditTee}
-                                    onSave={handleEditTee}
-                                  />
-                                )}
-                            </div>
                           </div>
                         </FormControl>
                         <FormMessage />
@@ -513,20 +516,27 @@ export default function GolfScorecard({ profile }: GolfScorecardProps) {
               </Card>
             </div>
             {selectedTeeKey &&
-            getEffectiveTees(selectedCourseId) &&
-            displayedHoles ? (
-              <ScorecardTable
-                selectedTee={selectedTee}
-                displayedHoles={displayedHoles}
-                holeCount={holeCount}
-                scores={form.watch("scores")}
-                onScoreChange={handleScoreChange}
-              />
-            ) : (
-              <div className="flex justify-center items-center h-48">
-                <span className="text-2xl text-gray-400">Select a tee</span>
+              getEffectiveTees(selectedCourseId) &&
+              displayedHoles && (
+                <ScorecardTable
+                  selectedTee={selectedTee}
+                  displayedHoles={displayedHoles}
+                  holeCount={holeCount}
+                  scores={form.watch("scores")}
+                  onScoreChange={handleScoreChange}
+                />
+              )}
+
+            {!selectedTeeKey && (
+              <div
+                className={`h-32 sm:w-[270px] md:w-[600px] lg:w-[725px] xl:w-[975px] 2xl:w-[1225px] 3xl:w-[1325px]`}
+              >
+                <div className="flex items-center justify-center h-full">
+                  <Lead>Select a course and tee to submit your scorecard</Lead>
+                </div>
               </div>
             )}
+
             {selectedTeeKey && (
               <div className="mt-4 flex justify-end">
                 <Button type="submit">Submit Scorecard</Button>

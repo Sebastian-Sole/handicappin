@@ -62,6 +62,9 @@ function TeeInfoFields({ tee, onTeeChange }: TeeFormContentProps) {
           placeholder="e.g., RED"
           value={tee.name}
           onChange={(e) => onTeeChange({ ...tee, name: e.target.value })}
+          onWheel={(e) => {
+            e.currentTarget.blur();
+          }}
         />
       </div>
 
@@ -185,6 +188,9 @@ function TeeRatingFields({ tee, onTeeChange }: TeeFormContentProps) {
               handleFront9RatingChange(parseFloat(e.target.value) || 0)
             }
             placeholder="e.g., 39.5"
+            onWheel={(e) => {
+              e.currentTarget.blur();
+            }}
           />
         </div>
 
@@ -202,6 +208,9 @@ function TeeRatingFields({ tee, onTeeChange }: TeeFormContentProps) {
               handleBack9RatingChange(parseFloat(e.target.value) || 0)
             }
             placeholder="e.g., 40.3"
+            onWheel={(e) => {
+              e.currentTarget.blur();
+            }}
           />
         </div>
 
@@ -219,6 +228,9 @@ function TeeRatingFields({ tee, onTeeChange }: TeeFormContentProps) {
               handleTotalRatingChange(parseFloat(e.target.value) || 0)
             }
             placeholder="e.g., 79.8"
+            onWheel={(e) => {
+              e.currentTarget.blur();
+            }}
           />
         </div>
       </div>
@@ -238,6 +250,9 @@ function TeeRatingFields({ tee, onTeeChange }: TeeFormContentProps) {
               handleFront9SlopeChange(parseInt(e.target.value) || 0)
             }
             placeholder="e.g., 147"
+            onWheel={(e) => {
+              e.currentTarget.blur();
+            }}
           />
         </div>
 
@@ -254,6 +269,9 @@ function TeeRatingFields({ tee, onTeeChange }: TeeFormContentProps) {
               handleBack9SlopeChange(parseInt(e.target.value) || 0)
             }
             placeholder="e.g., 149"
+            onWheel={(e) => {
+              e.currentTarget.blur();
+            }}
           />
         </div>
 
@@ -270,6 +288,9 @@ function TeeRatingFields({ tee, onTeeChange }: TeeFormContentProps) {
               handleTotalSlopeChange(parseInt(e.target.value) || 0)
             }
             placeholder="e.g., 148"
+            onWheel={(e) => {
+              e.currentTarget.blur();
+            }}
           />
         </div>
       </div>
@@ -392,6 +413,9 @@ function TeeHoleTable({ tee, onTeeChange }: TeeFormContentProps) {
                           parseInt(e.target.value) || 0
                         )
                       }
+                      onWheel={(e) => {
+                        e.currentTarget.blur();
+                      }}
                     />
                   </TableCell>
                 ))}
@@ -412,6 +436,9 @@ function TeeHoleTable({ tee, onTeeChange }: TeeFormContentProps) {
                       onChange={(e) =>
                         handleParChange(index, parseInt(e.target.value) || 0)
                       }
+                      onWheel={(e) => {
+                        e.currentTarget.blur();
+                      }}
                     />
                   </TableCell>
                 ))}
@@ -435,6 +462,9 @@ function TeeHoleTable({ tee, onTeeChange }: TeeFormContentProps) {
                           parseInt(e.target.value) || 0
                         )
                       }
+                      onWheel={(e) => {
+                        e.currentTarget.blur();
+                      }}
                     />
                   </TableCell>
                 ))}

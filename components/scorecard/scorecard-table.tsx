@@ -9,7 +9,8 @@ import {
 import { Input } from "../ui/input";
 import { toast } from "../ui/use-toast";
 import { Hole, Tee } from "@/types/scorecard";
-import { CONSTANTS, BREAKPOINTS } from "@/constants/golf";
+import { CONSTANTS } from "@/constants/golf";
+import { Skeleton } from "../ui/skeleton";
 
 interface ScorecardTableProps {
   selectedTee: Tee | undefined;
@@ -31,7 +32,7 @@ export function ScorecardTable({
 
   return (
     <div
-      className={`rounded-lg border max-w-[${BREAKPOINTS.TABLE_WIDTH.DEFAULT}] sm:max-w-[${BREAKPOINTS.TABLE_WIDTH.SM}] md:max-w-[${BREAKPOINTS.TABLE_WIDTH.MD}] lg:max-w-[${BREAKPOINTS.TABLE_WIDTH.LG}] xl:max-w-[${BREAKPOINTS.TABLE_WIDTH.XL}] 2xl:max-w-[${BREAKPOINTS.TABLE_WIDTH["2XL"]}] 3xl:max-w-[${BREAKPOINTS.TABLE_WIDTH["3XL"]}]`}
+      className={`rounded-lg border overflow-hidden max-w-[270px] sm:max-w-[350px] md:max-w-[600px] lg:max-w-[725px] xl:max-w-[975px] 2xl:max-w-[1225px] 3xl:max-w-[1325px]`}
     >
       <div className="overflow-x-auto max-w-full">
         <Table className="w-full">
@@ -168,6 +169,9 @@ export function ScorecardTable({
                       }
                       onScoreChange(i, parsed);
                     }}
+                    onWheel={(e) => {
+                      e.currentTarget.blur();
+                    }}
                   />
                 </TableCell>
               ))}
@@ -195,3 +199,135 @@ export function ScorecardTable({
     </div>
   );
 }
+
+export const TableSkeleton = ({ holeCount }: { holeCount: number }) => {
+  return (
+    <Skeleton
+      className={`rounded-lg border min-w-[270px] sm:min-w-[350px] md:min-w-[600px] lg:min-w-[725px] xl:min-w-[975px] 2xl:min-w-[1225px] 3xl:min-w-[1600px]`}
+    >
+      <div className="overflow-x-auto max-w-full">
+        <table className="w-full border-collapse">
+          <thead>
+            <tr>
+              <th className="p-2  dark:bg-accent w-20">
+                <Skeleton className="h-6 w-12" />
+              </th>
+              {[...Array(holeCount)].map((_, i) => (
+                <th key={i} className="p-2  dark:bg-accent text-center">
+                  <Skeleton className="h-6 w-8" />
+                </th>
+              ))}
+              {holeCount === 18 && (
+                <>
+                  <th className="p-2  dark:bg-accent text-center">
+                    <Skeleton className="h-6 w-10" />
+                  </th>
+                  <th className="p-2  dark:bg-accent text-center">
+                    <Skeleton className="h-6 w-10" />
+                  </th>
+                </>
+              )}
+              <th className="p-2  dark:bg-accent text-center">
+                <Skeleton className="h-6 w-10" />
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {/* Distance Row */}
+            <tr>
+              <td className="p-2  dark:bg-accent">
+                <Skeleton className="h-6 w-24" />
+              </td>
+              {[...Array(holeCount)].map((_, i) => (
+                <td key={i} className="p-2 text-center">
+                  <Skeleton className="h-6 w-10" />
+                </td>
+              ))}
+              {holeCount === 18 && (
+                <>
+                  <td className="p-2 text-center">
+                    <Skeleton className="h-6 w-12" />
+                  </td>
+                  <td className="p-2 text-center">
+                    <Skeleton className="h-6 w-12" />
+                  </td>
+                </>
+              )}
+              <td className="p-2 text-center">
+                <Skeleton className="h-6 w-12" />
+              </td>
+            </tr>
+
+            {/* Par Row */}
+            <tr>
+              <td className="p-2  dark:bg-accent">
+                <Skeleton className="h-6 w-10" />
+              </td>
+              {[...Array(holeCount)].map((_, i) => (
+                <td key={i} className="p-2 text-center">
+                  <Skeleton className="h-6 w-10" />
+                </td>
+              ))}
+              {holeCount === 18 && (
+                <>
+                  <td className="p-2 text-center">
+                    <Skeleton className="h-6 w-12" />
+                  </td>
+                  <td className="p-2 text-center">
+                    <Skeleton className="h-6 w-12" />
+                  </td>
+                </>
+              )}
+              <td className="p-2 text-center">
+                <Skeleton className="h-6 w-12" />
+              </td>
+            </tr>
+
+            {/* Handicap Row */}
+            <tr>
+              <td className="p-2  dark:bg-accent">
+                <Skeleton className="h-6 w-14" />
+              </td>
+              {[...Array(holeCount)].map((_, i) => (
+                <td key={i} className="p-2 text-center">
+                  <Skeleton className="h-6 w-8" />
+                </td>
+              ))}
+              {holeCount === 18 ? (
+                <Skeleton className="h-6 w-12" />
+              ) : (
+                <Skeleton className="h-6 w-12" />
+              )}
+              <Skeleton className="h-6 w-12" />
+            </tr>
+
+            {/* Score Row */}
+            <tr>
+              <td className="p-2  dark:bg-accent">
+                <Skeleton className="h-6 w-14" />
+              </td>
+              {[...Array(holeCount)].map((_, i) => (
+                <td key={i} className="p-2">
+                  <Skeleton className="h-10 w-full" />
+                </td>
+              ))}
+              {holeCount === 18 && (
+                <>
+                  <td className="p-2 text-center">
+                    <Skeleton className="h-6 w-12" />
+                  </td>
+                  <td className="p-2 text-center">
+                    <Skeleton className="h-6 w-12" />
+                  </td>
+                </>
+              )}
+              <td className="p-2 text-center">
+                <Skeleton className="h-6 w-12" />
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </Skeleton>
+  );
+};
