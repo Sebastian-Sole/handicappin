@@ -40,33 +40,45 @@ export function AddCourseDialog({ onAdd }: AddCourseDialogProps) {
   };
 
   return (
-    <Form {...form}>
-      <form onSubmit={(e) => e.preventDefault()}>
-        <MultiPageDialog
-          trigger={
-            <Button
-              variant="ghost"
-              size="sm"
-              className="w-full"
-              onClick={() => setOpen(true)}
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              Add New Course
-            </Button>
-          }
-          isNextButtonDisabled={!watchName}
-          handleSave={handleSubmit(onSubmit, (errors) => {
-            console.log(errors);
-            toast({
-              title: "Failed to add course",
-              description:
-                "Please check the form for errors/missing data, or contact support",
-              variant: "destructive",
-            });
-          })}
-          open={open}
-          setOpen={setOpen}
-        >
+    <MultiPageDialog
+      trigger={
+        <div className="flex gap-2 justify-between flex-wrap sm:flex-row flex-col">
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-10 hidden md:flex"
+            onClick={() => setOpen(true)}
+            type="button"
+          >
+            <Plus className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="outline"
+            size="lg"
+            className="h-10 md:hidden sm:flex"
+            onClick={() => setOpen(true)}
+            type="button"
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Add New Course
+          </Button>
+        </div>
+      }
+      isNextButtonDisabled={!watchName}
+      handleSave={handleSubmit(onSubmit, (errors) => {
+        console.log(errors);
+        toast({
+          title: "Failed to add course",
+          description:
+            "Please check the form for errors/missing data, or contact support",
+          variant: "destructive",
+        });
+      })}
+      open={open}
+      setOpen={setOpen}
+    >
+      <Form {...form}>
+        <form onSubmit={(e) => e.preventDefault()}>
           <DialogPage title="Add New Course">
             <FormField
               control={control}
@@ -100,8 +112,8 @@ export function AddCourseDialog({ onAdd }: AddCourseDialogProps) {
               )}
             />
           </DialogPage>
-        </MultiPageDialog>
-      </form>
-    </Form>
+        </form>
+      </Form>
+    </MultiPageDialog>
   );
 }

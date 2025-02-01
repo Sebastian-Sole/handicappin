@@ -21,16 +21,16 @@ interface TeeDialogProps {
   mode: "add" | "edit";
   existingTee?: Tee;
   onSave: (updatedTee: Tee) => void;
-  id?: string;
   onOpenChange?: (open: boolean) => void;
+  disabled?: boolean;
 }
 
 export function TeeDialog({
   mode,
   existingTee = blankTee,
   onSave,
-  id,
   onOpenChange,
+  disabled,
 }: TeeDialogProps) {
   const [isOpen, setIsOpen] = useState(false);
 
@@ -65,13 +65,21 @@ export function TeeDialog({
       <DialogTrigger asChild>
         {mode === "edit" ? (
           <div className="flex gap-2 justify-between flex-wrap sm:flex-row flex-col">
-            <Button variant="outline" size="sm" className="h-10 hidden md:flex">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="h-10 hidden md:flex"
+              disabled={disabled}
+            >
               <Pencil className="h-4 w-4" />
             </Button>
             <Button
+              type="button"
               variant="outline"
               size="lg"
               className="h-10 sm:flex md:hidden "
+              disabled={disabled}
             >
               <Pencil className="h-4 w-4 mr-2" />
               Edit Tee
@@ -80,16 +88,20 @@ export function TeeDialog({
         ) : (
           <div className="flex gap-2 justify-between flex-wrap sm:flex-row flex-col">
             <Button
+              type="button"
               variant="outline"
               size="sm"
               className="h-10 hidden  md:flex"
+              disabled={disabled}
             >
               <Plus className="h-4 w-4" />
             </Button>
             <Button
+              type="button"
               variant="outline"
               size="lg"
               className="h-10  sm:flex md:hidden"
+              disabled={disabled}
             >
               <Plus className="h-4 w-4 mr-2" />
               Add Tee

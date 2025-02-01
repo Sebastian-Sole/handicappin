@@ -2,6 +2,10 @@ import { Hole } from "@/types/scorecard";
 
 /**
  * Calculates the total score for a range of holes
+ * @param scores - The scores to calculate the total for
+ * @param start - The start hole index
+ * @param end - The end hole index
+ * @returns The total score
  */
 export const calculateTotal = (
   scores: number[],
@@ -12,6 +16,9 @@ export const calculateTotal = (
 /**
  * Normalizes handicap values for nine holes
  * When playing 9 holes, we need to adjust the handicaps to be 1-9 instead of potentially using values from 1-18
+ * @param holes - The holes to normalize
+ * @param holeCount - The number of holes to display
+ * @returns The normalized holes
  */
 export const normalizeHcpForNineHoles = (
   holes: Hole[] | undefined,
@@ -41,6 +48,9 @@ export const normalizeHcpForNineHoles = (
 
 /**
  * Gets the displayed holes based on the selected tee and hole count
+ * @param selectedTee - The selected tee
+ * @param holeCount - The number of holes to display
+ * @returns The displayed holes
  */
 export const getDisplayedHoles = (
   selectedTee: { holes?: Hole[] } | undefined,
@@ -48,4 +58,16 @@ export const getDisplayedHoles = (
 ): Hole[] => {
   if (!selectedTee?.holes) return [];
   return normalizeHcpForNineHoles(selectedTee.holes, holeCount) || [];
+};
+
+/**
+ * Rounds a date to the nearest minute
+ * @param date - The date to round
+ * @returns The rounded date
+ */
+export const roundToNearestMinute = (date: Date) => {
+  const newDate = new Date(date);
+  newDate.setSeconds(0);
+  newDate.setMilliseconds(0);
+  return newDate;
 };

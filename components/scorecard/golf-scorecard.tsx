@@ -21,7 +21,7 @@ import {
   CommandItem,
   CommandList,
 } from "@/components/ui/command";
-import { ChevronsUpDown } from "lucide-react";
+import { Check, ChevronsUpDown } from "lucide-react";
 import { AddCourseDialog } from "./add-course-dialog";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -31,26 +31,33 @@ import {
   FormControl,
   FormField,
   FormItem,
+  FormLabel,
   FormMessage,
 } from "../ui/form";
 import { api } from "@/trpc/react";
 import { useDebounce } from "use-debounce";
 import { Course, Scorecard, scorecardSchema, Tee } from "@/types/scorecard";
-import { Input } from "../ui/input";
 import { Textarea } from "../ui/textarea";
 import { toast } from "../ui/use-toast";
 import { TeeDialog } from "./tee-dialog";
 import { getTeeKey, useTeeManagement } from "@/hooks/useTeeManagement";
 import { ScorecardTable } from "./scorecard-table";
-import { getDisplayedHoles } from "@/utils/scorecard/scorecardUtils";
-import { Lead } from "../ui/typography";
+import {
+  getDisplayedHoles,
+  roundToNearestMinute,
+} from "@/utils/scorecard/scorecardUtils";
+import { Lead, P } from "../ui/typography";
 import { Badge } from "../ui/badge";
+import { DateTimePicker } from "../ui/datepicker";
+import useMounted from "@/hooks/useMounted";
+import { Skeleton } from "../ui/skeleton";
 
 interface GolfScorecardProps {
   profile: Tables<"Profile">;
 }
 
 export default function GolfScorecard({ profile }: GolfScorecardProps) {
+  const isMounted = useMounted();
   // Use the tee management hook
   const {
     modifications,
@@ -70,7 +77,7 @@ export default function GolfScorecard({ profile }: GolfScorecardProps) {
   // Core state
   const [fetchedCourses, setFetchedCourses] = useState<Course[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
-  const [debouncedSearchTerm] = useDebounce(searchTerm, 300);
+  const [debouncedSearchTerm] = useDebounce(searchTerm, 600);
   const [openCourseSelect, setOpenCourseSelect] = useState(false);
   const [holeCount, setHoleCount] = useState<number>(18);
 
@@ -79,9 +86,9 @@ export default function GolfScorecard({ profile }: GolfScorecardProps) {
     resolver: zodResolver(scorecardSchema),
     defaultValues: {
       userId: profile.id,
-      teeTime: new Date().toISOString(),
       approvalStatus: "pending",
       scores: Array(18).fill(0),
+      teeTime: roundToNearestMinute(new Date()).toISOString(),
       notes: "",
     },
   });
@@ -146,8 +153,17 @@ export default function GolfScorecard({ profile }: GolfScorecardProps) {
         course.id !== null &&
         !modifications.courses[course.id]
     );
-    return [...unmodifiedCourses, ...Object.values(modifications.courses)];
-  }, [fetchedCourses, modifications.courses]);
+
+    const allCourses = [
+      ...unmodifiedCourses,
+      ...Object.values(modifications.courses),
+    ];
+
+    // Move the selected course to the first position
+    return allCourses.sort((a, b) =>
+      a.id === selectedCourseId ? -1 : b.id === selectedCourseId ? 1 : 0
+    );
+  }, [fetchedCourses, modifications.courses, selectedCourseId]);
 
   const handleCourseSearch = (searchString: string) => {
     setSearchTerm(searchString);
@@ -281,70 +297,90 @@ export default function GolfScorecard({ profile }: GolfScorecardProps) {
                         <FormControl>
                           <div className="space-y-2">
                             <Label htmlFor="course">Course</Label>
-                            <Popover
-                              open={openCourseSelect}
-                              onOpenChange={setOpenCourseSelect}
-                            >
-                              <PopoverTrigger asChild>
-                                <Button
-                                  variant="outline"
-                                  role="combobox"
-                                  aria-expanded={openCourseSelect}
-                                  className="w-full justify-between"
+                            <div className="flex flex-col md:flex-row gap-2">
+                              <div className="flex-1">
+                                <Popover
+                                  open={openCourseSelect}
+                                  onOpenChange={setOpenCourseSelect}
                                 >
-                                  {getSelectedCourseName()}
-                                  <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                                </Button>
-                              </PopoverTrigger>
-                              <PopoverContent className="w-full p-0">
-                                <Command>
-                                  <CommandInput
-                                    placeholder="Search course..."
-                                    onValueChange={handleCourseSearch}
-                                  />
-                                  <CommandList>
-                                    {effectiveCourses.length === 0 &&
-                                      !isLoading && (
-                                        <CommandEmpty>
-                                          <AddCourseDialog
-                                            onAdd={handleAddCourse}
-                                          />
-                                        </CommandEmpty>
-                                      )}
-                                    <CommandGroup className="py-6">
-                                      {effectiveCourses.length > 0 &&
-                                        !isLoading &&
-                                        effectiveCourses.map((course) => (
-                                          <CommandItem
-                                            key={course.id || course.name}
-                                            onSelect={() => {
-                                              // Clear the selected tee first
-                                              selectTee(undefined);
-                                              // Then set the new course
-                                              selectCourse(course.id);
-                                              setOpenCourseSelect(false);
-                                              form.setValue("course", course);
-                                            }}
-                                          >
-                                            {course.name}
-                                          </CommandItem>
-                                        ))}
-                                      <CommandItem>
-                                        <AddCourseDialog
-                                          onAdd={handleAddCourse}
-                                        />
-                                      </CommandItem>
-                                    </CommandGroup>
+                                  <PopoverTrigger asChild>
+                                    <Button
+                                      variant="outline"
+                                      role="combobox"
+                                      aria-expanded={openCourseSelect}
+                                      className="w-full justify-between"
+                                    >
+                                      {getSelectedCourseName()}
+                                      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                    </Button>
+                                  </PopoverTrigger>
+                                  <PopoverContent className="w-full p-0">
+                                    <Command>
+                                      <CommandInput
+                                        placeholder="Search course..."
+                                        onValueChange={handleCourseSearch}
+                                      />
+                                      <CommandList>
+                                        <CommandGroup className="py-6">
+                                          {effectiveCourses.length > 0 &&
+                                            !isLoading &&
+                                            effectiveCourses.map((course) => (
+                                              <CommandItem
+                                                key={course.id || course.name}
+                                                onSelect={() => {
+                                                  // Clear the selected tee first
+                                                  selectTee(undefined);
+                                                  // Then set the new course
+                                                  selectCourse(course.id);
+                                                  setOpenCourseSelect(false);
+                                                  form.setValue(
+                                                    "course",
+                                                    course
+                                                  );
+                                                }}
+                                              >
+                                                {course.name}
+                                              </CommandItem>
+                                            ))}
+                                          {effectiveCourses.length === 0 &&
+                                            !isLoading && (
+                                              <CommandEmpty>
+                                                <P>Search for a course...</P>
+                                              </CommandEmpty>
+                                            )}
+                                        </CommandGroup>
 
-                                    {isLoading && (
-                                      <CommandEmpty>
-                                        <span>Loading...</span>
-                                      </CommandEmpty>
-                                    )}
-                                  </CommandList>
-                                </Command>
-                              </PopoverContent>
-                            </Popover>
+                                        {(isLoading ||
+                                          (!searchedCourses &&
+                                            searchTerm !==
+                                              debouncedSearchTerm) ||
+                                          (searchedCourses &&
+                                            effectiveCourses.length !== 0 &&
+                                            searchTerm !==
+                                              debouncedSearchTerm)) && (
+                                          <CommandEmpty>
+                                            <P>Loading...</P>
+                                          </CommandEmpty>
+                                        )}
+
+                                        {!isLoading &&
+                                          searchedCourses &&
+                                          searchedCourses.length === 0 &&
+                                          searchTerm ===
+                                            debouncedSearchTerm && (
+                                            <CommandEmpty>
+                                              <P>No courses found</P>
+                                            </CommandEmpty>
+                                          )}
+                                      </CommandList>
+                                    </Command>
+                                  </PopoverContent>
+                                </Popover>
+                              </div>
+                              <div className="flex gap-2 justify-between lg:justify-start w-full md:w-auto sm:flex-row flex-col">
+                                <AddCourseDialog onAdd={handleAddCourse} />
+                              </div>
+                            </div>
                           </div>
                         </FormControl>
                         <FormMessage />
@@ -412,25 +448,29 @@ export default function GolfScorecard({ profile }: GolfScorecardProps) {
                                   </Select>
                                 </div>
                                 <div className="flex gap-2 justify-between lg:justify-start w-full md:w-auto sm:flex-row flex-col">
-                                  {selectedTeeKey &&
-                                    getEffectiveTees(selectedCourseId) &&
-                                    getEffectiveTees(selectedCourseId).length >
-                                      0 && (
-                                      <TeeDialog
-                                        mode="edit"
-                                        key={`${selectedCourseId}-${selectedTeeKey}`}
-                                        existingTee={getCompleteEditTee}
-                                        onSave={handleEditTee}
-                                      />
-                                    )}
+                                  <TeeDialog
+                                    mode="edit"
+                                    key={`${selectedCourseId}-${selectedTeeKey}`}
+                                    existingTee={getCompleteEditTee}
+                                    onSave={handleEditTee}
+                                    disabled={
+                                      !selectedTeeKey &&
+                                      getEffectiveTees(selectedCourseId) &&
+                                      getEffectiveTees(selectedCourseId)
+                                        ?.length === 0
+                                    }
+                                  />
 
-                                  {selectedCourseId && (
-                                    <TeeDialog
-                                      key={`${selectedCourseId}-${selectedCourseId}-new`}
-                                      mode="add"
-                                      onSave={handleAddTee}
-                                    />
-                                  )}
+                                  <TeeDialog
+                                    key={`${selectedCourseId}-${selectedCourseId}-new`}
+                                    mode="add"
+                                    onSave={handleAddTee}
+                                    disabled={
+                                      !selectedCourseId ||
+                                      getEffectiveTees(selectedCourseId)
+                                        ?.length === 0
+                                    }
+                                  />
                                 </div>
                               </div>
                             </div>
@@ -456,60 +496,78 @@ export default function GolfScorecard({ profile }: GolfScorecardProps) {
                 <CardContent className="p-4">
                   <div className="space-y-4">
                     <div className="space-y-2">
-                      <Label htmlFor="date">Date</Label>
+                      <FormLabel>Tee Time</FormLabel>
                       <FormField
                         control={form.control}
                         name="teeTime"
                         render={({ field }) => (
-                          <FormItem>
+                          <FormItem className="flex flex-col">
                             <FormControl>
-                              <Input
-                                id="date"
-                                type="date"
-                                value={field.value.split("T")[0]}
-                                onChange={(e) =>
-                                  field.onChange(
-                                    new Date(e.target.value).toISOString()
-                                  )
-                                }
-                              />
+                              {isMounted ? (
+                                <DateTimePicker
+                                  granularity="minute"
+                                  value={roundToNearestMinute(
+                                    new Date(field.value)
+                                  )}
+                                  onChange={(date) => {
+                                    if (date) {
+                                      field.onChange(
+                                        roundToNearestMinute(date).toISOString()
+                                      );
+                                    }
+                                  }}
+                                />
+                              ) : (
+                                <Skeleton className="h-10 w-full" />
+                              )}
                             </FormControl>
+                            <FormMessage />
                           </FormItem>
                         )}
                       />
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="holes">Holes</Label>
-                      <Select
-                        value={holeCount.toString()}
-                        onValueChange={(value) => setHoleCount(parseInt(value))}
-                      >
-                        <SelectTrigger id="holes">
-                          <SelectValue placeholder="Select Holes" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="9">9 Holes</SelectItem>
-                          <SelectItem value="18">18 Holes</SelectItem>
-                        </SelectContent>
-                      </Select>
+                      {isMounted ? (
+                        <Select
+                          value={holeCount.toString()}
+                          onValueChange={(value) =>
+                            setHoleCount(parseInt(value))
+                          }
+                        >
+                          <SelectTrigger id="holes">
+                            <SelectValue placeholder="Select Holes" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="9">9 Holes</SelectItem>
+                            <SelectItem value="18">18 Holes</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      ) : (
+                        <Skeleton className="h-10 w-full" />
+                      )}
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="notes">Notes</Label>
-                      <FormField
-                        control={form.control}
-                        name="notes"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormControl>
-                              <Textarea
-                                id="notes"
-                                placeholder="Enter any notes here..."
-                                {...field}
-                              />
-                            </FormControl>
-                          </FormItem>
-                        )}
-                      />
+                      {isMounted ? (
+                        <FormField
+                          control={form.control}
+                          name="notes"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormControl>
+                                <Textarea
+                                  id="notes"
+                                  placeholder="Enter any notes here..."
+                                  {...field}
+                                />
+                              </FormControl>
+                            </FormItem>
+                          )}
+                        />
+                      ) : (
+                        <Skeleton className="h-20 w-full" />
+                      )}
                     </div>
                   </div>
                 </CardContent>
