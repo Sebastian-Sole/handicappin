@@ -72,7 +72,7 @@ serve(async (req) => {
       throw new Error("Error creating token");
     }
 
-    const resetLink = `${resetLinkBase}?token=${token}`;
+    const resetLink = `${resetLinkBase}?token=${token}&email=${email}`;
 
     const emailHtml = render(
       ResetPasswordEmail({ resetLink, username: email }),
