@@ -1,11 +1,11 @@
 import { Tables } from "./supabase";
 
-export type RoundWithCourse = Tables<"Round"> & {
+export type RoundWithCourse = Tables<"round"> & {
   // Flatten Course properties directly into RoundWithCourse
-  courseName: Tables<"Course">["name"];
-  courseEighteenHolePar: Tables<"Course">["eighteenHolePar"];
-  courseNineHolePar: Tables<"Course">["nineHolePar"];
-  courseRating: Tables<"Course">["courseRating"];
-  courseSlope: Tables<"Course">["slopeRating"];
+  courseName: Tables<"course">["name"];
+  courseEighteenHolePar: Tables<"course">["eighteenHolePar"];
+  courseNineHolePar: Tables<"course">["nineHolePar"];
+  courseRating: Tables<"course">["courseRating"];
+  courseSlope: Tables<"course">["slopeRating"];
   // Add other Course attributes here as needed
 };

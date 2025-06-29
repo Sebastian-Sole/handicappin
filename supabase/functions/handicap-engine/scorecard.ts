@@ -1,4 +1,4 @@
-import z from "zod";
+import { z } from "https://esm.sh/zod@3.24.1";
 
 export const holeSchema = z.object({
   id: z.number().or(z.undefined()),

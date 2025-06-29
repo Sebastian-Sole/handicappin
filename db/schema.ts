@@ -13,14 +13,15 @@ import {
   pgSchema,
 } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
-
+import { createSelectSchema } from "drizzle-zod";
+import { z } from "zod";
 const authSchema = pgSchema("auth");
 export const usersInAuth = authSchema.table("users", {
   id: uuid("id").primaryKey(),
 });
 
 export const profile = pgTable(
-  "Profile",
+  "profile",
   {
     id: uuid().primaryKey().notNull(),
     email: text().notNull(),
@@ -29,53 +30,64 @@ export const profile = pgTable(
     verified: boolean().default(false).notNull(),
   },
   (table) => [
-    uniqueIndex("Profile_email_key").using(
+    uniqueIndex("profile_email_key").using(
       "btree",
       table.email.asc().nullsLast().op("text_ops")
     ),
     foreignKey({
       columns: [table.id],
       foreignColumns: [usersInAuth.id],
-      name: "Profile_id_fkey",
+      name: "profile_id_fkey",
     })
       .onUpdate("cascade")
       .onDelete("cascade"),
-    pgPolicy("Allow profile updates for authed users", {
-      as: "permissive",
-      for: "update",
-      to: ["public"],
-      using: sql`(auth.uid() = id)`,
-    }),
-    pgPolicy("Enable delete for users based on their own user_id", {
-      as: "permissive",
-      for: "delete",
-      to: ["public"],
-      using: sql`(auth.uid() = id)`,
-    }),
-    pgPolicy("Enable insert for authenticated users only", {
-      as: "permissive",
-      for: "insert",
-      to: ["authenticated"],
-      withCheck: sql`true`,
-    }),
-    pgPolicy("Enable users to view their own data only", {
+    // SELECT: only allow a user to read the row whose id matches their JWT
+    pgPolicy("Users can select their own profile", {
       as: "permissive",
       for: "select",
       to: ["authenticated"],
-      using: sql`(auth.uid() = id)`,
+      using: sql`(auth.uid()::uuid = id)`,
+    }),
+
+    // UPDATE: only allow a user to update their own row
+    pgPolicy("Users can update their own profile", {
+      as: "permissive",
+      for: "update",
+      to: ["authenticated"],
+      using: sql`(auth.uid()::uuid = id)`,
+    }),
+
+    // INSERT: only allow a user to INSERT *their* profile
+    // (so that malicious JWTs can’t insert rows under someone else’s UUID)
+    pgPolicy("Users can insert their own profile", {
+      as: "permissive",
+      for: "insert",
+      to: ["authenticated"],
+      withCheck: sql`(auth.uid()::uuid = id)`,
+    }),
+
+    // DELETE: if you want users to be able to delete their own profile
+    pgPolicy("Users can delete their own profile", {
+      as: "permissive",
+      for: "delete",
+      to: ["authenticated"],
+      using: sql`(auth.uid()::uuid = id)`,
     }),
   ]
 );
 
+export const profileSchema = createSelectSchema(profile);
+export type Profile = z.infer<typeof profileSchema>;
+
 export const course = pgTable(
-  "Course",
+  "course",
   {
     id: serial().primaryKey().notNull(),
     name: text().notNull(),
     approvalStatus: text().default("pending").notNull(),
   },
   (table) => [
-    uniqueIndex("Course_name_key").using(
+    uniqueIndex("course_name_key").using(
       "btree",
       table.name.asc().nullsLast().op("text_ops")
     ),
@@ -93,8 +105,11 @@ export const course = pgTable(
   ]
 );
 
+export const courseSchema = createSelectSchema(course);
+export type Course = z.infer<typeof courseSchema>;
+
 export const teeInfo = pgTable(
-  "TeeInfo",
+  "teeInfo",
   {
     id: serial().primaryKey().notNull(),
     courseId: integer().notNull(),
@@ -126,7 +141,7 @@ export const teeInfo = pgTable(
     foreignKey({
       columns: [table.courseId],
       foreignColumns: [course.id],
-      name: "TeeInfo_courseId_fkey",
+      name: "teeInfo_courseId_fkey",
     })
       .onUpdate("cascade")
       .onDelete("cascade"),
@@ -144,8 +159,11 @@ export const teeInfo = pgTable(
   ]
 );
 
+export const teeInfoSchema = createSelectSchema(teeInfo);
+export type TeeInfo = z.infer<typeof teeInfoSchema>;
+
 export const hole = pgTable(
-  "Hole",
+  "hole",
   {
     id: serial().primaryKey().notNull(),
     teeId: integer().notNull(),
@@ -158,7 +176,7 @@ export const hole = pgTable(
     foreignKey({
       columns: [table.teeId],
       foreignColumns: [teeInfo.id],
-      name: "Hole_teeId_fkey",
+      name: "hole_teeId_fkey",
     })
       .onUpdate("cascade")
       .onDelete("cascade"),
@@ -176,8 +194,11 @@ export const hole = pgTable(
   ]
 );
 
+export const holeSchema = createSelectSchema(hole);
+export type Hole = z.infer<typeof holeSchema>;
+
 export const round = pgTable(
-  "Round",
+  "round",
   {
     id: serial().primaryKey().notNull(),
     teeTime: timestamp().notNull(),
@@ -185,36 +206,39 @@ export const round = pgTable(
     userId: uuid().notNull(),
     teeId: integer().notNull(),
     existingHandicapIndex: doublePrecision().notNull(),
-    updatedHandicapIndex: doublePrecision().default(0).notNull(),
+    updatedHandicapIndex: doublePrecision().default(54).notNull(),
     scoreDifferential: doublePrecision().notNull(),
     totalStrokes: integer().notNull(),
     adjustedGrossScore: integer().notNull(),
+    adjustedPlayedScore: integer().notNull(),
     createdAt: timestamp()
       .default(sql`CURRENT_TIMESTAMP`)
       .notNull(),
     parPlayed: integer().notNull(),
     notes: text(),
     exceptionalScoreAdjustment: integer().default(0).notNull(),
+    courseHandicap: integer().notNull(),
+    approvalStatus: text().default("pending").notNull(),
   },
   (table) => [
     foreignKey({
       columns: [table.courseId],
       foreignColumns: [course.id],
-      name: "Round_courseId_fkey",
+      name: "round_courseId_fkey",
     })
       .onUpdate("cascade")
       .onDelete("cascade"),
     foreignKey({
       columns: [table.userId],
       foreignColumns: [profile.id],
-      name: "Round_userId_fkey",
+      name: "round_userId_fkey",
     })
       .onUpdate("cascade")
       .onDelete("cascade"),
     foreignKey({
       columns: [table.teeId],
       foreignColumns: [teeInfo.id],
-      name: "Round_teeId_fkey",
+      name: "round_teeId_fkey",
     })
       .onUpdate("cascade")
       .onDelete("cascade"),
@@ -233,8 +257,11 @@ export const round = pgTable(
   ]
 );
 
+export const roundSchema = createSelectSchema(round);
+export type Round = z.infer<typeof roundSchema>;
+
 export const score = pgTable(
-  "Score",
+  "score",
   {
     id: serial().primaryKey().notNull(),
     roundId: integer().notNull(),
@@ -247,21 +274,21 @@ export const score = pgTable(
     foreignKey({
       columns: [table.roundId],
       foreignColumns: [round.id],
-      name: "Score_roundId_fkey",
+      name: "score_roundId_fkey",
     })
       .onUpdate("cascade")
       .onDelete("cascade"),
     foreignKey({
       columns: [table.holeId],
       foreignColumns: [hole.id],
-      name: "Score_holeId_fkey",
+      name: "score_holeId_fkey",
     })
       .onUpdate("cascade")
       .onDelete("cascade"),
     foreignKey({
       columns: [table.userId],
       foreignColumns: [profile.id],
-      name: "Score_userId_fkey",
+      name: "score_userId_fkey",
     })
       .onUpdate("cascade")
       .onDelete("cascade"),
@@ -279,3 +306,6 @@ export const score = pgTable(
     }),
   ]
 );
+
+export const scoreSchema = createSelectSchema(score);
+export type Score = z.infer<typeof scoreSchema>;

@@ -42,3 +42,5 @@ handicappin.code-workspace
 .env.development
 
 .env.production
+
+.vscode/

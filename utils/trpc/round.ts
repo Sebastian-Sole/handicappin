@@ -2,8 +2,8 @@ import { RoundWithCourse } from "@/types/database";
 import { Tables } from "@/types/supabase";
 
 export const flattenRoundWithCourse = (
-  round: Tables<"Round">,
-  course: Tables<"Course"> | null
+  round: Tables<"round">,
+  course: Tables<"course"> | null
 ): RoundWithCourse | null => {
   if (course) {
     return {

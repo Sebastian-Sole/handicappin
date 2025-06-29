@@ -35,7 +35,7 @@ const VerifyLoginPage = async ({
   if (user) {
     // Check if the profile exists
     const { data: profileData, error: profileError } = await supabase
-      .from("Profile")
+      .from("profile")
       .select("*")
       .eq("id", user.id)
       .maybeSingle();
@@ -46,7 +46,7 @@ const VerifyLoginPage = async ({
     }
 
     const { error: updateProfileError } = await supabase
-      .from("Profile")
+      .from("profile")
       .update({
         verified: true,
       })
