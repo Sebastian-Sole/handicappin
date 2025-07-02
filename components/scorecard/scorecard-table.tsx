@@ -8,7 +8,7 @@ import {
 } from "../ui/table";
 import { Input } from "../ui/input";
 import { toast } from "../ui/use-toast";
-import { Hole, Tee } from "@/types/scorecard";
+import { Hole, Score, Tee } from "@/types/scorecard";
 import { CONSTANTS } from "@/constants/golf";
 import { Skeleton } from "../ui/skeleton";
 
@@ -16,7 +16,7 @@ interface ScorecardTableProps {
   selectedTee: Tee | undefined;
   displayedHoles: Hole[];
   holeCount: number;
-  scores: number[];
+  scores: Score[];
   onScoreChange: (holeIndex: number, score: number) => void;
 }
 
@@ -27,8 +27,8 @@ export function ScorecardTable({
   scores,
   onScoreChange,
 }: ScorecardTableProps) {
-  const calculateTotal = (scores: number[], start: number, end: number) =>
-    scores.slice(start, end).reduce((sum, score) => sum + score, 0);
+  const calculateTotal = (scores: Score[], start: number, end: number) =>
+    scores.slice(start, end).reduce((sum, score) => sum + score.strokes, 0);
 
   return (
     <div
@@ -133,11 +133,13 @@ export function ScorecardTable({
                 </TableCell>
               ))}
               {holeCount === CONSTANTS.EIGHTEEN_HOLES ? (
-                <TableCell className="bg-background" colSpan={2} />
+                <>
+                  <TableCell className="bg-background" colSpan={2} />
+                  <TableCell className="bg-background" />
+                </>
               ) : (
                 <TableCell className="bg-background" />
               )}
-              <TableCell className="bg-background" />
             </TableRow>
 
             {/* Score Row */}
@@ -153,7 +155,7 @@ export function ScorecardTable({
                   <Input
                     className="border-0 h-full text-center w-full"
                     type="number"
-                    value={score || ""}
+                    value={score.strokes || ""}
                     onChange={(e) => {
                       if (e.target.value.length > CONSTANTS.MAX_SCORE_LENGTH) {
                         return;
@@ -294,11 +296,13 @@ export const TableSkeleton = ({ holeCount }: { holeCount: number }) => {
                 </td>
               ))}
               {holeCount === 18 ? (
-                <Skeleton className="h-6 w-12" />
+                <>
+                  <Skeleton className="h-6 w-12" />
+                  <Skeleton className="h-6 w-12" />
+                </>
               ) : (
                 <Skeleton className="h-6 w-12" />
               )}
-              <Skeleton className="h-6 w-12" />
             </tr>
 
             {/* Score Row */}

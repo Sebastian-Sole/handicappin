@@ -64,3 +64,36 @@ export type Scorecard = z.infer<typeof scorecardSchema>;
 export type Tee = z.infer<typeof teeSchema>;
 export type Course = z.infer<typeof courseSchema>;
 export type Score = z.infer<typeof scoreSchema>;
+
+
+
+export const roundSchema = z.object({
+  id: z.number(),
+  userId: z.string().uuid(),
+  courseId: z.number(),
+  teeId: z.number(),
+  teeTime: z.string(),
+  totalStrokes: z.number(),
+  parPlayed: z.number(),
+  adjustedGrossScore: z.number(),
+  adjustedPlayedScore: z.number(),
+  courseHandicap: z.number(),
+  scoreDifferential: z.number(),
+  existingHandicapIndex: z.number().min(0).max(54),
+  updatedHandicapIndex: z.number().min(0).max(54),
+  exceptionalScoreAdjustment: z.number().min(0).max(10),
+  approvalStatus: z.literal("pending").or(z.literal("approved")).or(z.literal("rejected")),
+  notes: z.string().optional(),
+  createdAt: z.string(),
+})
+
+export const roundResponseSchema = z.array(roundSchema);
+export const teeResponseSchema = z.array(teeSchema);
+export const scoreResponseSchema = z.array(scoreSchema);
+export const holeResponseSchema = z.array(holeSchema);
+
+export type Round = z.infer<typeof roundSchema>;
+export type RoundResponse = z.infer<typeof roundResponseSchema>;
+export type TeeResponse = z.infer<typeof teeResponseSchema>;
+export type ScoreResponse = z.infer<typeof scoreResponseSchema>;
+export type HoleResponse = z.infer<typeof holeResponseSchema>;

@@ -67,13 +67,15 @@ export type Database = {
           email: string
           handicapIndex: number
           id: string
+          initialHandicapIndex: number
           name: string | null
           verified: boolean
         }
         Insert: {
           email: string
-          handicapIndex: number
+          handicapIndex?: number
           id: string
+          initialHandicapIndex?: number
           name?: string | null
           verified?: boolean
         }
@@ -81,6 +83,7 @@ export type Database = {
           email?: string
           handicapIndex?: number
           id?: string
+          initialHandicapIndex?: number
           name?: string | null
           verified?: boolean
         }
@@ -122,7 +125,7 @@ export type Database = {
           teeId: number
           teeTime: string
           totalStrokes: number
-          updatedHandicapIndex?: number
+          updatedHandicapIndex: number
           userId: string
         }
         Update: {

@@ -1,19 +1,44 @@
 import { RoundWithCourse } from "@/types/database";
-import { Hole } from "@/types/scorecard";
+import { Hole, Score, Tee } from "@/types/scorecard";
 import { SupabaseClient } from "@supabase/supabase-js";
 
-export const calculateCourseHandicap = (
+/**
+ * Calculates the course handicap based on the handicap index, slope rating, course rating, and par. A course handicap is the number of additional strokes a player receives on a course based on their handicap index.
+ *
+ * @param handicapIndex - The handicap index of the player.
+ * @param teePlayed - The tee object
+ * @param numberOfHolesPlayed - The number of holes played
+ * @returns The course handicap.
+ */
+export function calculateCourseHandicap(
   handicapIndex: number,
-  slopeRating: number,
-  courseRating: number,
-  par: number
-) => {
-  // Todo: Number of holes
-  return Math.round(handicapIndex * (slopeRating / 113) + (courseRating - par));
-};
+  teePlayed: Tee,
+  numberOfHolesPlayed: number
+): number {
+  if (numberOfHolesPlayed === 9) {
+    const adjustedHandicapIndex = Math.round((handicapIndex / 2) * 10) / 10;
+
+    console.log("adjusted handicap index: ", adjustedHandicapIndex);
+
+    const courseHcp =  Math.round(
+      adjustedHandicapIndex * (teePlayed.slopeRatingFront9 / 113) +
+        (teePlayed.courseRatingFront9 - teePlayed.outPar)
+    );
+
+    console.log("course handicap: ", courseHcp);
+
+    return courseHcp;
+  } else {
+    return Math.round(
+      handicapIndex * (teePlayed.slopeRating18 / 113) +
+        (teePlayed.courseRating18 - teePlayed.totalPar)
+    );
+  }
+}
 
 /**
  * Calculates the score differential based on the adjusted gross score, course rating, and slope rating.
+ * The score differential is essentially the number of strokes a player is above or below their expected score.
  *
  * @param adjustedGrossScore - The adjusted gross score of the player.
  * @param courseRating - The course rating of the golf course.
@@ -24,7 +49,7 @@ export const calculateScoreDifferential = (
   adjustedGrossScore: number,
   courseRating: number,
   slopeRating: number
-) => {
+): number => {
   return (adjustedGrossScore - courseRating) * (113 / slopeRating);
 };
 
@@ -35,9 +60,12 @@ export const calculateScoreDifferential = (
  * @param handicapStrokes - The number of handicap strokes for the player (optional).
  * @returns The hole-adjusted score.
  */
-export const calculateHoleAdjustedScore = (hole: Hole): number => {
-  const maxScore = Math.min(hole.par + 5, hole.par + 2 + hole.hcpStrokes);
-  return Math.min(hole.strokes, maxScore);
+export const calculateHoleAdjustedScore = (
+  hole: Hole,
+  score: Score
+): number => {
+  const maxScore = Math.min(hole.par + 5, hole.par + 2 + score.hcpStrokes);
+  return Math.min(score.strokes, maxScore);
 };
 
 /**
@@ -48,69 +76,64 @@ export const calculateHoleAdjustedScore = (hole: Hole): number => {
  * @param holes - An array of Hole objects representing the holes played.
  * @returns The calculated adjusted played score.
  */
-
-// Todo: Adjust calculation in accordance to hole handicap rules
-export const calculateAdjustedPlayedScore = (holes: Hole[]): number => {
-  const adjustedScores = holes.map((hole) => {
-    return calculateHoleAdjustedScore(hole);
+export const calculateAdjustedPlayedScore = (
+  holes: Hole[],
+  scores: Score[]
+): number => {
+  const adjustedScores = holes.map((hole, index) => {
+    const score = scores[index];
+    // If no score exists for this hole, return 0 (hole not played)
+    if (!score) {
+      return 0;
+    }
+    return calculateHoleAdjustedScore(hole, score);
+  });
+  adjustedScores.forEach((adjustedScore, index) => {
+    console.log(`Hole ${index + 1} adjusted score:`, adjustedScore);
   });
   return adjustedScores.reduce((acc, cur) => acc + cur);
 };
 
-// Todo: Can these attributes be manditory?
-export const calculateAdjustedGrossScore = (
-  holes: Hole[],
-  handicapIndex: number,
-  slopeRating?: number,
-  courseRating?: number,
-  par?: number
-): number | Error => {
-  const initialAdjust = calculateAdjustedPlayedScore(holes);
-
-  if (holes.length === 18) {
-    return initialAdjust;
+export function calculateAdjustedGrossScore(
+  adjustedPlayedScore: number,
+  courseHandicap: number,
+  numberOfHolesPlayed: number,
+  teePlayed: Tee
+): number {
+  let adjustedGrossScore;
+  if (numberOfHolesPlayed === 18) {
+    adjustedGrossScore = adjustedPlayedScore;
   } else {
-    if (!slopeRating || !courseRating || !par) {
-      throw new Error(
-        "Slope rating, course rating and par are required for calculating adjusted gross score for less than 18 holes"
-      );
-    }
-
-    // Calculate the predicted amount of strokes for the remaining holes based on the handicap index
-    const courseHandicap = calculateCourseHandicap(
-      handicapIndex,
-      slopeRating!,
-      courseRating!,
-      par!
-    );
-
-    const holesLeft = 18 - holes.length;
+    const holesLeft = 18 - numberOfHolesPlayed;
     const predictedStrokes = Math.round((courseHandicap / 18) * holesLeft);
-    const parForRemainingHoles = holesLeft * (par / 18);
-    return initialAdjust + predictedStrokes + parForRemainingHoles;
+    const parForRemainingHoles = holesLeft * (teePlayed.totalPar / 18);
+    adjustedGrossScore =
+      adjustedPlayedScore + predictedStrokes + parForRemainingHoles;
   }
-};
 
-export const calculateInputAdjustedGrossScore = (
-  initialAdjust: number,
-  handicapIndex: number,
-  slopeRating: number,
-  courseRating: number,
-  par: number,
-  holesPlayed: number
-) => {
-  const courseHandicap = calculateCourseHandicap(
-    handicapIndex,
-    slopeRating,
-    courseRating,
-    par
-  );
+  return adjustedGrossScore;
+}
 
-  const holesLeft = 18 - holesPlayed;
-  const predictedStrokes = Math.round((courseHandicap / 18) * holesLeft);
-  const parForRemainingHoles = holesLeft * (par / 18);
-  return initialAdjust + predictedStrokes + parForRemainingHoles;
-};
+// export const calculateInputAdjustedGrossScore = (
+//   initialAdjust: number,
+//   handicapIndex: number,
+//   slopeRating: number,
+//   courseRating: number,
+//   par: number,
+//   holesPlayed: number
+// ) => {
+//   const courseHandicap = calculateCourseHandicap(
+//     handicapIndex,
+//     slopeRating,
+//     courseRating,
+//     par
+//   );
+
+//   const holesLeft = 18 - holesPlayed;
+//   const predictedStrokes = Math.round((courseHandicap / 18) * holesLeft);
+//   const parForRemainingHoles = holesLeft * (par / 18);
+//   return initialAdjust + predictedStrokes + parForRemainingHoles;
+// };
 
 export const getRelevantDifferentials = (scoreDifferentials: number[]) => {
   if (scoreDifferentials.length <= 5) {
@@ -276,4 +299,39 @@ function applyHandicapAdjustement(
     return handicapCalculation - 1;
   }
   return handicapCalculation;
+}
+
+/**
+ * 
+ * @param holes 
+ * @param roundScores 
+ * @param courseHandicap 
+ * @param numberOfHolesPlayed 
+ * @returns 
+ */
+export function addHcpStrokesToScores(
+  holes: Hole[],
+  roundScores: Score[],
+  courseHandicap: number,
+  numberOfHolesPlayed: number,
+): Score[] {
+  const fullDivision = Math.floor(courseHandicap / numberOfHolesPlayed);
+  const remainder = courseHandicap % numberOfHolesPlayed;
+
+  console.log(holes)
+  console.log(roundScores)
+
+  // Get only the holes that were played, in the order of roundScores
+  holes.forEach((hole, index) => {
+    const score = roundScores.find((score) => score.holeId === hole.id);
+    if (!score) {
+      throw new Error(`Score not found for hole ${hole.id}`);
+    }
+    score.hcpStrokes = fullDivision;
+    if (index < remainder) {
+      score.hcpStrokes += 1;
+    }
+  });
+
+  return roundScores;
 }

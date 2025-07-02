@@ -48,7 +48,13 @@ export function calculateScoreDifferential(
   courseRating: number,
   slopeRating: number,
 ): number {
-  return (adjustedGrossScore - courseRating) * (113 / slopeRating);
+  const scoreDiff = (adjustedGrossScore - courseRating) * (113 / slopeRating);
+  // If scoreDiff is negative, round upwards towards 0 (to 1 decimal)
+  if (scoreDiff < 0) {
+    return Math.ceil(scoreDiff * 10) / 10;
+  }
+  // Otherwise, round to 1 decimal as usual
+  return Math.round(scoreDiff * 10) / 10;
 }
 
 /**
@@ -152,14 +158,14 @@ export const calculateAdjustedPlayedScore = (
   holes: Hole[],
   scores: Score[],
 ): number => {
-  const adjustedScores = holes.map((hole) => {
-    const score = scores.find((score) => score.holeId === hole.id);
-    if (!score) {
-      throw new Error("Score not found for hole");
+  const adjustedScores = scores.map((score) => {
+    const hole = holes.find((hole) => hole.id === score.holeId);
+    if (!hole) {
+      throw new Error(`Hole not found for score with holeId ${score.holeId}`);
     }
     return calculateHoleAdjustedScore(hole, score);
   });
-  return adjustedScores.reduce((acc, cur) => acc + cur);
+  return adjustedScores.reduce((acc, cur) => acc + cur, 0);
 };
 
 export const calculateHoleAdjustedScore = (
@@ -170,6 +176,7 @@ export const calculateHoleAdjustedScore = (
   return Math.min(score.strokes, maxScore);
 };
 
+// Todo: Update so that we filter out specific holes that have been played already, like if they played 1-9, and then 11 and 13.
 export function calculateAdjustedGrossScore(
   adjustedPlayedScore: number,
   courseHandicap: number,
@@ -182,7 +189,11 @@ export function calculateAdjustedGrossScore(
   } else {
     const holesLeft = 18 - numberOfHolesPlayed;
     const predictedStrokes = Math.round((courseHandicap / 18) * holesLeft);
-    const parForRemainingHoles = holesLeft * (teePlayed.totalPar / 18);
+
+    const parForRemainingHoles = teePlayed.holes?.slice(numberOfHolesPlayed).reduce((acc, cur) => acc + cur.par, 0) ?? 0;
+    if (teePlayed.holes === undefined) {
+      throw new Error("Tee played has no holes");
+    }
     adjustedGrossScore = adjustedPlayedScore + predictedStrokes +
       parForRemainingHoles;
   }
@@ -199,19 +210,16 @@ export function addHcpStrokesToScores(
   const fullDivision = Math.floor(courseHandicap / numberOfHolesPlayed);
   const remainder = courseHandicap % numberOfHolesPlayed;
 
-  const scoresWithHcpStrokes = holes.map((hole, index) => {
-    const score = roundScores.find((s) => s.holeId === hole.id);
-    if (!score) {
-      throw new Error(`Score not found for hole ${hole.holeNumber}`);
+  // Get only the holes that were played, in the order of roundScores
+  return roundScores.map((score, index) => {
+    const hole = holes.find((hole) => hole.id === score.holeId);
+    if (!hole) {
+      throw new Error(`Hole not found for score with holeId ${score.holeId}`);
     }
-
     score.hcpStrokes = fullDivision;
     if (index < remainder) {
       score.hcpStrokes += 1;
     }
-
     return score;
   });
-
-  return scoresWithHcpStrokes;
 }

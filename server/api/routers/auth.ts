@@ -9,7 +9,7 @@ export const authRouter = createTRPCRouter({
       const { data: profileData, error: profileError } = await ctx.supabase
         .from("profile")
         .select("*")
-        // .eq('id', input)
+        .eq('id', input).single()
 
       // console.log(profileError)
       console.log(profileData);

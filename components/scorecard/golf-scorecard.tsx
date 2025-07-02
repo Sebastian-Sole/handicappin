@@ -53,7 +53,7 @@ import useMounted from "@/hooks/useMounted";
 import { Skeleton } from "../ui/skeleton";
 
 interface GolfScorecardProps {
-  profile: Tables<"Profile">;
+  profile: Tables<"profile">;
 }
 
 export default function GolfScorecard({ profile }: GolfScorecardProps) {
@@ -87,7 +87,7 @@ export default function GolfScorecard({ profile }: GolfScorecardProps) {
     defaultValues: {
       userId: profile.id,
       approvalStatus: "pending",
-      scores: Array(18).fill(0),
+      scores: Array(18).fill({ strokes: 0, hcpStrokes: 0 }),
       teeTime: roundToNearestMinute(new Date()).toISOString(),
       notes: "",
     },
@@ -139,7 +139,7 @@ export default function GolfScorecard({ profile }: GolfScorecardProps) {
       const tees = getEffectiveTees(selectedCourseId);
       if (tees && tees.length > 0) {
         const firstTee = tees[0];
-        const teeKey = getTeeKey(selectedCourseId, firstTee.name);
+        const teeKey = getTeeKey(selectedCourseId, firstTee.name, firstTee.gender);
         selectTee(teeKey);
         form.setValue("teePlayed", firstTee);
       }
@@ -235,7 +235,7 @@ export default function GolfScorecard({ profile }: GolfScorecardProps) {
   const handleScoreChange = (holeIndex: number, score: number) => {
     const currentScores = form.getValues("scores");
     const newScores = [...currentScores];
-    newScores[holeIndex] = score;
+    newScores[holeIndex] = { strokes: score, hcpStrokes: 0 };
     form.setValue("scores", newScores);
   };
 
@@ -243,16 +243,74 @@ export default function GolfScorecard({ profile }: GolfScorecardProps) {
     return getDisplayedHoles(selectedTee, holeCount);
   }, [selectedTee, holeCount]);
 
-  const onSubmit = (data: Scorecard) => {
-    // Create a new data object with only the played holes' scores
-    const submissionData = {
-      ...data,
-      scores: data.scores.slice(0, holeCount),
-    };
-    console.log("Form is being submitted with data:", submissionData);
+  const submitScorecardMutation = api.round.submitScorecard.useMutation();
+
+  const onSubmit = async (data: Scorecard) => {
+    try {
+      // Create a new data object with only the played holes' scores
+      const isAutoApproved =
+        data.course.approvalStatus === "approved" &&
+        data.teePlayed.approvalStatus === "approved";
+
+      console.log("is auto approved: ", isAutoApproved);
+
+      // Determine parPlayed based on holeCount
+      let parPlayed = 0;
+      if (holeCount === 18) {
+        parPlayed = selectedTee?.totalPar ?? 0;
+      } else if (holeCount === 9) {
+        parPlayed = selectedTee?.outPar ?? 0;
+      }
+
+      const submissionData: Scorecard = {
+        ...data,
+        approvalStatus: isAutoApproved
+          ? ("approved" as const)
+          : ("pending" as const),
+        teePlayed: {
+          ...data.teePlayed,
+        },
+        scores: data.scores.slice(0, holeCount),
+      };
+
+      // Check if first 9 scores are all 0
+      const first9Scores = submissionData.scores.slice(0, 9);
+      const anyZeros = first9Scores.some((score) => score.strokes === 0);
+
+      if (anyZeros) {
+        toast({
+          title: "Invalid Scores",
+          description:
+            "Please enter scores for the first 9 holes, or select 18 holes",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      console.log("submissionData: ", submissionData);
+      await submitScorecardMutation.mutate(submissionData);
+
+      // Show success message
+      toast({
+        title: "Success",
+        description: "Your scorecard has been submitted successfully",
+      });
+
+      // Redirect to home page
+      // window.location.href = "/";
+    } catch (error) {
+      console.error("Error submitting scorecard:", error);
+      toast({
+        title: "Error",
+        description:
+          error instanceof Error ? error.message : "Failed to submit scorecard",
+        variant: "destructive",
+      });
+    }
   };
 
   const onError = (errors: any) => {
+    console.log(errors)
     console.error("Form validation errors:", errors);
     toast({
       title: "Validation Error",
@@ -407,7 +465,8 @@ export default function GolfScorecard({ profile }: GolfScorecardProps) {
                                         (tee) =>
                                           getTeeKey(
                                             selectedCourseId || 0,
-                                            tee.name
+                                            tee.name,
+                                            tee.gender
                                           ) === value
                                       );
                                       if (!foundTee) {
@@ -429,20 +488,26 @@ export default function GolfScorecard({ profile }: GolfScorecardProps) {
                                     </SelectTrigger>
                                     <SelectContent>
                                       {getEffectiveTees(selectedCourseId)?.map(
-                                        (tee) => (
-                                          <SelectItem
-                                            key={getTeeKey(
-                                              selectedCourseId || 0,
-                                              tee.name
-                                            )}
-                                            value={getTeeKey(
-                                              selectedCourseId || 0,
-                                              tee.name
-                                            )}
-                                          >
-                                            {tee.name}
-                                          </SelectItem>
-                                        )
+                                        (tee) => {
+                                          const genderIndicator = tee.gender === "mens" ? "(M)" : "(F)";
+                                          const displayName = `${tee.name} ${genderIndicator}`;
+                                          return (
+                                            <SelectItem
+                                              key={getTeeKey(
+                                                selectedCourseId || 0,
+                                                tee.name,
+                                                tee.gender
+                                              )}
+                                              value={getTeeKey(
+                                                selectedCourseId || 0,
+                                                tee.name,
+                                                tee.gender
+                                              )}
+                                            >
+                                              {displayName}
+                                            </SelectItem>
+                                          );
+                                        }
                                       )}
                                     </SelectContent>
                                   </Select>

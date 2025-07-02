@@ -16,6 +16,8 @@ import {
   ProcessedRound,
 } from "./utils.ts";
 
+import { holeResponseSchema, roundResponseSchema, scoreResponseSchema, teeResponseSchema } from "./scorecard.ts";
+
 export const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
@@ -32,8 +34,14 @@ Deno.serve(async (req) => {
     return new Response(null, { headers: corsHeaders, status: 204 });
   }
 
+  console.log("Handicap engine called");
+
   try {
-    const { userId } = await req.json();
+    const payload = await req.json();
+
+    const userId = payload.userId ?? payload.record?.userId;
+
+    console.log("userId", userId);
 
     if (!userId) {
       return new Response(
@@ -50,12 +58,16 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
     );
 
+    console.log("supabase", supabase);
+
     // 1. Fetch user profile
     const { data: userProfile, error: profileError } = await supabase
       .from("profile")
       .select("*")
       .eq("id", userId)
       .single();
+
+    console.log("userProfile", userProfile);
 
     if (profileError || !userProfile) {
       return new Response(
@@ -67,6 +79,11 @@ Deno.serve(async (req) => {
       );
     }
 
+    // Get initial handicap index from profile, fallback to MAX_SCORE_DIFFERENTIAL
+    const initialHandicapIndex = userProfile.initialHandicapIndex !== undefined && userProfile.initialHandicapIndex !== null
+      ? Number(userProfile.initialHandicapIndex)
+      : MAX_SCORE_DIFFERENTIAL;
+
     // 2. Fetch all approved rounds for user
     const { data: userRoundsRaw, error: roundsError } = await supabase
       .from("round")
@@ -75,11 +92,23 @@ Deno.serve(async (req) => {
       .eq("approvalStatus", "approved")
       .order("teeTime", { ascending: true });
 
+    console.log("userRoundsRaw", userRoundsRaw);
+
     if (roundsError) {
       throw roundsError;
     }
 
-    if (!userRoundsRaw.length) {
+    const parsedRounds = roundResponseSchema.safeParse(userRoundsRaw);
+
+    if (!parsedRounds.success) {
+      throw new Error("Invalid rounds data: " + parsedRounds.error.message);
+    }
+
+    const userRounds = parsedRounds.data;
+
+    console.log("userRounds", userRounds);
+
+    if (!userRounds.length) {
       // No approved rounds, set user index to maximum
       await supabase
         .from("profile")
@@ -96,16 +125,28 @@ Deno.serve(async (req) => {
       );
     }
 
+    console.log("userRounds", userRounds);
+
     // 3. Fetch all teeInfo needed
-    const teeIds = new Set(userRoundsRaw.map((r) => r.teeId));
+    const teeIds = new Set(userRounds.map((r) => r.teeId));
     const { data: teesRaw, error: teesError } = await supabase
-      .from("tee_info")
+      .from("teeInfo")
       .select("*")
       .in("id", Array.from(teeIds));
+
+    console.log("teesRaw", teesRaw);
 
     if (teesError) {
       throw teesError;
     }
+
+    const parsedTees = teeResponseSchema.safeParse(teesRaw);
+
+    if (!parsedTees.success) {
+      throw new Error("Invalid tees data: " + parsedTees.error.message);
+    }
+
+    const tees = parsedTees.data;
 
     // 4. Fetch all holes for those teeIds
     const { data: holesRaw, error: holesError } = await supabase
@@ -113,45 +154,71 @@ Deno.serve(async (req) => {
       .select("*")
       .in("teeId", Array.from(teeIds));
 
+    console.log("holesRaw", holesRaw);
+
     if (holesError) {
       throw holesError;
     }
 
+    const parsedHoles = holeResponseSchema.safeParse(holesRaw);
+
+    if (!parsedHoles.success) {
+      throw new Error("Invalid holes data: " + parsedHoles.error.message);
+    }
+
+    const holes = parsedHoles.data;
+
     // 5. Fetch all scores for these rounds
-    const roundIds = userRoundsRaw.map((r) => r.id);
+    const roundIds = userRounds.map((r) => r.id);
     const { data: scoresRaw, error: scoresError } = await supabase
       .from("score")
       .select("*")
       .in("roundId", roundIds);
 
+    console.log("scoresRaw", scoresRaw);
+
     if (scoresError) {
       throw scoresError;
     }
 
+    const parsedScores = scoreResponseSchema.safeParse(scoresRaw);
+
+    if (!parsedScores.success) {
+      throw new Error("Invalid scores data: " + parsedScores.error.message);
+    }
+
+    const scores = parsedScores.data;
+
     // Build in-memory maps
     const teeMap = new Map(
-      teesRaw.map((tee) => [
+      tees.map((tee) => [
         tee.id,
         tee,
       ]),
     );
 
+    console.log("teeMap", teeMap);
+
     const roundScoresMap = new Map(
       roundIds.map((roundId) => [
         roundId,
-        scoresRaw.filter((s) => s.roundId === roundId),
+        scores.filter((s) => s.roundId === roundId),
       ]),
     );
+
+    console.log("roundScoresMap", roundScoresMap);
 
     const holesMap = new Map(
       Array.from(teeIds).map((teeId) => [
         teeId,
-        holesRaw.filter((h) => h.teeId === teeId),
+        holes.filter((h) => h.teeId === teeId),
       ]),
     );
 
+    console.log("holesMap", holesMap);
+
     // Initialize processed rounds array
-    const processedRounds: ProcessedRound[] = userRoundsRaw.map((r) => ({
+    const processedRounds: ProcessedRound[] = userRounds.map((r) => ({
       id: r.id,
       teeTime: new Date(r.teeTime),
       existingHandicapIndex: MAX_SCORE_DIFFERENTIAL,
@@ -164,6 +231,8 @@ Deno.serve(async (req) => {
       teeId: r.teeId,
       courseHandicap: 0,
     }));
+
+    console.log("processedRounds", processedRounds);
 
     // Pass 1: Calculate adjusted gross scores
     for (const pr of processedRounds) {
@@ -184,6 +253,8 @@ Deno.serve(async (req) => {
         numberOfHolesPlayed,
       );
 
+      console.log("courseHandicap", courseHandicap);
+
       const scoresWithHcpStrokes = addHcpStrokesToScores(
         holes,
         roundScores,
@@ -191,10 +262,14 @@ Deno.serve(async (req) => {
         numberOfHolesPlayed,
       );
 
+      console.log("scoresWithHcpStrokes", scoresWithHcpStrokes);
+
       const adjustedPlayedScore = calculateAdjustedPlayedScore(
         holes,
         scoresWithHcpStrokes,
       );
+
+      console.log("adjustedPlayedScore", adjustedPlayedScore);
 
       const adjustedGrossScore = calculateAdjustedGrossScore(
         adjustedPlayedScore,
@@ -203,13 +278,15 @@ Deno.serve(async (req) => {
         teePlayed,
       );
 
+      console.log("adjustedGrossScore", adjustedGrossScore);
+
       pr.adjustedGrossScore = adjustedGrossScore;
       pr.adjustedPlayedScore = adjustedPlayedScore;
       pr.courseHandicap = courseHandicap;
     }
 
     // Pass 2: Calculate raw differentials and detect ESR
-    let rollingIndex = MAX_SCORE_DIFFERENTIAL;
+    let rollingIndex = initialHandicapIndex;
     for (let i = 0; i < processedRounds.length; i++) {
       const pr = processedRounds[i];
       pr.existingHandicapIndex = rollingIndex;
@@ -226,7 +303,7 @@ Deno.serve(async (req) => {
       const startIdx = Math.max(0, i - (ESR_WINDOW_SIZE - 1));
       const relevantDifferentials = processedRounds
         .slice(startIdx, i + 1)
-        .map((r) => r.rawDifferential);
+        .map((round) => round.rawDifferential);
       pr.updatedHandicapIndex = calculateHandicapIndex(relevantDifferentials);
 
       const difference = rollingIndex - pr.rawDifferential;
@@ -247,7 +324,9 @@ Deno.serve(async (req) => {
     // Pass 3: Apply ESR offsets and calculate final differentials
     for (let i = 0; i < processedRounds.length; i++) {
       const pr = processedRounds[i];
-      pr.existingHandicapIndex = processedRounds[i - 1].updatedHandicapIndex;
+      pr.existingHandicapIndex = i === 0
+        ? initialHandicapIndex
+        : processedRounds[i - 1].updatedHandicapIndex;
 
       pr.finalDifferential = pr.rawDifferential - pr.esrOffset;
       const startIdx = Math.max(0, i - (ESR_WINDOW_SIZE - 1));
@@ -255,6 +334,8 @@ Deno.serve(async (req) => {
         .slice(startIdx, i + 1)
         .map((r) => r.finalDifferential);
       const calculatedIndex = calculateHandicapIndex(relevantDifferentials);
+
+      console.log("calculatedIndex", calculatedIndex);
 
       if (processedRounds.length >= 20) {
         const lowHandicapIndex = calculateLowHandicapIndex(processedRounds, i);
@@ -265,6 +346,8 @@ Deno.serve(async (req) => {
       } else {
         pr.updatedHandicapIndex = calculatedIndex;
       }
+
+      console.log("pr.updatedHandicapIndex", pr.updatedHandicapIndex);
 
       pr.updatedHandicapIndex = Math.min(
         pr.updatedHandicapIndex,
@@ -297,6 +380,8 @@ Deno.serve(async (req) => {
       })
       .eq("id", userId);
 
+    console.log("Handicap calculation completed successfully");
+
     return new Response(
       JSON.stringify({
         message: "Handicap calculation completed successfully",
@@ -309,6 +394,7 @@ Deno.serve(async (req) => {
       },
     );
   } catch (error: unknown) {
+    console.error(error);
     const errorMessage = error instanceof Error
       ? error.message
       : "An unknown error occurred";

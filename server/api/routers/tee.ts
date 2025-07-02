@@ -29,6 +29,10 @@ export const teeRouter = createTRPCRouter({
 
           return {
             ...tee,
+            // Convert decimal strings to numbers
+            courseRating18: Number(tee.courseRating18),
+            courseRatingFront9: Number(tee.courseRatingFront9),
+            courseRatingBack9: Number(tee.courseRatingBack9),
             approvalStatus: "approved" as const,
             distanceMeasurement: tee.distanceMeasurement as "meters" | "yards",
             gender: tee.gender as "mens" | "ladies",

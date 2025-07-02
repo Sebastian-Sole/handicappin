@@ -2,8 +2,8 @@ import { useState, useCallback, useMemo } from "react";
 import { Course, Tee } from "@/types/scorecard";
 
 // Helper function to create a unique key for tees
-export const getTeeKey = (courseId: number, teeName: string) =>
-  `${courseId}_${teeName}`;
+export const getTeeKey = (courseId: number, teeName: string, gender: string) =>
+  `${courseId}_${teeName}_${gender}`;
 
 // Temporary ID counter and generator
 let tempIdCounter = -1;
@@ -47,7 +47,7 @@ export function useTeeManagement() {
       const fetchedCourseTees = fetchedTees[courseId] || [];
 
       const unmodifiedTees = fetchedCourseTees.filter(
-        (tee: Tee) => !modifications.tees[getTeeKey(courseId, tee.name)]
+        (tee: Tee) => !modifications.tees[getTeeKey(courseId, tee.name, tee.gender)]
       );
 
       const modifiedTees = Object.values(modifications.tees).filter(
@@ -85,7 +85,7 @@ export function useTeeManagement() {
       holes: course.tees[0].holes,
     };
 
-    const teeKey = getTeeKey(newCourse.id, firstTee.name);
+    const teeKey = getTeeKey(newCourse.id, firstTee.name, firstTee.gender);
 
     setModifications((prev) => ({
       ...prev,
@@ -115,7 +115,7 @@ export function useTeeManagement() {
       holes: newTee.holes,
     };
 
-    const teeKey = getTeeKey(courseId, newTee.name);
+    const teeKey = getTeeKey(courseId, newTee.name, newTee.gender);
 
     setModifications((prev) => ({
       ...prev,
@@ -141,7 +141,7 @@ export function useTeeManagement() {
         holes: updatedTee.holes,
       };
 
-      const teeKey = getTeeKey(courseId, updatedTee.name);
+      const teeKey = getTeeKey(courseId, updatedTee.name, updatedTee.gender);
 
       setModifications((prev) => ({
         ...prev,
@@ -163,7 +163,7 @@ export function useTeeManagement() {
   const selectedTee = useMemo(() => {
     if (!selectedTeeKey || !selectedCourseId) return undefined;
     return getEffectiveTees(selectedCourseId)?.find(
-      (tee) => getTeeKey(selectedCourseId, tee.name) === selectedTeeKey
+      (tee) => getTeeKey(selectedCourseId, tee.name, tee.gender) === selectedTeeKey
     );
   }, [selectedTeeKey, selectedCourseId, getEffectiveTees]);
 
@@ -175,11 +175,11 @@ export function useTeeManagement() {
     if (selectedCourseId > 0) {
       // Get the tee with its holes from fetchedTees
       const fetchedTee = fetchedTees[selectedCourseId]?.find(
-        (tee) => tee.name === selectedTee.name
+        (tee) => tee.name === selectedTee.name && tee.gender === selectedTee.gender
       );
 
       // Check if this tee has been modified
-      const teeKey = getTeeKey(selectedCourseId, selectedTee.name);
+      const teeKey = getTeeKey(selectedCourseId, selectedTee.name, selectedTee.gender);
       const modifiedTee = modifications.tees[teeKey];
 
       // If the tee has been modified, use that data
@@ -194,7 +194,7 @@ export function useTeeManagement() {
     }
 
     // For user-created tees
-    const teeKey = getTeeKey(selectedCourseId, selectedTee.name);
+    const teeKey = getTeeKey(selectedCourseId, selectedTee.name, selectedTee.gender);
     const modifiedTee = modifications.tees[teeKey];
     if (modifiedTee) {
       return modifiedTee;

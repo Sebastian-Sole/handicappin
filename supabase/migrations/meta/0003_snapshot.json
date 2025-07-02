@@ -1,11 +1,11 @@
 {
-  "id": "9ab989d8-55fb-43f8-8a21-e94400b467e4",
-  "prevId": "8fbab21b-d897-4615-bffc-bbb22ebd402b",
+  "id": "84505165-e390-48f9-ba03-87e5ebe88475",
+  "prevId": "dae55b23-3a8a-4506-a078-6c401b9633a8",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
-    "public.Course": {
-      "name": "Course",
+    "public.course": {
+      "name": "course",
       "schema": "",
       "columns": {
         "id": {
@@ -20,17 +20,17 @@
           "primaryKey": false,
           "notNull": true
         },
-        "isApproved": {
-          "name": "isApproved",
-          "type": "boolean",
+        "approvalStatus": {
+          "name": "approvalStatus",
+          "type": "text",
           "primaryKey": false,
           "notNull": true,
-          "default": false
+          "default": "'pending'"
         }
       },
       "indexes": {
-        "Course_name_key": {
-          "name": "Course_name_key",
+        "course_name_key": {
+          "name": "course_name_key",
           "columns": [
             {
               "expression": "name",
@@ -50,29 +50,21 @@
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "policies": {
-        "Enable insert for authenticated users only": {
-          "name": "Enable insert for authenticated users only",
-          "as": "PERMISSIVE",
-          "for": "INSERT",
-          "to": [
-            "authenticated"
-          ],
-          "withCheck": "true"
-        },
-        "Enable read access for all users": {
-          "name": "Enable read access for all users",
+        "Authenticated users can view courses": {
+          "name": "Authenticated users can view courses",
           "as": "PERMISSIVE",
           "for": "SELECT",
           "to": [
             "authenticated"
-          ]
+          ],
+          "using": "true"
         }
       },
       "checkConstraints": {},
       "isRLSEnabled": false
     },
-    "public.Hole": {
-      "name": "Hole",
+    "public.hole": {
+      "name": "hole",
       "schema": "",
       "columns": {
         "id": {
@@ -99,14 +91,14 @@
           "primaryKey": false,
           "notNull": true
         },
-        "hcp": {
-          "name": "hcp",
+        "distance": {
+          "name": "distance",
           "type": "integer",
           "primaryKey": false,
           "notNull": true
         },
-        "distance": {
-          "name": "distance",
+        "hcp": {
+          "name": "hcp",
           "type": "integer",
           "primaryKey": false,
           "notNull": true
@@ -114,10 +106,10 @@
       },
       "indexes": {},
       "foreignKeys": {
-        "Hole_teeId_fkey": {
-          "name": "Hole_teeId_fkey",
-          "tableFrom": "Hole",
-          "tableTo": "TeeInfo",
+        "hole_teeId_fkey": {
+          "name": "hole_teeId_fkey",
+          "tableFrom": "hole",
+          "tableTo": "teeInfo",
           "columnsFrom": [
             "teeId"
           ],
@@ -131,29 +123,21 @@
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "policies": {
-        "Enable insert for authenticated users only": {
-          "name": "Enable insert for authenticated users only",
-          "as": "PERMISSIVE",
-          "for": "INSERT",
-          "to": [
-            "authenticated"
-          ],
-          "withCheck": "true"
-        },
-        "Enable read access for all users": {
-          "name": "Enable read access for all users",
+        "Authenticated users can view holes": {
+          "name": "Authenticated users can view holes",
           "as": "PERMISSIVE",
           "for": "SELECT",
           "to": [
             "authenticated"
-          ]
+          ],
+          "using": "true"
         }
       },
       "checkConstraints": {},
       "isRLSEnabled": false
     },
-    "public.Profile": {
-      "name": "Profile",
+    "public.profile": {
+      "name": "profile",
       "schema": "",
       "columns": {
         "id": {
@@ -176,9 +160,10 @@
         },
         "handicapIndex": {
           "name": "handicapIndex",
-          "type": "double precision",
+          "type": "numeric",
           "primaryKey": false,
-          "notNull": true
+          "notNull": true,
+          "default": "'54'"
         },
         "verified": {
           "name": "verified",
@@ -186,11 +171,18 @@
           "primaryKey": false,
           "notNull": true,
           "default": false
+        },
+        "initialHandicapIndex": {
+          "name": "initialHandicapIndex",
+          "type": "numeric",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'54'"
         }
       },
       "indexes": {
-        "Profile_email_key": {
-          "name": "Profile_email_key",
+        "profile_email_key": {
+          "name": "profile_email_key",
           "columns": [
             {
               "expression": "email",
@@ -207,9 +199,9 @@
         }
       },
       "foreignKeys": {
-        "Profile_id_fkey": {
-          "name": "Profile_id_fkey",
-          "tableFrom": "Profile",
+        "profile_id_fkey": {
+          "name": "profile_id_fkey",
+          "tableFrom": "profile",
           "tableTo": "users",
           "schemaTo": "auth",
           "columnsFrom": [
@@ -225,48 +217,48 @@
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "policies": {
-        "Allow profile updates for authed users": {
-          "name": "Allow profile updates for authed users",
-          "as": "PERMISSIVE",
-          "for": "UPDATE",
-          "to": [
-            "public"
-          ],
-          "using": "(auth.uid() = id)"
-        },
-        "Enable delete for users based on their own user_id": {
-          "name": "Enable delete for users based on their own user_id",
-          "as": "PERMISSIVE",
-          "for": "DELETE",
-          "to": [
-            "public"
-          ],
-          "using": "(auth.uid() = id)"
-        },
-        "Enable insert for authenticated users only": {
-          "name": "Enable insert for authenticated users only",
-          "as": "PERMISSIVE",
-          "for": "INSERT",
-          "to": [
-            "authenticated"
-          ],
-          "withCheck": "true"
-        },
-        "Enable users to view their own data only": {
-          "name": "Enable users to view their own data only",
+        "Users can view their own profile": {
+          "name": "Users can view their own profile",
           "as": "PERMISSIVE",
           "for": "SELECT",
           "to": [
             "authenticated"
           ],
-          "using": "(auth.uid() = id)"
+          "using": "(auth.uid()::uuid = id)"
+        },
+        "Users can update their own profile": {
+          "name": "Users can update their own profile",
+          "as": "PERMISSIVE",
+          "for": "UPDATE",
+          "to": [
+            "authenticated"
+          ],
+          "using": "(auth.uid()::uuid = id)"
+        },
+        "Users can insert their own profile": {
+          "name": "Users can insert their own profile",
+          "as": "PERMISSIVE",
+          "for": "INSERT",
+          "to": [
+            "authenticated"
+          ],
+          "withCheck": "(auth.uid()::uuid = id)"
+        },
+        "Users can delete their own profile": {
+          "name": "Users can delete their own profile",
+          "as": "PERMISSIVE",
+          "for": "DELETE",
+          "to": [
+            "authenticated"
+          ],
+          "using": "(auth.uid()::uuid = id)"
         }
       },
       "checkConstraints": {},
       "isRLSEnabled": false
     },
-    "public.Round": {
-      "name": "Round",
+    "public.round": {
+      "name": "round",
       "schema": "",
       "columns": {
         "id": {
@@ -275,9 +267,9 @@
           "primaryKey": true,
           "notNull": true
         },
-        "teeTime": {
-          "name": "teeTime",
-          "type": "timestamp",
+        "userId": {
+          "name": "userId",
+          "type": "uuid",
           "primaryKey": false,
           "notNull": true
         },
@@ -287,39 +279,26 @@
           "primaryKey": false,
           "notNull": true
         },
-        "userId": {
-          "name": "userId",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
         "teeId": {
           "name": "teeId",
           "type": "integer",
           "primaryKey": false,
           "notNull": true
         },
-        "existingHandicapIndex": {
-          "name": "existingHandicapIndex",
-          "type": "double precision",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "updatedHandicapIndex": {
-          "name": "updatedHandicapIndex",
-          "type": "double precision",
-          "primaryKey": false,
-          "notNull": true,
-          "default": 0
-        },
-        "scoreDifferential": {
-          "name": "scoreDifferential",
-          "type": "double precision",
+        "teeTime": {
+          "name": "teeTime",
+          "type": "timestamp",
           "primaryKey": false,
           "notNull": true
         },
         "totalStrokes": {
           "name": "totalStrokes",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "parPlayed": {
+          "name": "parPlayed",
           "type": "integer",
           "primaryKey": false,
           "notNull": true
@@ -330,18 +309,42 @@
           "primaryKey": false,
           "notNull": true
         },
-        "createdAt": {
-          "name": "createdAt",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "CURRENT_TIMESTAMP"
-        },
-        "parPlayed": {
-          "name": "parPlayed",
+        "adjustedPlayedScore": {
+          "name": "adjustedPlayedScore",
           "type": "integer",
           "primaryKey": false,
           "notNull": true
+        },
+        "courseHandicap": {
+          "name": "courseHandicap",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "scoreDifferential": {
+          "name": "scoreDifferential",
+          "type": "numeric",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "existingHandicapIndex": {
+          "name": "existingHandicapIndex",
+          "type": "numeric",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "updatedHandicapIndex": {
+          "name": "updatedHandicapIndex",
+          "type": "numeric",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "exceptionalScoreAdjustment": {
+          "name": "exceptionalScoreAdjustment",
+          "type": "numeric",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'0'"
         },
         "notes": {
           "name": "notes",
@@ -349,33 +352,40 @@
           "primaryKey": false,
           "notNull": false
         },
-        "exceptionalScoreAdjustment": {
-          "name": "exceptionalScoreAdjustment",
-          "type": "integer",
+        "approvalStatus": {
+          "name": "approvalStatus",
+          "type": "text",
           "primaryKey": false,
           "notNull": true,
-          "default": 0
+          "default": "'pending'"
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "CURRENT_TIMESTAMP"
         }
       },
       "indexes": {},
       "foreignKeys": {
-        "Round_courseId_fkey": {
-          "name": "Round_courseId_fkey",
-          "tableFrom": "Round",
-          "tableTo": "Course",
+        "round_courseId_fkey": {
+          "name": "round_courseId_fkey",
+          "tableFrom": "round",
+          "tableTo": "course",
           "columnsFrom": [
             "courseId"
           ],
           "columnsTo": [
             "id"
           ],
-          "onDelete": "cascade",
+          "onDelete": "restrict",
           "onUpdate": "cascade"
         },
-        "Round_userId_fkey": {
-          "name": "Round_userId_fkey",
-          "tableFrom": "Round",
-          "tableTo": "Profile",
+        "round_userId_fkey": {
+          "name": "round_userId_fkey",
+          "tableFrom": "round",
+          "tableTo": "profile",
           "columnsFrom": [
             "userId"
           ],
@@ -385,53 +395,77 @@
           "onDelete": "cascade",
           "onUpdate": "cascade"
         },
-        "Round_teeId_fkey": {
-          "name": "Round_teeId_fkey",
-          "tableFrom": "Round",
-          "tableTo": "TeeInfo",
+        "round_teeId_fkey": {
+          "name": "round_teeId_fkey",
+          "tableFrom": "round",
+          "tableTo": "teeInfo",
           "columnsFrom": [
             "teeId"
           ],
           "columnsTo": [
             "id"
           ],
-          "onDelete": "cascade",
+          "onDelete": "restrict",
           "onUpdate": "cascade"
         }
       },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "policies": {
-        "Enable insert for users based on userId": {
-          "name": "Enable insert for users based on userId",
-          "as": "PERMISSIVE",
-          "for": "INSERT",
-          "to": [
-            "authenticated"
-          ],
-          "withCheck": "(( SELECT auth.uid()) = \"userId\")"
-        },
-        "Enable users to view their own data only": {
-          "name": "Enable users to view their own data only",
+        "Users can view their own rounds": {
+          "name": "Users can view their own rounds",
           "as": "PERMISSIVE",
           "for": "SELECT",
           "to": [
             "authenticated"
           ],
-          "using": "(( SELECT auth.uid()) = \"userId\")"
+          "using": "(auth.uid()::uuid = userId)"
+        },
+        "Users can insert their own rounds": {
+          "name": "Users can insert their own rounds",
+          "as": "PERMISSIVE",
+          "for": "INSERT",
+          "to": [
+            "authenticated"
+          ],
+          "withCheck": "(auth.uid()::uuid = userId)"
+        },
+        "Users can update their own rounds": {
+          "name": "Users can update their own rounds",
+          "as": "PERMISSIVE",
+          "for": "UPDATE",
+          "to": [
+            "authenticated"
+          ],
+          "using": "(auth.uid()::uuid = userId)"
+        },
+        "Users can delete their own rounds": {
+          "name": "Users can delete their own rounds",
+          "as": "PERMISSIVE",
+          "for": "DELETE",
+          "to": [
+            "authenticated"
+          ],
+          "using": "(auth.uid()::uuid = userId)"
         }
       },
       "checkConstraints": {},
       "isRLSEnabled": false
     },
-    "public.Score": {
-      "name": "Score",
+    "public.score": {
+      "name": "score",
       "schema": "",
       "columns": {
         "id": {
           "name": "id",
           "type": "serial",
           "primaryKey": true,
+          "notNull": true
+        },
+        "userId": {
+          "name": "userId",
+          "type": "uuid",
+          "primaryKey": false,
           "notNull": true
         },
         "roundId": {
@@ -458,20 +492,14 @@
           "primaryKey": false,
           "notNull": true,
           "default": 0
-        },
-        "userId": {
-          "name": "userId",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
         }
       },
       "indexes": {},
       "foreignKeys": {
-        "Score_roundId_fkey": {
-          "name": "Score_roundId_fkey",
-          "tableFrom": "Score",
-          "tableTo": "Round",
+        "score_roundId_fkey": {
+          "name": "score_roundId_fkey",
+          "tableFrom": "score",
+          "tableTo": "round",
           "columnsFrom": [
             "roundId"
           ],
@@ -481,23 +509,23 @@
           "onDelete": "cascade",
           "onUpdate": "cascade"
         },
-        "Score_holeId_fkey": {
-          "name": "Score_holeId_fkey",
-          "tableFrom": "Score",
-          "tableTo": "Hole",
+        "score_holeId_fkey": {
+          "name": "score_holeId_fkey",
+          "tableFrom": "score",
+          "tableTo": "hole",
           "columnsFrom": [
             "holeId"
           ],
           "columnsTo": [
             "id"
           ],
-          "onDelete": "cascade",
+          "onDelete": "restrict",
           "onUpdate": "cascade"
         },
-        "Score_userId_fkey": {
-          "name": "Score_userId_fkey",
-          "tableFrom": "Score",
-          "tableTo": "Profile",
+        "score_userId_fkey": {
+          "name": "score_userId_fkey",
+          "tableFrom": "score",
+          "tableTo": "profile",
           "columnsFrom": [
             "userId"
           ],
@@ -511,30 +539,48 @@
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "policies": {
-        "Enable insert for users based on userId": {
-          "name": "Enable insert for users based on userId",
-          "as": "PERMISSIVE",
-          "for": "INSERT",
-          "to": [
-            "authenticated"
-          ],
-          "withCheck": "(( SELECT auth.uid()) = \"userId\")"
-        },
-        "Enable users to view their own data only": {
-          "name": "Enable users to view their own data only",
+        "Users can view their own scores": {
+          "name": "Users can view their own scores",
           "as": "PERMISSIVE",
           "for": "SELECT",
           "to": [
             "authenticated"
           ],
-          "using": "(auth.uid() = \"userId\")"
+          "using": "(auth.uid()::uuid = userId)"
+        },
+        "Users can insert their own scores": {
+          "name": "Users can insert their own scores",
+          "as": "PERMISSIVE",
+          "for": "INSERT",
+          "to": [
+            "authenticated"
+          ],
+          "withCheck": "(auth.uid()::uuid = userId)"
+        },
+        "Users can update their own scores": {
+          "name": "Users can update their own scores",
+          "as": "PERMISSIVE",
+          "for": "UPDATE",
+          "to": [
+            "authenticated"
+          ],
+          "using": "(auth.uid()::uuid = userId)"
+        },
+        "Users can delete their own scores": {
+          "name": "Users can delete their own scores",
+          "as": "PERMISSIVE",
+          "for": "DELETE",
+          "to": [
+            "authenticated"
+          ],
+          "using": "(auth.uid()::uuid = userId)"
         }
       },
       "checkConstraints": {},
       "isRLSEnabled": false
     },
-    "public.TeeInfo": {
-      "name": "TeeInfo",
+    "public.teeInfo": {
+      "name": "teeInfo",
       "schema": "",
       "columns": {
         "id": {
@@ -563,7 +609,7 @@
         },
         "courseRating18": {
           "name": "courseRating18",
-          "type": "double precision",
+          "type": "numeric",
           "primaryKey": false,
           "notNull": true
         },
@@ -575,7 +621,7 @@
         },
         "courseRatingFront9": {
           "name": "courseRatingFront9",
-          "type": "double precision",
+          "type": "numeric",
           "primaryKey": false,
           "notNull": true
         },
@@ -587,7 +633,7 @@
         },
         "courseRatingBack9": {
           "name": "courseRatingBack9",
-          "type": "double precision",
+          "type": "numeric",
           "primaryKey": false,
           "notNull": true
         },
@@ -607,7 +653,7 @@
           "name": "inPar",
           "type": "integer",
           "primaryKey": false,
-          "notNull": false
+          "notNull": true
         },
         "totalPar": {
           "name": "totalPar",
@@ -625,7 +671,7 @@
           "name": "inDistance",
           "type": "integer",
           "primaryKey": false,
-          "notNull": false
+          "notNull": true
         },
         "totalDistance": {
           "name": "totalDistance",
@@ -638,14 +684,14 @@
           "type": "text",
           "primaryKey": false,
           "notNull": true,
-          "default": "'meters'"
+          "default": "'yards'"
         },
-        "isApproved": {
-          "name": "isApproved",
-          "type": "boolean",
+        "approvalStatus": {
+          "name": "approvalStatus",
+          "type": "text",
           "primaryKey": false,
           "notNull": true,
-          "default": false
+          "default": "'pending'"
         },
         "isArchived": {
           "name": "isArchived",
@@ -664,10 +710,10 @@
       },
       "indexes": {},
       "foreignKeys": {
-        "TeeInfo_courseId_fkey": {
-          "name": "TeeInfo_courseId_fkey",
-          "tableFrom": "TeeInfo",
-          "tableTo": "Course",
+        "teeInfo_courseId_fkey": {
+          "name": "teeInfo_courseId_fkey",
+          "tableFrom": "teeInfo",
+          "tableTo": "course",
           "columnsFrom": [
             "courseId"
           ],
@@ -681,22 +727,14 @@
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "policies": {
-        "Enable insert for authenticated users only": {
-          "name": "Enable insert for authenticated users only",
-          "as": "PERMISSIVE",
-          "for": "INSERT",
-          "to": [
-            "authenticated"
-          ],
-          "withCheck": "true"
-        },
-        "Enable read access for all users": {
-          "name": "Enable read access for all users",
+        "Authenticated users can view tee info": {
+          "name": "Authenticated users can view tee info",
           "as": "PERMISSIVE",
           "for": "SELECT",
           "to": [
             "authenticated"
-          ]
+          ],
+          "using": "true"
         }
       },
       "checkConstraints": {},

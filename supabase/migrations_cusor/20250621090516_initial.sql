@@ -189,6 +189,7 @@ FOR DELETE
 TO authenticated
 USING ((SELECT auth.uid()) = user_id);
 
+create extension if not exists "pgjwt" with schema "extensions";
 -- -- Enable extensions for HTTP requests
 -- CREATE EXTENSION IF NOT EXISTS http;
 

@@ -1,1 +1,0 @@
-ALTER TABLE "TeeInfo" ADD COLUMN "distanceMeasurement" text DEFAULT 'meters' NOT NULL;
