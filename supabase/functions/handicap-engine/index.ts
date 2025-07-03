@@ -36,14 +36,52 @@ Deno.serve(async (req) => {
 
   console.log("Handicap engine called");
 
+  let payload;
   try {
-    const payload = await req.json();
+    payload = await req.json();
+  } catch {
+    return new Response(JSON.stringify({ error: "Invalid JSON" }), {
+      status: 400,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
 
-    const userId = payload.userId ?? payload.record?.userId;
+  console.log("payload", payload);
 
-    console.log("userId", userId);
+  // Supabase webhook event type: 'INSERT', 'UPDATE', 'DELETE'
+  const eventType = payload.type || payload.eventType; // adjust as per your webhook payload
+  const newRecord = payload.record || payload.new;
+  const oldRecord = payload.old_record;
 
+  let shouldRun = false;
+  let userId = null;
+
+  if (eventType === "INSERT") {
+    shouldRun = newRecord?.approvalStatus === "approved";
+    userId = newRecord?.userId;
+  } else if (eventType === "UPDATE") {
+    shouldRun =
+      oldRecord?.approvalStatus !== "approved" && newRecord?.approvalStatus === "approved";
+    userId = newRecord?.userId;
+  } else if (eventType === "DELETE") {
+    shouldRun = true;
+    userId = oldRecord?.userId;
+  }
+
+  if (!shouldRun) {
+    console.log(`No action required for this event: ${eventType}, new apr:${newRecord?.approvalStatus}, old apr: ${oldRecord?.approvalStatus}`);
+    return new Response(
+      JSON.stringify({ message: "No action required for this event." }),
+      {
+        status: 200,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      }
+    );
+  }
+
+  try {
     if (!userId) {
+      console.error("Missing required field: userId");
       return new Response(
         JSON.stringify({ error: "Missing required field: userId" }),
         {
@@ -58,16 +96,12 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
     );
 
-    console.log("supabase", supabase);
-
     // 1. Fetch user profile
     const { data: userProfile, error: profileError } = await supabase
       .from("profile")
       .select("*")
       .eq("id", userId)
       .single();
-
-    console.log("userProfile", userProfile);
 
     if (profileError || !userProfile) {
       return new Response(
@@ -92,8 +126,6 @@ Deno.serve(async (req) => {
       .eq("approvalStatus", "approved")
       .order("teeTime", { ascending: true });
 
-    console.log("userRoundsRaw", userRoundsRaw);
-
     if (roundsError) {
       throw roundsError;
     }
@@ -105,8 +137,6 @@ Deno.serve(async (req) => {
     }
 
     const userRounds = parsedRounds.data;
-
-    console.log("userRounds", userRounds);
 
     if (!userRounds.length) {
       // No approved rounds, set user index to maximum
@@ -125,16 +155,12 @@ Deno.serve(async (req) => {
       );
     }
 
-    console.log("userRounds", userRounds);
-
     // 3. Fetch all teeInfo needed
     const teeIds = new Set(userRounds.map((r) => r.teeId));
     const { data: teesRaw, error: teesError } = await supabase
       .from("teeInfo")
       .select("*")
       .in("id", Array.from(teeIds));
-
-    console.log("teesRaw", teesRaw);
 
     if (teesError) {
       throw teesError;
@@ -154,8 +180,6 @@ Deno.serve(async (req) => {
       .select("*")
       .in("teeId", Array.from(teeIds));
 
-    console.log("holesRaw", holesRaw);
-
     if (holesError) {
       throw holesError;
     }
@@ -174,8 +198,6 @@ Deno.serve(async (req) => {
       .from("score")
       .select("*")
       .in("roundId", roundIds);
-
-    console.log("scoresRaw", scoresRaw);
 
     if (scoresError) {
       throw scoresError;
@@ -197,8 +219,6 @@ Deno.serve(async (req) => {
       ]),
     );
 
-    console.log("teeMap", teeMap);
-
     const roundScoresMap = new Map(
       roundIds.map((roundId) => [
         roundId,
@@ -206,16 +226,12 @@ Deno.serve(async (req) => {
       ]),
     );
 
-    console.log("roundScoresMap", roundScoresMap);
-
     const holesMap = new Map(
       Array.from(teeIds).map((teeId) => [
         teeId,
         holes.filter((h) => h.teeId === teeId),
       ]),
     );
-
-    console.log("holesMap", holesMap);
 
     // Initialize processed rounds array
     const processedRounds: ProcessedRound[] = userRounds.map((r) => ({
@@ -230,9 +246,8 @@ Deno.serve(async (req) => {
       adjustedPlayedScore: 0,
       teeId: r.teeId,
       courseHandicap: 0,
+      approvalStatus: r.approvalStatus,
     }));
-
-    console.log("processedRounds", processedRounds);
 
     // Pass 1: Calculate adjusted gross scores
     for (const pr of processedRounds) {
@@ -253,8 +268,6 @@ Deno.serve(async (req) => {
         numberOfHolesPlayed,
       );
 
-      console.log("courseHandicap", courseHandicap);
-
       const scoresWithHcpStrokes = addHcpStrokesToScores(
         holes,
         roundScores,
@@ -262,23 +275,18 @@ Deno.serve(async (req) => {
         numberOfHolesPlayed,
       );
 
-      console.log("scoresWithHcpStrokes", scoresWithHcpStrokes);
-
       const adjustedPlayedScore = calculateAdjustedPlayedScore(
         holes,
         scoresWithHcpStrokes,
       );
 
-      console.log("adjustedPlayedScore", adjustedPlayedScore);
-
       const adjustedGrossScore = calculateAdjustedGrossScore(
         adjustedPlayedScore,
         courseHandicap,
         numberOfHolesPlayed,
-        teePlayed,
+        holes,
+        roundScores,
       );
-
-      console.log("adjustedGrossScore", adjustedGrossScore);
 
       pr.adjustedGrossScore = adjustedGrossScore;
       pr.adjustedPlayedScore = adjustedPlayedScore;
@@ -335,8 +343,6 @@ Deno.serve(async (req) => {
         .map((r) => r.finalDifferential);
       const calculatedIndex = calculateHandicapIndex(relevantDifferentials);
 
-      console.log("calculatedIndex", calculatedIndex);
-
       if (processedRounds.length >= 20) {
         const lowHandicapIndex = calculateLowHandicapIndex(processedRounds, i);
         pr.updatedHandicapIndex = applyHandicapCaps(
@@ -346,8 +352,6 @@ Deno.serve(async (req) => {
       } else {
         pr.updatedHandicapIndex = calculatedIndex;
       }
-
-      console.log("pr.updatedHandicapIndex", pr.updatedHandicapIndex);
 
       pr.updatedHandicapIndex = Math.min(
         pr.updatedHandicapIndex,

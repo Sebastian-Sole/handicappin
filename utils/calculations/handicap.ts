@@ -17,17 +17,10 @@ export function calculateCourseHandicap(
 ): number {
   if (numberOfHolesPlayed === 9) {
     const adjustedHandicapIndex = Math.round((handicapIndex / 2) * 10) / 10;
-
-    console.log("adjusted handicap index: ", adjustedHandicapIndex);
-
-    const courseHcp =  Math.round(
+    return Math.round(
       adjustedHandicapIndex * (teePlayed.slopeRatingFront9 / 113) +
         (teePlayed.courseRatingFront9 - teePlayed.outPar)
     );
-
-    console.log("course handicap: ", courseHcp);
-
-    return courseHcp;
   } else {
     return Math.round(
       handicapIndex * (teePlayed.slopeRating18 / 113) +
@@ -45,13 +38,19 @@ export function calculateCourseHandicap(
  * @param slopeRating - The slope rating of the golf course.
  * @returns The score differential.
  */
-export const calculateScoreDifferential = (
+export function calculateScoreDifferential(
   adjustedGrossScore: number,
   courseRating: number,
-  slopeRating: number
-): number => {
-  return (adjustedGrossScore - courseRating) * (113 / slopeRating);
-};
+  slopeRating: number,
+): number {
+  const scoreDiff = (adjustedGrossScore - courseRating) * (113 / slopeRating);
+  // If scoreDiff is negative, round upwards towards 0 (to 1 decimal)
+  if (scoreDiff < 0) {
+    return Math.ceil(scoreDiff * 10) / 10;
+  }
+  // Otherwise, round to 1 decimal as usual
+  return Math.round(scoreDiff * 10) / 10;
+}
 
 /**
  * Calculates the hole-adjusted score for a given hole.

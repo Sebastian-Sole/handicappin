@@ -12,6 +12,7 @@ export type ProcessedRound = {
   updatedHandicapIndex: number;
   teeId: number;
   courseHandicap: number;
+  approvalStatus: string;
 };
 
 const SOFT_CAP_THRESHOLD = 3.0;
@@ -23,19 +24,18 @@ const LOW_HANDICAP_WINDOW_DAYS = 365;
 export function calculateCourseHandicap(
   handicapIndex: number,
   teePlayed: Tee,
-  numberOfHolesPlayed: number,
+  numberOfHolesPlayed: number
 ): number {
   if (numberOfHolesPlayed === 9) {
-    const adjustedHandicapIndex = Math.round(handicapIndex / 2 * 10) / 10;
-
+    const adjustedHandicapIndex = Math.round((handicapIndex / 2) * 10) / 10;
     return Math.round(
       adjustedHandicapIndex * (teePlayed.slopeRatingFront9 / 113) +
-        (teePlayed.courseRatingFront9 - teePlayed.totalPar),
+        (teePlayed.courseRatingFront9 - teePlayed.outPar)
     );
   } else {
     return Math.round(
       handicapIndex * (teePlayed.slopeRating18 / 113) +
-        (teePlayed.courseRating18 - teePlayed.totalPar),
+        (teePlayed.courseRating18 - teePlayed.totalPar)
     );
   }
 }
@@ -117,13 +117,25 @@ export function calculateLowHandicapIndex(
   rounds: ProcessedRound[],
   currentRoundIndex: number,
 ): number {
-  const currentRound = rounds[currentRoundIndex];
-  const oneYearAgo = new Date(currentRound.teeTime);
+  // Exclude the current round
+  const previousRounds = rounds.slice(0, currentRoundIndex);
+  // Find the most recent approved round before the current round
+  const mostRecentApprovedRound = [...previousRounds]
+    .reverse()
+    .find((r) => (r as ProcessedRound).approvalStatus === "approved");
+
+  // If no approved round is found, fallback to current round's date
+  const referenceDate = mostRecentApprovedRound
+    ? new Date(mostRecentApprovedRound.teeTime)
+    : new Date(rounds[currentRoundIndex].teeTime);
+
+  const oneYearAgo = new Date(referenceDate);
   oneYearAgo.setDate(oneYearAgo.getDate() - LOW_HANDICAP_WINDOW_DAYS);
 
+  // Filter rounds within the 1-year window from the reference date
   const relevantRounds = rounds
     .slice(0, currentRoundIndex + 1)
-    .filter((r) => r.teeTime >= oneYearAgo);
+    .filter((r) => r.teeTime >= oneYearAgo && r.teeTime <= referenceDate && r.approvalStatus === "approved");
 
   const handicapIndices = relevantRounds.map((r) => r.updatedHandicapIndex);
   return Math.min(...handicapIndices);
@@ -156,16 +168,17 @@ export function applyHandicapCaps(
 
 export const calculateAdjustedPlayedScore = (
   holes: Hole[],
-  scores: Score[],
+  scores: Score[]
 ): number => {
-  const adjustedScores = scores.map((score) => {
-    const hole = holes.find((hole) => hole.id === score.holeId);
-    if (!hole) {
-      throw new Error(`Hole not found for score with holeId ${score.holeId}`);
+  const adjustedScores = holes.map((hole, index) => {
+    const score = scores[index];
+    // If no score exists for this hole, return 0 (hole not played)
+    if (!score) {
+      return 0;
     }
     return calculateHoleAdjustedScore(hole, score);
   });
-  return adjustedScores.reduce((acc, cur) => acc + cur, 0);
+  return adjustedScores.reduce((acc, cur) => acc + cur);
 };
 
 export const calculateHoleAdjustedScore = (
@@ -181,7 +194,8 @@ export function calculateAdjustedGrossScore(
   adjustedPlayedScore: number,
   courseHandicap: number,
   numberOfHolesPlayed: number,
-  teePlayed: Tee,
+  holes: Hole[],
+  roundScores: Score[],
 ): number {
   let adjustedGrossScore;
   if (numberOfHolesPlayed === 18) {
@@ -189,11 +203,10 @@ export function calculateAdjustedGrossScore(
   } else {
     const holesLeft = 18 - numberOfHolesPlayed;
     const predictedStrokes = Math.round((courseHandicap / 18) * holesLeft);
-
-    const parForRemainingHoles = teePlayed.holes?.slice(numberOfHolesPlayed).reduce((acc, cur) => acc + cur.par, 0) ?? 0;
-    if (teePlayed.holes === undefined) {
-      throw new Error("Tee played has no holes");
-    }
+    // Get the holes for which there isn't a registered score, and sum the par of these holes
+    const parForRemainingHoles = holes
+      .filter((hole) => !roundScores.some((score) => score.holeId === hole.id))
+      .reduce((acc, cur) => acc + cur.par, 0);
     adjustedGrossScore = adjustedPlayedScore + predictedStrokes +
       parForRemainingHoles;
   }
@@ -207,8 +220,10 @@ export function addHcpStrokesToScores(
   courseHandicap: number,
   numberOfHolesPlayed: number,
 ): Score[] {
-  const fullDivision = Math.floor(courseHandicap / numberOfHolesPlayed);
-  const remainder = courseHandicap % numberOfHolesPlayed;
+  // Ensure courseHandicap is never negative
+  const safeCourseHandicap = Math.max(0, courseHandicap);
+  const fullDivision = Math.floor(safeCourseHandicap / numberOfHolesPlayed);
+  const remainder = safeCourseHandicap % numberOfHolesPlayed;
 
   // Get only the holes that were played, in the order of roundScores
   return roundScores.map((score, index) => {
