@@ -18,7 +18,7 @@ import {
 } from "../ui/hover-card";
 
 interface HeroProps {
-  profile: Tables<"Profile">;
+  profile: Tables<"profile">;
   previousScores: number[];
   bestRound: RoundWithCourse | null;
 }

@@ -14,7 +14,7 @@ export const courseRouter = createTRPCRouter({
     .query(async ({ ctx, input }) => {
       const { userId } = input;
       const { data: courses, error } = await ctx.supabase
-        .from("Course")
+        .from("course")
         .select("*")
         .eq("userId", userId);
       if (error) {

@@ -9,7 +9,7 @@ export const holeRouter = createTRPCRouter({
     .input(z.string())
     .query(async ({ ctx, input }) => {
       const { data: holes, error: holesError } = await ctx.supabase
-        .from("Hole")
+        .from("hole")
         .select("*")
         .eq("roundId", input);
 

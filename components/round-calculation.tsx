@@ -16,7 +16,7 @@ import ScoreDiffCalculationDisplay from "./round/calculation/ScoreDiffCalculatio
 
 interface RoundCalculationProps {
   round: RoundWithCourse;
-  holes: Tables<"Hole">[];
+  holes: Tables<"hole">[];
 }
 
 const RoundCalculationContent = () => {

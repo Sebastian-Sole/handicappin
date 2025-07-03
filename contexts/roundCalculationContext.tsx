@@ -8,15 +8,14 @@ import React, {
 import {
   calculateAdjustedPlayedScore,
   calculateCourseHandicap,
-  calculateInputAdjustedGrossScore,
   calculateScoreDifferential,
 } from "@/utils/calculations/handicap";
-import { RoundWithCourse } from "@/types/database";
+import { RoundWithCourseAndTee } from "@/types/database";
 import { Tables } from "@/types/supabase";
 
 interface RoundCalculationContextProps {
-  round: RoundWithCourse;
-  holes: Tables<"Hole">[];
+  round: RoundWithCourseAndTee;
+  holes: Tables<"hole">[];
   par: number;
   setPar: (par: number) => void;
   holesPlayed: number;
@@ -48,8 +47,8 @@ export const RoundCalculationProvider = ({
   holes,
 }: {
   children: ReactNode;
-  round: RoundWithCourse;
-  holes: Tables<"Hole">[];
+  round: RoundWithCourseAndTee;
+  holes: Tables<"hole">[];
 }) => {
   const [par, setPar] = useState(round.courseEighteenHolePar);
   const [holesPlayed, setHolesPlayed] = useState(holes.length);
@@ -72,7 +71,7 @@ export const RoundCalculationProvider = ({
   }, [handicapIndex, slope, rating, par, isNineHoles]);
 
   const adjustedGrossScoreCalculation = useMemo(() => {
-    return calculateInputAdjustedGrossScore(
+    return calculateAdjustedGrossScore(
       adjustedPlayedScore,
       handicapIndex,
       slope,

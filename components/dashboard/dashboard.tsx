@@ -23,7 +23,7 @@ import RoundTablePagination from "./roundTablePagination";
 import { getRelevantRounds } from "@/utils/calculations/handicap";
 
 interface DashboardProps {
-  profile: Tables<"Profile">;
+  profile: Tables<"profile">;
   roundsList: RoundWithCourse[];
   header: string;
 }

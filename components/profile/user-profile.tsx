@@ -23,7 +23,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 
 interface UserProfileProps {
   authUser: User;
-  profile: Tables<"Profile">;
+  profile: Tables<"profile">;
 }
 
 const UserProfile = ({ profile, authUser }: UserProfileProps) => {

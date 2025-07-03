@@ -12,7 +12,7 @@ import HandicapTrendChartDisplay from "../charts/handicap-trend-chart-display";
 import ScoreBarChartDisplay from "../charts/score-bar-chat-display";
 
 interface HomepageProps {
-  profile: Tables<"Profile">;
+  profile: Tables<"profile">;
 }
 
 export const HomePage = async ({ profile }: HomepageProps) => {

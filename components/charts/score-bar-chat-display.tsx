@@ -16,7 +16,7 @@ interface ScoreBarChartDisplayProps {
     score: number;
     influencesHcp?: boolean;
   }[];
-  profile: Tables<"Profile">;
+  profile: Tables<"profile">;
 }
 
 const ScoreBarChartDisplay = ({
