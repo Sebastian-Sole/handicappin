@@ -1,4 +1,4 @@
-import { RoundWithCourse } from "@/types/database";
+import { RoundWithCourseAndTee } from "@/types/database";
 import {
   Pagination,
   PaginationContent,
@@ -12,7 +12,7 @@ import {
 interface RoundTablePaginationProps {
   page: number;
   setPage: (page: number) => void;
-  roundsList: RoundWithCourse[];
+  roundsList: RoundWithCourseAndTee[];
 }
 const RoundTablePagination = ({
   page,

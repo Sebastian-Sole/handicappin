@@ -4,7 +4,7 @@ import { round, score, profile, teeInfo, course, hole } from "@/db/schema";
 import { eq } from "drizzle-orm";
 
 import { db } from "@/db";
-import { RoundWithCourse } from "@/types/database";
+import { RoundWithCourseAndTee } from "@/types/database";
 import { flattenRoundWithCourse } from "@/utils/trpc/round";
 import { Scorecard, scorecardSchema } from "@/types/scorecard";
 import {
@@ -93,14 +93,7 @@ export const roundRouter = createTRPCRouter({
     .query(async ({ ctx, input }) => {
       const { data: rounds, error } = await ctx.supabase
         .from("round")
-        .select(
-          `
-        *,
-        course (
-          *
-        )
-      `
-        )
+        .select(`*`)
         .eq("userId", input.userId)
         .order("teeTime", { ascending: false }) // Order by teeTime in descending order
         .range(input.startIndex, input.startIndex + input.amount - 1);
@@ -110,20 +103,22 @@ export const roundRouter = createTRPCRouter({
         throw new Error(`Error getting rounds: ${error.message}`);
       }
 
-      const roundsWithCourse = rounds
-        .map((round) => {
-          return flattenRoundWithCourse(round, round.course);
-        })
-        .filter((round): round is RoundWithCourse => round !== null);
+      return rounds;
 
-      return roundsWithCourse;
+      // const roundsWithCourse = rounds
+      //   .map((round) => {
+      //     return flattenRoundWithCourse(round, round.course);
+      //   })
+      //   .filter((round): round is RoundWithCourseAndTee => round !== null);
+
+      // return roundsWithCourse;
     }),
-  getRound: authedProcedure
+  getRoundById: authedProcedure
     .input(z.object({ roundId: z.string() }))
     .query(async ({ ctx, input }) => {
       const { data: round, error } = await ctx.supabase
         .from("round")
-        .select(`*, course (*)`)
+        .select(`*`)
         .eq("id", input.roundId)
         .single();
 
@@ -132,9 +127,7 @@ export const roundRouter = createTRPCRouter({
         throw new Error(`Error getting round: ${error.message}`);
       }
 
-      const roundWithCourse = flattenRoundWithCourse(round, round.course);
-
-      return roundWithCourse;
+      return round;
     }),
   getBestRound: authedProcedure
     .input(
@@ -145,14 +138,7 @@ export const roundRouter = createTRPCRouter({
     .query(async ({ ctx, input }) => {
       const { data: round, error } = await ctx.supabase
         .from("round")
-        .select(
-          `
-    *,
-    course (
-      *
-    )
-  `
-        )
+        .select("*")
         .eq("userId", input.userId)
         .order("scoreDifferential", { ascending: true })
         .limit(1)
@@ -162,8 +148,7 @@ export const roundRouter = createTRPCRouter({
         console.log(error);
         return null;
       }
-
-      return flattenRoundWithCourse(round, round.course);
+      return round;
     }),
   submitScorecard: authedProcedure
     .input(scorecardSchema)

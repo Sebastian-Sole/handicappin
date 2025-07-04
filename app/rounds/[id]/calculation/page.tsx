@@ -19,7 +19,7 @@ const RoundCalculationPage = async ({ params }: { params: { id: string } }) => {
     return <div>Invalid user</div>;
   }
 
-  const round = await api.round.getRound({ roundId });
+  const round = await api.round.getRoundById({ roundId });
 
   if (!round) {
     return <div> Round not found </div>;

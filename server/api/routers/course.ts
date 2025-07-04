@@ -9,6 +9,17 @@ const courseQuery = z.object({
 });
 
 export const courseRouter = createTRPCRouter({
+  getCourseById: publicProcedure
+    .input(z.object({ courseId: z.number() }))
+    .query(async ({ ctx, input }) => {
+      const { courseId } = input;
+      const { data: course, error } = await ctx.supabase.from("course").select("*").eq("id", courseId).single();
+      if (error) {
+        console.error(error);
+        return null;
+      }
+      return course;
+    }),
   getAllUserCourses: publicProcedure
     .input(courseQuery)
     .query(async ({ ctx, input }) => {

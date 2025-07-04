@@ -5,6 +5,17 @@ import { teeInfo, hole } from "@/db/schema";
 import { and, eq } from "drizzle-orm";
 
 export const teeRouter = createTRPCRouter({
+  getTeeById: publicProcedure
+    .input(z.object({ teeId: z.number() }))
+    .query(async ({ ctx, input }) => {
+      const { teeId } = input;
+      const { data: tee, error } = await ctx.supabase.from("teeInfo").select("*").eq("id", teeId).single();
+      if (error) {
+        console.error(error);
+        return null;
+      }
+      return tee;
+    }),
   fetchTees: publicProcedure
     .input(z.object({ courseId: z.number() }))
     .query(async ({ ctx, input }) => {

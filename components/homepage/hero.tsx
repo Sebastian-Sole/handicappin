@@ -9,7 +9,6 @@ import {
   Info,
 } from "lucide-react";
 import Link from "next/link";
-import { RoundWithCourse } from "@/types/database";
 import { P } from "../ui/typography";
 import {
   HoverCard,
@@ -20,16 +19,17 @@ import {
 interface HeroProps {
   profile: Tables<"profile">;
   previousScores: number[];
-  bestRound: RoundWithCourse | null;
+  bestRound: Tables<"round"> | null;
+  bestRoundTee: Tables<"teeInfo"> | null;
 }
 
-const Hero = ({ profile, previousScores, bestRound }: HeroProps) => {
+const Hero = ({ profile, previousScores, bestRound, bestRoundTee }: HeroProps) => {
   const calculatePlusMinusScore = (): string => {
-    if (bestRound === undefined || bestRound === null) {
+    if ((bestRound === undefined || bestRound === null) || (bestRoundTee === undefined || bestRoundTee === null)) {
       return "N/A";
     }
     const calculatedScore =
-      bestRound.adjustedGrossScore - bestRound.courseEighteenHolePar;
+      bestRound.adjustedGrossScore - bestRoundTee.totalPar;
     if (calculatedScore > 0) {
       return `+${calculatedScore}`;
     }

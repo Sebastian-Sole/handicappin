@@ -1,6 +1,6 @@
 "use client";
 
-import { RoundWithCourse } from "@/types/database";
+import { RoundWithCourseAndTee } from "@/types/database";
 import { Tables } from "@/types/supabase";
 import { H2, H3 } from "./ui/typography";
 import { Separator } from "./ui/separator";
@@ -15,7 +15,7 @@ import AGSCalculationDisplay from "./round/calculation/AGSCalculationDisplay";
 import ScoreDiffCalculationDisplay from "./round/calculation/ScoreDiffCalculationDisplay";
 
 interface RoundCalculationProps {
-  round: RoundWithCourse;
+  round: RoundWithCourseAndTee;
   holes: Tables<"hole">[];
 }
 

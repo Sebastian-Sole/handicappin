@@ -6,7 +6,7 @@ import Link from "next/link";
 import DashboardInfo from "./dashboardInfo";
 import DashboardGraphDisplay from "./dashboardGraphDisplay";
 import useMounted from "@/hooks/useMounted";
-import { RoundWithCourse } from "@/types/database";
+import { RoundWithCourseAndTee } from "@/types/database";
 import { Tables } from "@/types/supabase";
 import { Input } from "../ui/input";
 import {
@@ -24,7 +24,7 @@ import { getRelevantRounds } from "@/utils/calculations/handicap";
 
 interface DashboardProps {
   profile: Tables<"profile">;
-  roundsList: RoundWithCourse[];
+  roundsList: RoundWithCourseAndTee[];
   header: string;
 }
 
@@ -32,7 +32,7 @@ export function Dashboard({ profile, roundsList, header }: DashboardProps) {
   const isMounted = useMounted();
   const [searchTerm, setSearchTerm] = useState("");
   const [sortColumn, setSortColumn] =
-    useState<keyof RoundWithCourse>("teeTime");
+    useState<keyof RoundWithCourseAndTee>("teeTime");
   const [sortDirection, setSortDirection] = useState("desc");
   const [page, setPage] = useState(0);
 
@@ -57,7 +57,7 @@ export function Dashboard({ profile, roundsList, header }: DashboardProps) {
     return filteredRounds.slice(page * 20, page * 20 + 20);
   }, [searchTerm, sortColumn, sortDirection, page]);
 
-  const handleSort = (column: keyof RoundWithCourse) => {
+  const handleSort = (column: keyof RoundWithCourseAndTee) => {
     if (sortColumn === column) {
       setSortDirection(sortDirection === "asc" ? "desc" : "asc");
     } else {

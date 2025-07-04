@@ -1,6 +1,6 @@
 import { Dashboard } from "@/components/dashboard/dashboard";
 import { api } from "@/trpc/server";
-import { RoundWithCourse } from "@/types/database";
+import { RoundWithCourseAndTee } from "@/types/database";
 import { getRandomHeader } from "@/utils/frivolities/headerGenerator";
 
 import { createServerComponentClient } from "@/utils/supabase/server";
@@ -23,7 +23,7 @@ const DashboardPage = async ({ params }: { params: { id: string } }) => {
     return <div>Invalid user, this is not your profile</div>;
   }
 
-  const roundsList: RoundWithCourse[] = await api.round.getAllByUserId({
+  const roundsList: RoundWithCourseAndTee[] = await api.round.getAllByUserId({
     userId: id,
   });
   const profile = await api.auth.getProfileFromUserId(id);

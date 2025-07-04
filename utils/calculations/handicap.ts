@@ -1,5 +1,6 @@
-import { RoundWithCourse } from "@/types/database";
+import { RoundWithCourseAndTee } from "@/types/database";
 import { Hole, Score, Tee } from "@/types/scorecard";
+import { Tables } from "@/types/supabase";
 import { SupabaseClient } from "@supabase/supabase-js";
 
 /**
@@ -172,7 +173,7 @@ export const getRelevantDifferentials = (scoreDifferentials: number[]) => {
  * @param rounds - An array of rounds with course information.
  * @returns An array of handicap contributing rounds based on the number of rounds provided.
  */
-export function getRelevantRounds(rounds: RoundWithCourse[]) {
+export function getRelevantRounds(rounds: Tables<"round">[]) {
   if (rounds.length <= 5) {
     return rounds.sort((a, b) => a.scoreDifferential - b.scoreDifferential);
   } else if (rounds.length >= 6 && rounds.length <= 8) {
@@ -233,7 +234,7 @@ export async function getLowestHandicapIndex(
   supabase: SupabaseClient
 ): Promise<number> {
   const { data: rounds, error } = await supabase
-    .from("Round")
+    .from("round")
     .select("updatedHandicapIndex, teeTime")
     .eq("userId", userId)
     .gte(

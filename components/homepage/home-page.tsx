@@ -4,7 +4,6 @@ import { Tables } from "@/types/supabase";
 import { api } from "@/trpc/server";
 import Hero from "./hero";
 import React from "react";
-import { RoundWithCourse } from "@/types/database";
 import { getRelevantRounds } from "@/utils/calculations/handicap";
 import CourseHandicapCalculator from "../calculators/course-handicap";
 import ScoreDifferentialCalculator from "../calculators/score-differential";
@@ -23,7 +22,7 @@ export const HomePage = async ({ profile }: HomepageProps) => {
     amount: 20,
   });
 
-  const bestRound: RoundWithCourse | null = await api.round.getBestRound({
+  const bestRound: Tables<"round"> | null = await api.round.getBestRound({
     userId: id,
   });
 
@@ -37,6 +36,8 @@ export const HomePage = async ({ profile }: HomepageProps) => {
   }[] = [];
   let percentageChange = 0;
 
+  let bestRoundCourse: Tables<"course"> | null = null;
+  let bestRoundTee: Tables<"teeInfo"> | null = null;
   if (bestRound !== null) {
     previousHandicaps = rounds
       .sort((a, b) => {
@@ -67,6 +68,16 @@ export const HomePage = async ({ profile }: HomepageProps) => {
         previousHandicaps[0].handicap
       ).toFixed(2)
     );
+
+    const course = await api.course.getCourseById({
+      courseId: bestRound.courseId,
+    });
+    bestRoundCourse = course;
+
+    const tee = await api.tee.getTeeById({
+      teeId: bestRound.teeId,
+    });
+    bestRoundTee = tee;
   }
 
   return (
@@ -79,6 +90,7 @@ export const HomePage = async ({ profile }: HomepageProps) => {
               return entry.score;
             })}
             bestRound={bestRound}
+            bestRoundTee={bestRoundTee}
           />
         </section>
 
