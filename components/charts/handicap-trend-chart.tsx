@@ -59,7 +59,7 @@ const HandicapTrendChart = ({
                 tickMargin={8}
                 axisLine={false}
                 domain={[18, 54]}
-              ></YAxis>
+              />
               <ChartTooltip
                 cursor={false}
                 content={<ChartTooltipContent hideLabel />}

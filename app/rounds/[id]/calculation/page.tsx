@@ -1,12 +1,7 @@
 import { RoundCalculation } from "@/components/round-calculation";
-import { HoverCard, HoverCardTrigger } from "@/components/ui/hover-card";
 import { Button } from "@/components/ui/button";
-import { HoverCardContent } from "@/components/ui/hover-card";
 import { api } from "@/trpc/server";
 import { createServerComponentClient } from "@/utils/supabase/server";
-import { Info } from "lucide-react";
-import { Large } from "@/components/ui/typography";
-import Link from "next/link";
 import { Dialog, DialogClose, DialogFooter } from "@/components/ui/dialog";
 import { DialogTrigger } from "@/components/ui/dialog";
 import { DialogContent } from "@/components/ui/dialog";

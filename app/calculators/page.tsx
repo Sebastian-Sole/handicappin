@@ -5,17 +5,10 @@ import {
   Dialog,
   DialogClose,
   DialogContent,
-  DialogDescription,
   DialogFooter,
-  DialogHeader,
-  DialogTitle,
 } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { createServerComponentClient } from "@/utils/supabase/server";
 import { DialogTrigger } from "@radix-ui/react-dialog";
-import { Copy } from "lucide-react";
-import Link from "next/link";
 
 const CalculatorsPage = async () => {
   const supabase = createServerComponentClient();

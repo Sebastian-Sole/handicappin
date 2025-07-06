@@ -9,7 +9,6 @@ import {
 } from "../ui/card";
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
-import { calculateCourseHandicap } from "@/utils/calculations/handicap";
 import {
   Tooltip,
   TooltipContent,
@@ -48,9 +47,6 @@ const CourseHandicapCalculator = ({
       setCourseHandicap(courseHandicap);
     } 
   }, [handicapIndex, slopeRating, courseRating, par, numberOfHolesPlayed]);
-
-
-  
 
   return (
     <div className="container px-4 lg:px-6">

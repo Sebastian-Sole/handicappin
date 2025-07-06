@@ -1,15 +1,6 @@
 "use client";
 
-import Link from "next/link";
 import { Button } from "../ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "../ui/dialog";
 import { User } from "@supabase/supabase-js";
 import { toast } from "../ui/use-toast";
 

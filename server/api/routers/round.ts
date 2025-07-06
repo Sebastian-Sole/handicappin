@@ -1,11 +1,9 @@
-import { number, z } from "zod";
+import { z } from "zod";
 import { createTRPCRouter, authedProcedure } from "@/server/api/trpc";
 import { round, score, profile, teeInfo, course, hole } from "@/db/schema";
 import { eq } from "drizzle-orm";
 
 import { db } from "@/db";
-import { RoundWithCourseAndTee } from "@/types/database";
-import { flattenRoundWithCourse } from "@/utils/trpc/round";
 import { Scorecard, scorecardSchema } from "@/types/scorecard";
 import {
   calculateAdjustedPlayedScore,

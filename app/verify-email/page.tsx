@@ -9,7 +9,7 @@ const VerifyLoginPage = async ({
   const supabase = createServerComponentClient();
 
   const { code } = searchParams;
-  console.log(code);
+
   if (!code) {
     redirect("/login");
   }
@@ -34,7 +34,7 @@ const VerifyLoginPage = async ({
   const user = exchangeData?.user;
   if (user) {
     // Check if the profile exists
-    const { data: profileData, error: profileError } = await supabase
+    const { error: profileError } = await supabase
       .from("profile")
       .select("*")
       .eq("id", user.id)
