@@ -39,7 +39,7 @@ const Hero = ({ profile, previousScores, bestRound, bestRoundTee }: HeroProps) =
     <section className="w-full py-4 lg:py-8 xl:py-12 2xl:py-24 bg-cover bg-center">
       <div className="sm:container px-4 lg:px-6">
         <div className="grid gap-6 xl:grid-cols-[1fr_460px] xl:gap-12 2xl:grid-cols-[1fr_600px]">
-          <div className="flex flex-col justify-between space-y-4 bg-background/90 backdrop-blur-sm p-8 rounded-xl shadow-lg h-full">
+          <div className="flex flex-col justify-between space-y-4 bg-background/90 backdrop-blur-xs p-8 rounded-xl shadow-lg h-full">
             <div className="space-y-4">
               <h1 className="text-3xl font-bold tracking-tighter md:text-5xl 2xl:text-6xl/none text-primary">
                 Welcome back, {profile.name}!
@@ -127,7 +127,7 @@ const Hero = ({ profile, previousScores, bestRound, bestRoundTee }: HeroProps) =
 
           <div className="hidden xl:flex items-center justify-center">
             <div className="relative w-full h-full max-w-[500px] max-h-[600px]">
-              <div className="absolute inset-0 bg-gradient-to-r from-primary to-primary-foreground rounded-full blur-3xl opacity-30 animate-pulse"></div>
+              <div className="absolute inset-0 bg-linear-to-r from-primary to-primary-foreground rounded-full blur-3xl opacity-30 animate-pulse"></div>
               <div className="relative w-full h-full bg-background/50 bg-opacity-50 backdrop-blur-md rounded-3xl shadow-2xl p-8 flex flex-col justify-between">
                 <div className="space-y-2">
                   <h3 className="text-2xl font-bold">Performance Breakdown</h3>
@@ -200,7 +200,7 @@ const Hero = ({ profile, previousScores, bestRound, bestRoundTee }: HeroProps) =
                     </li>
                   </ul>
                 </div>
-                <div className="absolute inset-0 bg-background/80 backdrop-blur-sm flex flex-col items-center justify-center rounded-3xl">
+                <div className="absolute inset-0 bg-background/80 backdrop-blur-xs flex flex-col items-center justify-center rounded-3xl">
                   <p className="text-2xl font-bold text-primary mb-2">
                     Coming Soon
                   </p>

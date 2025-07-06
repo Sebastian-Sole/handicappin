@@ -29,7 +29,7 @@ export async function Navbar() {
   const isAuthed = data?.user;
 
   return (
-    <header className="fixed top-0 z-50 w-full bg-background shadow-sm">
+    <header className="fixed top-0 z-50 w-full bg-background shadow-xs">
       <div className="container flex h-16 items-center justify-between px-4 sm:px-6 m-0 max-w-full">
         <Link
           href="/"

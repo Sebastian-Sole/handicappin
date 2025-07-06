@@ -76,7 +76,7 @@ const AGSCalculationDisplay = () => {
             {adjustedPlayedScore} + {Math.round(courseHandicapCalculation)} + (
             {par} &times; (18 - {numberOfHolesPlayed}) &#247; 18)
           </Muted>
-          <P className="!mt-0">=</P>
+          <P className="mt-0!">=</P>
           <u className="ml-2 text-primary font-bold">
             {adjustedGrossScoreCalculation}
           </u>

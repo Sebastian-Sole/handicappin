@@ -17,8 +17,8 @@ const DashboardIndex = ({ handicapIndex, header }: DashboardIndexProps) => {
         <Button variant="link" className="text-primary underline px-0 mb-10">
           How is my handicap calculated?{" "}
         </Button>
-        <H4 className="!mb-2">{header}</H4>
-        <P className="!mt-4">
+        <H4 className="mb-2!">{header}</H4>
+        <P className="mt-4!">
           Handicappin&apos; believes in transparency and making golf accessible.
           It can be difficult to find accurate and consistent information on the
           calculations of scores, handicaps and the rules of golf online. We aim

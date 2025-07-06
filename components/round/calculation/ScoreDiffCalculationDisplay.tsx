@@ -58,7 +58,7 @@ const ScoreDiffCalculationDisplay = () => {
           ({adjustedGrossScoreCalculation} - {rating}) &times; (113 &#247;{" "}
           {slope})
         </Muted>
-        <P className="!mt-0">=</P>
+        <P className="mt-0!">=</P>
         <u className="ml-2 text-primary font-bold">
           {Math.round(scoreDifferentialCalculation * 10) / 10}
         </u>

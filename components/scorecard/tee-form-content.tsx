@@ -82,11 +82,11 @@ function TeeInfoFields({ tee, onTeeChange }: TeeFormContentProps) {
         >
           <div className="flex items-center space-x-2">
             <RadioGroupItem value="meters" />
-            <label className="!mt-0">meters</label>
+            <label className="mt-0!">meters</label>
           </div>
           <div className="flex items-center space-x-2">
             <RadioGroupItem value="yards" />
-            <label className="!mt-0">yards</label>
+            <label className="mt-0!">yards</label>
           </div>
         </RadioGroup>
       </div>
@@ -102,11 +102,11 @@ function TeeInfoFields({ tee, onTeeChange }: TeeFormContentProps) {
         >
           <div className="flex items-center space-x-2">
             <RadioGroupItem value="mens" />
-            <label className="!mt-0">mens</label>
+            <label className="mt-0!">mens</label>
           </div>
           <div className="flex items-center space-x-2">
             <RadioGroupItem value="ladies" />
-            <label className="!mt-0">ladies</label>
+            <label className="mt-0!">ladies</label>
           </div>
         </RadioGroup>
       </div>

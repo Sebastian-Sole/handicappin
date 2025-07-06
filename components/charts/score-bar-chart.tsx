@@ -25,7 +25,7 @@ const ScoreBarChart = ({ scores, className }: ScoreBarChartProps) => {
   return (
     <>
       {scores.length !== 0 && (
-        <div className={`aspect-[16/9] ${className}`}>
+        <div className={`aspect-video ${className}`}>
           <ChartContainer
             config={{
               round: {

@@ -25,7 +25,7 @@ const HandicapTrendChart = ({
   return (
     <>
       {previousHandicaps.length !== 0 && (
-        <div className="aspect-[16/9]">
+        <div className="aspect-video">
           <ChartContainer
             config={{
               desktop: {

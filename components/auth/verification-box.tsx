@@ -3,9 +3,9 @@ import { CheckCircle } from "lucide-react";
 const VerificationBox = () => {
   return (
     <div className="max-w-sm mx-auto">
-      <div className="bg-green-50 dark:bg-green-900 border-l-4 border-green-400 dark:border-green-500 p-4 rounded-md shadow-sm">
+      <div className="bg-green-50 dark:bg-green-900 border-l-4 border-green-400 dark:border-green-500 p-4 rounded-md shadow-xs">
         <div className="flex items-center">
-          <div className="flex-shrink-0">
+          <div className="shrink-0">
             <CheckCircle
               className="h-5 w-5 text-green-400 dark:text-green-300"
               aria-hidden="true"

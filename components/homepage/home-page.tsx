@@ -111,7 +111,7 @@ export const HomePage = async ({ profile }: HomepageProps) => {
           </div>
         </section>
 
-        <section className="w-full py-6 lg:py-12 xl:py-16 !pt-0 flex flex-col items-center">
+        <section className="w-full py-6 lg:py-12 xl:py-16 pt-0! flex flex-col items-center">
           <span className="max-w-[800px] flex flex-col items-center space-y-8">
             <h2 className="text-3xl font-bold tracking-tighter md:text-4xl lg:text-5xl mt-4 text-primary">
               Calculators

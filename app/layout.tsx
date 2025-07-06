@@ -31,7 +31,7 @@ export default function RootLayout({
               disableTransitionOnChange
             >
               <Navbar />
-              <section className="pt-16 flex-grow bg-background">
+              <section className="pt-16 grow bg-background">
                 {children}
               </section>
               <Footer />

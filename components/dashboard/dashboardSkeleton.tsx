@@ -2,7 +2,7 @@ import { Skeleton } from "../ui/skeleton";
 
 const DashboardSkeleton = () => {
   return (
-    <div className="bg-background text-foreground p-8 rounded-lg shadow-lg h-[100vh]">
+    <div className="bg-background text-foreground p-8 rounded-lg shadow-lg h-screen">
       {/* <Skeleton className="h-10 w-1/3 mb-4" /> */}
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
         <div className="bg-card rounded-lg p-6">
