@@ -1,4 +1,3 @@
-import { RoundWithCourse } from "@/types/database";
 import {
   Pagination,
   PaginationContent,
@@ -8,16 +7,17 @@ import {
   PaginationEllipsis,
   PaginationNext,
 } from "../ui/pagination";
+import { Scorecard } from "@/types/scorecard";
 
 interface RoundTablePaginationProps {
   page: number;
   setPage: (page: number) => void;
-  roundsList: RoundWithCourse[];
+  scorecards: Scorecard[];
 }
 const RoundTablePagination = ({
   page,
   setPage,
-  roundsList,
+  scorecards,
 }: RoundTablePaginationProps) => {
   return (
     <div className="flex justify-between mt-4">
@@ -54,7 +54,7 @@ const RoundTablePagination = ({
             </PaginationLink>
           </PaginationItem>
 
-          {page * 20 + 20 < roundsList.length && (
+          {page * 20 + 20 < scorecards.length && (
             <>
               <PaginationItem>
                 <PaginationLink
@@ -65,7 +65,7 @@ const RoundTablePagination = ({
                   {page + 2}
                 </PaginationLink>
               </PaginationItem>
-              {page + 2 < roundsList.length / 20 && (
+              {page + 2 < scorecards.length / 20 && (
                 <PaginationItem>
                   <PaginationEllipsis />
                 </PaginationItem>

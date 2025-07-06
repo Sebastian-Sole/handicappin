@@ -57,7 +57,7 @@ const ScoreBarChart = ({ scores, className }: ScoreBarChartProps) => {
                 tickMargin={8}
                 axisLine={false}
                 domain={["dataMin - 10", "dataMax + 5"]}
-              ></YAxis>
+              />
               <CartesianGrid strokeDasharray="5 5" />
 
               <Bar dataKey="score" radius={8}>

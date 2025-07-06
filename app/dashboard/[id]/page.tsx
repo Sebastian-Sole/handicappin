@@ -1,6 +1,5 @@
 import { Dashboard } from "@/components/dashboard/dashboard";
 import { api } from "@/trpc/server";
-import { RoundWithCourse } from "@/types/database";
 import { getRandomHeader } from "@/utils/frivolities/headerGenerator";
 
 import { createServerComponentClient } from "@/utils/supabase/server";
@@ -18,23 +17,27 @@ const DashboardPage = async ({ params }: { params: { id: string } }) => {
   if (!data) {
     return <div>Invalid user</div>;
   }
-
   if (data.user?.id !== id) {
     return <div>Invalid user, this is not your profile</div>;
   }
 
-  const roundsList: RoundWithCourse[] = await api.round.getAllByUserId({
-    userId: id,
-  });
-  const profile = await api.auth.getProfileFromUserId(id);
+  try {
+    const scorecards = await api.scorecard.getAllScorecardsByUserId({
+      userId: id,
+    });
+    const profile = await api.auth.getProfileFromUserId(id);
+    const header = getRandomHeader();
+    return (
+      <div>
+        <Dashboard profile={profile} scorecards={scorecards} header={header} />
+      </div>
+    );
+  } catch (error) {
+    console.error(error);
+    return <div>Error loading scorecards</div>;
+  }
 
-  const header = getRandomHeader();
-
-  return (
-    <div>
-      <Dashboard profile={profile} roundsList={roundsList} header={header} />
-    </div>
-  );
+  
 };
 
 export default DashboardPage;

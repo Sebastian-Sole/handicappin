@@ -5,10 +5,16 @@ import { createClientComponentClient } from "../supabase/client";
 export const signUpUser = async (values: signupSchema) => {
   const supabase = createClientComponentClient();
 
+  // Use the current origin for the redirect URL
+  const baseUrl = window.location.origin;
+
   // Sign up the user
   const { data: signupData, error: signupError } = await supabase.auth.signUp({
     email: values.email,
     password: values.password,
+    options: {
+      emailRedirectTo: `${baseUrl}/verify-email`
+    }
   });
 
   if (signupError) {

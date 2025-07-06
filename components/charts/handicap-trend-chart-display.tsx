@@ -19,7 +19,7 @@ interface HandicapTrendChartDisplayProps {
   }[];
   handicapIndex: number;
   percentageChange: number;
-  profile: Tables<"Profile">;
+  profile: Tables<"profile">;
 }
 
 const HandicapTrendChartDisplay = ({

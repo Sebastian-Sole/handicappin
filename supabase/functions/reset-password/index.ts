@@ -2,12 +2,12 @@ import { createClient } from "jsr:@supabase/supabase-js@2";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { Resend } from "https://esm.sh/resend@4.0.0";
 import ResetPasswordEmail from "./email.tsx";
-import { render } from "https://esm.sh/@react-email/components@0.0.22";
+import { render } from "https://esm.sh/@react-email/components@0.0.22?deps=react@18.2.0";
 import { create, getNumericDate } from "https://deno.land/x/djwt@v2.4/mod.ts";
 
 const supabase = createClient(
   Deno.env.get("SUPABASE_URL")!,
-  Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+  Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
 );
 const resend = new Resend(Deno.env.get("RESEND_API_KEY")!);
 const JWT_SECRET = Deno.env.get("RESET_TOKEN_SECRET")!;
@@ -29,12 +29,16 @@ serve(async (req) => {
     });
   }
 
+  console.log("Reset password request");
+
   try {
     const { email, resetLinkBase } = await req.json();
+    console.log("Email:", email);
+    console.log("Reset link base:", resetLinkBase);
     if (!email) throw new Error("Email is required");
 
     const { data: user, error } = await supabase
-      .from("Profile")
+      .from("profile")
       .select("id")
       .eq("email", email)
       .single();
@@ -51,7 +55,7 @@ serve(async (req) => {
       new TextEncoder().encode(JWT_SECRET), // Convert JWT_SECRET to Uint8Array
       { name: "HMAC", hash: "SHA-256" }, // Algorithm settings
       false, // Whether the key is extractable
-      ["sign", "verify"] // Key usage
+      ["sign", "verify"], // Key usage
     );
 
     try {
@@ -68,10 +72,10 @@ serve(async (req) => {
       throw new Error("Error creating token");
     }
 
-    const resetLink = `${resetLinkBase}?token=${token}`;
+    const resetLink = `${resetLinkBase}?token=${token}&email=${email}`;
 
     const emailHtml = render(
-      ResetPasswordEmail({ resetLink, username: email })
+      ResetPasswordEmail({ resetLink, username: email }),
     );
 
     await resend.emails.send({
@@ -86,7 +90,7 @@ serve(async (req) => {
       headers: corsHeaders,
     });
   } catch (error) {
-    return new Response(JSON.stringify({ error: error.message }), {
+    return new Response(JSON.stringify({ error: error }), {
       status: 400,
       headers: corsHeaders,
     });

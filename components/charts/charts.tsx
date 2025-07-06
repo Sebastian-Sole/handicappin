@@ -47,7 +47,7 @@ function BarchartChart(props: any) {
             tickLine={false}
             tickMargin={8}
             axisLine={false}
-          ></YAxis>
+          />
           <Bar dataKey="score" fill="var(--color-round)" radius={8} />
         </BarChart>
       </ChartContainer>
@@ -96,7 +96,7 @@ function LinechartChart({ data, className, isPositive }: LinechartChartProps) {
             tickMargin={8}
             axisLine={false}
             domain={[18, 54]}
-          ></YAxis>
+          />
           <ChartTooltip
             cursor={false}
             content={<ChartTooltipContent hideLabel />}

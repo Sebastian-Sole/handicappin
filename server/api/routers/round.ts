@@ -1,241 +1,86 @@
-import {
-  authedProcedure,
-  createTRPCRouter,
-  publicProcedure,
-} from "@/server/api/trpc";
-import { RoundWithCourse } from "@/types/database";
-import { roundMutationSchema } from "@/types/round";
-import {
-  calculateCappedHandicapIndex,
-  calculateHandicapIndex,
-  getLowestHandicapIndex,
-} from "@/utils/calculations/handicap";
-import { calculateAdjustment } from "@/utils/round/addUtils";
-import { flattenRoundWithCourse } from "@/utils/trpc/round";
 import { z } from "zod";
+import { createTRPCRouter, authedProcedure } from "@/server/api/trpc";
+import { round, score, profile, teeInfo, course, hole } from "@/db/schema";
+import { eq } from "drizzle-orm";
 
-const EXCEPTIONAL_ROUND_THRESHOLD = 7;
-const MAX_SCORE_DIFFERENTIAL = 54;
+import { db } from "@/db";
+import { Scorecard, scorecardSchema } from "@/types/scorecard";
+import {
+  calculateAdjustedPlayedScore,
+  calculateCourseHandicap,
+  calculateScoreDifferential,
+  calculateAdjustedGrossScore,
+} from "@/utils/calculations/handicap";
+
+type RoundCalculations = {
+  adjustedGrossScore: number;
+  adjustedPlayedScore: number;
+  scoreDifferential: number;
+  courseHandicap: number;
+};
+
+const getRoundCalculations = (
+  scorecard: Scorecard,
+  handicapIndex: number
+): RoundCalculations => {
+  const { teePlayed, scores } = scorecard;
+
+  if (!teePlayed.holes) {
+    throw new Error("Tee played has no holes");
+  }
+
+  const numberOfHolesPlayed = scores.length;
+
+  console.log("Calculating course handicap");
+  const courseHandicap = calculateCourseHandicap(
+    handicapIndex,
+    teePlayed,
+    numberOfHolesPlayed
+  );
+
+  console.log("Course handicap calculated");
+  console.log("Calculating adjusted played score");
+
+  const adjustedPlayedScore = calculateAdjustedPlayedScore(
+    teePlayed.holes,
+    scores
+  );
+
+  console.log("Adjusted played score calculated");
+  console.log("Calculating adjusted gross score");
+
+  const adjustedGrossScore = calculateAdjustedGrossScore(
+    adjustedPlayedScore,
+    courseHandicap,
+    numberOfHolesPlayed,
+    teePlayed
+  );
+
+  console.log("Adjusted gross score calculated");
+  console.log("Calculating score differential");
+
+  const scoreDifferential = calculateScoreDifferential(
+    adjustedGrossScore,
+    teePlayed.courseRating18,
+    teePlayed.slopeRating18
+  );
+
+  console.log("Score differential calculated: ", scoreDifferential);
+
+  return {
+    adjustedGrossScore,
+    adjustedPlayedScore,
+    scoreDifferential,
+    courseHandicap,
+  };
+};
+
+// This type matches exactly what Drizzle expects for an insert
+type TeeInfoInsert = typeof teeInfo.$inferInsert;
+type RoundInsert = typeof round.$inferInsert;
 
 export const roundRouter = createTRPCRouter({
-  create: authedProcedure
-    .input(roundMutationSchema)
-    .mutation(async ({ ctx, input }) => {
-      if (!ctx.user) {
-        throw new Error("Unauthorized");
-      }
-
-      const {
-        courseInfo,
-        teeTime: date,
-        holes,
-        adjustedGrossScore,
-        userId,
-        existingHandicapIndex,
-        totalStrokes,
-        nineHolePar,
-        eighteenHolePar,
-      } = input;
-
-      let { scoreDifferential, exceptionalScoreAdjustment } = input;
-
-      const { data: existingCourse, error: existingCourseError } =
-        await ctx.supabase
-          .from("Course")
-          .select("id")
-          .eq("name", courseInfo.location)
-          .maybeSingle();
-
-      if (existingCourseError) {
-        console.log(existingCourseError);
-        throw new Error(
-          `Error checking if course exists: ${existingCourseError.message}`
-        );
-      }
-      console.log(existingCourse);
-
-      let courseId = existingCourse?.id || null;
-
-      if (courseId === null) {
-        const { data: course, error: courseError } = await ctx.supabase
-          .from("Course")
-          .insert([
-            {
-              courseRating: courseInfo.courseRating,
-              slopeRating: courseInfo.slope,
-              name: courseInfo.location,
-              eighteenHolePar,
-              nineHolePar,
-            },
-          ])
-          .select("id")
-          .single();
-
-        if (courseError) {
-          console.log("ID: " + courseId);
-          console.log("Course Name: " + courseInfo.location);
-          throw new Error(`Error inserting course: ${courseError.message}`);
-        }
-
-        courseId = course.id;
-      }
-
-      const { data: prevRoundsData, error: prevRoundsError } =
-        await ctx.supabase
-          .from("Round")
-          .select("*")
-          .eq("userId", userId)
-          .order("teeTime", { ascending: false })
-          .range(0, 18);
-
-      if (prevRoundsError) {
-        throw new Error(
-          `Error getting previous rounds: ${prevRoundsError.message}`
-        );
-      }
-
-      console.log("Score Differential: " + scoreDifferential);
-
-      const difference = existingHandicapIndex - scoreDifferential;
-      const isExceptionalRound = difference >= EXCEPTIONAL_ROUND_THRESHOLD;
-
-      if (isExceptionalRound) {
-        console.log("Difference: " + difference);
-        const adjustmentAmount = calculateAdjustment(difference);
-        console.log("Adjustment: " + adjustmentAmount);
-        exceptionalScoreAdjustment =
-          exceptionalScoreAdjustment - adjustmentAmount;
-        scoreDifferential = scoreDifferential - adjustmentAmount;
-        console.log("New score differential: " + scoreDifferential);
-        console.log(
-          "New exceptional score adjustment: " + exceptionalScoreAdjustment
-        );
-
-        // Update score differentials and adjustment for previous rounds
-        prevRoundsData.slice(1).forEach(async (round) => {
-          const { error: updateRoundError } = await ctx.supabase
-            .from("Round")
-            .update({
-              scoreDifferential: round.scoreDifferential - adjustmentAmount,
-              exceptionalScoreAdjustment:
-                round.exceptionalScoreAdjustment - adjustmentAmount,
-            })
-            .eq("id", round.id);
-
-          if (updateRoundError) {
-            throw new Error(
-              `Error updating previous rounds: ${updateRoundError.message}`
-            );
-          }
-        });
-      }
-
-      console.log(userId);
-
-      const { data: round, error: roundError } = await ctx.supabase
-        .from("Round")
-        .insert([
-          {
-            userId: userId,
-            courseId: courseId,
-            adjustedGrossScore: adjustedGrossScore,
-            scoreDifferential: scoreDifferential,
-            totalStrokes: totalStrokes,
-            existingHandicapIndex: existingHandicapIndex,
-            teeTime: date.toISOString(),
-            parPlayed: courseInfo.par,
-            updatedHandicapIndex: existingHandicapIndex,
-          },
-        ])
-        .select("*")
-        .single();
-
-      if (roundError) {
-        throw new Error(`Error inserting round: ${roundError.message}`);
-      }
-
-      const roundId = round.id;
-
-      const holesData = holes.map((hole) => ({
-        par: hole.par,
-        holeNumber: hole.holeNumber,
-        hcp: hole.hcp,
-        strokes: hole.strokes,
-        hcpStrokes: hole.hcpStrokes,
-        roundId: roundId,
-        userId: userId,
-      }));
-
-      const { error: holesError } = await ctx.supabase
-        .from("Hole")
-        .insert(holesData);
-
-      if (holesError) {
-        throw new Error(`Error inserting holes: ${holesError.message}`);
-      }
-
-      const lowestHandicapIndex = await getLowestHandicapIndex(
-        userId,
-        ctx.supabase
-      );
-
-      const roundsData = [round, ...prevRoundsData];
-
-      const scoreDifferentials = roundsData
-        .sort(
-          (a, b) =>
-            new Date(b.teeTime).getTime() - new Date(a.teeTime).getTime()
-        )
-        .map((round) => round.scoreDifferential);
-
-      const cappedDifferentials = scoreDifferentials.map((diff) =>
-        diff > MAX_SCORE_DIFFERENTIAL ? MAX_SCORE_DIFFERENTIAL : diff
-      );
-
-      let handicapIndex = calculateHandicapIndex(cappedDifferentials);
-
-      handicapIndex = calculateCappedHandicapIndex(
-        handicapIndex,
-        lowestHandicapIndex
-      );
-      console.log("Handicap index: " + handicapIndex);
-      console.log("Lowest Handicap Index:" + lowestHandicapIndex);
-
-      if (handicapIndex !== existingHandicapIndex) {
-        const { error: updateError } = await ctx.supabase
-          .from("Profile")
-          .update({
-            handicapIndex: handicapIndex,
-          })
-          .eq("id", userId);
-
-        if (updateError) {
-          throw new Error(
-            `Error updating handicap index: ${updateError.message}`
-          );
-        }
-
-        // Add new handicap index to the added round
-        const { error: updateRoundError } = await ctx.supabase
-          .from("Round")
-          .update({
-            updatedHandicapIndex: handicapIndex,
-          })
-          .eq("id", roundId);
-
-        if (updateRoundError) {
-          throw new Error(
-            `Error updating round with new handicap index: ${updateRoundError.message}`
-          );
-        }
-      }
-
-      return {
-        message: "Round and holes inserted successfully",
-        roundId: roundId,
-      };
-    }),
-  getAllByUserId: publicProcedure
+  getAllByUserId: authedProcedure
     .input(
       z.object({
         userId: z.string().uuid(),
@@ -245,15 +90,8 @@ export const roundRouter = createTRPCRouter({
     )
     .query(async ({ ctx, input }) => {
       const { data: rounds, error } = await ctx.supabase
-        .from("Round")
-        .select(
-          `
-        *,
-        Course (
-          *
-        )
-      `
-        )
+        .from("round")
+        .select(`*`)
         .eq("userId", input.userId)
         .order("teeTime", { ascending: false }) // Order by teeTime in descending order
         .range(input.startIndex, input.startIndex + input.amount - 1);
@@ -263,20 +101,22 @@ export const roundRouter = createTRPCRouter({
         throw new Error(`Error getting rounds: ${error.message}`);
       }
 
-      const roundsWithCourse = rounds
-        .map((round) => {
-          return flattenRoundWithCourse(round, round.Course);
-        })
-        .filter((round): round is RoundWithCourse => round !== null);
+      return rounds;
 
-      return roundsWithCourse;
+      // const roundsWithCourse = rounds
+      //   .map((round) => {
+      //     return flattenRoundWithCourse(round, round.course);
+      //   })
+      //   .filter((round): round is RoundWithCourseAndTee => round !== null);
+
+      // return roundsWithCourse;
     }),
-  getRound: publicProcedure
+  getRoundById: authedProcedure
     .input(z.object({ roundId: z.string() }))
     .query(async ({ ctx, input }) => {
       const { data: round, error } = await ctx.supabase
-        .from("Round")
-        .select(`*, Course (*)`)
+        .from("round")
+        .select(`*`)
         .eq("id", input.roundId)
         .single();
 
@@ -285,11 +125,9 @@ export const roundRouter = createTRPCRouter({
         throw new Error(`Error getting round: ${error.message}`);
       }
 
-      const roundWithCourse = flattenRoundWithCourse(round, round.Course);
-
-      return roundWithCourse;
+      return round;
     }),
-  getBestRound: publicProcedure
+  getBestRound: authedProcedure
     .input(
       z.object({
         userId: z.string().uuid(),
@@ -297,15 +135,8 @@ export const roundRouter = createTRPCRouter({
     )
     .query(async ({ ctx, input }) => {
       const { data: round, error } = await ctx.supabase
-        .from("Round")
-        .select(
-          `
-    *,
-    Course (
-      *
-    )
-  `
-        )
+        .from("round")
+        .select("*")
         .eq("userId", input.userId)
         .order("scoreDifferential", { ascending: true })
         .limit(1)
@@ -315,7 +146,196 @@ export const roundRouter = createTRPCRouter({
         console.log(error);
         return null;
       }
+      return round;
+    }),
+  submitScorecard: authedProcedure
+    .input(scorecardSchema)
+    .mutation(async ({ ctx, input }) => {
+      const {
+        teePlayed,
+        scores,
+        notes,
+        approvalStatus,
+        course: coursePlayed,
+        teeTime,
+        userId,
+      } = input;
 
-      return flattenRoundWithCourse(round, round.Course);
+      if (!teePlayed.holes) {
+        throw new Error("Tee played has no holes");
+      }
+
+      // 1. Get user profile for handicap calculations
+      const userProfile = await db
+        .select()
+        .from(profile)
+        .where(eq(profile.id, userId))
+        .limit(1);
+
+      if (!userProfile[0]) {
+        throw new Error("User profile not found");
+      }
+
+      console.log("User profile found");
+
+      // 2. Handle course
+      let courseId = coursePlayed.id;
+      if (coursePlayed.approvalStatus === "pending") {
+        // Only insert if it's pending (doesn't exist in DB)
+        const [newCourse] = await db
+          .insert(course)
+          .values({
+            name: coursePlayed.name,
+            approvalStatus: "pending",
+          })
+          .returning();
+        courseId = newCourse.id;
+      }
+
+      console.log("Course inserted", courseId);
+
+      if (!courseId) {
+        throw new Error("Course ID not found");
+      }
+
+      console.log("Course ID found", courseId);
+
+      // 3. Handle tee
+      let teeId = teePlayed.id;
+      console.log("Tee ID", teeId);
+      if (teePlayed.approvalStatus === "pending") {
+        console.log("Inserting tee");
+        // Only insert if it's pending (doesn't exist in DB)
+        console.log(teePlayed);
+
+        const teeInsert: TeeInfoInsert = {
+          courseId: courseId!,
+          name: teePlayed.name,
+          gender: teePlayed.gender,
+          courseRating18: teePlayed.courseRating18,
+          slopeRating18: teePlayed.slopeRating18,
+          courseRatingFront9: teePlayed.courseRatingFront9,
+          slopeRatingFront9: teePlayed.slopeRatingFront9,
+          courseRatingBack9: teePlayed.courseRatingBack9,
+          slopeRatingBack9: teePlayed.slopeRatingBack9,
+          outPar: teePlayed.outPar,
+          inPar: teePlayed.inPar,
+          totalPar: teePlayed.totalPar,
+          outDistance: teePlayed.outDistance,
+          inDistance: teePlayed.inDistance,
+          totalDistance: teePlayed.totalDistance,
+          distanceMeasurement: teePlayed.distanceMeasurement,
+          approvalStatus: "pending",
+          // isArchived and version are optional (defaulted in schema)
+        };
+
+        const [newTee] = await db
+          .insert(teeInfo)
+          .values(teeInsert)
+          .returning();
+        teeId = newTee.id;
+
+        console.log("Tee inserted", teeId);
+
+        if (teeId === null) {
+          throw new Error("Failed to insert tee");
+        }
+
+        // Insert holes if tee is pending
+        if (teePlayed.holes) {
+          console.log("Inserting holes");
+          const holeInserts = teePlayed.holes.map((h) => ({
+            teeId: teeId!,
+            holeNumber: h.holeNumber,
+            par: h.par,
+            hcp: h.hcp,
+            distance: h.distance,
+          }));
+
+          await db.insert(hole).values(holeInserts);
+          console.log("Holes inserted");
+        }
+      }
+
+      console.log("Calculating round calculations");
+
+      // Match scores with holes to calculate the par played
+      let parPlayed = 0;
+      if (teePlayed.holes && Array.isArray(scores)) {
+        // Create a map of holeNumber to par for quick lookup
+        const holeParMap = new Map<number, number>();
+        teePlayed.holes.forEach((h) => {
+          holeParMap.set(h.holeNumber, h.par);
+        });
+
+        // For each score, find the corresponding hole's par and sum
+        parPlayed = scores.reduce((sum, score, idx) => {
+          // Assume scores are in order of holeNumber (1-based)
+          const holeNumber = idx + 1;
+          const par = holeParMap.get(holeNumber) ?? 0;
+          return sum + par;
+        }, 0);
+      }
+
+      const {
+        adjustedGrossScore: tempAdjustedGrossScore,
+        adjustedPlayedScore: tempAdjustedPlayedScore,
+        scoreDifferential: tempScoreDifferential,
+        courseHandicap: tempCourseHandicap,
+      } = getRoundCalculations(input, Number(userProfile[0].handicapIndex));
+
+      console.log("Round calculations calculated");
+
+      if (!teeId) {
+        throw new Error("Course or tee ID not found");
+      }
+
+      console.log("Inserting round");
+
+      const roundInsert: RoundInsert = {
+        userId: userId,
+        courseId: courseId,
+        teeId: teeId,
+        teeTime: new Date(teeTime),
+        existingHandicapIndex: userProfile[0].handicapIndex,
+        updatedHandicapIndex: userProfile[0].handicapIndex,
+        scoreDifferential: tempScoreDifferential,
+        totalStrokes: scores.reduce((sum, score) => sum + score.strokes, 0),
+        adjustedGrossScore: tempAdjustedGrossScore,
+        adjustedPlayedScore: tempAdjustedPlayedScore,
+        parPlayed: parPlayed,
+        notes,
+        exceptionalScoreAdjustment: 0,
+        courseHandicap: tempCourseHandicap,
+        approvalStatus,
+      }
+
+      // 5. Insert round
+      const [newRound] = await db
+        .insert(round)
+        .values(roundInsert)
+        .returning();
+
+      console.log("Round inserted", newRound);
+
+      if (!newRound) {
+        throw new Error("Failed to insert round");
+      }
+
+      console.log("Inserting scores");
+      // Create score inserts with the correct holeIds
+      const scoreInserts = scores.map((score, index) => ({
+        userId,
+        roundId: newRound.id,
+        holeId: teePlayed.holes![index].id!,
+        strokes: score.strokes,
+        hcpStrokes: score.hcpStrokes, // Will be updated by the trigger
+      }));
+
+      await db.insert(score).values(scoreInserts);
+
+      console.log("Scores inserted");
+
+      return newRound;
     }),
 });

@@ -4,16 +4,13 @@
 
 // Setup type definitions for built-in Supabase Runtime APIs
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
-import {
-  create,
-  verify,
-  getNumericDate,
-} from "https://deno.land/x/djwt/mod.ts";
+import { verify } from "https://deno.land/x/djwt@v3.0.2/mod.ts";
 import { createClient } from "jsr:@supabase/supabase-js@2";
+import { passwordResetJwtPayloadSchema } from "../types.ts";
 
 const supabase = createClient(
   Deno.env.get("SUPABASE_URL")!,
-  Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+  Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
 );
 
 const JWT_SECRET = Deno.env.get("RESET_TOKEN_SECRET")!;
@@ -44,7 +41,7 @@ Deno.serve(async (req) => {
         {
           status: 400,
           headers: corsHeaders,
-        }
+        },
       );
     }
 
@@ -54,12 +51,24 @@ Deno.serve(async (req) => {
       new TextEncoder().encode(JWT_SECRET), // Secret as Uint8Array
       { name: "HMAC", hash: "SHA-256" }, // Algorithm settings
       false, // Whether the key is extractable
-      ["verify"] // Key usage
+      ["verify"], // Key usage
     );
 
-    const payload = await verify(token, key, "HS256");
+    const payload = await verify(token, key);
 
-    if (payload.metadata.type !== "password-reset" || !payload.user_id) {
+    const parsed = passwordResetJwtPayloadSchema.safeParse(payload);
+
+    if (!parsed.success) {
+      return new Response(
+        JSON.stringify({ error: "Invalid token" }),
+        {
+          status: 401,
+          headers: corsHeaders,
+        },
+      );
+    }
+
+    if (parsed.data.metadata.type !== "password-reset" || !payload.user_id) {
       return new Response(JSON.stringify({ error: "Invalid token" }), {
         status: 401,
         headers: corsHeaders,
@@ -68,10 +77,10 @@ Deno.serve(async (req) => {
 
     // Update the user's password
     const { error } = await supabase.auth.admin.updateUserById(
-      payload.user_id,
+      parsed.data.user_id,
       {
         password,
-      }
+      },
     );
 
     if (error) {
@@ -86,7 +95,7 @@ Deno.serve(async (req) => {
       {
         status: 200,
         headers: corsHeaders,
-      }
+      },
     );
   } catch (err) {
     console.error(err);

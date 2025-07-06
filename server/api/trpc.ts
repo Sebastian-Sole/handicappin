@@ -26,11 +26,11 @@ import { createServerComponentClient } from "@/utils/supabase/server";
  */
 export const createTRPCContext = async (opts: { headers: Headers }) => {
   const supabase = createServerComponentClient();
-  // Assuming you have a way to extract a session token from the headers
-  const token = opts.headers.get("Authorization")?.replace("Bearer ", "");
+  
+  // Get the user from the session using cookies (not Authorization header)
   const {
     data: { user },
-  } = await supabase.auth.getUser(token);
+  } = await supabase.auth.getUser();
 
   return {
     supabase,

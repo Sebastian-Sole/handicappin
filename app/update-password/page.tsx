@@ -8,7 +8,6 @@ const UpdatePasswordPage = async ({
 }) => {
   const { email, token } = searchParams;
 
-  console.log(token);
   if (!token) {
     redirect("/forgot-password");
   }

@@ -67,7 +67,7 @@ export default function ForgotPasswordPage() {
       const PROJECT_ID = process.env.NEXT_PUBLIC_SUPABASE_URL;
       const URL = `${PROJECT_ID}/functions/v1/reset-password`;
 
-      const resetLink = `${process.env.NEXT_PUBLIC_VERCEL_URL}/update-password`;
+      const resetLink = `${window.location.origin}/update-password`;
 
       await fetch(URL, {
         method: "POST",
@@ -153,7 +153,7 @@ export default function ForgotPasswordPage() {
             </div>
 
             <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? "Sending link..." : "Request link"}
+              {submitButtonText}
             </Button>
           </form>
         </Form>

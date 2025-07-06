@@ -2,6 +2,10 @@ import { createCallerFactory, createTRPCRouter } from "@/server/api/trpc";
 import { roundRouter } from "./routers/round";
 import { authRouter } from "./routers/auth";
 import { holeRouter } from "./routers/hole";
+import { courseRouter } from "./routers/course";
+import { teeRouter } from "./routers/tee";
+import { scorecardRouter } from "./routers/scorecard";
+
 
 /**
  * This is the primary router for your server.
@@ -12,6 +16,9 @@ export const appRouter = createTRPCRouter({
   round: roundRouter,
   auth: authRouter,
   hole: holeRouter,
+  course: courseRouter,
+  tee: teeRouter,
+  scorecard: scorecardRouter,
 });
 
 // export type definition of API

@@ -2,17 +2,19 @@
 // https://deno.land/manual/getting_started/setup_your_environment
 // This enables autocomplete, go to definition, etc.
 
-import SignupVerificationEmail from "./email.tsx";
+import Email from "./email.tsx";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { Resend } from "https://esm.sh/resend@4.0.0";
 import { Webhook } from "https://esm.sh/standardwebhooks@1.0.0";
 import * as React from "https://esm.sh/react@18.2.0";
-import { render } from "https://esm.sh/@react-email/components@0.0.22";
+import { render } from "https://esm.sh/@react-email/components@0.0.22?deps=react@18.2.0";
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY") as string);
-const hookSecret = Deno.env.get("SEND_EMAIL_HOOK_SECRET") as string;
+console.log(Deno.env.get("SEND_EMAIL_HOOK_SECRET"));
+const hookSecret = (Deno.env.get("SEND_EMAIL_HOOK_SECRET") as string).replace("v1,whsec_", "");
+console.log(hookSecret);
 
-serve(async (req: any) => {
+serve(async (req) => {
   if (req.method !== "POST") {
     return new Response("not allowed", { status: 400 });
   }
@@ -24,7 +26,7 @@ serve(async (req: any) => {
   try {
     const {
       user,
-      email_data: { token, token_hash, redirect_to, email_action_type },
+      email_data: { token_hash, redirect_to, email_action_type },
     } = wh.verify(payload, headers) as {
       user: {
         email: string;
@@ -40,15 +42,14 @@ serve(async (req: any) => {
       };
     };
 
-    const html = await render(
-      React.createElement(SignupVerificationEmail, {
+    const html = render(
+      React.createElement(Email, {
         username: user.email,
         supabase_url: Deno.env.get("NEXT_PUBLIC_SUPABASE_URL") ?? "",
-        token,
         token_hash,
         redirect_to,
         email_action_type,
-      })
+      }),
     );
 
     const { error } = await resend.emails.send({
@@ -60,18 +61,25 @@ serve(async (req: any) => {
     if (error) {
       throw error;
     }
-  } catch (error: any) {
+  } catch (error: unknown) {
+    let errorMessage = "Unknown error occurred";
+
+    if (error instanceof Error) {
+      errorMessage = error.message;
+    } else if (typeof error === "string") {
+      errorMessage = error; // If it's a plain string error
+    }
     console.log(error);
     return new Response(
       JSON.stringify({
         error: {
-          message: error.message,
+          message: errorMessage,
         },
       }),
       {
         status: 401,
         headers: { "Content-Type": "application/json" },
-      }
+      },
     );
   }
 

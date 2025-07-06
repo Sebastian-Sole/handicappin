@@ -9,7 +9,7 @@ const VerifyLoginPage = async ({
   const supabase = createServerComponentClient();
 
   const { code } = searchParams;
-  console.log(code);
+
   if (!code) {
     redirect("/login");
   }
@@ -34,8 +34,8 @@ const VerifyLoginPage = async ({
   const user = exchangeData?.user;
   if (user) {
     // Check if the profile exists
-    const { data: profileData, error: profileError } = await supabase
-      .from("Profile")
+    const { error: profileError } = await supabase
+      .from("profile")
       .select("*")
       .eq("id", user.id)
       .maybeSingle();
@@ -46,7 +46,7 @@ const VerifyLoginPage = async ({
     }
 
     const { error: updateProfileError } = await supabase
-      .from("Profile")
+      .from("profile")
       .update({
         verified: true,
       })

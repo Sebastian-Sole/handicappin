@@ -39,7 +39,7 @@ Deno.serve(async (req) => {
             ...corsHeaders,
             "Content-Type": "application/json",
           },
-        }
+        },
       );
     }
 
@@ -56,18 +56,18 @@ Deno.serve(async (req) => {
             ...corsHeaders,
             "Content-Type": "application/json",
           },
-        }
+        },
       );
     }
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
 
     // Insert the profile into the database
-    const { error } = await supabase.from("Profile").insert([
+    const { error } = await supabase.from("profile").insert([
       {
         email,
         name,
-        handicapIndex: handicapIndex || 54, // Default handicapIndex to 54 if not provided
+        handicap_index: handicapIndex || 54, // Default handicapIndex to 54 if not provided
         id: userId,
         verified: false, // Mark as unverified initially
       },
@@ -93,7 +93,7 @@ Deno.serve(async (req) => {
     });
   } catch (err) {
     // Handle unexpected errors
-    return new Response(JSON.stringify({ error: err.message }), {
+    return new Response(JSON.stringify({ error: err }), {
       status: 500,
       headers: {
         ...corsHeaders,

@@ -3,11 +3,9 @@ import { useRouter } from "next/navigation";
 import { createClientComponentClient } from "@/utils/supabase/client";
 import { LogOutIcon } from "lucide-react";
 
-interface LogoutButtonProps {
-  className?: string;
-}
 
-const LogoutButton = ({ className }: LogoutButtonProps) => {
+
+const LogoutButton = () => {
   const router = useRouter();
   const supabase = createClientComponentClient();
 
