@@ -1,7 +1,5 @@
 "use client";
 
-import { RoundWithCourseAndTee } from "@/types/database";
-import { Tables } from "@/types/supabase";
 import { H2, H3 } from "./ui/typography";
 import { Separator } from "./ui/separator";
 import HolesTable from "./round/calculation/holesTable";
@@ -13,21 +11,21 @@ import {
 import CourseHandicapCalculationDisplay from "./round/calculation/courseHcpCalculationDisplay";
 import AGSCalculationDisplay from "./round/calculation/AGSCalculationDisplay";
 import ScoreDiffCalculationDisplay from "./round/calculation/ScoreDiffCalculationDisplay";
+import { ScorecardWithRound } from "@/types/scorecard";
 
 interface RoundCalculationProps {
-  round: RoundWithCourseAndTee;
-  holes: Tables<"hole">[];
+  scorecard: ScorecardWithRound;
 }
 
 const RoundCalculationContent = () => {
-  const { round } = useRoundCalculationContext();
+  const { scorecard } = useRoundCalculationContext();
   return (
     <div className="container mx-auto px-4 sm:px-6 md:px-8 py-8 space-y-8">
       <section className="space-y-4">
         <H2>
-          {`${round.courseName} - ${new Date(
-            round.teeTime
-          ).toDateString()} - Score: ${round.adjustedGrossScore}`}
+          {`${scorecard.course.name} - ${new Date(
+            scorecard.teeTime
+          ).toDateString()} - Score: ${scorecard.round.adjustedGrossScore}`}
         </H2>
         <H3>Hole-by-hole results</H3>
         <HolesTable />
@@ -43,9 +41,9 @@ const RoundCalculationContent = () => {
   );
 };
 
-export function RoundCalculation({ round, holes }: RoundCalculationProps) {
+export function RoundCalculation({ scorecard }: RoundCalculationProps) {
   return (
-    <RoundCalculationProvider round={round} holes={holes}>
+    <RoundCalculationProvider scorecard={scorecard}>
       <RoundCalculationContent />
     </RoundCalculationProvider>
   );

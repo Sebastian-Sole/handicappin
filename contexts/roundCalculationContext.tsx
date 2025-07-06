@@ -8,17 +8,16 @@ import React, {
 import {
   calculateAdjustedPlayedScore,
   calculateCourseHandicap,
+  calculateAdjustedGrossScore,
   calculateScoreDifferential,
 } from "@/utils/calculations/handicap";
-import { RoundWithCourseAndTee } from "@/types/database";
-import { Tables } from "@/types/supabase";
+import { ScorecardWithRound } from "@/types/scorecard";
 
 interface RoundCalculationContextProps {
-  round: RoundWithCourseAndTee;
-  holes: Tables<"hole">[];
+  scorecard: ScorecardWithRound;
   par: number;
   setPar: (par: number) => void;
-  holesPlayed: number;
+  numberOfHolesPlayed: number;
   setHolesPlayed: (holesPlayed: number) => void;
   handicapIndex: number;
   setHandicapIndex: (index: number) => void;
@@ -43,23 +42,26 @@ const RoundCalculationContext = createContext<
 
 export const RoundCalculationProvider = ({
   children,
-  round,
-  holes,
+  scorecard,
 }: {
   children: ReactNode;
-  round: RoundWithCourseAndTee;
-  holes: Tables<"hole">[];
+  scorecard: ScorecardWithRound;
 }) => {
-  const [par, setPar] = useState(round.courseEighteenHolePar);
+  const holes = scorecard.teePlayed.holes
+  if (!holes) {
+    throw new Error("Holes are undefined");
+  }
+  const [par, setPar] = useState(scorecard.teePlayed.totalPar);
   const [holesPlayed, setHolesPlayed] = useState(holes.length);
   const [handicapIndex, setHandicapIndex] = useState(
-    round.existingHandicapIndex
+    scorecard.round.existingHandicapIndex
   );
-  const [slope, setSlope] = useState(round.courseSlope);
-  const [rating, setRating] = useState(round.courseRating);
+
   const [isNineHoles, setIsNineHoles] = useState(holesPlayed === 9);
+  const [slope, setSlope] = useState(isNineHoles ? scorecard.teePlayed.slopeRatingFront9 : scorecard.teePlayed.slopeRating18);
+  const [rating, setRating] = useState(isNineHoles ? scorecard.teePlayed.courseRatingFront9 : scorecard.teePlayed.courseRating18);
   const [adjustedPlayedScore, setAdjustedPlayedScore] = useState(
-    calculateAdjustedPlayedScore(holes)
+    calculateAdjustedPlayedScore(holes, scorecard.scores)
   );
 
   const courseHandicapCalculation = useMemo(() => {
@@ -73,18 +75,15 @@ export const RoundCalculationProvider = ({
   const adjustedGrossScoreCalculation = useMemo(() => {
     return calculateAdjustedGrossScore(
       adjustedPlayedScore,
-      handicapIndex,
-      slope,
-      rating,
-      par,
-      holesPlayed
+      courseHandicapCalculation,
+      holesPlayed,
+      scorecard.teePlayed
     );
   }, [
     adjustedPlayedScore,
     courseHandicapCalculation,
-    par,
     holesPlayed,
-    isNineHoles,
+    scorecard.teePlayed
   ]);
 
   const scoreDifferentialCalculation = useMemo(() => {
@@ -96,22 +95,20 @@ export const RoundCalculationProvider = ({
   }, [adjustedGrossScoreCalculation, rating, slope]);
 
   const courseHcpStat = calculateCourseHandicap(
-    round.existingHandicapIndex,
-    round.courseSlope,
-    round.courseRating,
-    round.courseEighteenHolePar
+    handicapIndex,
+    scorecard.teePlayed,
+    holesPlayed
   );
 
-  const apsStat = calculateAdjustedPlayedScore(holes);
+  const apsStat = calculateAdjustedPlayedScore(holes, scorecard.scores);
 
   return (
     <RoundCalculationContext.Provider
       value={{
-        round,
-        holes,
+        scorecard,
         par,
         setPar,
-        holesPlayed,
+        numberOfHolesPlayed: holesPlayed,
         setHolesPlayed,
         handicapIndex,
         setHandicapIndex,

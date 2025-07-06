@@ -13,7 +13,7 @@ const ScoreDiffCalculationDisplay = () => {
     slope,
     setSlope,
     scoreDifferentialCalculation,
-    round,
+    scorecard,
   } = useRoundCalculationContext();
   return (
     <section className="space-y-4">
@@ -67,9 +67,9 @@ const ScoreDiffCalculationDisplay = () => {
       <Large>How did this affect my handicap?</Large>
       <p>
         Your handicap index at the time this round was registered:{" "}
-        {round.existingHandicapIndex}
+        {scorecard.round.existingHandicapIndex}
       </p>
-      <p>Your handicap index after this round: {round.updatedHandicapIndex}</p>
+      <p>Your handicap index after this round: {scorecard.round.updatedHandicapIndex}</p>
       <Blockquote className="not-italic border-r-2 pr-2">
         Your handicap index adjusts if the round registered is one of your 8
         best rounds in your last 20 played. If you&apos;ve played less than 20

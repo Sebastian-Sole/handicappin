@@ -11,7 +11,7 @@ const AGSCalculationDisplay = () => {
     setPar,
     par,
     isNineHoles,
-    holesPlayed,
+    numberOfHolesPlayed,
     adjustedGrossScoreCalculation,
   } = useRoundCalculationContext();
   return (
@@ -74,7 +74,7 @@ const AGSCalculationDisplay = () => {
           <P>Adjusted Gross Score =</P>
           <Muted className="mx-2">
             {adjustedPlayedScore} + {Math.round(courseHandicapCalculation)} + (
-            {par} &times; (18 - {holesPlayed}) &#247; 18)
+            {par} &times; (18 - {numberOfHolesPlayed}) &#247; 18)
           </Muted>
           <P className="!mt-0">=</P>
           <u className="ml-2 text-primary font-bold">

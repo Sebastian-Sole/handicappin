@@ -1,4 +1,5 @@
 import z from "zod";
+import { Tables } from "./supabase";
 
 export const holeSchema = z.object({
   id: z.number().or(z.undefined()),
@@ -64,3 +65,5 @@ export type Scorecard = z.infer<typeof scorecardSchema>;
 export type Tee = z.infer<typeof teeSchema>;
 export type Course = z.infer<typeof courseSchema>;
 export type Score = z.infer<typeof scoreSchema>;
+
+export type ScorecardWithRound = Scorecard & { round: Tables<"round"> };

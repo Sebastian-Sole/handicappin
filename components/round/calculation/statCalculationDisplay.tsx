@@ -4,7 +4,7 @@ import { useRoundCalculationContext } from "@/contexts/roundCalculationContext";
 import Link from "next/link";
 
 const StatCalculationDisplay = () => {
-  const { round, holesPlayed, courseHcpStat, apsStat } =
+  const { scorecard, numberOfHolesPlayed, courseHcpStat, apsStat } =
     useRoundCalculationContext();
 
   return (
@@ -14,7 +14,7 @@ const StatCalculationDisplay = () => {
         <div>
           <Large>
             Course Handicap:{" "}
-            {holesPlayed === 9
+            {numberOfHolesPlayed === 9
               ? Math.round(courseHcpStat / 2)
               : Math.round(courseHcpStat)}
           </Large>
@@ -28,7 +28,7 @@ const StatCalculationDisplay = () => {
           </Muted>
         </div>
         <div>
-          <Large>Adjusted Gross Score: {round.adjustedGrossScore}</Large>
+          <Large>Adjusted Gross Score: {scorecard.round.adjustedGrossScore}</Large>
           <Muted>
             Your score adjusted for 18 holes, factoring in expected score for
             rounds with fewer than 18 holes played.
@@ -36,18 +36,18 @@ const StatCalculationDisplay = () => {
         </div>
         <div>
           <Large>
-            Score Differential: {Math.round(round.scoreDifferential * 10) / 10}
+            Score Differential: {Math.round(scorecard.round.scoreDifferential * 10) / 10}
           </Large>
           <Muted>
             Your performance of the round in relation to the relative difficulty
             of the course that was played, i.e. the handicap you played to.
           </Muted>
         </div>
-        {round.exceptionalScoreAdjustment !== 0 && (
+        {scorecard.round.exceptionalScoreAdjustment !== 0 && (
           <div>
             <Large>
               ✨ Exceptional Score Adjustment:{" "}
-              {round.exceptionalScoreAdjustment} ✨
+              {scorecard.round.exceptionalScoreAdjustment} ✨
             </Large>
             <Muted>
               This round was under the threshold for an exceptional round, and

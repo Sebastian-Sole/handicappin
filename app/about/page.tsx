@@ -110,10 +110,10 @@ export default function AboutPage() {
           <div className="grid gap-10 pt-8 md:gap-20 md:grid-cols-2">
             <p className="mx-auto max-w-[700px] text-accent-foreground dark:text-foreground md:text-xl/relaxed">
               We value your time. We know that golf statistics and round
-              calculations are complicated, we konw that other services
-              don&apos;t show you everything, and we know you want something
+              calculations are complicated, we know that other services
+              don&apos;t show you everything, and that you want something
               easy to use. That&apos;s why we made Handicappin&apos;. As
-              golfers, we made something that we would use, filling in the gaps
+              golfers, we made something that we would use ourselves, filling the gaps
               that other services left behind.
             </p>
             <h2 className="lg:leading-tighter text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl xl:text-[3.4rem] 2xl:text-[3.75rem]">

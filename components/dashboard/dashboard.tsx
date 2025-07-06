@@ -6,7 +6,6 @@ import Link from "next/link";
 import DashboardInfo from "./dashboardInfo";
 import DashboardGraphDisplay from "./dashboardGraphDisplay";
 import useMounted from "@/hooks/useMounted";
-import { RoundWithCourseAndTee } from "@/types/database";
 import { Tables } from "@/types/supabase";
 import { Input } from "../ui/input";
 import {
@@ -21,43 +20,69 @@ import { Button } from "../ui/button";
 import DashboardSkeleton from "./dashboardSkeleton";
 import RoundTablePagination from "./roundTablePagination";
 import { getRelevantRounds } from "@/utils/calculations/handicap";
+import { ScorecardWithRound } from "@/types/scorecard";
 
 interface DashboardProps {
   profile: Tables<"profile">;
-  roundsList: RoundWithCourseAndTee[];
+  scorecards: ScorecardWithRound[];
   header: string;
 }
 
-export function Dashboard({ profile, roundsList, header }: DashboardProps) {
+export function Dashboard({ profile, scorecards, header }: DashboardProps) {
   const isMounted = useMounted();
   const [searchTerm, setSearchTerm] = useState("");
-  const [sortColumn, setSortColumn] =
-    useState<keyof RoundWithCourseAndTee>("teeTime");
-  const [sortDirection, setSortDirection] = useState("desc");
+  const [sortColumn, setSortColumn] = useState<
+    "teeTime" | "course.name" | "round.adjustedGrossScore" | "round.parPlayed" | "round.scoreDifferential" | "round.exceptionalScoreAdjustment"
+  >("teeTime");
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
   const [page, setPage] = useState(0);
 
-  const filteredAndSortedRounds = useMemo(() => {
-    const filteredRounds = roundsList
-      .filter((round) => {
+  const filteredAndSortedScorecards = useMemo(() => {
+    const filteredScorecards = scorecards
+      .filter((scorecard) => {
         return (
-          round.teeTime.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          round.courseName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          round.adjustedGrossScore.toString().includes(searchTerm) ||
-          round.parPlayed.toString().includes(searchTerm)
+          scorecard.teeTime.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          scorecard.course.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          scorecard.round.adjustedGrossScore.toString().includes(searchTerm) ||
+          scorecard.round.parPlayed.toString().includes(searchTerm)
         );
       })
       .sort((a, b) => {
-        const columnA = a[sortColumn];
-        const columnB = b[sortColumn];
-        if (!columnA || !columnB) return 0;
+        let columnA, columnB;
+        switch (sortColumn) {
+          case "course.name":
+            columnA = a.course.name;
+            columnB = b.course.name;
+            break;
+          case "round.adjustedGrossScore":
+            columnA = a.round.adjustedGrossScore;
+            columnB = b.round.adjustedGrossScore;
+            break;
+          case "round.parPlayed":
+            columnA = a.round.parPlayed;
+            columnB = b.round.parPlayed;
+            break;
+          case "round.scoreDifferential":
+            columnA = a.round.scoreDifferential;
+            columnB = b.round.scoreDifferential;
+            break;
+          case "round.exceptionalScoreAdjustment":
+            columnA = a.round.exceptionalScoreAdjustment;
+            columnB = b.round.exceptionalScoreAdjustment;
+            break;
+          default:
+            columnA = a[sortColumn];
+            columnB = b[sortColumn];
+        }
+        if (columnA == null || columnB == null) return 0;
         if (columnA < columnB) return sortDirection === "asc" ? -1 : 1;
         if (columnA > columnB) return sortDirection === "asc" ? 1 : -1;
         return 0;
       });
-    return filteredRounds.slice(page * 20, page * 20 + 20);
-  }, [searchTerm, sortColumn, sortDirection, page]);
+    return filteredScorecards.slice(page * 20, page * 20 + 20);
+  }, [scorecards, searchTerm, sortColumn, sortDirection, page]);
 
-  const handleSort = (column: keyof RoundWithCourseAndTee) => {
+  const handleSort = (column: typeof sortColumn) => {
     if (sortColumn === column) {
       setSortDirection(sortDirection === "asc" ? "desc" : "asc");
     } else {
@@ -66,13 +91,13 @@ export function Dashboard({ profile, roundsList, header }: DashboardProps) {
     }
   };
 
-  const relevantRoundsList = getRelevantRounds(roundsList);
+  const relevantRoundsList = getRelevantRounds(scorecards.map(scorecard => scorecard.round));
 
-  const sortedGraphData = roundsList
-    .map((round) => ({
-      roundDate: new Date(round.teeTime).toLocaleDateString(),
-      score: round.adjustedGrossScore,
-      influencesHcp: relevantRoundsList.includes(round),
+  const sortedGraphData = scorecards
+    .map((scorecard) => ({
+      roundDate: new Date(scorecard.teeTime).toLocaleDateString(),
+      score: scorecard.round.adjustedGrossScore,
+      influencesHcp: relevantRoundsList.includes(scorecard.round),
     }))
     .sort((a, b) => {
       return new Date(a.roundDate).getTime() - new Date(b.roundDate).getTime();
@@ -107,7 +132,7 @@ export function Dashboard({ profile, roundsList, header }: DashboardProps) {
           />
         </div>
 
-        {filteredAndSortedRounds.length > 0 ? (
+        {filteredAndSortedScorecards.length > 0 ? (
           <Table>
             <TableHeader>
               <TableRow className="hover:bg-inherit">
@@ -116,66 +141,54 @@ export function Dashboard({ profile, roundsList, header }: DashboardProps) {
                   onClick={() => handleSort("teeTime")}
                 >
                   Date{" "}
-                  {sortColumn === "teeTime" && (
-                    <span className="ml-1">
-                      {sortDirection === "asc" ? "\u2191" : "\u2193"}
-                    </span>
-                  )}
+                  <span className="ml-1 opacity-0 transition-opacity" style={{ opacity: sortColumn === "teeTime" ? 1 : 0 }}>
+                    {sortDirection === "asc" ? "\u2191" : "\u2193"}
+                  </span>
                 </TableHead>
                 <TableHead
                   className="cursor-pointer whitespace-nowrap font-bold text-primary"
-                  onClick={() => handleSort("courseName")}
+                  onClick={() => handleSort("course.name")}
                 >
                   Course{" "}
-                  {sortColumn === "courseName" && (
-                    <span className="ml-1">
-                      {sortDirection === "asc" ? "\u2191" : "\u2193"}
-                    </span>
-                  )}
+                  <span className="ml-1 opacity-0 transition-opacity" style={{ opacity: sortColumn === "course.name" ? 1 : 0 }}>
+                    {sortDirection === "asc" ? "\u2191" : "\u2193"}
+                  </span>
                 </TableHead>
                 <TableHead
                   className="cursor-pointer whitespace-nowrap font-bold text-primary"
-                  onClick={() => handleSort("adjustedGrossScore")}
+                  onClick={() => handleSort("round.adjustedGrossScore")}
                 >
                   Score{" "}
-                  {sortColumn === "adjustedGrossScore" && (
-                    <span className="ml-1">
-                      {sortDirection === "asc" ? "\u2191" : "\u2193"}
-                    </span>
-                  )}
+                  <span className="ml-1 opacity-0 transition-opacity" style={{ opacity: sortColumn === "round.adjustedGrossScore" ? 1 : 0 }}>
+                    {sortDirection === "asc" ? "\u2191" : "\u2193"}
+                  </span>
                 </TableHead>
                 <TableHead
                   className="cursor-pointer whitespace-nowrap font-bold text-primary"
-                  onClick={() => handleSort("parPlayed")}
+                  onClick={() => handleSort("round.parPlayed")}
                 >
                   Par{" "}
-                  {sortColumn === "parPlayed" && (
-                    <span className="ml-1">
-                      {sortDirection === "asc" ? "\u2191" : "\u2193"}
-                    </span>
-                  )}
+                  <span className="ml-1 opacity-0 transition-opacity" style={{ opacity: sortColumn === "round.parPlayed" ? 1 : 0 }}>
+                    {sortDirection === "asc" ? "\u2191" : "\u2193"}
+                  </span>
                 </TableHead>
                 <TableHead
                   className="cursor-pointer whitespace-nowrap font-bold text-primary"
-                  onClick={() => handleSort("scoreDifferential")}
+                  onClick={() => handleSort("round.scoreDifferential")}
                 >
                   Differential{" "}
-                  {sortColumn === "scoreDifferential" && (
-                    <span className="ml-1">
-                      {sortDirection === "asc" ? "\u2191" : "\u2193"}
-                    </span>
-                  )}
+                  <span className="ml-1 opacity-0 transition-opacity" style={{ opacity: sortColumn === "round.scoreDifferential" ? 1 : 0 }}>
+                    {sortDirection === "asc" ? "\u2191" : "\u2193"}
+                  </span>
                 </TableHead>
                 <TableHead
                   className="cursor-pointer whitespace-nowrap font-bold text-primary"
-                  onClick={() => handleSort("exceptionalScoreAdjustment")}
+                  onClick={() => handleSort("round.exceptionalScoreAdjustment")}
                 >
                   Adjustment{" "}
-                  {sortColumn === "exceptionalScoreAdjustment" && (
-                    <span className="ml-1">
-                      {sortDirection === "asc" ? "\u2191" : "\u2193"}
-                    </span>
-                  )}
+                  <span className="ml-1 opacity-0 transition-opacity" style={{ opacity: sortColumn === "round.exceptionalScoreAdjustment" ? 1 : 0 }}>
+                    {sortDirection === "asc" ? "\u2191" : "\u2193"}
+                  </span>
                 </TableHead>
                 <TableHead className="font-bold text-primary">
                   Actions
@@ -183,24 +196,24 @@ export function Dashboard({ profile, roundsList, header }: DashboardProps) {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredAndSortedRounds.map((round, index) => (
+              {filteredAndSortedScorecards.map((scorecard, index) => (
                 <TableRow key={index} className="hover:bg-accent/20">
                   <TableCell>
-                    {new Date(round.teeTime).toLocaleString()}
+                    {new Date(scorecard.teeTime).toLocaleString()}
                   </TableCell>
-                  <TableCell>{round.courseName}</TableCell>
-                  <TableCell>{round.adjustedGrossScore}</TableCell>
-                  <TableCell>{round.parPlayed}</TableCell>
+                  <TableCell>{scorecard.course.name}</TableCell>
+                  <TableCell>{scorecard.round.adjustedGrossScore}</TableCell>
+                  <TableCell>{scorecard.round.parPlayed}</TableCell>
                   <TableCell>
-                    {Math.round(round.scoreDifferential * 10) / 10}
+                    {Math.round(scorecard.round.scoreDifferential * 10) / 10}
                   </TableCell>
                   <TableCell>
-                    {round.exceptionalScoreAdjustment
-                      ? Math.round(round.exceptionalScoreAdjustment * 10) / 10
+                    {scorecard.round.exceptionalScoreAdjustment
+                      ? Math.round(scorecard.round.exceptionalScoreAdjustment * 10) / 10
                       : 0}
                   </TableCell>
                   <TableCell>
-                    <Link href={`/rounds/${round.id}/calculation`}>
+                    <Link href={`/rounds/${scorecard.round.id}/calculation`}>
                       <Button
                         variant="link"
                         className="text-primary underline px-0"
@@ -220,11 +233,11 @@ export function Dashboard({ profile, roundsList, header }: DashboardProps) {
           </div>
         )}
 
-        {roundsList.length > 20 && (
+        {scorecards.length > 20 && (
           <RoundTablePagination
             page={page}
             setPage={setPage}
-            roundsList={roundsList}
+            scorecards={scorecards}
           />
         )}
       </div>

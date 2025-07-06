@@ -17,7 +17,7 @@ import {
 import { useRoundCalculationContext } from "@/contexts/roundCalculationContext";
 
 const HolesTable = () => {
-  const { holes } = useRoundCalculationContext();
+  const { scorecard } = useRoundCalculationContext();
 
   return (
     <div className="bg-background rounded-lg border">
@@ -48,14 +48,14 @@ const HolesTable = () => {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {holes.map((hole) => {
+          {scorecard.teePlayed.holes?.slice(0, scorecard.scores.length).map((hole) => {
             return (
               <TableRow key={hole.id}>
                 <TableCell>{hole.holeNumber}</TableCell>
                 <TableCell>{hole.par}</TableCell>
-                <TableCell>{hole.strokes}</TableCell>
-                <TableCell>{hole.hcpStrokes}</TableCell>
-                <TableCell>{calculateHoleAdjustedScore(hole)}</TableCell>
+                <TableCell>{scorecard.scores[hole.holeNumber - 1]?.strokes}</TableCell>
+                <TableCell>{scorecard.scores[hole.holeNumber - 1]?.hcpStrokes}</TableCell>
+                <TableCell>{calculateHoleAdjustedScore(hole, scorecard.scores[hole.holeNumber - 1])}</TableCell>
               </TableRow>
             );
           })}
@@ -64,23 +64,23 @@ const HolesTable = () => {
               Total
             </TableCell>
             <TableCell>
-              {holes.reduce((acc, hole) => {
+              {scorecard.teePlayed.holes?.slice(0, scorecard.scores.length).reduce((acc, hole) => {
                 return acc + hole.par;
               }, 0)}
             </TableCell>
             <TableCell>
-              {holes.reduce((acc, hole) => {
-                return acc + hole.strokes;
+              {scorecard.teePlayed.holes?.slice(0, scorecard.scores.length).reduce((acc, hole) => {
+                return acc + scorecard.scores[hole.holeNumber - 1]?.strokes;
               }, 0)}
             </TableCell>
             <TableCell>
-              {holes.reduce((acc, hole) => {
-                return acc + hole.hcpStrokes;
+              {scorecard.teePlayed.holes?.slice(0, scorecard.scores.length).reduce((acc, hole) => {
+                return acc + scorecard.scores[hole.holeNumber - 1]?.hcpStrokes;
               }, 0)}
             </TableCell>
             <TableCell className="first:rounded-l-lg last:rounded-r-lg !rounded-tr-none ">
-              {holes.reduce((acc, hole) => {
-                return acc + calculateHoleAdjustedScore(hole);
+              {scorecard.teePlayed.holes?.slice(0, scorecard.scores.length).reduce((acc, hole) => {
+                return acc + calculateHoleAdjustedScore(hole, scorecard.scores[hole.holeNumber - 1]);
               }, 0)}
             </TableCell>
           </TableRow>
