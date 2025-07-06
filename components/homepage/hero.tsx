@@ -39,7 +39,7 @@ const Hero = ({ profile, previousScores, bestRound, bestRoundTee }: HeroProps) =
     <section className="w-full py-4 lg:py-8 xl:py-12 2xl:py-24 bg-cover bg-center">
       <div className="sm:container px-4 lg:px-6">
         <div className="grid gap-6 xl:grid-cols-[1fr_460px] xl:gap-12 2xl:grid-cols-[1fr_600px]">
-          <div className="flex flex-col justify-between space-y-4 bg-background/90 backdrop-blur-xs p-8 rounded-xl shadow-lg h-full">
+          <div className="flex flex-col justify-between space-y-4 bg-background/95 backdrop-blur-xs p-8 rounded-xl shadow-lg h-full">
             <div className="space-y-4">
               <h1 className="text-3xl font-bold tracking-tighter md:text-5xl 2xl:text-6xl/none text-primary">
                 Welcome back, {profile.name}!

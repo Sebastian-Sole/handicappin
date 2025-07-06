@@ -83,7 +83,7 @@ export const HomePage = async ({ profile }: HomepageProps) => {
   return (
     <div className="flex flex-col min-h-screen">
       <main className="flex-1">
-        <section className="w-full py-4 lg:py-4 xl:py-4 2xl:py-4 bg-primary-alternate dark:bg-primary/80">
+        <section className="w-full py-4 lg:py-4 xl:py-4 2xl:py-4 bg-primary-alternate dark:bg-primary/30">
           <Hero
             profile={profile}
             previousScores={previousScores.map((entry) => {
