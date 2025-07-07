@@ -9,6 +9,8 @@ import CourseHandicapCalculator from "../calculators/course-handicap";
 import ScoreDifferentialCalculator from "../calculators/score-differential";
 import HandicapTrendChartDisplay from "../charts/handicap-trend-chart-display";
 import ScoreBarChartDisplay from "../charts/score-bar-chat-display";
+import { Play, TrendingUp, Badge } from "lucide-react";
+import { Card, CardHeader, CardTitle, CardContent } from "../ui/card";
 
 interface HomepageProps {
   profile: Tables<"profile">;
@@ -38,6 +40,7 @@ export const HomePage = async ({ profile }: HomepageProps) => {
 
   let bestRoundCourse: Tables<"course"> | null = null;
   let bestRoundTee: Tables<"teeInfo"> | null = null;
+  let relevantRoundsList: Tables<"round">[] = [];
   if (bestRound !== null) {
     previousHandicaps = rounds
       .sort((a, b) => {
@@ -49,7 +52,7 @@ export const HomePage = async ({ profile }: HomepageProps) => {
         handicap: round.updatedHandicapIndex,
       }));
 
-    const relevantRoundsList = getRelevantRounds(rounds);
+    relevantRoundsList = getRelevantRounds(rounds);
 
     previousScores = rounds
       .sort((a, b) => {
@@ -83,7 +86,7 @@ export const HomePage = async ({ profile }: HomepageProps) => {
   return (
     <div className="flex flex-col min-h-screen">
       <main className="flex-1">
-        <section className="w-full py-4 lg:py-4 xl:py-4 2xl:py-4 bg-primary-alternate dark:bg-primary/30">
+        <section className="w-full py-4 lg:py-4 xl:py-4 2xl:py-4 bg-gradient-to-r from-primary/5 to-primary/20">
           <Hero
             profile={profile}
             previousScores={previousScores.map((entry) => {
@@ -91,11 +94,20 @@ export const HomePage = async ({ profile }: HomepageProps) => {
             })}
             bestRound={bestRound}
             bestRoundTee={bestRoundTee}
+            handicapPercentageChange={percentageChange}
           />
         </section>
 
-        <section className="w-full py-12 lg:py-24 xl:py-32">
+        <section className="w-full py-8 lg:py-18 xl:py-24">
           <div className="sm:container px-4 lg:px-6">
+            <div className="text-center mb-12">
+              <h2 className="text-2xl lg:text-3xl font-bold text-gray-900 dark:text-white mb-4 transition-colors duration-300">
+                Performance Analytics
+              </h2>
+              <p className="text-lg text-gray-600 dark:text-gray-300 transition-colors duration-300">
+                Track your progress with detailed charts and insights
+              </p>
+            </div>
             <div className="grid gap-6 xl:grid-cols-2 xl:gap-12">
               <HandicapTrendChartDisplay
                 handicapIndex={handicapIndex}
@@ -113,10 +125,10 @@ export const HomePage = async ({ profile }: HomepageProps) => {
 
         <section className="w-full py-6 lg:py-12 xl:py-16 pt-0! flex flex-col items-center">
           <span className="max-w-[800px] flex flex-col items-center space-y-8">
-            <h2 className="text-3xl font-bold tracking-tighter md:text-4xl lg:text-5xl mt-4 text-primary">
+            <h2 className="text-2xl lg:text-3xl font-bold text-gray-900 dark:text-white mb-4 transition-colors duration-300">
               Calculators
             </h2>
-            <p className="text-center	max-w-[80%]">
+            <p className="text-lg text-gray-600 dark:text-gray-300 transition-colors duration-300 max-w-[80%] text-center">
               We know that golf statistics and round calculations are
               confusing... that&apos;s why we made Handicappin&apos;. Other golf
               services hide the inner workings of the calculations that go into

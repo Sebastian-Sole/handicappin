@@ -31,6 +31,9 @@ export const profile = pgTable(
     handicapIndex: decimal<"number">().notNull().default(54),
     verified: boolean().default(false).notNull(),
     initialHandicapIndex: decimal<"number">().notNull().default(54),
+    createdAt: timestamp()
+      .default(sql`CURRENT_TIMESTAMP`)
+      .notNull(),
   },
   (table) => [
     uniqueIndex("profile_email_key").using(
