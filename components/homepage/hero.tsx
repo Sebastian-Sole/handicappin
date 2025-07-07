@@ -9,6 +9,7 @@ interface HeroProps {
   previousScores: number[];
   bestRound: Tables<"round"> | null;
   bestRoundTee: Tables<"teeInfo"> | null;
+  bestRoundCourseName: string | undefined;
   handicapPercentageChange: number;
 }
 
@@ -17,6 +18,7 @@ const Hero = ({
   previousScores,
   bestRound,
   bestRoundTee,
+  bestRoundCourseName,
   handicapPercentageChange,
 }: HeroProps) => {
   const calculatePlusMinusScore = (): string => {
@@ -97,6 +99,12 @@ const Hero = ({
       : Math.abs(handicapPercentageChange) < 7
       ? "Your handicap is slightly increasing"
       : "Your handicap is increasing";
+
+  const bestRoundDescription =
+    bestRoundCourseName !== undefined
+      ? `Best round at ${bestRoundCourseName}`
+      : `Best round`;
+
   return (
     <section className="w-full py-4 lg:py-8 xl:py-12 2xl:py-24 bg-cover bg-center">
       <div className="sm:container px-4 lg:px-6">
@@ -168,8 +176,8 @@ const Hero = ({
               <StatBox
                 title="Best Round"
                 value={calculatePlusMinusScore()}
-                change="improvement"
-                description="Your handicap is improving!"
+                change="achievement"
+                description={bestRoundDescription}
                 icon={<Award className="h-8 w-8 text-primary" />}
               />
               <StatBox

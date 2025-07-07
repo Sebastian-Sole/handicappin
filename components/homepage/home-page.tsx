@@ -94,6 +94,7 @@ export const HomePage = async ({ profile }: HomepageProps) => {
             })}
             bestRound={bestRound}
             bestRoundTee={bestRoundTee}
+            bestRoundCourseName={bestRoundCourse?.name}
             handicapPercentageChange={percentageChange}
           />
         </section>
