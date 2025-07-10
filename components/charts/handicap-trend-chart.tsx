@@ -9,6 +9,7 @@ import {
   ChartTooltip,
   ChartContainer,
 } from "@/components/ui/chart";
+import { useEffect, useState } from "react";
 
 interface HandicapTrendChartProps {
   previousHandicaps: {
@@ -22,6 +23,15 @@ const HandicapTrendChart = ({
   previousHandicaps,
   isPositive,
 }: HandicapTrendChartProps) => {
+  const [strokeColor, setStrokeColor] = useState<string>("");
+
+  useEffect(() => {
+    const value = getComputedStyle(document.documentElement)
+      .getPropertyValue("--chart-1")
+      .trim();
+    setStrokeColor(value);
+  }, [isPositive]);
+
   return (
     <>
       {previousHandicaps.length !== 0 && (
@@ -67,9 +77,7 @@ const HandicapTrendChart = ({
               <Line
                 dataKey="handicap"
                 type="natural"
-                stroke={
-                  isPositive ? "hsl(var(--destructive))" : "hsl(var(--primary))"
-                }
+                stroke={strokeColor}
                 strokeWidth={2}
                 dot={true}
               />
