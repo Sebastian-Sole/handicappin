@@ -79,7 +79,7 @@ const HandicapTrendChartDisplay = ({
         )}
       </CardContent>
       <CardFooter className="pt-4 flex justify-center">
-        <Link href={`/stats/${profile.id}`}>
+        <Link href={`/dashboard/${profile.id}`}>
           <Button variant={"link"}>View stats</Button>
         </Link>
       </CardFooter>

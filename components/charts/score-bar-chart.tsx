@@ -11,7 +11,7 @@ import {
   ChartContainer,
 } from "@/components/ui/chart";
 import { RefreshCcw } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useThemeColors } from "@/utils/theme-colors";
 
 interface ScoreBarChartProps {
   scores: {
@@ -23,19 +23,7 @@ interface ScoreBarChartProps {
 }
 
 const ScoreBarChart = ({ scores, className }: ScoreBarChartProps) => {
-  const [barActiveColor, setBarActiveColor] = useState<string>("");
-  const [barInactiveColor, setBarInactiveColor] = useState<string>("");
-
-  useEffect(() => {
-    const active = getComputedStyle(document.documentElement)
-      .getPropertyValue("--bar-active")
-      .trim();
-    const inactive = getComputedStyle(document.documentElement)
-      .getPropertyValue("--bar-inactive")
-      .trim();
-    setBarActiveColor(active);
-    setBarInactiveColor(inactive);
-  }, []);
+  const colors = useThemeColors();
 
   return (
     <>
@@ -81,8 +69,8 @@ const ScoreBarChart = ({ scores, className }: ScoreBarChartProps) => {
                     key={`cell-${index}`}
                     fill={
                       entry.influencesHcp
-                        ? barActiveColor
-                        : `${barInactiveColor}`
+                        ? colors.barActive
+                        : colors.barInactive
                     }
                   />
                 ))}
