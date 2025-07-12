@@ -85,8 +85,8 @@ export async function Navbar() {
                     <Avatar className="h-8 w-8 flex items-center justify-center">
                       <UserRound
                         strokeWidth={1.5}
-                        className="h-6 w-6 text-black"
-                      ></UserRound>
+                        className="h-6 w-6 text-primary-foreground"
+                      />
                     </Avatar>
                   </Link>
                 </DropdownMenuTrigger>
