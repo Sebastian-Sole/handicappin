@@ -1,16 +1,10 @@
-import { Button } from "@/components/ui/button";
-import Link from "next/link";
 import { Tables } from "@/types/supabase";
 import { api } from "@/trpc/server";
 import Hero from "./hero";
 import React from "react";
 import { getRelevantRounds } from "@/utils/calculations/handicap";
-import CourseHandicapCalculator from "../calculators/course-handicap";
-import ScoreDifferentialCalculator from "../calculators/score-differential";
 import HandicapTrendChartDisplay from "../charts/handicap-trend-chart-display";
-import ScoreBarChartDisplay from "../charts/score-bar-chat-display";
-import { Play, TrendingUp, Badge } from "lucide-react";
-import { Card, CardHeader, CardTitle, CardContent } from "../ui/card";
+import ScoreBarChartDisplay from "../charts/score-bar-chart-display";
 
 interface HomepageProps {
   profile: Tables<"profile">;
@@ -124,7 +118,7 @@ export const HomePage = async ({ profile }: HomepageProps) => {
           </div>
         </section>
 
-        <section className="w-full py-6 lg:py-12 xl:py-16 pt-0! flex flex-col items-center">
+        {/* <section className="w-full py-6 lg:py-12 xl:py-16 pt-0! flex flex-col items-center">
           <span className="max-w-[800px] flex flex-col items-center space-y-8">
             <h2 className="text-2xl lg:text-3xl font-bold text-gray-900 dark:text-white mb-4 transition-colors duration-300">
               Calculators
@@ -150,7 +144,7 @@ export const HomePage = async ({ profile }: HomepageProps) => {
               </div>
             </div>
           </span>
-        </section>
+        </section> */}
       </main>
     </div>
   );

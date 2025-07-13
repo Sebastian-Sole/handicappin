@@ -25,6 +25,28 @@ interface ScoreBarChartProps {
 const ScoreBarChart = ({ scores, className }: ScoreBarChartProps) => {
   const colors = useThemeColors();
 
+  // Calculate evenly spaced ticks with clean numbers
+  const minScore = Math.min(...scores.map((s) => s.score));
+  const maxScore = Math.max(...scores.map((s) => s.score));
+
+  // Find a nice range that covers the data with some padding
+  const range = maxScore - minScore;
+  const padding = 9;
+  const totalRange = range + padding * 2;
+
+  // Round to nearest 5 for cleaner tick spacing
+  const tickSpacing = Math.ceil(totalRange / 6 / 5) * 5;
+
+  // Calculate start value to center the range nicely
+  const centerValue = (minScore + maxScore) / 2;
+  const startValue = centerValue - tickSpacing * 3; // 3 intervals below center
+
+  // Generate 7 evenly spaced ticks
+  const tickValues = [];
+  for (let i = 0; i <= 6; i++) {
+    tickValues.push(startValue + i * tickSpacing);
+  }
+
   return (
     <>
       {scores.length !== 0 && (
@@ -56,10 +78,10 @@ const ScoreBarChart = ({ scores, className }: ScoreBarChartProps) => {
               <YAxis
                 dataKey="score"
                 tickLine={false}
-                tickCount={7}
                 tickMargin={8}
                 axisLine={false}
-                domain={["dataMin - 10", "dataMax + 5"]}
+                domain={[minScore - padding, maxScore + padding]}
+                ticks={tickValues}
               />
               <CartesianGrid strokeDasharray="5 5" />
 
