@@ -40,10 +40,10 @@ export default async function AboutPage() {
                 <P className="text-foreground/80 md:text-xl/relaxed">
                   We found that other golf services overcomplicated golfing,
                   whether it be keeping scores, or hiding the calculations
-                  behind *cough* ugly *cough* UI&apos;s. We put user experience
-                  first, and aim to make keeping track of your golf game
-                  effortless, all while helping golfers understand the
-                  calculations behind the scenes.
+                  behind confusing UI&apos;s. We put user experience first, and
+                  aim to make keeping track of your golf game effortless, all
+                  while helping golfers understand the calculations behind the
+                  scenes.
                 </P>
               </div>
             </div>
@@ -120,14 +120,13 @@ export default async function AboutPage() {
                 What Makes Us Different?
               </h2>
               <p className="mx-auto max-w-[900px] text-muted-foreground md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed">
-                We value your time. We found that other golf services
-                overcomplicate golfing, whether it be keeping scores, or hiding
-                the calculations behind confusing UI&apos;s. We put user
-                experience first, and aim to make keeping track of your golf
-                game effortless, all while helping golfers understand the
-                calculations behind the scenes. That&apos;s why we made
-                Handicappin&apos;. As golfers ourselves, we made something that
-                we would use, filling the gaps that other services left behind.
+                We value your time. We know that golf statistics and round
+                calculations are complicated, and that other services don&apos;t
+                show you everything. That&apos;s why we made Handicappin&apos;.
+                As golfers, we made something that we would use ourselves,
+                filling the gaps that other services left behind.
+                Handicappin&apos; is designed to be simple and intuitive. Just
+                log your rounds, and we&apos;ll handle the rest.
               </p>
             </div>
           </div>
