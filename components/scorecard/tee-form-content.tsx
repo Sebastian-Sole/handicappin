@@ -405,7 +405,7 @@ function TeeHoleTable({ tee, onTeeChange }: TeeFormContentProps) {
                   <TableCell key={index} className="p-0 min-w-[50px]">
                     <Input
                       type="number"
-                      className="border-0 text-center w-16 mx-1"
+                      className="border border-border text-center w-16 mx-1"
                       value={hole.distance === 0 ? "" : hole.distance}
                       onChange={(e) =>
                         handleDistanceChange(
@@ -431,7 +431,7 @@ function TeeHoleTable({ tee, onTeeChange }: TeeFormContentProps) {
                   <TableCell key={index} className="p-0">
                     <Input
                       type="number"
-                      className="border-0 text-center w-16 mx-1"
+                      className="border border-border text-center w-16 mx-1"
                       value={hole.par === 0 ? "" : hole.par}
                       onChange={(e) =>
                         handleParChange(index, parseInt(e.target.value) || 0)
@@ -454,7 +454,7 @@ function TeeHoleTable({ tee, onTeeChange }: TeeFormContentProps) {
                   <TableCell key={index} className="p-0">
                     <Input
                       type="number"
-                      className="border-0 text-center w-16 mx-1"
+                      className="border border-border text-center w-16 mx-1"
                       value={hole.hcp === 0 ? "" : hole.hcp}
                       onChange={(e) =>
                         handleHandicapChange(

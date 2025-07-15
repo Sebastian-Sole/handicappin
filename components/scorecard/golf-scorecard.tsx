@@ -139,7 +139,11 @@ export default function GolfScorecard({ profile }: GolfScorecardProps) {
       const tees = getEffectiveTees(selectedCourseId);
       if (tees && tees.length > 0) {
         const firstTee = tees[0];
-        const teeKey = getTeeKey(selectedCourseId, firstTee.name, firstTee.gender);
+        const teeKey = getTeeKey(
+          selectedCourseId,
+          firstTee.name,
+          firstTee.gender
+        );
         selectTee(teeKey);
         form.setValue("teePlayed", firstTee);
       }
@@ -310,7 +314,7 @@ export default function GolfScorecard({ profile }: GolfScorecardProps) {
   };
 
   const onError = (errors: any) => {
-    console.log(errors)
+    console.log(errors);
     console.error("Form validation errors:", errors);
     toast({
       title: "Validation Error",
@@ -489,7 +493,10 @@ export default function GolfScorecard({ profile }: GolfScorecardProps) {
                                     <SelectContent>
                                       {getEffectiveTees(selectedCourseId)?.map(
                                         (tee) => {
-                                          const genderIndicator = tee.gender === "mens" ? "(M)" : "(F)";
+                                          const genderIndicator =
+                                            tee.gender === "mens"
+                                              ? "(M)"
+                                              : "(F)";
                                           const displayName = `${tee.name} ${genderIndicator}`;
                                           return (
                                             <SelectItem
@@ -541,7 +548,7 @@ export default function GolfScorecard({ profile }: GolfScorecardProps) {
                             </div>
                             {selectedTeeKey && (
                               <div className="flex gap-2 justify-between w-full flex-wrap sm:flex-row flex-col">
-                                <Badge className="flex justify-center">
+                                <Badge className="flex justify-center ">
                                   Course Rating: {selectedTee?.courseRating18}
                                 </Badge>
                                 <Badge className="flex justify-center">
