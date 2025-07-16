@@ -21,7 +21,7 @@ import {
   CommandItem,
   CommandList,
 } from "@/components/ui/command";
-import { Check, ChevronsUpDown } from "lucide-react";
+import { Check, ChevronsUpDown, Plus, Edit, Loader2 } from "lucide-react";
 import { AddCourseDialog } from "./add-course-dialog";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -51,6 +51,12 @@ import { Badge } from "../ui/badge";
 import { DateTimePicker } from "../ui/datepicker";
 import useMounted from "@/hooks/useMounted";
 import { Skeleton } from "../ui/skeleton";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "../ui/tooltip";
 
 interface GolfScorecardProps {
   profile: Tables<"profile">;
@@ -423,7 +429,12 @@ export default function GolfScorecard({ profile }: GolfScorecardProps) {
                                               searchTerm !==
                                                 debouncedSearchTerm)) && (
                                             <CommandEmpty>
-                                              <P>Loading...</P>
+                                              <div className="flex items-center justify-center py-4">
+                                                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                                                <P className="!mt-0">
+                                                  Loading courses...
+                                                </P>
+                                              </div>
                                             </CommandEmpty>
                                           )}
 
@@ -490,7 +501,14 @@ export default function GolfScorecard({ profile }: GolfScorecardProps) {
                                             ?.length === 0
                                         }
                                       >
-                                        <SelectValue placeholder="Select Tee" />
+                                        {isTeesLoading ? (
+                                          <div className="flex items-center">
+                                            <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                                            <span>Loading tees...</span>
+                                          </div>
+                                        ) : (
+                                          <SelectValue placeholder="Select Tee" />
+                                        )}
                                       </SelectTrigger>
                                       <SelectContent>
                                         {getEffectiveTees(
