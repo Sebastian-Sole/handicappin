@@ -21,7 +21,7 @@ import {
   CommandItem,
   CommandList,
 } from "@/components/ui/command";
-import { Check, ChevronsUpDown, Plus, Edit, Loader2 } from "lucide-react";
+import { ChevronsUpDown, Loader2 } from "lucide-react";
 import { AddCourseDialog } from "./add-course-dialog";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -51,12 +51,6 @@ import { Badge } from "../ui/badge";
 import { DateTimePicker } from "../ui/datepicker";
 import useMounted from "@/hooks/useMounted";
 import { Skeleton } from "../ui/skeleton";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "../ui/tooltip";
 
 interface GolfScorecardProps {
   profile: Tables<"profile">;
@@ -351,7 +345,7 @@ export default function GolfScorecard({ profile }: GolfScorecardProps) {
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit, onError)}>
+      <form onSubmit={form.handleSubmit(onSubmit, onError)} role="form">
         <Card className="w-full mx-auto">
           <CardContent className="p-6">
             <div className="mb-6 grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-8">
@@ -429,7 +423,10 @@ export default function GolfScorecard({ profile }: GolfScorecardProps) {
                                               searchTerm !==
                                                 debouncedSearchTerm)) && (
                                             <CommandEmpty>
-                                              <div className="flex items-center justify-center py-4">
+                                              <div
+                                                className="flex items-center justify-center py-4"
+                                                aria-live="polite"
+                                              >
                                                 <Loader2 className="h-4 w-4 animate-spin mr-2" />
                                                 <P className="!mt-0">
                                                   Loading courses...
@@ -453,7 +450,10 @@ export default function GolfScorecard({ profile }: GolfScorecardProps) {
                                   </Popover>
                                 </div>
                                 <div className="flex gap-2 justify-between lg:justify-start w-full md:w-auto sm:flex-row flex-col">
-                                  <AddCourseDialog onAdd={handleAddCourse} />
+                                  <AddCourseDialog
+                                    onAdd={handleAddCourse}
+                                    aria-label="Add new course"
+                                  />
                                 </div>
                               </div>
                             </div>
@@ -507,7 +507,7 @@ export default function GolfScorecard({ profile }: GolfScorecardProps) {
                                             <span>Loading tees...</span>
                                           </div>
                                         ) : (
-                                          <SelectValue placeholder="Select Tee" />
+                                          <SelectValue placeholder="Select tee..." />
                                         )}
                                       </SelectTrigger>
                                       <SelectContent>
@@ -545,6 +545,7 @@ export default function GolfScorecard({ profile }: GolfScorecardProps) {
                                       key={`${selectedCourseId}-${selectedTeeKey}`}
                                       existingTee={getCompleteEditTee}
                                       onSave={handleEditTee}
+                                      aria-label="Edit selected tee"
                                       disabled={
                                         !selectedTeeKey &&
                                         getEffectiveTees(selectedCourseId) &&
@@ -557,6 +558,7 @@ export default function GolfScorecard({ profile }: GolfScorecardProps) {
                                       key={`${selectedCourseId}-${selectedCourseId}-new`}
                                       mode="add"
                                       onSave={handleAddTee}
+                                      aria-label="Add new tee"
                                       disabled={
                                         !selectedCourseId ||
                                         getEffectiveTees(selectedCourseId)
