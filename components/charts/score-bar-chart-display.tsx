@@ -7,6 +7,7 @@ import {
   CardFooter,
 } from "../ui/card";
 import ScoreBarChart from "./score-bar-chart";
+import ScoreLegend from "./score-legend";
 import { Tables } from "@/types/supabase";
 import { Button } from "../ui/button";
 
@@ -26,7 +27,10 @@ const ScoreBarChartDisplay = ({
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="sm:text-2xl text-xl">Previous Scores</CardTitle>
+        <div className="flex items-center gap-4 justify-between w-full">
+          <CardTitle className="sm:text-2xl text-xl">Previous Scores</CardTitle>
+          <ScoreLegend showLegend={previousScores.length >= 5} />
+        </div>
       </CardHeader>
       <CardContent className="p-0 lg:min-h-[300px] justify-center flex items-center">
         {previousScores.length < 5 && (

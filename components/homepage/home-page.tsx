@@ -5,6 +5,8 @@ import React from "react";
 import { getRelevantRounds } from "@/utils/calculations/handicap";
 import HandicapTrendChartDisplay from "../charts/handicap-trend-chart-display";
 import ScoreBarChartDisplay from "../charts/score-bar-chart-display";
+import Link from "next/link";
+import { Button } from "../ui/button";
 
 interface HomepageProps {
   profile: Tables<"profile">;
@@ -95,7 +97,7 @@ export const HomePage = async ({ profile }: HomepageProps) => {
 
         <section className="w-full py-8 lg:py-18 xl:py-24">
           <div className="sm:container px-4 lg:px-6">
-            <div className="text-center mb-12">
+            <div className="text-center md:mb-12 mb-6">
               <h2 className="text-2xl lg:text-3xl font-bold text-gray-900 dark:text-white mb-4 transition-colors duration-300">
                 Performance Analytics
               </h2>
@@ -103,7 +105,7 @@ export const HomePage = async ({ profile }: HomepageProps) => {
                 Track your progress with detailed charts and insights
               </p>
             </div>
-            <div className="grid gap-6 xl:grid-cols-2 xl:gap-12">
+            <div className="hidden md:grid gap-6 2xl:grid-cols-2 2xl:gap-12">
               <HandicapTrendChartDisplay
                 handicapIndex={handicapIndex}
                 percentageChange={percentageChange}
@@ -114,6 +116,15 @@ export const HomePage = async ({ profile }: HomepageProps) => {
                 previousScores={previousScores}
                 profile={profile}
               />
+            </div>
+            <div className="grid gap-6 md:hidden">
+              <div className="flex justify-center">
+                <Link href={`/dashboard/${profile.id}`}>
+                  <Button variant={"default"} size="lg">
+                    Go to Dashboard
+                  </Button>
+                </Link>
+              </div>
             </div>
           </div>
         </section>
