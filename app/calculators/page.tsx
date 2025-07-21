@@ -22,7 +22,7 @@ const CalculatorsPage = async () => {
         <h1 className="mt-4 text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
           Calculators - Coming Soon!
         </h1>
-        <p className="mt-4 dark:text-muted-foreground text-muted">
+        <p className="mt-4">
           We are hard at work building out our calculators. We know you want to
           get started, but we&apos;re making sure that we get it right. Stay
           tuned!
