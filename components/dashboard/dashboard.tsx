@@ -1,7 +1,5 @@
 "use client";
 
-import { useState, useMemo } from "react";
-
 import DashboardInfo from "./dashboardInfo";
 import DashboardGraphDisplay from "./dashboardGraphDisplay";
 import useMounted from "@/hooks/useMounted";
