@@ -1,3 +1,4 @@
+import AboutSkeleton from "@/components/loading/about-skeleton";
 import { Badge } from "@/components/ui/badge";
 import { P } from "@/components/ui/typography";
 import { createServerComponentClient } from "@/utils/supabase/server";
@@ -14,6 +15,8 @@ import {
 } from "lucide-react";
 
 export default async function AboutPage() {
+  // return <AboutSkeleton />;
+
   const supabase = await createServerComponentClient();
   const { count } = await supabase
     .from("round")
