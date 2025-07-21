@@ -1,4 +1,5 @@
 import { Signup } from "@/components/auth/signup";
+import SignupSkeleton from "@/components/loading/signup-skeleton";
 
 const SignupPage = () => {
   return (
