@@ -67,7 +67,7 @@ Deno.serve(async (req) => {
       {
         email,
         name,
-        handicap_index: handicapIndex || 54, // Default handicapIndex to 54 if not provided
+        handicapIndex: handicapIndex || 54, // Default handicapIndex to 54 if not provided
         id: userId,
         verified: false, // Mark as unverified initially
       },
