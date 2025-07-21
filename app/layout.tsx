@@ -6,6 +6,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Navbar } from "@/components/layout/navbar";
 import Footer from "@/components/layout/footer";
+import { Analytics } from "@vercel/analytics/next";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -31,14 +32,13 @@ export default function RootLayout({
               disableTransitionOnChange
             >
               <Navbar />
-              <section className="pt-16 grow bg-background">
-                {children}
-              </section>
+              <section className="pt-16 grow bg-background">{children}</section>
               <Footer />
               <Toaster />
             </ThemeProvider>
           </TRPCReactProvider>
         </div>
+        <Analytics />
       </body>
     </html>
   );
