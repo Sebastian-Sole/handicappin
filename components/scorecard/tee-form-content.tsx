@@ -82,11 +82,11 @@ function TeeInfoFields({ tee, onTeeChange }: TeeFormContentProps) {
         >
           <div className="flex items-center space-x-2">
             <RadioGroupItem value="meters" />
-            <label className="!mt-0">meters</label>
+            <label className="mt-0!">meters</label>
           </div>
           <div className="flex items-center space-x-2">
             <RadioGroupItem value="yards" />
-            <label className="!mt-0">yards</label>
+            <label className="mt-0!">yards</label>
           </div>
         </RadioGroup>
       </div>
@@ -102,11 +102,11 @@ function TeeInfoFields({ tee, onTeeChange }: TeeFormContentProps) {
         >
           <div className="flex items-center space-x-2">
             <RadioGroupItem value="mens" />
-            <label className="!mt-0">mens</label>
+            <label className="mt-0!">mens</label>
           </div>
           <div className="flex items-center space-x-2">
             <RadioGroupItem value="ladies" />
-            <label className="!mt-0">ladies</label>
+            <label className="mt-0!">ladies</label>
           </div>
         </RadioGroup>
       </div>
@@ -405,7 +405,7 @@ function TeeHoleTable({ tee, onTeeChange }: TeeFormContentProps) {
                   <TableCell key={index} className="p-0 min-w-[50px]">
                     <Input
                       type="number"
-                      className="border-0 text-center w-16 mx-1"
+                      className="border border-border text-center w-16 mx-1"
                       value={hole.distance === 0 ? "" : hole.distance}
                       onChange={(e) =>
                         handleDistanceChange(
@@ -431,7 +431,7 @@ function TeeHoleTable({ tee, onTeeChange }: TeeFormContentProps) {
                   <TableCell key={index} className="p-0">
                     <Input
                       type="number"
-                      className="border-0 text-center w-16 mx-1"
+                      className="border border-border text-center w-16 mx-1"
                       value={hole.par === 0 ? "" : hole.par}
                       onChange={(e) =>
                         handleParChange(index, parseInt(e.target.value) || 0)
@@ -454,7 +454,7 @@ function TeeHoleTable({ tee, onTeeChange }: TeeFormContentProps) {
                   <TableCell key={index} className="p-0">
                     <Input
                       type="number"
-                      className="border-0 text-center w-16 mx-1"
+                      className="border border-border text-center w-16 mx-1"
                       value={hole.hcp === 0 ? "" : hole.hcp}
                       onChange={(e) =>
                         handleHandicapChange(

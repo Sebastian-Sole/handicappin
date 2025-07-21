@@ -38,28 +38,28 @@ export function ScorecardTable({
         <Table className="w-full">
           <TableHeader>
             <TableRow>
-              <TableHead className="bg-secondary dark:bg-accent text-primary-foreground dark:text-foreground w-20">
+              <TableHead className="bg-secondary dark:bg-muted dark:text-muted-foreground text-secondary-foreground w-20">
                 HOLE
               </TableHead>
               {[...Array(holeCount)].map((_, i) => (
                 <TableHead
                   key={i}
-                  className="bg-secondary dark:bg-accent text-primary-foreground dark:text-foreground text-center min-w-[40px]"
+                  className="bg-secondary dark:bg-muted dark:text-muted-foreground text-secondary-foreground text-center min-w-[40px]"
                 >
                   {i + 1}
                 </TableHead>
               ))}
               {holeCount === CONSTANTS.EIGHTEEN_HOLES && (
                 <>
-                  <TableHead className="bg-secondary dark:bg-accent dark:text-foreground text-primary-foreground text-center min-w-[50px]">
+                  <TableHead className="bg-secondary dark:bg-muted dark:text-muted-foreground text-secondary-foreground text-center min-w-[50px]">
                     OUT
                   </TableHead>
-                  <TableHead className="bg-secondary dark:bg-accent dark:text-foreground text-primary-foreground text-center min-w-[50px]">
+                  <TableHead className="bg-secondary dark:bg-muted dark:text-muted-foreground text-secondary-foreground text-center min-w-[50px]">
                     IN
                   </TableHead>
                 </>
               )}
-              <TableHead className="bg-secondary dark:bg-accent dark:text-foreground text-primary-foreground text-center min-w-[50px]">
+              <TableHead className="bg-secondary dark:bg-muted dark:text-muted-foreground text-secondary-foreground text-center min-w-[50px]">
                 TOT
               </TableHead>
             </TableRow>
@@ -67,7 +67,7 @@ export function ScorecardTable({
           <TableBody>
             {/* Distance Row */}
             <TableRow className="hover:bg-inherit">
-              <TableCell className="font-medium bg-secondary dark:bg-accent truncate text-ellipsis whitespace-nowrap">
+              <TableCell className="font-medium bg-secondary dark:bg-muted dark:text-muted-foreground text-secondary-foreground truncate text-ellipsis whitespace-nowrap">
                 {selectedTee?.name.toUpperCase()} TEE
               </TableCell>
               {displayedHoles.map((hole, i) => (
@@ -94,28 +94,28 @@ export function ScorecardTable({
 
             {/* Par Row */}
             <TableRow className="hover:bg-inherit">
-              <TableCell className="font-medium bg-secondary dark:bg-accent">
+              <TableCell className="font-medium bg-secondary dark:bg-muted dark:text-muted-foreground text-secondary-foreground">
                 PAR
               </TableCell>
               {displayedHoles.map((hole, i) => (
                 <TableCell
                   key={i}
-                  className="text-center bg-background-alternate dark:bg-bar"
+                  className="text-center bg-background-alternate"
                 >
                   {hole.par}
                 </TableCell>
               ))}
               {holeCount === CONSTANTS.EIGHTEEN_HOLES && (
                 <>
-                  <TableCell className="text-center font-medium bg-background-alternate dark:bg-bar">
+                  <TableCell className="text-center font-medium bg-background-alternate">
                     {selectedTee?.outPar}
                   </TableCell>
-                  <TableCell className="text-center font-medium bg-background-alternate dark:bg-bar">
+                  <TableCell className="text-center font-medium bg-background-alternate">
                     {selectedTee?.inPar}
                   </TableCell>
                 </>
               )}
-              <TableCell className="text-center font-medium bg-background-alternate dark:bg-bar">
+              <TableCell className="text-center font-medium bg-background-alternate">
                 {holeCount === CONSTANTS.EIGHTEEN_HOLES
                   ? selectedTee?.totalPar
                   : selectedTee?.outPar}
@@ -124,7 +124,7 @@ export function ScorecardTable({
 
             {/* Handicap Row */}
             <TableRow className="hover:bg-inherit">
-              <TableCell className="font-medium bg-secondary dark:bg-accent">
+              <TableCell className="font-medium bg-secondary dark:bg-muted dark:text-muted-foreground text-secondary-foreground">
                 HANDICAP
               </TableCell>
               {displayedHoles.map((hole, i) => (
@@ -144,16 +144,13 @@ export function ScorecardTable({
 
             {/* Score Row */}
             <TableRow className="hover:bg-inherit">
-              <TableCell className="font-medium bg-secondary dark:bg-accent truncate text-ellipsis whitespace-nowrap">
+              <TableCell className="font-medium bg-secondary dark:bg-muted dark:text-muted-foreground text-secondary-foreground truncate text-ellipsis whitespace-nowrap">
                 SCORE
               </TableCell>
               {scores.slice(0, holeCount).map((score, i) => (
-                <TableCell
-                  key={i}
-                  className="p-2 bg-background-alternate dark:bg-bar"
-                >
+                <TableCell key={i} className="p-2 bg-background-alternate">
                   <Input
-                    className="border-0 h-full text-center w-full"
+                    className="border border-border h-full text-center w-full"
                     type="number"
                     value={score.strokes || ""}
                     onChange={(e) => {
@@ -179,10 +176,10 @@ export function ScorecardTable({
               ))}
               {holeCount === CONSTANTS.EIGHTEEN_HOLES && (
                 <>
-                  <TableCell className="text-center bg-background-alternate dark:bg-bar">
+                  <TableCell className="text-center bg-background-alternate">
                     {calculateTotal(scores, 0, CONSTANTS.NINE_HOLES)}
                   </TableCell>
-                  <TableCell className="text-center bg-background-alternate dark:bg-bar">
+                  <TableCell className="text-center bg-background-alternate">
                     {calculateTotal(
                       scores,
                       CONSTANTS.NINE_HOLES,
@@ -191,7 +188,7 @@ export function ScorecardTable({
                   </TableCell>
                 </>
               )}
-              <TableCell className="text-center bg-background-alternate dark:bg-bar">
+              <TableCell className="text-center bg-background-alternate">
                 {calculateTotal(scores, 0, holeCount)}
               </TableCell>
             </TableRow>
@@ -211,25 +208,25 @@ export const TableSkeleton = ({ holeCount }: { holeCount: number }) => {
         <table className="w-full border-collapse">
           <thead>
             <tr>
-              <th className="p-2  dark:bg-accent w-20">
+              <th className="p-2 bg-secondary w-20">
                 <Skeleton className="h-6 w-12" />
               </th>
               {[...Array(holeCount)].map((_, i) => (
-                <th key={i} className="p-2  dark:bg-accent text-center">
+                <th key={i} className="p-2 bg-secondary text-center">
                   <Skeleton className="h-6 w-8" />
                 </th>
               ))}
               {holeCount === 18 && (
                 <>
-                  <th className="p-2  dark:bg-accent text-center">
+                  <th className="p-2 bg-secondary text-center">
                     <Skeleton className="h-6 w-10" />
                   </th>
-                  <th className="p-2  dark:bg-accent text-center">
+                  <th className="p-2 bg-secondary text-center">
                     <Skeleton className="h-6 w-10" />
                   </th>
                 </>
               )}
-              <th className="p-2  dark:bg-accent text-center">
+              <th className="p-2 bg-secondary text-center">
                 <Skeleton className="h-6 w-10" />
               </th>
             </tr>
@@ -237,7 +234,7 @@ export const TableSkeleton = ({ holeCount }: { holeCount: number }) => {
           <tbody>
             {/* Distance Row */}
             <tr>
-              <td className="p-2  dark:bg-accent">
+              <td className="p-2 bg-secondary">
                 <Skeleton className="h-6 w-24" />
               </td>
               {[...Array(holeCount)].map((_, i) => (
@@ -262,7 +259,7 @@ export const TableSkeleton = ({ holeCount }: { holeCount: number }) => {
 
             {/* Par Row */}
             <tr>
-              <td className="p-2  dark:bg-accent">
+              <td className="p-2 bg-secondary">
                 <Skeleton className="h-6 w-10" />
               </td>
               {[...Array(holeCount)].map((_, i) => (
@@ -287,7 +284,7 @@ export const TableSkeleton = ({ holeCount }: { holeCount: number }) => {
 
             {/* Handicap Row */}
             <tr>
-              <td className="p-2  dark:bg-accent">
+              <td className="p-2 bg-secondary">
                 <Skeleton className="h-6 w-14" />
               </td>
               {[...Array(holeCount)].map((_, i) => (
@@ -307,7 +304,7 @@ export const TableSkeleton = ({ holeCount }: { holeCount: number }) => {
 
             {/* Score Row */}
             <tr>
-              <td className="p-2  dark:bg-accent">
+              <td className="p-2 bg-secondary">
                 <Skeleton className="h-6 w-14" />
               </td>
               {[...Array(holeCount)].map((_, i) => (

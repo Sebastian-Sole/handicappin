@@ -60,7 +60,7 @@ const HolesTable = () => {
             );
           })}
           <TableRow key={"total"} className="bg-secondary dark:bg-secondary">
-            <TableCell className="first:rounded-l-lg !rounded-tl-none last:rounded-r-lg ">
+            <TableCell className="first:rounded-l-lg rounded-tl-none! last:rounded-r-lg ">
               Total
             </TableCell>
             <TableCell>
@@ -78,7 +78,7 @@ const HolesTable = () => {
                 return acc + scorecard.scores[hole.holeNumber - 1]?.hcpStrokes;
               }, 0)}
             </TableCell>
-            <TableCell className="first:rounded-l-lg last:rounded-r-lg !rounded-tr-none ">
+            <TableCell className="first:rounded-l-lg last:rounded-r-lg rounded-tr-none! ">
               {scorecard.teePlayed.holes?.slice(0, scorecard.scores.length).reduce((acc, hole) => {
                 return acc + calculateHoleAdjustedScore(hole, scorecard.scores[hole.holeNumber - 1]);
               }, 0)}

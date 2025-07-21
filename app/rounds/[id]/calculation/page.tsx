@@ -32,18 +32,16 @@ const RoundCalculationPage = async ({ params }: { params: { id: string } }) => {
         <h1 className="mt-4 text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
           Round Calculation - Coming Soon!
         </h1>
-        <p className="mt-4 dark:text-muted-foreground text-muted">
-          We are hard at work building out our detailed round calculation page. We know you want to
-          get started, but we&apos;re making sure that we get it right. Stay
-          tuned!
+        <p className="mt-4">
+          We are hard at work building out our detailed round calculation page.
+          We know you want to get started, but we&apos;re making sure that we
+          get it right. Stay tuned!
         </p>
         {!data.user && (
           <div className="mt-6">
             <Dialog>
               <DialogTrigger asChild>
-                <Button variant="secondary">
-                  Notify me when it is ready!
-                </Button>
+                <Button variant="secondary">Notify me when it is ready!</Button>
               </DialogTrigger>
               <DialogContent className="sm:max-w-md">
                 <div className="flex items-center space-x-2">
@@ -66,7 +64,7 @@ const RoundCalculationPage = async ({ params }: { params: { id: string } }) => {
         {data.user && <NotifyButton user={data.user} />}
       </div>
     </div>
-  )
+  );
 
   const scorecard = await api.scorecard.getScorecardByRoundId({ id: roundId });
 
@@ -78,8 +76,6 @@ const RoundCalculationPage = async ({ params }: { params: { id: string } }) => {
   if (scorecard.userId !== userId) {
     return <div> This round does not belong to you </div>;
   }
-
-  
 
   // return (
   //   <div>

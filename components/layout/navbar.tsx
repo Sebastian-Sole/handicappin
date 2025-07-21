@@ -29,7 +29,7 @@ export async function Navbar() {
   const isAuthed = data?.user;
 
   return (
-    <header className="fixed top-0 z-50 w-full bg-background shadow-sm">
+    <header className="fixed top-0 z-50 w-full bg-background shadow-xs">
       <div className="container flex h-16 items-center justify-between px-4 sm:px-6 m-0 max-w-full">
         <Link
           href="/"
@@ -85,8 +85,8 @@ export async function Navbar() {
                     <Avatar className="h-8 w-8 flex items-center justify-center">
                       <UserRound
                         strokeWidth={1.5}
-                        className="h-6 w-6 text-black"
-                      ></UserRound>
+                        className="h-6 w-6 text-primary-foreground"
+                      />
                     </Avatar>
                   </Link>
                 </DropdownMenuTrigger>

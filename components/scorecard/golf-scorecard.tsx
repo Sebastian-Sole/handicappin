@@ -21,7 +21,7 @@ import {
   CommandItem,
   CommandList,
 } from "@/components/ui/command";
-import { Check, ChevronsUpDown } from "lucide-react";
+import { ChevronsUpDown, Loader2 } from "lucide-react";
 import { AddCourseDialog } from "./add-course-dialog";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -139,7 +139,11 @@ export default function GolfScorecard({ profile }: GolfScorecardProps) {
       const tees = getEffectiveTees(selectedCourseId);
       if (tees && tees.length > 0) {
         const firstTee = tees[0];
-        const teeKey = getTeeKey(selectedCourseId, firstTee.name, firstTee.gender);
+        const teeKey = getTeeKey(
+          selectedCourseId,
+          firstTee.name,
+          firstTee.gender
+        );
         selectTee(teeKey);
         form.setValue("teePlayed", firstTee);
       }
@@ -310,7 +314,7 @@ export default function GolfScorecard({ profile }: GolfScorecardProps) {
   };
 
   const onError = (errors: any) => {
-    console.log(errors)
+    console.log(errors);
     console.error("Form validation errors:", errors);
     toast({
       title: "Validation Error",
@@ -341,155 +345,179 @@ export default function GolfScorecard({ profile }: GolfScorecardProps) {
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit, onError)}>
+      <form onSubmit={form.handleSubmit(onSubmit, onError)} role="form">
         <Card className="w-full mx-auto">
           <CardContent className="p-6">
-            <div className="mb-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="mb-6 grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-8">
               <Card>
                 <CardContent className="p-4">
-                  <FormField
-                    control={form.control}
-                    name="course.name"
-                    render={() => (
-                      <FormItem>
-                        <FormControl>
-                          <div className="space-y-2">
-                            <Label htmlFor="course">Course</Label>
-                            <div className="flex flex-col md:flex-row gap-2">
-                              <div className="flex-1">
-                                <Popover
-                                  open={openCourseSelect}
-                                  onOpenChange={setOpenCourseSelect}
-                                >
-                                  <PopoverTrigger asChild>
-                                    <Button
-                                      variant="outline"
-                                      role="combobox"
-                                      aria-expanded={openCourseSelect}
-                                      className="w-full justify-between"
-                                    >
-                                      {getSelectedCourseName()}
-                                      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                                    </Button>
-                                  </PopoverTrigger>
-                                  <PopoverContent className="w-full p-0">
-                                    <Command>
-                                      <CommandInput
-                                        placeholder="Search course..."
-                                        onValueChange={handleCourseSearch}
-                                      />
-                                      <CommandList>
-                                        <CommandGroup className="py-6">
-                                          {effectiveCourses.length > 0 &&
-                                            !isLoading &&
-                                            effectiveCourses.map((course) => (
-                                              <CommandItem
-                                                key={course.id || course.name}
-                                                onSelect={() => {
-                                                  // Clear the selected tee first
-                                                  selectTee(undefined);
-                                                  // Then set the new course
-                                                  selectCourse(course.id);
-                                                  setOpenCourseSelect(false);
-                                                  form.setValue(
-                                                    "course",
-                                                    course
-                                                  );
-                                                }}
-                                              >
-                                                {course.name}
-                                              </CommandItem>
-                                            ))}
-                                          {effectiveCourses.length === 0 &&
-                                            !isLoading && (
-                                              <CommandEmpty>
-                                                <P>Search for a course...</P>
-                                              </CommandEmpty>
-                                            )}
-                                        </CommandGroup>
-
-                                        {(isLoading ||
-                                          (!searchedCourses &&
-                                            searchTerm !==
-                                              debouncedSearchTerm) ||
-                                          (searchedCourses &&
-                                            effectiveCourses.length !== 0 &&
-                                            searchTerm !==
-                                              debouncedSearchTerm)) && (
-                                          <CommandEmpty>
-                                            <P>Loading...</P>
-                                          </CommandEmpty>
-                                        )}
-
-                                        {!isLoading &&
-                                          searchedCourses &&
-                                          searchedCourses.length === 0 &&
-                                          searchTerm ===
-                                            debouncedSearchTerm && (
-                                            <CommandEmpty>
-                                              <P>No courses found</P>
-                                            </CommandEmpty>
-                                          )}
-                                      </CommandList>
-                                    </Command>
-                                  </PopoverContent>
-                                </Popover>
-                              </div>
-                              <div className="flex gap-2 justify-between lg:justify-start w-full md:w-auto sm:flex-row flex-col">
-                                <AddCourseDialog onAdd={handleAddCourse} />
-                              </div>
-                            </div>
-                          </div>
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="course.tees"
-                    render={() => (
-                      <FormItem>
-                        <FormControl>
-                          <div className="space-y-4 mt-4">
+                  {/* Left-align all labels */}
+                  <div className="space-y-2 text-left">
+                    <FormField
+                      control={form.control}
+                      name="course.name"
+                      render={() => (
+                        <FormItem>
+                          <FormControl>
                             <div className="space-y-2">
-                              <Label htmlFor="tee">Tee</Label>
+                              <Label htmlFor="course">Course</Label>
                               <div className="flex flex-col md:flex-row gap-2">
                                 <div className="flex-1">
-                                  <Select
-                                    value={selectedTeeKey}
-                                    onValueChange={(value) => {
-                                      const foundTee = getEffectiveTees(
-                                        selectedCourseId
-                                      )?.find(
-                                        (tee) =>
-                                          getTeeKey(
-                                            selectedCourseId || 0,
-                                            tee.name,
-                                            tee.gender
-                                          ) === value
-                                      );
-                                      if (!foundTee) {
-                                        return;
-                                      }
-                                      selectTee(value);
-                                      form.setValue("teePlayed", foundTee);
-                                    }}
+                                  <Popover
+                                    open={openCourseSelect}
+                                    onOpenChange={setOpenCourseSelect}
                                   >
-                                    <SelectTrigger
-                                      id="tee"
-                                      disabled={
-                                        !selectedCourseId ||
-                                        getEffectiveTees(selectedCourseId)
-                                          ?.length === 0
-                                      }
+                                    <PopoverTrigger asChild>
+                                      <Button
+                                        variant="outline"
+                                        role="combobox"
+                                        aria-expanded={openCourseSelect}
+                                        className="w-full justify-between"
+                                      >
+                                        {getSelectedCourseName()}
+                                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                      </Button>
+                                    </PopoverTrigger>
+                                    <PopoverContent className="w-full p-0">
+                                      <Command>
+                                        <CommandInput
+                                          placeholder="Search course..."
+                                          onValueChange={handleCourseSearch}
+                                        />
+                                        <CommandList>
+                                          <CommandGroup className="py-6">
+                                            {effectiveCourses.length > 0 &&
+                                              !isLoading &&
+                                              effectiveCourses.map((course) => (
+                                                <CommandItem
+                                                  key={course.id || course.name}
+                                                  onSelect={() => {
+                                                    // Clear the selected tee first
+                                                    selectTee(undefined);
+                                                    // Then set the new course
+                                                    selectCourse(course.id);
+                                                    setOpenCourseSelect(false);
+                                                    form.setValue(
+                                                      "course",
+                                                      course
+                                                    );
+                                                  }}
+                                                >
+                                                  {course.name}
+                                                </CommandItem>
+                                              ))}
+                                            {effectiveCourses.length === 0 &&
+                                              !isLoading && (
+                                                <CommandEmpty>
+                                                  <P>Search for a course...</P>
+                                                </CommandEmpty>
+                                              )}
+                                          </CommandGroup>
+
+                                          {(isLoading ||
+                                            (!searchedCourses &&
+                                              searchTerm !==
+                                                debouncedSearchTerm) ||
+                                            (searchedCourses &&
+                                              effectiveCourses.length !== 0 &&
+                                              searchTerm !==
+                                                debouncedSearchTerm)) && (
+                                            <CommandEmpty>
+                                              <div
+                                                className="flex items-center justify-center py-4"
+                                                aria-live="polite"
+                                              >
+                                                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                                                <P className="!mt-0">
+                                                  Loading courses...
+                                                </P>
+                                              </div>
+                                            </CommandEmpty>
+                                          )}
+
+                                          {!isLoading &&
+                                            searchedCourses &&
+                                            searchedCourses.length === 0 &&
+                                            searchTerm ===
+                                              debouncedSearchTerm && (
+                                              <CommandEmpty>
+                                                <P>No courses found</P>
+                                              </CommandEmpty>
+                                            )}
+                                        </CommandList>
+                                      </Command>
+                                    </PopoverContent>
+                                  </Popover>
+                                </div>
+                                <div className="flex gap-2 justify-between lg:justify-start w-full md:w-auto sm:flex-row flex-col">
+                                  <AddCourseDialog
+                                    onAdd={handleAddCourse}
+                                    aria-label="Add new course"
+                                  />
+                                </div>
+                              </div>
+                            </div>
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="course.tees"
+                      render={() => (
+                        <FormItem>
+                          <FormControl>
+                            <div className="space-y-4 mt-4">
+                              <div className="space-y-2">
+                                <Label htmlFor="tee">Tee</Label>
+                                <div className="flex flex-col md:flex-row gap-2">
+                                  <div className="flex-1">
+                                    <Select
+                                      value={selectedTeeKey}
+                                      onValueChange={(value) => {
+                                        const foundTee = getEffectiveTees(
+                                          selectedCourseId
+                                        )?.find(
+                                          (tee) =>
+                                            getTeeKey(
+                                              selectedCourseId || 0,
+                                              tee.name,
+                                              tee.gender
+                                            ) === value
+                                        );
+                                        if (!foundTee) {
+                                          return;
+                                        }
+                                        selectTee(value);
+                                        form.setValue("teePlayed", foundTee);
+                                      }}
                                     >
-                                      <SelectValue placeholder="Select Tee" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                      {getEffectiveTees(selectedCourseId)?.map(
-                                        (tee) => {
-                                          const genderIndicator = tee.gender === "mens" ? "(M)" : "(F)";
+                                      <SelectTrigger
+                                        id="tee"
+                                        disabled={
+                                          !selectedCourseId ||
+                                          getEffectiveTees(selectedCourseId)
+                                            ?.length === 0
+                                        }
+                                      >
+                                        {isTeesLoading ? (
+                                          <div className="flex items-center">
+                                            <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                                            <span>Loading tees...</span>
+                                          </div>
+                                        ) : (
+                                          <SelectValue placeholder="Select tee..." />
+                                        )}
+                                      </SelectTrigger>
+                                      <SelectContent>
+                                        {getEffectiveTees(
+                                          selectedCourseId
+                                        )?.map((tee) => {
+                                          const genderIndicator =
+                                            tee.gender === "mens"
+                                              ? "(M)"
+                                              : "(F)";
                                           const displayName = `${tee.name} ${genderIndicator}`;
                                           return (
                                             <SelectItem
@@ -507,59 +535,61 @@ export default function GolfScorecard({ profile }: GolfScorecardProps) {
                                               {displayName}
                                             </SelectItem>
                                           );
-                                        }
-                                      )}
-                                    </SelectContent>
-                                  </Select>
-                                </div>
-                                <div className="flex gap-2 justify-between lg:justify-start w-full md:w-auto sm:flex-row flex-col">
-                                  <TeeDialog
-                                    mode="edit"
-                                    key={`${selectedCourseId}-${selectedTeeKey}`}
-                                    existingTee={getCompleteEditTee}
-                                    onSave={handleEditTee}
-                                    disabled={
-                                      !selectedTeeKey &&
-                                      getEffectiveTees(selectedCourseId) &&
-                                      getEffectiveTees(selectedCourseId)
-                                        ?.length === 0
-                                    }
-                                  />
+                                        })}
+                                      </SelectContent>
+                                    </Select>
+                                  </div>
+                                  <div className="flex gap-2 justify-between lg:justify-start w-full md:w-auto sm:flex-row flex-col">
+                                    <TeeDialog
+                                      mode="edit"
+                                      key={`${selectedCourseId}-${selectedTeeKey}`}
+                                      existingTee={getCompleteEditTee}
+                                      onSave={handleEditTee}
+                                      aria-label="Edit selected tee"
+                                      disabled={
+                                        !selectedTeeKey &&
+                                        getEffectiveTees(selectedCourseId) &&
+                                        getEffectiveTees(selectedCourseId)
+                                          ?.length === 0
+                                      }
+                                    />
 
-                                  <TeeDialog
-                                    key={`${selectedCourseId}-${selectedCourseId}-new`}
-                                    mode="add"
-                                    onSave={handleAddTee}
-                                    disabled={
-                                      !selectedCourseId ||
-                                      getEffectiveTees(selectedCourseId)
-                                        ?.length === 0
-                                    }
-                                  />
+                                    <TeeDialog
+                                      key={`${selectedCourseId}-${selectedCourseId}-new`}
+                                      mode="add"
+                                      onSave={handleAddTee}
+                                      aria-label="Add new tee"
+                                      disabled={
+                                        !selectedCourseId ||
+                                        getEffectiveTees(selectedCourseId)
+                                          ?.length === 0
+                                      }
+                                    />
+                                  </div>
                                 </div>
                               </div>
+                              {selectedTeeKey && (
+                                <div className="flex gap-2 justify-between w-full flex-wrap sm:flex-row flex-col">
+                                  <Badge className="flex justify-center ">
+                                    Course Rating: {selectedTee?.courseRating18}
+                                  </Badge>
+                                  <Badge className="flex justify-center">
+                                    Slope Rating: {selectedTee?.slopeRating18}
+                                  </Badge>
+                                </div>
+                              )}
                             </div>
-                            {selectedTeeKey && (
-                              <div className="flex gap-2 justify-between w-full flex-wrap sm:flex-row flex-col">
-                                <Badge className="flex justify-center">
-                                  Course Rating: {selectedTee?.courseRating18}
-                                </Badge>
-                                <Badge className="flex justify-center">
-                                  Slope Rating: {selectedTee?.slopeRating18}
-                                </Badge>
-                              </div>
-                            )}
-                          </div>
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
                 </CardContent>
               </Card>
               <Card>
                 <CardContent className="p-4">
-                  <div className="space-y-4">
+                  <div className="space-y-4 text-left">
                     <div className="space-y-2">
                       <FormLabel>Tee Time</FormLabel>
                       <FormField
@@ -649,7 +679,6 @@ export default function GolfScorecard({ profile }: GolfScorecardProps) {
                   onScoreChange={handleScoreChange}
                 />
               )}
-
             {!selectedTeeKey && (
               <div
                 className={`h-32 sm:w-[270px] md:w-[600px] lg:w-[725px] xl:w-[975px] 2xl:w-[1225px] 3xl:w-[1325px]`}
@@ -659,14 +688,22 @@ export default function GolfScorecard({ profile }: GolfScorecardProps) {
                 </div>
               </div>
             )}
-
+            {/* Desktop submit button */}
             {selectedTeeKey && (
-              <div className="mt-4 flex justify-end">
+              <div className="mt-4 flex justify-end hidden md:flex">
                 <Button type="submit">Submit Scorecard</Button>
               </div>
             )}
           </CardContent>
         </Card>
+        {/* Sticky mobile submit button */}
+        {selectedTeeKey && (
+          <div className="fixed bottom-0 left-0 right-0 z-50 bg-background border-t border-border p-4 flex justify-center md:hidden">
+            <Button type="submit" className="w-full max-w-md">
+              Submit Scorecard
+            </Button>
+          </div>
+        )}
       </form>
     </Form>
   );

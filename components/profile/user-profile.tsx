@@ -152,7 +152,7 @@ const UserProfile = ({ profile, authUser }: UserProfileProps) => {
               />
             </div>
 
-            <Button type="submit" className="w-full" disabled={loading}>
+            <Button type="submit" className="w-full mb-4" disabled={loading}>
               {loading ? "Updating..." : "Update profile"}
             </Button>
             <div className="flex items-center justify-center flex-wrap">

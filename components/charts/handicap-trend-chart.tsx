@@ -9,6 +9,7 @@ import {
   ChartTooltip,
   ChartContainer,
 } from "@/components/ui/chart";
+import { useThemeColors } from "@/utils/theme-colors";
 
 interface HandicapTrendChartProps {
   previousHandicaps: {
@@ -22,10 +23,12 @@ const HandicapTrendChart = ({
   previousHandicaps,
   isPositive,
 }: HandicapTrendChartProps) => {
+  const colors = useThemeColors();
+  const strokeColor = isPositive ? colors.destructive : colors.primary;
   return (
     <>
       {previousHandicaps.length !== 0 && (
-        <div className="aspect-[16/9]">
+        <div className="aspect-video">
           <ChartContainer
             config={{
               desktop: {
@@ -58,7 +61,8 @@ const HandicapTrendChart = ({
                 tickLine={false}
                 tickMargin={8}
                 axisLine={false}
-                domain={[18, 54]}
+                domain={[0, 54]}
+                ticks={[0, 9, 18, 27, 36, 45, 54]}
               />
               <ChartTooltip
                 cursor={false}
@@ -67,9 +71,7 @@ const HandicapTrendChart = ({
               <Line
                 dataKey="handicap"
                 type="natural"
-                stroke={
-                  isPositive ? "hsl(var(--destructive))" : "hsl(var(--primary))"
-                }
+                stroke={strokeColor}
                 strokeWidth={2}
                 dot={true}
               />
