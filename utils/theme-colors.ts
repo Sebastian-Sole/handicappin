@@ -20,7 +20,6 @@ export const getThemeColor = (colorName: string): string => {
   if (!cssVariable) return '';
   
   const value = getComputedStyle(document.documentElement).getPropertyValue(cssVariable).trim();
-  console.log(`Theme color ${colorName}: ${value}`); // Debug log
   return value;
 };
 
