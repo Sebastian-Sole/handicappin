@@ -13,7 +13,7 @@ const StatBox = ({ title, value, change, description, icon }: StatBoxProps) => {
   return (
     <Card className="hover:shadow-md dark:hover:shadow-2xl transition-all duration-300 border-0 dark:bg-primary/20 backdrop-blur-sm hover:bg-background/75 dark:hover:bg-primary/10">
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-300 transition-colors duration-300">
+        <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-300 transition-colors duration-300 min-h-[2.5rem] min-[423px]:min-h-0">
           {title}
         </CardTitle>
         <div className="ml-2 min-[400px]:block hidden">{icon}</div>
