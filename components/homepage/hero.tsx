@@ -21,6 +21,11 @@ const Hero = ({
   bestRoundCourseName,
   handicapPercentageChange,
 }: HeroProps) => {
+  let hasPlayedAnyRounds = false;
+  if (previousScores.length > 0) {
+    hasPlayedAnyRounds = true;
+  }
+
   const calculatePlusMinusScore = (): string => {
     if (
       bestRound === undefined ||
@@ -78,32 +83,56 @@ const Hero = ({
     }
   };
 
-  const averageScoreChangeType =
-    calculateAverageScoreChange() < 0 ? "improvement" : "increase";
-  const averageScoreChangeDescription =
-    calculateAverageScoreChange() < 0
-      ? Math.abs(calculateAverageScoreChange()) < 5
-        ? "Your average score is slightly improving!"
-        : "Your average score is improving!"
-      : Math.abs(calculateAverageScoreChange()) < 5
-      ? "Your average score is slightly increasing"
-      : "Your average score is increasing";
+  let averageScoreChangeType: string;
+  let averageScoreChangeDescription: string;
+  let handicapChangeType: string;
+  let handicapChangeDescription: string;
+  let bestRoundDescription: string;
+  let roundsPlayedDescription: string;
+  let bestRoundType: string;
+  let roundsPlayedType: string;
 
-  const handicapChangeType =
-    handicapPercentageChange < 0 ? "improvement" : "increase";
-  const handicapChangeDescription =
-    handicapPercentageChange < 0
-      ? Math.abs(handicapPercentageChange) < 7
-        ? "Your handicap is slightly improving!"
-        : "Your handicap is improving!"
-      : Math.abs(handicapPercentageChange) < 7
-      ? "Your handicap is slightly increasing"
-      : "Your handicap is increasing";
+  if (!hasPlayedAnyRounds) {
+    averageScoreChangeType = "neutral";
+    averageScoreChangeDescription = "Log a round to start your progression";
+    handicapChangeType = "neutral";
+    handicapChangeDescription = "Log a round to start your progression";
+    bestRoundType = "neutral";
+    bestRoundDescription = "Log a round to start your progression";
+    roundsPlayedType = "neutral";
+    roundsPlayedDescription = "Log a round to start your progression";
+  } else {
+    averageScoreChangeType =
+      calculateAverageScoreChange() < 0 ? "improvement" : "increase";
+    averageScoreChangeDescription =
+      calculateAverageScoreChange() < 0
+        ? Math.abs(calculateAverageScoreChange()) < 5
+          ? "Your average score is slightly improving!"
+          : "Your average score is improving!"
+        : Math.abs(calculateAverageScoreChange()) < 5
+        ? "Your average score is slightly increasing"
+        : "Your average score is increasing";
 
-  const bestRoundDescription =
-    bestRoundCourseName !== undefined
+    handicapChangeType =
+      handicapPercentageChange < 0 ? "improvement" : "increase";
+    handicapChangeDescription =
+      handicapPercentageChange < 0
+        ? Math.abs(handicapPercentageChange) < 7
+          ? "Your handicap is slightly improving!"
+          : "Your handicap is improving!"
+        : Math.abs(handicapPercentageChange) < 7
+        ? "Your handicap is slightly increasing"
+        : "Your handicap is increasing";
+    bestRoundDescription = bestRoundCourseName
       ? `Best round at ${bestRoundCourseName}`
       : `Best round`;
+    roundsPlayedDescription =
+      previousScores.length < 20
+        ? "Psst! 20 rounds gives you a complete handicap index!"
+        : "You've played a lot of rounds!";
+    bestRoundType = "achievement";
+    roundsPlayedType = "achievement";
+  }
 
   return (
     <section className="w-full py-4 lg:py-8 xl:py-12 2xl:py-24 bg-cover bg-center">
@@ -176,15 +205,15 @@ const Hero = ({
               <StatBox
                 title="Best Round"
                 value={calculatePlusMinusScore()}
-                change="achievement"
+                change={bestRoundType}
                 description={bestRoundDescription}
                 icon={<Award className="h-8 w-8 text-primary" />}
               />
               <StatBox
                 title="Rounds Played"
                 value={previousScores.length.toString()}
-                change="achievement"
-                description="You've played a lot of rounds!"
+                change={roundsPlayedType}
+                description={roundsPlayedDescription}
                 icon={<BarChart2 className="h-8 w-8 text-primary" />}
               />
             </div>
