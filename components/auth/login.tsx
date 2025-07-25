@@ -19,6 +19,7 @@ import { Skeleton } from "../ui/skeleton";
 import { Input } from "../ui/input";
 import { useToast } from "../ui/use-toast";
 import { VerificationBox } from "./verification-box";
+import { useState } from "react";
 
 export function Login() {
   const isMounted = useMounted();
@@ -27,6 +28,7 @@ export function Login() {
   const { toast } = useToast();
   const searchParams = useSearchParams();
   const isVerified = searchParams.get("verified");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const loginSchema = z.object({
     email: z.string().min(2).max(50),
@@ -42,6 +44,7 @@ export function Login() {
   });
 
   const onSubmit = async (values: z.infer<typeof loginSchema>) => {
+    setIsSubmitting(true);
     const { error } = await supabase.auth.signInWithPassword({
       email: values.email,
       password: values.password,
@@ -55,6 +58,7 @@ export function Login() {
         variant: "destructive",
       });
       router.push("/error");
+      setIsSubmitting(false);
     }
     router.push("/");
     router.refresh();
@@ -113,8 +117,8 @@ export function Login() {
                 )}
               />
             </div>
-            <Button type="submit" className="w-full">
-              Sign In
+            <Button type="submit" className="w-full" disabled={isSubmitting}>
+              {isSubmitting ? "Signing In..." : "Sign In"}
             </Button>
 
             <div className="flex items-center justify-center flex-wrap">
