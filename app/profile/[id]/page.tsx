@@ -3,6 +3,8 @@ import { toast } from "@/components/ui/use-toast";
 import { api } from "@/trpc/server";
 import { createServerComponentClient } from "@/utils/supabase/server";
 import { redirect } from "next/navigation";
+import { Suspense } from "react";
+import ProfileSkeleton from "@/components/loading/profile-skeleton";
 
 const ProfilePage = async ({ params }: { params: { id: string } }) => {
   const { id: profileId } = params;
@@ -35,7 +37,11 @@ const ProfilePage = async ({ params }: { params: { id: string } }) => {
     redirect("/404");
   }
 
-  return <UserProfile authUser={data.user} profile={profile} />;
+  return (
+    <Suspense fallback={<ProfileSkeleton />}>
+      <UserProfile authUser={data.user} profile={profile} />
+    </Suspense>
+  );
 };
 
 export default ProfilePage;
