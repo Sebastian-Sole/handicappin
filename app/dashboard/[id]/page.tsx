@@ -1,6 +1,8 @@
 import { Dashboard } from "@/components/dashboard/dashboard";
 import { api } from "@/trpc/server";
 import { getRandomHeader } from "@/utils/frivolities/headerGenerator";
+import { Suspense } from "react";
+import DashboardSkeleton from "@/components/dashboard/dashboardSkeleton";
 
 import { createServerComponentClient } from "@/utils/supabase/server";
 
@@ -28,16 +30,20 @@ const DashboardPage = async ({ params }: { params: { id: string } }) => {
     const profile = await api.auth.getProfileFromUserId(id);
     const header = getRandomHeader();
     return (
-      <div>
-        <Dashboard profile={profile} scorecards={scorecards} header={header} />
-      </div>
+      <Suspense fallback={<DashboardSkeleton />}>
+        <div>
+          <Dashboard
+            profile={profile}
+            scorecards={scorecards}
+            header={header}
+          />
+        </div>
+      </Suspense>
     );
   } catch (error) {
     console.error(error);
     return <div>Error loading scorecards</div>;
   }
-
-  
 };
 
 export default DashboardPage;
