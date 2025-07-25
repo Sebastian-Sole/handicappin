@@ -2,6 +2,8 @@ import { HomePage } from "@/components/homepage/home-page";
 import { api } from "@/trpc/server";
 import { createServerComponentClient } from "@/utils/supabase/server";
 import { redirect } from "next/navigation";
+import { Suspense } from "react";
+import HomepageSkeleton from "@/components/loading/homepage-skeleton";
 
 export default async function Home() {
   const supabase = createServerComponentClient();
@@ -15,5 +17,9 @@ export default async function Home() {
 
   const profile = await api.auth.getProfileFromUserId(userId);
 
-  return <HomePage profile={profile} />;
+  return (
+    <Suspense fallback={<HomepageSkeleton />}>
+      <HomePage profile={profile} />
+    </Suspense>
+  );
 }

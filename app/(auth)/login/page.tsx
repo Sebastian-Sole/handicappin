@@ -1,6 +1,8 @@
 import { Login } from "@/components/auth/login";
 import { createServerComponentClient } from "@/utils/supabase/server";
 import { redirect } from "next/navigation";
+import { Suspense } from "react";
+import LoginSkeleton from "@/components/loading/login-skeleton";
 
 const LoginPage = async () => {
   const supabase = createServerComponentClient();
@@ -11,9 +13,11 @@ const LoginPage = async () => {
   }
 
   return (
-    <div className="flex justify-center items-center h-full">
-      <Login />
-    </div>
+    <Suspense fallback={<LoginSkeleton />}>
+      <div className="flex justify-center items-center h-full">
+        <Login />
+      </div>
+    </Suspense>
   );
 };
 
