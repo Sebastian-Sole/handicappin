@@ -34,7 +34,7 @@ export async function Navbar() {
         <Link
           href="/"
           className="flex items-center gap-2 w-1/3"
-          prefetch={false}
+          prefetch={true}
         >
           <Large>Handicappin&apos;</Large>
         </Link>
@@ -44,28 +44,28 @@ export async function Navbar() {
               <Link
                 href="/"
                 className="hover:underline hover:underline-offset-4 "
-                prefetch={false}
+                prefetch={true}
               >
                 Home
               </Link>
               <Link
                 href="/about"
                 className="hover:underline hover:underline-offset-4"
-                prefetch={false}
+                prefetch={true}
               >
                 About
               </Link>
               <Link
                 href="/calculators"
                 className="hover:underline hover:underline-offset-4"
-                prefetch={false}
+                prefetch={true}
               >
                 Calculators
               </Link>
               <Link
                 href={`/dashboard/${data.user.id}`}
                 className="hover:underline hover:underline-offset-4"
-                prefetch={false}
+                prefetch={true}
               >
                 Dashboard
               </Link>
@@ -80,7 +80,7 @@ export async function Navbar() {
                   <Link
                     href="#"
                     className="rounded-full bg-primary p-1 hover:bg-primary/80"
-                    prefetch={false}
+                    prefetch={true}
                   >
                     <Avatar className="h-8 w-8 flex items-center justify-center">
                       <UserRound
@@ -138,35 +138,35 @@ export async function Navbar() {
                       <Link
                         href="/"
                         className="hover:underline hover:underline-offset-4"
-                        prefetch={false}
+                        prefetch={true}
                       >
                         Home
                       </Link>
                       <Link
                         href="/about"
                         className="hover:underline hover:underline-offset-4"
-                        prefetch={false}
+                        prefetch={true}
                       >
                         About
                       </Link>
                       <Link
-                        href="/services"
+                        href="/calculators"
                         className="hover:underline hover:underline-offset-4"
-                        prefetch={false}
+                        prefetch={true}
                       >
                         Calculators
                       </Link>
                       <Link
                         href={`/dashboard/${data.user.id}`}
                         className="hover:underline hover:underline-offset-4"
-                        prefetch={false}
+                        prefetch={true}
                       >
                         Dashboard
                       </Link>
                       <Link
                         href="/contact"
                         className="hover:underline hover:underline-offset-4"
-                        prefetch={false}
+                        prefetch={true}
                       >
                         Contact
                       </Link>
@@ -185,21 +185,21 @@ export async function Navbar() {
               <Link
                 href="/"
                 className="hover:underline hover:underline-offset-4"
-                prefetch={false}
+                prefetch={true}
               >
                 Home
               </Link>
               <Link
                 href="/about"
                 className="hover:underline hover:underline-offset-4"
-                prefetch={false}
+                prefetch={true}
               >
                 About
               </Link>
               <Link
                 href="/calculators"
                 className="hover:underline hover:underline-offset-4"
-                prefetch={false}
+                prefetch={true}
               >
                 Calculators
               </Link>
@@ -229,28 +229,28 @@ export async function Navbar() {
                       <Link
                         href="/"
                         className="hover:underline hover:underline-offset-4"
-                        prefetch={false}
+                        prefetch={true}
                       >
                         Home
                       </Link>
                       <Link
                         href="/about"
                         className="hover:underline hover:underline-offset-4"
-                        prefetch={false}
+                        prefetch={true}
                       >
                         About
                       </Link>
                       <Link
                         href="/calculators"
                         className="hover:underline hover:underline-offset-4"
-                        prefetch={false}
+                        prefetch={true}
                       >
                         Calculators
                       </Link>
                       <Link
                         href="/contact"
                         className="hover:underline hover:underline-offset-4"
-                        prefetch={false}
+                        prefetch={true}
                       >
                         Contact
                       </Link>
