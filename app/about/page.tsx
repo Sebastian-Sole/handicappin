@@ -16,7 +16,7 @@ import {
 } from "lucide-react";
 
 export default async function AboutPage() {
-  // return <AboutSkeleton />;
+  
 
   const supabase = await createServerComponentClient();
   const { count } = await supabase
