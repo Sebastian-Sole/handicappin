@@ -54,6 +54,17 @@ export function Signup({
       router.push("/login");
     } catch (error: any) {
       console.error("Error during sign up:", error);
+      if (
+        error.message.includes(
+          `duplicate key value violates unique constraint "profile_email_key"`
+        )
+      ) {
+        toast({
+          title: "Error signing up",
+          description: "Email already in use. Please login.",
+        });
+        return;
+      }
       toast({
         title: "Error signing up",
         description: error.message || "An error occurred during sign up.",
