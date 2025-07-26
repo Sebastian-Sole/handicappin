@@ -18,6 +18,7 @@ interface ScorecardTableProps {
   holeCount: number;
   scores: Score[];
   onScoreChange: (holeIndex: number, score: number) => void;
+  disabled: boolean;
 }
 
 export function ScorecardTable({
@@ -26,6 +27,7 @@ export function ScorecardTable({
   holeCount,
   scores,
   onScoreChange,
+  disabled,
 }: ScorecardTableProps) {
   const calculateTotal = (scores: Score[], start: number, end: number) =>
     scores.slice(start, end).reduce((sum, score) => sum + score.strokes, 0);
@@ -153,6 +155,7 @@ export function ScorecardTable({
                     className="border border-border h-full text-center w-full"
                     type="number"
                     value={score.strokes || ""}
+                    disabled={disabled}
                     onChange={(e) => {
                       if (e.target.value.length > CONSTANTS.MAX_SCORE_LENGTH) {
                         return;

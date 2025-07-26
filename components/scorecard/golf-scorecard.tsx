@@ -80,6 +80,7 @@ export default function GolfScorecard({ profile }: GolfScorecardProps) {
   const [debouncedSearchTerm] = useDebounce(searchTerm, 600);
   const [openCourseSelect, setOpenCourseSelect] = useState(false);
   const [holeCount, setHoleCount] = useState<number>(18);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Form setup
   const form = useForm<Scorecard>({
@@ -250,6 +251,8 @@ export default function GolfScorecard({ profile }: GolfScorecardProps) {
   const submitScorecardMutation = api.round.submitScorecard.useMutation();
 
   const onSubmit = async (data: Scorecard) => {
+    setIsSubmitting(true);
+    await new Promise((resolve) => setTimeout(resolve, 1000));
     try {
       // Create a new data object with only the played holes' scores
       const isAutoApproved =
@@ -301,9 +304,10 @@ export default function GolfScorecard({ profile }: GolfScorecardProps) {
       });
 
       // Redirect to home page
-      // window.location.href = "/";
+      window.location.href = `/`;
     } catch (error) {
       console.error("Error submitting scorecard:", error);
+      setIsSubmitting(false);
       toast({
         title: "Error",
         description:
@@ -356,6 +360,7 @@ export default function GolfScorecard({ profile }: GolfScorecardProps) {
                     <FormField
                       control={form.control}
                       name="course.name"
+                      disabled={isSubmitting}
                       render={() => (
                         <FormItem>
                           <FormControl>
@@ -465,6 +470,7 @@ export default function GolfScorecard({ profile }: GolfScorecardProps) {
                     <FormField
                       control={form.control}
                       name="course.tees"
+                      disabled={isSubmitting}
                       render={() => (
                         <FormItem>
                           <FormControl>
@@ -595,6 +601,7 @@ export default function GolfScorecard({ profile }: GolfScorecardProps) {
                       <FormField
                         control={form.control}
                         name="teeTime"
+                        disabled={isSubmitting}
                         render={({ field }) => (
                           <FormItem className="flex flex-col">
                             <FormControl>
@@ -648,6 +655,7 @@ export default function GolfScorecard({ profile }: GolfScorecardProps) {
                         <FormField
                           control={form.control}
                           name="notes"
+                          disabled={isSubmitting}
                           render={({ field }) => (
                             <FormItem>
                               <FormControl>
@@ -677,6 +685,7 @@ export default function GolfScorecard({ profile }: GolfScorecardProps) {
                   holeCount={holeCount}
                   scores={form.watch("scores")}
                   onScoreChange={handleScoreChange}
+                  disabled={isSubmitting}
                 />
               )}
             {!selectedTeeKey && (
@@ -691,7 +700,9 @@ export default function GolfScorecard({ profile }: GolfScorecardProps) {
             {/* Desktop submit button */}
             {selectedTeeKey && (
               <div className="mt-4 flex justify-end hidden md:flex">
-                <Button type="submit">Submit Scorecard</Button>
+                <Button type="submit" disabled={isSubmitting}>
+                  {isSubmitting ? "Submitting..." : "Submit Scorecard"}
+                </Button>
               </div>
             )}
           </CardContent>
@@ -699,8 +710,12 @@ export default function GolfScorecard({ profile }: GolfScorecardProps) {
         {/* Sticky mobile submit button */}
         {selectedTeeKey && (
           <div className="fixed bottom-0 left-0 right-0 z-50 bg-background border-t border-border p-4 flex justify-center md:hidden">
-            <Button type="submit" className="w-full max-w-md">
-              Submit Scorecard
+            <Button
+              type="submit"
+              className="w-full max-w-md"
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? "Submitting..." : "Submit Scorecard"}
             </Button>
           </div>
         )}
