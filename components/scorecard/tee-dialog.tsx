@@ -60,55 +60,65 @@ export function TeeDialog({
     onOpenChange?.(open);
   };
 
+  function renderTeeButtons() {
+    if (mode === "edit") {
+      return (
+        <div className="flex gap-2 justify-between flex-wrap sm:flex-row flex-col">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="h-10 hidden md:flex"
+            disabled={disabled}
+          >
+            <Pencil className="h-4 w-4" />
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            size="lg"
+            className="h-10 sm:flex md:hidden "
+            disabled={disabled}
+          >
+            <Pencil className="h-4 w-4 mr-2" />
+            Edit Tee
+          </Button>
+        </div>
+      );
+    } else {
+      return (
+        <div className="flex gap-2 justify-between flex-wrap sm:flex-row flex-col">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="h-10 hidden  md:flex"
+            disabled={disabled}
+          >
+            <Plus className="h-4 w-4" />
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            size="lg"
+            className="h-10  sm:flex md:hidden"
+            disabled={disabled}
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Add Tee
+          </Button>
+        </div>
+      );
+    }
+  }
+
   return (
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
-      <DialogTrigger asChild>
-        {mode === "edit" ? (
-          <div className="flex gap-2 justify-between flex-wrap sm:flex-row flex-col">
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              className="h-10 hidden md:flex"
-              disabled={disabled}
-            >
-              <Pencil className="h-4 w-4" />
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              size="lg"
-              className="h-10 sm:flex md:hidden "
-              disabled={disabled}
-            >
-              <Pencil className="h-4 w-4 mr-2" />
-              Edit Tee
-            </Button>
-          </div>
-        ) : (
-          <div className="flex gap-2 justify-between flex-wrap sm:flex-row flex-col">
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              className="h-10 hidden  md:flex"
-              disabled={disabled}
-            >
-              <Plus className="h-4 w-4" />
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              size="lg"
-              className="h-10  sm:flex md:hidden"
-              disabled={disabled}
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              Add Tee
-            </Button>
-          </div>
-        )}
-      </DialogTrigger>
+      {!disabled ? (
+        <DialogTrigger asChild>{renderTeeButtons()}</DialogTrigger>
+      ) : (
+        renderTeeButtons()
+      )}
       <DialogContent className="max-w-[300px] sm:max-w-[400px] md:max-w-[600px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
