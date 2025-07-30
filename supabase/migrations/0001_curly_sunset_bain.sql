@@ -62,11 +62,11 @@ ALTER TABLE "score" ADD CONSTRAINT "score_roundId_fkey" FOREIGN KEY ("roundId") 
 ALTER TABLE "score" ADD CONSTRAINT "score_holeId_fkey" FOREIGN KEY ("holeId") REFERENCES "public"."hole"("id") ON DELETE restrict ON UPDATE cascade;--> statement-breakpoint
 ALTER TABLE "score" ADD CONSTRAINT "score_userId_fkey" FOREIGN KEY ("userId") REFERENCES "public"."profile"("id") ON DELETE cascade ON UPDATE cascade;--> statement-breakpoint
 ALTER TABLE "teeInfo" ADD CONSTRAINT "teeInfo_courseId_fkey" FOREIGN KEY ("courseId") REFERENCES "public"."course"("id") ON DELETE cascade ON UPDATE cascade;--> statement-breakpoint
-ALTER POLICY "Users can view their own rounds" ON "round" TO authenticated USING ((auth.uid()::uuid = userId));--> statement-breakpoint
-ALTER POLICY "Users can insert their own rounds" ON "round" TO authenticated WITH CHECK ((auth.uid()::uuid = userId));--> statement-breakpoint
-ALTER POLICY "Users can update their own rounds" ON "round" TO authenticated USING ((auth.uid()::uuid = userId));--> statement-breakpoint
-ALTER POLICY "Users can delete their own rounds" ON "round" TO authenticated USING ((auth.uid()::uuid = userId));--> statement-breakpoint
-ALTER POLICY "Users can view their own scores" ON "score" TO authenticated USING ((auth.uid()::uuid = userId));--> statement-breakpoint
-ALTER POLICY "Users can insert their own scores" ON "score" TO authenticated WITH CHECK ((auth.uid()::uuid = userId));--> statement-breakpoint
-ALTER POLICY "Users can update their own scores" ON "score" TO authenticated USING ((auth.uid()::uuid = userId));--> statement-breakpoint
-ALTER POLICY "Users can delete their own scores" ON "score" TO authenticated USING ((auth.uid()::uuid = userId));
+ALTER POLICY "Users can view their own rounds" ON "round" TO authenticated USING ((auth.uid()::uuid = "userId"));--> statement-breakpoint
+ALTER POLICY "Users can insert their own rounds" ON "round" TO authenticated WITH CHECK ((auth.uid()::uuid = "userId"));--> statement-breakpoint
+ALTER POLICY "Users can update their own rounds" ON "round" TO authenticated USING ((auth.uid()::uuid = "userId"));--> statement-breakpoint
+ALTER POLICY "Users can delete their own rounds" ON "round" TO authenticated USING ((auth.uid()::uuid = "userId"));--> statement-breakpoint
+ALTER POLICY "Users can view their own scores" ON "score" TO authenticated USING ((auth.uid()::uuid = "userId"));--> statement-breakpoint
+ALTER POLICY "Users can insert their own scores" ON "score" TO authenticated WITH CHECK ((auth.uid()::uuid = "userId"));--> statement-breakpoint
+ALTER POLICY "Users can update their own scores" ON "score" TO authenticated USING ((auth.uid()::uuid = "userId"));--> statement-breakpoint
+ALTER POLICY "Users can delete their own scores" ON "score" TO authenticated USING ((auth.uid()::uuid = "userId"));
