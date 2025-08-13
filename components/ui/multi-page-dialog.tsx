@@ -33,6 +33,7 @@ export const DialogPage: React.FC<DialogPageProps> = ({
 interface MultiPageDialogProps {
   trigger: React.ReactNode;
   isNextButtonDisabled: boolean;
+  isSaveButtonDisabled?: boolean;
   children: ReactElement<DialogPageProps> | ReactElement<DialogPageProps>[];
   handleSave: () => void;
   open: boolean;
@@ -60,6 +61,7 @@ const ProgressDots: React.FC<{ total: number; current: number }> = ({
 export const MultiPageDialog: React.FC<MultiPageDialogProps> = ({
   trigger,
   isNextButtonDisabled = false,
+  isSaveButtonDisabled = false,
   children,
   handleSave,
   open,
@@ -102,7 +104,11 @@ export const MultiPageDialog: React.FC<MultiPageDialogProps> = ({
           </Button>
           <ProgressDots total={pages.length} current={currentPage} />
           {currentPage === pages.length - 1 && (
-            <Button type="submit" onClick={handleSave}>
+            <Button
+              type="submit"
+              onClick={handleSave}
+              disabled={isSaveButtonDisabled}
+            >
               Save
             </Button>
           )}
