@@ -5,7 +5,6 @@ import { Input } from "@/components/ui/input";
 import { Plus } from "lucide-react";
 import { DialogPage, MultiPageDialog } from "../ui/multi-page-dialog";
 import { Course, courseSchema } from "@/types/scorecard";
-import { validCourse } from "@/utils/scorecard/tee";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -27,7 +26,6 @@ export function AddCourseDialog({ onAdd }: AddCourseDialogProps) {
   const [open, setOpen] = useState(false);
   const form = useForm<Course>({
     resolver: zodResolver(courseSchema),
-    defaultValues: validCourse,
   });
 
   const { control, handleSubmit, watch } = form;

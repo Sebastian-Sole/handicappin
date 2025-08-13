@@ -13,7 +13,7 @@ export const corsHeaders = {
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
-Deno.serve(async (req) => {
+Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
     return new Response(null, {
       headers: {
@@ -44,23 +44,24 @@ Deno.serve(async (req) => {
     }
 
     // Initialize the Supabase client
-    const SUPABASE_URL = Deno.env.get("NEXT_PUBLIC_SUPABASE_URL");
-    const SUPABASE_SERVICE_KEY = Deno.env.get("SERVICE_KEY");
+    const supabaseUrl =
+      Deno.env.get("SUPABASE_URL") ?? Deno.env.get("LOCAL_SUPABASE_URL");
+    const supabaseServiceRoleKey =
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ??
+      Deno.env.get("LOCAL_SUPABASE_SERVICE_ROLE_KEY");
 
-    if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY) {
+    if (!supabaseUrl || !supabaseServiceRoleKey) {
+      console.error("Missing Supabase environment variables");
       return new Response(
-        JSON.stringify({ error: "Supabase environment variables are not set" }),
+        JSON.stringify({ error: "Missing Supabase environment variables" }),
         {
           status: 500,
-          headers: {
-            ...corsHeaders,
-            "Content-Type": "application/json",
-          },
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
         },
       );
     }
 
-    const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
+    const supabase = createClient(supabaseUrl, supabaseServiceRoleKey);
 
     // Insert the profile into the database
     const { error } = await supabase.from("profile").insert([

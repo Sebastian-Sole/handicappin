@@ -1,5 +1,5 @@
 {
-  "id": "42cb5f06-6431-49a3-acfd-f3370b3b62c5",
+  "id": "2b52bb55-0632-44b4-93cf-5f6b08bb421e",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -20,8 +20,8 @@
           "primaryKey": false,
           "notNull": true
         },
-        "approval_status": {
-          "name": "approval_status",
+        "approvalStatus": {
+          "name": "approvalStatus",
           "type": "text",
           "primaryKey": false,
           "notNull": true,
@@ -73,14 +73,14 @@
           "primaryKey": true,
           "notNull": true
         },
-        "tee_id": {
-          "name": "tee_id",
+        "teeId": {
+          "name": "teeId",
           "type": "integer",
           "primaryKey": false,
           "notNull": true
         },
-        "hole_number": {
-          "name": "hole_number",
+        "holeNumber": {
+          "name": "holeNumber",
           "type": "integer",
           "primaryKey": false,
           "notNull": true
@@ -106,12 +106,12 @@
       },
       "indexes": {},
       "foreignKeys": {
-        "hole_tee_id_fkey": {
-          "name": "hole_tee_id_fkey",
+        "hole_teeId_fkey": {
+          "name": "hole_teeId_fkey",
           "tableFrom": "hole",
-          "tableTo": "tee_info",
+          "tableTo": "teeInfo",
           "columnsFrom": [
-            "tee_id"
+            "teeId"
           ],
           "columnsTo": [
             "id"
@@ -158,12 +158,12 @@
           "primaryKey": false,
           "notNull": false
         },
-        "handicap_index": {
-          "name": "handicap_index",
+        "handicapIndex": {
+          "name": "handicapIndex",
           "type": "numeric",
           "primaryKey": false,
           "notNull": true,
-          "default": "'0'"
+          "default": 54
         },
         "verified": {
           "name": "verified",
@@ -171,6 +171,20 @@
           "primaryKey": false,
           "notNull": true,
           "default": false
+        },
+        "initialHandicapIndex": {
+          "name": "initialHandicapIndex",
+          "type": "numeric",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 54
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "CURRENT_TIMESTAMP"
         }
       },
       "indexes": {
@@ -260,84 +274,84 @@
           "primaryKey": true,
           "notNull": true
         },
-        "user_id": {
-          "name": "user_id",
+        "userId": {
+          "name": "userId",
           "type": "uuid",
           "primaryKey": false,
           "notNull": true
         },
-        "course_id": {
-          "name": "course_id",
+        "courseId": {
+          "name": "courseId",
           "type": "integer",
           "primaryKey": false,
           "notNull": true
         },
-        "tee_id": {
-          "name": "tee_id",
+        "teeId": {
+          "name": "teeId",
           "type": "integer",
           "primaryKey": false,
           "notNull": true
         },
-        "tee_time": {
-          "name": "tee_time",
+        "teeTime": {
+          "name": "teeTime",
           "type": "timestamp",
           "primaryKey": false,
           "notNull": true
         },
-        "total_strokes": {
-          "name": "total_strokes",
+        "totalStrokes": {
+          "name": "totalStrokes",
           "type": "integer",
           "primaryKey": false,
           "notNull": true
         },
-        "par_played": {
-          "name": "par_played",
+        "parPlayed": {
+          "name": "parPlayed",
           "type": "integer",
           "primaryKey": false,
           "notNull": true
         },
-        "adjusted_gross_score": {
-          "name": "adjusted_gross_score",
+        "adjustedGrossScore": {
+          "name": "adjustedGrossScore",
           "type": "integer",
           "primaryKey": false,
           "notNull": true
         },
-        "adjusted_played_score": {
-          "name": "adjusted_played_score",
+        "adjustedPlayedScore": {
+          "name": "adjustedPlayedScore",
           "type": "integer",
           "primaryKey": false,
           "notNull": true
         },
-        "course_handicap": {
-          "name": "course_handicap",
+        "courseHandicap": {
+          "name": "courseHandicap",
           "type": "integer",
           "primaryKey": false,
           "notNull": true
         },
-        "score_differential": {
-          "name": "score_differential",
+        "scoreDifferential": {
+          "name": "scoreDifferential",
           "type": "numeric",
           "primaryKey": false,
           "notNull": true
         },
-        "existing_handicap_index": {
-          "name": "existing_handicap_index",
+        "existingHandicapIndex": {
+          "name": "existingHandicapIndex",
           "type": "numeric",
           "primaryKey": false,
           "notNull": true
         },
-        "updated_handicap_index": {
-          "name": "updated_handicap_index",
+        "updatedHandicapIndex": {
+          "name": "updatedHandicapIndex",
           "type": "numeric",
           "primaryKey": false,
           "notNull": true
         },
-        "exceptional_score_adjustment": {
-          "name": "exceptional_score_adjustment",
+        "exceptionalScoreAdjustment": {
+          "name": "exceptionalScoreAdjustment",
           "type": "numeric",
           "primaryKey": false,
           "notNull": true,
-          "default": "'0'"
+          "default": 0
         },
         "notes": {
           "name": "notes",
@@ -345,15 +359,15 @@
           "primaryKey": false,
           "notNull": false
         },
-        "approval_status": {
-          "name": "approval_status",
+        "approvalStatus": {
+          "name": "approvalStatus",
           "type": "text",
           "primaryKey": false,
           "notNull": true,
           "default": "'pending'"
         },
-        "created_at": {
-          "name": "created_at",
+        "createdAt": {
+          "name": "createdAt",
           "type": "timestamp",
           "primaryKey": false,
           "notNull": true,
@@ -362,12 +376,12 @@
       },
       "indexes": {},
       "foreignKeys": {
-        "round_course_id_fkey": {
-          "name": "round_course_id_fkey",
+        "round_courseId_fkey": {
+          "name": "round_courseId_fkey",
           "tableFrom": "round",
           "tableTo": "course",
           "columnsFrom": [
-            "course_id"
+            "courseId"
           ],
           "columnsTo": [
             "id"
@@ -375,12 +389,12 @@
           "onDelete": "restrict",
           "onUpdate": "cascade"
         },
-        "round_user_id_fkey": {
-          "name": "round_user_id_fkey",
+        "round_userId_fkey": {
+          "name": "round_userId_fkey",
           "tableFrom": "round",
           "tableTo": "profile",
           "columnsFrom": [
-            "user_id"
+            "userId"
           ],
           "columnsTo": [
             "id"
@@ -388,12 +402,12 @@
           "onDelete": "cascade",
           "onUpdate": "cascade"
         },
-        "round_tee_id_fkey": {
-          "name": "round_tee_id_fkey",
+        "round_teeId_fkey": {
+          "name": "round_teeId_fkey",
           "tableFrom": "round",
-          "tableTo": "tee_info",
+          "tableTo": "teeInfo",
           "columnsFrom": [
-            "tee_id"
+            "teeId"
           ],
           "columnsTo": [
             "id"
@@ -412,7 +426,7 @@
           "to": [
             "authenticated"
           ],
-          "using": "(auth.uid()::uuid = \"user_id\")"
+          "using": "(auth.uid()::uuid = userId)"
         },
         "Users can insert their own rounds": {
           "name": "Users can insert their own rounds",
@@ -421,7 +435,7 @@
           "to": [
             "authenticated"
           ],
-          "withCheck": "(auth.uid()::uuid = \"user_id\")"
+          "withCheck": "(auth.uid()::uuid = userId)"
         },
         "Users can update their own rounds": {
           "name": "Users can update their own rounds",
@@ -430,7 +444,7 @@
           "to": [
             "authenticated"
           ],
-          "using": "(auth.uid()::uuid = \"user_id\")"
+          "using": "(auth.uid()::uuid = userId)"
         },
         "Users can delete their own rounds": {
           "name": "Users can delete their own rounds",
@@ -439,7 +453,7 @@
           "to": [
             "authenticated"
           ],
-          "using": "(auth.uid()::uuid = \"user_id\")"
+          "using": "(auth.uid()::uuid = userId)"
         }
       },
       "checkConstraints": {},
@@ -455,20 +469,20 @@
           "primaryKey": true,
           "notNull": true
         },
-        "user_id": {
-          "name": "user_id",
+        "userId": {
+          "name": "userId",
           "type": "uuid",
           "primaryKey": false,
           "notNull": true
         },
-        "round_id": {
-          "name": "round_id",
+        "roundId": {
+          "name": "roundId",
           "type": "integer",
           "primaryKey": false,
           "notNull": true
         },
-        "hole_id": {
-          "name": "hole_id",
+        "holeId": {
+          "name": "holeId",
           "type": "integer",
           "primaryKey": false,
           "notNull": true
@@ -479,8 +493,8 @@
           "primaryKey": false,
           "notNull": true
         },
-        "hcp_strokes": {
-          "name": "hcp_strokes",
+        "hcpStrokes": {
+          "name": "hcpStrokes",
           "type": "integer",
           "primaryKey": false,
           "notNull": true,
@@ -489,12 +503,12 @@
       },
       "indexes": {},
       "foreignKeys": {
-        "score_round_id_fkey": {
-          "name": "score_round_id_fkey",
+        "score_roundId_fkey": {
+          "name": "score_roundId_fkey",
           "tableFrom": "score",
           "tableTo": "round",
           "columnsFrom": [
-            "round_id"
+            "roundId"
           ],
           "columnsTo": [
             "id"
@@ -502,12 +516,12 @@
           "onDelete": "cascade",
           "onUpdate": "cascade"
         },
-        "score_hole_id_fkey": {
-          "name": "score_hole_id_fkey",
+        "score_holeId_fkey": {
+          "name": "score_holeId_fkey",
           "tableFrom": "score",
           "tableTo": "hole",
           "columnsFrom": [
-            "hole_id"
+            "holeId"
           ],
           "columnsTo": [
             "id"
@@ -515,12 +529,12 @@
           "onDelete": "restrict",
           "onUpdate": "cascade"
         },
-        "score_user_id_fkey": {
-          "name": "score_user_id_fkey",
+        "score_userId_fkey": {
+          "name": "score_userId_fkey",
           "tableFrom": "score",
           "tableTo": "profile",
           "columnsFrom": [
-            "user_id"
+            "userId"
           ],
           "columnsTo": [
             "id"
@@ -539,7 +553,7 @@
           "to": [
             "authenticated"
           ],
-          "using": "(auth.uid()::uuid = \"user_id\")"
+          "using": "(auth.uid()::uuid = userId)"
         },
         "Users can insert their own scores": {
           "name": "Users can insert their own scores",
@@ -548,7 +562,7 @@
           "to": [
             "authenticated"
           ],
-          "withCheck": "(auth.uid()::uuid = \"user_id\")"
+          "withCheck": "(auth.uid()::uuid = userId)"
         },
         "Users can update their own scores": {
           "name": "Users can update their own scores",
@@ -557,7 +571,7 @@
           "to": [
             "authenticated"
           ],
-          "using": "(auth.uid()::uuid = \"user_id\")"
+          "using": "(auth.uid()::uuid = userId)"
         },
         "Users can delete their own scores": {
           "name": "Users can delete their own scores",
@@ -566,14 +580,14 @@
           "to": [
             "authenticated"
           ],
-          "using": "(auth.uid()::uuid = \"user_id\")"
+          "using": "(auth.uid()::uuid = userId)"
         }
       },
       "checkConstraints": {},
       "isRLSEnabled": false
     },
-    "public.tee_info": {
-      "name": "tee_info",
+    "public.teeInfo": {
+      "name": "teeInfo",
       "schema": "",
       "columns": {
         "id": {
@@ -582,8 +596,8 @@
           "primaryKey": true,
           "notNull": true
         },
-        "course_id": {
-          "name": "course_id",
+        "courseId": {
+          "name": "courseId",
           "type": "integer",
           "primaryKey": false,
           "notNull": true
@@ -600,94 +614,94 @@
           "primaryKey": false,
           "notNull": true
         },
-        "course_rating_18": {
-          "name": "course_rating_18",
+        "courseRating18": {
+          "name": "courseRating18",
           "type": "numeric",
           "primaryKey": false,
           "notNull": true
         },
-        "slope_rating_18": {
-          "name": "slope_rating_18",
+        "slopeRating18": {
+          "name": "slopeRating18",
           "type": "integer",
           "primaryKey": false,
           "notNull": true
         },
-        "course_rating_front_9": {
-          "name": "course_rating_front_9",
+        "courseRatingFront9": {
+          "name": "courseRatingFront9",
           "type": "numeric",
           "primaryKey": false,
           "notNull": true
         },
-        "slope_rating_front_9": {
-          "name": "slope_rating_front_9",
+        "slopeRatingFront9": {
+          "name": "slopeRatingFront9",
           "type": "integer",
           "primaryKey": false,
           "notNull": true
         },
-        "course_rating_back_9": {
-          "name": "course_rating_back_9",
+        "courseRatingBack9": {
+          "name": "courseRatingBack9",
           "type": "numeric",
           "primaryKey": false,
           "notNull": true
         },
-        "slope_rating_back_9": {
-          "name": "slope_rating_back_9",
+        "slopeRatingBack9": {
+          "name": "slopeRatingBack9",
           "type": "integer",
           "primaryKey": false,
           "notNull": true
         },
-        "out_par": {
-          "name": "out_par",
+        "outPar": {
+          "name": "outPar",
           "type": "integer",
           "primaryKey": false,
           "notNull": true
         },
-        "in_par": {
-          "name": "in_par",
+        "inPar": {
+          "name": "inPar",
           "type": "integer",
           "primaryKey": false,
           "notNull": true
         },
-        "total_par": {
-          "name": "total_par",
+        "totalPar": {
+          "name": "totalPar",
           "type": "integer",
           "primaryKey": false,
           "notNull": true
         },
-        "out_distance": {
-          "name": "out_distance",
+        "outDistance": {
+          "name": "outDistance",
           "type": "integer",
           "primaryKey": false,
           "notNull": true
         },
-        "in_distance": {
-          "name": "in_distance",
+        "inDistance": {
+          "name": "inDistance",
           "type": "integer",
           "primaryKey": false,
           "notNull": true
         },
-        "total_distance": {
-          "name": "total_distance",
+        "totalDistance": {
+          "name": "totalDistance",
           "type": "integer",
           "primaryKey": false,
           "notNull": true
         },
-        "distance_measurement": {
-          "name": "distance_measurement",
+        "distanceMeasurement": {
+          "name": "distanceMeasurement",
           "type": "text",
           "primaryKey": false,
           "notNull": true,
           "default": "'yards'"
         },
-        "approval_status": {
-          "name": "approval_status",
+        "approvalStatus": {
+          "name": "approvalStatus",
           "type": "text",
           "primaryKey": false,
           "notNull": true,
           "default": "'pending'"
         },
-        "is_archived": {
-          "name": "is_archived",
+        "isArchived": {
+          "name": "isArchived",
           "type": "boolean",
           "primaryKey": false,
           "notNull": true,
@@ -703,12 +717,12 @@
       },
       "indexes": {},
       "foreignKeys": {
-        "tee_info_course_id_fkey": {
-          "name": "tee_info_course_id_fkey",
-          "tableFrom": "tee_info",
+        "teeInfo_courseId_fkey": {
+          "name": "teeInfo_courseId_fkey",
+          "tableFrom": "teeInfo",
           "tableTo": "course",
           "columnsFrom": [
-            "course_id"
+            "courseId"
           ],
           "columnsTo": [
             "id"

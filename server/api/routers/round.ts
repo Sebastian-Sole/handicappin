@@ -112,7 +112,7 @@ export const roundRouter = createTRPCRouter({
       // return roundsWithCourse;
     }),
   getRoundById: authedProcedure
-    .input(z.object({ roundId: z.string() }))
+    .input(z.object({ roundId: z.number() }))
     .query(async ({ ctx, input }) => {
       const { data: round, error } = await ctx.supabase
         .from("round")
@@ -229,10 +229,7 @@ export const roundRouter = createTRPCRouter({
           // isArchived and version are optional (defaulted in schema)
         };
 
-        const [newTee] = await db
-          .insert(teeInfo)
-          .values(teeInsert)
-          .returning();
+        const [newTee] = await db.insert(teeInfo).values(teeInsert).returning();
         teeId = newTee.id;
 
         console.log("Tee inserted", teeId);
@@ -308,13 +305,12 @@ export const roundRouter = createTRPCRouter({
         exceptionalScoreAdjustment: 0,
         courseHandicap: tempCourseHandicap,
         approvalStatus,
-      }
+      };
+
+      console.log("Round insert", roundInsert);
 
       // 5. Insert round
-      const [newRound] = await db
-        .insert(round)
-        .values(roundInsert)
-        .returning();
+      const [newRound] = await db.insert(round).values(roundInsert).returning();
 
       console.log("Round inserted", newRound);
 

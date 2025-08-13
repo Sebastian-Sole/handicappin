@@ -9,10 +9,11 @@ import { Webhook } from "https://esm.sh/standardwebhooks@1.0.0";
 import * as React from "https://esm.sh/react@18.2.0";
 import { render } from "https://esm.sh/@react-email/components@0.0.22?deps=react@18.2.0";
 
+// This is from supabase docs: https://supabase.com/docs/guides/auth/auth-hooks/send-email-hook
+console.log("Calling send-verification-email");
+
 const resend = new Resend(Deno.env.get("RESEND_API_KEY") as string);
-console.log(Deno.env.get("SEND_EMAIL_HOOK_SECRET"));
 const hookSecret = (Deno.env.get("SEND_EMAIL_HOOK_SECRET") as string).replace("v1,whsec_", "");
-console.log(hookSecret);
 
 serve(async (req) => {
   if (req.method !== "POST") {
@@ -22,6 +23,10 @@ serve(async (req) => {
   const payload = await req.text();
   const headers = Object.fromEntries(req.headers);
   const wh = new Webhook(hookSecret);
+
+  
+
+  console.log("Calling send-verification-email inside");
 
   try {
     const {

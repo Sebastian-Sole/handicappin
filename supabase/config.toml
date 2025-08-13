@@ -132,3 +132,8 @@ port = 54327
 vector_port = 54328
 # Configure one of the supported backends: `postgres`, `bigquery`.
 backend = "postgres"
+
+[auth.hook.send_email]
+enabled=true
+uri = "http://host.docker.internal:54321/functions/v1/send-verification-email"
+secrets= "env(SEND_EMAIL_HOOK_SECRET)"
