@@ -8,7 +8,11 @@ INSERT INTO course (id, name, "approvalStatus") VALUES
 INSERT INTO "teeInfo" ("courseId", name, gender, "courseRating18", "slopeRating18", "courseRatingFront9", "slopeRatingFront9", "courseRatingBack9", "slopeRatingBack9", "outPar", "inPar", "totalPar", "outDistance", "inDistance", "totalDistance", "distanceMeasurement", "approvalStatus", "isArchived", version) VALUES
 -- Femens Black Tee
 (10823, 'Black', 'ladies', 79.8, 148, 39.5, 147, 40.3, 149, 38, 38, 76, 3350, 2749, 6099, 'yards', 'approved', false, 1),
--- Femens Blue Tee
+-- Insert tee information for ladies tees
+INSERT INTO "teeInfo" ("courseId", name, gender, "courseRating18", "slopeRating18", "courseRatingFront9", "slopeRatingFront9", "courseRatingBack9", "slopeRatingBack9", "outPar", "inPar", "totalPar", "outDistance", "inDistance", "totalDistance", "distanceMeasurement", "approvalStatus", "isArchived", version) VALUES
+-- Ladies Black Tee
+(10823, 'Black', 'ladies', 79.8, 148, 39.5, 147, 40.3, 149, 38, 38, 76, 3350, 2749, 6099, 'yards', 'approved', false, 1),
+-- Ladies Blue Tee
 (10823, 'Blue', 'ladies', 78.2, 143, 38.6, 141, 39.6, 145, 38, 38, 76, 3150, 2658, 5808, 'yards', 'approved', false, 1),
 -- ladies Championship Tee
 (10823, 'Championship', 'ladies', 77.6, 142, 38.4, 139, 39.2, 145, 38, 38, 76, 3100, 2608, 5708, 'yards', 'approved', false, 1),
