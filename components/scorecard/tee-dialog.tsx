@@ -41,7 +41,8 @@ function getTeeValidationErrors(tee: Tee): string[] {
   if (tee.totalPar <= 0) {
     errors.push("Total par must be greater than 0");
   } else if (tee.totalPar < 54 || tee.totalPar > 80) {
-    errors.push("Total par should be between 54-80");
+  } else if (tee.totalPar < 54 || tee.totalPar > 72) {
+    errors.push("Total par should be between 54-72");
   }
 
   if (tee.totalDistance <= 0) {
