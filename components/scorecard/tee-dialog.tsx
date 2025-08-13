@@ -48,7 +48,8 @@ function getTeeValidationErrors(tee: Tee): string[] {
   if (tee.totalDistance <= 0) {
     errors.push("Total distance must be greater than 0");
   } else if (tee.totalDistance < 1500 || tee.totalDistance > 8700) {
-    errors.push("Total distance should be between 1500-8700");
+  } else if (tee.totalDistance < 3000 || tee.totalDistance > 8000) {
+    errors.push("Total distance should be between 3000-8000");
   }
 
   // Check if all holes have valid data
