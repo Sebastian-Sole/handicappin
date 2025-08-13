@@ -28,7 +28,8 @@ function getTeeValidationErrors(tee: Tee): string[] {
   if (tee.courseRating18 <= 0) {
     errors.push("Course rating must be greater than 0");
   } else if (tee.courseRating18 < 40 || tee.courseRating18 > 90) {
-    errors.push("Course rating should be between 40-90");
+  } else if (tee.courseRating18 < 30 || tee.courseRating18 > 85) {
+    errors.push("Course rating should be between 30-85");
   }
 
   if (tee.slopeRating18 <= 0) {
