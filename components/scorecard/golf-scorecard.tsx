@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useMemo, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import { Card, CardContent } from "@/components/ui/card";
 import {
   Select,
@@ -58,6 +59,7 @@ interface GolfScorecardProps {
 
 export default function GolfScorecard({ profile }: GolfScorecardProps) {
   const isMounted = useMounted();
+  const router = useRouter();
   // Use the tee management hook
   const {
     modifications,
@@ -303,8 +305,11 @@ export default function GolfScorecard({ profile }: GolfScorecardProps) {
         description: "Your scorecard has been submitted successfully",
       });
 
+      // Small delay to ensure tRPC response is fully processed
+      await new Promise((resolve) => setTimeout(resolve, 100));
+
       // Redirect to home page
-      window.location.href = `/`;
+      router.push(`/`);
     } catch (error) {
       console.error("Error submitting scorecard:", error);
       setIsSubmitting(false);

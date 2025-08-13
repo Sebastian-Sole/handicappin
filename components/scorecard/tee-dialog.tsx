@@ -17,6 +17,52 @@ import { Tee, teeSchema } from "@/types/scorecard";
 import { Form } from "../ui/form";
 import { blankTee } from "@/utils/scorecard/tee";
 
+// Import the validation function
+function getTeeValidationErrors(tee: Tee): string[] {
+  const errors: string[] = [];
+
+  if (!tee.name || tee.name.trim().length === 0) {
+    errors.push("Tee name is required");
+  }
+
+  if (tee.courseRating18 <= 0) {
+    errors.push("Course rating must be greater than 0");
+  } else if (tee.courseRating18 < 40 || tee.courseRating18 > 90) {
+    errors.push("Course rating should be between 40-90");
+  }
+
+  if (tee.slopeRating18 <= 0) {
+    errors.push("Slope rating must be greater than 0");
+  } else if (tee.slopeRating18 < 45 || tee.slopeRating18 > 165) {
+    errors.push("Slope rating should be between 45-165");
+  }
+
+  if (tee.totalPar <= 0) {
+    errors.push("Total par must be greater than 0");
+  } else if (tee.totalPar < 54 || tee.totalPar > 80) {
+    errors.push("Total par should be between 54-80");
+  }
+
+  if (tee.totalDistance <= 0) {
+    errors.push("Total distance must be greater than 0");
+  } else if (tee.totalDistance < 1500 || tee.totalDistance > 8700) {
+    errors.push("Total distance should be between 1500-8700");
+  }
+
+  // Check if all holes have valid data
+  const invalidHoles = tee.holes?.filter(
+    (hole) => hole.par <= 0 || hole.distance <= 0 || hole.hcp <= 0
+  );
+
+  if (invalidHoles && invalidHoles.length > 0) {
+    errors.push(
+      `${invalidHoles.length} holes have invalid data (par, distance, or handicap)`
+    );
+  }
+
+  return errors;
+}
+
 interface TeeDialogProps {
   mode: "add" | "edit";
   existingTee?: Tee;
@@ -33,6 +79,7 @@ export function TeeDialog({
   disabled,
 }: TeeDialogProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const [showValidationErrors, setShowValidationErrors] = useState(false);
 
   const form = useForm<Tee>({
     resolver: zodResolver(teeSchema),
@@ -49,14 +96,31 @@ export function TeeDialog({
     e.preventDefault();
     e.stopPropagation();
 
-    form.handleSubmit((data) => {
-      onSave({ ...data, approvalStatus: "pending" });
-      setIsOpen(false);
-    })(e);
+    form.handleSubmit(
+      (data) => {
+        // Check if the data is valid before saving
+        const validationErrors = getTeeValidationErrors(data);
+        if (validationErrors.length > 0) {
+          setShowValidationErrors(true);
+          return;
+        }
+
+        onSave({ ...data, approvalStatus: "pending" });
+        setIsOpen(false);
+        setShowValidationErrors(false);
+      },
+      (errors) => {
+        console.log(errors);
+        setShowValidationErrors(true);
+      }
+    )(e);
   };
 
   const handleOpenChange = (open: boolean) => {
     setIsOpen(open);
+    if (!open) {
+      setShowValidationErrors(false);
+    }
     onOpenChange?.(open);
   };
 
@@ -128,7 +192,11 @@ export function TeeDialog({
         <div className="max-w-[250px] sm:max-w-[350px] md:max-w-[550px]">
           <Form {...form}>
             <form onSubmit={handleSubmit}>
-              <TeeFormContent tee={tee} onTeeChange={handleTeeChange} />
+              <TeeFormContent
+                tee={tee}
+                onTeeChange={handleTeeChange}
+                showValidationErrors={showValidationErrors}
+              />
               <div className="flex justify-end mt-4">
                 <Button type="submit">
                   {mode === "edit" ? "Save Changes" : "Add Tee"}

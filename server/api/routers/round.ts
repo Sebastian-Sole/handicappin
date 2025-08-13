@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { createTRPCRouter, authedProcedure } from "@/server/api/trpc";
 import { round, score, profile, teeInfo, course, hole } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 
 import { db } from "@/db";
 import { Scorecard, scorecardSchema } from "@/types/scorecard";
@@ -180,8 +180,20 @@ export const roundRouter = createTRPCRouter({
 
       // 2. Handle course
       let courseId = coursePlayed.id;
-      if (coursePlayed.approvalStatus === "pending") {
-        // Only insert if it's pending (doesn't exist in DB)
+
+      // First, try to find existing course by name
+      const existingCourse = await db
+        .select()
+        .from(course)
+        .where(eq(course.name, coursePlayed.name))
+        .limit(1);
+
+      if (existingCourse[0]) {
+        // Course already exists, use its ID
+        courseId = existingCourse[0].id;
+        console.log("Using existing course", courseId);
+      } else if (coursePlayed.approvalStatus === "pending") {
+        // Course doesn't exist and is pending, insert new one
         const [newCourse] = await db
           .insert(course)
           .values({
@@ -190,9 +202,10 @@ export const roundRouter = createTRPCRouter({
           })
           .returning();
         courseId = newCourse.id;
+        console.log("Inserted new course", courseId);
       }
 
-      console.log("Course inserted", courseId);
+      console.log("Course ID found", courseId);
 
       if (!courseId) {
         throw new Error("Course ID not found");
@@ -203,9 +216,27 @@ export const roundRouter = createTRPCRouter({
       // 3. Handle tee
       let teeId = teePlayed.id;
       console.log("Tee ID", teeId);
-      if (teePlayed.approvalStatus === "pending") {
+
+      // First, try to find existing tee by name and course
+      const existingTee = await db
+        .select()
+        .from(teeInfo)
+        .where(
+          and(
+            eq(teeInfo.courseId, courseId),
+            eq(teeInfo.name, teePlayed.name),
+            eq(teeInfo.gender, teePlayed.gender)
+          )
+        )
+        .limit(1);
+
+      if (existingTee[0]) {
+        // Tee already exists, use its ID
+        teeId = existingTee[0].id;
+        console.log("Using existing tee", teeId);
+      } else if (teePlayed.approvalStatus === "pending") {
         console.log("Inserting tee");
-        // Only insert if it's pending (doesn't exist in DB)
+        // Tee doesn't exist and is pending, insert new one
         console.log(teePlayed);
 
         const teeInsert: TeeInfoInsert = {
@@ -319,11 +350,36 @@ export const roundRouter = createTRPCRouter({
       }
 
       console.log("Inserting scores");
-      // Create score inserts with the correct holeIds
+
+      // Get the actual hole IDs from the database
+      const dbHoles = await db
+        .select()
+        .from(hole)
+        .where(eq(hole.teeId, teeId))
+        .orderBy(hole.holeNumber);
+
+      console.log("Database holes:", dbHoles);
+
+      // Validate that we have enough holes in the database
+      if (dbHoles.length < scores.length) {
+        throw new Error(
+          `Expected at least ${scores.length} holes but found ${dbHoles.length} in database`
+        );
+      }
+
+      // For 9-hole rounds, only use the first 9 holes from the database
+      // For 18-hole rounds, use all 18 holes
+      const holesToUse = dbHoles.slice(0, scores.length);
+
+      console.log(
+        `Using ${holesToUse.length} holes for ${scores.length} scores`
+      );
+
+      // Create score inserts with the correct holeIds from database
       const scoreInserts = scores.map((score, index) => ({
         userId,
         roundId: newRound.id,
-        holeId: teePlayed.holes![index].id!,
+        holeId: holesToUse[index].id,
         strokes: score.strokes,
         hcpStrokes: score.hcpStrokes, // Will be updated by the trigger
       }));
