@@ -358,8 +358,6 @@ export const roundRouter = createTRPCRouter({
         .where(eq(hole.teeId, teeId))
         .orderBy(hole.holeNumber);
 
-      console.log("Database holes:", dbHoles);
-
       // Validate that we have enough holes in the database
       if (dbHoles.length < scores.length) {
         throw new Error(
@@ -370,10 +368,6 @@ export const roundRouter = createTRPCRouter({
       // For 9-hole rounds, only use the first 9 holes from the database
       // For 18-hole rounds, use all 18 holes
       const holesToUse = dbHoles.slice(0, scores.length);
-
-      console.log(
-        `Using ${holesToUse.length} holes for ${scores.length} scores`
-      );
 
       // Create score inserts with the correct holeIds from database
       const scoreInserts = scores.map((score, index) => ({
