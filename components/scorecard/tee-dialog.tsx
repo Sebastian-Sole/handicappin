@@ -28,7 +28,8 @@ function getTeeValidationErrors(tee: Tee): string[] {
   if (tee.courseRating18 <= 0) {
     errors.push("Course rating must be greater than 0");
   } else if (tee.courseRating18 < 40 || tee.courseRating18 > 90) {
-    errors.push("Course rating should be between 40-90");
+  } else if (tee.courseRating18 < 30 || tee.courseRating18 > 85) {
+    errors.push("Course rating should be between 30-85");
   }
 
   if (tee.slopeRating18 <= 0) {
@@ -40,13 +41,15 @@ function getTeeValidationErrors(tee: Tee): string[] {
   if (tee.totalPar <= 0) {
     errors.push("Total par must be greater than 0");
   } else if (tee.totalPar < 54 || tee.totalPar > 80) {
-    errors.push("Total par should be between 54-80");
+  } else if (tee.totalPar < 54 || tee.totalPar > 72) {
+    errors.push("Total par should be between 54-72");
   }
 
   if (tee.totalDistance <= 0) {
     errors.push("Total distance must be greater than 0");
   } else if (tee.totalDistance < 1500 || tee.totalDistance > 8700) {
-    errors.push("Total distance should be between 1500-8700");
+  } else if (tee.totalDistance < 3000 || tee.totalDistance > 8000) {
+    errors.push("Total distance should be between 3000-8000");
   }
 
   // Check if all holes have valid data
