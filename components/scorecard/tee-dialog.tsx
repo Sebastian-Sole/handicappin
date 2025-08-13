@@ -13,57 +13,18 @@ import { useState } from "react";
 import { TeeFormContent } from "./tee-form-content";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Tee, teeSchema } from "@/types/scorecard";
+import { Tee, teeSchema, teeCreationSchema } from "@/types/scorecard";
 import { Form } from "../ui/form";
 import { blankTee } from "@/utils/scorecard/tee";
 
-// Import the validation function
+// Use the teeCreationSchema for validation
 function getTeeValidationErrors(tee: Tee): string[] {
-  const errors: string[] = [];
-
-  if (!tee.name || tee.name.trim().length === 0) {
-    errors.push("Tee name is required");
+  const result = teeCreationSchema.safeParse(tee);
+  if (result.success) {
+    return [];
   }
 
-  if (tee.courseRating18 <= 0) {
-    errors.push("Course rating must be greater than 0");
-  } else if (tee.courseRating18 < 40 || tee.courseRating18 > 90) {
-  } else if (tee.courseRating18 < 30 || tee.courseRating18 > 85) {
-    errors.push("Course rating should be between 30-85");
-  }
-
-  if (tee.slopeRating18 <= 0) {
-    errors.push("Slope rating must be greater than 0");
-  } else if (tee.slopeRating18 < 45 || tee.slopeRating18 > 165) {
-    errors.push("Slope rating should be between 45-165");
-  }
-
-  if (tee.totalPar <= 0) {
-    errors.push("Total par must be greater than 0");
-  } else if (tee.totalPar < 54 || tee.totalPar > 80) {
-  } else if (tee.totalPar < 54 || tee.totalPar > 72) {
-    errors.push("Total par should be between 54-72");
-  }
-
-  if (tee.totalDistance <= 0) {
-    errors.push("Total distance must be greater than 0");
-  } else if (tee.totalDistance < 1500 || tee.totalDistance > 8700) {
-  } else if (tee.totalDistance < 3000 || tee.totalDistance > 8000) {
-    errors.push("Total distance should be between 3000-8000");
-  }
-
-  // Check if all holes have valid data
-  const invalidHoles = tee.holes?.filter(
-    (hole) => hole.par <= 0 || hole.distance <= 0 || hole.hcp <= 0
-  );
-
-  if (invalidHoles && invalidHoles.length > 0) {
-    errors.push(
-      `${invalidHoles.length} holes have invalid data (par, distance, or handicap)`
-    );
-  }
-
-  return errors;
+  return result.error.errors.map((err) => err.message);
 }
 
 interface TeeDialogProps {

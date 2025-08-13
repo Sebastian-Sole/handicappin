@@ -16,7 +16,7 @@ import {
   FormMessage,
 } from "../ui/form";
 import { toast } from "../ui/use-toast";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { TeeFormContent } from "./tee-form-content";
 interface AddCourseDialogProps {
   onAdd: (newCourse: Course) => void;
@@ -66,30 +66,18 @@ export function AddCourseDialog({ onAdd }: AddCourseDialogProps) {
   const watchName = watch("name");
   const watchTee = watch("tees.0");
 
-  // Check if the form has valid data for submission
-  const isFormValid =
-    watchName &&
-    watchName.length >= 2 &&
-    watchTee &&
-    watchTee.name &&
-    watchTee.courseRating18 > 0 &&
-    watchTee.slopeRating18 > 0 &&
-    watchTee.totalPar > 0 &&
-    watchTee.totalDistance > 0;
+  // Use schema validation instead of custom logic
+  const isFormValid = useMemo(() => {
+    const result = courseCreationSchema.safeParse({
+      name: watchName,
+      approvalStatus: "pending",
+      tees: watchTee ? [watchTee] : [],
+    });
+    return result.success;
+  }, [watchName, watchTee]);
 
   const onSubmit = (values: Course) => {
-    // Additional validation before submission
-    if (!isFormValid) {
-      setShowValidationErrors(true);
-      toast({
-        title: "Invalid Course Data",
-        description:
-          "Please ensure all required fields are filled with valid values",
-        variant: "destructive",
-      });
-      return;
-    }
-
+    // Schema validation is already handled by the form resolver
     onAdd(values);
     setOpen(false);
     setShowValidationErrors(false);

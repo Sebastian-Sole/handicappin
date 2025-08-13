@@ -16,7 +16,7 @@ import {
   TableRow,
 } from "../ui/table";
 import { Input } from "@/components/ui/input";
-import { Tee } from "@/types/scorecard";
+import { Tee, teeCreationSchema } from "@/types/scorecard";
 import { Badge } from "../ui/badge";
 
 interface TeeFormContentProps {
@@ -25,50 +25,14 @@ interface TeeFormContentProps {
   showValidationErrors?: boolean; // Only show errors when this is true
 }
 
-// Validation helper function
+// Use the teeCreationSchema for validation
 function getTeeValidationErrors(tee: Tee): string[] {
-  const errors: string[] = [];
-
-  if (!tee.name || tee.name.trim().length === 0) {
-    errors.push("Tee name is required");
+  const result = teeCreationSchema.safeParse(tee);
+  if (result.success) {
+    return [];
   }
 
-  if (tee.courseRating18 <= 0) {
-    errors.push("Course rating must be greater than 0");
-  } else if (tee.courseRating18 < 30 || tee.courseRating18 > 85) {
-    errors.push("Course rating should be between 30-85");
-  }
-
-  if (tee.slopeRating18 <= 0) {
-    errors.push("Slope rating must be greater than 0");
-  } else if (tee.slopeRating18 < 55 || tee.slopeRating18 > 155) {
-    errors.push("Slope rating should be between 55-155");
-  }
-
-  if (tee.totalPar <= 0) {
-    errors.push("Total par must be greater than 0");
-  } else if (tee.totalPar < 54 || tee.totalPar > 72) {
-    errors.push("Total par should be between 54-72");
-  }
-
-  if (tee.totalDistance <= 0) {
-    errors.push("Total distance must be greater than 0");
-  } else if (tee.totalDistance < 3000 || tee.totalDistance > 8000) {
-    errors.push("Total distance should be between 3000-8000");
-  }
-
-  // Check if all holes have valid data
-  const invalidHoles = tee.holes?.filter(
-    (hole) => hole.par <= 0 || hole.distance <= 0 || hole.hcp <= 0
-  );
-
-  if (invalidHoles && invalidHoles.length > 0) {
-    errors.push(
-      `${invalidHoles.length} holes have invalid data (par, distance, or handicap)`
-    );
-  }
-
-  return errors;
+  return result.error.errors.map((err) => err.message);
 }
 
 export function TeeFormContent({
