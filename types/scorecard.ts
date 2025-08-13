@@ -107,7 +107,7 @@ export const teeCreationSchema = teeSchema
       )
       .max(
         80,
-        "Total par must be at most 85. Contact us if you need to add a course out of this range."
+        "Total par must be at most 80. Contact us if you need to add a course out of this range."
       ), // practical cap
 
     outPar: z
@@ -195,7 +195,7 @@ export const courseCreationSchema = courseSchema.extend({
   name: z
     .string()
     .min(
-      2,
+      3,
       "Course name must be at least 3 characters. Contact us if you need to add a course out of this range."
     )
     .max(
