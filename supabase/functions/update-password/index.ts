@@ -8,10 +8,6 @@ import { verify } from "https://deno.land/x/djwt@v3.0.2/mod.ts";
 import { createClient } from "jsr:@supabase/supabase-js@2";
 import { passwordResetJwtPayloadSchema } from "../types.ts";
 
-const supabase = createClient(
-  Deno.env.get("SUPABASE_URL")!,
-  Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
-);
 
 const JWT_SECRET = Deno.env.get("RESET_TOKEN_SECRET")!;
 
@@ -33,6 +29,24 @@ Deno.serve(async (req) => {
   }
 
   try {
+    const supabaseUrl =
+      Deno.env.get("SUPABASE_URL") ?? Deno.env.get("LOCAL_SUPABASE_URL");
+    const supabaseServiceRoleKey =
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ??
+      Deno.env.get("LOCAL_SUPABASE_SERVICE_ROLE_KEY");
+
+    if (!supabaseUrl || !supabaseServiceRoleKey) {
+      console.error("Missing Supabase environment variables");
+      return new Response(
+        JSON.stringify({ error: "Missing Supabase environment variables" }),
+        {
+          status: 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        },
+      );
+    }
+
+    const supabase = createClient(supabaseUrl, supabaseServiceRoleKey);
     const { token, password } = await req.json();
 
     if (!token || !password) {

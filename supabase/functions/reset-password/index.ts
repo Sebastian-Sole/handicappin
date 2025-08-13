@@ -5,10 +5,6 @@ import ResetPasswordEmail from "./email.tsx";
 import { render } from "https://esm.sh/@react-email/components@0.0.22?deps=react@18.2.0";
 import { create, getNumericDate } from "https://deno.land/x/djwt@v2.4/mod.ts";
 
-const supabase = createClient(
-  Deno.env.get("SUPABASE_URL")!,
-  Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
-);
 const resend = new Resend(Deno.env.get("RESEND_API_KEY")!);
 const JWT_SECRET = Deno.env.get("RESET_TOKEN_SECRET")!;
 
@@ -30,6 +26,25 @@ serve(async (req) => {
   }
 
   console.log("Reset password request");
+
+  const supabaseUrl =
+      Deno.env.get("SUPABASE_URL") ?? Deno.env.get("LOCAL_SUPABASE_URL");
+  const supabaseServiceRoleKey =
+    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ??
+    Deno.env.get("LOCAL_SUPABASE_SERVICE_ROLE_KEY");
+
+  if (!supabaseUrl || !supabaseServiceRoleKey) {
+    console.error("Missing Supabase environment variables");
+    return new Response(
+      JSON.stringify({ error: "Missing Supabase environment variables" }),
+      {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      },
+    );
+  }
+
+  const supabase = createClient(supabaseUrl, supabaseServiceRoleKey);
 
   try {
     const { email, resetLinkBase } = await req.json();

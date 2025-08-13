@@ -1,1 +1,0 @@
-ALTER TABLE "profile" ALTER COLUMN "handicapIndex" SET DEFAULT '54';

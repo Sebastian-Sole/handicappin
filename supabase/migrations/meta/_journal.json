@@ -5,36 +5,8 @@
     {
       "idx": 0,
       "version": "7",
-      "when": 1751223387365,
-      "tag": "0000_marvelous_jimmy_woo",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "7",
-      "when": 1751269887609,
-      "tag": "0001_curly_sunset_bain",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "7",
-      "when": 1751290626983,
-      "tag": "0002_organic_silk_fever",
-      "breakpoints": true
-    },
-    {
-      "idx": 3,
-      "version": "7",
-      "when": 1751363034878,
-      "tag": "0003_exotic_tigra",
-      "breakpoints": true
-    },
-    {
-      "idx": 4,
-      "version": "7",
-      "when": 1751889159926,
-      "tag": "0004_tranquil_spyke",
+      "when": 1755032947018,
+      "tag": "20250812210907_hard_stone_men",
       "breakpoints": true
     }
   ]

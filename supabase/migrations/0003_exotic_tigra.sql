@@ -1,1 +1,0 @@
-ALTER TABLE "profile" ADD COLUMN "initialHandicapIndex" numeric DEFAULT '54' NOT NULL;
