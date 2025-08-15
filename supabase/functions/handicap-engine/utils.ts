@@ -46,7 +46,7 @@ export function calculateCourseHandicap(
 export function calculateScoreDifferential(
   adjustedGrossScore: number,
   courseRating: number,
-  slopeRating: number,
+  slopeRating: number
 ): number {
   const scoreDiff = (adjustedGrossScore - courseRating) * (113 / slopeRating);
   // If scoreDiff is negative, round upwards towards 0 (to 1 decimal)
@@ -61,26 +61,30 @@ export function calculateScoreDifferential(
  * Gets the relevant number of differentials based on the total number of rounds.
  */
 export function getRelevantDifferentials(
-  scoreDifferentials: number[],
+  scoreDifferentials: number[]
 ): number[] {
   if (scoreDifferentials.length <= 5) {
     return scoreDifferentials.slice(0, 1);
   } else if (scoreDifferentials.length >= 6 && scoreDifferentials.length <= 8) {
     return scoreDifferentials.slice(0, 2);
   } else if (
-    scoreDifferentials.length >= 9 && scoreDifferentials.length <= 11
+    scoreDifferentials.length >= 9 &&
+    scoreDifferentials.length <= 11
   ) {
     return scoreDifferentials.slice(0, 3);
   } else if (
-    scoreDifferentials.length >= 12 && scoreDifferentials.length <= 14
+    scoreDifferentials.length >= 12 &&
+    scoreDifferentials.length <= 14
   ) {
     return scoreDifferentials.slice(0, 4);
   } else if (
-    scoreDifferentials.length >= 15 && scoreDifferentials.length <= 16
+    scoreDifferentials.length >= 15 &&
+    scoreDifferentials.length <= 16
   ) {
     return scoreDifferentials.slice(0, 5);
   } else if (
-    scoreDifferentials.length >= 17 && scoreDifferentials.length <= 18
+    scoreDifferentials.length >= 17 &&
+    scoreDifferentials.length <= 18
   ) {
     return scoreDifferentials.slice(0, 6);
   } else if (scoreDifferentials.length === 19) {
@@ -96,12 +100,18 @@ export function getRelevantDifferentials(
 export function calculateHandicapIndex(scoreDifferentials: number[]): number {
   const sortedDifferentials = scoreDifferentials.sort((a, b) => a - b);
   const relevantDiffs = getRelevantDifferentials(sortedDifferentials);
-  const handicapCalculation = Math.round(
-    (relevantDiffs.reduce((acc, cur) => acc + cur) / relevantDiffs.length) * 10,
-  ) / 10;
+  const handicapCalculation =
+    Math.round(
+      (relevantDiffs.reduce((acc, cur) => acc + cur) / relevantDiffs.length) *
+        10
+    ) / 10;
+
+  if (scoreDifferentials.length < 3) {
+    return 54;
+  }
 
   // Apply handicap adjustment based on number of differentials
-  if (scoreDifferentials.length <= 3) {
+  if (scoreDifferentials.length === 3) {
     return handicapCalculation - 2;
   }
   if (scoreDifferentials.length === 4 || scoreDifferentials.length === 6) {
@@ -115,7 +125,7 @@ export function calculateHandicapIndex(scoreDifferentials: number[]): number {
  */
 export function calculateLowHandicapIndex(
   rounds: ProcessedRound[],
-  currentRoundIndex: number,
+  currentRoundIndex: number
 ): number {
   // Exclude the current round
   const previousRounds = rounds.slice(0, currentRoundIndex);
@@ -135,7 +145,12 @@ export function calculateLowHandicapIndex(
   // Filter rounds within the 1-year window from the reference date
   const relevantRounds = rounds
     .slice(0, currentRoundIndex + 1)
-    .filter((r) => r.teeTime >= oneYearAgo && r.teeTime <= referenceDate && r.approvalStatus === "approved");
+    .filter(
+      (r) =>
+        r.teeTime >= oneYearAgo &&
+        r.teeTime <= referenceDate &&
+        r.approvalStatus === "approved"
+    );
 
   const handicapIndices = relevantRounds.map((r) => r.updatedHandicapIndex);
   return Math.min(...handicapIndices);
@@ -146,7 +161,7 @@ export function calculateLowHandicapIndex(
  */
 export function applyHandicapCaps(
   newIndex: number,
-  lowHandicapIndex: number,
+  lowHandicapIndex: number
 ): number {
   const difference = newIndex - lowHandicapIndex;
 
@@ -156,8 +171,8 @@ export function applyHandicapCaps(
 
   let cappedIndex = lowHandicapIndex;
   if (difference > SOFT_CAP_THRESHOLD) {
-    const softCapIncrease = SOFT_CAP_THRESHOLD +
-      (difference - SOFT_CAP_THRESHOLD) * 0.5;
+    const softCapIncrease =
+      SOFT_CAP_THRESHOLD + (difference - SOFT_CAP_THRESHOLD) * 0.5;
     cappedIndex = lowHandicapIndex + softCapIncrease;
   } else {
     cappedIndex = newIndex;
@@ -183,7 +198,7 @@ export const calculateAdjustedPlayedScore = (
 
 export const calculateHoleAdjustedScore = (
   hole: Hole,
-  score: Score,
+  score: Score
 ): number => {
   const maxScore = Math.min(hole.par + 5, hole.par + 2 + score.hcpStrokes);
   return Math.min(score.strokes, maxScore);
@@ -195,7 +210,7 @@ export function calculateAdjustedGrossScore(
   courseHandicap: number,
   numberOfHolesPlayed: number,
   holes: Hole[],
-  roundScores: Score[],
+  roundScores: Score[]
 ): number {
   let adjustedGrossScore;
   if (numberOfHolesPlayed === 18) {
@@ -207,8 +222,8 @@ export function calculateAdjustedGrossScore(
     const parForRemainingHoles = holes
       .filter((hole) => !roundScores.some((score) => score.holeId === hole.id))
       .reduce((acc, cur) => acc + cur.par, 0);
-    adjustedGrossScore = adjustedPlayedScore + predictedStrokes +
-      parForRemainingHoles;
+    adjustedGrossScore =
+      adjustedPlayedScore + predictedStrokes + parForRemainingHoles;
   }
 
   return adjustedGrossScore;
@@ -218,7 +233,7 @@ export function addHcpStrokesToScores(
   holes: Hole[],
   roundScores: Score[],
   courseHandicap: number,
-  numberOfHolesPlayed: number,
+  numberOfHolesPlayed: number
 ): Score[] {
   // Ensure courseHandicap is never negative
   const safeCourseHandicap = Math.max(0, courseHandicap);

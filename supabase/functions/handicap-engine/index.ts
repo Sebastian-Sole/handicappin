@@ -16,7 +16,12 @@ import {
   ProcessedRound,
 } from "./utils.ts";
 
-import { holeResponseSchema, roundResponseSchema, scoreResponseSchema, teeResponseSchema } from "./scorecard.ts";
+import {
+  holeResponseSchema,
+  roundResponseSchema,
+  scoreResponseSchema,
+  teeResponseSchema,
+} from "./scorecard.ts";
 
 export const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -61,7 +66,8 @@ Deno.serve(async (req) => {
     userId = newRecord?.userId;
   } else if (eventType === "UPDATE") {
     shouldRun =
-      oldRecord?.approvalStatus !== "approved" && newRecord?.approvalStatus === "approved";
+      oldRecord?.approvalStatus !== "approved" &&
+      newRecord?.approvalStatus === "approved";
     userId = newRecord?.userId;
   } else if (eventType === "DELETE") {
     shouldRun = true;
@@ -69,7 +75,9 @@ Deno.serve(async (req) => {
   }
 
   if (!shouldRun) {
-    console.log(`No action required for this event: ${eventType}, new apr:${newRecord?.approvalStatus}, old apr: ${oldRecord?.approvalStatus}`);
+    console.log(
+      `No action required for this event: ${eventType}, new apr:${newRecord?.approvalStatus}, old apr: ${oldRecord?.approvalStatus}`
+    );
     return new Response(
       JSON.stringify({ message: "No action required for this event." }),
       {
@@ -87,7 +95,7 @@ Deno.serve(async (req) => {
         {
           status: 400,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
-        },
+        }
       );
     }
 
@@ -104,7 +112,7 @@ Deno.serve(async (req) => {
         {
           status: 500,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
-        },
+        }
       );
     }
 
@@ -118,19 +126,18 @@ Deno.serve(async (req) => {
       .single();
 
     if (profileError || !userProfile) {
-      return new Response(
-        JSON.stringify({ error: "User profile not found" }),
-        {
-          status: 404,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        },
-      );
+      return new Response(JSON.stringify({ error: "User profile not found" }), {
+        status: 404,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
     // Get initial handicap index from profile, fallback to MAX_SCORE_DIFFERENTIAL
-    const initialHandicapIndex = userProfile.initialHandicapIndex !== undefined && userProfile.initialHandicapIndex !== null
-      ? Number(userProfile.initialHandicapIndex)
-      : MAX_SCORE_DIFFERENTIAL;
+    const initialHandicapIndex =
+      userProfile.initialHandicapIndex !== undefined &&
+      userProfile.initialHandicapIndex !== null
+        ? Number(userProfile.initialHandicapIndex)
+        : MAX_SCORE_DIFFERENTIAL;
 
     // 2. Fetch all approved rounds for user
     const { data: userRoundsRaw, error: roundsError } = await supabase
@@ -165,7 +172,7 @@ Deno.serve(async (req) => {
         {
           status: 200,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
-        },
+        }
       );
     }
 
@@ -226,25 +233,20 @@ Deno.serve(async (req) => {
     const scores = parsedScores.data;
 
     // Build in-memory maps
-    const teeMap = new Map(
-      tees.map((tee) => [
-        tee.id,
-        tee,
-      ]),
-    );
+    const teeMap = new Map(tees.map((tee) => [tee.id, tee]));
 
     const roundScoresMap = new Map(
       roundIds.map((roundId) => [
         roundId,
         scores.filter((s) => s.roundId === roundId),
-      ]),
+      ])
     );
 
     const holesMap = new Map(
       Array.from(teeIds).map((teeId) => [
         teeId,
         holes.filter((h) => h.teeId === teeId),
-      ]),
+      ])
     );
 
     // Initialize processed rounds array
@@ -279,19 +281,19 @@ Deno.serve(async (req) => {
       const courseHandicap = calculateCourseHandicap(
         pr.existingHandicapIndex,
         teePlayed,
-        numberOfHolesPlayed,
+        numberOfHolesPlayed
       );
 
       const scoresWithHcpStrokes = addHcpStrokesToScores(
         holes,
         roundScores,
         courseHandicap,
-        numberOfHolesPlayed,
+        numberOfHolesPlayed
       );
 
       const adjustedPlayedScore = calculateAdjustedPlayedScore(
         holes,
-        scoresWithHcpStrokes,
+        scoresWithHcpStrokes
       );
 
       const adjustedGrossScore = calculateAdjustedGrossScore(
@@ -299,7 +301,7 @@ Deno.serve(async (req) => {
         courseHandicap,
         numberOfHolesPlayed,
         holes,
-        roundScores,
+        roundScores
       );
 
       pr.adjustedGrossScore = adjustedGrossScore;
@@ -319,7 +321,7 @@ Deno.serve(async (req) => {
       pr.rawDifferential = calculateScoreDifferential(
         pr.adjustedGrossScore,
         teePlayed.courseRating18,
-        teePlayed.slopeRating18,
+        teePlayed.slopeRating18
       );
 
       const startIdx = Math.max(0, i - (ESR_WINDOW_SIZE - 1));
@@ -333,7 +335,7 @@ Deno.serve(async (req) => {
         const offset = difference >= 10 ? 2 : 1;
         const startIdx = Math.max(
           0,
-          i - (Math.min(ESR_WINDOW_SIZE, i + 1) - 1),
+          i - (Math.min(ESR_WINDOW_SIZE, i + 1) - 1)
         );
         for (let j = startIdx; j <= i; j++) {
           processedRounds[j].esrOffset += offset;
@@ -346,9 +348,10 @@ Deno.serve(async (req) => {
     // Pass 3: Apply ESR offsets and calculate final differentials
     for (let i = 0; i < processedRounds.length; i++) {
       const pr = processedRounds[i];
-      pr.existingHandicapIndex = i === 0
-        ? initialHandicapIndex
-        : processedRounds[i - 1].updatedHandicapIndex;
+      pr.existingHandicapIndex =
+        i === 0
+          ? initialHandicapIndex
+          : processedRounds[i - 1].updatedHandicapIndex;
 
       pr.finalDifferential = pr.rawDifferential - pr.esrOffset;
       const startIdx = Math.max(0, i - (ESR_WINDOW_SIZE - 1));
@@ -361,7 +364,7 @@ Deno.serve(async (req) => {
         const lowHandicapIndex = calculateLowHandicapIndex(processedRounds, i);
         pr.updatedHandicapIndex = applyHandicapCaps(
           calculatedIndex,
-          lowHandicapIndex,
+          lowHandicapIndex
         );
       } else {
         pr.updatedHandicapIndex = calculatedIndex;
@@ -369,7 +372,7 @@ Deno.serve(async (req) => {
 
       pr.updatedHandicapIndex = Math.min(
         pr.updatedHandicapIndex,
-        MAX_SCORE_DIFFERENTIAL,
+        MAX_SCORE_DIFFERENTIAL
       );
     }
 
@@ -409,20 +412,16 @@ Deno.serve(async (req) => {
       {
         status: 200,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
-      },
+      }
     );
   } catch (error: unknown) {
     console.error(error);
-    const errorMessage = error instanceof Error
-      ? error.message
-      : "An unknown error occurred";
-    return new Response(
-      JSON.stringify({ error: errorMessage }),
-      {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      },
-    );
+    const errorMessage =
+      error instanceof Error ? error.message : "An unknown error occurred";
+    return new Response(JSON.stringify({ error: errorMessage }), {
+      status: 500,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
   }
 });
 

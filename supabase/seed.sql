@@ -4,11 +4,7 @@
 INSERT INTO course (id, name, "approvalStatus") VALUES 
 (10823, 'St. Andrews Old Course', 'approved');
 
--- Insert tee information for femens tees
-INSERT INTO "teeInfo" ("courseId", name, gender, "courseRating18", "slopeRating18", "courseRatingFront9", "slopeRatingFront9", "courseRatingBack9", "slopeRatingBack9", "outPar", "inPar", "totalPar", "outDistance", "inDistance", "totalDistance", "distanceMeasurement", "approvalStatus", "isArchived", version) VALUES
--- Ladies Black Tee
-(10823, 'Black', 'ladies', 79.8, 148, 39.5, 147, 40.3, 149, 38, 38, 76, 3350, 2749, 6099, 'yards', 'approved', false, 1),
--- Insert tee information for ladies tees
+-- Insert tee information for all tees
 INSERT INTO "teeInfo" ("courseId", name, gender, "courseRating18", "slopeRating18", "courseRatingFront9", "slopeRatingFront9", "courseRatingBack9", "slopeRatingBack9", "outPar", "inPar", "totalPar", "outDistance", "inDistance", "totalDistance", "distanceMeasurement", "approvalStatus", "isArchived", version) VALUES
 -- Ladies Black Tee
 (10823, 'Black', 'ladies', 79.8, 148, 39.5, 147, 40.3, 149, 38, 38, 76, 3350, 2749, 6099, 'yards', 'approved', false, 1),
