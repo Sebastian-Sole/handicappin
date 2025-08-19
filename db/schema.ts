@@ -88,9 +88,11 @@ export const course = pgTable(
     website: text(),
   },
   (table) => [
-    uniqueIndex("course_name_key").using(
+    uniqueIndex("course_name_country_city_key").using(
       "btree",
-      table.name.asc().nullsLast().op("text_ops")
+      table.name.asc().nullsLast().op("text_ops"),
+      table.country.asc().nullsLast().op("text_ops"),
+      table.city.asc().nullsLast().op("text_ops")
     ),
     pgPolicy("Authenticated users can view courses", {
       as: "permissive",
@@ -129,6 +131,12 @@ export const teeInfo = pgTable(
     version: integer().default(1).notNull(),
   },
   (table) => [
+    uniqueIndex("teeInfo_courseId_name_gender_key").using(
+      "btree",
+      table.courseId.asc().nullsLast().op("int4_ops"),
+      table.name.asc().nullsLast().op("text_ops"),
+      table.gender.asc().nullsLast().op("text_ops")
+    ),
     foreignKey({
       columns: [table.courseId],
       foreignColumns: [course.id],
@@ -159,6 +167,11 @@ export const hole = pgTable(
     hcp: integer().notNull(),
   },
   (table) => [
+    uniqueIndex("hole_teeId_holeNumber_key").using(
+      "btree",
+      table.teeId.asc().nullsLast().op("int4_ops"),
+      table.holeNumber.asc().nullsLast().op("int4_ops")
+    ),
     foreignKey({
       columns: [table.teeId],
       foreignColumns: [teeInfo.id],

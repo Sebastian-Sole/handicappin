@@ -721,7 +721,7 @@ export default function GolfScorecard({ profile }: GolfScorecardProps) {
             )}
             {/* Desktop submit button */}
             {selectedTeeKey && (
-              <div className="mt-4 flex justify-end hidden md:flex">
+              <div className="mt-4 justify-end hidden md:flex">
                 <Button type="submit" disabled={isSubmitting}>
                   {isSubmitting ? "Submitting..." : "Submit Scorecard"}
                 </Button>
