@@ -83,6 +83,8 @@ export const course = pgTable(
     id: serial().primaryKey().notNull(),
     name: text().notNull(),
     approvalStatus: text().default("pending").notNull(),
+    country: text().default("Scotland").notNull(),
+    website: text(),
   },
   (table) => [
     uniqueIndex("course_name_key").using(

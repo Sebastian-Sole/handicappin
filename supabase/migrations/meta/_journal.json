@@ -8,6 +8,13 @@
       "when": 1755032947018,
       "tag": "20250812210907_hard_stone_men",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1755623157381,
+      "tag": "20250819170557_futuristic_terrax",
+      "breakpoints": true
     }
   ]
 }

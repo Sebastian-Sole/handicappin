@@ -1,4 +1,3 @@
-import { RoundWithCourseAndTee } from "@/types/database";
 import { Hole, Score, Tee } from "@/types/scorecard";
 import { Tables } from "@/types/supabase";
 import { SupabaseClient } from "@supabase/supabase-js";
@@ -42,7 +41,7 @@ export function calculateCourseHandicap(
 export function calculateScoreDifferential(
   adjustedGrossScore: number,
   courseRating: number,
-  slopeRating: number,
+  slopeRating: number
 ): number {
   const scoreDiff = (adjustedGrossScore - courseRating) * (113 / slopeRating);
   // If scoreDiff is negative, round upwards towards 0 (to 1 decimal)
@@ -302,24 +301,24 @@ function applyHandicapAdjustement(
 }
 
 /**
- * 
- * @param holes 
- * @param roundScores 
- * @param courseHandicap 
- * @param numberOfHolesPlayed 
- * @returns 
+ *
+ * @param holes
+ * @param roundScores
+ * @param courseHandicap
+ * @param numberOfHolesPlayed
+ * @returns
  */
 export function addHcpStrokesToScores(
   holes: Hole[],
   roundScores: Score[],
   courseHandicap: number,
-  numberOfHolesPlayed: number,
+  numberOfHolesPlayed: number
 ): Score[] {
   const fullDivision = Math.floor(courseHandicap / numberOfHolesPlayed);
   const remainder = courseHandicap % numberOfHolesPlayed;
 
-  console.log(holes)
-  console.log(roundScores)
+  console.log(holes);
+  console.log(roundScores);
 
   // Get only the holes that were played, in the order of roundScores
   holes.forEach((hole, index) => {

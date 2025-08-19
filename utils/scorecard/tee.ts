@@ -134,6 +134,7 @@ export const validCourse: Course = {
   name: "Ballerud",
   approvalStatus: "pending",
   id: -1,
+  country: "Norway",
   tees: [
     {
       id: -1,
@@ -301,5 +302,6 @@ export const blankCourse: Course = {
   name: "",
   approvalStatus: "pending",
   id: -1,
+  country: "Norway",
   tees: [blankTee],
 };
