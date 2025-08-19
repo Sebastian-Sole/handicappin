@@ -184,6 +184,8 @@ export const courseSchema = z.object({
   id: z.number().or(z.undefined()),
   name: z.string(),
   approvalStatus: z.literal("pending").or(z.literal("approved")),
+  country: z.string(),
+  website: z.string().optional(),
   tees: z
     .array(teeSchema)
     .min(1, "At least one tee required")
@@ -202,6 +204,8 @@ export const courseCreationSchema = courseSchema.extend({
       100,
       "Course name must be less than 100 characters. Contact us if you need to add a course out of this range."
     ),
+  country: z.string(),
+  website: z.string().optional(),
   tees: z.array(teeCreationSchema).min(1, "At least one tee required"),
 });
 

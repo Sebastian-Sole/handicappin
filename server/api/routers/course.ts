@@ -13,7 +13,11 @@ export const courseRouter = createTRPCRouter({
     .input(z.object({ courseId: z.number() }))
     .query(async ({ ctx, input }) => {
       const { courseId } = input;
-      const { data: course, error } = await ctx.supabase.from("course").select("*").eq("id", courseId).single();
+      const { data: course, error } = await ctx.supabase
+        .from("course")
+        .select("*")
+        .eq("id", courseId)
+        .single();
       if (error) {
         console.error(error);
         return null;
@@ -43,6 +47,7 @@ export const courseRouter = createTRPCRouter({
           id: course.id,
           name: course.name,
           approvalStatus: course.approvalStatus,
+          country: course.country,
         })
         .from(course)
         .where(

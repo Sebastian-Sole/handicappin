@@ -2,6 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { CountryCombobox } from "@/components/scorecard/country-combobox";
 import { Plus } from "lucide-react";
 import { DialogPage, MultiPageDialog } from "../ui/multi-page-dialog";
 import { Course, courseCreationSchema } from "@/types/scorecard";
@@ -29,6 +30,7 @@ export function AddCourseDialog({ onAdd }: AddCourseDialogProps) {
     resolver: zodResolver(courseCreationSchema),
     defaultValues: {
       name: "",
+      country: "",
       approvalStatus: "pending",
       tees: [
         {
@@ -64,17 +66,19 @@ export function AddCourseDialog({ onAdd }: AddCourseDialogProps) {
   const { control, handleSubmit, watch } = form;
 
   const watchName = watch("name");
+  const watchCountry = watch("country");
   const watchTee = watch("tees.0");
 
   // Use schema validation instead of custom logic
   const isFormValid = useMemo(() => {
     const result = courseCreationSchema.safeParse({
       name: watchName,
+      country: watchCountry,
       approvalStatus: "pending",
       tees: watchTee ? [watchTee] : [],
     });
     return result.success;
-  }, [watchName, watchTee]);
+  }, [watchName, watchCountry, watchTee]);
 
   const onSubmit = (values: Course) => {
     // Schema validation is already handled by the form resolver
@@ -148,6 +152,25 @@ export function AddCourseDialog({ onAdd }: AddCourseDialogProps) {
                   <FormItem>
                     <FormControl>
                       <Input {...field} placeholder="Enter course name" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                </div>
+              )}
+            />
+            <FormField
+              control={control}
+              name="country"
+              render={({ field }) => (
+                <div className="space-y-2 py-4">
+                  <FormLabel htmlFor="country">Country</FormLabel>
+                  <FormItem>
+                    <FormControl>
+                      <CountryCombobox
+                        value={field.value}
+                        onValueChange={field.onChange}
+                        placeholder="Select a country..."
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

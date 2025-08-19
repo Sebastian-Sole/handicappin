@@ -7,7 +7,7 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instanciate createClient with right options
+  // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
     PostgrestVersion: "12.2.3 (519615d)"
@@ -304,6 +304,42 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      trigger_debug_log: {
+        Row: {
+          approval_status: string | null
+          created_at: string | null
+          http_post_result: Json | null
+          id: number
+          op: string
+          payload: Json | null
+          round_id: number | null
+          service_role_key_prefix: string | null
+          user_id: string | null
+        }
+        Insert: {
+          approval_status?: string | null
+          created_at?: string | null
+          http_post_result?: Json | null
+          id?: number
+          op: string
+          payload?: Json | null
+          round_id?: number | null
+          service_role_key_prefix?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          approval_status?: string | null
+          created_at?: string | null
+          http_post_result?: Json | null
+          id?: number
+          op?: string
+          payload?: Json | null
+          round_id?: number | null
+          service_role_key_prefix?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
       }
     }
     Views: {
