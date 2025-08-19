@@ -48,6 +48,7 @@ export const courseRouter = createTRPCRouter({
           name: course.name,
           approvalStatus: course.approvalStatus,
           country: course.country,
+          city: course.city,
         })
         .from(course)
         .where(

@@ -32,6 +32,7 @@ export function AddCourseDialog({ onAdd }: AddCourseDialogProps) {
       name: "",
       country: "",
       approvalStatus: "pending",
+      city: "",
       tees: [
         {
           name: "",
@@ -171,6 +172,21 @@ export function AddCourseDialog({ onAdd }: AddCourseDialogProps) {
                         onValueChange={field.onChange}
                         placeholder="Select a country..."
                       />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                </div>
+              )}
+            />
+            <FormField
+              control={control}
+              name="city"
+              render={({ field }) => (
+                <div className="space-y-2 py-4">
+                  <FormLabel htmlFor="city">City</FormLabel>
+                  <FormItem>
+                    <FormControl>
+                      <Input {...field} placeholder="Enter city" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

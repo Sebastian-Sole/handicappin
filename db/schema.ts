@@ -84,6 +84,7 @@ export const course = pgTable(
     name: text().notNull(),
     approvalStatus: text().default("pending").notNull(),
     country: text().default("Scotland").notNull(),
+    city: text(),
     website: text(),
   },
   (table) => [
