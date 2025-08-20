@@ -17,18 +17,24 @@ export type Database = {
       course: {
         Row: {
           approvalStatus: string
+          country: string
           id: number
           name: string
+          website: string | null
         }
         Insert: {
           approvalStatus?: string
+          country?: string
           id?: number
           name: string
+          website?: string | null
         }
         Update: {
           approvalStatus?: string
+          country?: string
           id?: number
           name?: string
+          website?: string | null
         }
         Relationships: []
       }

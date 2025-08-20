@@ -48,6 +48,8 @@ export const courseRouter = createTRPCRouter({
           name: course.name,
           approvalStatus: course.approvalStatus,
           country: course.country,
+          city: course.city,
+          website: course.website,
         })
         .from(course)
         .where(
@@ -60,6 +62,8 @@ export const courseRouter = createTRPCRouter({
       console.log(results);
       return results.map((course) => ({
         ...course,
+        website: course.website ?? undefined,
+        city: course.city,
         approvalStatus: "approved" as const,
       }));
     }),

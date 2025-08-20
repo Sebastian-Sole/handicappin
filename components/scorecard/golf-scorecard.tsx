@@ -52,6 +52,7 @@ import { Badge } from "../ui/badge";
 import { DateTimePicker } from "../ui/datepicker";
 import useMounted from "@/hooks/useMounted";
 import { Skeleton } from "../ui/skeleton";
+import { getFlagEmoji } from "@/utils/frivolities/headerGenerator";
 
 interface GolfScorecardProps {
   profile: Tables<"profile">;
@@ -346,7 +347,15 @@ export default function GolfScorecard({ profile }: GolfScorecardProps) {
       (course) => course.id === selectedCourseId
     );
     if (fetchedCourse) {
-      return fetchedCourse.name;
+      return (
+        fetchedCourse.name +
+        " - " +
+        fetchedCourse.city +
+        (fetchedCourse.city ? fetchedCourse.city + ", " : "") +
+        fetchedCourse.country +
+        " " +
+        getFlagEmoji(fetchedCourse.country)
+      );
     }
 
     return "Select course...";
@@ -388,7 +397,7 @@ export default function GolfScorecard({ profile }: GolfScorecardProps) {
                                         <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                                       </Button>
                                     </PopoverTrigger>
-                                    <PopoverContent className="w-full p-0">
+                                    <PopoverContent className="w-[var(--radix-popover-trigger-width)] max-w-none p-0">
                                       <Command>
                                         <CommandInput
                                           placeholder="Search course..."
@@ -413,7 +422,15 @@ export default function GolfScorecard({ profile }: GolfScorecardProps) {
                                                     );
                                                   }}
                                                 >
-                                                  {course.name}
+                                                  {course.name +
+                                                    " - " +
+                                                    course.city +
+                                                    ", " +
+                                                    course.country +
+                                                    " " +
+                                                    getFlagEmoji(
+                                                      course.country
+                                                    )}
                                                 </CommandItem>
                                               ))}
                                             {effectiveCourses.length === 0 &&
@@ -704,7 +721,7 @@ export default function GolfScorecard({ profile }: GolfScorecardProps) {
             )}
             {/* Desktop submit button */}
             {selectedTeeKey && (
-              <div className="mt-4 flex justify-end hidden md:flex">
+              <div className="mt-4 justify-end hidden md:flex">
                 <Button type="submit" disabled={isSubmitting}>
                   {isSubmitting ? "Submitting..." : "Submit Scorecard"}
                 </Button>

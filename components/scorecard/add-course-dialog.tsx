@@ -32,6 +32,7 @@ export function AddCourseDialog({ onAdd }: AddCourseDialogProps) {
       name: "",
       country: "",
       approvalStatus: "pending",
+      city: "",
       tees: [
         {
           name: "",
@@ -67,6 +68,7 @@ export function AddCourseDialog({ onAdd }: AddCourseDialogProps) {
 
   const watchName = watch("name");
   const watchCountry = watch("country");
+  const watchCity = watch("city");
   const watchTee = watch("tees.0");
 
   // Use schema validation instead of custom logic
@@ -74,11 +76,12 @@ export function AddCourseDialog({ onAdd }: AddCourseDialogProps) {
     const result = courseCreationSchema.safeParse({
       name: watchName,
       country: watchCountry,
+      city: watchCity,
       approvalStatus: "pending",
       tees: watchTee ? [watchTee] : [],
     });
     return result.success;
-  }, [watchName, watchCountry, watchTee]);
+  }, [watchName, watchCountry, watchCity, watchTee]);
 
   const onSubmit = (values: Course) => {
     // Schema validation is already handled by the form resolver
@@ -171,6 +174,21 @@ export function AddCourseDialog({ onAdd }: AddCourseDialogProps) {
                         onValueChange={field.onChange}
                         placeholder="Select a country..."
                       />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                </div>
+              )}
+            />
+            <FormField
+              control={control}
+              name="city"
+              render={({ field }) => (
+                <div className="space-y-2 py-4">
+                  <FormLabel htmlFor="city">City</FormLabel>
+                  <FormItem>
+                    <FormControl>
+                      <Input {...field} placeholder="Enter city" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

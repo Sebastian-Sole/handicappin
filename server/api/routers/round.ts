@@ -199,6 +199,9 @@ export const roundRouter = createTRPCRouter({
           .values({
             name: coursePlayed.name,
             approvalStatus: "pending",
+            country: coursePlayed.country,
+            city: coursePlayed.city,
+            website: coursePlayed.website,
           })
           .returning();
         courseId = newCourse.id;

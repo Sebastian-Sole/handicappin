@@ -186,6 +186,7 @@ export const courseSchema = z.object({
   approvalStatus: z.literal("pending").or(z.literal("approved")),
   country: z.string(),
   website: z.string().optional(),
+  city: z.string(),
   tees: z
     .array(teeSchema)
     .min(1, "At least one tee required")
@@ -206,6 +207,7 @@ export const courseCreationSchema = courseSchema.extend({
     ),
   country: z.string(),
   website: z.string().optional(),
+  city: z.string().optional(),
   tees: z.array(teeCreationSchema).min(1, "At least one tee required"),
 });
 
