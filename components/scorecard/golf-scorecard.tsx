@@ -351,7 +351,7 @@ export default function GolfScorecard({ profile }: GolfScorecardProps) {
         fetchedCourse.name +
         " - " +
         fetchedCourse.city +
-        ", " +
+        (fetchedCourse.city ? fetchedCourse.city + ", " : "") +
         fetchedCourse.country +
         " " +
         getFlagEmoji(fetchedCourse.country)
