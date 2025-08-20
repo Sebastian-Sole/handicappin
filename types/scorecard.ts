@@ -186,7 +186,7 @@ export const courseSchema = z.object({
   approvalStatus: z.literal("pending").or(z.literal("approved")),
   country: z.string(),
   website: z.string().optional(),
-  city: z.string().optional(),
+  city: z.string(),
   tees: z
     .array(teeSchema)
     .min(1, "At least one tee required")

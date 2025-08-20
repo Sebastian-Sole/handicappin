@@ -135,6 +135,8 @@ export const validCourse: Course = {
   approvalStatus: "pending",
   id: -1,
   country: "Norway",
+  city: "Oslo",
+  website: "",
   tees: [
     {
       id: -1,
@@ -304,4 +306,6 @@ export const blankCourse: Course = {
   id: -1,
   country: "Norway",
   tees: [blankTee],
+  city: "St. Andrews",
+  website: "",
 };

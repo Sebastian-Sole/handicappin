@@ -63,7 +63,7 @@ export const scorecardRouter = createTRPCRouter({
             courseData.approvalStatus === "approved" ? "approved" : "pending",
           tees: undefined,
           country: courseData.country,
-          city: courseData.city || undefined,
+          city: courseData.city,
         },
         teePlayed: {
           ...teePlayed,
@@ -136,7 +136,7 @@ export const scorecardRouter = createTRPCRouter({
                   : "pending",
               tees: undefined,
               country: courseData.country,
-              city: courseData.city || undefined,
+              city: courseData.city,
             },
             teePlayed: {
               ...teePlayed,
