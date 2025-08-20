@@ -63,7 +63,7 @@ export const courseRouter = createTRPCRouter({
       return results.map((course) => ({
         ...course,
         website: course.website ?? undefined,
-        city: course.city ?? undefined,
+        city: course.city,
         approvalStatus: "approved" as const,
       }));
     }),
