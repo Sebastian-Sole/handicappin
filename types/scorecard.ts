@@ -5,8 +5,14 @@ export const holeSchema = z.object({
   id: z.number().or(z.undefined()),
   teeId: z.number().or(z.undefined()),
   holeNumber: z.number().min(1).max(18),
-  par: z.number().min(1).max(5),
-  hcp: z.number().min(1).max(18),
+  par: z
+    .number()
+    .min(1, "One of the par values is less than 1")
+    .max(5, "One of the par values is greater than 5"),
+  hcp: z
+    .number()
+    .min(1, "One of the HCP values is less than 1")
+    .max(18, "One of the HCP values is greater than 18"),
   distance: z.number().min(1).max(700),
 });
 

@@ -25,7 +25,6 @@ interface AddCourseDialogProps {
 
 export function AddCourseDialog({ onAdd }: AddCourseDialogProps) {
   const [open, setOpen] = useState(false);
-  const [showValidationErrors, setShowValidationErrors] = useState(false);
   const form = useForm<Course>({
     resolver: zodResolver(courseCreationSchema),
     defaultValues: {
@@ -111,7 +110,6 @@ export function AddCourseDialog({ onAdd }: AddCourseDialogProps) {
             className="h-10 hidden md:flex"
             onClick={() => {
               setOpen(true);
-              setShowValidationErrors(false);
             }}
             type="button"
           >
@@ -123,7 +121,6 @@ export function AddCourseDialog({ onAdd }: AddCourseDialogProps) {
             className="h-10 md:hidden sm:flex"
             onClick={() => {
               setOpen(true);
-              setShowValidationErrors(false);
             }}
             type="button"
           >
@@ -138,9 +135,6 @@ export function AddCourseDialog({ onAdd }: AddCourseDialogProps) {
       open={open}
       setOpen={(newOpen) => {
         setOpen(newOpen);
-        if (!newOpen) {
-          setShowValidationErrors(false);
-        }
       }}
     >
       <Form {...form}>
@@ -208,7 +202,6 @@ export function AddCourseDialog({ onAdd }: AddCourseDialogProps) {
                 <TeeFormContent
                   tee={field.value}
                   onTeeChange={field.onChange}
-                  showValidationErrors={showValidationErrors}
                 />
               )}
             />

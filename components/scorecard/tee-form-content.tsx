@@ -22,7 +22,6 @@ import { Badge } from "../ui/badge";
 interface TeeFormContentProps {
   tee: Tee; // The entire tee we are editing
   onTeeChange: (updated: Tee) => void; // Callback any time a field changes
-  showValidationErrors?: boolean; // Only show errors when this is true
 }
 
 // Use the teeCreationSchema for validation
@@ -32,14 +31,34 @@ function getTeeValidationErrors(tee: Tee): string[] {
     return [];
   }
 
-  return result.error.errors.map((err) => err.message);
+  // Group errors for holes by their message and path[2] (the field: par, hcp, distance)
+  const errors = result.error.errors;
+  const seenHoleErrors = new Set<string>();
+  return errors
+    .filter((err) => {
+      // Only group errors for holes
+      if (
+        err.path &&
+        err.path[0] === "holes" &&
+        typeof err.path[2] === "string"
+      ) {
+        // Only group for par, hcp, distance
+        if (["par", "hcp", "distance"].includes(err.path[2])) {
+          const key = `${err.path[2]}|${err.message}`;
+          if (seenHoleErrors.has(key)) {
+            return false;
+          }
+          seenHoleErrors.add(key);
+          return true;
+        }
+      }
+      // For all other errors, include them
+      return true;
+    })
+    .map((err) => err.message);
 }
 
-export function TeeFormContent({
-  tee,
-  onTeeChange,
-  showValidationErrors = false,
-}: TeeFormContentProps) {
+export function TeeFormContent({ tee, onTeeChange }: TeeFormContentProps) {
   const validationErrors = useMemo(() => getTeeValidationErrors(tee), [tee]);
   const isValid = validationErrors.length === 0;
 
@@ -56,43 +75,40 @@ export function TeeFormContent({
         </AlertDescription>
       </Alert>
 
-      {/* Validation Status - only show when showValidationErrors is true */}
-      {showValidationErrors && (
-        <div className="space-y-2 py-4">
-          <div className="flex items-center gap-2">
-            <Badge variant={isValid ? "default" : "destructive"}>
-              {isValid ? "✓ Valid" : "⚠ Incomplete"}
-            </Badge>
-            {!isValid && (
-              <span className="text-sm text-muted-foreground">
-                {validationErrors.length} issue
-                {validationErrors.length !== 1 ? "s" : ""} to fix
-              </span>
-            )}
-          </div>
-
-          {validationErrors.length > 0 && (
-            <Alert variant="destructive">
-              <AlertCircle className="h-4 w-4" />
-              <AlertTitle>Validation Issues</AlertTitle>
-              <AlertDescription>
-                <ul className="list-disc list-inside space-y-1 mt-2">
-                  {validationErrors.map((error, index) => (
-                    <li key={index} className="text-sm">
-                      {error}
-                    </li>
-                  ))}
-                </ul>
-              </AlertDescription>
-            </Alert>
-          )}
-        </div>
-      )}
-
       <div className="space-y-2 py-4">
         <TeeInfoFields tee={tee} onTeeChange={onTeeChange} />
         <TeeRatingFields tee={tee} onTeeChange={onTeeChange} />
         <TeeHoleTable tee={tee} onTeeChange={onTeeChange} />
+      </div>
+
+      <div className="space-y-2 py-4">
+        <div className="flex items-center gap-2">
+          <Badge variant={isValid ? "default" : "destructive"}>
+            {isValid ? "✓ Valid" : "⚠ Incomplete"}
+          </Badge>
+          {!isValid && (
+            <span className="text-sm text-muted-foreground">
+              {validationErrors.length} issue
+              {validationErrors.length !== 1 ? "s" : ""} to fix
+            </span>
+          )}
+        </div>
+
+        {validationErrors.length > 0 && (
+          <Alert variant="destructive">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>Validation Issues</AlertTitle>
+            <AlertDescription>
+              <ul className="list-disc list-inside space-y-1 mt-2">
+                {validationErrors.map((error, index) => (
+                  <li key={index} className="text-sm">
+                    {error}
+                  </li>
+                ))}
+              </ul>
+            </AlertDescription>
+          </Alert>
+        )}
       </div>
     </>
   );
