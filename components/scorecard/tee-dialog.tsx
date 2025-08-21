@@ -43,7 +43,6 @@ export function TeeDialog({
   disabled,
 }: TeeDialogProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const [showValidationErrors, setShowValidationErrors] = useState(false);
 
   const form = useForm<Tee>({
     resolver: zodResolver(teeSchema),
@@ -65,26 +64,20 @@ export function TeeDialog({
         // Check if the data is valid before saving
         const validationErrors = getTeeValidationErrors(data);
         if (validationErrors.length > 0) {
-          setShowValidationErrors(true);
           return;
         }
 
         onSave({ ...data, approvalStatus: "pending" });
         setIsOpen(false);
-        setShowValidationErrors(false);
       },
       (errors) => {
         console.log(errors);
-        setShowValidationErrors(true);
       }
     )(e);
   };
 
   const handleOpenChange = (open: boolean) => {
     setIsOpen(open);
-    if (!open) {
-      setShowValidationErrors(false);
-    }
     onOpenChange?.(open);
   };
 
@@ -156,11 +149,7 @@ export function TeeDialog({
         <div className="max-w-[250px] sm:max-w-[350px] md:max-w-[550px]">
           <Form {...form}>
             <form onSubmit={handleSubmit}>
-              <TeeFormContent
-                tee={tee}
-                onTeeChange={handleTeeChange}
-                showValidationErrors={showValidationErrors}
-              />
+              <TeeFormContent tee={tee} onTeeChange={handleTeeChange} />
               <div className="flex justify-end mt-4">
                 <Button type="submit">
                   {mode === "edit" ? "Save Changes" : "Add Tee"}
