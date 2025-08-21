@@ -13,7 +13,10 @@ export const holeSchema = z.object({
     .number()
     .min(1, "One of the HCP values is less than 1")
     .max(18, "One of the HCP values is greater than 18"),
-  distance: z.number().min(1).max(700),
+  distance: z
+    .number()
+    .min(1, "One of the distance values is less than 1")
+    .max(700, "One of the distance values is greater than 700"),
 });
 
 export const teeSchema = z.object({
