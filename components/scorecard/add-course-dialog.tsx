@@ -86,12 +86,10 @@ export function AddCourseDialog({ onAdd }: AddCourseDialogProps) {
     // Schema validation is already handled by the form resolver
     onAdd(values);
     setOpen(false);
-    setShowValidationErrors(false);
   };
 
   const onError = (errors: any) => {
     console.log(errors);
-    setShowValidationErrors(true);
     toast({
       title: "Failed to add course",
       description:
