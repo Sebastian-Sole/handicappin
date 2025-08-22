@@ -32,7 +32,7 @@ function getTeeValidationErrors(tee: Tee): string[] {
   }
 
   // Group errors for holes by their message and path[2] (the field: par, hcp, distance)
-  const errors = result.error.errors;
+  const errors = result.error.issues;
   const seenHoleErrors = new Set<string>();
   return errors
     .filter((err) => {
@@ -376,6 +376,8 @@ function TeeHoleTable({ tee, onTeeChange }: TeeFormContentProps) {
     return Array(18)
       .fill(null)
       .map((_, index) => ({
+        id: existingHoles[index]?.id || undefined,
+        teeId: existingHoles[index]?.teeId || undefined,
         holeNumber: index + 1,
         par: existingHoles[index]?.par || 0,
         hcp: existingHoles[index]?.hcp || 0,

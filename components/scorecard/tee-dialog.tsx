@@ -24,7 +24,7 @@ function getTeeValidationErrors(tee: Tee): string[] {
     return [];
   }
 
-  return result.error.errors.map((err) => err.message);
+  return result.error.issues.map((err) => err.message);
 }
 
 interface TeeDialogProps {

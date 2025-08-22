@@ -246,4 +246,14 @@ export type Score = z.infer<typeof scoreSchema>;
 export type TeeCreation = z.infer<typeof teeCreationSchema>;
 export type CourseCreation = z.infer<typeof courseCreationSchema>;
 
+// Type for course search results (without tees)
+export type CourseSearchResult = {
+  id: number | undefined;
+  name: string;
+  approvalStatus: "pending" | "approved";
+  country: string;
+  city: string;
+  website?: string | undefined;
+};
+
 export type ScorecardWithRound = Scorecard & { round: Tables<"round"> };
