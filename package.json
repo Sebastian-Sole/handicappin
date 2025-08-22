@@ -58,13 +58,13 @@
     "resend": "^6.0.1",
     "server-only": "^0.0.1",
     "superjson": "^2.2.1",
-    "tailwind-merge": "^2.3.0",
+    "tailwind-merge": "^2.6.0",
     "tailwindcss-animate": "^1.0.7",
     "use-debounce": "^10.0.4",
     "zod": "^4.0.17"
   },
   "devDependencies": {
-    "@tailwindcss/postcss": "^4.1.11",
+    "@tailwindcss/postcss": "^4.1.12",
     "@types/node": "^20",
     "@types/pg": "^8.11.10",
     "@types/react": "^18",
@@ -76,7 +76,7 @@
     "postcss": "^8",
     "react-email": "3.0.2",
     "supabase": "^2.31.8",
-    "tailwindcss": "^4.1.11",
+    "tailwindcss": "^4.1.12",
     "tsx": "^4.19.2",
     "typescript": "^5",
     "vitest": "^2.0.5"
