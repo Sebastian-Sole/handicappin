@@ -49,7 +49,7 @@ import {
 } from "@/utils/scorecard/scorecardUtils";
 import { Lead, P } from "../ui/typography";
 import { Badge } from "../ui/badge";
-import { DateTimePicker } from "../ui/datepicker";
+import DatePicker from "../ui/datepicker";
 import useMounted from "@/hooks/useMounted";
 import { Skeleton } from "../ui/skeleton";
 import { getFlagEmoji } from "@/utils/frivolities/headerGenerator";
@@ -645,17 +645,14 @@ export default function GolfScorecard({ profile }: GolfScorecardProps) {
                           <FormItem className="flex flex-col">
                             <FormControl>
                               {isMounted ? (
-                                <DateTimePicker
-                                  granularity="minute"
+                                <DatePicker
                                   value={roundToNearestMinute(
                                     new Date(field.value)
                                   )}
                                   onChange={(date) => {
-                                    if (date) {
-                                      field.onChange(
-                                        roundToNearestMinute(date).toISOString()
-                                      );
-                                    }
+                                    field.onChange(
+                                      roundToNearestMinute(date).toISOString()
+                                    );
                                   }}
                                 />
                               ) : (
