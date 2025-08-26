@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { CountryCombobox } from "@/components/scorecard/country-combobox";
 import { Plus } from "lucide-react";
 import { DialogPage, MultiPageDialog } from "../ui/multi-page-dialog";
-import { Course, courseCreationSchema } from "@/types/scorecard";
+import { Course, courseSchema } from "@/types/scorecard";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -26,14 +26,17 @@ interface AddCourseDialogProps {
 export function AddCourseDialog({ onAdd }: AddCourseDialogProps) {
   const [open, setOpen] = useState(false);
   const form = useForm<Course>({
-    resolver: zodResolver(courseCreationSchema),
+    resolver: zodResolver(courseSchema),
     defaultValues: {
+      id: -1,
       name: "",
       country: "",
       approvalStatus: "pending",
       city: "",
       tees: [
         {
+          id: -1,
+          courseId: -1,
           name: "",
           gender: "mens",
           distanceMeasurement: "yards",
@@ -52,6 +55,8 @@ export function AddCourseDialog({ onAdd }: AddCourseDialogProps) {
           holes: Array(18)
             .fill(null)
             .map((_, index) => ({
+              id: -1,
+              teeId: -1,
               holeNumber: index + 1,
               par: 0,
               hcp: 0,
@@ -72,7 +77,7 @@ export function AddCourseDialog({ onAdd }: AddCourseDialogProps) {
 
   // Use schema validation instead of custom logic
   const isFormValid = useMemo(() => {
-    const result = courseCreationSchema.safeParse({
+    const result = courseSchema.safeParse({
       name: watchName,
       country: watchCountry,
       city: watchCity,

@@ -16,7 +16,7 @@ import {
   TableRow,
 } from "../ui/table";
 import { Input } from "@/components/ui/input";
-import { Tee, teeCreationSchema } from "@/types/scorecard";
+import { Tee, teeSchema } from "@/types/scorecard";
 import { Badge } from "../ui/badge";
 
 interface TeeFormContentProps {
@@ -24,9 +24,9 @@ interface TeeFormContentProps {
   onTeeChange: (updated: Tee) => void; // Callback any time a field changes
 }
 
-// Use the teeCreationSchema for validation
+// Use the teeSchema for validation
 function getTeeValidationErrors(tee: Tee): string[] {
-  const result = teeCreationSchema.safeParse(tee);
+  const result = teeSchema.safeParse(tee);
   if (result.success) {
     return [];
   }

@@ -26,7 +26,7 @@ import { createServerComponentClient } from "@/utils/supabase/server";
  */
 export const createTRPCContext = async (opts: { headers: Headers }) => {
   const supabase = createServerComponentClient();
-  
+
   // Get the user from the session using cookies (not Authorization header)
   const {
     data: { user },

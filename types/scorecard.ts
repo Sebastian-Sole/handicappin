@@ -1,6 +1,7 @@
 import z from "zod";
 import { Tables } from "./supabase";
 
+// Base schemas that handle both fetched data (positive IDs) and user-created data (ID: -1)
 export const holeSchema = z.object({
   id: z.number().or(z.undefined()),
   teeId: z.number().or(z.undefined()),
@@ -19,158 +20,66 @@ export const holeSchema = z.object({
     .max(700, "One of the distance values is greater than 700"),
 });
 
-export const teeSchema = z.object({
-  id: z.number().or(z.undefined()),
-  name: z.string(),
-  gender: z.enum(["mens", "ladies"]),
-  courseRating18: z.number(),
-  slopeRating18: z.number(),
-  courseRatingFront9: z.number(),
-  slopeRatingFront9: z.number(),
-  courseRatingBack9: z.number(),
-  slopeRatingBack9: z.number(),
-  outPar: z.number(),
-  inPar: z.number(),
-  totalPar: z.number(),
-  outDistance: z.number(),
-  inDistance: z.number(),
-  totalDistance: z.number(),
-  distanceMeasurement: z.literal("meters").or(z.literal("yards")),
-  approvalStatus: z.literal("approved").or(z.literal("pending")),
-  holes: z.array(holeSchema).or(z.undefined()),
-  courseId: z.number().or(z.undefined()),
-});
-
-// Enhanced validation for tee creation - requires meaningful values
-export const teeCreationSchema = teeSchema
-  .extend({
+export const teeSchema = z
+  .object({
+    id: z.number().or(z.undefined()),
     name: z.string().min(1, "Tee name is required"),
+    gender: z.enum(["mens", "ladies"]),
     courseRating18: z
       .number()
-      .min(
-        40,
-        "Course rating must be at least 40. Contact us if you need to add a course out of this range."
-      )
-      .max(
-        90,
-        "Course rating must be at most 90. Contact us if you need to add a course out of this range."
-      ),
+      .min(40, "Course rating must be at least 40")
+      .max(90, "Course rating must be at most 90"),
     slopeRating18: z
       .number()
-      .min(
-        45,
-        "Slope rating must be at least 45. Contact us if you need to add a course out of this range."
-      )
-      .max(
-        165,
-        "Slope rating must be at most 165. Contact us if you need to add a course out of this range."
-      ),
-
+      .min(45, "Slope rating must be at least 45")
+      .max(165, "Slope rating must be at most 165"),
     courseRatingFront9: z
       .number()
-      .min(
-        20,
-        "Front 9 rating must be at least 20. Contact us if you need to add a course out of this range."
-      )
-      .max(
-        45,
-        "Front 9 rating must be at most 45. Contact us if you need to add a course out of this range."
-      ),
+      .min(20, "Front 9 rating must be at least 20")
+      .max(45, "Front 9 rating must be at most 45"),
     slopeRatingFront9: z
       .number()
-      .min(
-        45,
-        "Front 9 slope must be at least 45. Contact us if you need to add a course out of this range."
-      )
-      .max(
-        165,
-        "Front 9 slope must be at most 165. Contact us if you need to add a course out of this range."
-      ),
-
+      .min(45, "Front 9 slope must be at least 45")
+      .max(165, "Front 9 slope must be at most 165"),
     courseRatingBack9: z
       .number()
-      .min(
-        20,
-        "Back 9 rating must be at least 20. Contact us if you need to add a course out of this range."
-      )
-      .max(
-        45,
-        "Back 9 rating must be at most 45. Contact us if you need to add a course out of this range."
-      ),
+      .min(20, "Back 9 rating must be at least 20")
+      .max(45, "Back 9 rating must be at most 45"),
     slopeRatingBack9: z
       .number()
-      .min(
-        45,
-        "Back 9 slope must be at least 45. Contact us if you need to add a course out of this range."
-      )
-      .max(
-        165,
-        "Back 9 slope must be at most 165. Contact us if you need to add a course out of this range."
-      ),
-
-    totalPar: z
-      .number()
-      .min(
-        54,
-        "Total par must be at least 54. Contact us if you need to add a course out of this range."
-      )
-      .max(
-        80,
-        "Total par must be at most 80. Contact us if you need to add a course out of this range."
-      ), // practical cap
-
+      .min(45, "Back 9 slope must be at least 45")
+      .max(165, "Back 9 slope must be at most 165"),
     outPar: z
       .number()
-      .min(
-        27,
-        "Front 9 par must be at least 27. Contact us if you need to add a course out of this range."
-      )
-      .max(
-        40,
-        "Front 9 par must be at most 40. Contact us if you need to add a course out of this range."
-      ), // practical cap
+      .min(27, "Front 9 par must be at least 27")
+      .max(40, "Front 9 par must be at most 40"),
     inPar: z
       .number()
-      .min(
-        27,
-        "Back 9 par must be at least 27. Contact us if you need to add a course out of this range."
-      )
-      .max(
-        40,
-        "Back 9 par must be at most 40. Contact us if you need to add a course out of this range."
-      ), // practical cap
-
-    totalDistance: z
+      .min(27, "Back 9 par must be at least 27")
+      .max(40, "Back 9 par must be at most 40"),
+    totalPar: z
       .number()
-      .min(
-        1500,
-        "Total distance must be at least 1500 yards. Contact us if you need to add a course out of this range."
-      )
-      .max(
-        8700,
-        "Total distance must be at most 8700 yards. Contact us if you need to add a course out of this range."
-      ),
+      .min(54, "Total par must be at least 54")
+      .max(80, "Total par must be at most 80"),
     outDistance: z
       .number()
-      .min(
-        750,
-        "Front 9 distance must be at least 750 yards. Contact us if you need to add a course out of this range."
-      )
-      .max(
-        4500,
-        "Front 9 distance must be at most 4500 yards. Contact us if you need to add a course out of this range."
-      ),
+      .min(750, "Front 9 distance must be at least 750 yards")
+      .max(4500, "Front 9 distance must be at most 4500 yards"),
     inDistance: z
       .number()
-      .min(
-        750,
-        "Back 9 distance must be at least 750 yards. Contact us if you need to add a course out of this range."
-      )
-      .max(
-        4500,
-        "Back 9 distance must be at most 4500 yards. Contact us if you need to add a course out of this range."
-      ),
-    holes: z.array(holeSchema).min(18, "All 18 holes must be defined"),
+      .min(750, "Back 9 distance must be at least 750 yards")
+      .max(4500, "Back 9 distance must be at most 4500 yards"),
+    totalDistance: z
+      .number()
+      .min(1500, "Total distance must be at least 1500 yards")
+      .max(8700, "Total distance must be at most 8700 yards"),
+    distanceMeasurement: z.literal("meters").or(z.literal("yards")),
+    approvalStatus: z.literal("approved").or(z.literal("pending")),
+    holes: z
+      .array(holeSchema)
+      .min(18, "All 18 holes must be defined")
+      .or(z.undefined()),
+    courseId: z.number().or(z.undefined()),
   })
   .superRefine((v, ctx) => {
     if (v.outPar + v.inPar !== v.totalPar) {
@@ -191,7 +100,10 @@ export const teeCreationSchema = teeSchema
 
 export const courseSchema = z.object({
   id: z.number().or(z.undefined()),
-  name: z.string(),
+  name: z
+    .string()
+    .min(3, "Course name must be at least 3 characters")
+    .max(100, "Course name must be less than 100 characters"),
   approvalStatus: z.literal("pending").or(z.literal("approved")),
   country: z.string(),
   website: z.string().optional(),
@@ -200,24 +112,6 @@ export const courseSchema = z.object({
     .array(teeSchema)
     .min(1, "At least one tee required")
     .or(z.undefined()),
-});
-
-// Enhanced validation for course creation - requires meaningful values
-export const courseCreationSchema = courseSchema.extend({
-  name: z
-    .string()
-    .min(
-      3,
-      "Course name must be at least 3 characters. Contact us if you need to add a course out of this range."
-    )
-    .max(
-      100,
-      "Course name must be less than 100 characters. Contact us if you need to add a course out of this range."
-    ),
-  country: z.string(),
-  website: z.string().optional(),
-  city: z.string().optional(),
-  tees: z.array(teeCreationSchema).min(1, "At least one tee required"),
 });
 
 export const scoreSchema = z.object({
@@ -243,10 +137,8 @@ export type Scorecard = z.infer<typeof scorecardSchema>;
 export type Tee = z.infer<typeof teeSchema>;
 export type Course = z.infer<typeof courseSchema>;
 export type Score = z.infer<typeof scoreSchema>;
-export type TeeCreation = z.infer<typeof teeCreationSchema>;
-export type CourseCreation = z.infer<typeof courseCreationSchema>;
 
-// Type for course search results (without tees)
+// Type for course search results (without tees) - used by API responses
 export type CourseSearchResult = {
   id: number | undefined;
   name: string;
