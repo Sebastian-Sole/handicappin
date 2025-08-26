@@ -49,7 +49,7 @@ import {
 } from "@/utils/scorecard/scorecardUtils";
 import { Lead, P } from "../ui/typography";
 import { Badge } from "../ui/badge";
-import { DateTimePicker } from "../ui/datepicker";
+import DatePicker from "../ui/datepicker";
 import useMounted from "@/hooks/useMounted";
 import { Skeleton } from "../ui/skeleton";
 import { getFlagEmoji } from "@/utils/frivolities/headerGenerator";
@@ -91,7 +91,13 @@ export default function GolfScorecard({ profile }: GolfScorecardProps) {
     defaultValues: {
       userId: profile.id,
       approvalStatus: "pending",
-      scores: Array(18).fill({ strokes: 0, hcpStrokes: 0 }),
+      scores: Array(18).fill({
+        id: undefined,
+        roundId: undefined,
+        holeId: undefined,
+        strokes: 0,
+        hcpStrokes: 0,
+      }),
       teeTime: roundToNearestMinute(new Date()).toISOString(),
       notes: "",
     },
@@ -121,11 +127,17 @@ export default function GolfScorecard({ profile }: GolfScorecardProps) {
   // Update fetched data when queries return results
   useEffect(() => {
     if (searchedCourses) {
+      console.log("searchedCourses: ", searchedCourses);
       setFetchedCourses((prev) => {
         const newCourses = searchedCourses.filter(
           (course) => !prev.some((p) => p.id === course.id)
         );
-        return [...prev, ...newCourses];
+        // Convert search results to Course type by adding undefined tees
+        const coursesWithTees: Course[] = newCourses.map((course) => ({
+          ...course,
+          tees: undefined,
+        }));
+        return [...prev, ...coursesWithTees];
       });
     }
   }, [searchedCourses]);
@@ -243,7 +255,13 @@ export default function GolfScorecard({ profile }: GolfScorecardProps) {
   const handleScoreChange = (holeIndex: number, score: number) => {
     const currentScores = form.getValues("scores");
     const newScores = [...currentScores];
-    newScores[holeIndex] = { strokes: score, hcpStrokes: 0 };
+    newScores[holeIndex] = {
+      id: undefined,
+      roundId: undefined,
+      holeId: undefined,
+      strokes: score,
+      hcpStrokes: 0,
+    };
     form.setValue("scores", newScores);
   };
 
@@ -350,7 +368,6 @@ export default function GolfScorecard({ profile }: GolfScorecardProps) {
       return (
         fetchedCourse.name +
         " - " +
-        fetchedCourse.city +
         (fetchedCourse.city ? fetchedCourse.city + ", " : "") +
         fetchedCourse.country +
         " " +
@@ -381,7 +398,7 @@ export default function GolfScorecard({ profile }: GolfScorecardProps) {
                             <div className="space-y-2">
                               <Label htmlFor="course">Course</Label>
                               <div className="flex flex-col md:flex-row gap-2">
-                                <div className="flex-1">
+                                <div className="flex-1 overflow-hidden">
                                   <Popover
                                     open={openCourseSelect}
                                     onOpenChange={setOpenCourseSelect}
@@ -628,17 +645,14 @@ export default function GolfScorecard({ profile }: GolfScorecardProps) {
                           <FormItem className="flex flex-col">
                             <FormControl>
                               {isMounted ? (
-                                <DateTimePicker
-                                  granularity="minute"
+                                <DatePicker
                                   value={roundToNearestMinute(
                                     new Date(field.value)
                                   )}
                                   onChange={(date) => {
-                                    if (date) {
-                                      field.onChange(
-                                        roundToNearestMinute(date).toISOString()
-                                      );
-                                    }
+                                    field.onChange(
+                                      roundToNearestMinute(date).toISOString()
+                                    );
                                   }}
                                 />
                               ) : (

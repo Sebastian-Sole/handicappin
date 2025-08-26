@@ -16,7 +16,7 @@ import {
   TableRow,
 } from "../ui/table";
 import { Input } from "@/components/ui/input";
-import { Tee, teeCreationSchema } from "@/types/scorecard";
+import { Tee, teeSchema } from "@/types/scorecard";
 import { Badge } from "../ui/badge";
 
 interface TeeFormContentProps {
@@ -24,15 +24,15 @@ interface TeeFormContentProps {
   onTeeChange: (updated: Tee) => void; // Callback any time a field changes
 }
 
-// Use the teeCreationSchema for validation
+// Use the teeSchema for validation
 function getTeeValidationErrors(tee: Tee): string[] {
-  const result = teeCreationSchema.safeParse(tee);
+  const result = teeSchema.safeParse(tee);
   if (result.success) {
     return [];
   }
 
   // Group errors for holes by their message and path[2] (the field: par, hcp, distance)
-  const errors = result.error.errors;
+  const errors = result.error.issues;
   const seenHoleErrors = new Set<string>();
   return errors
     .filter((err) => {
@@ -376,6 +376,8 @@ function TeeHoleTable({ tee, onTeeChange }: TeeFormContentProps) {
     return Array(18)
       .fill(null)
       .map((_, index) => ({
+        id: existingHoles[index]?.id || undefined,
+        teeId: existingHoles[index]?.teeId || undefined,
         holeNumber: index + 1,
         par: existingHoles[index]?.par || 0,
         hcp: existingHoles[index]?.hcp || 0,

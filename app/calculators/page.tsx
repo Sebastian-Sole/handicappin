@@ -11,7 +11,7 @@ import { createServerComponentClient } from "@/utils/supabase/server";
 import { DialogTrigger } from "@radix-ui/react-dialog";
 
 const CalculatorsPage = async () => {
-  const supabase = createServerComponentClient();
+  const supabase = await createServerComponentClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();

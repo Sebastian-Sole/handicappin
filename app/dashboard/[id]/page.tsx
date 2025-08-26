@@ -6,14 +6,15 @@ import DashboardSkeleton from "@/components/dashboard/dashboardSkeleton";
 
 import { createServerComponentClient } from "@/utils/supabase/server";
 
-const DashboardPage = async ({ params }: { params: { id: string } }) => {
+const DashboardPage = async (props: { params: Promise<{ id: string }> }) => {
+  const params = await props.params;
   const { id } = params;
 
   if (!id) {
     return <div>Invalid user id</div>;
   }
 
-  const supabase = createServerComponentClient();
+  const supabase = await createServerComponentClient();
   const { data } = await supabase.auth.getUser();
 
   if (!data) {

@@ -7,7 +7,7 @@ import { Suspense } from "react";
 import AddRoundSkeleton from "@/components/loading/add-round-skeleton";
 
 const AddRoundPage = async () => {
-  const supabase = createServerComponentClient();
+  const supabase = await createServerComponentClient();
   const { data } = await supabase.auth.getUser();
 
   const userId = data.user?.id;

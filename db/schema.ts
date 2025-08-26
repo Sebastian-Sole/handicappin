@@ -15,6 +15,7 @@ import {
 import { sql } from "drizzle-orm";
 import { createSelectSchema } from "drizzle-zod";
 import { z } from "zod";
+import type { InferSelectModel } from "drizzle-orm";
 
 const authSchema = pgSchema("auth");
 
@@ -75,7 +76,7 @@ export const profile = pgTable(
 );
 
 export const profileSchema = createSelectSchema(profile);
-export type Profile = z.infer<typeof profileSchema>;
+export type Profile = InferSelectModel<typeof profile>;
 
 export const course = pgTable(
   "course",
@@ -104,7 +105,7 @@ export const course = pgTable(
 );
 
 export const courseSchema = createSelectSchema(course);
-export type Course = z.infer<typeof courseSchema>;
+export type Course = InferSelectModel<typeof course>;
 
 export const teeInfo = pgTable(
   "teeInfo",
@@ -154,7 +155,7 @@ export const teeInfo = pgTable(
 );
 
 export const teeInfoSchema = createSelectSchema(teeInfo);
-export type TeeInfo = z.infer<typeof teeInfoSchema>;
+export type TeeInfo = InferSelectModel<typeof teeInfo>;
 
 export const hole = pgTable(
   "hole",
@@ -189,7 +190,7 @@ export const hole = pgTable(
 );
 
 export const holeSchema = createSelectSchema(hole);
-export type Hole = z.infer<typeof holeSchema>;
+export type Hole = InferSelectModel<typeof hole>;
 
 export const round = pgTable(
   "round",
@@ -264,7 +265,7 @@ export const round = pgTable(
 );
 
 export const roundSchema = createSelectSchema(round);
-export type Round = z.infer<typeof roundSchema>;
+export type Round = InferSelectModel<typeof round>;
 
 export const score = pgTable(
   "score",
@@ -326,4 +327,4 @@ export const score = pgTable(
 );
 
 export const scoreSchema = createSelectSchema(score);
-export type Score = z.infer<typeof scoreSchema>;
+export type Score = InferSelectModel<typeof score>;

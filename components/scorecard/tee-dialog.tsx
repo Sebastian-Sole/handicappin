@@ -13,18 +13,18 @@ import { useState } from "react";
 import { TeeFormContent } from "./tee-form-content";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Tee, teeSchema, teeCreationSchema } from "@/types/scorecard";
+import { Tee, teeSchema } from "@/types/scorecard";
 import { Form } from "../ui/form";
 import { blankTee } from "@/utils/scorecard/tee";
 
-// Use the teeCreationSchema for validation
+// Use the teeSchema for validation
 function getTeeValidationErrors(tee: Tee): string[] {
-  const result = teeCreationSchema.safeParse(tee);
+  const result = teeSchema.safeParse(tee);
   if (result.success) {
     return [];
   }
 
-  return result.error.errors.map((err) => err.message);
+  return result.error.issues.map((err) => err.message);
 }
 
 interface TeeDialogProps {
