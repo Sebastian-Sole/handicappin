@@ -1,0 +1,17 @@
+name: Check outdated dependencies
+
+on:
+  schedule:
+    - cron: "0 9 */7 * *" # every 7 days at 09:00 UTC
+  workflow_dispatch:
+
+jobs:
+  outdated:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v3
+        with:
+          version: 9
+      - run: pnpm install
+      - run: pnpm outdated
