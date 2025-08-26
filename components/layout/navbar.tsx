@@ -24,7 +24,7 @@ import { Separator } from "../ui/separator";
 import ThemeButton from "./themeButton";
 
 export async function Navbar() {
-  const supabase = createServerComponentClient();
+  const supabase = await createServerComponentClient();
   const { data } = await supabase.auth.getUser();
 
   const isAuthed = data?.user;

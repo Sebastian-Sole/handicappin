@@ -8,14 +8,17 @@ import { DialogContent } from "@/components/ui/dialog";
 import { Signup } from "@/components/auth/signup";
 import NotifyButton from "@/components/calculators/notify-button";
 
-const RoundCalculationPage = async ({ params }: { params: { id: string } }) => {
+const RoundCalculationPage = async (props: {
+  params: Promise<{ id: string }>;
+}) => {
+  const params = await props.params;
   const { id: roundId } = params;
 
   if (!roundId) {
     return <div>Invalid round id</div>;
   }
 
-  const supabase = createServerComponentClient();
+  const supabase = await createServerComponentClient();
 
   const { data } = await supabase.auth.getUser();
 

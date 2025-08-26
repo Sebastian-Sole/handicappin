@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
@@ -46,11 +46,11 @@
     "jose": "^6.0.13",
     "jsonwebtoken": "^9.0.2",
     "lucide-react": "^0.542.0",
-    "next": "14.2.4",
+    "next": "15.5.1",
     "next-themes": "^0.4.6",
     "pg": "^8.13.1",
     "postgres": "^3.4.5",
-    "react": "^19.1.1",
+    "react": "19.1.1",
     "react-day-picker": "^9.9.0",
     "react-dom": "19.1.1",
     "react-hook-form": "^7.62.0",
@@ -65,10 +65,10 @@
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.1.12",
-    "@types/node": "^20",
+    "@types/node": "^24",
     "@types/pg": "^8.11.10",
-    "@types/react": "^18",
-    "@types/react-dom": "^18",
+    "@types/react": "19.1.11",
+    "@types/react-dom": "19.1.8",
     "drizzle-kit": "^0.31.4",
     "drizzle-orm": "^0.44.5",
     "eslint": "^9.34.0",
@@ -80,5 +80,11 @@
     "tsx": "^4.20.5",
     "typescript": "^5",
     "vitest": "^3.2.4"
+  },
+  "pnpm": {
+    "overrides": {
+      "@types/react": "19.1.11",
+      "@types/react-dom": "19.1.8"
+    }
   }
 }

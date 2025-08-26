@@ -1,12 +1,11 @@
 import { createServerComponentClient } from "@/utils/supabase/server";
 import { redirect } from "next/navigation";
 
-const VerifyLoginPage = async ({
-  searchParams,
-}: {
-  searchParams: { code?: string };
+const VerifyLoginPage = async (props: {
+  searchParams: Promise<{ code?: string }>;
 }) => {
-  const supabase = createServerComponentClient();
+  const searchParams = await props.searchParams;
+  const supabase = await createServerComponentClient();
 
   const { code } = searchParams;
 

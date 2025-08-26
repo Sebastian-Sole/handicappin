@@ -6,14 +6,15 @@ import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import ProfileSkeleton from "@/components/loading/profile-skeleton";
 
-const ProfilePage = async ({ params }: { params: { id: string } }) => {
+const ProfilePage = async (props: { params: Promise<{ id: string }> }) => {
+  const params = await props.params;
   const { id: profileId } = params;
 
   if (!profileId) {
     return <div>Invalid profile id</div>;
   }
 
-  const supabase = createServerComponentClient();
+  const supabase = await createServerComponentClient();
 
   const { data, error } = await supabase.auth.getUser();
 
