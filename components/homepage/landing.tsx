@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { createServerComponentClient } from "@/utils/supabase/server";
 import ThemeImage from "@/components/homepage/theme-image";
+import Link from "next/link";
 
 export default async function Landing() {
   const supabase = await createServerComponentClient();
@@ -56,17 +57,22 @@ export default async function Landing() {
               understand the calculations behind the scenes.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button size="lg" className="text-lg px-8">
-                Start Free Forever
-                <ArrowRight className="ml-2 h-5 w-5" />
-              </Button>
-              <Button
-                variant="outline"
-                size="lg"
-                className="text-lg px-8 bg-transparent"
-              >
-                Why Handicappin&apos;?
-              </Button>
+              <Link href="/signup">
+                <Button size="lg" className="text-lg px-8">
+                  Start Free Forever
+                  <ArrowRight className="ml-2 h-5 w-5" />
+                </Button>
+              </Link>
+
+              <Link href="/about">
+                <Button
+                  variant="outline"
+                  size="lg"
+                  className="text-lg px-8 bg-transparent"
+                >
+                  Why Handicappin&apos;?
+                </Button>
+              </Link>
             </div>
             <p className="text-sm text-muted-foreground mt-4">
               No credit card required • free <strong>forever</strong> for first
@@ -345,7 +351,9 @@ export default async function Landing() {
                 </div>
               </CardHeader>
               <CardContent>
-                <Button className="w-full mb-6">Sign Up</Button>
+                <Link href="/signup">
+                  <Button className="w-full mb-6">Sign Up</Button>
+                </Link>
                 <ul className="space-y-3 text-sm">
                   <li className="flex items-center gap-2">
                     <CheckCircle className="h-4 w-4 min-h-4 min-w-4 flex-shrink-0 text-primary" />
@@ -385,7 +393,9 @@ export default async function Landing() {
                 </div>
               </CardHeader>
               <CardContent>
-                <Button className="w-full mb-6">Sign Up</Button>
+                <Link href="/signup">
+                  <Button className="w-full mb-6">Sign Up</Button>
+                </Link>
                 <ul className="space-y-3 text-sm">
                   <li className="flex items-center gap-2">
                     <CheckCircle className="h-4 w-4 min-h-4 min-w-4 flex-shrink-0 text-primary" />
@@ -424,7 +434,9 @@ export default async function Landing() {
                 </div>
               </CardHeader>
               <CardContent>
-                <Button className="w-full mb-6">Sign Up</Button>
+                <Link href="/signup">
+                  <Button className="w-full mb-6">Sign Up</Button>
+                </Link>
                 <ul className="space-y-3 text-sm">
                   <li className="flex items-center gap-2">
                     <CheckCircle className="h-4 w-4 min-h-4 min-w-4 flex-shrink-0 text-primary" />
@@ -461,10 +473,12 @@ export default async function Landing() {
             Join a community of golfers who are already using data to lower
             their scores and improve their game.
           </p>
-          <Button size="lg" variant="default" className="text-lg px-8">
-            Start Your Free Trial
-            <ArrowRight className="ml-2 h-5 w-5" />
-          </Button>
+          <Link href="/signup">
+            <Button size="lg" variant="default" className="text-lg px-8">
+              Start Your Free Trial
+              <ArrowRight className="ml-2 h-5 w-5" />
+            </Button>
+          </Link>
           <p className="text-sm mt-4 opacity-75">
             Free <strong>forever</strong> for first 100 users • No credit card
             required • Cancel anytime
