@@ -14,8 +14,8 @@ import {
   ArrowRight,
   CheckCircle,
 } from "lucide-react";
-import Image from "next/image";
 import { createServerComponentClient } from "@/utils/supabase/server";
+import ThemeImage from "@/components/homepage/theme-image";
 
 export default async function Landing() {
   const supabase = await createServerComponentClient();
@@ -57,7 +57,7 @@ export default async function Landing() {
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Button size="lg" className="text-lg px-8">
-                Start Free Trial
+                Start Free Forever
                 <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
               <Button
@@ -78,13 +78,7 @@ export default async function Landing() {
         {/* Hero Image Placeholder */}
         <div className="mt-16 container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="relative max-w-5xl mx-auto">
-            <Image
-              src="/images/landing.png"
-              alt="Handicappin' Dashboard"
-              className="w-full rounded-lg shadow-2xl border"
-              width={1000}
-              height={1000}
-            />
+            <ThemeImage />
           </div>
         </div>
       </section>
@@ -93,10 +87,10 @@ export default async function Landing() {
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-4xl font-bold mb-4">
-              Everything you need to improve your golf game
+              Professional-Grade Tools Made Accessible
             </h2>
             <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-              Professional-grade tools made accessible to everyone.
+              Everything you need to improve your game, all in one place.
             </p>
           </div>
 
