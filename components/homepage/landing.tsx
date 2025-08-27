@@ -201,9 +201,9 @@ export default async function Landing() {
           <div className="grid md:grid-cols-3 gap-8 text-center">
             <div>
               <div className="text-4xl font-bold text-primary mb-2">
-                {numberOfUsers}+
+                {numberOfUsers > 0 ? numberOfUsers : "10"}+
               </div>
-              <div className="text-muted-foreground">Active Golfers</div>
+              <div className="text-muted-foreground">Active Users</div>
             </div>
             <div>
               <div className="text-4xl font-bold text-primary mb-2">
