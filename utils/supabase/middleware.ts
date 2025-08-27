@@ -50,6 +50,7 @@ export async function updateSession(request: NextRequest) {
     "/api",
     "/verify-email",
     "/forgot-password",
+    "/",
   ];
 
   const isPublic = publicPaths.some((path) => pathname.startsWith(path));

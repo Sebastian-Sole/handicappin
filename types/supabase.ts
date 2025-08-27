@@ -17,6 +17,7 @@ export type Database = {
       course: {
         Row: {
           approvalStatus: string
+          city: string | null
           country: string
           id: number
           name: string
@@ -24,6 +25,7 @@ export type Database = {
         }
         Insert: {
           approvalStatus?: string
+          city?: string | null
           country?: string
           id?: number
           name: string
@@ -31,6 +33,7 @@ export type Database = {
         }
         Update: {
           approvalStatus?: string
+          city?: string | null
           country?: string
           id?: number
           name?: string
