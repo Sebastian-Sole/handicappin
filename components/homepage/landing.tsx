@@ -45,7 +45,10 @@ export default async function Landing() {
       <section className="relative py-10 lg:py-16">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center max-w-4xl mx-auto">
-            <Badge variant="secondary" className="mb-6">
+            <Badge
+              variant="secondary"
+              className="mb-6 dark:bg-primary dark:text-primary-foreground"
+            >
               Trusted by golfers worldwide
             </Badge>
             <h1 className="text-4xl md:text-6xl font-bold text-balance mb-6">
@@ -101,7 +104,7 @@ export default async function Landing() {
           </div>
 
           <div className="grid md:grid-cols-3 gap-8">
-            <Card className="border-0 shadow-lg">
+            <Card className="border-0 shadow-lg dark:bg-primary/10">
               <CardHeader>
                 <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mb-4">
                   <BarChart3 className="h-6 w-6 text-primary" />
@@ -131,7 +134,7 @@ export default async function Landing() {
               </CardContent>
             </Card>
 
-            <Card className="border-0 shadow-lg">
+            <Card className="border-0 shadow-lg dark:bg-primary/10">
               <CardHeader>
                 <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mb-4">
                   <Target className="h-6 w-6 text-primary" />
@@ -160,7 +163,7 @@ export default async function Landing() {
               </CardContent>
             </Card>
 
-            <Card className="border-0 shadow-lg">
+            <Card className="border-0 shadow-lg dark:bg-primary/10">
               <CardHeader>
                 <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mb-4">
                   <TrendingUp className="h-6 w-6 text-primary" />
@@ -331,8 +334,8 @@ export default async function Landing() {
           </div>
 
           <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
-            <Card className="border-2 border-primary shadow-lg relative">
-              <Badge className="absolute -top-3 left-1/2 -translate-x-1/2">
+            <Card className="border-2 border-primary shadow-lg relative dark:bg-primary/10">
+              <Badge className="absolute -top-3 left-1/2 -translate-x-1/2 whitespace-nowrap min-h-6 flex items-center">
                 Launch Offer!
               </Badge>
               <CardHeader>
@@ -375,7 +378,7 @@ export default async function Landing() {
               </CardContent>
             </Card>
 
-            <Card className="border-0 shadow-lg ">
+            <Card className="border-0 shadow-lg dark:bg-primary/10">
               <CardHeader>
                 <CardTitle>
                   Premium
@@ -417,7 +420,7 @@ export default async function Landing() {
               </CardContent>
             </Card>
 
-            <Card className="border-0 shadow-lg">
+            <Card className="border-0 shadow-lg dark:bg-primary/10">
               <CardHeader>
                 <CardTitle>
                   Unlimited
