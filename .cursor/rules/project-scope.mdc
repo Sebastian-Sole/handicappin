@@ -6,160 +6,178 @@ alwaysApply: true
 
 ## 🎯 **Project Vision**
 
-A responsive web application that displays and analyzes code performance metrics for Knowit projects and their customers' projects. The application provides comprehensive scoreboard functionality with project analytics, performance tracking, and interactive data visualization.
+A customer-facing golf SaaS application that provides comprehensive handicap tracking, round management, and calculation tools. The application offers transparent, USGA-compliant handicap calculations with detailed explanations, interactive scorecards, and performance analytics for golfers of all skill levels.
 
 ## 🏗️ **System Architecture**
 
 ```
-Backend API → Hey API Client → React Frontend
-      ↓             ↓              ↓
-  Performance    Auto-generated  Dashboard
-   Metrics       Types/Client    Components
+Supabase Backend → tRPC API → Next.js Frontend
+      ↓              ↓            ↓
+  PostgreSQL      Type-Safe    React Components
+  Auth & RLS      Endpoints    Dashboard & Forms
+  Edge Functions  Validation   Scorecards & Charts
 ```
 
 ### **Component Responsibilities**
 
-#### **This Frontend (Our Scope):**
+#### **This Application (Our Scope):**
 
-- Display performance metrics dashboard
-- Interactive data tables with sorting/filtering
-- Project analytics and visualization
-- Real-time data updates and caching
-- User authentication via Azure AD
+- Golf handicap tracking and calculation
+- Round entry and scorecard management
+- Course and tee information database
+- User authentication and profile management
+- Dashboard analytics and performance tracking
+- Interactive calculators and tools
 - Responsive design for all devices
 
 #### **External Systems (Not Our Scope):**
 
-- Backend API development and maintenance
-- Performance data collection/processing
-- Database schema design and optimization
-- User management and permissions
-- Raw data aggregation and calculations
+- Golf course data providers
+- Tournament management systems
+- Payment processing (Stripe integration in progress)
+- Third-party handicap verification services
+- Mobile app development
 
 ## ✅ **In Scope - What We Build**
 
 ### **Core Features (MVP)**
 
-1. **Project Dashboard**
-   - Performance metrics overview
-   - Project list with sortable columns
-   - Score visualization with color coding
-   - Progress indicators and trends
+1. **Golf Handicap System**
 
-2. **Data Display Components**
-   - Interactive tables with Hey API integration
-   - Responsive cards and layouts
-   - Donut charts for metric visualization
-   - Performance score indicators
+   - USGA-compliant handicap index calculation
+   - Score differential computation
+   - Course handicap calculation
+   - Exceptional score reduction (ESR)
+   - Soft and hard cap implementation
 
-3. **Navigation & User Experience**
-   - Route-based navigation between views
-   - Project detail pages
-   - Live data updates
-   - Authentication flow
+2. **Round Management**
 
-4. **Analytics Features**
-   - Performance score breakdowns
-   - Historical progress tracking
-   - Project comparison views
-   - Filtering and search capabilities
+   - Interactive golf scorecard entry
+   - Course and tee selection
+   - 9-hole and 18-hole round support
+   - Score validation and handicap stroke calculation
+   - Round history and analytics
+
+3. **User Dashboard**
+
+   - Personal handicap tracking
+   - Round history with pagination
+   - Performance trend charts
+   - Handicap progression visualization
+   - Round statistics and insights
+
+4. **Course Database**
+
+   - Searchable course information
+   - Tee ratings and slope information
+   - Course approval and management
+   - Hole-by-hole course details
 
 5. **Authentication & Security**
-   - Azure AD integration via NextAuth
-   - Protected routes and session management
-   - Secure API communication
-   - Role-based access patterns
+   - Supabase email/password authentication
+   - User profile management
+   - Row Level Security (RLS) policies
+   - Session management and protection
+   - Email verification flow
 
 ### **Technical Implementation**
 
 ```typescript
 // Core data flow
-API → Hey Client → React Components → User Interface
+User Input → React Hook Form → Zod Validation → tRPC → Supabase → Database
 
 // Key components
-<ProjectsTable
-  projects={projectData}
-  onSort={handleSort}
-  onFilter={handleFilter}
+<GolfScorecard
+  profile={userProfile}
+  onRoundSubmit={handleRoundSubmit}
 />
 <Dashboard
-  metrics={performanceMetrics}
-  analytics={analyticsData}
+  profile={userProfile}
+  scorecards={roundHistory}
+  header={motivationalHeader}
+/>
+<HandicapCalculator
+  handicapIndex={userHandicap}
+  courseRating={teeInfo}
 />
 ```
 
 ### **Integration Points**
 
-- Hey API client for backend communication
-- NextAuth for Azure AD authentication
-- Panda CSS for consistent styling
-- Vitest + Playwright for testing
-- Auto-generated type definitions
+- Supabase for backend services (database, auth, edge functions)
+- tRPC for type-safe API communication
+- React Query for server state management
+- Tailwind CSS with Radix UI for styling
+- Vitest for testing
+- Drizzle ORM for database operations
 
 ## 🚫 **Out of Scope - What We Don't Build**
 
-### **Backend Services**
+### **Golf Course Data Management**
 
-- API endpoint development
-- Database design and queries
-- Performance data collection
-- Metric calculation algorithms
-- Data processing pipelines
+- Course data collection and maintenance
+- Tee rating and slope rating verification
+- Course approval workflows
+- Geographic course mapping
+- Course image management
 
-### **Advanced Analytics**
+### **Advanced Golf Features**
 
-- Complex statistical analysis
-- Machine learning predictions
-- Historical data mining
-- Custom report generation
-- Data export/import systems
+- Tournament management systems
+- League and competition organization
+- Golf lesson scheduling
+- Equipment tracking and recommendations
+- Weather integration for course conditions
 
 ### **Administrative Features**
 
-- User management interfaces
-- Project configuration screens
+- Course administrator interfaces
 - System administration tools
-- Audit logging interfaces
-- Permission management UI
+- User role management beyond basic profiles
+- Audit logging and compliance reporting
+- Bulk data import/export tools
 
-### **Complex Visualizations**
+### **Complex Analytics**
 
-- Advanced charting libraries
-- 3D visualizations
-- Interactive data exploration
-- Custom dashboard builders
-- Real-time streaming charts
+- Advanced statistical analysis
+- Machine learning predictions
+- Comparative performance analysis
+- Custom report generation
+- Data visualization beyond basic charts
 
 ### **External Integrations**
 
-- Third-party service connections
-- Webhook management
-- API rate limiting
-- External authentication providers
-- Data synchronization services
+- Golf course booking systems
+- Tournament management platforms
+- Social media integration
+- Third-party handicap verification
+- Payment processing (currently in progress)
 
 ## 🎮 **User Stories (In Scope)**
 
-### **Primary User: Project Manager/Developer**
+### **Primary User: Recreational Golfer**
 
-1. "I want to see performance metrics for all my projects at a glance"
-2. "I want to drill down into specific project details"
-3. "I want to track performance improvements over time"
-4. "I want to compare different projects' performance"
-5. "I want the interface to be fast and responsive on my device"
+1. "I want to track my handicap index accurately and transparently"
+2. "I want to enter my golf rounds easily with a scorecard interface"
+3. "I want to see how my handicap changes over time"
+4. "I want to understand how my scores affect my handicap"
+5. "I want to access my golf data from any device"
 
-### **Secondary User: Stakeholder/Client**
+### **Secondary User: Serious Golfer**
 
-1. "I want to view project performance in an easy-to-understand format"
-2. "I want to see progress trends and improvements"
-3. "I want to access the dashboard from any device"
-4. "I want to understand what the metrics mean"
+1. "I want detailed explanations of handicap calculations"
+2. "I want to see my performance trends and statistics"
+3. "I want to calculate course handicaps for different tees"
+4. "I want to track my progress toward specific goals"
+5. "I want to compare my performance across different courses"
 
-### **Tertiary User: Administrator**
+### **Tertiary User: Golf Instructor/Coach**
 
-1. "I want to ensure only authorized users can access the data"
-2. "I want the system to handle errors gracefully"
-3. "I want fast loading times and smooth interactions"
+1. "I want to help my students understand their handicap calculations"
+2. "I want to track student progress over time"
+3. "I want to explain the USGA handicap system clearly"
+4. "I want to use calculators to demonstrate concepts"
+5. "I want to ensure accurate handicap tracking for my students"
 
 ## 🔧 **Technical Boundaries**
 
@@ -167,22 +185,24 @@ API → Hey Client → React Components → User Interface
 
 ```json
 {
-  "next": "15.5.2",
-  "react": "19.1.0",
-  "@pandacss/dev": "^1.2.0",
-  "@park-ui/panda-preset": "^0.43.1",
-  "next-auth": "5.0.0-beta.29",
-  "@hey-api/openapi-ts": "^0.83.1",
+  "next": "15.5.1",
+  "react": "19.1.1",
+  "@supabase/supabase-js": "^2.56.0",
+  "@trpc/server": "11.5.0",
+  "@trpc/client": "11.5.0",
+  "@trpc/react-query": "11.5.0",
+  "tailwindcss": "^4.1.12",
   "vitest": "^3.2.4",
-  "@playwright/test": "^1.55.0"
+  "drizzle-orm": "^0.44.5"
 }
 ```
 
 ### **External Services We Integrate**
 
-- Backend API (Hey API client integration)
-- Azure Active Directory (authentication)
-- Performance metrics database (read-only access)
+- Supabase (PostgreSQL database, authentication, edge functions)
+- Resend (email delivery for verification and notifications)
+- Vercel (hosting and deployment)
+- Stripe (payment processing - in progress)
 
 ### **Browser Support**
 
@@ -196,77 +216,76 @@ API → Hey Client → React Components → User Interface
 ### **Performance Requirements**
 
 - Initial page load < 3 seconds
-- API response handling < 1 second
-- Smooth table sorting and filtering
+- Scorecard entry response < 1 second
+- Smooth handicap calculation updates
 - Responsive design on all devices
-- Optimized bundle size
+- Optimized bundle size for mobile
 
 ### **Reliability Requirements**
 
-- Handle API failures gracefully
+- Handle Supabase connection failures gracefully
 - Maintain user session across refreshes
-- Recover from network issues
-- Clear error messaging and fallbacks
-- Consistent data display
+- Recover from network issues during round entry
+- Clear error messaging for invalid scores
+- Consistent handicap calculation accuracy
 
 ### **Security Considerations**
 
-- Secure authentication flow
-- Protected API endpoints
+- Secure Supabase authentication flow
+- Row Level Security (RLS) for data access
 - No sensitive data in client code
 - HTTPS communication only
 - Session management security
+- USGA compliance for handicap calculations
 
 ## 📊 **Success Metrics**
 
 ### **Functional**
 
-- [ ] All projects display correctly with accurate metrics
-- [ ] Sorting and filtering work smoothly
+- [ ] Handicap calculations are USGA-compliant and accurate
+- [ ] Round entry and scorecard submission work smoothly
 - [ ] Authentication flow is seamless
-- [ ] API integration handles errors gracefully
-- [ ] Real-time updates work reliably
+- [ ] Dashboard displays correct handicap and round data
+- [ ] Course search and selection function properly
 
 ### **Technical**
 
 - [ ] Zero TypeScript compilation errors
 - [ ] All ESLint rules pass
-- [ ] Bundle size < 500KB gzipped
-- [ ] Test coverage > 80% for business logic
-- [ ] E2E tests pass for critical flows
+- [ ] Supabase integration handles errors gracefully
+- [ ] Stripe integration is secure
 
 ### **User Experience**
 
-- [ ] Clean, professional interface
-- [ ] Mobile responsive design
+- [ ] Clean, professional golf-focused interface
+- [ ] Mobile responsive design for scorecard entry
 - [ ] Accessible to screen readers (WCAG AA)
 - [ ] Fast loading with proper loading states
-- [ ] Intuitive navigation and interactions
+- [ ] Intuitive navigation and golf terminology
 
 ## 🔄 **Future Expansion Areas**
 
 ### **Phase 2 Considerations** (After MVP)
 
-- Advanced filtering and search
-- Custom dashboard layouts
-- Enhanced data visualization
-- Project comparison tools
-- Performance alerting system
+- Advanced handicap analytics and insights
+- Tournament and competition tracking
+- Social features and friend connections
+- Enhanced calculator tools
+- Course rating and review system
 
 ### **Phase 3 Considerations** (Long-term)
 
-- Real-time notifications
-- Custom report generation
-- Advanced analytics features
 - Mobile app companion
-- API usage analytics
+- Golf lesson integration
+- Equipment tracking and recommendations
+- Advanced statistical analysis
 
 ### **Not Planned**
 
-- Backend API development
-- Complex data processing
-- Administrative interfaces
-- Third-party integrations
-- Custom authentication systems
+- Golf course booking systems
+- Tournament management platforms
+- Social media integration
+- Third-party handicap verification
+- Complex administrative interfaces
 
-This scope document ensures all development stays focused on the core mission: providing a high-quality, responsive dashboard for analyzing and displaying code performance metrics for Knowit projects.
+This scope document ensures all development stays focused on the core mission: providing a high-quality, transparent golf handicap tracking and calculation system that helps golfers understand and improve their game.
