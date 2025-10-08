@@ -7,17 +7,207 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instantiate createClient with right options
-  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
-  __InternalSupabase: {
-    PostgrestVersion: "12.2.3 (519615d)"
+  billing: {
+    Tables: {
+      customers: {
+        Row: {
+          created_at: string
+          stripe_customer_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          stripe_customer_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          stripe_customer_id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      events: {
+        Row: {
+          created_at: string
+          id: number
+          payload: string
+          type: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: number
+          payload: string
+          type: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: number
+          payload?: string
+          type?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      subscriptions: {
+        Row: {
+          current_period_end: string | null
+          is_lifetime: boolean
+          plan: string
+          status: string
+          stripe_subscription_id: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          current_period_end?: string | null
+          is_lifetime?: boolean
+          plan: string
+          status: string
+          stripe_subscription_id?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          current_period_end?: string | null
+          is_lifetime?: boolean
+          plan?: string
+          status?: string
+          stripe_subscription_id?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      upsert_subscription: {
+        Args: {
+          p_current_period_end: string
+          p_is_lifetime: boolean
+          p_plan: string
+          p_status: string
+          p_stripe_subscription_id: string
+          p_user_id: string
+        }
+        Returns: undefined
+      }
+    }
+    Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
+  }
+  graphql_public: {
+    Tables: {
+      [_ in never]: never
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      graphql: {
+        Args: {
+          extensions?: Json
+          operationName?: string
+          query?: string
+          variables?: Json
+        }
+        Returns: Json
+      }
+    }
+    Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
   }
   public: {
     Tables: {
+      billing_customers: {
+        Row: {
+          created_at: string
+          stripe_customer_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          stripe_customer_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          stripe_customer_id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      billing_events: {
+        Row: {
+          created_at: string
+          id: number
+          payload: string
+          type: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: number
+          payload: string
+          type: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: number
+          payload?: string
+          type?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      billing_subscriptions: {
+        Row: {
+          current_period_end: string | null
+          is_lifetime: boolean
+          plan: string
+          status: string
+          stripe_subscription_id: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          current_period_end?: string | null
+          is_lifetime?: boolean
+          plan: string
+          status: string
+          stripe_subscription_id?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          current_period_end?: string | null
+          is_lifetime?: boolean
+          plan?: string
+          status?: string
+          stripe_subscription_id?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       course: {
         Row: {
           approvalStatus: string
-          city: string | null
+          city: string
           country: string
           id: number
           name: string
@@ -25,7 +215,7 @@ export type Database = {
         }
         Insert: {
           approvalStatus?: string
-          city?: string | null
+          city?: string
           country?: string
           id?: number
           name: string
@@ -33,7 +223,7 @@ export type Database = {
         }
         Update: {
           approvalStatus?: string
-          city?: string | null
+          city?: string
           country?: string
           id?: number
           name?: string
@@ -355,7 +545,29 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_user_subscription: {
+        Args: { p_user_id: string }
+        Returns: {
+          current_period_end: string
+          is_lifetime: boolean
+          plan: string
+          status: string
+          stripe_subscription_id: string
+          updated_at: string
+          user_id: string
+        }[]
+      }
+      upsert_subscription: {
+        Args: {
+          p_current_period_end: string
+          p_is_lifetime: boolean
+          p_plan: string
+          p_status: string
+          p_stripe_subscription_id: string
+          p_user_id: string
+        }
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never
@@ -484,7 +696,14 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
+  billing: {
+    Enums: {},
+  },
+  graphql_public: {
+    Enums: {},
+  },
   public: {
     Enums: {},
   },
 } as const
+

@@ -1,4 +1,4 @@
-# 0001 - Stripe Subscription System (MVP)
+<!-- # 0001 - Stripe Subscription System (MVP)
 
 ## 🎯 **Description**
 
@@ -525,4 +525,4 @@ Decision:  User has 25 rounds of data stored
 
 **Business Impact:** Critical (primary monetization strategy)
 
-**User Impact:** High (affects all user journeys and core value proposition)
+**User Impact:** High (affects all user journeys and core value proposition) -->

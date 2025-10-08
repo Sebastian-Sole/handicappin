@@ -11,6 +11,7 @@ import superjson from "superjson";
 import { ZodError } from "zod";
 
 import { createServerComponentClient } from "@/utils/supabase/server";
+import { getUserSubscription } from "@/utils/billing/entitlements";
 
 /**
  * 1. CONTEXT
@@ -32,9 +33,13 @@ export const createTRPCContext = async (opts: { headers: Headers }) => {
     data: { user },
   } = await supabase.auth.getUser();
 
+  // Get subscription if user exists
+  const subscription = user ? await getUserSubscription(user.id) : null;
+
   return {
     supabase,
     user,
+    subscription,
     ...opts,
   };
 };
@@ -100,6 +105,23 @@ export const authedProcedure = t.procedure.use(async function isAuthed(opts) {
     ctx: {
       // ✅ user value is known to be non-null now
       user: ctx.user,
+      subscription: ctx.subscription,
     },
+  });
+});
+
+// NEW: Paid procedure (requires premium access)
+export const paidProcedure = authedProcedure.use(async function isPaid(opts) {
+  const { ctx } = opts;
+
+  if (!ctx.subscription || !ctx.subscription.hasPremiumAccess) {
+    throw new TRPCError({
+      code: "FORBIDDEN",
+      message: "This feature requires a premium subscription",
+    });
+  }
+
+  return opts.next({
+    ctx,
   });
 });

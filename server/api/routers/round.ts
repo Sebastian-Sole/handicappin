@@ -2,6 +2,7 @@ import { z } from "zod";
 import { createTRPCRouter, authedProcedure } from "@/server/api/trpc";
 import { round, score, profile, teeInfo, course, hole } from "@/db/schema";
 import { eq, and } from "drizzle-orm";
+import { TRPCError } from "@trpc/server";
 
 import { db } from "@/db";
 import { Scorecard, scorecardSchema } from "@/types/scorecard";
@@ -11,6 +12,7 @@ import {
   calculateScoreDifferential,
   calculateAdjustedGrossScore,
 } from "@/utils/calculations/handicap";
+import { canAddRound, getUserSubscription } from "@/utils/billing/entitlements";
 
 type RoundCalculations = {
   adjustedGrossScore: number;
@@ -160,6 +162,29 @@ export const roundRouter = createTRPCRouter({
         teeTime,
         userId,
       } = input;
+
+      // ============================================
+      // NEW: Check round limit for free tier users
+      // ============================================
+      const canAdd = await canAddRound(userId);
+
+      if (!canAdd) {
+        const subscription = await getUserSubscription(userId);
+
+        if (subscription?.plan === "free") {
+          throw new TRPCError({
+            code: "FORBIDDEN",
+            message:
+              "You've reached your 25 round limit. Please upgrade to continue tracking rounds.",
+          });
+        }
+
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message:
+            "Unable to add round. Please check your subscription status.",
+        });
+      }
 
       if (!teePlayed.holes) {
         throw new Error("Tee played has no holes");

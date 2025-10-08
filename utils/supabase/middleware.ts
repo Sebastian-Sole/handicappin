@@ -53,7 +53,9 @@ export async function updateSession(request: NextRequest) {
     "/",
   ];
 
-  const isPublic = publicPaths.some((path) => pathname.startsWith(path));
+  const isPublic = publicPaths.some(
+    (path) => pathname === path || pathname.startsWith(path + "/")
+  );
 
   if (!user && pathname === "/update-password") {
     const resetToken = request.nextUrl.searchParams.get("token");
@@ -99,6 +101,53 @@ export async function updateSession(request: NextRequest) {
     const url = request.nextUrl.clone();
     url.pathname = "/";
     return NextResponse.redirect(url);
+  }
+
+  // ============================================
+  // NEW: Entitlement check
+  // ============================================
+  if (
+    user &&
+    !isPublic &&
+    pathname !== "/onboarding" &&
+    pathname !== "/billing"
+  ) {
+    // Check if user has a subscription in billing.subscriptions
+    // Using raw SQL query since Supabase client doesn't support custom schemas
+    console.log("🔍 Middleware: Checking subscription for user:", user.id);
+    const { data: subscription, error } = await supabase.rpc(
+      "get_user_subscription",
+      {
+        p_user_id: user.id,
+      }
+    );
+
+    console.log("📊 Middleware: Subscription data:", subscription);
+    if (error) {
+      console.log("❌ Middleware: Error:", error);
+    }
+
+    // If no subscription exists, redirect to onboarding
+    if (!subscription || subscription.length === 0) {
+      console.log(
+        "🚫 Middleware: No subscription found, redirecting to onboarding"
+      );
+      const url = request.nextUrl.clone();
+      url.pathname = "/onboarding";
+      return NextResponse.redirect(url);
+    }
+
+    // Optional: Check if subscription is active
+    // For past_due or incomplete, you might want to redirect to billing page
+    const sub = subscription[0]; // RPC returns array
+    console.log("✅ Middleware: Found subscription:", sub);
+    if (sub.status === "past_due" || sub.status === "incomplete") {
+      console.log("⚠️ Middleware: Subscription issue, redirecting to billing");
+      const url = request.nextUrl.clone();
+      url.pathname = "/billing";
+      url.searchParams.set("error", "subscription_issue");
+      return NextResponse.redirect(url);
+    }
   }
 
   // IMPORTANT: You *must* return the supabaseResponse object as it is. If you're

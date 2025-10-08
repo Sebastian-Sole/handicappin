@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Avatar } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
 import { Sheet, SheetTrigger, SheetContent } from "@/components/ui/sheet";
 import { createServerComponentClient } from "@/utils/supabase/server";
 import LogoutButton from "../auth/logoutButton";
@@ -14,6 +15,7 @@ import {
 } from "../ui/dropdown-menu";
 import {
   CirclePlus,
+  CreditCard,
   LayoutDashboardIcon,
   Menu,
   SettingsIcon,
@@ -22,12 +24,14 @@ import {
 } from "lucide-react";
 import { Separator } from "../ui/separator";
 import ThemeButton from "./themeButton";
+import { getUserSubscription } from "@/utils/billing/entitlements";
 
 export async function Navbar() {
   const supabase = await createServerComponentClient();
   const { data } = await supabase.auth.getUser();
 
   const isAuthed = data?.user;
+  const subscription = isAuthed ? await getUserSubscription(isAuthed.id) : null;
 
   return (
     <header className="fixed top-0 z-50 w-full bg-background shadow-xs">
@@ -72,6 +76,30 @@ export async function Navbar() {
               </Link>
             </nav>
             <div className="flex items-center gap-4 xs:w-1/3 justify-end">
+              {subscription && (
+                <>
+                  {subscription.plan === "free" && (
+                    <Link href="/onboarding" className="lg:block hidden">
+                      <Button size="sm" variant="outline">
+                        Upgrade
+                      </Button>
+                    </Link>
+                  )}
+                  <Badge
+                    variant={
+                      subscription.plan === "free" ? "secondary" : "default"
+                    }
+                    className="lg:block hidden"
+                  >
+                    {subscription.plan === "free"
+                      ? "Free"
+                      : subscription.isLifetime
+                      ? "Lifetime"
+                      : subscription.plan.charAt(0).toUpperCase() +
+                        subscription.plan.slice(1)}
+                  </Badge>
+                </>
+              )}
               <Link href={"/rounds/add"} className="xl:block hidden">
                 <Button variant={"default"}>Add Round</Button>
               </Link>
@@ -115,6 +143,12 @@ export async function Navbar() {
                     <DropdownMenuItem>
                       <CirclePlus className="h-4 w-4 mr-2" />
                       Add Round
+                    </DropdownMenuItem>
+                  </Link>
+                  <Link href={"/billing"}>
+                    <DropdownMenuItem>
+                      <CreditCard className="h-4 w-4 mr-2" />
+                      Billing
                     </DropdownMenuItem>
                   </Link>
                   <DropdownMenuSeparator />
@@ -165,13 +199,27 @@ export async function Navbar() {
                         Dashboard
                       </Link>
                       <Link
+                        href="/billing"
+                        className="hover:underline hover:underline-offset-4"
+                        prefetch={true}
+                      >
+                        Billing
+                      </Link>
+                      <Link
                         href="/contact"
                         className="hover:underline hover:underline-offset-4"
                         prefetch={true}
                       >
                         Contact
                       </Link>
-
+                      {subscription && subscription.plan === "free" && (
+                        <Link href="/onboarding">
+                          <Button variant="outline" className="w-full">
+                            Upgrade
+                          </Button>
+                        </Link>
+                      )}
+                      <Separator />
                       <LogoutButton />
                     </div>
                   </SheetContent>
