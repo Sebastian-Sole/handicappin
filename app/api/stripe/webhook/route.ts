@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { headers } from "next/headers";
 import Stripe from "stripe";
-import { stripe, mapPriceToPlan } from "@/lib/stripe";
+import { stripe } from "@/lib/stripe";
 import { env } from "@/env";
 import { createClient } from "@supabase/supabase-js";
 import type { Database } from "@/types/supabase";
@@ -19,214 +19,34 @@ const supabaseAdmin = createClient<Database>(
 );
 
 /**
- * Log webhook event to billing.events table
+ * Handle customer.created event - create local customer record
  */
-async function logEvent(
-  type: string,
-  payload: unknown,
-  userId?: string | null
-) {
-  // Log event to public schema billing_events table
-  await supabaseAdmin.from("billing_events").insert({
-    user_id: userId ?? null,
-    type,
-    payload: JSON.stringify(payload),
-  });
-}
-
-/**
- * Handle checkout.session.completed event
- */
-async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
-  const userId =
-    session.metadata?.supabase_user_id || session.client_reference_id;
+async function handleCustomerCreated(customer: Stripe.Customer) {
+  const userId = customer.metadata?.supabase_user_id;
 
   if (!userId) {
-    console.error("No user ID in checkout session metadata");
+    console.error("No supabase_user_id in customer metadata");
     return;
   }
 
-  console.log("✅ Processing checkout for user:", userId);
-  await logEvent("checkout.session.completed", session, userId);
+  console.log("✅ Creating Stripe customer record for user:", userId);
 
-  if (session.mode === "subscription") {
-    // Subscription mode: fetch subscription details
-    const subscriptionId = session.subscription as string;
-    const subscription = await stripe.subscriptions.retrieve(subscriptionId);
-
-    console.log(
-      "📊 Full subscription object:",
-      JSON.stringify(subscription, null, 2)
-    );
-
-    const priceId = subscription.items.data[0]?.price.id;
-    if (!priceId) {
-      console.error("No price ID in subscription");
-      return;
-    }
-
-    const plan = mapPriceToPlan(priceId);
-    if (!plan) {
-      console.error("Unknown price ID:", priceId);
-      return;
-    }
-
-    // Upsert subscription using RPC
-    // Get current_period_end from subscription items (not root subscription object)
-    const subscriptionItem = subscription.items.data[0];
-    const currentPeriodEnd = subscriptionItem.current_period_end;
-    const currentPeriodEndISO = currentPeriodEnd
-      ? new Date(currentPeriodEnd * 1000).toISOString()
-      : null;
-
-    console.log("💾 Upserting subscription:", {
-      userId,
-      subscriptionId,
-      plan,
-      status: subscription.status,
-      currentPeriodEnd,
-      currentPeriodEndISO,
-    });
-
-    // Call RPC function in public schema (Supabase client limitation)
-    const { error: rpcError } = await supabaseAdmin.rpc("upsert_subscription", {
-      p_user_id: userId,
-      p_stripe_subscription_id: subscriptionId,
-      p_plan: plan,
-      p_status: subscription.status,
-      p_current_period_end: currentPeriodEndISO,
-      p_is_lifetime: false,
-    });
-
-    if (rpcError) {
-      console.error("❌ RPC Error:", rpcError);
-      throw rpcError;
-    }
-
-    console.log("✅ Subscription created successfully in database!");
-  } else if (session.mode === "payment") {
-    // One-time payment (lifetime)
-    console.log("💰 Processing one-time payment for lifetime access");
-
-    // Call RPC function in public schema (Supabase client limitation)
-    const { error: rpcError } = await supabaseAdmin.rpc("upsert_subscription", {
-      p_user_id: userId,
-      p_stripe_subscription_id: null,
-      p_plan: "unlimited",
-      p_status: "active",
-      p_current_period_end: null,
-      p_is_lifetime: true,
-    });
-
-    if (rpcError) {
-      console.error("❌ Failed to create lifetime subscription:", rpcError);
-      throw rpcError;
-    }
-
-    console.log("✅ Lifetime subscription created successfully");
-  }
-}
-
-/**
- * Handle customer.subscription.* events
- */
-async function handleSubscriptionUpdate(subscription: Stripe.Subscription) {
-  const userId = subscription.metadata?.supabase_user_id;
-
-  if (!userId) {
-    console.error("No user ID in subscription metadata");
-    return;
-  }
-
-  await logEvent("customer.subscription.updated", subscription, userId);
-
-  const priceId = subscription.items.data[0]?.price.id;
-  if (!priceId) {
-    console.error("No price ID in subscription");
-    return;
-  }
-
-  const plan = mapPriceToPlan(priceId);
-  if (!plan) {
-    console.error("Unknown price ID:", priceId);
-    return;
-  }
-
-  // Get current_period_end from subscription items
-  const subscriptionItem = subscription.items.data[0];
-  const currentPeriodEnd = subscriptionItem?.current_period_end as
-    | number
-    | undefined;
-  const currentPeriodEndISO = currentPeriodEnd
-    ? new Date(currentPeriodEnd * 1000).toISOString()
-    : null;
-
-  // Call RPC function in public schema (Supabase client limitation)
-  const { error: rpcError } = await supabaseAdmin.rpc("upsert_subscription", {
-    p_user_id: userId,
-    p_stripe_subscription_id: subscription.id,
-    p_plan: plan,
-    p_status: subscription.status,
-    p_current_period_end: currentPeriodEndISO,
-    p_is_lifetime: false,
+  // Insert customer record into local table
+  const { error } = await supabaseAdmin.from("stripe_customers").upsert({
+    user_id: userId,
+    stripe_customer_id: customer.id,
   });
 
-  if (rpcError) {
-    console.error("❌ RPC Error updating subscription:", rpcError);
-    throw rpcError;
+  if (error) {
+    console.error("❌ Failed to create customer record:", error);
+    throw error;
   }
+
+  console.log("✅ Customer record created successfully");
 }
 
 /**
- * Handle customer.subscription.deleted event
- */
-async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
-  const userId = subscription.metadata?.supabase_user_id;
-
-  if (!userId) {
-    console.error("No user ID in subscription metadata");
-    return;
-  }
-
-  await logEvent("customer.subscription.deleted", subscription, userId);
-
-  const priceId = subscription.items.data[0]?.price.id;
-  if (!priceId) {
-    console.error("No price ID in subscription");
-    return;
-  }
-
-  const plan = mapPriceToPlan(priceId);
-  if (!plan) {
-    console.error("Unknown price ID:", priceId);
-    return;
-  }
-
-  // Get current_period_end from subscription items
-  const subscriptionItem = subscription.items.data[0];
-  const currentPeriodEnd = subscriptionItem.current_period_end;
-  const currentPeriodEndISO = currentPeriodEnd
-    ? new Date(currentPeriodEnd * 1000).toISOString()
-    : null;
-
-  // Call RPC function in public schema (Supabase client limitation)
-  const { error: rpcError } = await supabaseAdmin.rpc("upsert_subscription", {
-    p_user_id: userId,
-    p_stripe_subscription_id: subscription.id,
-    p_plan: plan,
-    p_status: "canceled",
-    p_current_period_end: currentPeriodEndISO,
-    p_is_lifetime: false,
-  });
-
-  if (rpcError) {
-    console.error("❌ RPC Error deleting subscription:", rpcError);
-    throw rpcError;
-  }
-}
-
-/**
- * Main webhook handler
+ * Main webhook handler - simplified to only handle essential events
  */
 export async function POST(request: NextRequest) {
   const body = await request.text();
@@ -252,31 +72,34 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    // Log all events for debugging
-    await logEvent(event.type, event.data.object);
+    console.log(`📨 Processing webhook event: ${event.type}`);
 
-    // Handle events
+    // Handle only essential events
     switch (event.type) {
+      case "customer.created":
+        await handleCustomerCreated(event.data.object);
+        break;
+
       case "checkout.session.completed":
-        await handleCheckoutCompleted(event.data.object);
+        // Just log - access control will query Stripe directly
+        console.log(
+          "✅ Checkout completed for customer:",
+          event.data.object.customer
+        );
         break;
 
       case "customer.subscription.created":
       case "customer.subscription.updated":
-        await handleSubscriptionUpdate(event.data.object);
-        break;
-
       case "customer.subscription.deleted":
-        await handleSubscriptionDeleted(event.data.object);
-        break;
-
-      case "invoice.payment_succeeded":
-      case "invoice.payment_failed":
-        // These are already logged above, no additional processing needed
+        // Just log - access control will query Stripe directly
+        console.log(
+          `📊 Subscription ${event.type} for customer:`,
+          event.data.object.customer
+        );
         break;
 
       default:
-        console.log(`Unhandled event type: ${event.type}`);
+        console.log(`ℹ️ Unhandled event type: ${event.type}`);
     }
 
     return NextResponse.json({ received: true });

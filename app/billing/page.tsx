@@ -1,9 +1,7 @@
 import { redirect } from "next/navigation";
 import { createServerComponentClient } from "@/utils/supabase/server";
-import {
-  getUserSubscription,
-  getRemainingRounds,
-} from "@/utils/billing/entitlements";
+import { getComprehensiveUserAccess } from "@/utils/billing/access-control";
+import { getRemainingRounds } from "@/utils/billing/entitlements";
 import { BillingPortalButton } from "@/components/billing/portal-button";
 import { UpgradePrompt } from "@/components/billing/upgrade-prompt";
 
@@ -22,11 +20,11 @@ export default async function BillingPage({
     redirect("/login");
   }
 
-  const subscription = await getUserSubscription(user.id);
+  const subscription = await getComprehensiveUserAccess(user.id);
 
   console.log("subscription", subscription);
 
-  if (!subscription) {
+  if (!subscription.hasAccess) {
     redirect("/onboarding");
   }
 
@@ -62,7 +60,9 @@ export default async function BillingPage({
 
             <p>
               <span className="font-semibold">Status:</span>{" "}
-              <span className="capitalize">{subscription.status}</span>
+              <span className="capitalize">
+                {subscription.hasAccess ? "active" : "inactive"}
+              </span>
             </p>
 
             {subscription.currentPeriodEnd && (

@@ -3,7 +3,7 @@ import { createServerComponentClient } from "@/utils/supabase/server";
 import { createPortalSession } from "@/lib/stripe";
 import { env } from "@/env";
 import { db } from "@/db";
-import { billingCustomers } from "@/db/schema";
+import { stripeCustomers } from "@/db/schema";
 import { eq } from "drizzle-orm";
 
 export async function POST(request: NextRequest) {
@@ -22,8 +22,8 @@ export async function POST(request: NextRequest) {
     // 2. Get Stripe customer ID
     const customer = await db
       .select()
-      .from(billingCustomers)
-      .where(eq(billingCustomers.userId, user.id))
+      .from(stripeCustomers)
+      .where(eq(stripeCustomers.userId, user.id))
       .limit(1);
 
     if (!customer[0]) {

@@ -333,11 +333,12 @@ export type Score = InferSelectModel<typeof score>;
 // BILLING SCHEMA
 // ============================================
 
-// Billing tables moved to public schema for Supabase compatibility
+// Simplified billing system - Stripe-first approach
+// Only store minimal customer mapping, query Stripe directly for subscription status
 
-// billing_customers - Links Supabase users to Stripe customers
-export const billingCustomers = pgTable(
-  "billing_customers",
+// stripe_customers - Minimal mapping between Supabase users and Stripe customers
+export const stripeCustomers = pgTable(
+  "stripe_customers",
   {
     userId: uuid("user_id")
       .primaryKey()
@@ -355,37 +356,7 @@ export const billingCustomers = pgTable(
       to: ["authenticated"],
       using: sql`(auth.uid()::uuid = user_id)`,
     }),
-  ]
-);
-
-export const billingCustomersSchema = createSelectSchema(billingCustomers);
-export type BillingCustomer = InferSelectModel<typeof billingCustomers>;
-
-// billing_subscriptions - Stores subscription status and entitlements
-export const billingSubscriptions = pgTable(
-  "billing_subscriptions",
-  {
-    userId: uuid("user_id")
-      .primaryKey()
-      .notNull()
-      .references(() => usersInAuth.id, { onDelete: "cascade" }),
-    stripeSubscriptionId: text("stripe_subscription_id"), // NULL for free tier and lifetime
-    plan: text("plan").notNull(), // 'free' | 'premium' | 'unlimited'
-    status: text("status").notNull(), // 'active' | 'canceled' | 'past_due' | 'incomplete' | 'trialing'
-    currentPeriodEnd: timestamp("current_period_end"), // NULL for free and lifetime
-    isLifetime: boolean("is_lifetime").default(false).notNull(),
-    updatedAt: timestamp("updated_at")
-      .default(sql`CURRENT_TIMESTAMP`)
-      .notNull(),
-  },
-  (table) => [
-    pgPolicy("Users can view their own subscription", {
-      as: "permissive",
-      for: "select",
-      to: ["authenticated"],
-      using: sql`(auth.uid()::uuid = user_id)`,
-    }),
-    pgPolicy("Service role can manage subscriptions", {
+    pgPolicy("Service role can manage customer records", {
       as: "permissive",
       for: "all",
       to: ["service_role"],
@@ -394,37 +365,5 @@ export const billingSubscriptions = pgTable(
   ]
 );
 
-export const billingSubscriptionsSchema =
-  createSelectSchema(billingSubscriptions);
-export type BillingSubscription = InferSelectModel<typeof billingSubscriptions>;
-
-// billing_events - Audit log for webhook events
-export const billingEvents = pgTable(
-  "billing_events",
-  {
-    id: serial("id").primaryKey(),
-    userId: uuid("user_id"), // NULL if event not tied to specific user
-    type: text("type").notNull(),
-    payload: text("payload").notNull(), // JSON string
-    createdAt: timestamp("created_at")
-      .default(sql`CURRENT_TIMESTAMP`)
-      .notNull(),
-  },
-  (table) => [
-    pgPolicy("Service role can insert events", {
-      as: "permissive",
-      for: "insert",
-      to: ["service_role"],
-      withCheck: sql`true`,
-    }),
-    pgPolicy("Users can view their own events", {
-      as: "permissive",
-      for: "select",
-      to: ["authenticated"],
-      using: sql`(auth.uid()::uuid = user_id)`,
-    }),
-  ]
-);
-
-export const billingEventsSchema = createSelectSchema(billingEvents);
-export type BillingEvent = InferSelectModel<typeof billingEvents>;
+export const stripeCustomersSchema = createSelectSchema(stripeCustomers);
+export type StripeCustomer = InferSelectModel<typeof stripeCustomers>;

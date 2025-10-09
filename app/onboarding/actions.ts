@@ -14,21 +14,8 @@ export async function createFreeTierSubscription(userId: string) {
     throw new Error("Unauthorized");
   }
 
-  // Create free tier subscription in billing.subscriptions
-  // Using type assertion since billing schema types haven't been regenerated yet
-  const { error } = await supabase.from("billing_subscriptions").insert({
-    user_id: userId,
-    stripe_subscription_id: null,
-    plan: "free",
-    status: "active",
-    current_period_end: null,
-    is_lifetime: false,
-  });
-
-  if (error) {
-    console.error("Free tier creation error:", error);
-    throw new Error("Failed to create free tier subscription");
-  }
-
+  // With Stripe-first approach, free tier users don't need a subscription record
+  // Access control will query Stripe directly and default to free tier if no subscription exists
+  console.log("✅ Free tier access granted (no subscription record needed)");
   return { success: true };
 }

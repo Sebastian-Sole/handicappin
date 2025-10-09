@@ -114,7 +114,7 @@ export const authedProcedure = t.procedure.use(async function isAuthed(opts) {
 export const paidProcedure = authedProcedure.use(async function isPaid(opts) {
   const { ctx } = opts;
 
-  if (!ctx.subscription || !ctx.subscription.hasPremiumAccess) {
+  if (!ctx.subscription || !ctx.subscription.hasAccess) {
     throw new TRPCError({
       code: "FORBIDDEN",
       message: "This feature requires a premium subscription",

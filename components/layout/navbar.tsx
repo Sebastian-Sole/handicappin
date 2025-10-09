@@ -93,7 +93,7 @@ export async function Navbar() {
                   >
                     {subscription.plan === "free"
                       ? "Free"
-                      : subscription.isLifetime
+                      : (subscription as any).isLifetime
                       ? "Lifetime"
                       : subscription.plan.charAt(0).toUpperCase() +
                         subscription.plan.slice(1)}
