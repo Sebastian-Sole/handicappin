@@ -51,6 +51,7 @@ export async function updateSession(request: NextRequest) {
     "/api",
     "/verify-email",
     "/forgot-password",
+    "/onboarding",
     "/",
   ];
 

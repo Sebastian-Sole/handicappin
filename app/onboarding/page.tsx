@@ -17,7 +17,7 @@ export default async function OnboardingPage() {
   // Check if user already has a subscription
   const subscription = await getUserSubscription(user.id);
 
-  if (subscription) {
+  if (subscription.hasAccess) {
     // User already has entitlement, redirect to dashboard
     redirect("/dashboard");
   }
