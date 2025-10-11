@@ -35,6 +35,11 @@ export const profile = pgTable(
     createdAt: timestamp()
       .default(sql`CURRENT_TIMESTAMP`)
       .notNull(),
+
+    // Billing/plan tracking fields
+    roundsUsed: integer("rounds_used").default(0).notNull(),
+    planSelected: text("plan_selected"),
+    planSelectedAt: timestamp("plan_selected_at"),
   },
   (table) => [
     uniqueIndex("profile_email_key").using(

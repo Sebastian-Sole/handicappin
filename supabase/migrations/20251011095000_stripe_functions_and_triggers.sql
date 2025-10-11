@@ -1,3 +1,12 @@
+-- Migration: Stripe Functions and Triggers
+-- Purpose: Add database functions and triggers needed for Stripe integration
+--          This complements the Drizzle-generated schema with business logic
+--          Note: RLS policies for stripe_customers are created in the main migration
+
+-- ============================================
+-- HANDICAP ENGINE TRIGGER FUNCTION
+-- ============================================
+
 -- Create debug log table for production
 CREATE TABLE IF NOT EXISTS public.trigger_debug_log (
   id SERIAL PRIMARY KEY,
@@ -33,7 +42,7 @@ BEGIN
     SELECT COUNT(*) > 0 INTO is_local
     FROM vault.decrypted_secrets
     WHERE name = 'SUPABASE_SERVICE_ROLE_KEY';
-    
+
     -- If we can't access the table or it's empty, we're likely in local development
     is_local := NOT is_local;
   EXCEPTION
@@ -46,7 +55,17 @@ BEGIN
   IF is_local THEN
     url := 'http://host.docker.internal:54321/functions/v1/handicap-engine';
   ELSE
-    url := 'https://lssnaapatrurmhbbqadb.supabase.co/functions/v1/handicap-engine';
+    -- Production: get URL from vault to avoid hardcoding in repo
+    SELECT secret INTO url
+    FROM vault.decrypted_secrets
+    WHERE name = 'HANDICAP_ENGINE_URL'
+    ORDER BY created_at DESC
+    LIMIT 1;
+
+    -- Fallback or validation
+    IF url IS NULL THEN
+      RAISE EXCEPTION 'HANDICAP_ENGINE_URL not found in vault.decrypted_secrets';
+    END IF;
   END IF;
 
   -- Determine whether to use NEW or OLD depending on operation
@@ -156,3 +175,91 @@ CREATE TRIGGER trigger_handicap_recalculation
   AFTER INSERT OR UPDATE OR DELETE ON public.round
   FOR EACH ROW
   EXECUTE FUNCTION public.notify_handicap_engine();
+
+-- ============================================
+-- APPROVAL STATUS CASCADE TRIGGERS
+-- ============================================
+
+-- Function to handle approval status cascading to rounds
+-- This function checks if a round's course and tee are both approved, and if so, approves the round
+CREATE OR REPLACE FUNCTION public.cascade_approval_to_rounds()
+RETURNS trigger
+LANGUAGE plpgsql
+SECURITY INVOKER
+SET search_path = ''
+AS $$
+DECLARE
+  affected_rounds_count integer;
+BEGIN
+  -- Only proceed if the approval status was changed to 'approved'
+  IF new."approvalStatus" = 'approved' AND (old."approvalStatus" IS NULL OR old."approvalStatus" != 'approved') THEN
+    
+    IF tg_table_name = 'course' THEN
+      -- Course was approved: update rounds where both course and tee are approved
+      UPDATE public.round 
+      SET "approvalStatus" = 'approved'
+      WHERE "courseId" = new.id
+        AND "approvalStatus" != 'approved'
+        AND "teeId" IN (
+          SELECT t.id 
+          FROM public."teeInfo" t 
+          WHERE t."approvalStatus" = 'approved'
+        );
+      
+      GET DIAGNOSTICS affected_rounds_count = row_count;
+      
+      -- Log the operation for debugging (optional)
+      IF affected_rounds_count > 0 THEN
+        RAISE NOTICE 'Course % approved: automatically approved % rounds', new.name, affected_rounds_count;
+      END IF;
+      
+    ELSIF tg_table_name = 'teeInfo' THEN
+      -- Tee was approved: update rounds where both course and tee are approved
+      UPDATE public.round 
+      SET "approvalStatus" = 'approved'
+      WHERE "teeId" = new.id
+        AND "approvalStatus" != 'approved'
+        AND "courseId" IN (
+          SELECT c.id 
+          FROM public.course c 
+          WHERE c."approvalStatus" = 'approved'
+        );
+      
+      GET DIAGNOSTICS affected_rounds_count = row_count;
+      
+      -- Log the operation for debugging (optional)
+      IF affected_rounds_count > 0 THEN
+        RAISE NOTICE 'Tee % approved: automatically approved % rounds', new.name, affected_rounds_count;
+      END IF;
+      
+    END IF;
+  END IF;
+  
+  RETURN new;
+END;
+$$;
+
+-- Create trigger on course table
+-- Fires after update to check if course approval should cascade to rounds
+DROP TRIGGER IF EXISTS trigger_course_approval_cascade ON public.course;
+CREATE TRIGGER trigger_course_approval_cascade
+  AFTER UPDATE ON public.course
+  FOR EACH ROW
+  WHEN (new."approvalStatus" = 'approved' AND old."approvalStatus" != 'approved')
+  EXECUTE FUNCTION public.cascade_approval_to_rounds();
+
+-- Create trigger on teeInfo table  
+-- Fires after update to check if tee approval should cascade to rounds
+DROP TRIGGER IF EXISTS trigger_tee_approval_cascade ON public."teeInfo";
+CREATE TRIGGER trigger_tee_approval_cascade
+  AFTER UPDATE ON public."teeInfo"
+  FOR EACH ROW
+  WHEN (new."approvalStatus" = 'approved' AND old."approvalStatus" != 'approved')
+  EXECUTE FUNCTION public.cascade_approval_to_rounds();
+
+-- ============================================
+-- COMMENTS FOR DOCUMENTATION
+-- ============================================
+
+-- Add comment to document the Stripe-first approach
+COMMENT ON TABLE public.stripe_customers IS 'Minimal Stripe customer mapping. Access control queries Stripe directly for real-time subscription status.';

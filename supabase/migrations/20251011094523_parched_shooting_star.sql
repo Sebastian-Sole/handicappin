@@ -1,7 +1,10 @@
 CREATE TABLE "course" (
 	"id" serial PRIMARY KEY NOT NULL,
 	"name" text NOT NULL,
-	"approvalStatus" text DEFAULT 'pending' NOT NULL
+	"approvalStatus" text DEFAULT 'pending' NOT NULL,
+	"country" text DEFAULT 'Scotland' NOT NULL,
+	"city" text DEFAULT 'St. Andrews' NOT NULL,
+	"website" text
 );
 --> statement-breakpoint
 ALTER TABLE "course" ENABLE ROW LEVEL SECURITY;--> statement-breakpoint
@@ -57,6 +60,14 @@ CREATE TABLE "score" (
 );
 --> statement-breakpoint
 ALTER TABLE "score" ENABLE ROW LEVEL SECURITY;--> statement-breakpoint
+CREATE TABLE "stripe_customers" (
+	"user_id" uuid PRIMARY KEY NOT NULL,
+	"stripe_customer_id" text NOT NULL,
+	"created_at" timestamp DEFAULT CURRENT_TIMESTAMP NOT NULL,
+	CONSTRAINT "stripe_customers_stripe_customer_id_unique" UNIQUE("stripe_customer_id")
+);
+--> statement-breakpoint
+ALTER TABLE "stripe_customers" ENABLE ROW LEVEL SECURITY;--> statement-breakpoint
 CREATE TABLE "teeInfo" (
 	"id" serial PRIMARY KEY NOT NULL,
 	"courseId" integer NOT NULL,
@@ -93,9 +104,12 @@ ALTER TABLE "round" ADD CONSTRAINT "round_teeId_fkey" FOREIGN KEY ("teeId") REFE
 ALTER TABLE "score" ADD CONSTRAINT "score_roundId_fkey" FOREIGN KEY ("roundId") REFERENCES "public"."round"("id") ON DELETE cascade ON UPDATE cascade;--> statement-breakpoint
 ALTER TABLE "score" ADD CONSTRAINT "score_holeId_fkey" FOREIGN KEY ("holeId") REFERENCES "public"."hole"("id") ON DELETE restrict ON UPDATE cascade;--> statement-breakpoint
 ALTER TABLE "score" ADD CONSTRAINT "score_userId_fkey" FOREIGN KEY ("userId") REFERENCES "public"."profile"("id") ON DELETE cascade ON UPDATE cascade;--> statement-breakpoint
+ALTER TABLE "stripe_customers" ADD CONSTRAINT "stripe_customers_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "auth"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "teeInfo" ADD CONSTRAINT "teeInfo_courseId_fkey" FOREIGN KEY ("courseId") REFERENCES "public"."course"("id") ON DELETE cascade ON UPDATE cascade;--> statement-breakpoint
-CREATE UNIQUE INDEX "course_name_key" ON "course" USING btree ("name" text_ops);--> statement-breakpoint
+CREATE UNIQUE INDEX "course_name_country_city_key" ON "course" USING btree ("name" text_ops,"country" text_ops,"city" text_ops);--> statement-breakpoint
+CREATE UNIQUE INDEX "hole_teeId_holeNumber_key" ON "hole" USING btree ("teeId" int4_ops,"holeNumber" int4_ops);--> statement-breakpoint
 CREATE UNIQUE INDEX "profile_email_key" ON "profile" USING btree ("email" text_ops);--> statement-breakpoint
+CREATE UNIQUE INDEX "teeInfo_courseId_name_gender_key" ON "teeInfo" USING btree ("courseId" int4_ops,"name" text_ops,"gender" text_ops);--> statement-breakpoint
 CREATE POLICY "Authenticated users can view courses" ON "course" AS PERMISSIVE FOR SELECT TO "authenticated" USING (true);--> statement-breakpoint
 CREATE POLICY "Authenticated users can view holes" ON "hole" AS PERMISSIVE FOR SELECT TO "authenticated" USING (true);--> statement-breakpoint
 CREATE POLICY "Users can view their own profile" ON "profile" AS PERMISSIVE FOR SELECT TO "authenticated" USING ((auth.uid()::uuid = id));--> statement-breakpoint
@@ -110,4 +124,6 @@ CREATE POLICY "Users can view their own scores" ON "score" AS PERMISSIVE FOR SEL
 CREATE POLICY "Users can insert their own scores" ON "score" AS PERMISSIVE FOR INSERT TO "authenticated" WITH CHECK ((auth.uid()::uuid = "userId"));--> statement-breakpoint
 CREATE POLICY "Users can update their own scores" ON "score" AS PERMISSIVE FOR UPDATE TO "authenticated" USING ((auth.uid()::uuid = "userId"));--> statement-breakpoint
 CREATE POLICY "Users can delete their own scores" ON "score" AS PERMISSIVE FOR DELETE TO "authenticated" USING ((auth.uid()::uuid = "userId"));--> statement-breakpoint
+CREATE POLICY "Users can view their own customer record" ON "stripe_customers" AS PERMISSIVE FOR SELECT TO "authenticated" USING ((auth.uid()::uuid = user_id));--> statement-breakpoint
+CREATE POLICY "Service role can manage customer records" ON "stripe_customers" AS PERMISSIVE FOR ALL TO "service_role" USING (true);--> statement-breakpoint
 CREATE POLICY "Authenticated users can view tee info" ON "teeInfo" AS PERMISSIVE FOR SELECT TO "authenticated" USING (true);

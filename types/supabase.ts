@@ -84,6 +84,9 @@ export type Database = {
           id: string
           initialHandicapIndex: number
           name: string | null
+          plan_selected: string | null
+          plan_selected_at: string | null
+          rounds_used: number | null
           verified: boolean
         }
         Insert: {
@@ -93,6 +96,9 @@ export type Database = {
           id: string
           initialHandicapIndex?: number
           name?: string | null
+          plan_selected?: string | null
+          plan_selected_at?: string | null
+          rounds_used?: number | null
           verified?: boolean
         }
         Update: {
@@ -102,6 +108,9 @@ export type Database = {
           id?: string
           initialHandicapIndex?: number
           name?: string | null
+          plan_selected?: string | null
+          plan_selected_at?: string | null
+          rounds_used?: number | null
           verified?: boolean
         }
         Relationships: []

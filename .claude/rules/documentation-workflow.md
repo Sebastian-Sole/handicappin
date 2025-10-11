@@ -1,0 +1,403 @@
+---
+alwaysApply: true
+---
+
+# Documentation Maintenance Workflow
+
+## 🎯 **Core Principle**
+
+Every completed task MUST update the knowledge base. Future developers (including yourself) depend on accurate, up-to-date documentation.
+
+### **Critical Constraints**
+
+- **AGENTS AND COMMANDS ARE IMMUTABLE**: Never modify files in `.claude/agents/` or `.claude/commands/`
+- **Research drives planning**: All plans must be based on comprehensive research
+- **Documentation is source of truth**: Always update documentation after task completion
+- **Experiences capture learning**: Document both successes and failures for future reference
+
+## 📋 **Mandatory Documentation Steps**
+
+### **After ANY Development Task**:
+
+#### 1. **Update Ticket Status** (Always Required)
+
+```bash
+# File: .claude/tickets/[ticket-number]-[description].md
+- Mark completed acceptance criteria: [ ] → [x]
+- Update ticket status if applicable
+- Add completion notes and lessons learned
+- Reference any new experiences created
+```
+
+#### 2. **Document Experiences** (When Applicable)
+
+Create new experience files for:
+
+- ✅ **Complex implementations** - Working patterns and configurations
+- ❌ **Failed approaches** - What didn't work and why
+- 🔍 **External library integration** - API discoveries and gotchas
+- 🚨 **Unexpected issues** - Bugs, compatibility problems, workarounds
+- 💡 **Novel solutions** - Creative workarounds and innovative approaches
+- 📚 **Research findings** - Comprehensive research results from sub-agents
+
+#### 3. **Update Rules** (When Needed)
+
+Modify existing rules for:
+
+- 🚫 **New "don'ts"** - Things that caused problems
+- ✅ **New coding patterns** - Successful approaches to follow
+- 📚 **Dependency updates** - Version changes, compatibility notes
+- 🎯 **Scope changes** - Feature additions/removals
+- 🔧 **Process improvements** - Workflow and methodology updates
+
+#### 4. **Create New Tickets** (When Needed)
+
+Use `@create-ticket.md` command for:
+
+- Follow-up work identified during implementation
+- Related features discovered during development
+- Bug fixes or improvements needed
+- Technical debt items
+
+## 📂 **File Organization**
+
+### **Experience Files Naming**:
+
+```
+.claude/experiences/[component]-[action]-[outcome].mdc
+
+Examples:
+✅ Success: projects-table-sorting-implementation.mdc
+❌ Failure: hey-api-authentication-failed-attempts.mdc
+🔍 Discovery: panda-css-responsive-design-gotchas.mdc
+💡 Solution: nextauth-azure-ad-session-handling.mdc
+📚 Research: performance-metrics-visualization-research.mdc
+```
+
+### **Research Files Structure**:
+
+```
+.claude/experiences/research/
+├── [ticket-number]-[feature-name].mdc  # Research results
+├── [component]-analysis.mdc            # Component-specific research
+└── [integration]-investigation.mdc     # Integration research
+```
+
+### **Plans Structure**:
+
+```
+.claude/plans/
+├── [ticket-number]-[feature-name]/
+│   └── [YYMMDD].mdc                    # Implementation plan
+```
+
+### **Rules Files Structure**:
+
+```
+.claude/rules/
+├── coding-standards.mdc      # Code quality, patterns, workflows
+├── project-scope.mdc         # Boundaries, what's in/out of scope
+├── external-dependencies.mdc # Package management, versions
+├── documentation-workflow.mdc # This file - how to maintain docs
+└── [new-domain].mdc         # Add new rule categories as needed
+```
+
+## 📝 **Documentation Templates**
+
+### **Experience File Template**:
+
+````markdown
+# [Component/Feature] - [Action] Experience
+
+## Problem/Goal
+
+Brief description of what you were trying to achieve.
+
+## Approach Taken
+
+Step-by-step description of what you tried.
+
+## Outcome
+
+- ✅ What worked
+- ❌ What failed
+- 🔍 What you discovered
+
+## Code Examples
+
+```typescript
+// Working implementation
+```
+
+## Gotchas & Pitfalls
+
+- Specific things to watch out for
+- Common mistakes to avoid
+
+## Next Steps
+
+What remains to be done or investigated.
+
+## Impact on Project
+
+How this affects the overall development plan.
+
+## References
+
+- Related ticket: `.claude/tickets/[ticket-number]-[description].md`
+- Research findings: `.claude/experiences/research/[research-file].mdc`
+- Implementation plan: `.claude/plans/[plan-file].mdc`
+````
+
+### **Research File Template**:
+
+```markdown
+---
+date: [Current date and time with timezone in ISO format]
+git_commit: [Current commit hash]
+branch: [Current branch name]
+repository: [Repository name]
+topic: "[Research Question/Topic]"
+tags: [research, codebase, relevant-component-names]
+status: complete
+last_updated: [Current date in YYYY-MM-DD format]
+---
+
+# Research: [Research Question/Topic]
+
+## Research Question
+
+[Original research query]
+
+## Summary
+
+[High-level findings answering the research question]
+
+## Detailed Findings
+
+### [Component/Area 1]
+
+- Finding with reference ([file.ext:line](link))
+- Connection to other components
+- Implementation details
+
+### [Component/Area 2]
+
+...
+
+## Code References
+
+- `path/to/file.py:123` - Description of what's there
+- `another/file.ts:45-67` - Description of the code block
+
+## Architecture Insights
+
+[Patterns, conventions, and design decisions discovered]
+
+## Historical Context (from experiences/)
+
+[Relevant insights from experiences/ directory with references]
+
+## Open Questions
+
+[Any areas that need further investigation]
+```
+
+### **Rules Update Template**:
+
+````markdown
+## New Rule: [Title]
+
+### Context
+
+Why this rule is needed (what problem it prevents).
+
+### Rule
+
+Specific do/don't with examples.
+
+### Examples
+
+```typescript
+// Good
+// Bad
+```
+````
+
+### Enforcement
+
+How to check compliance with this rule.
+
+```
+
+## 🚨 **Critical Documentation Triggers**
+
+### **ALWAYS Document When**:
+1. **External Library Issues**
+   - Props don't work as expected
+   - Type definitions are wrong
+   - Version compatibility problems
+   - Hey API client generation problems
+   - Panda CSS recipe compilation errors
+   - NextAuth Azure AD configuration issues
+
+2. **TypeScript/Compilation Errors**
+   - Complex error resolution
+   - Type system workarounds
+   - Build configuration changes
+   - Complex API type resolution
+   - Panda CSS type system workarounds
+   - Next.js build configuration changes
+
+3. **Architecture Decisions**
+   - Why you chose approach A over B
+   - Performance considerations
+   - Future scalability decisions
+   - Why you chose specific visualization approach
+   - Performance optimization strategies
+   - Responsive design implementation decisions
+
+4. **Integration Challenges**
+   - API connection issues
+   - Real-time data flow problems
+   - State management complexities
+   - Backend API connection issues
+   - Authentication flow problems
+   - Data table performance complexities
+
+5. **Research Discoveries**
+   - New patterns found during codebase research
+   - Integration approaches that work
+   - Performance optimizations discovered
+
+### **NEVER Skip Documentation For**:
+- ❌ "Simple" bug fixes (they often reveal bigger issues)
+- ❌ "Temporary" workarounds (they become permanent)
+- ❌ "Obvious" solutions (not obvious to others)
+- ❌ Failed experiments (future developers will try the same thing)
+- ❌ Research findings (even if not immediately actionable)
+
+## 🔄 **Documentation Update Checklist**
+
+After completing ANY task, verify:
+
+- [ ] **Ticket updated**: Acceptance criteria marked complete
+- [ ] **Experience documented**: If task was complex or failed
+- [ ] **Research saved**: If comprehensive research was conducted
+- [ ] **Rules updated**: If new patterns/constraints emerged
+- [ ] **Code examples included**: Working implementations documented
+- [ ] **Future considerations noted**: What's next or what to avoid
+- [ ] **New tickets created**: If follow-up work is needed
+
+## 📊 **Quality Standards**
+
+### **Good Documentation**:
+- ✅ Specific code examples that work
+- ✅ Clear problem/solution descriptions
+- ✅ Actionable next steps
+- ✅ Lessons learned that prevent future issues
+- ✅ Cross-references to related tickets, plans, and research
+
+### **Poor Documentation**:
+- ❌ Vague descriptions ("it didn't work")
+- ❌ No code examples
+- ❌ Missing context about why something was needed
+- ❌ No consideration of future impact
+- ❌ No references to related work
+
+## 🎯 **Success Metrics**
+
+### **Documentation is Effective When**:
+- Future developers can avoid repeated mistakes
+- Complex setups can be replicated from docs alone
+- Project scope and boundaries are clear to all
+- Technical decisions have recorded rationale
+- Research findings are easily discoverable and actionable
+
+### **Warning Signs**:
+- Repeating the same research/debugging
+- Unclear why certain architectural decisions were made
+- New team members can't get up to speed quickly
+- Code reviews reveal patterns not documented in rules
+- Research findings are not being utilized in planning
+
+## 📚 **Workflow Example: Ticket #0001 Dashboard Implementation**
+
+### **Proper Documentation Flow Demonstrated**
+
+The performance metrics dashboard implementation (ticket #0001) exemplifies the complete documentation workflow:
+
+#### **1. Ticket Status Updates** ✅
+- **File**: `.claude/tickets/0001-performance-dashboard-implementation.md`
+- **Action**: Marked completed acceptance criteria from `[ ]` to `[x]`
+- **Added**: Completion notes with key components, API integration summary, and references
+- **Result**: Clear record of what was accomplished and what remains
+
+#### **2. Experience Documentation** ✅
+- **File**: `.claude/experiences/projects-table-implementation-success.mdc`
+- **Content**: Comprehensive implementation details with working Panda CSS recipes
+- **Value**: Future data table implementations can follow proven patterns
+- **Cross-references**: Links to related tickets, plans, and research
+
+#### **3. Research Documentation** ✅
+- **File**: `.claude/experiences/research/hey-api-authentication-analysis.md`
+- **Purpose**: Documented Azure AD token handling and API client configuration
+- **Impact**: Prevented repeated debugging of authentication flow issues
+
+#### **4. Implementation Artifacts** ✅
+- **Plan File**: `.claude/plans/0001-performance-dashboard-implementation/250924.md`
+- **Component Files**: ProjectsTable, TitleHeader, and related UI components
+- **API Integration**: Hey API client configuration and type definitions
+
+### **Key Success Factors**
+
+1. **Immediate Documentation**: Updated ticket status upon completion
+2. **Comprehensive Coverage**: Documented both successes and challenges
+3. **Future-Focused**: Included specific Panda CSS examples and gotchas
+4. **Cross-Referenced**: Connected related documentation pieces
+5. **Actionable Insights**: Clear next steps and follow-up tickets identified
+
+### **Documentation Completeness Checklist**
+
+Using ticket #0001 as the standard:
+
+- [x] **Ticket marked complete** with specific completion notes
+- [x] **Experience file created** with implementation details
+- [x] **Code examples included** that can be copied and adapted
+- [x] **Gotchas documented** to prevent future issues
+- [x] **Cross-references added** between related documentation
+- [x] **Follow-up work identified** (ticket #0002 for project detail views)
+- [x] **Research saved** for authentication configuration troubleshooting
+
+This comprehensive documentation enables:
+- **Rapid onboarding** of new developers
+- **Confident iteration** on existing dashboard features
+- **Efficient troubleshooting** of similar UI/API issues
+- **Informed planning** of related analytics features
+
+## 🚀 **Agent Integration Guidelines**
+
+### **Working with Sub-Agents**:
+- Always wait for all sub-agent tasks to complete before proceeding
+- Use research findings to inform planning decisions
+- Document agent discoveries in experience files
+- Reference agent research in implementation plans
+
+### **Command Usage**:
+- Use `@create-plan.md` for comprehensive planning
+- Use `@research-codebase.md` for deep investigation
+- Use `@create-ticket.md` for follow-up work
+- Use `@implement-plan.md` for execution
+- Never modify agent or command files
+
+### **Documentation Flow**:
+1. Research → Save to `.claude/experiences/research/`
+2. Planning → Save to `.claude/plans/`
+3. Implementation → Update ticket status
+4. Learning → Save to `.claude/experiences/`
+5. Process improvement → Update rules
+
+---
+
+**Remember**: Documentation is not overhead - it's an investment in project velocity and code quality. The agent-based workflow ensures comprehensive research drives informed planning, which leads to better implementations and continuous learning.
+```
