@@ -27,7 +27,9 @@ export function PlanSelector({ userId }: PlanSelectorProps) {
     }
   };
 
-  const handlePaidPlan = async (plan: "premium" | "unlimited") => {
+  const handlePaidPlan = async (
+    plan: "premium" | "unlimited" | "lifetime"
+  ) => {
     try {
       setLoading(plan);
       // Redirect to checkout API route
@@ -52,7 +54,7 @@ export function PlanSelector({ userId }: PlanSelectorProps) {
   };
 
   return (
-    <div className="grid md:grid-cols-3 gap-8">
+    <div className="grid md:grid-cols-4 gap-6">
       {/* Free Plan */}
       <div className="border rounded-lg p-8 shadow-md hover:shadow-lg transition">
         <h2 className="text-2xl font-bold mb-2">Free</h2>
@@ -168,6 +170,49 @@ export function PlanSelector({ userId }: PlanSelectorProps) {
           className="w-full"
         >
           {loading === "unlimited" ? "Loading..." : "Subscribe"}
+        </Button>
+      </div>
+
+      {/* Lifetime Plan */}
+      <div className="border-2 border-green-500 rounded-lg p-8 shadow-lg hover:shadow-xl transition relative">
+        <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
+          <span className="bg-green-500 text-white px-4 py-1 rounded-full text-sm font-semibold">
+            Best Value
+          </span>
+        </div>
+        <h2 className="text-2xl font-bold mb-2">Lifetime</h2>
+        <div className="text-3xl font-bold mb-4">
+          $199<span className="text-lg text-gray-600"> once</span>
+        </div>
+        <p className="text-gray-600 mb-6">Pay once, own forever</p>
+        <ul className="space-y-3 mb-8">
+          <li className="flex items-start">
+            <span className="text-green-500 mr-2">✓</span>
+            <span>Everything in Unlimited</span>
+          </li>
+          <li className="flex items-start">
+            <span className="text-green-500 mr-2">✓</span>
+            <span>One-time payment</span>
+          </li>
+          <li className="flex items-start">
+            <span className="text-green-500 mr-2">✓</span>
+            <span>Lifetime updates</span>
+          </li>
+          <li className="flex items-start">
+            <span className="text-green-500 mr-2">✓</span>
+            <span>All future features</span>
+          </li>
+          <li className="flex items-start">
+            <span className="text-green-500 mr-2">✓</span>
+            <span>Premium support forever</span>
+          </li>
+        </ul>
+        <Button
+          onClick={() => handlePaidPlan("lifetime")}
+          disabled={loading !== null}
+          className="w-full bg-green-600 hover:bg-green-700"
+        >
+          {loading === "lifetime" ? "Loading..." : "Buy Lifetime"}
         </Button>
       </div>
     </div>

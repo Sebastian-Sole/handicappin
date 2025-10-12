@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerComponentClient } from "@/utils/supabase/server";
-import { createCheckoutSession, PLAN_TO_PRICE_MAP } from "@/lib/stripe";
+import {
+  createCheckoutSession,
+  createLifetimeCheckoutSession,
+  PLAN_TO_PRICE_MAP,
+} from "@/lib/stripe";
 
 export async function POST(request: NextRequest) {
   try {
@@ -15,11 +19,12 @@ export async function POST(request: NextRequest) {
 
     const { plan } = (await request.json()) as { plan: string };
 
-    if (plan !== "premium" && plan !== "unlimited") {
+    if (plan !== "premium" && plan !== "unlimited" && plan !== "lifetime") {
       return NextResponse.json({ error: "Invalid plan" }, { status: 400 });
     }
 
-    const priceId = PLAN_TO_PRICE_MAP[plan as "premium" | "unlimited"];
+    const priceId =
+      PLAN_TO_PRICE_MAP[plan as "premium" | "unlimited" | "lifetime"];
 
     if (!priceId) {
       return NextResponse.json(
@@ -41,14 +46,23 @@ export async function POST(request: NextRequest) {
       `${process.env.NEXT_PUBLIC_SITE_URL}/onboarding`
     );
 
-    // Create the checkout session
-    const session = await createCheckoutSession({
-      userId: user.id,
-      email: user.email!,
-      priceId,
-      successUrl: `${process.env.NEXT_PUBLIC_SITE_URL}/billing/success?session_id={CHECKOUT_SESSION_ID}`,
-      cancelUrl: `${process.env.NEXT_PUBLIC_SITE_URL}/onboarding`,
-    });
+    // Create the checkout session (lifetime uses payment mode, others use subscription mode)
+    const session =
+      plan === "lifetime"
+        ? await createLifetimeCheckoutSession({
+            userId: user.id,
+            email: user.email!,
+            priceId,
+            successUrl: `${process.env.NEXT_PUBLIC_SITE_URL}/billing/success?session_id={CHECKOUT_SESSION_ID}`,
+            cancelUrl: `${process.env.NEXT_PUBLIC_SITE_URL}/onboarding`,
+          })
+        : await createCheckoutSession({
+            userId: user.id,
+            email: user.email!,
+            priceId,
+            successUrl: `${process.env.NEXT_PUBLIC_SITE_URL}/billing/success?session_id={CHECKOUT_SESSION_ID}`,
+            cancelUrl: `${process.env.NEXT_PUBLIC_SITE_URL}/onboarding`,
+          });
 
     console.log("Checkout session created:", session);
 

@@ -1,7 +1,7 @@
 -- Add plan selection tracking to profile table
 ALTER TABLE profile
   ADD COLUMN IF NOT EXISTS rounds_used INTEGER DEFAULT 0,
-  ADD COLUMN IF NOT EXISTS plan_selected TEXT CHECK (plan_selected IN ('free', 'premium', 'unlimited')),
+  ADD COLUMN IF NOT EXISTS plan_selected TEXT CHECK (plan_selected IN ('free', 'premium', 'unlimited', 'lifetime')),
   ADD COLUMN IF NOT EXISTS plan_selected_at TIMESTAMPTZ;
 
 -- Create index for plan queries (improves performance)

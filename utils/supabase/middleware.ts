@@ -3,7 +3,7 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { jwtVerify } from "jose"; // Import the `jose` library
 import { PasswordResetPayload } from "@/types/auth";
-import { getComprehensiveUserAccess } from "@/utils/billing/access-control";
+import { getBasicUserAccess } from "@/utils/billing/access-control";
 
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({
@@ -114,8 +114,8 @@ export async function updateSession(request: NextRequest) {
     console.log("🔍 Middleware: Checking access for user:", user.id);
 
     try {
-      // Query access level
-      const access = await getComprehensiveUserAccess(user.id);
+      // Query access level (basic check for middleware - no Stripe API calls)
+      const access = await getBasicUserAccess(user.id);
 
       console.log("📊 Middleware: User access:", {
         plan: access.plan,

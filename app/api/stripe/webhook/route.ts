@@ -91,8 +91,17 @@ async function handleCheckoutCompleted(session: any) {
   const userId = session.metadata?.supabase_user_id;
   const customerId = session.customer;
 
+  console.log("🔍 Checkout session details:", {
+    sessionId: session.id,
+    mode: session.mode,
+    customerId,
+    metadata: session.metadata,
+    paymentStatus: session.payment_status,
+  });
+
   if (!userId) {
-    console.error("No supabase_user_id in checkout session metadata");
+    console.error("❌ No supabase_user_id in checkout session metadata");
+    console.error("Session metadata:", session.metadata);
     return;
   }
 
@@ -111,36 +120,55 @@ async function handleCheckoutCompleted(session: any) {
 
       console.log("✅ Stripe customer ID stored for user:", userId);
     } catch (error) {
-      console.error("Error storing stripe customer ID:", error);
+      console.error("❌ Error storing stripe customer ID:", error);
     }
+  } else {
+    console.warn("⚠️ No customer ID in checkout session");
   }
 
   // For subscription mode, wait for subscription.created event to update plan
   if (session.mode === "subscription") {
     console.log(
-      "Subscription checkout - will update plan on subscription.created"
+      "📝 Subscription checkout - will update plan on subscription.created"
     );
     return;
   }
 
   // For payment mode (lifetime), update plan immediately
   if (session.mode === "payment") {
-    const lineItems = await stripe.checkout.sessions.listLineItems(session.id);
-    const priceId = lineItems.data[0]?.price?.id;
+    console.log("💳 Payment mode detected - processing lifetime plan");
 
-    if (priceId) {
-      const plan = mapPriceToPlan(priceId);
-      if (plan) {
-        await db
-          .update(profile)
-          .set({
-            planSelected: plan,
-            planSelectedAt: new Date(),
-          })
-          .where(eq(profile.id, userId));
+    try {
+      const lineItems = await stripe.checkout.sessions.listLineItems(session.id);
+      const priceId = lineItems.data[0]?.price?.id;
 
-        console.log(`✅ Updated plan_selected to '${plan}' for user:`, userId);
+      console.log("🔍 Line items:", {
+        count: lineItems.data.length,
+        priceId,
+      });
+
+      if (priceId) {
+        const plan = mapPriceToPlan(priceId);
+        console.log(`🔍 Mapped price ${priceId} to plan: ${plan}`);
+
+        if (plan) {
+          await db
+            .update(profile)
+            .set({
+              planSelected: plan,
+              planSelectedAt: new Date(),
+            })
+            .where(eq(profile.id, userId));
+
+          console.log(`✅ Updated plan_selected to '${plan}' for user:`, userId);
+        } else {
+          console.error(`❌ Unknown price ID: ${priceId}`);
+        }
+      } else {
+        console.error("❌ No price ID found in line items");
       }
+    } catch (error) {
+      console.error("❌ Error processing payment mode checkout:", error);
     }
   }
 }

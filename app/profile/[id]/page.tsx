@@ -181,8 +181,7 @@ const ProfilePage = async (props: { params: Promise<{ id: string }> }) => {
                       <h4 className="font-medium mb-2">
                         Subscription Details:
                       </h4>
-                      {stripeData.subscriptions.map(
-                        (sub: any, index: number) => (
+                      {stripeData.subscriptions.map((sub: any) => (
                           <div
                             key={sub.id}
                             className="bg-white p-2 rounded border mb-2"

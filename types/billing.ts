@@ -8,7 +8,7 @@ export type SubscriptionStatus =
   | "unpaid"
   | "free";
 
-export type PlanType = "free" | "premium" | "unlimited";
+export type PlanType = "free" | "premium" | "unlimited" | "lifetime";
 
 export interface FeatureAccess {
   plan: PlanType;

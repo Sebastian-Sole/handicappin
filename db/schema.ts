@@ -14,7 +14,6 @@ import {
 } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
 import { createSelectSchema } from "drizzle-zod";
-import { z } from "zod";
 import type { InferSelectModel } from "drizzle-orm";
 
 const authSchema = pgSchema("auth");
@@ -38,7 +37,9 @@ export const profile = pgTable(
 
     // Billing/plan tracking fields
     roundsUsed: integer("rounds_used").default(0).notNull(),
-    planSelected: text("plan_selected"),
+    planSelected: text("plan_selected").$type<
+      "free" | "premium" | "unlimited" | "lifetime" | null
+    >(),
     planSelectedAt: timestamp("plan_selected_at"),
   },
   (table) => [

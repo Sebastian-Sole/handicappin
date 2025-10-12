@@ -2,18 +2,80 @@ import { createServerComponentClient } from "@/utils/supabase/server";
 import { FeatureAccess, SubscriptionStatus } from "@/types/billing";
 
 /**
- * Returns free tier access (no Stripe subscription needed)
+ * Lightweight version of access control for Edge Runtime (middleware)
+ * Only checks database, doesn't call Stripe API
  */
-function getFreeAccess(roundsUsed: number = 0): FeatureAccess {
+export async function getBasicUserAccess(
+  userId: string
+): Promise<FeatureAccess> {
+  const supabase = await createServerComponentClient();
+
+  // Get user profile
+  const { data: profile, error: profileError } = await supabase
+    .from("profile")
+    .select("plan_selected, rounds_used")
+    .eq("id", userId)
+    .single();
+
+  if (profileError) {
+    console.error("Error fetching profile:", profileError);
+    // No profile = needs onboarding
+    return {
+      plan: "free",
+      hasAccess: false,
+      hasPremiumAccess: false,
+      hasUnlimitedRounds: false,
+      remainingRounds: 25,
+      status: "free",
+      isLifetime: false,
+      currentPeriodEnd: null,
+    };
+  }
+
+  // No plan selected yet
+  if (!profile.plan_selected) {
+    return {
+      plan: "free",
+      hasAccess: false,
+      hasPremiumAccess: false,
+      hasUnlimitedRounds: false,
+      remainingRounds: 25,
+      status: "free",
+      isLifetime: false,
+      currentPeriodEnd: null,
+    };
+  }
+
+  // Free plan
+  if (profile.plan_selected === "free") {
+    const roundsUsed = profile.rounds_used || 0;
+    return {
+      plan: "free",
+      hasAccess: true,
+      hasPremiumAccess: false,
+      hasUnlimitedRounds: false,
+      remainingRounds: Math.max(0, 25 - roundsUsed),
+      status: "free",
+      isLifetime: false,
+      currentPeriodEnd: null,
+    };
+  }
+
+  // Paid plan (trust database, Stripe verification happens in page components)
   return {
-    plan: "free",
-    hasAccess: true, // ✅ Free users can access app
-    hasPremiumAccess: false, // ❌ But not premium routes
-    hasUnlimitedRounds: false,
-    remainingRounds: Math.max(0, 25 - roundsUsed),
-    status: "free",
-    isLifetime: false,
-    currentPeriodEnd: null,
+    plan: profile.plan_selected as "premium" | "unlimited" | "lifetime",
+    hasAccess: true,
+    hasPremiumAccess: true,
+    hasUnlimitedRounds:
+      profile.plan_selected === "unlimited" ||
+      profile.plan_selected === "lifetime",
+    remainingRounds: Infinity,
+    status: "active",
+    isLifetime: profile.plan_selected === "lifetime",
+    currentPeriodEnd:
+      profile.plan_selected === "lifetime"
+        ? new Date("2099-12-31T23:59:59.000Z")
+        : null,
   };
 }
 
@@ -22,89 +84,66 @@ function getFreeAccess(roundsUsed: number = 0): FeatureAccess {
  * Returns access info based on Stripe subscription status
  */
 async function getUserAccess(userId: string): Promise<FeatureAccess | null> {
-  // TODO: Implement Stripe subscription check when Stripe is fully integrated
-  // For now, this returns null to indicate no active paid subscription
+  try {
+    const supabase = await createServerComponentClient();
 
-  /*
-  Example implementation when Stripe is integrated:
+    // Get stripe customer ID
+    const { data: stripeCustomer } = await supabase
+      .from("stripe_customers")
+      .select("stripe_customer_id")
+      .eq("user_id", userId)
+      .single();
 
-  const supabase = await createServerComponentClient();
+    if (!stripeCustomer) {
+      return null;
+    }
 
-  // Get stripe customer ID
-  const { data: stripeCustomer } = await supabase
-    .from("stripe_customers")
-    .select("stripe_customer_id")
-    .eq("user_id", userId)
-    .single();
+    // Query Stripe for active subscriptions
+    const { stripe, mapPriceToPlan } = await import("@/lib/stripe");
+    const subscriptions = await stripe.subscriptions.list({
+      customer: stripeCustomer.stripe_customer_id,
+      status: "active",
+      limit: 1,
+    });
 
-  if (!stripeCustomer) {
+    const activeSubscription = subscriptions.data[0];
+
+    if (activeSubscription) {
+      const priceId = activeSubscription.items.data[0]?.price.id;
+      const plan = mapPriceToPlan(priceId || "");
+
+      if (!plan) {
+        console.error("Unknown price ID:", priceId);
+        return null;
+      }
+
+      // Get subscription period from the subscription items
+      const item = activeSubscription.items.data[0];
+      const periodEnd = item?.current_period_end
+        ? new Date(item.current_period_end * 1000)
+        : new Date();
+
+      return {
+        plan,
+        hasAccess: true,
+        hasPremiumAccess: true,
+        hasUnlimitedRounds:
+          plan === "premium" || plan === "unlimited" || plan === "lifetime",
+        remainingRounds:
+          plan === "premium" || plan === "unlimited" || plan === "lifetime"
+            ? Infinity
+            : 100,
+        status: "active" as SubscriptionStatus,
+        currentPeriodEnd: periodEnd,
+        isLifetime: plan === "lifetime",
+      };
+    }
+
+    return null;
+  } catch (error) {
+    console.error("Error checking Stripe subscription:", error);
     return null;
   }
-
-  // Query Stripe for active subscriptions
-  const subscriptions = await stripe.subscriptions.list({
-    customer: stripeCustomer.stripe_customer_id,
-    status: "active",
-    limit: 1,
-  });
-
-  const activeSubscription = subscriptions.data[0];
-
-  if (activeSubscription) {
-    const priceId = activeSubscription.items.data[0]?.price.id;
-    const plan = mapPriceToPlan(priceId);
-
-    return {
-      plan,
-      hasAccess: true,
-      hasPremiumAccess: true,
-      hasUnlimitedRounds: plan === "unlimited",
-      remainingRounds: plan === "unlimited" ? Infinity : 100,
-      status: "active" as SubscriptionStatus,
-      currentPeriodEnd: new Date(activeSubscription.current_period_end * 1000),
-      isLifetime: false,
-    };
-  }
-  */
-
-  return null;
-}
-
-/**
- * Checks if user has lifetime access
- */
-async function getLifetimeAccess(
-  userId: string
-): Promise<FeatureAccess | null> {
-  // TODO: Implement lifetime access check when needed
-  // This would check for one-time payment or special lifetime flag
-
-  /*
-  Example implementation:
-
-  const supabase = await createServerComponentClient();
-
-  const { data: profile } = await supabase
-    .from("profile")
-    .select("plan_selected")
-    .eq("id", userId)
-    .single();
-
-  if (profile?.plan_selected === "lifetime") {
-    return {
-      plan: "unlimited",
-      hasAccess: true,
-      hasPremiumAccess: true,
-      hasUnlimitedRounds: true,
-      remainingRounds: Infinity,
-      status: "active" as SubscriptionStatus,
-      currentPeriodEnd: new Date("2099-12-31T23:59:59.000Z"),
-      isLifetime: true,
-    };
-  }
-  */
-
-  return null;
 }
 
 /**
@@ -153,38 +192,23 @@ export async function getComprehensiveUserAccess(
     };
   }
 
-  // 3. Check if user selected paid plan - verify with Stripe
+  // 4. Check if user selected recurring paid plan - verify with Stripe
   if (
     profile.plan_selected === "premium" ||
-    profile.plan_selected === "unlimited"
+    profile.plan_selected === "unlimited" ||
+    profile.plan_selected === "lifetime"
   ) {
     const subscriptionAccess = await getUserAccess(userId);
 
     if (subscriptionAccess?.hasAccess) {
       // Stripe confirms active subscription
-      return {
-        ...subscriptionAccess,
-        hasAccess: true,
-        hasPremiumAccess: true, // ✅ Paid users get premium access
-        hasUnlimitedRounds: true,
-      };
+      return subscriptionAccess;
     }
 
     // Stripe says no active subscription (expired/cancelled)
     // Fall back to free tier
     console.log("Subscription expired, falling back to free tier");
     // Note: Webhook should have updated plan_selected to 'free', but handle gracefully
-  }
-
-  // 4. Check for lifetime access
-  const lifetimeAccess = await getLifetimeAccess(userId);
-  if (lifetimeAccess) {
-    return {
-      ...lifetimeAccess,
-      hasAccess: true,
-      hasPremiumAccess: true,
-      hasUnlimitedRounds: true,
-    };
   }
 
   // 5. No plan selected yet - needs onboarding
