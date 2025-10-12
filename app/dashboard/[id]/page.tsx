@@ -5,6 +5,8 @@ import { Suspense } from "react";
 import DashboardSkeleton from "@/components/dashboard/dashboardSkeleton";
 
 import { createServerComponentClient } from "@/utils/supabase/server";
+import { getComprehensiveUserAccess } from "@/utils/billing/access-control";
+import { redirect } from "next/navigation";
 
 const DashboardPage = async (props: { params: Promise<{ id: string }> }) => {
   const params = await props.params;
@@ -22,6 +24,15 @@ const DashboardPage = async (props: { params: Promise<{ id: string }> }) => {
   }
   if (data.user?.id !== id) {
     return <div>Invalid user, this is not your profile</div>;
+  }
+
+  // Check premium access
+  const access = await getComprehensiveUserAccess(id);
+
+  console.log("🔍 Dashboard: Has premium access:", access.hasPremiumAccess);
+
+  if (!access.hasPremiumAccess) {
+    redirect("/upgrade");
   }
 
   try {

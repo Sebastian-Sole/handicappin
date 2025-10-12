@@ -9,12 +9,27 @@ import {
 } from "@/components/ui/dialog";
 import { createServerComponentClient } from "@/utils/supabase/server";
 import { DialogTrigger } from "@radix-ui/react-dialog";
+import { getComprehensiveUserAccess } from "@/utils/billing/access-control";
+import { redirect } from "next/navigation";
 
 const CalculatorsPage = async () => {
   const supabase = await createServerComponentClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
+
+  // Check premium access
+  if (user) {
+    const access = await getComprehensiveUserAccess(user.id);
+
+    if (!access.hasPremiumAccess) {
+      redirect("/upgrade");
+    }
+  } else {
+    // No user = redirect to login
+    redirect("/login");
+  }
+
   return (
     <div className="flex flex-col items-center justify-center min-h-[calc(100vh-12rem)] bg-background px-4 py-12">
       <div className="text-center">

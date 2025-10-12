@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { createTRPCRouter, authedProcedure } from "@/server/api/trpc";
 import { round, score, profile, teeInfo, course, hole } from "@/db/schema";
-import { eq, and } from "drizzle-orm";
+import { eq, and, sql } from "drizzle-orm";
 
 import { db } from "@/db";
 import { Scorecard, scorecardSchema } from "@/types/scorecard";
@@ -11,6 +11,8 @@ import {
   calculateScoreDifferential,
   calculateAdjustedGrossScore,
 } from "@/utils/calculations/handicap";
+import { getComprehensiveUserAccess } from "@/utils/billing/access-control";
+import { TRPCError } from "@trpc/server";
 
 type RoundCalculations = {
   adjustedGrossScore: number;
@@ -164,6 +166,18 @@ export const roundRouter = createTRPCRouter({
       if (!teePlayed.holes) {
         throw new Error("Tee played has no holes");
       }
+
+      // 0. Check round limit for free tier users
+      const access = await getComprehensiveUserAccess(userId);
+
+      if (access.plan === "free" && access.remainingRounds <= 0) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: `You've reached your free tier limit of 25 rounds. You have ${access.remainingRounds} rounds remaining. Please upgrade to continue tracking rounds.`,
+        });
+      }
+
+      console.log("✅ Round limit check passed. Remaining rounds:", access.remainingRounds);
 
       // 1. Get user profile for handicap calculations
       const userProfile = await db
@@ -384,6 +398,18 @@ export const roundRouter = createTRPCRouter({
       await db.insert(score).values(scoreInserts);
 
       console.log("Scores inserted");
+
+      // Increment rounds_used for free tier users
+      if (access.plan === "free") {
+        await db
+          .update(profile)
+          .set({
+            roundsUsed: sql`${profile.roundsUsed} + 1`,
+          })
+          .where(eq(profile.id, userId));
+
+        console.log("✅ Incremented rounds_used for free tier user");
+      }
 
       return newRound;
     }),

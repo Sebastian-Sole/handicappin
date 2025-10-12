@@ -3,6 +3,7 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { jwtVerify } from "jose"; // Import the `jose` library
 import { PasswordResetPayload } from "@/types/auth";
+import { getComprehensiveUserAccess } from "@/utils/billing/access-control";
 
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({
@@ -45,7 +46,6 @@ export async function updateSession(request: NextRequest) {
   const publicPaths = [
     "/login",
     "/signup",
-    "/calculators",
     "/about",
     "/api",
     "/verify-email",
@@ -99,6 +99,63 @@ export async function updateSession(request: NextRequest) {
     const url = request.nextUrl.clone();
     url.pathname = "/";
     return NextResponse.redirect(url);
+  }
+
+  // Check access control for authenticated users on protected routes
+  const premiumPaths = ["/dashboard", "/calculators"];
+
+  if (
+    user &&
+    !isPublic &&
+    !pathname.startsWith("/onboarding") &&
+    !pathname.startsWith("/billing") &&
+    !pathname.startsWith("/upgrade")
+  ) {
+    console.log("🔍 Middleware: Checking access for user:", user.id);
+
+    try {
+      // Query access level
+      const access = await getComprehensiveUserAccess(user.id);
+
+      console.log("📊 Middleware: User access:", {
+        plan: access.plan,
+        hasAccess: access.hasAccess,
+        hasPremiumAccess: access.hasPremiumAccess,
+        isLifetime: access.isLifetime,
+      });
+
+      // Check if user needs onboarding (no plan selected)
+      if (!access.hasAccess) {
+        console.log(
+          "🚫 Middleware: No access found, redirecting to onboarding"
+        );
+        const url = request.nextUrl.clone();
+        url.pathname = "/onboarding";
+        return NextResponse.redirect(url);
+      }
+
+      // Check premium routes
+      const isPremiumRoute = premiumPaths.some((path) =>
+        pathname.startsWith(path)
+      );
+
+      if (isPremiumRoute && !access.hasPremiumAccess) {
+        console.log(
+          "🚫 Middleware: Premium route blocked, redirecting to upgrade"
+        );
+        const url = request.nextUrl.clone();
+        url.pathname = "/upgrade";
+        return NextResponse.redirect(url);
+      }
+
+      console.log("✅ Middleware: Access granted for plan:", access.plan);
+    } catch (error) {
+      console.error("❌ Middleware: Error checking access:", error);
+      // On error, redirect to onboarding to be safe
+      const url = request.nextUrl.clone();
+      url.pathname = "/onboarding";
+      return NextResponse.redirect(url);
+    }
   }
 
   // IMPORTANT: You *must* return the supabaseResponse object as it is. If you're

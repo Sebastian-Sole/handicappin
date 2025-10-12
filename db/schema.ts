@@ -333,3 +333,33 @@ export const score = pgTable(
 
 export const scoreSchema = createSelectSchema(score);
 export type Score = InferSelectModel<typeof score>;
+
+// Stripe customers table for managing Stripe customer IDs
+export const stripeCustomers = pgTable(
+  "stripe_customers",
+  {
+    userId: uuid("user_id").primaryKey().notNull(),
+    stripeCustomerId: text("stripe_customer_id").notNull().unique(),
+    createdAt: timestamp("created_at")
+      .default(sql`CURRENT_TIMESTAMP`)
+      .notNull(),
+  },
+  (table) => [
+    foreignKey({
+      columns: [table.userId],
+      foreignColumns: [profile.id],
+      name: "stripe_customers_user_id_fkey",
+    })
+      .onUpdate("cascade")
+      .onDelete("cascade"),
+    pgPolicy("Users can view their own stripe customer", {
+      as: "permissive",
+      for: "select",
+      to: ["authenticated"],
+      using: sql`(auth.uid()::uuid = user_id)`,
+    }),
+  ]
+);
+
+export const stripeCustomersSchema = createSelectSchema(stripeCustomers);
+export type StripeCustomer = InferSelectModel<typeof stripeCustomers>;
