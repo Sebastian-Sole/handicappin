@@ -1,4 +1,5 @@
 import Stripe from "stripe";
+import { getOrCreateStripeCustomer } from "./stripe-customer";
 
 // Initialize Stripe client
 export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY ?? "", {
@@ -39,34 +40,8 @@ export async function createCheckoutSession({
   successUrl: string;
   cancelUrl: string;
 }) {
-  // Check if customer already exists, if not create one
-  let customerId: string | undefined;
-
-  try {
-    // Search for existing customer by email
-    const existingCustomers = await stripe.customers.list({
-      email: email,
-      limit: 1,
-    });
-
-    if (existingCustomers.data.length > 0) {
-      customerId = existingCustomers.data[0].id;
-      console.log("Found existing Stripe customer:", customerId);
-    } else {
-      // Create new customer with metadata
-      const customer = await stripe.customers.create({
-        email: email,
-        metadata: {
-          supabase_user_id: userId,
-        },
-      });
-      customerId = customer.id;
-      console.log("Created new Stripe customer:", customerId);
-    }
-  } catch (error) {
-    console.error("Error managing Stripe customer:", error);
-    // Continue without customer - Stripe will auto-create one
-  }
+  // Get or create Stripe customer
+  const customerId = await getOrCreateStripeCustomer({ email, userId });
 
   const session = await stripe.checkout.sessions.create({
     mode: "subscription",
@@ -109,34 +84,8 @@ export async function createLifetimeCheckoutSession({
   successUrl: string;
   cancelUrl: string;
 }) {
-  // Check if customer already exists, if not create one
-  let customerId: string | undefined;
-
-  try {
-    // Search for existing customer by email
-    const existingCustomers = await stripe.customers.list({
-      email: email,
-      limit: 1,
-    });
-
-    if (existingCustomers.data.length > 0) {
-      customerId = existingCustomers.data[0].id;
-      console.log("Found existing Stripe customer:", customerId);
-    } else {
-      // Create new customer with metadata
-      const customer = await stripe.customers.create({
-        email: email,
-        metadata: {
-          supabase_user_id: userId,
-        },
-      });
-      customerId = customer.id;
-      console.log("Created new Stripe customer:", customerId);
-    }
-  } catch (error) {
-    console.error("Error managing Stripe customer:", error);
-    // Continue without customer - Stripe will auto-create one
-  }
+  // Get or create Stripe customer
+  const customerId = await getOrCreateStripeCustomer({ email, userId });
 
   const session = await stripe.checkout.sessions.create({
     mode: "payment",

@@ -4,6 +4,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { jwtVerify } from "jose"; // Import the `jose` library
 import { PasswordResetPayload } from "@/types/auth";
 import { getBasicUserAccess } from "@/utils/billing/access-control";
+import { PREMIUM_PATHS } from "@/utils/billing/constants";
 
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({
@@ -102,7 +103,7 @@ export async function updateSession(request: NextRequest) {
   }
 
   // Check access control for authenticated users on protected routes
-  const premiumPaths = ["/dashboard", "/calculators"];
+  const premiumPaths = PREMIUM_PATHS;
 
   if (
     user &&

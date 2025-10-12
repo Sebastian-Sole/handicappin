@@ -3,6 +3,16 @@ import { db } from "@/db";
 import { profile, stripeCustomers } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { stripe, mapPriceToPlan } from "@/lib/stripe";
+import {
+  logWebhookReceived,
+  logWebhookSuccess,
+  logWebhookError,
+  logWebhookWarning,
+  logWebhookDebug,
+  logWebhookInfo,
+  logPaymentEvent,
+  logSubscriptionEvent,
+} from "@/lib/webhook-logger";
 
 export async function POST(request: NextRequest) {
   try {
@@ -23,7 +33,7 @@ export async function POST(request: NextRequest) {
       process.env.STRIPE_WEBHOOK_SECRET!
     );
 
-    console.log(`📥 Received webhook event: ${event.type}`);
+    logWebhookReceived(event.type);
 
     // Handle different event types
     switch (event.type) {
@@ -45,15 +55,25 @@ export async function POST(request: NextRequest) {
         break;
 
       default:
-        console.log(`ℹ️ Unhandled event type: ${event.type}`);
+        logWebhookInfo(`Unhandled event type: ${event.type}`);
     }
 
     return NextResponse.json({ received: true }, { status: 200 });
   } catch (error) {
-    console.error("❌ Webhook error:", error);
+    // Signature verification failures are client errors (400)
+    if (error instanceof Error && error.message.includes("signature")) {
+      logWebhookError("Invalid webhook signature", error);
+      return NextResponse.json(
+        { error: "Invalid signature" },
+        { status: 400 }
+      );
+    }
+
+    // All other errors are server errors (500)
+    logWebhookError("Webhook handler failed", error);
     return NextResponse.json(
-      { error: "Webhook handler failed" },
-      { status: 400 }
+      { error: "Internal server error" },
+      { status: 500 }
     );
   }
 }
@@ -65,7 +85,7 @@ async function handleCustomerCreated(customer: any) {
   const userId = customer.metadata?.supabase_user_id;
 
   if (!userId) {
-    console.error("No supabase_user_id in customer metadata");
+    logWebhookError("No supabase_user_id in customer metadata");
     return;
   }
 
@@ -78,9 +98,9 @@ async function handleCustomerCreated(customer: any) {
       })
       .onConflictDoNothing();
 
-    console.log("✅ Stripe customer created for user:", userId);
+    logWebhookSuccess(`Stripe customer created for user: ${userId}`);
   } catch (error) {
-    console.error("Error creating stripe customer record:", error);
+    logWebhookError("Error creating stripe customer record", error);
   }
 }
 
@@ -91,7 +111,7 @@ async function handleCheckoutCompleted(session: any) {
   const userId = session.metadata?.supabase_user_id;
   const customerId = session.customer;
 
-  console.log("🔍 Checkout session details:", {
+  logWebhookDebug("Checkout session details", {
     sessionId: session.id,
     mode: session.mode,
     customerId,
@@ -100,12 +120,13 @@ async function handleCheckoutCompleted(session: any) {
   });
 
   if (!userId) {
-    console.error("❌ No supabase_user_id in checkout session metadata");
-    console.error("Session metadata:", session.metadata);
+    logWebhookError("No supabase_user_id in checkout session metadata", {
+      metadata: session.metadata,
+    });
     return;
   }
 
-  console.log("✅ Checkout completed for user:", userId);
+  logWebhookSuccess(`Checkout completed for user: ${userId}`);
 
   // Store Stripe customer ID if we have one
   if (customerId) {
@@ -118,57 +139,63 @@ async function handleCheckoutCompleted(session: any) {
         })
         .onConflictDoNothing();
 
-      console.log("✅ Stripe customer ID stored for user:", userId);
+      logWebhookSuccess(`Stripe customer ID stored for user: ${userId}`);
     } catch (error) {
-      console.error("❌ Error storing stripe customer ID:", error);
+      logWebhookError("Error storing stripe customer ID", error);
     }
   } else {
-    console.warn("⚠️ No customer ID in checkout session");
+    logWebhookWarning("No customer ID in checkout session");
   }
 
   // For subscription mode, wait for subscription.created event to update plan
   if (session.mode === "subscription") {
-    console.log(
-      "📝 Subscription checkout - will update plan on subscription.created"
+    logSubscriptionEvent(
+      "Subscription checkout - will update plan on subscription.created"
     );
     return;
   }
 
   // For payment mode (lifetime), update plan immediately
   if (session.mode === "payment") {
-    console.log("💳 Payment mode detected - processing lifetime plan");
+    logPaymentEvent("Payment mode detected - processing lifetime plan");
 
     try {
       const lineItems = await stripe.checkout.sessions.listLineItems(session.id);
       const priceId = lineItems.data[0]?.price?.id;
 
-      console.log("🔍 Line items:", {
+      logWebhookDebug("Line items", {
         count: lineItems.data.length,
         priceId,
       });
 
       if (priceId) {
         const plan = mapPriceToPlan(priceId);
-        console.log(`🔍 Mapped price ${priceId} to plan: ${plan}`);
+        logWebhookDebug("Mapped price to plan", { priceId, plan });
 
         if (plan) {
-          await db
-            .update(profile)
-            .set({
-              planSelected: plan,
-              planSelectedAt: new Date(),
-            })
-            .where(eq(profile.id, userId));
+          try {
+            await db
+              .update(profile)
+              .set({
+                planSelected: plan,
+                planSelectedAt: new Date(),
+              })
+              .where(eq(profile.id, userId));
 
-          console.log(`✅ Updated plan_selected to '${plan}' for user:`, userId);
+            logWebhookSuccess(`Updated plan_selected to '${plan}' for user: ${userId}`);
+          } catch (dbError) {
+            logWebhookError(`Error updating plan for user ${userId}`, dbError);
+            // Throw error to trigger webhook retry by Stripe
+            throw dbError;
+          }
         } else {
-          console.error(`❌ Unknown price ID: ${priceId}`);
+          logWebhookError(`Unknown price ID: ${priceId}`);
         }
       } else {
-        console.error("❌ No price ID found in line items");
+        logWebhookError("No price ID found in line items");
       }
     } catch (error) {
-      console.error("❌ Error processing payment mode checkout:", error);
+      logWebhookError("Error processing payment mode checkout", error);
     }
   }
 }
@@ -180,33 +207,39 @@ async function handleSubscriptionChange(subscription: any) {
   const userId = subscription.metadata?.supabase_user_id;
 
   if (!userId) {
-    console.error("No supabase_user_id in subscription metadata");
+    logWebhookError("No supabase_user_id in subscription metadata");
     return;
   }
 
   const priceId = subscription.items.data[0]?.price.id;
   if (!priceId) {
-    console.error("No price ID in subscription");
+    logWebhookError("No price ID in subscription");
     return;
   }
 
   const plan = mapPriceToPlan(priceId);
   if (!plan) {
-    console.error("Unknown price ID:", priceId);
+    logWebhookError(`Unknown price ID: ${priceId}`);
     return;
   }
 
   // Only update if subscription is active
   if (subscription.status === "active" || subscription.status === "trialing") {
-    await db
-      .update(profile)
-      .set({
-        planSelected: plan,
-        planSelectedAt: new Date(),
-      })
-      .where(eq(profile.id, userId));
+    try {
+      await db
+        .update(profile)
+        .set({
+          planSelected: plan,
+          planSelectedAt: new Date(),
+        })
+        .where(eq(profile.id, userId));
 
-    console.log(`✅ Updated plan_selected to '${plan}' for user:`, userId);
+      logWebhookSuccess(`Updated plan_selected to '${plan}' for user: ${userId}`);
+    } catch (error) {
+      logWebhookError(`Error updating plan for user ${userId}`, error);
+      // Throw error to trigger webhook retry by Stripe
+      throw error;
+    }
   }
 }
 
@@ -217,18 +250,24 @@ async function handleSubscriptionDeleted(subscription: any) {
   const userId = subscription.metadata?.supabase_user_id;
 
   if (!userId) {
-    console.error("No supabase_user_id in subscription metadata");
+    logWebhookError("No supabase_user_id in subscription metadata");
     return;
   }
 
   // Revert to free tier
-  await db
-    .update(profile)
-    .set({
-      planSelected: "free",
-      planSelectedAt: new Date(),
-    })
-    .where(eq(profile.id, userId));
+  try {
+    await db
+      .update(profile)
+      .set({
+        planSelected: "free",
+        planSelectedAt: new Date(),
+      })
+      .where(eq(profile.id, userId));
 
-  console.log("✅ Reverted to free tier for user:", userId);
+    logWebhookSuccess(`Reverted to free tier for user: ${userId}`);
+  } catch (error) {
+    logWebhookError(`Error reverting user ${userId} to free tier`, error);
+    // Throw error to trigger webhook retry by Stripe
+    throw error;
+  }
 }

@@ -70,11 +70,13 @@ export const billingRouter = createTRPCRouter({
       const { user } = ctx;
 
       // Get customer ID from database
-      const customer = await ctx.db.query.stripeCustomers.findFirst({
-        where: eq(stripeCustomers.userId, user.id),
-      });
+      const { data: customer, error } = await ctx.supabase
+        .from('stripe_customers')
+        .select('stripe_customer_id')
+        .eq('user_id', user.id)
+        .single();
 
-      if (!customer) {
+      if (error || !customer) {
         throw new TRPCError({
           code: 'NOT_FOUND',
           message: 'No Stripe customer found',
@@ -82,7 +84,7 @@ export const billingRouter = createTRPCRouter({
       }
 
       const session = await createPortalSession({
-        customerId: customer.stripeCustomerId,
+        customerId: customer.stripe_customer_id,
         returnUrl: `${process.env.NEXT_PUBLIC_SITE_URL}/billing`,
       });
 
@@ -91,13 +93,20 @@ export const billingRouter = createTRPCRouter({
 
   selectFreePlan: protectedProcedure
     .mutation(async ({ ctx }) => {
-      await ctx.db
-        .update(profile)
-        .set({
-          planSelected: 'free',
-          planSelectedAt: new Date(),
+      const { error } = await ctx.supabase
+        .from('profile')
+        .update({
+          plan_selected: 'free',
+          plan_selected_at: new Date().toISOString(),
         })
-        .where(eq(profile.id, ctx.user.id));
+        .eq('id', ctx.user.id);
+
+      if (error) {
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Failed to update plan selection',
+        });
+      }
 
       return { success: true };
     }),
@@ -107,26 +116,50 @@ export const billingRouter = createTRPCRouter({
 2. **Update Frontend Components**
 ```typescript
 // components/billing/plan-selector.tsx
-const createCheckout = api.billing.createCheckoutSession.useMutation();
-const selectFree = api.billing.selectFreePlan.useMutation();
+const { mutate: createCheckout } = api.billing.createCheckoutSession.useMutation({
+  onSuccess: (data) => {
+    if (data.url) window.location.href = data.url;
+  },
+  onError: (error) => {
+    toast({
+      title: "Error",
+      description: error.message,
+      variant: "destructive",
+    });
+  },
+});
 
-const handlePaidPlan = async (plan: 'premium' | 'unlimited' | 'lifetime') => {
-  const result = await createCheckout.mutateAsync({ plan });
-  if (result.url) window.location.href = result.url;
+const { mutate: selectFree } = api.billing.selectFreePlan.useMutation({
+  onSuccess: () => {
+    router.push('/');
+    router.refresh();
+  },
+  onError: (error) => {
+    toast({
+      title: "Error",
+      description: error.message,
+      variant: "destructive",
+    });
+  },
+});
+
+const handlePaidPlan = (plan: 'premium' | 'unlimited' | 'lifetime') => {
+  createCheckout({ plan });
 };
 
-const handleFreePlan = async () => {
-  await selectFree.mutateAsync();
-  router.push('/');
-  router.refresh();
+const handleFreePlan = () => {
+  selectFree();
 };
 ```
 
-3. **Keep Webhook as API Route**
+3. **Keep Webhook as Separate API Route**
 ```typescript
 // app/api/stripe/webhook/route.ts
-// This MUST stay as an API route because Stripe calls it externally
-// Cannot use tRPC for external webhooks
+// This MUST stay as a dedicated API route (not a tRPC procedure) because:
+// - Stripe needs to POST to a specific URL (/api/stripe/webhook)
+// - Requires raw request body access for signature verification
+// - tRPC procedures are accessed via /api/trpc/[trpc] with tRPC protocol
+// - External webhooks cannot use tRPC's client-server communication pattern
 ```
 
 ### **Dependencies**
@@ -142,7 +175,7 @@ const handleFreePlan = async () => {
 ### **Integration Points**
 
 - tRPC context for user authentication
-- Drizzle ORM for database queries
+- Supabase client for database queries
 - Stripe SDK for API calls
 - Frontend components using tRPC hooks
 

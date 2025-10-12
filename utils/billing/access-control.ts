@@ -1,9 +1,27 @@
 import { createServerComponentClient } from "@/utils/supabase/server";
 import { FeatureAccess, SubscriptionStatus } from "@/types/billing";
+import {
+  createNoAccessResponse,
+  createFreeTierResponse,
+  hasUnlimitedRounds,
+} from "./access-helpers";
 
 /**
  * Lightweight version of access control for Edge Runtime (middleware)
  * Only checks database, doesn't call Stripe API
+ *
+ * ⚠️ SECURITY NOTE: This function trusts the database as source of truth.
+ * The database is kept in sync via Stripe webhooks. However, there are edge cases
+ * where the DB may be out of sync:
+ * - Webhook delivery failures (mitigated by Stripe's automatic retries)
+ * - Database write failures (mitigated by throwing errors to trigger retries)
+ * - Subscription status changes not reflected (past_due, paused, etc.)
+ *
+ * For critical access decisions, page components SHOULD use
+ * getComprehensiveUserAccess() which verifies with Stripe directly.
+ *
+ * This middleware check is a performance optimization to avoid Stripe API calls
+ * on every request, but should be paired with Stripe verification at the page level.
  */
 export async function getBasicUserAccess(
   userId: string
@@ -19,46 +37,17 @@ export async function getBasicUserAccess(
 
   if (profileError) {
     console.error("Error fetching profile:", profileError);
-    // No profile = needs onboarding
-    return {
-      plan: "free",
-      hasAccess: false,
-      hasPremiumAccess: false,
-      hasUnlimitedRounds: false,
-      remainingRounds: 25,
-      status: "free",
-      isLifetime: false,
-      currentPeriodEnd: null,
-    };
+    return createNoAccessResponse();
   }
 
   // No plan selected yet
   if (!profile.plan_selected) {
-    return {
-      plan: "free",
-      hasAccess: false,
-      hasPremiumAccess: false,
-      hasUnlimitedRounds: false,
-      remainingRounds: 25,
-      status: "free",
-      isLifetime: false,
-      currentPeriodEnd: null,
-    };
+    return createNoAccessResponse();
   }
 
   // Free plan
   if (profile.plan_selected === "free") {
-    const roundsUsed = profile.rounds_used || 0;
-    return {
-      plan: "free",
-      hasAccess: true,
-      hasPremiumAccess: false,
-      hasUnlimitedRounds: false,
-      remainingRounds: Math.max(0, 25 - roundsUsed),
-      status: "free",
-      isLifetime: false,
-      currentPeriodEnd: null,
-    };
+    return createFreeTierResponse(profile.rounds_used || 0);
   }
 
   // Paid plan (trust database, Stripe verification happens in page components)
@@ -66,9 +55,7 @@ export async function getBasicUserAccess(
     plan: profile.plan_selected as "premium" | "unlimited" | "lifetime",
     hasAccess: true,
     hasPremiumAccess: true,
-    hasUnlimitedRounds:
-      profile.plan_selected === "unlimited" ||
-      profile.plan_selected === "lifetime",
+    hasUnlimitedRounds: hasUnlimitedRounds(profile.plan_selected),
     remainingRounds: Infinity,
     status: "active",
     isLifetime: profile.plan_selected === "lifetime",
@@ -164,32 +151,12 @@ export async function getComprehensiveUserAccess(
 
   if (profileError) {
     console.error("Error fetching profile:", profileError);
-    // No profile = needs onboarding
-    return {
-      plan: "free",
-      hasAccess: false,
-      hasPremiumAccess: false,
-      hasUnlimitedRounds: false,
-      remainingRounds: 25,
-      status: "free",
-      isLifetime: false,
-      currentPeriodEnd: null,
-    };
+    return createNoAccessResponse();
   }
 
   // 2. Check if user selected free plan
   if (profile.plan_selected === "free") {
-    const roundsUsed = profile.rounds_used || 0;
-    return {
-      plan: "free",
-      hasAccess: true, // ✅ Free users can use app
-      hasPremiumAccess: false, // ❌ But not premium routes
-      hasUnlimitedRounds: false,
-      remainingRounds: Math.max(0, 25 - roundsUsed),
-      status: "free",
-      isLifetime: false,
-      currentPeriodEnd: null,
-    };
+    return createFreeTierResponse(profile.rounds_used || 0);
   }
 
   // 4. Check if user selected recurring paid plan - verify with Stripe
@@ -212,16 +179,7 @@ export async function getComprehensiveUserAccess(
   }
 
   // 5. No plan selected yet - needs onboarding
-  return {
-    plan: "free",
-    hasAccess: false, // ❌ Redirect to onboarding
-    hasPremiumAccess: false,
-    hasUnlimitedRounds: false,
-    remainingRounds: 25,
-    status: "free",
-    isLifetime: false,
-    currentPeriodEnd: null,
-  };
+  return createNoAccessResponse();
 }
 
 /**
