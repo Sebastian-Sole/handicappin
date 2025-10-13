@@ -6,6 +6,18 @@ import { PasswordResetPayload } from "@/types/auth";
 import { getBasicUserAccess } from "@/utils/billing/access-control";
 import { PREMIUM_PATHS } from "@/utils/billing/constants";
 
+// Define billing claims type (minimal)
+type BillingClaims = {
+  plan: string;
+  status: string;
+  current_period_end: number | null;
+  cancel_at_period_end: boolean;
+  billing_version: number;
+};
+
+// Clock skew tolerance for expiry checks (prevent edge flaps)
+const EXPIRY_LEEWAY_SECONDS = 120; // 2 minutes
+
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({
     request,
@@ -112,23 +124,106 @@ export async function updateSession(request: NextRequest) {
     !pathname.startsWith("/billing") &&
     !pathname.startsWith("/upgrade")
   ) {
+    const startTime = performance.now(); // Performance monitoring
     console.log("🔍 Middleware: Checking access for user:", user.id);
 
     try {
-      // Query access level (basic check for middleware - no Stripe API calls)
-      const access = await getBasicUserAccess(user.id);
+      // NEW: Read MINIMAL billing info from JWT claims (NO DATABASE QUERY!)
+      const billing = user.app_metadata?.billing as BillingClaims | undefined;
 
-      console.log("📊 Middleware: User access:", {
-        plan: access.plan,
-        hasAccess: access.hasAccess,
-        hasPremiumAccess: access.hasPremiumAccess,
-        isLifetime: access.isLifetime,
+      let plan: string | null = null;
+      let status: string = 'active';
+      let hasPremiumAccess: boolean = false;
+
+      // Graceful fallback to database if claims missing (during migration)
+      if (!billing) {
+        console.warn(
+          `⚠️ Missing JWT claims for user ${user.id}, falling back to database`
+        );
+
+        // Fallback: Query database (temporary during migration)
+        const access = await getBasicUserAccess(user.id);
+        plan = access.plan;
+        hasPremiumAccess = access.hasPremiumAccess;
+      } else {
+        // JWT claims present - use them!
+        plan = billing.plan;
+        status = billing.status;
+
+        // Check for edge cases using status and period_end
+        // This avoids database queries for common scenarios
+
+        // 1. Check subscription status (but respect cancel_at_period_end)
+        // If canceled but cancel_at_period_end=true, keep access until expiry
+        if (status === 'past_due' || status === 'incomplete' || status === 'paused') {
+          console.warn(`⚠️ Subscription ${status} for user ${user.id}`);
+          hasPremiumAccess = false; // Revoke premium access
+        }
+        // 2. Handle "canceled" status: check cancel_at_period_end flag
+        else if (status === 'canceled') {
+          if (billing.cancel_at_period_end && billing.current_period_end) {
+            // User canceled but has access until period end
+            // Check if period has expired (with leeway for clock skew)
+            const nowSeconds = Date.now() / 1000;
+            const isExpired = nowSeconds > (billing.current_period_end + EXPIRY_LEEWAY_SECONDS);
+
+            if (isExpired) {
+              console.warn(`⚠️ Canceled subscription expired for user ${user.id}`);
+              hasPremiumAccess = false;
+            } else {
+              console.log(`✅ Canceled subscription still valid until ${new Date(billing.current_period_end * 1000).toISOString()} for user ${user.id}`);
+              hasPremiumAccess = plan === "premium" || plan === "unlimited" || plan === "lifetime";
+            }
+          } else {
+            // Canceled without period end, or cancel_at_period_end=false (immediate cancellation)
+            console.warn(`⚠️ Subscription canceled (immediate) for user ${user.id}`);
+            hasPremiumAccess = false;
+          }
+        }
+        // 3. Check if subscription expired (with leeway for clock skew)
+        else if (billing.current_period_end && Date.now() / 1000 > (billing.current_period_end + EXPIRY_LEEWAY_SECONDS)) {
+          console.warn(`⚠️ Subscription expired for user ${user.id}`);
+          hasPremiumAccess = false; // Revoke premium access
+        }
+        // 4. Normal case: check plan type
+        else {
+          hasPremiumAccess =
+            plan === "premium" || plan === "unlimited" || plan === "lifetime";
+        }
+
+        console.log(
+          `✅ Using JWT claims for user ${user.id} (v${billing.billing_version})`
+        );
+      }
+
+      const endTime = performance.now();
+      const duration = endTime - startTime;
+
+      console.log(`⏱️ Middleware access check took: ${duration.toFixed(2)}ms`, {
+        userId: user.id,
+        source: billing ? "jwt" : "database",
+        plan,
+        status,
+        hasPremiumAccess,
       });
 
+      // Alert if middleware is slow
+      const threshold = billing ? 10 : 100;
+      if (duration > threshold) {
+        console.warn(
+          `🐌 Slow middleware detected: ${duration.toFixed(2)}ms (threshold: ${threshold}ms)`,
+          {
+            userId: user.id,
+            source: billing ? "jwt" : "database",
+            pathname,
+          }
+        );
+      }
+
       // Check if user needs onboarding (no plan selected)
-      if (!access.hasAccess) {
+      if (!plan) {
         console.log(
-          "🚫 Middleware: No access found, redirecting to onboarding"
+          "🚫 Middleware: No plan selected, redirecting to onboarding"
         );
         const url = request.nextUrl.clone();
         url.pathname = "/onboarding";
@@ -140,7 +235,7 @@ export async function updateSession(request: NextRequest) {
         pathname.startsWith(path)
       );
 
-      if (isPremiumRoute && !access.hasPremiumAccess) {
+      if (isPremiumRoute && !hasPremiumAccess) {
         console.log(
           "🚫 Middleware: Premium route blocked, redirecting to upgrade"
         );
@@ -149,7 +244,7 @@ export async function updateSession(request: NextRequest) {
         return NextResponse.redirect(url);
       }
 
-      console.log("✅ Middleware: Access granted for plan:", access.plan);
+      console.log("✅ Middleware: Access granted for plan:", plan);
     } catch (error) {
       console.error("❌ Middleware: Error checking access:", error);
       // On error, redirect to onboarding to be safe

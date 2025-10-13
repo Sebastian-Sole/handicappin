@@ -8,20 +8,31 @@ import {
 
 /**
  * Lightweight version of access control for Edge Runtime (middleware)
- * Only checks database, doesn't call Stripe API
+ * Reads MINIMAL billing info from JWT claims for optimal performance (<1ms).
  *
- * ⚠️ SECURITY NOTE: This function trusts the database as source of truth.
- * The database is kept in sync via Stripe webhooks. However, there are edge cases
- * where the DB may be out of sync:
- * - Webhook delivery failures (mitigated by Stripe's automatic retries)
- * - Database write failures (mitigated by throwing errors to trigger retries)
- * - Subscription status changes not reflected (past_due, paused, etc.)
+ * ⚠️ PERFORMANCE NOTE: This function is now only used as a FALLBACK when JWT
+ * claims are missing. In normal operation, middleware reads directly from JWT.
  *
- * For critical access decisions, page components SHOULD use
- * getComprehensiveUserAccess() which verifies with Stripe directly.
+ * JWT claims structure (MINIMAL, ~80 bytes):
+ * {
+ *   plan: "free" | "premium" | "unlimited" | "lifetime",
+ *   status: "active" | "past_due" | "canceled" | ...,
+ *   current_period_end: number | null,
+ *   cancel_at_period_end: boolean,
+ *   billing_version: number
+ * }
  *
- * This middleware check is a performance optimization to avoid Stripe API calls
- * on every request, but should be paired with Stripe verification at the page level.
+ * JWT claims are updated automatically via Custom Access Token Hook on:
+ * - User login
+ * - Token refresh (~every 1 hour)
+ * - Manual refresh via /api/auth/refresh-claims
+ *
+ * ⚠️ STALENESS NOTE: JWT claims can be stale (1-60 minutes). This is acceptable
+ * because middleware is a COARSE FILTER. Page components MUST still use
+ * getComprehensiveUserAccess() which verifies with Stripe directly for critical ops.
+ *
+ * ⚠️ USAGE LIMITS: rounds_used is NOT in JWT (intentional). Enforce usage limits
+ * in server actions by querying the database.
  */
 export async function getBasicUserAccess(
   userId: string

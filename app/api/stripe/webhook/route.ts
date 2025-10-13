@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
 import { profile, stripeCustomers } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { stripe, mapPriceToPlan } from "@/lib/stripe";
 import {
   logWebhookReceived,
@@ -179,6 +179,10 @@ async function handleCheckoutCompleted(session: any) {
               .set({
                 planSelected: plan,
                 planSelectedAt: new Date(),
+                subscriptionStatus: 'active', // NEW
+                currentPeriodEnd: null, // NEW: Lifetime plans have no period end
+                cancelAtPeriodEnd: false, // NEW: Not canceled
+                billingVersion: sql`billing_version + 1`, // NEW: Increment version
               })
               .where(eq(profile.id, userId));
 
@@ -231,6 +235,10 @@ async function handleSubscriptionChange(subscription: any) {
         .set({
           planSelected: plan,
           planSelectedAt: new Date(),
+          subscriptionStatus: subscription.status, // NEW: active, trialing, etc.
+          currentPeriodEnd: subscription.current_period_end, // NEW: unix timestamp
+          cancelAtPeriodEnd: subscription.cancel_at_period_end || false, // NEW: Critical for graceful cancellation
+          billingVersion: sql`billing_version + 1`, // NEW: Increment version
         })
         .where(eq(profile.id, userId));
 
@@ -261,6 +269,10 @@ async function handleSubscriptionDeleted(subscription: any) {
       .set({
         planSelected: "free",
         planSelectedAt: new Date(),
+        subscriptionStatus: 'canceled', // NEW
+        currentPeriodEnd: null, // NEW
+        cancelAtPeriodEnd: false, // NEW: No longer relevant after deletion
+        billingVersion: sql`billing_version + 1`, // NEW: Increment version
       })
       .where(eq(profile.id, userId));
 
