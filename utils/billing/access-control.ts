@@ -97,6 +97,8 @@ async function getUserAccess(userId: string): Promise<FeatureAccess | null> {
     }
 
     // Query Stripe for active subscriptions
+    // Note: This function should not be called from middleware (edge runtime)
+    // Use getBasicUserAccess() for middleware instead
     const { stripe, mapPriceToPlan } = await import("@/lib/stripe");
     const subscriptions = await stripe.subscriptions.list({
       customer: stripeCustomer.stripe_customer_id,
@@ -170,11 +172,27 @@ export async function getComprehensiveUserAccess(
     return createFreeTierResponse(profile.rounds_used || 0);
   }
 
-  // 4. Check if user selected recurring paid plan - verify with Stripe
+  // 3. LIFETIME plan (one-time payment, NOT subscription)
+  if (profile.plan_selected === "lifetime") {
+    // Lifetime: Trust database value set by webhook after successful payment
+    // No need to query Stripe - if plan_selected='lifetime', payment succeeded
+    // Webhook validates payment via signature verification (cryptographically secure)
+    return {
+      plan: "lifetime",
+      hasAccess: true,
+      hasPremiumAccess: true,
+      hasUnlimitedRounds: true,
+      remainingRounds: Infinity,
+      status: "active",
+      isLifetime: true,
+      currentPeriodEnd: new Date("2099-12-31T23:59:59.000Z"), // Never expires
+    };
+  }
+
+  // 4. PREMIUM/UNLIMITED plans (recurring subscriptions)
   if (
     profile.plan_selected === "premium" ||
-    profile.plan_selected === "unlimited" ||
-    profile.plan_selected === "lifetime"
+    profile.plan_selected === "unlimited"
   ) {
     const subscriptionAccess = await getUserAccess(userId);
 
@@ -183,8 +201,7 @@ export async function getComprehensiveUserAccess(
       return subscriptionAccess;
     }
 
-    // Stripe says no active subscription (expired/cancelled)
-    // Fall back to free tier
+    // Subscription expired/cancelled - fall back to free tier
     console.log("Subscription expired, falling back to free tier");
     // Note: Webhook should have updated plan_selected to 'free', but handle gracefully
   }
