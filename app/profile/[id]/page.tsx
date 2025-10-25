@@ -138,9 +138,6 @@ const ProfilePage = async (props: { params: Promise<{ id: string }> }) => {
                   : "null"}
               </div>
               <div>
-                <strong>Rounds Used:</strong> {profile.rounds_used}
-              </div>
-              <div>
                 <strong>User ID:</strong>{" "}
                 <code className="text-xs">{profile.id}</code>
               </div>

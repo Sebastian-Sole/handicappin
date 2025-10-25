@@ -4,7 +4,10 @@ import { NextResponse, type NextRequest } from "next/server";
 import { jwtVerify } from "jose"; // Import the `jose` library
 import { PasswordResetPayload } from "@/types/auth";
 import { getBasicUserAccess } from "@/utils/billing/access-control";
-import { PREMIUM_PATHS } from "@/utils/billing/constants";
+import {
+  FREE_TIER_ROUND_LIMIT,
+  PREMIUM_PATHS,
+} from "@/utils/billing/constants";
 
 // Define billing claims type (minimal)
 type BillingClaims = {
@@ -132,7 +135,7 @@ export async function updateSession(request: NextRequest) {
       const billing = user.app_metadata?.billing as BillingClaims | undefined;
 
       let plan: string | null = null;
-      let status: string = 'active';
+      let status: string = "active";
       let hasPremiumAccess: boolean = false;
 
       // Graceful fallback to database if claims missing (during migration)
@@ -155,33 +158,52 @@ export async function updateSession(request: NextRequest) {
 
         // 1. Check subscription status (but respect cancel_at_period_end)
         // If canceled but cancel_at_period_end=true, keep access until expiry
-        if (status === 'past_due' || status === 'incomplete' || status === 'paused') {
+        if (
+          status === "past_due" ||
+          status === "incomplete" ||
+          status === "paused"
+        ) {
           console.warn(`⚠️ Subscription ${status} for user ${user.id}`);
           hasPremiumAccess = false; // Revoke premium access
         }
         // 2. Handle "canceled" status: check cancel_at_period_end flag
-        else if (status === 'canceled') {
+        else if (status === "canceled") {
           if (billing.cancel_at_period_end && billing.current_period_end) {
             // User canceled but has access until period end
             // Check if period has expired (with leeway for clock skew)
             const nowSeconds = Date.now() / 1000;
-            const isExpired = nowSeconds > (billing.current_period_end + EXPIRY_LEEWAY_SECONDS);
+            const isExpired =
+              nowSeconds > billing.current_period_end + EXPIRY_LEEWAY_SECONDS;
 
             if (isExpired) {
-              console.warn(`⚠️ Canceled subscription expired for user ${user.id}`);
+              console.warn(
+                `⚠️ Canceled subscription expired for user ${user.id}`
+              );
               hasPremiumAccess = false;
             } else {
-              console.log(`✅ Canceled subscription still valid until ${new Date(billing.current_period_end * 1000).toISOString()} for user ${user.id}`);
-              hasPremiumAccess = plan === "premium" || plan === "unlimited" || plan === "lifetime";
+              console.log(
+                `✅ Canceled subscription still valid until ${new Date(
+                  billing.current_period_end * 1000
+                ).toISOString()} for user ${user.id}`
+              );
+              hasPremiumAccess =
+                plan === "premium" ||
+                plan === "unlimited" ||
+                plan === "lifetime";
             }
           } else {
             // Canceled without period end, or cancel_at_period_end=false (immediate cancellation)
-            console.warn(`⚠️ Subscription canceled (immediate) for user ${user.id}`);
+            console.warn(
+              `⚠️ Subscription canceled (immediate) for user ${user.id}`
+            );
             hasPremiumAccess = false;
           }
         }
         // 3. Check if subscription expired (with leeway for clock skew)
-        else if (billing.current_period_end && Date.now() / 1000 > (billing.current_period_end + EXPIRY_LEEWAY_SECONDS)) {
+        else if (
+          billing.current_period_end &&
+          Date.now() / 1000 > billing.current_period_end + EXPIRY_LEEWAY_SECONDS
+        ) {
           console.warn(`⚠️ Subscription expired for user ${user.id}`);
           hasPremiumAccess = false; // Revoke premium access
         }
@@ -211,7 +233,9 @@ export async function updateSession(request: NextRequest) {
       const threshold = billing ? 10 : 100;
       if (duration > threshold) {
         console.warn(
-          `🐌 Slow middleware detected: ${duration.toFixed(2)}ms (threshold: ${threshold}ms)`,
+          `🐌 Slow middleware detected: ${duration.toFixed(
+            2
+          )}ms (threshold: ${threshold}ms)`,
           {
             userId: user.id,
             source: billing ? "jwt" : "database",
@@ -245,6 +269,35 @@ export async function updateSession(request: NextRequest) {
       }
 
       console.log("✅ Middleware: Access granted for plan:", plan);
+
+      // Check if user is trying to add a round when at limit (free tier only)
+      if (pathname.startsWith("/rounds/add") && plan === "free") {
+        console.log("🔍 Middleware: Checking round limit for free tier user");
+
+        // Count rounds from database (fast query due to index)
+        const { count: roundCount, error: countError } = await supabase
+          .from("round")
+          .select("*", { count: "exact", head: true })
+          .eq("userId", user.id);
+
+        if (countError) {
+          console.error("❌ Middleware: Error counting rounds:", countError);
+        } else {
+          if (roundCount !== null && roundCount >= FREE_TIER_ROUND_LIMIT) {
+            console.log(
+              `🚫 Middleware: Free tier user at limit (${roundCount}/${FREE_TIER_ROUND_LIMIT}), redirecting to upgrade`
+            );
+            const url = request.nextUrl.clone();
+            url.pathname = "/upgrade";
+            url.searchParams.set("reason", "round_limit");
+            return NextResponse.redirect(url);
+          }
+
+          console.log(
+            `✅ Middleware: Free tier user within limit (${roundCount}/${FREE_TIER_ROUND_LIMIT})`
+          );
+        }
+      }
     } catch (error) {
       console.error("❌ Middleware: Error checking access:", error);
       // On error, redirect to onboarding to be safe

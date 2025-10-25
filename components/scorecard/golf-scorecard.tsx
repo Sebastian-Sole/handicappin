@@ -53,12 +53,19 @@ import DatePicker from "../ui/datepicker";
 import useMounted from "@/hooks/useMounted";
 import { Skeleton } from "../ui/skeleton";
 import { getFlagEmoji } from "@/utils/frivolities/headerGenerator";
+import { FeatureAccess } from "@/types/billing";
 
 interface GolfScorecardProps {
   profile: Tables<"profile">;
+  access: FeatureAccess;
+  isAtLimit: boolean;
 }
 
-export default function GolfScorecard({ profile }: GolfScorecardProps) {
+export default function GolfScorecard({
+  profile,
+  access,
+  isAtLimit,
+}: GolfScorecardProps) {
   const isMounted = useMounted();
   const router = useRouter();
   // Use the tee management hook
@@ -272,6 +279,16 @@ export default function GolfScorecard({ profile }: GolfScorecardProps) {
   const submitScorecardMutation = api.round.submitScorecard.useMutation();
 
   const onSubmit = async (data: Scorecard) => {
+    // Prevent submission if at limit
+    if (isAtLimit) {
+      toast({
+        title: "Round Limit Reached",
+        description: "Please upgrade to continue tracking rounds",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsSubmitting(true);
     await new Promise((resolve) => setTimeout(resolve, 1000));
     try {
@@ -312,11 +329,12 @@ export default function GolfScorecard({ profile }: GolfScorecardProps) {
             "Please enter scores for the first 9 holes, or select 18 holes",
           variant: "destructive",
         });
+        setIsSubmitting(false);
         return;
       }
 
       console.log("submissionData: ", submissionData);
-      await submitScorecardMutation.mutate(submissionData);
+      await submitScorecardMutation.mutateAsync(submissionData);
 
       // Show success message
       toast({
@@ -332,12 +350,31 @@ export default function GolfScorecard({ profile }: GolfScorecardProps) {
     } catch (error) {
       console.error("Error submitting scorecard:", error);
       setIsSubmitting(false);
+
+      // Better error handling - check for specific error types
+      let errorMessage = "Failed to submit scorecard";
+
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      }
+
+      // Check if it's a TRPC error with a specific message
+      if (
+        typeof error === "object" &&
+        error !== null &&
+        "message" in error &&
+        typeof error.message === "string"
+      ) {
+        errorMessage = error.message;
+      }
+
       toast({
         title: "Error",
-        description:
-          error instanceof Error ? error.message : "Failed to submit scorecard",
+        description: errorMessage,
         variant: "destructive",
       });
+
+      // DO NOT redirect on error - let user see the error and try again
     }
   };
 
@@ -381,8 +418,12 @@ export default function GolfScorecard({ profile }: GolfScorecardProps) {
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit, onError)} role="form">
-        <Card className="w-full mx-auto">
-          <CardContent className="p-6">
+        <div className={`relative ${isAtLimit ? "pointer-events-none" : ""}`}>
+          {isAtLimit && (
+            <div className="absolute inset-0 bg-background/80 backdrop-blur-sm z-10 rounded-lg" />
+          )}
+          <Card className={`w-full mx-auto ${isAtLimit ? "opacity-50" : ""}`}>
+            <CardContent className="p-6">
             <div className="mb-6 grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-8">
               <Card>
                 <CardContent className="p-4">
@@ -736,20 +777,21 @@ export default function GolfScorecard({ profile }: GolfScorecardProps) {
             {/* Desktop submit button */}
             {selectedTeeKey && (
               <div className="mt-4 justify-end hidden md:flex">
-                <Button type="submit" disabled={isSubmitting}>
+                <Button type="submit" disabled={isSubmitting || isAtLimit}>
                   {isSubmitting ? "Submitting..." : "Submit Scorecard"}
                 </Button>
               </div>
             )}
           </CardContent>
         </Card>
+        </div>
         {/* Sticky mobile submit button */}
         {selectedTeeKey && (
           <div className="fixed bottom-0 left-0 right-0 z-50 bg-background border-t border-border p-4 flex justify-center md:hidden">
             <Button
               type="submit"
               className="w-full max-w-md"
-              disabled={isSubmitting}
+              disabled={isSubmitting || isAtLimit}
             >
               {isSubmitting ? "Submitting..." : "Submit Scorecard"}
             </Button>

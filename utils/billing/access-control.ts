@@ -42,7 +42,7 @@ export async function getBasicUserAccess(
   // Get user profile
   const { data: profile, error: profileError } = await supabase
     .from("profile")
-    .select("plan_selected, rounds_used")
+    .select("plan_selected")
     .eq("id", userId)
     .single();
 
@@ -56,9 +56,19 @@ export async function getBasicUserAccess(
     return createNoAccessResponse();
   }
 
-  // Free plan
+  // Free plan - COUNT rounds from database
   if (profile.plan_selected === "free") {
-    return createFreeTierResponse(profile.rounds_used || 0);
+    const { count, error: countError } = await supabase
+      .from("round")
+      .select("*", { count: "exact", head: true })
+      .eq("userId", userId);
+
+    if (countError) {
+      console.error("Error counting rounds:", countError);
+      return createFreeTierResponse(0);
+    }
+
+    return createFreeTierResponse(count || 0);
   }
 
   // Paid plan (trust database, Stripe verification happens in page components)
@@ -158,7 +168,7 @@ export async function getComprehensiveUserAccess(
   // 1. Get user profile (exists for ALL users)
   const { data: profile, error: profileError } = await supabase
     .from("profile")
-    .select("plan_selected, rounds_used")
+    .select("plan_selected")
     .eq("id", userId)
     .single();
 
@@ -167,9 +177,19 @@ export async function getComprehensiveUserAccess(
     return createNoAccessResponse();
   }
 
-  // 2. Check if user selected free plan
+  // 2. Check if user selected free plan - COUNT rounds from database
   if (profile.plan_selected === "free") {
-    return createFreeTierResponse(profile.rounds_used || 0);
+    const { count, error: countError } = await supabase
+      .from("round")
+      .select("*", { count: "exact", head: true })
+      .eq("userId", userId);
+
+    if (countError) {
+      console.error("Error counting rounds:", countError);
+      return createFreeTierResponse(0);
+    }
+
+    return createFreeTierResponse(count || 0);
   }
 
   // 3. LIFETIME plan (one-time payment, NOT subscription)

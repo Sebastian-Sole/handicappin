@@ -11,6 +11,7 @@ import {
   integer,
   timestamp,
   pgSchema,
+  index,
 } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
 import { createSelectSchema } from "drizzle-zod";
@@ -36,7 +37,6 @@ export const profile = pgTable(
       .notNull(),
 
     // Billing/plan tracking fields
-    roundsUsed: integer("rounds_used").default(0).notNull(),
     planSelected: text("plan_selected").$type<
       "free" | "premium" | "unlimited" | "lifetime" | null
     >(),
@@ -231,6 +231,7 @@ export const round = pgTable(
       .notNull(),
   },
   (table) => [
+    index("idx_round_userId").on(table.userId),
     foreignKey({
       columns: [table.courseId],
       foreignColumns: [course.id],
