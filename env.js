@@ -12,6 +12,11 @@ export const env = createEnv({
     NODE_ENV: z
       .enum(["development", "test", "production"])
       .default("development"),
+    STRIPE_SECRET_KEY: z.string().optional(),
+    STRIPE_PREMIUM_PRICE_ID: z.string().optional(),
+    STRIPE_UNLIMITED_PRICE_ID: z.string().optional(),
+    STRIPE_UNLIMITED_LIFETIME_PRICE_ID: z.string().optional(),
+    RESET_TOKEN_SECRET: z.string().optional(),
   },
 
   /**
@@ -34,6 +39,11 @@ export const env = createEnv({
     DATABASE_URL: process.env.DATABASE_URL,
     DIRECT_URL: process.env.DIRECT_URL,
     NODE_ENV: process.env.NODE_ENV,
+    STRIPE_SECRET_KEY: process.env.STRIPE_SECRET_KEY,
+    STRIPE_PREMIUM_PRICE_ID: process.env.STRIPE_PREMIUM_PRICE_ID,
+    STRIPE_UNLIMITED_PRICE_ID: process.env.STRIPE_UNLIMITED_PRICE_ID,
+    STRIPE_UNLIMITED_LIFETIME_PRICE_ID: process.env.STRIPE_UNLIMITED_LIFETIME_PRICE_ID,
+    RESET_TOKEN_SECRET: process.env.RESET_TOKEN_SECRET,
     NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
     NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
     NEXT_PUBLIC_BASE_URL: process.env.NEXT_PUBLIC_BASE_URL,
