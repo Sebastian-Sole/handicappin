@@ -8,6 +8,15 @@
 export const FREE_TIER_ROUND_LIMIT = 25;
 
 /**
+ * Free tier round limit critical
+ */
+export const FREE_TIER_ROUND_LIMIT_CRITICAL = 5;
+/**
+ * Free tier round limit warning
+ */
+export const FREE_TIER_ROUND_LIMIT_WARNING = 10;
+
+/**
  * Premium paths that require paid plan access
  */
 export const PREMIUM_PATHS = ["/dashboard", "/calculators"];

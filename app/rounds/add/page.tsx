@@ -10,7 +10,15 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { FREE_TIER_ROUND_LIMIT } from "@/utils/billing/constants";
+import {
+  FREE_TIER_ROUND_LIMIT,
+  FREE_TIER_ROUND_LIMIT_CRITICAL,
+  FREE_TIER_ROUND_LIMIT_WARNING,
+} from "@/utils/billing/constants";
+import {
+  UsageLimitAlert,
+  UsageLimitReachedView,
+} from "@/components/scorecard/usage-limit-alert";
 
 const AddRoundPage = async () => {
   const supabase = await createServerComponentClient();
@@ -27,6 +35,24 @@ const AddRoundPage = async () => {
   // Get user access info to show remaining rounds
   const access = await getComprehensiveUserAccess(userId);
 
+  const alertVariant =
+    access.remainingRounds < FREE_TIER_ROUND_LIMIT_CRITICAL
+      ? "critical"
+      : access.remainingRounds < FREE_TIER_ROUND_LIMIT_WARNING
+      ? "warning"
+      : "default";
+
+  // If user has no remaining rounds, only show the limit reached view
+  if (access.plan === "free" && access.remainingRounds <= 0) {
+    return (
+      <Suspense fallback={<AddRoundSkeleton />}>
+        <div className="flex justify-center items-center flex-col">
+          <UsageLimitReachedView />
+        </div>
+      </Suspense>
+    );
+  }
+
   return (
     <Suspense fallback={<AddRoundSkeleton />}>
       <div className="flex justify-center items-center flex-col h-full py-2 md:py-4 lg:py-8">
@@ -38,38 +64,13 @@ const AddRoundPage = async () => {
         </P>
 
         {/* Show remaining rounds for free tier users */}
-        {access.plan === "free" && (
+        {access.plan === "free" && access.remainingRounds > 0 && (
           <div className="w-full max-w-4xl mb-4">
-            {access.remainingRounds > 0 ? (
-              <Alert>
-                <AlertCircle className="h-4 w-4" />
-                <AlertTitle>Free Tier</AlertTitle>
-                <AlertDescription>
-                  You have <strong>{access.remainingRounds}</strong> of{" "}
-                  <strong>{FREE_TIER_ROUND_LIMIT}</strong> free rounds
-                  remaining.{" "}
-                  <Link href="/upgrade" className="underline">
-                    Upgrade to unlimited
-                  </Link>
-                </AlertDescription>
-              </Alert>
-            ) : (
-              <Alert variant="destructive">
-                <AlertCircle className="h-4 w-4" />
-                <AlertTitle>Round Limit Reached</AlertTitle>
-                <AlertDescription className="flex flex-col gap-2">
-                  <p>
-                    You&apos;ve used all {FREE_TIER_ROUND_LIMIT} free rounds.
-                    Upgrade to continue tracking your golf game!
-                  </p>
-                  <Link href="/upgrade">
-                    <Button variant="default" size="sm">
-                      Upgrade Now
-                    </Button>
-                  </Link>
-                </AlertDescription>
-              </Alert>
-            )}
+            <UsageLimitAlert
+              current={FREE_TIER_ROUND_LIMIT - access.remainingRounds}
+              total={FREE_TIER_ROUND_LIMIT}
+              variant={alertVariant}
+            />
           </div>
         )}
 
