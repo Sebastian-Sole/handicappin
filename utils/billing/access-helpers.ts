@@ -6,12 +6,12 @@ import { FREE_TIER_ROUND_LIMIT } from "./constants";
  */
 export function createNoAccessResponse(): FeatureAccess {
   return {
-    plan: "free",
+    plan: null, // NULL because no plan selected yet
     hasAccess: false,
     hasPremiumAccess: false,
     hasUnlimitedRounds: false,
-    remainingRounds: FREE_TIER_ROUND_LIMIT,
-    status: "free",
+    remainingRounds: 0, // No rounds available without plan selection
+    status: null, // NULL because no plan selected yet
     isLifetime: false,
     currentPeriodEnd: null,
   };

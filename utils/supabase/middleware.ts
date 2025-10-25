@@ -11,8 +11,8 @@ import {
 
 // Define billing claims type (minimal)
 type BillingClaims = {
-  plan: string;
-  status: string;
+  plan: string | null; // NULL when user hasn't selected a plan
+  status: string | null; // NULL when user hasn't selected a plan
   current_period_end: number | null;
   cancel_at_period_end: boolean;
   billing_version: number;
@@ -66,10 +66,11 @@ export async function updateSession(request: NextRequest) {
     "/api",
     "/verify-email",
     "/forgot-password",
-    "/",
   ];
 
-  const isPublic = publicPaths.some((path) => pathname.startsWith(path));
+  // Special case: "/" is public, but not paths that start with "/"
+  const isPublic =
+    pathname === "/" || publicPaths.some((path) => pathname.startsWith(path));
 
   if (!user && pathname === "/update-password") {
     const resetToken = request.nextUrl.searchParams.get("token");
@@ -128,14 +129,13 @@ export async function updateSession(request: NextRequest) {
     !pathname.startsWith("/upgrade")
   ) {
     const startTime = performance.now(); // Performance monitoring
-    console.log("🔍 Middleware: Checking access for user:", user.id);
 
     try {
       // NEW: Read MINIMAL billing info from JWT claims (NO DATABASE QUERY!)
       const billing = user.app_metadata?.billing as BillingClaims | undefined;
 
       let plan: string | null = null;
-      let status: string = "active";
+      let status: string | null = "active";
       let hasPremiumAccess: boolean = false;
 
       // Graceful fallback to database if claims missing (during migration)
@@ -181,11 +181,6 @@ export async function updateSession(request: NextRequest) {
               );
               hasPremiumAccess = false;
             } else {
-              console.log(
-                `✅ Canceled subscription still valid until ${new Date(
-                  billing.current_period_end * 1000
-                ).toISOString()} for user ${user.id}`
-              );
               hasPremiumAccess =
                 plan === "premium" ||
                 plan === "unlimited" ||
@@ -212,22 +207,10 @@ export async function updateSession(request: NextRequest) {
           hasPremiumAccess =
             plan === "premium" || plan === "unlimited" || plan === "lifetime";
         }
-
-        console.log(
-          `✅ Using JWT claims for user ${user.id} (v${billing.billing_version})`
-        );
       }
 
       const endTime = performance.now();
       const duration = endTime - startTime;
-
-      console.log(`⏱️ Middleware access check took: ${duration.toFixed(2)}ms`, {
-        userId: user.id,
-        source: billing ? "jwt" : "database",
-        plan,
-        status,
-        hasPremiumAccess,
-      });
 
       // Alert if middleware is slow
       const threshold = billing ? 10 : 100;
@@ -246,9 +229,6 @@ export async function updateSession(request: NextRequest) {
 
       // Check if user needs onboarding (no plan selected)
       if (!plan) {
-        console.log(
-          "🚫 Middleware: No plan selected, redirecting to onboarding"
-        );
         const url = request.nextUrl.clone();
         url.pathname = "/onboarding";
         return NextResponse.redirect(url);
@@ -260,20 +240,13 @@ export async function updateSession(request: NextRequest) {
       );
 
       if (isPremiumRoute && !hasPremiumAccess) {
-        console.log(
-          "🚫 Middleware: Premium route blocked, redirecting to upgrade"
-        );
         const url = request.nextUrl.clone();
         url.pathname = "/upgrade";
         return NextResponse.redirect(url);
       }
 
-      console.log("✅ Middleware: Access granted for plan:", plan);
-
       // Check if user is trying to add a round when at limit (free tier only)
       if (pathname.startsWith("/rounds/add") && plan === "free") {
-        console.log("🔍 Middleware: Checking round limit for free tier user");
-
         // Count rounds from database (fast query due to index)
         const { count: roundCount, error: countError } = await supabase
           .from("round")
@@ -284,22 +257,14 @@ export async function updateSession(request: NextRequest) {
           console.error("❌ Middleware: Error counting rounds:", countError);
         } else {
           if (roundCount !== null && roundCount >= FREE_TIER_ROUND_LIMIT) {
-            console.log(
-              `🚫 Middleware: Free tier user at limit (${roundCount}/${FREE_TIER_ROUND_LIMIT}), redirecting to upgrade`
-            );
             const url = request.nextUrl.clone();
             url.pathname = "/upgrade";
             url.searchParams.set("reason", "round_limit");
             return NextResponse.redirect(url);
           }
-
-          console.log(
-            `✅ Middleware: Free tier user within limit (${roundCount}/${FREE_TIER_ROUND_LIMIT})`
-          );
         }
       }
     } catch (error) {
-      console.error("❌ Middleware: Error checking access:", error);
       // On error, redirect to onboarding to be safe
       const url = request.nextUrl.clone();
       url.pathname = "/onboarding";

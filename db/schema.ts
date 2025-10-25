@@ -44,9 +44,7 @@ export const profile = pgTable(
 
     // NEW: Subscription status tracking for JWT claims
     subscriptionStatus: text("subscription_status")
-      .$type<"active" | "trialing" | "past_due" | "canceled" | "paused" | "incomplete" | "incomplete_expired" | "unpaid">()
-      .default("active")
-      .notNull(),
+      .$type<"active" | "trialing" | "past_due" | "canceled" | "paused" | "incomplete" | "incomplete_expired" | "unpaid" | null>(),
     currentPeriodEnd: integer("current_period_end"), // bigint stored as integer
     cancelAtPeriodEnd: boolean("cancel_at_period_end").default(false).notNull(),
     billingVersion: integer("billing_version").default(1).notNull(),

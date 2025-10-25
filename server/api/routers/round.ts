@@ -168,20 +168,30 @@ export const roundRouter = createTRPCRouter({
         throw new Error("Tee played has no holes");
       }
 
-      // 0. Check round limit for free tier users
+      // 0. Check user access (plan selected)
       const access = await getComprehensiveUserAccess(userId);
 
-      if (access.plan === "free" && access.remainingRounds <= 0) {
+      // 0a. First check: Has user selected a plan?
+      if (!access.hasAccess) {
         throw new TRPCError({
           code: "FORBIDDEN",
-          message: `You've reached your free tier limit of ${FREE_TIER_ROUND_LIMIT} rounds. You have ${access.remainingRounds} rounds remaining. Please upgrade to continue tracking rounds.`,
+          message: "Please select a plan to continue. Visit the onboarding page to get started.",
         });
       }
 
-      console.log(
-        "✅ Round limit check passed. Remaining rounds:",
-        access.remainingRounds
-      );
+      // 0b. Second check: Free tier round limit
+      if (access.plan === "free" && access.remainingRounds <= 0) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: `You've reached your free tier limit of ${FREE_TIER_ROUND_LIMIT} rounds. Please upgrade to continue tracking rounds.`,
+        });
+      }
+
+      console.log("✅ Access checks passed", {
+        plan: access.plan,
+        hasAccess: access.hasAccess,
+        remainingRounds: access.remainingRounds,
+      });
 
       // 1. Get user profile for handicap calculations
       const userProfile = await db

@@ -3,7 +3,7 @@
 import { createServerComponentClient } from "@/utils/supabase/server";
 import { db } from "@/db";
 import { profile } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 
 export async function createFreeTierSubscription(userId: string) {
   const supabase = await createServerComponentClient();
@@ -24,6 +24,8 @@ export async function createFreeTierSubscription(userId: string) {
       .set({
         planSelected: "free",
         planSelectedAt: new Date(),
+        subscriptionStatus: "active", // Explicitly set status for free plan
+        billingVersion: sql`billing_version + 1`, // Increment to invalidate JWT cache
       })
       .where(eq(profile.id, userId));
 

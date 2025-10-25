@@ -6,9 +6,10 @@ export type SubscriptionStatus =
   | "past_due"
   | "trialing"
   | "unpaid"
-  | "free";
+  | "free"
+  | null; // NULL when no plan selected
 
-export type PlanType = "free" | "premium" | "unlimited" | "lifetime";
+export type PlanType = "free" | "premium" | "unlimited" | "lifetime" | null; // NULL when no plan selected
 
 export interface FeatureAccess {
   plan: PlanType;
