@@ -372,3 +372,35 @@ export const stripeCustomers = pgTable(
 
 export const stripeCustomersSchema = createSelectSchema(stripeCustomers);
 export type StripeCustomer = InferSelectModel<typeof stripeCustomers>;
+
+// Webhook idempotency tracking table
+export const webhookEvents = pgTable(
+  "webhook_events",
+  {
+    eventId: text("event_id").primaryKey().notNull(),
+    eventType: text("event_type").notNull(),
+    processedAt: timestamp("processed_at")
+      .default(sql`CURRENT_TIMESTAMP`)
+      .notNull(),
+    status: text("status").$type<"success" | "failed">().notNull(),
+    errorMessage: text("error_message"),
+    retryCount: integer("retry_count").default(0).notNull(),
+    userId: uuid("user_id"),
+  },
+  (table) => [
+    index("idx_webhook_events_event_type").on(table.eventType),
+    index("idx_webhook_events_user_id").on(table.userId),
+    index("idx_webhook_events_processed_at").on(table.processedAt),
+    foreignKey({
+      columns: [table.userId],
+      foreignColumns: [profile.id],
+      name: "webhook_events_user_id_fkey",
+    })
+      .onUpdate("cascade")
+      .onDelete("set null"), // Don't delete events when user is deleted
+    // Note: No RLS policies - this is a system table accessed only by webhook handler
+  ]
+);
+
+export const webhookEventsSchema = createSelectSchema(webhookEvents);
+export type WebhookEvent = InferSelectModel<typeof webhookEvents>;
