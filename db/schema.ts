@@ -404,3 +404,39 @@ export const webhookEvents = pgTable(
 
 export const webhookEventsSchema = createSelectSchema(webhookEvents);
 export type WebhookEvent = InferSelectModel<typeof webhookEvents>;
+
+// Pending lifetime purchases - tracks payment mode checkouts awaiting payment confirmation
+export const pendingLifetimePurchases = pgTable(
+  "pending_lifetime_purchases",
+  {
+    id: serial("id").primaryKey(),
+    userId: uuid("user_id").notNull(),
+    checkoutSessionId: text("checkout_session_id").notNull().unique(),
+    paymentIntentId: text("payment_intent_id"),
+    priceId: text("price_id").notNull(),
+    plan: text("plan").$type<"lifetime">().notNull(),
+    status: text("status").$type<"pending" | "paid" | "failed">().notNull(),
+    createdAt: timestamp("created_at")
+      .default(sql`CURRENT_TIMESTAMP`)
+      .notNull(),
+    updatedAt: timestamp("updated_at")
+      .default(sql`CURRENT_TIMESTAMP`)
+      .notNull(),
+  },
+  (table) => [
+    index("idx_pending_lifetime_user").on(table.userId),
+    index("idx_pending_lifetime_payment_intent").on(table.paymentIntentId),
+    index("idx_pending_lifetime_status").on(table.status),
+    foreignKey({
+      columns: [table.userId],
+      foreignColumns: [profile.id],
+      name: "pending_lifetime_purchases_user_id_fkey",
+    })
+      .onUpdate("cascade")
+      .onDelete("cascade"), // Delete pending purchases when user is deleted
+    // Note: No RLS policies - this is a system table accessed only by webhook handler
+  ]
+);
+
+export const pendingLifetimePurchasesSchema = createSelectSchema(pendingLifetimePurchases);
+export type PendingLifetimePurchase = InferSelectModel<typeof pendingLifetimePurchases>;

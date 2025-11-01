@@ -96,9 +96,56 @@ export type Database = {
           },
         ]
       }
+      pending_lifetime_purchases: {
+        Row: {
+          checkout_session_id: string
+          created_at: string
+          id: number
+          payment_intent_id: string | null
+          plan: string
+          price_id: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          checkout_session_id: string
+          created_at?: string
+          id?: number
+          payment_intent_id?: string | null
+          plan: string
+          price_id: string
+          status: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          checkout_session_id?: string
+          created_at?: string
+          id?: number
+          payment_intent_id?: string | null
+          plan?: string
+          price_id?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pending_lifetime_purchases_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profile"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profile: {
         Row: {
+          billing_version: number
+          cancel_at_period_end: boolean
           createdAt: string
+          current_period_end: number | null
           email: string
           handicapIndex: number
           id: string
@@ -106,11 +153,14 @@ export type Database = {
           name: string | null
           plan_selected: string | null
           plan_selected_at: string | null
-          rounds_used: number | null
+          subscription_status: string | null
           verified: boolean
         }
         Insert: {
+          billing_version?: number
+          cancel_at_period_end?: boolean
           createdAt?: string
+          current_period_end?: number | null
           email: string
           handicapIndex?: number
           id: string
@@ -118,11 +168,14 @@ export type Database = {
           name?: string | null
           plan_selected?: string | null
           plan_selected_at?: string | null
-          rounds_used?: number | null
+          subscription_status?: string | null
           verified?: boolean
         }
         Update: {
+          billing_version?: number
+          cancel_at_period_end?: boolean
           createdAt?: string
+          current_period_end?: number | null
           email?: string
           handicapIndex?: number
           id?: string
@@ -130,7 +183,7 @@ export type Database = {
           name?: string | null
           plan_selected?: string | null
           plan_selected_at?: string | null
-          rounds_used?: number | null
+          subscription_status?: string | null
           verified?: boolean
         }
         Relationships: []
@@ -397,12 +450,53 @@ export type Database = {
         }
         Relationships: []
       }
+      webhook_events: {
+        Row: {
+          error_message: string | null
+          event_id: string
+          event_type: string
+          processed_at: string
+          retry_count: number
+          status: string
+          user_id: string | null
+        }
+        Insert: {
+          error_message?: string | null
+          event_id: string
+          event_type: string
+          processed_at?: string
+          retry_count?: number
+          status: string
+          user_id?: string | null
+        }
+        Update: {
+          error_message?: string | null
+          event_id?: string
+          event_type?: string
+          processed_at?: string
+          retry_count?: number
+          status?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "webhook_events_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profile"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      custom_access_token_hook: { Args: { event: Json }; Returns: Json }
+      get_public_course_count: { Args: never; Returns: number }
+      get_public_round_count: { Args: never; Returns: number }
+      get_public_user_count: { Args: never; Returns: number }
     }
     Enums: {
       [_ in never]: never

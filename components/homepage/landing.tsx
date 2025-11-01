@@ -21,23 +21,24 @@ import Link from "next/link";
 export default async function Landing() {
   const supabase = await createServerComponentClient();
 
-  const { data: users } = await supabase.from("profile").select("id");
-  if (!users) {
-    throw new Error("Failed to fetch number of users");
-  }
-  const numberOfUsers = Math.round(users.length / 10) * 10;
+  const { data: numberOfUsers, error: usersError } = await supabase.rpc(
+    "get_public_user_count"
+  );
 
-  const { data: rounds } = await supabase.from("round").select("id");
-  if (!rounds) {
-    throw new Error("Failed to fetch number of rounds");
-  }
-  const numberOfRounds = Math.round(rounds.length / 10) * 10;
+  const { data: numberOfRounds, error: roundsError } = await supabase.rpc(
+    "get_public_round_count"
+  );
 
-  const { data: courses } = await supabase.from("course").select("id");
-  if (!courses) {
-    throw new Error("Failed to fetch number of courses");
-  }
-  const numberOfCourses = Math.round(courses.length / 10) * 10;
+  const { data: numberOfCourses, error: coursesError } = await supabase.rpc(
+    "get_public_course_count"
+  );
+
+  const usersCount =
+    usersError || numberOfUsers === null ? 10 : numberOfUsers || 10;
+  const roundsCount =
+    roundsError || numberOfRounds === null ? 0 : numberOfRounds || 0;
+  const coursesCount =
+    coursesError || numberOfCourses === null ? 0 : numberOfCourses || 0;
 
   return (
     <div className="min-h-screen bg-background">
@@ -201,19 +202,19 @@ export default async function Landing() {
           <div className="grid md:grid-cols-3 gap-8 text-center">
             <div>
               <div className="text-4xl font-bold text-primary mb-2">
-                {numberOfUsers > 0 ? numberOfUsers : "10"}+
+                {usersCount > 0 ? usersCount : "10"}+
               </div>
               <div className="text-muted-foreground">Active Users</div>
             </div>
             <div>
               <div className="text-4xl font-bold text-primary mb-2">
-                {numberOfRounds}+
+                {roundsCount}+
               </div>
               <div className="text-muted-foreground">Rounds Logged</div>
             </div>
             <div>
               <div className="text-4xl font-bold text-primary mb-2">
-                {numberOfCourses}+
+                {coursesCount}+
               </div>
               <div className="text-muted-foreground">Courses supported</div>
             </div>

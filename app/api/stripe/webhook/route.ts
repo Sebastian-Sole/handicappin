@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
-import { profile, stripeCustomers, webhookEvents } from "@/db/schema";
+import { profile, stripeCustomers, webhookEvents, pendingLifetimePurchases } from "@/db/schema";
 import { eq, sql } from "drizzle-orm";
 import { stripe, mapPriceToPlan } from "@/lib/stripe";
 import {
@@ -66,6 +66,14 @@ export async function POST(request: NextRequest) {
 
       case "checkout.session.completed":
         await handleCheckoutCompleted(event.data.object);
+        break;
+
+      case "payment_intent.succeeded":
+        await handlePaymentIntentSucceeded(event.data.object);
+        break;
+
+      case "payment_intent.payment_failed":
+        await handlePaymentIntentFailed(event.data.object);
         break;
 
       case "customer.subscription.created":
@@ -229,9 +237,9 @@ async function handleCheckoutCompleted(session: any) {
     return;
   }
 
-  // For payment mode (lifetime), update plan immediately
+  // For payment mode (lifetime), check payment status first
   if (session.mode === "payment") {
-    logPaymentEvent("Payment mode detected - processing lifetime plan");
+    logPaymentEvent("Payment mode detected - checking payment status");
 
     try {
       const lineItems = await stripe.checkout.sessions.listLineItems(
@@ -244,41 +252,212 @@ async function handleCheckoutCompleted(session: any) {
         priceId,
       });
 
-      if (priceId) {
-        const plan = mapPriceToPlan(priceId);
-        logWebhookDebug("Mapped price to plan", { priceId, plan });
-
-        if (plan) {
-          try {
-            await db
-              .update(profile)
-              .set({
-                planSelected: plan,
-                planSelectedAt: new Date(),
-                subscriptionStatus: "active", // NEW
-                currentPeriodEnd: null, // NEW: Lifetime plans have no period end
-                cancelAtPeriodEnd: false, // NEW: Not canceled
-                billingVersion: sql`billing_version + 1`, // NEW: Increment version
-              })
-              .where(eq(profile.id, userId));
-
-            logWebhookSuccess(
-              `Updated plan_selected to '${plan}' for user: ${userId}`
-            );
-          } catch (dbError) {
-            logWebhookError(`Error updating plan for user ${userId}`, dbError);
-            // Throw error to trigger webhook retry by Stripe
-            throw dbError;
-          }
-        } else {
-          logWebhookError(`Unknown price ID: ${priceId}`);
-        }
-      } else {
+      if (!priceId) {
         logWebhookError("No price ID found in line items");
+        return;
       }
+
+      const plan = mapPriceToPlan(priceId);
+      logWebhookDebug("Mapped price to plan", { priceId, plan });
+
+      if (!plan) {
+        logWebhookError(`Unknown price ID: ${priceId}`);
+        return;
+      }
+
+      // ✅ NEW: Check payment status before granting access
+      const paymentStatus = session.payment_status;
+      logWebhookDebug("Payment status", { paymentStatus, sessionId: session.id });
+
+      if (paymentStatus === "paid") {
+        // Payment confirmed - grant access immediately
+        logPaymentEvent(`Payment confirmed - granting ${plan} access to user ${userId}`);
+
+        try {
+          await db
+            .update(profile)
+            .set({
+              planSelected: plan,
+              planSelectedAt: new Date(),
+              subscriptionStatus: "active",
+              currentPeriodEnd: null,
+              cancelAtPeriodEnd: false,
+              billingVersion: sql`billing_version + 1`,
+            })
+            .where(eq(profile.id, userId));
+
+          logWebhookSuccess(`Granted ${plan} access to user ${userId}`);
+        } catch (dbError) {
+          logWebhookError(`Error updating plan for user ${userId}`, dbError);
+          throw dbError;
+        }
+
+      } else if (paymentStatus === "unpaid") {
+        // Payment pending - store for later processing
+        logPaymentEvent(`Payment pending for user ${userId} - waiting for payment_intent.succeeded`);
+
+        try {
+          await db.insert(pendingLifetimePurchases).values({
+            userId,
+            checkoutSessionId: session.id,
+            paymentIntentId: session.payment_intent as string,
+            priceId,
+            plan: plan as "lifetime",
+            status: "pending",
+          }).onConflictDoUpdate({
+            target: pendingLifetimePurchases.checkoutSessionId,
+            set: {
+              updatedAt: new Date(),
+              paymentIntentId: session.payment_intent as string, // Update if webhook retries
+            },
+          });
+
+          logWebhookInfo(`Stored pending lifetime purchase for user ${userId}`);
+        } catch (dbError) {
+          logWebhookError(`Error storing pending purchase for user ${userId}`, dbError);
+          throw dbError;
+        }
+
+      } else if (paymentStatus === "no_payment_required") {
+        // Free checkout (100% coupon) - grant access
+        logPaymentEvent(`No payment required - granting ${plan} access to user ${userId}`);
+
+        try {
+          await db
+            .update(profile)
+            .set({
+              planSelected: plan,
+              planSelectedAt: new Date(),
+              subscriptionStatus: "active",
+              currentPeriodEnd: null,
+              cancelAtPeriodEnd: false,
+              billingVersion: sql`billing_version + 1`,
+            })
+            .where(eq(profile.id, userId));
+
+          logWebhookSuccess(`Granted ${plan} access to user ${userId} (no payment required)`);
+        } catch (dbError) {
+          logWebhookError(`Error updating plan for user ${userId}`, dbError);
+          throw dbError;
+        }
+
+      } else {
+        // Unknown payment status
+        logWebhookWarning(`Unknown payment status: ${paymentStatus} for session ${session.id}`);
+      }
+
     } catch (error) {
       logWebhookError("Error processing payment mode checkout", error);
+      throw error;
     }
+  }
+}
+
+/**
+ * Handle payment intent succeeded - grant access for pending lifetime purchases
+ */
+async function handlePaymentIntentSucceeded(paymentIntent: any) {
+  const paymentIntentId = paymentIntent.id;
+
+  logPaymentEvent(`Payment intent succeeded: ${paymentIntentId}`);
+
+  try {
+    // Find pending lifetime purchase
+    const pendingResults = await db
+      .select()
+      .from(pendingLifetimePurchases)
+      .where(eq(pendingLifetimePurchases.paymentIntentId, paymentIntentId))
+      .limit(1);
+
+    if (pendingResults.length === 0) {
+      // Not a lifetime purchase or already processed
+      logWebhookInfo(`No pending lifetime purchase found for payment intent ${paymentIntentId}`);
+      return;
+    }
+
+    const purchase = pendingResults[0];
+
+    // Grant lifetime access
+    logPaymentEvent(`Granting ${purchase.plan} access to user ${purchase.userId} after payment confirmation`);
+
+    try {
+      await db.update(profile).set({
+        planSelected: purchase.plan,
+        planSelectedAt: new Date(),
+        subscriptionStatus: "active",
+        currentPeriodEnd: null,
+        cancelAtPeriodEnd: false,
+        billingVersion: sql`billing_version + 1`,
+      }).where(eq(profile.id, purchase.userId));
+
+      logWebhookSuccess(`Granted ${purchase.plan} access to user ${purchase.userId}`);
+    } catch (dbError) {
+      logWebhookError(`Error updating plan for user ${purchase.userId}`, dbError);
+      throw dbError;
+    }
+
+    // Mark purchase as paid
+    try {
+      await db.update(pendingLifetimePurchases).set({
+        status: "paid",
+        updatedAt: new Date(),
+      }).where(eq(pendingLifetimePurchases.id, purchase.id));
+
+      logWebhookSuccess(`Marked pending purchase ${purchase.id} as paid`);
+    } catch (dbError) {
+      logWebhookError(`Error updating pending purchase status`, dbError);
+      // Don't throw - access was granted successfully
+    }
+
+  } catch (error) {
+    logWebhookError("Error processing payment intent succeeded", error);
+    throw error;
+  }
+}
+
+/**
+ * Handle payment intent failed - mark pending lifetime purchase as failed
+ */
+async function handlePaymentIntentFailed(paymentIntent: any) {
+  const paymentIntentId = paymentIntent.id;
+
+  logPaymentEvent(`Payment intent failed: ${paymentIntentId}`);
+
+  try {
+    // Find pending lifetime purchase
+    const pendingResults = await db
+      .select()
+      .from(pendingLifetimePurchases)
+      .where(eq(pendingLifetimePurchases.paymentIntentId, paymentIntentId))
+      .limit(1);
+
+    if (pendingResults.length === 0) {
+      // Not a lifetime purchase or already processed
+      logWebhookInfo(`No pending lifetime purchase found for failed payment intent ${paymentIntentId}`);
+      return;
+    }
+
+    const purchase = pendingResults[0];
+
+    // Mark purchase as failed
+    try {
+      await db.update(pendingLifetimePurchases).set({
+        status: "failed",
+        updatedAt: new Date(),
+      }).where(eq(pendingLifetimePurchases.id, purchase.id));
+
+      logWebhookWarning(`Payment failed for user ${purchase.userId} - marked pending purchase ${purchase.id} as failed`);
+    } catch (dbError) {
+      logWebhookError(`Error marking pending purchase as failed`, dbError);
+      throw dbError;
+    }
+
+    // TODO: Send email notification to user (separate ticket)
+    // TODO: Consider cleanup job for old failed purchases (separate ticket)
+
+  } catch (error) {
+    logWebhookError("Error processing payment intent failed", error);
+    throw error;
   }
 }
 
