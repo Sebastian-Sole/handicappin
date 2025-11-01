@@ -13,6 +13,7 @@ import {
   logPaymentEvent,
   logSubscriptionEvent,
 } from "@/lib/webhook-logger";
+import { verifyCustomerOwnership } from "@/lib/stripe-security";
 
 export async function POST(request: NextRequest) {
   let event: any = null; // Declare in outer scope for failure recording
@@ -172,13 +173,35 @@ async function handleCustomerCreated(customer: any) {
   }
 
   try {
+    // ✅ NEW: Check if user already has a customer (defensive)
+    const existingCustomer = await db
+      .select()
+      .from(stripeCustomers)
+      .where(eq(stripeCustomers.userId, userId))
+      .limit(1);
+
+    if (existingCustomer.length > 0) {
+      // User already has a customer - this is suspicious
+      logWebhookWarning('🚨 SECURITY: Attempt to create duplicate customer for user', {
+        userId,
+        existingCustomerId: existingCustomer[0].stripeCustomerId,
+        newCustomerId: customer.id,
+        severity: 'MEDIUM',
+      });
+
+      // Don't insert - primary key constraint would fail anyway
+      // But log for security monitoring
+      return;
+    }
+
+    // Proceed with customer creation
     await db
       .insert(stripeCustomers)
       .values({
         userId,
         stripeCustomerId: customer.id,
       })
-      .onConflictDoNothing();
+      .onConflictDoNothing(); // Still keep this as safety net
 
     logWebhookSuccess(`Stripe customer created for user: ${userId}`);
   } catch (error) {
@@ -265,6 +288,30 @@ async function handleCheckoutCompleted(session: any) {
         return;
       }
 
+      // ✅ NEW: Verify customer ownership if customer ID exists
+      if (customerId) {
+        const ownership = await verifyCustomerOwnership(customerId, userId);
+
+        if (!ownership.valid) {
+          logWebhookError('Customer-User correlation check failed for lifetime purchase', {
+            handler: 'handleCheckoutCompleted',
+            mode: 'payment',
+            claimedUserId: userId,
+            actualUserId: ownership.actualUserId,
+            stripeCustomerId: customerId,
+            sessionId: session.id,
+            severity: 'HIGH',
+          });
+          return; // ❌ DO NOT GRANT LIFETIME ACCESS
+        }
+
+        logWebhookDebug('Customer-User correlation verified for lifetime purchase', {
+          userId,
+          customerId,
+        });
+      }
+
+      // Continue with existing payment status logic (no changes below)...
       // ✅ NEW: Check payment status before granting access
       const paymentStatus = session.payment_status;
       logWebhookDebug("Payment status", { paymentStatus, sessionId: session.id });
@@ -466,12 +513,34 @@ async function handlePaymentIntentFailed(paymentIntent: any) {
  */
 async function handleSubscriptionChange(subscription: any) {
   const userId = subscription.metadata?.supabase_user_id;
+  const customerId = subscription.customer; // Stripe customer ID
 
   if (!userId) {
     logWebhookError("No supabase_user_id in subscription metadata");
     return;
   }
 
+  // ✅ NEW: Verify customer belongs to this user
+  const ownership = await verifyCustomerOwnership(customerId, userId);
+
+  if (!ownership.valid) {
+    logWebhookError('Customer-User correlation check failed - NOT updating plan', {
+      handler: 'handleSubscriptionChange',
+      claimedUserId: userId,
+      actualUserId: ownership.actualUserId,
+      stripeCustomerId: customerId,
+      subscriptionId: subscription.id,
+      severity: 'HIGH',
+    });
+    return; // ❌ DO NOT UPDATE PROFILE
+  }
+
+  logWebhookDebug('Customer-User correlation verified', {
+    userId,
+    customerId,
+  });
+
+  // Continue with existing logic (no changes below)...
   const priceId = subscription.items.data[0]?.price.id;
   if (!priceId) {
     logWebhookError("No price ID in subscription");
@@ -515,12 +584,28 @@ async function handleSubscriptionChange(subscription: any) {
  */
 async function handleSubscriptionDeleted(subscription: any) {
   const userId = subscription.metadata?.supabase_user_id;
+  const customerId = subscription.customer;
 
   if (!userId) {
     logWebhookError("No supabase_user_id in subscription metadata");
     return;
   }
 
+  // ✅ NEW: Verify customer belongs to this user
+  const ownership = await verifyCustomerOwnership(customerId, userId);
+
+  if (!ownership.valid) {
+    logWebhookError('Customer-User correlation check failed - NOT reverting plan', {
+      handler: 'handleSubscriptionDeleted',
+      claimedUserId: userId,
+      actualUserId: ownership.actualUserId,
+      stripeCustomerId: customerId,
+      severity: 'HIGH',
+    });
+    return; // ❌ DO NOT REVERT PLAN
+  }
+
+  // Continue with existing logic (no changes below)...
   // Revert to free tier
   try {
     await db
