@@ -87,6 +87,18 @@ export async function POST(request: NextRequest) {
         await handleSubscriptionDeleted(event.data.object);
         break;
 
+      case "invoice.payment_failed":
+        await handleInvoicePaymentFailed(event.data.object);
+        break;
+
+      case "charge.refunded":
+        await handleChargeRefunded(event.data.object);
+        break;
+
+      case "charge.dispute.created":
+        await handleDisputeCreated(event.data.object);
+        break;
+
       default:
         logWebhookInfo(`Unhandled event type: ${event.type}`);
     }
@@ -546,6 +558,312 @@ async function handlePaymentIntentFailed(paymentIntent: any) {
   } catch (error) {
     logWebhookError("Error processing payment intent failed", error);
     throw error;
+  }
+}
+
+/**
+ * Handle failed invoice payment (subscription payment declined)
+ * Updates subscription status to reflect payment failure
+ */
+async function handleInvoicePaymentFailed(invoice: any) {
+  const subscriptionId = invoice.subscription;
+  const customerId = invoice.customer;
+  const attemptCount = invoice.attempt_count;
+
+  logPaymentEvent(
+    `Invoice payment failed for subscription ${subscriptionId} (attempt ${attemptCount})`
+  );
+
+  if (!subscriptionId) {
+    logWebhookWarning("Invoice has no subscription ID");
+    return;
+  }
+
+  try {
+    // Get subscription to find user ID from metadata
+    const subscription = await stripe.subscriptions.retrieve(subscriptionId);
+    const userId = subscription.metadata?.supabase_user_id;
+
+    if (!userId) {
+      logWebhookError("No user ID in subscription metadata", {
+        subscriptionId,
+        customerId,
+      });
+      return;
+    }
+
+    // Verify customer ownership (security check)
+    const ownership = await verifyCustomerOwnership(customerId, userId);
+
+    if (!ownership.valid) {
+      logWebhookError('Customer-User correlation check failed for invoice payment failure', {
+        handler: 'handleInvoicePaymentFailed',
+        claimedUserId: userId,
+        actualUserId: ownership.actualUserId,
+        stripeCustomerId: customerId,
+        subscriptionId,
+        invoiceId: invoice.id,
+        severity: 'HIGH',
+      });
+      return; // ❌ DO NOT UPDATE STATUS
+    }
+
+    logWebhookDebug('Customer-User correlation verified for invoice failure', {
+      userId,
+      customerId,
+      subscriptionId,
+    });
+
+    // Update subscription status to past_due
+    await db
+      .update(profile)
+      .set({
+        subscriptionStatus: "past_due",
+        billingVersion: sql`billing_version + 1`,
+      })
+      .where(eq(profile.id, userId));
+
+    logWebhookSuccess(
+      `Updated subscription status to past_due for user ${userId}`
+    );
+
+    // Log warning if this is the final attempt
+    if (attemptCount >= 3) {
+      logWebhookWarning(
+        `Final payment attempt failed for user ${userId} - subscription will be canceled by Stripe`,
+        {
+          attemptCount,
+          subscriptionId,
+          userId,
+        }
+      );
+    }
+
+    // TODO: Send email notification (separate ticket)
+    // await sendPaymentFailureEmail({
+    //   userId,
+    //   attemptCount,
+    //   nextAttemptDate: nextPaymentAttempt ? new Date(nextPaymentAttempt * 1000) : null,
+    // });
+
+  } catch (error) {
+    logWebhookError("Error processing invoice payment failure", error);
+    throw error; // Trigger Stripe retry
+  }
+}
+
+/**
+ * Handle charge refunds (full or partial)
+ * Revokes access for full refunds of lifetime purchases
+ */
+async function handleChargeRefunded(charge: any) {
+  const chargeId = charge.id;
+  const customerId = charge.customer;
+  const amountRefunded = charge.amount_refunded; // In cents
+  const amountCharged = charge.amount; // In cents
+  const currency = charge.currency;
+  const isFullRefund = amountRefunded === amountCharged;
+
+  logPaymentEvent(
+    `Charge refunded: ${chargeId} (${formatAmount(amountRefunded, currency)} refunded)`
+  );
+
+  if (!customerId) {
+    logWebhookWarning("Charge has no customer ID", { chargeId });
+    return;
+  }
+
+  try {
+    // Find user by customer ID
+    const customerRecord = await db
+      .select()
+      .from(stripeCustomers)
+      .where(eq(stripeCustomers.stripeCustomerId, customerId))
+      .limit(1);
+
+    if (customerRecord.length === 0) {
+      logWebhookWarning(`No user found for customer ${customerId}`, {
+        chargeId,
+        customerId,
+      });
+      return;
+    }
+
+    const userId = customerRecord[0].userId;
+
+    // Get user's current plan
+    const userProfile = await db
+      .select()
+      .from(profile)
+      .where(eq(profile.id, userId))
+      .limit(1);
+
+    if (userProfile.length === 0) {
+      logWebhookError(`No profile found for user ${userId}`, {
+        userId,
+        chargeId,
+      });
+      return;
+    }
+
+    const currentPlan = userProfile[0].planSelected;
+
+    // Log refund details
+    logWebhookDebug('Refund details', {
+      userId,
+      currentPlan,
+      isFullRefund,
+      amountRefunded: formatAmount(amountRefunded, currency),
+      amountCharged: formatAmount(amountCharged, currency),
+    });
+
+    // For lifetime plans, full refund = revoke access
+    if (currentPlan === "lifetime" && isFullRefund) {
+      logPaymentEvent(
+        `Full refund detected - revoking lifetime access for user ${userId}`
+      );
+
+      await db
+        .update(profile)
+        .set({
+          planSelected: "free",
+          planSelectedAt: new Date(),
+          subscriptionStatus: "canceled",
+          currentPeriodEnd: null,
+          cancelAtPeriodEnd: false,
+          billingVersion: sql`billing_version + 1`,
+        })
+        .where(eq(profile.id, userId));
+
+      logWebhookSuccess(
+        `Revoked lifetime access for user ${userId} due to full refund`
+      );
+
+      // TODO: Send email notification (separate ticket)
+      // await sendRefundNotificationEmail({ userId, amount: amountRefunded });
+
+    } else if (isFullRefund) {
+      // Full refund for subscription - let subscription.deleted handle it
+      logWebhookInfo(
+        `Full refund for non-lifetime plan (user ${userId}, plan ${currentPlan}) - subscription cancellation will be handled by subscription.deleted event`
+      );
+    } else {
+      // Partial refund - no action needed
+      logWebhookInfo(
+        `Partial refund (${formatAmount(amountRefunded, currency)}) for user ${userId} - no access changes`
+      );
+    }
+
+  } catch (error) {
+    logWebhookError("Error processing charge refund", error);
+    throw error; // Trigger Stripe retry
+  }
+}
+
+/**
+ * Handle charge disputes (chargebacks)
+ * Logs security alert for manual review - does NOT automatically revoke access
+ */
+async function handleDisputeCreated(dispute: any) {
+  const disputeId = dispute.id;
+  const chargeId = dispute.charge;
+  const amount = dispute.amount;
+  const reason = dispute.reason;
+  const status = dispute.status;
+  const currency = dispute.currency || 'usd';
+
+  logPaymentEvent(
+    `Dispute created: ${disputeId} for charge ${chargeId} (${formatAmount(amount, currency)})`
+  );
+
+  try {
+    // Get charge details to find customer
+    const charge = await stripe.charges.retrieve(chargeId);
+    const customerId = charge.customer;
+
+    if (!customerId) {
+      logWebhookWarning("Disputed charge has no customer ID", {
+        disputeId,
+        chargeId,
+      });
+      return;
+    }
+
+    // Find user by customer ID
+    const customerRecord = await db
+      .select()
+      .from(stripeCustomers)
+      .where(eq(stripeCustomers.stripeCustomerId, customerId as string))
+      .limit(1);
+
+    if (customerRecord.length === 0) {
+      logWebhookWarning(
+        `No user found for disputed customer ${customerId}`,
+        {
+          disputeId,
+          chargeId,
+          customerId,
+        }
+      );
+      return;
+    }
+
+    const userId = customerRecord[0].userId;
+
+    // Get user details for logging
+    const userProfile = await db
+      .select()
+      .from(profile)
+      .where(eq(profile.id, userId))
+      .limit(1);
+
+    const currentPlan = userProfile[0]?.planSelected || 'unknown';
+
+    // Log security alert for manual review
+    console.error('🚨 SECURITY ALERT: Charge dispute filed', {
+      disputeId,
+      chargeId,
+      userId,
+      currentPlan,
+      amount: formatAmount(amount, currency),
+      currency,
+      reason,
+      status,
+      timestamp: new Date().toISOString(),
+      action: 'MANUAL_REVIEW_REQUIRED',
+      severity: 'HIGH',
+    });
+
+    logWebhookWarning(
+      `Dispute filed for user ${userId} - requires manual review`,
+      {
+        disputeId,
+        amount: formatAmount(amount, currency),
+        reason,
+        currentPlan,
+      }
+    );
+
+    // TODO: Send alert to admin (separate ticket)
+    // await sendDisputeAlert({
+    //   userId,
+    //   disputeId,
+    //   amount,
+    //   reason,
+    // });
+
+    // TODO: Flag user account for review (separate ticket)
+    // await flagUserAccountForReview(userId, 'dispute_filed');
+
+    // IMPORTANT: Do NOT automatically revoke access
+    // Wait for dispute resolution (charge.dispute.closed)
+    logWebhookInfo(
+      'No automatic action taken - waiting for dispute resolution'
+    );
+
+  } catch (error) {
+    logWebhookError("Error processing dispute notification", error);
+    throw error; // Trigger Stripe retry
   }
 }
 
