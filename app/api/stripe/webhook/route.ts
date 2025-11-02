@@ -14,6 +14,7 @@ import {
   logSubscriptionEvent,
 } from "@/lib/webhook-logger";
 import { verifyCustomerOwnership } from "@/lib/stripe-security";
+import { verifyPaymentAmount, formatAmount } from '@/utils/billing/pricing';
 
 export async function POST(request: NextRequest) {
   let event: any = null; // Declare in outer scope for failure recording
@@ -316,6 +317,46 @@ async function handleCheckoutCompleted(session: any) {
       const paymentStatus = session.payment_status;
       logWebhookDebug("Payment status", { paymentStatus, sessionId: session.id });
 
+      // ✅ NEW: Verify line item price (NOT session total, to support 100% coupons)
+      const lineItemPrice = lineItems.data[0]?.price;
+      if (!lineItemPrice) {
+        logWebhookError("No price found in line items", { sessionId: session.id });
+        return;
+      }
+
+      const verification = verifyPaymentAmount(
+        plan,
+        lineItemPrice.currency || 'usd',
+        lineItemPrice.unit_amount || 0,
+        false // lifetime is one-time payment
+      );
+
+      if (!verification.valid) {
+        logWebhookError('🚨 CRITICAL: Amount verification failed - NOT granting access', {
+          handler: 'handleCheckoutCompleted',
+          mode: 'payment',
+          plan,
+          expected: formatAmount(verification.expected),
+          actual: formatAmount(verification.actual),
+          variance: verification.variance,
+          currency: verification.currency,
+          sessionId: session.id,
+          userId,
+          priceId,
+          severity: 'HIGH',
+          action: 'Check environment variables and Stripe price configuration',
+        });
+
+        // ❌ DO NOT GRANT ACCESS - Return early
+        return;
+      }
+
+      logWebhookSuccess('✅ Amount verification passed', {
+        plan,
+        amount: formatAmount(verification.actual),
+        currency: verification.currency,
+      });
+
       if (paymentStatus === "paid") {
         // Payment confirmed - grant access immediately
         logPaymentEvent(`Payment confirmed - granting ${plan} access to user ${userId}`);
@@ -552,6 +593,48 @@ async function handleSubscriptionChange(subscription: any) {
     logWebhookError(`Unknown price ID: ${priceId}`);
     return;
   }
+
+  // ✅ NEW: Verify subscription amount
+  const price = subscription.items.data[0]?.price;
+  if (!price) {
+    logWebhookError("No price object in subscription items");
+    return;
+  }
+
+  const amount = price.unit_amount || 0;
+  const currency = price.currency || 'usd';
+
+  const verification = verifyPaymentAmount(
+    plan,
+    currency,
+    amount,
+    true // subscription is recurring
+  );
+
+  if (!verification.valid) {
+    logWebhookError('🚨 CRITICAL: Subscription amount verification failed - NOT updating plan', {
+      handler: 'handleSubscriptionChange',
+      plan,
+      expected: formatAmount(verification.expected),
+      actual: formatAmount(verification.actual),
+      variance: verification.variance,
+      currency: verification.currency,
+      subscriptionId: subscription.id,
+      userId,
+      priceId,
+      severity: 'HIGH',
+      action: 'Check environment variables and Stripe price configuration',
+    });
+
+    // ❌ DO NOT GRANT ACCESS - Return early
+    return;
+  }
+
+  logWebhookSuccess('✅ Subscription amount verification passed', {
+    plan,
+    amount: formatAmount(verification.actual),
+    currency: verification.currency,
+  });
 
   // Only update if subscription is active
   if (subscription.status === "active" || subscription.status === "trialing") {

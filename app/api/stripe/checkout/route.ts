@@ -4,7 +4,9 @@ import {
   createCheckoutSession,
   createLifetimeCheckoutSession,
   PLAN_TO_PRICE_MAP,
+  stripe,
 } from "@/lib/stripe";
+import { verifyPaymentAmount, formatAmount } from '@/utils/billing/pricing';
 
 export async function POST(request: NextRequest) {
   try {
@@ -29,6 +31,47 @@ export async function POST(request: NextRequest) {
     if (!priceId) {
       return NextResponse.json(
         { error: "Price ID not configured for this plan" },
+        { status: 500 }
+      );
+    }
+
+    // ✅ NEW: Verify price ID points to correct amount (Defense in Depth)
+    try {
+      const price = await stripe.prices.retrieve(priceId);
+
+      const verification = verifyPaymentAmount(
+        plan as "premium" | "unlimited" | "lifetime",
+        price.currency,
+        price.unit_amount || 0,
+        price.type === 'recurring'
+      );
+
+      if (!verification.valid) {
+        console.error('❌ CRITICAL: Price verification failed at checkout', {
+          plan,
+          priceId,
+          expected: formatAmount(verification.expected),
+          actual: formatAmount(verification.actual),
+          variance: verification.variance,
+          severity: 'HIGH',
+          action: 'Check environment variables and Stripe dashboard',
+        });
+
+        return NextResponse.json(
+          { error: 'Pricing configuration error. Please contact support.' },
+          { status: 500 }
+        );
+      }
+
+      console.log('✅ Price verification passed at checkout', {
+        plan,
+        amount: formatAmount(verification.actual),
+        currency: price.currency,
+      });
+    } catch (error) {
+      console.error('❌ Failed to verify price during checkout', error);
+      return NextResponse.json(
+        { error: 'Failed to verify pricing' },
         { status: 500 }
       );
     }
