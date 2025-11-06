@@ -7,36 +7,36 @@ import {
 } from "./access-helpers";
 
 /**
- * Lightweight version of access control for Edge Runtime (middleware)
- * Reads MINIMAL billing info from JWT claims for optimal performance (<1ms).
+ * ⚠️ DEPRECATED: This function is NO LONGER used in middleware!
  *
- * ⚠️ PERFORMANCE NOTE: This function is now only used as a FALLBACK when JWT
- * claims are missing. In normal operation, middleware reads directly from JWT.
+ * Lightweight version of access control for Edge Runtime (middleware).
+ * Reads MINIMAL billing info from database WITHOUT Stripe verification.
  *
- * JWT claims structure (MINIMAL, ~80 bytes):
- * {
- *   plan: "free" | "premium" | "unlimited" | "lifetime",
- *   status: "active" | "past_due" | "canceled" | ...,
- *   current_period_end: number | null,
- *   cancel_at_period_end: boolean,
- *   billing_version: number
- * }
+ * ⚠️ SECURITY WARNING: This function does NOT verify with Stripe and should
+ * NOT be used for authorization decisions!
  *
- * JWT claims are updated automatically via Custom Access Token Hook on:
- * - User login
- * - Token refresh (~every 1 hour)
- * - Manual refresh via /api/auth/refresh-claims
+ * ⚠️ MIDDLEWARE NOTE: Middleware no longer calls this function. Missing JWT
+ * claims now trigger a redirect to /auth/verify-session for controlled recovery.
  *
- * ⚠️ STALENESS NOTE: JWT claims can be stale (1-60 minutes). This is acceptable
- * because middleware is a COARSE FILTER. Page components MUST still use
- * getComprehensiveUserAccess() which verifies with Stripe directly for critical ops.
+ * ✅ USE INSTEAD:
+ * - Middleware: Read billing data from JWT claims (user.app_metadata.billing)
+ * - Server Actions: Use getComprehensiveUserAccess() which verifies with Stripe
  *
- * ⚠️ USAGE LIMITS: rounds_used is NOT in JWT (intentional). Enforce usage limits
- * in server actions by querying the database.
+ * This function is kept for backward compatibility in case other code uses it,
+ * but should be removed entirely once all usages are migrated.
+ *
+ * @deprecated Use JWT claims in middleware or getComprehensiveUserAccess() in server actions
  */
 export async function getBasicUserAccess(
   userId: string
 ): Promise<FeatureAccess> {
+  console.warn(
+    "⚠️ DEPRECATED: getBasicUserAccess() called - this should NOT be used for authorization!",
+    {
+      userId,
+      caller: new Error().stack?.split("\n")[2]?.trim(), // Log caller for debugging
+    }
+  );
   const supabase = await createServerComponentClient();
 
   // Get user profile

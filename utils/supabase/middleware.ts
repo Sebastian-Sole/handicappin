@@ -3,7 +3,6 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { jwtVerify } from "jose"; // Import the `jose` library
 import { PasswordResetPayload } from "@/types/auth";
-import { getBasicUserAccess } from "@/utils/billing/access-control";
 import {
   FREE_TIER_ROUND_LIMIT,
   PREMIUM_PATHS,
@@ -126,59 +125,108 @@ export async function updateSession(request: NextRequest) {
     !isPublic &&
     !pathname.startsWith("/onboarding") &&
     !pathname.startsWith("/billing") &&
-    !pathname.startsWith("/upgrade")
+    !pathname.startsWith("/upgrade") &&
+    !pathname.startsWith("/auth/verify-session")
   ) {
     const startTime = performance.now(); // Performance monitoring
 
     try {
-      // NEW: Read MINIMAL billing info from JWT claims (NO DATABASE QUERY!)
+      // Read billing info from JWT claims (NO DATABASE FALLBACK!)
       const billing = user.app_metadata?.billing as BillingClaims | undefined;
 
       let plan: string | null = null;
       let status: string | null = "active";
       let hasPremiumAccess: boolean = false;
 
-      // Graceful fallback to database if claims missing (during migration)
+      // ✅ NEW: If claims missing, handle based on environment
       if (!billing) {
-        console.warn(
-          `⚠️ Missing JWT claims for user ${user.id}, falling back to database`
+        // 🔍 DIAGNOSTIC: Log what we actually received
+        console.error(
+          `❌ Missing JWT claims for user ${user.id}`,
+          {
+            pathname,
+            timestamp: new Date().toISOString(),
+            hasAppMetadata: !!user.app_metadata,
+            appMetadataKeys: user.app_metadata ? Object.keys(user.app_metadata) : [],
+            appMetadataType: typeof user.app_metadata,
+            environment: process.env.NODE_ENV,
+          }
         );
 
-        // Fallback: Query database (temporary during migration)
-        const access = await getBasicUserAccess(user.id);
-        plan = access.plan;
-        hasPremiumAccess = access.hasPremiumAccess;
+        // 🔧 LOCAL DEV ONLY: Fallback to database (JWT hook doesn't work reliably locally)
+        if (process.env.NODE_ENV === "development") {
+          console.warn("⚠️ LOCAL DEV: JWT hook not working, falling back to database query");
+
+          try {
+            // Query profile table directly
+            const { data: profileData, error: profileError } = await supabase
+              .from("profile")
+              .select("plan_selected, subscription_status, current_period_end, cancel_at_period_end")
+              .eq("id", user.id)
+              .single();
+
+            if (profileError || !profileData) {
+              console.error("❌ LOCAL DEV: Profile query failed:", profileError);
+              // No profile = needs onboarding
+              const url = request.nextUrl.clone();
+              url.pathname = "/onboarding";
+              return NextResponse.redirect(url);
+            }
+
+            // Manually construct billing data from database
+            plan = profileData.plan_selected;
+            status = profileData.subscription_status || "active";
+
+            // If no plan, redirect to onboarding
+            if (!plan) {
+              const url = request.nextUrl.clone();
+              url.pathname = "/onboarding";
+              return NextResponse.redirect(url);
+            }
+
+            // Set hasPremiumAccess based on plan
+            hasPremiumAccess = plan === "premium" || plan === "unlimited" || plan === "lifetime";
+
+            console.log(`✅ LOCAL DEV: Using database fallback - plan: ${plan}, status: ${status}`);
+          } catch (dbError) {
+            console.error("❌ LOCAL DEV: Database fallback failed:", dbError);
+            const url = request.nextUrl.clone();
+            url.pathname = "/onboarding";
+            return NextResponse.redirect(url);
+          }
+        } else {
+          // 🔒 PRODUCTION: Fail closed - redirect to verification page
+          console.error("🔒 PRODUCTION: Redirecting to session verification");
+
+          const url = request.nextUrl.clone();
+          url.pathname = "/auth/verify-session";
+          url.searchParams.set("returnTo", pathname);
+          return NextResponse.redirect(url);
+        }
       } else {
         // JWT claims present - use them!
         plan = billing.plan;
         status = billing.status;
+      }
 
-        // Check for edge cases using status and period_end
-        // This avoids database queries for common scenarios
-
-        // 1. Check subscription status (but respect cancel_at_period_end)
-        // If canceled but cancel_at_period_end=true, keep access until expiry
+      // Check for edge cases using status and period_end (only if we have JWT claims)
+      if (billing) {
         if (
           status === "past_due" ||
           status === "incomplete" ||
           status === "paused"
         ) {
           console.warn(`⚠️ Subscription ${status} for user ${user.id}`);
-          hasPremiumAccess = false; // Revoke premium access
+          hasPremiumAccess = false;
         }
-        // 2. Handle "canceled" status: check cancel_at_period_end flag
         else if (status === "canceled") {
           if (billing.cancel_at_period_end && billing.current_period_end) {
-            // User canceled but has access until period end
-            // Check if period has expired (with leeway for clock skew)
             const nowSeconds = Date.now() / 1000;
             const isExpired =
               nowSeconds > billing.current_period_end + EXPIRY_LEEWAY_SECONDS;
 
             if (isExpired) {
-              console.warn(
-                `⚠️ Canceled subscription expired for user ${user.id}`
-              );
+              console.warn(`⚠️ Canceled subscription expired for user ${user.id}`);
               hasPremiumAccess = false;
             } else {
               hasPremiumAccess =
@@ -187,41 +235,33 @@ export async function updateSession(request: NextRequest) {
                 plan === "lifetime";
             }
           } else {
-            // Canceled without period end, or cancel_at_period_end=false (immediate cancellation)
-            console.warn(
-              `⚠️ Subscription canceled (immediate) for user ${user.id}`
-            );
+            console.warn(`⚠️ Subscription canceled (immediate) for user ${user.id}`);
             hasPremiumAccess = false;
           }
         }
-        // 3. Check if subscription expired (with leeway for clock skew)
         else if (
           billing.current_period_end &&
           Date.now() / 1000 > billing.current_period_end + EXPIRY_LEEWAY_SECONDS
         ) {
           console.warn(`⚠️ Subscription expired for user ${user.id}`);
-          hasPremiumAccess = false; // Revoke premium access
+          hasPremiumAccess = false;
         }
-        // 4. Normal case: check plan type
         else {
           hasPremiumAccess =
             plan === "premium" || plan === "unlimited" || plan === "lifetime";
         }
       }
+      // Local dev fallback already set hasPremiumAccess
 
       const endTime = performance.now();
       const duration = endTime - startTime;
 
-      // Alert if middleware is slow
-      const threshold = billing ? 10 : 100;
-      if (duration > threshold) {
+      // Alert if middleware is slow (should be < 10ms with JWT-only)
+      if (duration > 10) {
         console.warn(
-          `🐌 Slow middleware detected: ${duration.toFixed(
-            2
-          )}ms (threshold: ${threshold}ms)`,
+          `🐌 Slow middleware detected: ${duration.toFixed(2)}ms (threshold: 10ms)`,
           {
             userId: user.id,
-            source: billing ? "jwt" : "database",
             pathname,
           }
         );
@@ -265,9 +305,14 @@ export async function updateSession(request: NextRequest) {
         }
       }
     } catch (error) {
-      // On error, redirect to onboarding to be safe
+      // ✅ NEW: On error, redirect to verification page (not onboarding)
+      console.error("❌ Middleware error - redirecting to session verification:", error);
+
       const url = request.nextUrl.clone();
-      url.pathname = "/onboarding";
+      url.pathname = "/auth/verify-session";
+      url.searchParams.set("returnTo", pathname);
+      url.searchParams.set("error", "middleware_exception");
+
       return NextResponse.redirect(url);
     }
   }
