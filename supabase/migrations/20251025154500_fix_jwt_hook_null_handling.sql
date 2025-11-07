@@ -9,7 +9,7 @@
 CREATE OR REPLACE FUNCTION public.custom_access_token_hook(event jsonb)
 RETURNS jsonb
 LANGUAGE plpgsql
-SECURITY DEFINER  -- Required to access profile table from auth context
+-- NO SECURITY DEFINER per Supabase docs - use explicit grants instead
 SET search_path = public  -- Prevent search_path attacks
 STABLE  -- Function doesn't modify database
 AS $$
@@ -20,6 +20,9 @@ DECLARE
   rec record;
   app_meta jsonb;
 BEGIN
+  -- Log that hook is being called
+  RAISE LOG '🎣 JWT Hook called for user: %', event->>'user_id';
+
   -- Get original claims from event
   original_claims := event->'claims';
   new_claims := '{}'::jsonb;
@@ -61,11 +64,14 @@ BEGIN
 
   -- Handle missing profile (shouldn't happen, but be defensive)
   IF NOT FOUND THEN
+    RAISE WARNING '⚠️ JWT Hook: No profile found for user %', event->>'user_id';
     rec.plan := NULL;  -- No plan for missing profile
     rec.status := NULL;  -- No status for missing profile
     rec.current_period_end := NULL;
     rec.cancel_at_period_end := false;
     rec.billing_version := 0;
+  ELSE
+    RAISE LOG '✅ JWT Hook: Profile found - plan: %, status: %', rec.plan, rec.status;
   END IF;
 
   -- Build app_metadata with billing information
@@ -92,18 +98,29 @@ BEGIN
   -- Set the complete app_metadata back into claims
   new_claims := jsonb_set(new_claims, '{app_metadata}', app_meta);
 
+  -- Log successful completion
+  RAISE LOG '✅ JWT Hook: Returning claims with billing data for user %', event->>'user_id';
+
   -- Return event with modified claims
   RETURN jsonb_build_object('claims', new_claims);
 END;
 $$;
 
--- Grant necessary permissions
+-- Grant necessary permissions per Supabase docs
+-- https://supabase.com/docs/guides/auth/auth-hooks#postgres-functions
+
+-- 1. Grant usage on schema (CRITICAL - without this, hook won't execute!)
+GRANT USAGE ON SCHEMA public TO supabase_auth_admin;
+
+-- 2. Grant execute on function
 GRANT EXECUTE ON FUNCTION public.custom_access_token_hook(jsonb) TO supabase_auth_admin;
+
+-- 3. Grant select on tables the function needs to access
 GRANT SELECT ON public.profile TO supabase_auth_admin;
 
--- Revoke from public for security
-REVOKE EXECUTE ON FUNCTION public.custom_access_token_hook(jsonb) FROM PUBLIC;
+-- 4. Revoke from authenticated, anon, and public for security
+REVOKE EXECUTE ON FUNCTION public.custom_access_token_hook(jsonb) FROM authenticated, anon, public;
 
 -- Add comment for documentation
 COMMENT ON FUNCTION public.custom_access_token_hook IS
-  'Custom Access Token Hook: Injects MINIMAL billing information from profile table into JWT claims. Allows NULL plan/status for users who have not completed onboarding. Runs automatically on token issue/refresh. SECURITY DEFINER with safe search_path.';
+  'Custom Access Token Hook: Injects MINIMAL billing information from profile table into JWT claims. Allows NULL plan/status for users who have not completed onboarding. Runs automatically on token issue/refresh. Uses explicit grants to supabase_auth_admin (no SECURITY DEFINER).';

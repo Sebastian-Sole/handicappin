@@ -7,6 +7,8 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { Navbar } from "@/components/layout/navbar";
 import Footer from "@/components/layout/footer";
 import { Analytics } from "@vercel/analytics/next";
+import { BillingSync } from "@/components/billing-sync";
+import { createServerComponentClient } from "@/utils/supabase/server";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -15,11 +17,17 @@ export const metadata: Metadata = {
   description: "Golf made easy",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  // Get authenticated user for BillingSync
+  const supabase = await createServerComponentClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={inter.className}>
@@ -31,6 +39,9 @@ export default function RootLayout({
               enableSystem
               disableTransitionOnChange
             >
+              {/* Mount BillingSync for authenticated users only */}
+              {user && <BillingSync userId={user.id} />}
+
               <Navbar />
               <section className="pt-16 grow bg-background">{children}</section>
               <Footer />

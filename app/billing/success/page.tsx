@@ -1,68 +1,112 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { createClientComponentClient } from "@/utils/supabase/client";
 
 export default function BillingSuccessPage() {
-  const router = useRouter();
-  const [status, setStatus] = useState<"loading" | "success" | "error">(
-    "loading"
-  );
+  const [status, setStatus] = useState<"loading" | "success">("loading");
   const [userId, setUserId] = useState<string | null>(null);
 
   useEffect(() => {
     async function refreshClaims() {
       try {
-        // Get current user
         const supabase = createClientComponentClient();
+
+        // Get current user first
         const {
-          data: { user },
+          data: { user: initialUser },
         } = await supabase.auth.getUser();
 
-        if (!user) {
-          router.push("/login");
+        if (!initialUser) {
+          window.location.href = "/login";
           return;
         }
 
-        setUserId(user.id);
+        setUserId(initialUser.id);
 
-        // Refresh JWT claims immediately to collapse staleness window
-        console.log("🔄 Refreshing JWT claims after checkout...");
-        const response = await fetch("/api/auth/refresh-claims", {
-          method: "POST",
-        });
+        console.log("🔄 Waiting for webhook to update plan...");
 
-        if (!response.ok) {
-          throw new Error("Failed to refresh claims");
+        // Helper function to decode JWT and get billing claims
+        const getBillingFromToken = (session: any) => {
+          if (!session?.access_token) return null;
+
+          try {
+            const parts = session.access_token.split('.');
+            if (parts.length === 3) {
+              const payload = JSON.parse(atob(parts[1]));
+              return payload.app_metadata?.billing || null;
+            }
+          } catch (e) {
+            console.error("Failed to decode JWT:", e);
+          }
+          return null;
+        };
+
+        // Poll for plan update (up to 15 seconds)
+        // Webhooks typically arrive within 2-5 seconds
+        const maxAttempts = 8;
+        const pollInterval = 2000; // 2 seconds
+
+        for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+          console.log(`⏳ Polling for plan update (attempt ${attempt}/${maxAttempts})...`);
+
+          const { data: sessionData, error: refreshError } = await supabase.auth.refreshSession();
+
+          if (refreshError) {
+            console.error("Failed to refresh session:", refreshError);
+            throw refreshError;
+          }
+
+          // Decode JWT manually to get custom claims from hook
+          const billing = getBillingFromToken(sessionData.session);
+          console.log(`🔍 Billing claims (attempt ${attempt}):`, billing);
+
+          // Check if plan has been updated (not null and not free)
+          if (billing?.plan && billing.plan !== 'free') {
+            console.log(`✅ Plan updated successfully to '${billing.plan}'!`);
+            setStatus("success");
+
+            // Wait 2 seconds to show success message
+            await new Promise(resolve => setTimeout(resolve, 2000));
+
+            console.log("🚀 Redirecting to dashboard...");
+
+            // Use window.location.href to force full page reload
+            // This ensures cookies are sent with the request to middleware
+            window.location.href = `/dashboard/${initialUser.id}`;
+
+            return; // Exit early - success!
+          }
+
+          // If not the last attempt, wait before trying again
+          if (attempt < maxAttempts) {
+            await new Promise(resolve => setTimeout(resolve, pollInterval));
+          }
         }
 
-        const data = await response.json();
-        console.log("✅ JWT claims refreshed:", data);
+        // After all attempts, plan still not updated - but try dashboard anyway
+        console.warn("⚠️ Plan not detected after 15 seconds - redirecting anyway...");
+        setStatus("success"); // Show success anyway
 
-        setStatus("success");
-
-        // Wait 2 seconds to show success message, then redirect
-        setTimeout(() => {
-          router.push(`/dashboard/${user.id}`);
-          router.refresh(); // Force Next.js to re-run middleware
-        }, 2000);
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        window.location.href = `/dashboard/${initialUser.id}`;
       } catch (error) {
         console.error("Failed to refresh claims:", error);
-        // Continue anyway - claims will refresh naturally within ~1 hour
-        setStatus("success");
+
+        // Redirect to dashboard anyway - let middleware handle auth
         setTimeout(() => {
           if (userId) {
-            router.push(`/dashboard/${userId}`);
-            router.refresh();
+            window.location.href = `/dashboard/${userId}`;
+          } else {
+            window.location.href = "/login";
           }
         }, 2000);
       }
     }
 
     refreshClaims();
-  }, [router, userId]);
+  }, [userId]);
 
   return (
     <div className="container mx-auto px-4 py-16">
@@ -89,17 +133,6 @@ export default function BillingSuccessPage() {
               </p>
               <p className="text-sm text-gray-500">
                 Redirecting to dashboard...
-              </p>
-            </>
-          )}
-
-          {status === "error" && (
-            <>
-              <div className="text-6xl mb-4">⚠️</div>
-              <h1 className="text-4xl font-bold mb-4">Almost There!</h1>
-              <p className="text-lg text-gray-600 mb-8">
-                Your subscription is being processed. You&apos;ll have access within
-                a few minutes.
               </p>
             </>
           )}

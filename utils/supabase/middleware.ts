@@ -3,7 +3,6 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { jwtVerify } from "jose"; // Import the `jose` library
 import { PasswordResetPayload } from "@/types/auth";
-import { getBasicUserAccess } from "@/utils/billing/access-control";
 import {
   FREE_TIER_ROUND_LIMIT,
   PREMIUM_PATHS,
@@ -53,9 +52,36 @@ export async function updateSession(request: NextRequest) {
   // supabase.auth.getUser(). A simple mistake could make it very hard to debug
   // issues with users being randomly logged out.
 
+  // Use getUser() for secure authentication
   const {
     data: { user },
   } = await supabase.auth.getUser();
+
+  // Get session which includes JWT with custom claims
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+
+  // Manually decode the JWT to get custom claims from the hook
+  let jwtAppMetadata = null;
+  if (session?.access_token) {
+    try {
+      const parts = session.access_token.split('.');
+      if (parts.length === 3) {
+        const payload = JSON.parse(Buffer.from(parts[1], 'base64').toString());
+        jwtAppMetadata = payload.app_metadata;
+      }
+    } catch (e) {
+      console.error('❌ Failed to decode JWT token in middleware:', e);
+    }
+  }
+
+  // Merge JWT claims into getUser() user object
+  // Use the decoded JWT payload, NOT session.user.app_metadata (which doesn't include custom claims)
+  const enrichedUser = user ? {
+    ...user,
+    app_metadata: jwtAppMetadata || user.app_metadata
+  } : null;
 
   const { pathname } = request.nextUrl;
 
@@ -72,7 +98,7 @@ export async function updateSession(request: NextRequest) {
   const isPublic =
     pathname === "/" || publicPaths.some((path) => pathname.startsWith(path));
 
-  if (!user && pathname === "/update-password") {
+  if (!enrichedUser && pathname === "/update-password") {
     const resetToken = request.nextUrl.searchParams.get("token");
     if (!resetToken) {
       const url = request.nextUrl.clone();
@@ -102,14 +128,14 @@ export async function updateSession(request: NextRequest) {
     }
   }
 
-  if (!user && !isPublic) {
+  if (!enrichedUser && !isPublic) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
     return NextResponse.redirect(url);
   }
 
   if (
-    user &&
+    enrichedUser &&
     (pathname.startsWith("/login") || pathname.startsWith("/signup"))
   ) {
     // Redirect authenticated user away from login/signup
@@ -122,106 +148,103 @@ export async function updateSession(request: NextRequest) {
   const premiumPaths = PREMIUM_PATHS;
 
   if (
-    user &&
+    enrichedUser &&
     !isPublic &&
     !pathname.startsWith("/onboarding") &&
-    !pathname.startsWith("/billing") &&
-    !pathname.startsWith("/upgrade")
+    !pathname.startsWith("/billing") && // Includes /billing/success
+    !pathname.startsWith("/upgrade") &&
+    !pathname.startsWith("/auth/verify-session")
   ) {
     const startTime = performance.now(); // Performance monitoring
 
     try {
-      // NEW: Read MINIMAL billing info from JWT claims (NO DATABASE QUERY!)
-      const billing = user.app_metadata?.billing as BillingClaims | undefined;
+      // Read billing info from JWT claims (manually decoded from cookie)
+      const billing = enrichedUser.app_metadata?.billing as BillingClaims | undefined;
 
       let plan: string | null = null;
       let status: string | null = "active";
       let hasPremiumAccess: boolean = false;
 
-      // Graceful fallback to database if claims missing (during migration)
+      // Check if billing claims are present
       if (!billing) {
-        console.warn(
-          `⚠️ Missing JWT claims for user ${user.id}, falling back to database`
-        );
+        // No billing claims in JWT - redirect to verification to refresh token
+        // This is an edge case that should rarely happen
+        console.error(`🚨 CRITICAL: Missing JWT billing claims for user ${enrichedUser.id}`, {
+          pathname,
+          timestamp: new Date().toISOString(),
+          hasSession: !!session,
+          hasAccessToken: !!session?.access_token,
+        });
 
-        // Fallback: Query database (temporary during migration)
-        const access = await getBasicUserAccess(user.id);
-        plan = access.plan;
-        hasPremiumAccess = access.hasPremiumAccess;
-      } else {
-        // JWT claims present - use them!
-        plan = billing.plan;
-        status = billing.status;
+        // Redirect to verification page to refresh the JWT
+        // This will trigger a token refresh which should add billing claims
+        const url = request.nextUrl.clone();
+        url.pathname = "/auth/verify-session";
+        url.searchParams.set("returnTo", pathname);
+        url.searchParams.set("reason", "missing_billing_claims");
+        return NextResponse.redirect(url);
+      }
 
-        // Check for edge cases using status and period_end
-        // This avoids database queries for common scenarios
+      // ✅ SUCCESS: Using JWT claims from custom access token hook
+      console.log(`✅ JWT Auth: plan=${billing.plan}, status=${billing.status}, user=${enrichedUser.id}`);
 
-        // 1. Check subscription status (but respect cancel_at_period_end)
-        // If canceled but cancel_at_period_end=true, keep access until expiry
-        if (
-          status === "past_due" ||
-          status === "incomplete" ||
-          status === "paused"
-        ) {
-          console.warn(`⚠️ Subscription ${status} for user ${user.id}`);
-          hasPremiumAccess = false; // Revoke premium access
-        }
-        // 2. Handle "canceled" status: check cancel_at_period_end flag
-        else if (status === "canceled") {
-          if (billing.cancel_at_period_end && billing.current_period_end) {
-            // User canceled but has access until period end
-            // Check if period has expired (with leeway for clock skew)
-            const nowSeconds = Date.now() / 1000;
-            const isExpired =
-              nowSeconds > billing.current_period_end + EXPIRY_LEEWAY_SECONDS;
+      // Use JWT claims
+      plan = billing.plan;
+      status = billing.status;
 
-            if (isExpired) {
-              console.warn(
-                `⚠️ Canceled subscription expired for user ${user.id}`
-              );
-              hasPremiumAccess = false;
-            } else {
-              hasPremiumAccess =
-                plan === "premium" ||
-                plan === "unlimited" ||
-                plan === "lifetime";
-            }
-          } else {
-            // Canceled without period end, or cancel_at_period_end=false (immediate cancellation)
-            console.warn(
-              `⚠️ Subscription canceled (immediate) for user ${user.id}`
-            );
+      // Check for edge cases using status and period_end
+      if (
+        status === "past_due" ||
+        status === "incomplete" ||
+        status === "paused"
+      ) {
+        console.warn(`⚠️ Subscription ${status} for user ${enrichedUser.id}`);
+        hasPremiumAccess = false;
+      }
+      else if (status === "canceled") {
+        if (billing.cancel_at_period_end && billing.current_period_end) {
+          const nowSeconds = Date.now() / 1000;
+          const isExpired =
+            nowSeconds > billing.current_period_end + EXPIRY_LEEWAY_SECONDS;
+
+          if (isExpired) {
+            console.warn(`⚠️ Canceled subscription expired for user ${enrichedUser.id}`);
             hasPremiumAccess = false;
+          } else {
+            hasPremiumAccess =
+              plan === "premium" ||
+              plan === "unlimited" ||
+              plan === "lifetime";
           }
+        } else {
+          console.warn(`⚠️ Subscription canceled (immediate) for user ${enrichedUser.id}`);
+          hasPremiumAccess = false;
         }
-        // 3. Check if subscription expired (with leeway for clock skew)
-        else if (
-          billing.current_period_end &&
-          Date.now() / 1000 > billing.current_period_end + EXPIRY_LEEWAY_SECONDS
-        ) {
-          console.warn(`⚠️ Subscription expired for user ${user.id}`);
-          hasPremiumAccess = false; // Revoke premium access
-        }
-        // 4. Normal case: check plan type
-        else {
-          hasPremiumAccess =
-            plan === "premium" || plan === "unlimited" || plan === "lifetime";
-        }
+      }
+      else if (
+        billing.current_period_end &&
+        Date.now() / 1000 > billing.current_period_end + EXPIRY_LEEWAY_SECONDS
+      ) {
+        console.warn(`⚠️ Subscription expired for user ${enrichedUser.id}`);
+        hasPremiumAccess = false;
+      }
+      else {
+        hasPremiumAccess =
+          plan === "premium" || plan === "unlimited" || plan === "lifetime";
       }
 
       const endTime = performance.now();
       const duration = endTime - startTime;
 
-      // Alert if middleware is slow
-      const threshold = billing ? 10 : 100;
-      if (duration > threshold) {
+      // Log successful JWT-only authorization (no database queries!)
+      console.log(`⚡ Middleware completed in ${duration.toFixed(2)}ms (JWT-only, no database)`);
+
+      // Alert if middleware is slow (should be < 10ms with JWT-only)
+      if (duration > 10) {
         console.warn(
-          `🐌 Slow middleware detected: ${duration.toFixed(
-            2
-          )}ms (threshold: ${threshold}ms)`,
+          `🐌 Slow middleware detected: ${duration.toFixed(2)}ms (threshold: 10ms)`,
           {
-            userId: user.id,
-            source: billing ? "jwt" : "database",
+            userId: enrichedUser.id,
             pathname,
           }
         );
@@ -251,7 +274,7 @@ export async function updateSession(request: NextRequest) {
         const { count: roundCount, error: countError } = await supabase
           .from("round")
           .select("*", { count: "exact", head: true })
-          .eq("userId", user.id);
+          .eq("userId", enrichedUser.id);
 
         if (countError) {
           console.error("❌ Middleware: Error counting rounds:", countError);
@@ -265,9 +288,14 @@ export async function updateSession(request: NextRequest) {
         }
       }
     } catch (error) {
-      // On error, redirect to onboarding to be safe
+      // ✅ NEW: On error, redirect to verification page (not onboarding)
+      console.error("❌ Middleware error - redirecting to session verification:", error);
+
       const url = request.nextUrl.clone();
-      url.pathname = "/onboarding";
+      url.pathname = "/auth/verify-session";
+      url.searchParams.set("returnTo", pathname);
+      url.searchParams.set("error", "middleware_exception");
+
       return NextResponse.redirect(url);
     }
   }
