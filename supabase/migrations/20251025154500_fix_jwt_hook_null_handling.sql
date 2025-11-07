@@ -9,7 +9,7 @@
 CREATE OR REPLACE FUNCTION public.custom_access_token_hook(event jsonb)
 RETURNS jsonb
 LANGUAGE plpgsql
-SECURITY DEFINER  -- Required to access profile table from auth context
+-- NO SECURITY DEFINER per Supabase docs - use explicit grants instead
 SET search_path = public  -- Prevent search_path attacks
 STABLE  -- Function doesn't modify database
 AS $$
@@ -106,13 +106,21 @@ BEGIN
 END;
 $$;
 
--- Grant necessary permissions
+-- Grant necessary permissions per Supabase docs
+-- https://supabase.com/docs/guides/auth/auth-hooks#postgres-functions
+
+-- 1. Grant usage on schema (CRITICAL - without this, hook won't execute!)
+GRANT USAGE ON SCHEMA public TO supabase_auth_admin;
+
+-- 2. Grant execute on function
 GRANT EXECUTE ON FUNCTION public.custom_access_token_hook(jsonb) TO supabase_auth_admin;
+
+-- 3. Grant select on tables the function needs to access
 GRANT SELECT ON public.profile TO supabase_auth_admin;
 
--- Revoke from public for security
-REVOKE EXECUTE ON FUNCTION public.custom_access_token_hook(jsonb) FROM PUBLIC;
+-- 4. Revoke from authenticated, anon, and public for security
+REVOKE EXECUTE ON FUNCTION public.custom_access_token_hook(jsonb) FROM authenticated, anon, public;
 
 -- Add comment for documentation
 COMMENT ON FUNCTION public.custom_access_token_hook IS
-  'Custom Access Token Hook: Injects MINIMAL billing information from profile table into JWT claims. Allows NULL plan/status for users who have not completed onboarding. Runs automatically on token issue/refresh. SECURITY DEFINER with safe search_path.';
+  'Custom Access Token Hook: Injects MINIMAL billing information from profile table into JWT claims. Allows NULL plan/status for users who have not completed onboarding. Runs automatically on token issue/refresh. Uses explicit grants to supabase_auth_admin (no SECURITY DEFINER).';

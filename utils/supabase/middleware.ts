@@ -52,9 +52,36 @@ export async function updateSession(request: NextRequest) {
   // supabase.auth.getUser(). A simple mistake could make it very hard to debug
   // issues with users being randomly logged out.
 
+  // Use getUser() for secure authentication
   const {
     data: { user },
   } = await supabase.auth.getUser();
+
+  // Get session which includes JWT with custom claims
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+
+  // Manually decode the JWT to get custom claims from the hook
+  let jwtAppMetadata = null;
+  if (session?.access_token) {
+    try {
+      const parts = session.access_token.split('.');
+      if (parts.length === 3) {
+        const payload = JSON.parse(Buffer.from(parts[1], 'base64').toString());
+        jwtAppMetadata = payload.app_metadata;
+      }
+    } catch (e) {
+      console.error('❌ Failed to decode JWT token in middleware:', e);
+    }
+  }
+
+  // Merge JWT claims into getUser() user object
+  // Use the decoded JWT payload, NOT session.user.app_metadata (which doesn't include custom claims)
+  const enrichedUser = user ? {
+    ...user,
+    app_metadata: jwtAppMetadata || user.app_metadata
+  } : null;
 
   const { pathname } = request.nextUrl;
 
@@ -71,7 +98,7 @@ export async function updateSession(request: NextRequest) {
   const isPublic =
     pathname === "/" || publicPaths.some((path) => pathname.startsWith(path));
 
-  if (!user && pathname === "/update-password") {
+  if (!enrichedUser && pathname === "/update-password") {
     const resetToken = request.nextUrl.searchParams.get("token");
     if (!resetToken) {
       const url = request.nextUrl.clone();
@@ -101,14 +128,14 @@ export async function updateSession(request: NextRequest) {
     }
   }
 
-  if (!user && !isPublic) {
+  if (!enrichedUser && !isPublic) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
     return NextResponse.redirect(url);
   }
 
   if (
-    user &&
+    enrichedUser &&
     (pathname.startsWith("/login") || pathname.startsWith("/signup"))
   ) {
     // Redirect authenticated user away from login/signup
@@ -121,147 +148,127 @@ export async function updateSession(request: NextRequest) {
   const premiumPaths = PREMIUM_PATHS;
 
   if (
-    user &&
+    enrichedUser &&
     !isPublic &&
     !pathname.startsWith("/onboarding") &&
-    !pathname.startsWith("/billing") &&
+    !pathname.startsWith("/billing") && // Includes /billing/success
     !pathname.startsWith("/upgrade") &&
     !pathname.startsWith("/auth/verify-session")
   ) {
     const startTime = performance.now(); // Performance monitoring
 
     try {
-      // Read billing info from JWT claims (NO DATABASE FALLBACK!)
-      const billing = user.app_metadata?.billing as BillingClaims | undefined;
+      // Read billing info from JWT claims (manually decoded from cookie)
+      const billing = enrichedUser.app_metadata?.billing as BillingClaims | undefined;
 
       let plan: string | null = null;
       let status: string | null = "active";
       let hasPremiumAccess: boolean = false;
 
-      // ✅ NEW: If claims missing, handle based on environment
+      // Check if billing claims are present
       if (!billing) {
-        // 🔍 DIAGNOSTIC: Log what we actually received
-        console.error(
-          `❌ Missing JWT claims for user ${user.id}`,
-          {
-            pathname,
-            timestamp: new Date().toISOString(),
-            hasAppMetadata: !!user.app_metadata,
-            appMetadataKeys: user.app_metadata ? Object.keys(user.app_metadata) : [],
-            appMetadataType: typeof user.app_metadata,
-            environment: process.env.NODE_ENV,
+        // No billing claims in JWT - check database to determine why
+        console.warn(`⚠️ Missing JWT billing claims for user ${enrichedUser.id} - checking database`);
+
+        try {
+          const { data: profileData, error: profileError } = await supabase
+            .from("profile")
+            .select("plan_selected")
+            .eq("id", enrichedUser.id)
+            .single();
+
+          if (profileError || !profileData) {
+            // No profile exists - send to verification
+            console.error("❌ No profile found - redirecting to verification");
+            const url = request.nextUrl.clone();
+            url.pathname = "/auth/verify-session";
+            url.searchParams.set("returnTo", pathname);
+            return NextResponse.redirect(url);
           }
-        );
 
-        // 🔧 LOCAL DEV ONLY: Fallback to database (JWT hook doesn't work reliably locally)
-        if (process.env.NODE_ENV === "development") {
-          console.warn("⚠️ LOCAL DEV: JWT hook not working, falling back to database query");
-
-          try {
-            // Query profile table directly
-            const { data: profileData, error: profileError } = await supabase
-              .from("profile")
-              .select("plan_selected, subscription_status, current_period_end, cancel_at_period_end")
-              .eq("id", user.id)
-              .single();
-
-            if (profileError || !profileData) {
-              console.error("❌ LOCAL DEV: Profile query failed:", profileError);
-              // No profile = needs onboarding
-              const url = request.nextUrl.clone();
-              url.pathname = "/onboarding";
-              return NextResponse.redirect(url);
-            }
-
-            // Manually construct billing data from database
-            plan = profileData.plan_selected;
-            status = profileData.subscription_status || "active";
-
-            // If no plan, redirect to onboarding
-            if (!plan) {
-              const url = request.nextUrl.clone();
-              url.pathname = "/onboarding";
-              return NextResponse.redirect(url);
-            }
-
-            // Set hasPremiumAccess based on plan
-            hasPremiumAccess = plan === "premium" || plan === "unlimited" || plan === "lifetime";
-
-            console.log(`✅ LOCAL DEV: Using database fallback - plan: ${plan}, status: ${status}`);
-          } catch (dbError) {
-            console.error("❌ LOCAL DEV: Database fallback failed:", dbError);
+          if (!profileData.plan_selected) {
+            // Profile exists but no plan - send to onboarding
+            console.log("✅ Profile exists, no plan - redirecting to onboarding");
             const url = request.nextUrl.clone();
             url.pathname = "/onboarding";
             return NextResponse.redirect(url);
           }
-        } else {
-          // 🔒 PRODUCTION: Fail closed - redirect to verification page
-          console.error("🔒 PRODUCTION: Redirecting to session verification");
 
+          // Profile exists with plan but JWT missing claims - need token refresh
+          console.error("❌ Profile has plan but JWT missing claims - redirecting to verification");
+          const url = request.nextUrl.clone();
+          url.pathname = "/auth/verify-session";
+          url.searchParams.set("returnTo", pathname);
+          return NextResponse.redirect(url);
+        } catch (error) {
+          console.error("❌ Database check failed:", error);
           const url = request.nextUrl.clone();
           url.pathname = "/auth/verify-session";
           url.searchParams.set("returnTo", pathname);
           return NextResponse.redirect(url);
         }
-      } else {
-        // JWT claims present - use them!
-        plan = billing.plan;
-        status = billing.status;
       }
 
-      // Check for edge cases using status and period_end (only if we have JWT claims)
-      if (billing) {
-        if (
-          status === "past_due" ||
-          status === "incomplete" ||
-          status === "paused"
-        ) {
-          console.warn(`⚠️ Subscription ${status} for user ${user.id}`);
-          hasPremiumAccess = false;
-        }
-        else if (status === "canceled") {
-          if (billing.cancel_at_period_end && billing.current_period_end) {
-            const nowSeconds = Date.now() / 1000;
-            const isExpired =
-              nowSeconds > billing.current_period_end + EXPIRY_LEEWAY_SECONDS;
+      // ✅ SUCCESS: Using JWT claims from custom access token hook
+      console.log(`✅ JWT Auth: plan=${billing.plan}, status=${billing.status}, user=${enrichedUser.id}`);
 
-            if (isExpired) {
-              console.warn(`⚠️ Canceled subscription expired for user ${user.id}`);
-              hasPremiumAccess = false;
-            } else {
-              hasPremiumAccess =
-                plan === "premium" ||
-                plan === "unlimited" ||
-                plan === "lifetime";
-            }
-          } else {
-            console.warn(`⚠️ Subscription canceled (immediate) for user ${user.id}`);
+      // Use JWT claims
+      plan = billing.plan;
+      status = billing.status;
+
+      // Check for edge cases using status and period_end
+      if (
+        status === "past_due" ||
+        status === "incomplete" ||
+        status === "paused"
+      ) {
+        console.warn(`⚠️ Subscription ${status} for user ${enrichedUser.id}`);
+        hasPremiumAccess = false;
+      }
+      else if (status === "canceled") {
+        if (billing.cancel_at_period_end && billing.current_period_end) {
+          const nowSeconds = Date.now() / 1000;
+          const isExpired =
+            nowSeconds > billing.current_period_end + EXPIRY_LEEWAY_SECONDS;
+
+          if (isExpired) {
+            console.warn(`⚠️ Canceled subscription expired for user ${enrichedUser.id}`);
             hasPremiumAccess = false;
+          } else {
+            hasPremiumAccess =
+              plan === "premium" ||
+              plan === "unlimited" ||
+              plan === "lifetime";
           }
-        }
-        else if (
-          billing.current_period_end &&
-          Date.now() / 1000 > billing.current_period_end + EXPIRY_LEEWAY_SECONDS
-        ) {
-          console.warn(`⚠️ Subscription expired for user ${user.id}`);
+        } else {
+          console.warn(`⚠️ Subscription canceled (immediate) for user ${enrichedUser.id}`);
           hasPremiumAccess = false;
         }
-        else {
-          hasPremiumAccess =
-            plan === "premium" || plan === "unlimited" || plan === "lifetime";
-        }
       }
-      // Local dev fallback already set hasPremiumAccess
+      else if (
+        billing.current_period_end &&
+        Date.now() / 1000 > billing.current_period_end + EXPIRY_LEEWAY_SECONDS
+      ) {
+        console.warn(`⚠️ Subscription expired for user ${enrichedUser.id}`);
+        hasPremiumAccess = false;
+      }
+      else {
+        hasPremiumAccess =
+          plan === "premium" || plan === "unlimited" || plan === "lifetime";
+      }
 
       const endTime = performance.now();
       const duration = endTime - startTime;
+
+      // Log successful JWT-only authorization (no database queries!)
+      console.log(`⚡ Middleware completed in ${duration.toFixed(2)}ms (JWT-only, no database)`);
 
       // Alert if middleware is slow (should be < 10ms with JWT-only)
       if (duration > 10) {
         console.warn(
           `🐌 Slow middleware detected: ${duration.toFixed(2)}ms (threshold: 10ms)`,
           {
-            userId: user.id,
+            userId: enrichedUser.id,
             pathname,
           }
         );
@@ -291,7 +298,7 @@ export async function updateSession(request: NextRequest) {
         const { count: roundCount, error: countError } = await supabase
           .from("round")
           .select("*", { count: "exact", head: true })
-          .eq("userId", user.id);
+          .eq("userId", enrichedUser.id);
 
         if (countError) {
           console.error("❌ Middleware: Error counting rounds:", countError);

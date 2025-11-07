@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
 import { profile, stripeCustomers, webhookEvents, pendingLifetimePurchases } from "@/db/schema";
 import { eq, sql } from "drizzle-orm";
+import Stripe from "stripe";
 import { stripe, mapPriceToPlan } from "@/lib/stripe";
 import {
   logWebhookReceived,
@@ -265,11 +266,88 @@ async function handleCheckoutCompleted(session: any) {
     logWebhookWarning("No customer ID in checkout session");
   }
 
-  // For subscription mode, wait for subscription.created event to update plan
+  // For subscription mode, handle subscription immediately to avoid race condition
   if (session.mode === "subscription") {
-    logSubscriptionEvent(
-      "Subscription checkout - will update plan on subscription.created"
-    );
+    logSubscriptionEvent("Subscription checkout - updating plan immediately");
+
+    try {
+      // Get subscription ID from session
+      const subscriptionId = session.subscription;
+
+      if (!subscriptionId) {
+        logWebhookWarning("No subscription ID in checkout session");
+        return;
+      }
+
+      // Retrieve full subscription details from Stripe
+      const subscription: any = await stripe.subscriptions.retrieve(subscriptionId as string);
+
+      // Get price ID from subscription
+      const priceId = subscription.items.data[0]?.price.id;
+      if (!priceId) {
+        logWebhookError("No price ID in subscription");
+        return;
+      }
+
+      const plan = mapPriceToPlan(priceId);
+      if (!plan) {
+        logWebhookError(`Unknown price ID: ${priceId}`);
+        return;
+      }
+
+      // Verify subscription amount
+      const price = subscription.items.data[0]?.price;
+      if (!price) {
+        logWebhookError("No price object in subscription items");
+        return;
+      }
+
+      const amount = price.unit_amount || 0;
+      const currency = price.currency || 'usd';
+
+      const verification = verifyPaymentAmount(plan, currency, amount, true);
+
+      if (!verification.valid) {
+        logWebhookError('🚨 Amount verification failed at checkout - NOT updating plan', {
+          handler: 'handleCheckoutCompleted',
+          plan,
+          expected: formatAmount(verification.expected),
+          actual: formatAmount(verification.actual),
+          variance: verification.variance,
+          currency: verification.currency,
+          subscriptionId: subscription.id,
+          userId,
+          priceId,
+          severity: 'HIGH',
+        });
+        return;
+      }
+
+      logWebhookSuccess('✅ Amount verification passed at checkout', {
+        plan,
+        amount: formatAmount(verification.actual),
+        currency: verification.currency,
+      });
+
+      // Update plan immediately
+      await db
+        .update(profile)
+        .set({
+          planSelected: plan,
+          planSelectedAt: new Date(),
+          subscriptionStatus: subscription.status,
+          currentPeriodEnd: subscription.current_period_end,
+          cancelAtPeriodEnd: subscription.cancel_at_period_end || false,
+          billingVersion: sql`billing_version + 1`,
+        })
+        .where(eq(profile.id, userId));
+
+      logWebhookSuccess(`Updated plan_selected to '${plan}' for user: ${userId} at checkout`);
+    } catch (error) {
+      logWebhookError("Error processing subscription at checkout", error);
+      throw error;
+    }
+
     return;
   }
 
