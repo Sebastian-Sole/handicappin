@@ -167,46 +167,22 @@ export async function updateSession(request: NextRequest) {
 
       // Check if billing claims are present
       if (!billing) {
-        // No billing claims in JWT - check database to determine why
-        console.warn(`⚠️ Missing JWT billing claims for user ${enrichedUser.id} - checking database`);
+        // No billing claims in JWT - redirect to verification to refresh token
+        // This is an edge case that should rarely happen
+        console.error(`🚨 CRITICAL: Missing JWT billing claims for user ${enrichedUser.id}`, {
+          pathname,
+          timestamp: new Date().toISOString(),
+          hasSession: !!session,
+          hasAccessToken: !!session?.access_token,
+        });
 
-        try {
-          const { data: profileData, error: profileError } = await supabase
-            .from("profile")
-            .select("plan_selected")
-            .eq("id", enrichedUser.id)
-            .single();
-
-          if (profileError || !profileData) {
-            // No profile exists - send to verification
-            console.error("❌ No profile found - redirecting to verification");
-            const url = request.nextUrl.clone();
-            url.pathname = "/auth/verify-session";
-            url.searchParams.set("returnTo", pathname);
-            return NextResponse.redirect(url);
-          }
-
-          if (!profileData.plan_selected) {
-            // Profile exists but no plan - send to onboarding
-            console.log("✅ Profile exists, no plan - redirecting to onboarding");
-            const url = request.nextUrl.clone();
-            url.pathname = "/onboarding";
-            return NextResponse.redirect(url);
-          }
-
-          // Profile exists with plan but JWT missing claims - need token refresh
-          console.error("❌ Profile has plan but JWT missing claims - redirecting to verification");
-          const url = request.nextUrl.clone();
-          url.pathname = "/auth/verify-session";
-          url.searchParams.set("returnTo", pathname);
-          return NextResponse.redirect(url);
-        } catch (error) {
-          console.error("❌ Database check failed:", error);
-          const url = request.nextUrl.clone();
-          url.pathname = "/auth/verify-session";
-          url.searchParams.set("returnTo", pathname);
-          return NextResponse.redirect(url);
-        }
+        // Redirect to verification page to refresh the JWT
+        // This will trigger a token refresh which should add billing claims
+        const url = request.nextUrl.clone();
+        url.pathname = "/auth/verify-session";
+        url.searchParams.set("returnTo", pathname);
+        url.searchParams.set("reason", "missing_billing_claims");
+        return NextResponse.redirect(url);
       }
 
       // ✅ SUCCESS: Using JWT claims from custom access token hook
