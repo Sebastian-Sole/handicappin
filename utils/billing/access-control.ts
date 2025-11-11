@@ -146,6 +146,7 @@ async function getUserAccess(userId: string): Promise<FeatureAccess | null> {
         status: "active" as SubscriptionStatus,
         currentPeriodEnd: periodEnd,
         isLifetime: plan === "lifetime",
+        cancelAtPeriodEnd: activeSubscription.cancel_at_period_end,
       };
     }
 
@@ -168,7 +169,7 @@ export async function getComprehensiveUserAccess(
   // 1. Get user profile (exists for ALL users)
   const { data: profile, error: profileError } = await supabase
     .from("profile")
-    .select("plan_selected")
+    .select("plan_selected, subscription_status, current_period_end, cancel_at_period_end")
     .eq("id", userId)
     .single();
 
@@ -214,15 +215,27 @@ export async function getComprehensiveUserAccess(
     profile.plan_selected === "premium" ||
     profile.plan_selected === "unlimited"
   ) {
-    const subscriptionAccess = await getUserAccess(userId);
-
-    if (subscriptionAccess?.hasAccess) {
-      // Stripe confirms active subscription
-      return subscriptionAccess;
+    // Trust database values set by webhook - webhooks are the source of truth
+    // Webhook validates via Stripe signature and updates these fields
+    if (profile.subscription_status === "active" || profile.subscription_status === "trialing") {
+      return {
+        plan: profile.plan_selected,
+        hasAccess: true,
+        hasPremiumAccess: true,
+        hasUnlimitedRounds: true,
+        remainingRounds: Infinity,
+        status: profile.subscription_status,
+        isLifetime: false,
+        currentPeriodEnd: profile.current_period_end ? new Date(profile.current_period_end) : null,
+        cancelAtPeriodEnd: profile.cancel_at_period_end || false,
+      };
     }
 
     // Subscription expired/cancelled - fall back to free tier
-    console.log("Subscription expired, falling back to free tier");
+    console.log("Subscription not active in database, falling back to free tier", {
+      plan: profile.plan_selected,
+      status: profile.subscription_status,
+    });
     // Note: Webhook should have updated plan_selected to 'free', but handle gracefully
   }
 

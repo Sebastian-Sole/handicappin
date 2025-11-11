@@ -2,7 +2,7 @@ import { stripe } from "./stripe";
 
 /**
  * Get or create a Stripe customer for a user
- * Searches for existing customer by email, creates if not found
+ * IMPORTANT: Checks database FIRST (source of truth), then falls back to Stripe email search
  *
  * @param email - User's email address
  * @param userId - Supabase user ID to store in metadata
@@ -16,7 +16,24 @@ export async function getOrCreateStripeCustomer({
   userId: string;
 }): Promise<string | undefined> {
   try {
-    // Search for existing customer by email
+    // 1. Check database FIRST - this is the source of truth
+    const { db } = await import("@/db");
+    const { stripeCustomers } = await import("@/db/schema");
+    const { eq } = await import("drizzle-orm");
+
+    const existingRecord = await db
+      .select()
+      .from(stripeCustomers)
+      .where(eq(stripeCustomers.userId, userId))
+      .limit(1);
+
+    if (existingRecord && existingRecord.length > 0) {
+      const customerId = existingRecord[0].stripeCustomerId;
+      console.log("Found existing Stripe customer in database:", customerId);
+      return customerId;
+    }
+
+    // 2. Fallback: Search Stripe by email (for migration/legacy cases)
     const existingCustomers = await stripe.customers.list({
       email: email,
       limit: 1,
@@ -24,11 +41,26 @@ export async function getOrCreateStripeCustomer({
 
     if (existingCustomers.data.length > 0) {
       const customerId = existingCustomers.data[0].id;
-      console.log("Found existing Stripe customer:", customerId);
+      console.log("Found existing Stripe customer by email:", customerId);
+
+      // Store in database for future lookups
+      try {
+        await db
+          .insert(stripeCustomers)
+          .values({
+            userId,
+            stripeCustomerId: customerId,
+          })
+          .onConflictDoNothing(); // In case webhook already created it
+      } catch (dbError) {
+        console.error("Error storing existing customer in database:", dbError);
+        // Continue - we have the customer ID
+      }
+
       return customerId;
     }
 
-    // Create new customer with metadata
+    // 3. Create new customer with metadata
     const customer = await stripe.customers.create({
       email: email,
       metadata: {
@@ -37,6 +69,21 @@ export async function getOrCreateStripeCustomer({
     });
 
     console.log("Created new Stripe customer:", customer.id);
+
+    // Store in database immediately
+    try {
+      await db
+        .insert(stripeCustomers)
+        .values({
+          userId,
+          stripeCustomerId: customer.id,
+        })
+        .onConflictDoNothing(); // Webhook might create it concurrently
+    } catch (dbError) {
+      console.error("Error storing new customer in database:", dbError);
+      // Continue - customer was created in Stripe
+    }
+
     return customer.id;
   } catch (error) {
     console.error(`Error managing Stripe customer for user ${userId}:`, error);
