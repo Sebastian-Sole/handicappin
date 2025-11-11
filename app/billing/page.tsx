@@ -30,22 +30,43 @@ export default async function BillingPage() {
                   {access.remainingRounds} rounds remaining
                 </p>
               )}
-              {access.currentPeriodEnd && (
+              {access.currentPeriodEnd && !access.isLifetime && (
                 <p className="text-gray-600 mt-1">
-                  Renews on {access.currentPeriodEnd.toLocaleDateString()}
+                  {access.cancelAtPeriodEnd
+                    ? `Cancels on ${access.currentPeriodEnd.toLocaleDateString()}`
+                    : `Renews on ${access.currentPeriodEnd.toLocaleDateString()}`}
+                </p>
+              )}
+              {access.isLifetime && (
+                <p className="text-green-600 mt-1 font-medium">
+                  ✓ Lifetime Access
                 </p>
               )}
             </div>
-            {access.plan === "free" ? (
-              <a
-                href="/upgrade"
-                className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition"
-              >
-                Upgrade Plan
-              </a>
-            ) : (
-              <ManageSubscriptionButton />
-            )}
+
+            <div className="flex gap-4">
+              {/* Always show "Change Plan" for non-lifetime users */}
+              {!access.isLifetime && (
+                <a
+                  href="/upgrade"
+                  className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition"
+                >
+                  {access.plan === "free" ? "Upgrade Plan" : "Change Plan"}
+                </a>
+              )}
+
+              {/* Show subscription management for paid users only */}
+              {access.plan !== "free" && !access.isLifetime && (
+                <ManageSubscriptionButton />
+              )}
+
+              {/* Lifetime users: no action needed */}
+              {access.isLifetime && (
+                <div className="text-gray-500 text-sm">
+                  No subscription management needed
+                </div>
+              )}
+            </div>
           </div>
         </div>
 

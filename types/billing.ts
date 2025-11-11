@@ -20,4 +20,5 @@ export interface FeatureAccess {
   status: SubscriptionStatus;
   currentPeriodEnd: Date | null;
   isLifetime: boolean;
+  cancelAtPeriodEnd?: boolean; // Whether subscription is set to cancel at period end
 }
