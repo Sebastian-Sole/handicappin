@@ -125,3 +125,129 @@ export async function createPortalSession({
 
   return session;
 }
+
+/**
+ * Update an existing subscription to a new price
+ * Handles both upgrades (immediate with proration) and downgrades (end of cycle)
+ */
+export async function updateSubscription({
+  userId,
+  newPlan,
+}: {
+  userId: string;
+  newPlan: "free" | "premium" | "unlimited" | "lifetime";
+}) {
+  const { db } = await import("@/db");
+  const { stripeCustomers } = await import("@/db/schema");
+  const { eq } = await import("drizzle-orm");
+
+  // Get user's Stripe customer ID
+  const customer = await db
+    .select()
+    .from(stripeCustomers)
+    .where(eq(stripeCustomers.userId, userId))
+    .limit(1);
+
+  if (!customer || customer.length === 0) {
+    throw new Error("No Stripe customer found for user");
+  }
+
+  const customerId = customer[0].stripeCustomerId;
+
+  // Get active subscription
+  const subscriptions = await stripe.subscriptions.list({
+    customer: customerId,
+    status: "active",
+    limit: 1,
+  });
+
+  const subscription = subscriptions.data[0];
+
+  // Special case: User wants to downgrade to free but no active subscription exists
+  // This can happen if subscription was already cancelled/expired in Stripe but DB not synced
+  if (!subscription && newPlan === "free") {
+    // Subscription already gone - manually sync DB to free
+    console.log("No active subscription found, but user wants free plan. Syncing DB to free.");
+
+    const { profile } = await import("@/db/schema");
+    const { sql } = await import("drizzle-orm");
+
+    await db
+      .update(profile)
+      .set({
+        planSelected: "free",
+        planSelectedAt: new Date(),
+        subscriptionStatus: "canceled",
+        currentPeriodEnd: null,
+        cancelAtPeriodEnd: false,
+        billingVersion: sql`billing_version + 1`,
+      })
+      .where(eq(profile.id, userId));
+
+    // Return success - subscription is already cancelled
+    return {
+      subscription: null,
+      changeType: "cancel" as const,
+      alreadyCancelled: true,
+    };
+  }
+
+  if (!subscription) {
+    throw new Error("No active subscription found");
+  }
+
+  const currentPlan = mapPriceToPlan(
+    subscription.items.data[0]?.price.id || ""
+  );
+
+  // Determine if upgrade or downgrade
+  const planHierarchy = { free: 0, premium: 1, unlimited: 2, lifetime: 3 };
+  const isUpgrade =
+    planHierarchy[newPlan] > planHierarchy[currentPlan || "free"];
+
+  // Handle downgrade to free = cancel subscription
+  if (newPlan === "free") {
+    const updated = await stripe.subscriptions.update(subscription.id, {
+      cancel_at_period_end: true,
+    });
+    return { subscription: updated, changeType: "cancel" as const };
+  }
+
+  // Handle upgrade to lifetime = cancel subscription + create checkout
+  if (newPlan === "lifetime") {
+    // Cancel current subscription at period end
+    await stripe.subscriptions.update(subscription.id, {
+      cancel_at_period_end: true,
+    });
+
+    // Return signal to create lifetime checkout
+    return {
+      subscription: null,
+      changeType: "lifetime" as const,
+      requiresCheckout: true,
+    };
+  }
+
+  // Handle subscription tier change (premium <-> unlimited)
+  const newPriceId = PLAN_TO_PRICE_MAP[newPlan];
+
+  if (!newPriceId) {
+    throw new Error(`No price ID found for plan: ${newPlan}`);
+  }
+
+  const updated = await stripe.subscriptions.update(subscription.id, {
+    items: [
+      {
+        id: subscription.items.data[0].id,
+        price: newPriceId,
+      },
+    ],
+    proration_behavior: isUpgrade ? "always_invoice" : "create_prorations",
+    billing_cycle_anchor: isUpgrade ? "now" : "unchanged",
+  });
+
+  return {
+    subscription: updated,
+    changeType: isUpgrade ? ("upgrade" as const) : ("downgrade" as const),
+  };
+}
