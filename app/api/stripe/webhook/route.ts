@@ -16,11 +16,37 @@ import {
 } from "@/lib/webhook-logger";
 import { verifyCustomerOwnership } from "@/lib/stripe-security";
 import { verifyPaymentAmount, formatAmount } from '@/utils/billing/pricing';
+import { webhookRateLimit, getIdentifier } from '@/lib/rate-limit';
 
 export async function POST(request: NextRequest) {
   let event: any = null; // Declare in outer scope for failure recording
 
   try {
+    // ✅ NEW: Rate limiting check (IP-based, no user context)
+    const identifier = getIdentifier(request); // No userId = uses IP
+    const { success, limit, remaining, reset } = await webhookRateLimit.limit(identifier);
+
+    console.log(`[Webhook] Rate limit check for ${identifier}:`, { success, limit, remaining, reset });
+
+    if (!success) {
+      const retryAfterSeconds = Math.ceil((reset - Date.now()) / 1000);
+
+      console.warn(`[Rate Limit] Webhook rate limit exceeded for ${identifier}`);
+
+      return NextResponse.json(
+        {
+          error: 'Rate limit exceeded',
+          retryAfter: retryAfterSeconds,
+        },
+        {
+          status: 429,
+          headers: {
+            'Retry-After': retryAfterSeconds.toString(),
+          },
+        }
+      );
+    }
+
     const body = await request.text();
     const signature = request.headers.get("stripe-signature");
 

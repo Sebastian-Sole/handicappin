@@ -7,6 +7,7 @@ import {
   stripe,
 } from "@/lib/stripe";
 import { verifyPaymentAmount, formatAmount } from '@/utils/billing/pricing';
+import { checkoutRateLimit, getIdentifier } from '@/lib/rate-limit';
 
 export async function POST(request: NextRequest) {
   try {
@@ -17,6 +18,38 @@ export async function POST(request: NextRequest) {
 
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    // ✅ NEW: Rate limiting check
+    const identifier = getIdentifier(request, user.id);
+    const { success, limit, remaining, reset } = await checkoutRateLimit.limit(identifier);
+
+    // Build rate limit headers
+    const rateLimitHeaders = {
+      'X-RateLimit-Limit': limit.toString(),
+      'X-RateLimit-Remaining': remaining.toString(),
+      'X-RateLimit-Reset': new Date(reset).toISOString(),
+    };
+
+    // If rate limit exceeded, return 429
+    if (!success) {
+      const retryAfterSeconds = Math.ceil((reset - Date.now()) / 1000);
+
+      console.warn(`[Rate Limit] Checkout rate limit exceeded for ${identifier}`);
+
+      return NextResponse.json(
+        {
+          error: 'Too many checkout requests. Please try again in a moment.',
+          retryAfter: retryAfterSeconds,
+        },
+        {
+          status: 429,
+          headers: {
+            ...rateLimitHeaders,
+            'Retry-After': retryAfterSeconds.toString(),
+          },
+        }
+      );
     }
 
     const { plan } = (await request.json()) as { plan: string };
@@ -109,7 +142,8 @@ export async function POST(request: NextRequest) {
 
     console.log("Checkout session created:", session);
 
-    return NextResponse.json({ url: session.url });
+    // ✅ NEW: Include rate limit headers in success response
+    return NextResponse.json({ url: session.url }, { headers: rateLimitHeaders });
   } catch (error) {
     console.error("Error creating checkout session:", error);
     return NextResponse.json(

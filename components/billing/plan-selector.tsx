@@ -126,10 +126,22 @@ export function PlanSelector({
         body: JSON.stringify({ plan, userId }),
       });
 
-      const { url } = await response.json();
+      const data = await response.json();
 
-      if (url) {
-        window.location.href = url;
+      // ✅ NEW: Handle rate limit specifically
+      if (response.status === 429) {
+        const retryAfter = data.retryAfter || 60;
+        alert(`Too many requests. Please wait ${retryAfter} seconds and try again.`);
+        setLoading(null);
+        return;
+      }
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to create checkout session");
+      }
+
+      if (data.url) {
+        window.location.href = data.url;
       } else {
         throw new Error("No checkout URL returned");
       }

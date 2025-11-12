@@ -13,10 +13,21 @@ export function ManageSubscriptionButton() {
         method: "POST",
       });
 
-      const { url } = await response.json();
+      const data = await response.json();
 
-      if (url) {
-        window.location.href = url;
+      // ✅ NEW: Handle rate limit specifically
+      if (response.status === 429) {
+        const retryAfter = data.retryAfter || 60;
+        alert(`Too many requests. Please wait ${retryAfter} seconds and try again.`);
+        return;
+      }
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to open portal");
+      }
+
+      if (data.url) {
+        window.location.href = data.url;
       } else {
         throw new Error("No portal URL returned");
       }

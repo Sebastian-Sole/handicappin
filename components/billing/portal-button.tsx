@@ -15,6 +15,18 @@ export function BillingPortalButton() {
 
       const data = await response.json();
 
+      // ✅ NEW: Handle rate limit specifically
+      if (response.status === 429) {
+        const retryAfter = data.retryAfter || 60;
+        alert(`Too many requests. Please wait ${retryAfter} seconds and try again.`);
+        setLoading(false);
+        return;
+      }
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to access portal");
+      }
+
       if (data.url) {
         window.location.href = data.url;
       } else {
