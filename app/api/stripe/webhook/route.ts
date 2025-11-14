@@ -17,6 +17,7 @@ import {
 import { verifyCustomerOwnership } from "@/lib/stripe-security";
 import { verifyPaymentAmount, formatAmount } from '@/utils/billing/pricing';
 import { webhookRateLimit, getIdentifier } from '@/lib/rate-limit';
+import { shouldAlertAdmin, sendAdminWebhookAlert } from '@/lib/admin-alerts';
 
 export async function POST(request: NextRequest) {
   let event: any = null; // Declare in outer scope for failure recording
@@ -167,6 +168,17 @@ export async function POST(request: NextRequest) {
         const errorMessage =
           error instanceof Error ? error.message : "Unknown error";
 
+        // Get or increment retry count
+        const existingEvent = await db
+          .select()
+          .from(webhookEvents)
+          .where(eq(webhookEvents.eventId, event.id))
+          .limit(1);
+
+        const retryCount = existingEvent.length > 0
+          ? (existingEvent[0].retryCount || 0) + 1
+          : 1;
+
         await db
           .insert(webhookEvents)
           .values({
@@ -174,7 +186,7 @@ export async function POST(request: NextRequest) {
             eventType: event.type,
             status: "failed",
             errorMessage: errorMessage,
-            retryCount: 1,
+            retryCount: retryCount,
             userId: userId,
           })
           .onConflictDoUpdate({
@@ -186,7 +198,22 @@ export async function POST(request: NextRequest) {
             },
           });
 
-        logWebhookError(`Recorded failure for ${event.type} (${event.id})`);
+        logWebhookError(`Recorded failure for ${event.type} (${event.id}), retry count: ${retryCount}`);
+
+        // ✅ NEW: Alert admin if retry count >= 3
+        if (shouldAlertAdmin(retryCount)) {
+          await sendAdminWebhookAlert({
+            userId: userId || 'unknown',
+            eventId: event.id,
+            eventType: event.type,
+            sessionId: event.data.object.id, // Checkout session ID if applicable
+            customerId: event.data.object.customer,
+            subscriptionId: event.data.object.subscription,
+            errorMessage,
+            retryCount,
+            timestamp: new Date(),
+          });
+        }
       } catch (recordError) {
         logWebhookError("Failed to record webhook failure", recordError);
       }
@@ -265,10 +292,9 @@ async function handleCheckoutCompleted(session: any) {
   });
 
   if (!userId) {
-    logWebhookError("No supabase_user_id in checkout session metadata", {
-      metadata: session.metadata,
-    });
-    return;
+    throw new Error(
+      `Missing supabase_user_id in checkout session ${session.id} - cannot grant access`
+    );
   }
 
   logWebhookSuccess(`Checkout completed for user: ${userId}`);
@@ -301,8 +327,9 @@ async function handleCheckoutCompleted(session: any) {
       const subscriptionId = session.subscription;
 
       if (!subscriptionId) {
-        logWebhookWarning("No subscription ID in checkout session");
-        return;
+        throw new Error(
+          `Missing subscription ID in checkout session ${session.id} for user ${userId}`
+        );
       }
 
       // Retrieve full subscription details from Stripe
@@ -311,21 +338,24 @@ async function handleCheckoutCompleted(session: any) {
       // Get price ID from subscription
       const priceId = subscription.items.data[0]?.price.id;
       if (!priceId) {
-        logWebhookError("No price ID in subscription");
-        return;
+        throw new Error(
+          `No price ID in subscription ${subscriptionId} for user ${userId}`
+        );
       }
 
       const plan = mapPriceToPlan(priceId);
       if (!plan) {
-        logWebhookError(`Unknown price ID: ${priceId}`);
-        return;
+        throw new Error(
+          `Unknown price ID ${priceId} in subscription ${subscriptionId} for user ${userId}`
+        );
       }
 
       // Verify subscription amount
       const price = subscription.items.data[0]?.price;
       if (!price) {
-        logWebhookError("No price object in subscription items");
-        return;
+        throw new Error(
+          `No price object in subscription ${subscriptionId} for user ${userId}`
+        );
       }
 
       const amount = price.unit_amount || 0;
@@ -346,7 +376,9 @@ async function handleCheckoutCompleted(session: any) {
           priceId,
           severity: 'HIGH',
         });
-        return;
+        throw new Error(
+          `Amount verification failed for subscription ${subscriptionId} - expected ${verification.expected}, got ${verification.actual}`
+        );
       }
 
       logWebhookSuccess('✅ Amount verification passed at checkout', {
@@ -679,8 +711,9 @@ async function handleInvoicePaymentFailed(invoice: any) {
   );
 
   if (!subscriptionId) {
-    logWebhookWarning("Invoice has no subscription ID");
-    return;
+    throw new Error(
+      `Invoice ${invoice.id} has no subscription ID - cannot update user status`
+    );
   }
 
   try {
@@ -689,11 +722,9 @@ async function handleInvoicePaymentFailed(invoice: any) {
     const userId = subscription.metadata?.supabase_user_id;
 
     if (!userId) {
-      logWebhookError("No user ID in subscription metadata", {
-        subscriptionId,
-        customerId,
-      });
-      return;
+      throw new Error(
+        `No user ID in subscription ${subscriptionId} metadata for failed invoice ${invoice.id}`
+      );
     }
 
     // Verify customer ownership (security check)
@@ -709,7 +740,9 @@ async function handleInvoicePaymentFailed(invoice: any) {
         invoiceId: invoice.id,
         severity: 'HIGH',
       });
-      return; // ❌ DO NOT UPDATE STATUS
+      throw new Error(
+        `Customer-User mismatch for failed invoice ${invoice.id}`
+      );
     }
 
     logWebhookDebug('Customer-User correlation verified for invoice failure', {
@@ -979,8 +1012,9 @@ async function handleSubscriptionChange(subscription: any) {
   const customerId = subscription.customer; // Stripe customer ID
 
   if (!userId) {
-    logWebhookError("No supabase_user_id in subscription metadata");
-    return;
+    throw new Error(
+      `Missing supabase_user_id in subscription ${subscription.id} - cannot update plan`
+    );
   }
 
   // ✅ NEW: Verify customer belongs to this user
@@ -995,7 +1029,9 @@ async function handleSubscriptionChange(subscription: any) {
       subscriptionId: subscription.id,
       severity: 'HIGH',
     });
-    return; // ❌ DO NOT UPDATE PROFILE
+    throw new Error(
+      `Customer-User mismatch: subscription ${subscription.id} claims user ${userId} but customer ${customerId} belongs to ${ownership.actualUserId}`
+    );
   }
 
   logWebhookDebug('Customer-User correlation verified', {
@@ -1006,21 +1042,24 @@ async function handleSubscriptionChange(subscription: any) {
   // Continue with existing logic (no changes below)...
   const priceId = subscription.items.data[0]?.price.id;
   if (!priceId) {
-    logWebhookError("No price ID in subscription");
-    return;
+    throw new Error(
+      `No price ID in subscription ${subscription.id} for user ${userId}`
+    );
   }
 
   const plan = mapPriceToPlan(priceId);
   if (!plan) {
-    logWebhookError(`Unknown price ID: ${priceId}`);
-    return;
+    throw new Error(
+      `Unknown price ID ${priceId} in subscription ${subscription.id} for user ${userId}`
+    );
   }
 
   // ✅ NEW: Verify subscription amount
   const price = subscription.items.data[0]?.price;
   if (!price) {
-    logWebhookError("No price object in subscription items");
-    return;
+    throw new Error(
+      `No price object in subscription ${subscription.id} for user ${userId}`
+    );
   }
 
   const amount = price.unit_amount || 0;
@@ -1047,9 +1086,9 @@ async function handleSubscriptionChange(subscription: any) {
       severity: 'HIGH',
       action: 'Check environment variables and Stripe price configuration',
     });
-
-    // ❌ DO NOT GRANT ACCESS - Return early
-    return;
+    throw new Error(
+      `Amount verification failed for subscription ${subscription.id}`
+    );
   }
 
   logWebhookSuccess('✅ Subscription amount verification passed', {
@@ -1092,8 +1131,9 @@ async function handleSubscriptionDeleted(subscription: any) {
   const customerId = subscription.customer;
 
   if (!userId) {
-    logWebhookError("No supabase_user_id in subscription metadata");
-    return;
+    throw new Error(
+      `Missing supabase_user_id in deleted subscription ${subscription.id} - cannot revert plan`
+    );
   }
 
   // ✅ NEW: Verify customer belongs to this user
@@ -1107,7 +1147,9 @@ async function handleSubscriptionDeleted(subscription: any) {
       stripeCustomerId: customerId,
       severity: 'HIGH',
     });
-    return; // ❌ DO NOT REVERT PLAN
+    throw new Error(
+      `Customer-User mismatch in subscription deletion ${subscription.id}`
+    );
   }
 
   // Continue with existing logic (no changes below)...
