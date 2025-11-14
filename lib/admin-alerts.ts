@@ -82,7 +82,7 @@ The daily reconciliation job will catch any discrepancies within 24 hours.
 
   try {
     // Example with fetch to email API endpoint (implement based on your setup)
-    const response = await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/admin/send-alert`, {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_SITE_URL}/api/admin/send-alert`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({

@@ -85,8 +85,23 @@ export default function BillingSuccessPage() {
           console.log(`✅ Subscription activated successfully!`);
           setStatus('success');
 
-          // Wait 3 seconds to show success message, then redirect
-          await new Promise(resolve => setTimeout(resolve, 3000));
+          // Wait 2 seconds to show success message
+          await new Promise(resolve => setTimeout(resolve, 2000));
+
+          // Refresh session to update JWT claims before redirecting
+          console.log("🔄 Refreshing session to update JWT claims...");
+          const { error: refreshError } = await supabase.auth.refreshSession();
+
+          if (refreshError) {
+            console.error('Failed to refresh session:', refreshError);
+            // Continue anyway - user can manually refresh
+          } else {
+            console.log("✅ Session refreshed successfully!");
+          }
+
+          // Wait 1 more second to ensure middleware picks up new claims
+          await new Promise(resolve => setTimeout(resolve, 1000));
+
           console.log("🚀 Redirecting to dashboard...");
           window.location.href = `/dashboard/${initialUser.id}`;
           return;
@@ -171,7 +186,7 @@ export default function BillingSuccessPage() {
                 Your subscription is now active. You have access to all premium features.
               </p>
               <p className="text-sm text-gray-500">
-                Redirecting to dashboard in 3 seconds...
+                Redirecting to dashboard...
               </p>
             </>
           )}
