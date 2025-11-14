@@ -1,7 +1,9 @@
 /**
  * Admin alerting for critical webhook failures
- * Sends email notifications when webhooks fail 3+ times
+ * Sends Sentry alerts when webhooks fail 3+ times
  */
+
+import * as Sentry from "@sentry/nextjs";
 
 export interface WebhookFailureAlert {
   userId: string;
@@ -24,45 +26,11 @@ export function shouldAlertAdmin(retryCount: number): boolean {
 }
 
 /**
- * Send email alert to admin for critical webhook failure
- * Uses simple fetch to email API endpoint
+ * Send Sentry alert to admin for critical webhook failure
+ * Captures exception with full context for debugging
  */
 export async function sendAdminWebhookAlert(failure: WebhookFailureAlert): Promise<void> {
-  const adminEmails = process.env.ADMIN_ALERT_EMAILS?.split(',') || ['sebastiansole@handicappin.com'];
-
-  const subject = `🚨 CRITICAL: Webhook Failed ${failure.retryCount} Times`;
-
-  const body = `
-CRITICAL: User Paid But Webhook Failed
-
-User ID: ${failure.userId}
-Event Type: ${failure.eventType}
-Event ID: ${failure.eventId}
-Error: ${failure.errorMessage}
-Retry Count: ${failure.retryCount}
-Timestamp: ${failure.timestamp.toISOString()}
-
-Stripe Dashboard Links:
-${failure.sessionId ? `- Session: https://dashboard.stripe.com/test/checkout/sessions/${failure.sessionId}` : ''}
-${failure.customerId ? `- Customer: https://dashboard.stripe.com/test/customers/${failure.customerId}` : ''}
-${failure.subscriptionId ? `- Subscription: https://dashboard.stripe.com/test/subscriptions/${failure.subscriptionId}` : ''}
-
-Database:
-- User Profile: /dashboard/${failure.userId}
-- Webhook Events: Check webhook_events table for event_id='${failure.eventId}'
-
-Recommended Actions:
-1. Check Stripe dashboard to verify payment was captured
-2. Check webhook_events table for full error details
-3. Check user's profile.plan_selected in database
-4. If payment captured but plan not updated, reconciliation job will fix within 24h
-5. For immediate fix, manually update profile.plan_selected in database
-
-This alert fires after 3 failed webhook attempts. Stripe will retry once more.
-The daily reconciliation job will catch any discrepancies within 24 hours.
-`;
-
-  // Log to console with high visibility
+  // Log to console with high visibility (keep for local dev)
   console.error('═══════════════════════════════════════════');
   console.error('🚨 CRITICAL WEBHOOK FAILURE - ADMIN ALERT');
   console.error('═══════════════════════════════════════════');
@@ -72,33 +40,48 @@ The daily reconciliation job will catch any discrepancies within 24 hours.
   console.error(`Error: ${failure.errorMessage}`);
   console.error('═══════════════════════════════════════════');
 
-  // Send email via your email service
-  // TODO: Implement email sending based on your email provider
-  // Options:
-  // 1. Resend (recommended for Next.js)
-  // 2. SendGrid
-  // 3. AWS SES
-  // 4. Postmark
+  // Send to Sentry with rich context
+  Sentry.captureException(new Error(`Webhook failed after ${failure.retryCount} retries: ${failure.errorMessage}`), {
+    level: 'fatal', // Critical - requires immediate attention
+    tags: {
+      event_type: failure.eventType,
+      retry_count: failure.retryCount.toString(),
+      webhook_event_id: failure.eventId,
+    },
+    contexts: {
+      webhook: {
+        event_id: failure.eventId,
+        event_type: failure.eventType,
+        retry_count: failure.retryCount,
+        timestamp: failure.timestamp.toISOString(),
+      },
+      user_context: {
+        user_id: failure.userId,
+      },
+      stripe: {
+        session_id: failure.sessionId || 'N/A',
+        customer_id: failure.customerId || 'N/A',
+        subscription_id: failure.subscriptionId || 'N/A',
+      },
+      remediation: {
+        stripe_session_url: failure.sessionId
+          ? `https://dashboard.stripe.com/test/checkout/sessions/${failure.sessionId}`
+          : 'N/A',
+        stripe_customer_url: failure.customerId
+          ? `https://dashboard.stripe.com/test/customers/${failure.customerId}`
+          : 'N/A',
+        stripe_subscription_url: failure.subscriptionId
+          ? `https://dashboard.stripe.com/test/subscriptions/${failure.subscriptionId}`
+          : 'N/A',
+        database_table: 'webhook_events',
+        reconciliation_eta: '24 hours',
+      },
+    },
+    fingerprint: [failure.eventId], // Group by event ID to avoid duplicate alerts
+    user: {
+      id: failure.userId,
+    },
+  });
 
-  try {
-    // Example with fetch to email API endpoint (implement based on your setup)
-    const response = await fetch(`${process.env.NEXT_PUBLIC_SITE_URL}/api/admin/send-alert`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        to: adminEmails,
-        subject,
-        body,
-      }),
-    });
-
-    if (!response.ok) {
-      console.error('Failed to send admin alert email:', response.statusText);
-    } else {
-      console.log('✅ Admin alert email sent successfully');
-    }
-  } catch (error) {
-    // Don't throw - email failure shouldn't break webhook processing
-    console.error('Error sending admin alert email:', error);
-  }
+  console.log('✅ Critical webhook failure sent to Sentry');
 }
