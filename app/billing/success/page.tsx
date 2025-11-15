@@ -4,166 +4,321 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { createClientComponentClient } from "@/utils/supabase/client";
 
+type WebhookStatus = {
+  status: 'processing' | 'success' | 'delayed' | 'failed';
+  message: string;
+  action: string | null;
+  plan: string;
+  failureCount: number;
+  debug?: {
+    recentEventCount: number;
+    lastEventType: string;
+    lastEventStatus: string;
+  };
+};
+
 export default function BillingSuccessPage() {
-  const [status, setStatus] = useState<"loading" | "success">("loading");
+  const [status, setStatus] = useState<'loading' | 'processing' | 'success' | 'delayed' | 'failed'>('loading');
+  const [webhookData, setWebhookData] = useState<WebhookStatus | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
+  const [sessionId, setSessionId] = useState<string | null>(null);
+  const [attemptCount, setAttemptCount] = useState(0);
 
   useEffect(() => {
-    async function refreshClaims() {
-      try {
-        const supabase = createClientComponentClient();
+    // Get session ID from URL params (passed from checkout redirect)
+    const params = new URLSearchParams(window.location.search);
+    setSessionId(params.get('session_id'));
 
-        // Get current user first
-        const {
-          data: { user: initialUser },
-        } = await supabase.auth.getUser();
+    checkWebhookStatus();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-        if (!initialUser) {
-          window.location.href = "/login";
-          return;
-        }
+  async function checkWebhookStatus() {
+    try {
+      const supabase = createClientComponentClient();
 
-        setUserId(initialUser.id);
+      // Get current user
+      const {
+        data: { user: initialUser },
+      } = await supabase.auth.getUser();
 
-        console.log("🔄 Waiting for webhook to update plan...");
+      if (!initialUser) {
+        window.location.href = "/login";
+        return;
+      }
 
-        // Helper function to decode JWT and get billing claims
-        const getBillingFromToken = (session: any) => {
-          if (!session?.access_token) return null;
+      setUserId(initialUser.id);
 
-          try {
-            const parts = session.access_token.split('.');
-            if (parts.length === 3) {
-              const payload = JSON.parse(atob(parts[1]));
-              return payload.app_metadata?.billing || null;
-            }
-          } catch (e) {
-            console.error("Failed to decode JWT:", e);
-          }
-          return null;
-        };
+      console.log("🔄 Checking webhook status...");
 
-        // Poll for plan update (up to 15 seconds)
-        // Webhooks typically arrive within 2-5 seconds
-        const maxAttempts = 8;
-        const pollInterval = 2000; // 2 seconds
+      // Poll webhook status API (up to 20 seconds, every 2 seconds)
+      const maxAttempts = 10;
+      const pollInterval = 2000;
 
-        for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-          console.log(`⏳ Polling for plan update (attempt ${attempt}/${maxAttempts})...`);
+      for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+        setAttemptCount(attempt);
+        console.log(`⏳ Polling webhook status (attempt ${attempt}/${maxAttempts})...`);
 
-          const { data: sessionData, error: refreshError } = await supabase.auth.refreshSession();
+        // Call webhook status API
+        const response = await fetch('/api/billing/webhook-status');
 
-          if (refreshError) {
-            console.error("Failed to refresh session:", refreshError);
-            throw refreshError;
-          }
-
-          // Decode JWT manually to get custom claims from hook
-          const billing = getBillingFromToken(sessionData.session);
-          console.log(`🔍 Billing claims (attempt ${attempt}):`, billing);
-
-          // Check if plan has been updated (not null and not free)
-          if (billing?.plan && billing.plan !== 'free') {
-            console.log(`✅ Plan updated successfully to '${billing.plan}'!`);
-            setStatus("success");
-
-            // Wait 2 seconds to show success message
-            await new Promise(resolve => setTimeout(resolve, 2000));
-
-            console.log("🚀 Redirecting to dashboard...");
-
-            // Use window.location.href to force full page reload
-            // This ensures cookies are sent with the request to middleware
-            window.location.href = `/dashboard/${initialUser.id}`;
-
-            return; // Exit early - success!
-          }
-
-          // If not the last attempt, wait before trying again
+        if (!response.ok) {
+          console.error('Failed to fetch webhook status:', response.statusText);
+          // Continue polling on API errors
           if (attempt < maxAttempts) {
             await new Promise(resolve => setTimeout(resolve, pollInterval));
+            continue;
+          } else {
+            // After max attempts, show delayed state
+            setStatus('delayed');
+            break;
           }
         }
 
-        // After all attempts, plan still not updated - but try dashboard anyway
-        console.warn("⚠️ Plan not detected after 15 seconds - redirecting anyway...");
-        setStatus("success"); // Show success anyway
+        const data: WebhookStatus = await response.json();
+        setWebhookData(data);
 
-        await new Promise(resolve => setTimeout(resolve, 2000));
-        window.location.href = `/dashboard/${initialUser.id}`;
-      } catch (error) {
-        console.error("Failed to refresh claims:", error);
+        console.log(`🔍 Webhook status (attempt ${attempt}):`, data);
 
-        // Redirect to dashboard anyway - let middleware handle auth
-        setTimeout(() => {
-          if (userId) {
-            window.location.href = `/dashboard/${userId}`;
+        // Update UI state based on API response
+        if (data.status === 'success') {
+          console.log(`✅ Subscription activated successfully!`);
+          setStatus('success');
+
+          // Wait 2 seconds to show success message
+          await new Promise(resolve => setTimeout(resolve, 2000));
+
+          // Refresh session to update JWT claims before redirecting
+          console.log("🔄 Refreshing session to update JWT claims...");
+          const { error: refreshError } = await supabase.auth.refreshSession();
+
+          if (refreshError) {
+            console.error('Failed to refresh session:', refreshError);
+            // Continue anyway - user can manually refresh
           } else {
-            window.location.href = "/login";
+            console.log("✅ Session refreshed successfully!");
           }
-        }, 2000);
-      }
-    }
 
-    refreshClaims();
-  }, [userId]);
+          // Wait 1 more second to ensure middleware picks up new claims
+          await new Promise(resolve => setTimeout(resolve, 1000));
+
+          console.log("🚀 Redirecting to dashboard...");
+          window.location.href = `/dashboard/${initialUser.id}`;
+          return;
+        }
+        else if (data.status === 'failed') {
+          console.error(`❌ Webhook failed ${data.failureCount} times`);
+          setStatus('failed');
+          return;
+        }
+        else if (data.status === 'delayed') {
+          console.warn(`⚠️ Webhook delayed (${data.failureCount} failures)`);
+          setStatus('delayed');
+          // Don't return - keep showing delayed UI, let user decide
+          return;
+        }
+        else {
+          // Still processing
+          setStatus('processing');
+        }
+
+        // If not the last attempt, wait before trying again
+        if (attempt < maxAttempts) {
+          await new Promise(resolve => setTimeout(resolve, pollInterval));
+        }
+      }
+
+      // After all attempts, if still processing, show delayed state
+      if (status === 'processing') {
+        console.warn("⚠️ Webhook not completed after 20 seconds - showing delayed state");
+        setStatus('delayed');
+      }
+    } catch (error) {
+      console.error("Error checking webhook status:", error);
+
+      // On error, show delayed state with support contact
+      setStatus('delayed');
+    }
+  }
+
+  // Allow user to manually re-check status
+  const handleCheckAgain = () => {
+    setStatus('loading');
+    setAttemptCount(0);
+    checkWebhookStatus();
+  };
 
   return (
     <div className="container mx-auto px-4 py-16">
       <div className="max-w-2xl mx-auto text-center">
         <div className="mb-8">
-          {status === "loading" && (
+          {/* Loading State */}
+          {status === 'loading' && (
             <>
               <div className="text-6xl mb-4">⏳</div>
-              <h1 className="text-4xl font-bold mb-4">Processing...</h1>
-              <p className="text-lg text-gray-600 mb-8">
-                Activating your subscription...
+              <h1 className="text-4xl font-bold mb-4">Just a moment...</h1>
+              <p className="text-lg text-gray-600">
+                Checking your subscription status...
               </p>
             </>
           )}
 
-          {status === "success" && (
+          {/* Processing State (0-5 seconds) */}
+          {status === 'processing' && (
+            <>
+              <div className="text-6xl mb-4 animate-pulse">⏳</div>
+              <h1 className="text-4xl font-bold mb-4">Activating Your Subscription</h1>
+              <p className="text-lg text-gray-600 mb-8">
+                We&apos;re setting up your premium access...
+              </p>
+              <p className="text-sm text-gray-500">
+                This usually takes just a few seconds. (Attempt {attemptCount}/10)
+              </p>
+            </>
+          )}
+
+          {/* Success State */}
+          {status === 'success' && (
             <>
               <div className="text-6xl mb-4">✅</div>
-              <h1 className="text-4xl font-bold mb-4">Welcome to Premium!</h1>
+              <h1 className="text-4xl font-bold mb-4 text-green-600">Welcome to Premium!</h1>
               <p className="text-lg text-gray-600 mb-8">
-                Your subscription is now active. You now have access to all
-                premium features including the dashboard, advanced calculators,
-                and unlimited rounds.
+                Your subscription is now active. You have access to all premium features.
               </p>
               <p className="text-sm text-gray-500">
                 Redirecting to dashboard...
               </p>
             </>
           )}
+
+          {/* Delayed State (5-20 seconds, 1-2 failures) */}
+          {status === 'delayed' && (
+            <>
+              <div className="text-6xl mb-4">⚠️</div>
+              <h1 className="text-4xl font-bold mb-4 text-amber-600">Almost There</h1>
+              <p className="text-lg text-gray-600 mb-4">
+                Your payment was successful! Activation is taking longer than usual.
+              </p>
+              <p className="text-base text-gray-600 mb-8">
+                {webhookData?.action || "This usually resolves within a few minutes. Our system is working on it."}
+              </p>
+
+              <div className="space-y-4">
+                <button
+                  onClick={handleCheckAgain}
+                  className="w-full bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition"
+                >
+                  Check Again
+                </button>
+
+                <Link
+                  href={userId ? `/dashboard/${userId}` : "/"}
+                  className="block w-full border border-gray-300 px-6 py-3 rounded-lg hover:bg-gray-50 transition"
+                >
+                  Continue to Dashboard
+                </Link>
+              </div>
+
+              <div className="mt-8 pt-8 border-t">
+                <p className="text-sm text-gray-600">
+                  Still waiting after 5 minutes?{" "}
+                  <a
+                    href={`mailto:sebastiansole@handicappin.com?subject=Subscription Activation Delayed&body=Session ID: ${sessionId || 'unknown'}%0D%0AUser ID: ${userId || 'unknown'}`}
+                    className="text-blue-600 hover:underline"
+                  >
+                    Contact Support
+                  </a>
+                </p>
+              </div>
+            </>
+          )}
+
+          {/* Failed State (3+ failures) */}
+          {status === 'failed' && (
+            <>
+              <div className="text-6xl mb-4">❌</div>
+              <h1 className="text-4xl font-bold mb-4 text-red-600">Activation Issue</h1>
+              <p className="text-lg text-gray-700 mb-4">
+                We encountered an issue activating your subscription.
+              </p>
+
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+                <p className="text-sm text-blue-800">
+                  <strong>✓ Your payment was successful</strong><br />
+                  Our team has been automatically notified and will resolve this within 24 hours.
+                </p>
+              </div>
+
+              <p className="text-base text-gray-600 mb-4">
+                For immediate assistance, contact our support team:
+              </p>
+
+              {sessionId && (
+                <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-6">
+                  <p className="text-xs text-gray-500 mb-1">Session ID (for support):</p>
+                  <p className="font-mono text-sm break-all">{sessionId}</p>
+                </div>
+              )}
+
+              <div className="space-y-4">
+                <a
+                  href={`mailto:sebastiansole@handicappin.com?subject=Subscription Activation Issue&body=Session ID: ${sessionId || 'unknown'}%0D%0AUser ID: ${userId || 'unknown'}%0D%0A%0D%0APlease describe the issue:`}
+                  className="block w-full bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition text-center"
+                >
+                  📧 Email Support
+                </a>
+
+                <button
+                  onClick={handleCheckAgain}
+                  className="w-full border border-gray-300 px-6 py-3 rounded-lg hover:bg-gray-50 transition"
+                >
+                  Try Checking Again
+                </button>
+
+                <Link
+                  href="/"
+                  className="block w-full border border-gray-300 px-6 py-3 rounded-lg hover:bg-gray-50 transition text-center"
+                >
+                  Return to Home
+                </Link>
+              </div>
+
+              <div className="mt-8 pt-8 border-t">
+                <p className="text-xs text-gray-500">
+                  Support: sebastiansole@handicappin.com
+                </p>
+                {webhookData?.debug && (
+                  <details className="mt-4 text-left">
+                    <summary className="text-xs text-gray-400 cursor-pointer hover:text-gray-600">
+                      Debug Info (for support)
+                    </summary>
+                    <pre className="mt-2 text-xs bg-gray-100 p-2 rounded overflow-auto">
+                      {JSON.stringify(webhookData.debug, null, 2)}
+                    </pre>
+                  </details>
+                )}
+              </div>
+            </>
+          )}
         </div>
 
-        <div className="space-y-4">
-          <Link
-            href={userId ? `/dashboard/${userId}` : "/"}
-            className="block w-full bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition"
-          >
-            Go to Dashboard
-          </Link>
-          <Link
-            href="/"
-            className="block w-full border border-gray-300 px-6 py-3 rounded-lg hover:bg-gray-50 transition"
-          >
-            Back to Home
-          </Link>
-        </div>
-
-        <div className="mt-8 pt-8 border-t">
-          <p className="text-sm text-gray-600">
-            Need help? Contact us at{" "}
-            <a
-              href="mailto:support@handicappin.com"
-              className="text-blue-600 hover:underline"
+        {/* Always show navigation buttons (except on success state) */}
+        {status !== 'success' && status !== 'delayed' && status !== 'failed' && (
+          <div className="space-y-4">
+            <Link
+              href={userId ? `/dashboard/${userId}` : "/"}
+              className="block w-full bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition"
             >
-              support@handicappin.com
-            </a>
-          </p>
-        </div>
+              Go to Dashboard
+            </Link>
+            <Link
+              href="/"
+              className="block w-full border border-gray-300 px-6 py-3 rounded-lg hover:bg-gray-50 transition"
+            >
+              Back to Home
+            </Link>
+          </div>
+        )}
       </div>
     </div>
   );

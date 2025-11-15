@@ -1,6 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
-import { profile, stripeCustomers, webhookEvents, pendingLifetimePurchases } from "@/db/schema";
+import {
+  profile,
+  stripeCustomers,
+  webhookEvents,
+  pendingLifetimePurchases,
+} from "@/db/schema";
 import { eq, sql } from "drizzle-orm";
 import Stripe from "stripe";
 import { stripe, mapPriceToPlan } from "@/lib/stripe";
@@ -15,8 +20,9 @@ import {
   logSubscriptionEvent,
 } from "@/lib/webhook-logger";
 import { verifyCustomerOwnership } from "@/lib/stripe-security";
-import { verifyPaymentAmount, formatAmount } from '@/utils/billing/pricing';
-import { webhookRateLimit, getIdentifier } from '@/lib/rate-limit';
+import { verifyPaymentAmount, formatAmount } from "@/utils/billing/pricing";
+import { webhookRateLimit, getIdentifier } from "@/lib/rate-limit";
+import { shouldAlertAdmin, sendAdminWebhookAlert } from "@/lib/admin-alerts";
 
 export async function POST(request: NextRequest) {
   let event: any = null; // Declare in outer scope for failure recording
@@ -24,24 +30,33 @@ export async function POST(request: NextRequest) {
   try {
     // ✅ NEW: Rate limiting check (IP-based, no user context)
     const identifier = getIdentifier(request); // No userId = uses IP
-    const { success, limit, remaining, reset } = await webhookRateLimit.limit(identifier);
+    const { success, limit, remaining, reset } = await webhookRateLimit.limit(
+      identifier
+    );
 
-    console.log(`[Webhook] Rate limit check for ${identifier}:`, { success, limit, remaining, reset });
+    console.log(`[Webhook] Rate limit check for ${identifier}:`, {
+      success,
+      limit,
+      remaining,
+      reset,
+    });
 
     if (!success) {
       const retryAfterSeconds = Math.ceil((reset - Date.now()) / 1000);
 
-      console.warn(`[Rate Limit] Webhook rate limit exceeded for ${identifier}`);
+      console.warn(
+        `[Rate Limit] Webhook rate limit exceeded for ${identifier}`
+      );
 
       return NextResponse.json(
         {
-          error: 'Rate limit exceeded',
+          error: "Rate limit exceeded",
           retryAfter: retryAfterSeconds,
         },
         {
           status: 429,
           headers: {
-            'Retry-After': retryAfterSeconds.toString(),
+            "Retry-After": retryAfterSeconds.toString(),
           },
         }
       );
@@ -66,16 +81,16 @@ export async function POST(request: NextRequest) {
 
     logWebhookReceived(event.type);
 
-    // Check for duplicate event
+    // Check for duplicate event (only block successful duplicates)
     const existingEvent = await db
       .select()
       .from(webhookEvents)
       .where(eq(webhookEvents.eventId, event.id))
       .limit(1);
 
-    if (existingEvent.length > 0) {
+    if (existingEvent.length > 0 && existingEvent[0].status === "success") {
       logWebhookInfo(
-        `Duplicate event ${event.id} (${event.type}) - already processed at ${existingEvent[0].processedAt}`
+        `Duplicate event ${event.id} (${event.type}) - already processed successfully at ${existingEvent[0].processedAt}`
       );
       return NextResponse.json(
         {
@@ -84,6 +99,10 @@ export async function POST(request: NextRequest) {
           originalProcessedAt: existingEvent[0].processedAt,
         },
         { status: 200 }
+      );
+    } else if (existingEvent.length > 0 && existingEvent[0].status === "failed") {
+      logWebhookInfo(
+        `Retry detected for failed event ${event.id} (retry #${(existingEvent[0].retryCount || 0) + 1})`
       );
     }
 
@@ -167,6 +186,16 @@ export async function POST(request: NextRequest) {
         const errorMessage =
           error instanceof Error ? error.message : "Unknown error";
 
+        // Get or increment retry count
+        const existingEvent = await db
+          .select()
+          .from(webhookEvents)
+          .where(eq(webhookEvents.eventId, event.id))
+          .limit(1);
+
+        const retryCount =
+          existingEvent.length > 0 ? (existingEvent[0].retryCount || 0) + 1 : 1;
+
         await db
           .insert(webhookEvents)
           .values({
@@ -174,7 +203,7 @@ export async function POST(request: NextRequest) {
             eventType: event.type,
             status: "failed",
             errorMessage: errorMessage,
-            retryCount: 1,
+            retryCount: retryCount,
             userId: userId,
           })
           .onConflictDoUpdate({
@@ -186,7 +215,24 @@ export async function POST(request: NextRequest) {
             },
           });
 
-        logWebhookError(`Recorded failure for ${event.type} (${event.id})`);
+        logWebhookError(
+          `Recorded failure for ${event.type} (${event.id}), retry count: ${retryCount}`
+        );
+
+        // ✅ NEW: Alert admin if retry count >= 3
+        if (shouldAlertAdmin(retryCount)) {
+          await sendAdminWebhookAlert({
+            userId: userId || "unknown",
+            eventId: event.id,
+            eventType: event.type,
+            sessionId: event.data.object.id, // Checkout session ID if applicable
+            customerId: event.data.object.customer,
+            subscriptionId: event.data.object.subscription,
+            errorMessage,
+            retryCount,
+            timestamp: new Date(),
+          });
+        }
       } catch (recordError) {
         logWebhookError("Failed to record webhook failure", recordError);
       }
@@ -221,17 +267,26 @@ async function handleCustomerCreated(customer: any) {
       .limit(1);
 
     if (existingCustomer.length > 0) {
-      // User already has a customer - this is suspicious
-      logWebhookWarning('🚨 SECURITY: Attempt to create duplicate customer for user', {
-        userId,
-        existingCustomerId: existingCustomer[0].stripeCustomerId,
-        newCustomerId: customer.id,
-        severity: 'MEDIUM',
-      });
-
-      // Don't insert - primary key constraint would fail anyway
-      // But log for security monitoring
-      return;
+      // Check if it's the same customer (race condition) or different (security issue)
+      if (existingCustomer[0].stripeCustomerId === customer.id) {
+        // Same customer - just a race between checkout API and webhook
+        logWebhookInfo(
+          `Customer ${customer.id} already stored for user ${userId} (race condition - checkout API vs webhook)`
+        );
+        return;
+      } else {
+        // Different customer - this is a real security concern
+        logWebhookWarning(
+          "🚨 SECURITY: Attempt to create duplicate customer for user",
+          {
+            userId,
+            existingCustomerId: existingCustomer[0].stripeCustomerId,
+            newCustomerId: customer.id,
+            severity: "HIGH",
+          }
+        );
+        return;
+      }
     }
 
     // Proceed with customer creation
@@ -265,10 +320,9 @@ async function handleCheckoutCompleted(session: any) {
   });
 
   if (!userId) {
-    logWebhookError("No supabase_user_id in checkout session metadata", {
-      metadata: session.metadata,
-    });
-    return;
+    throw new Error(
+      `Missing supabase_user_id in checkout session ${session.id} - cannot grant access`
+    );
   }
 
   logWebhookSuccess(`Checkout completed for user: ${userId}`);
@@ -301,55 +355,66 @@ async function handleCheckoutCompleted(session: any) {
       const subscriptionId = session.subscription;
 
       if (!subscriptionId) {
-        logWebhookWarning("No subscription ID in checkout session");
-        return;
+        throw new Error(
+          `Missing subscription ID in checkout session ${session.id} for user ${userId}`
+        );
       }
 
       // Retrieve full subscription details from Stripe
-      const subscription: any = await stripe.subscriptions.retrieve(subscriptionId as string);
+      const subscription: any = await stripe.subscriptions.retrieve(
+        subscriptionId as string
+      );
 
       // Get price ID from subscription
       const priceId = subscription.items.data[0]?.price.id;
       if (!priceId) {
-        logWebhookError("No price ID in subscription");
-        return;
+        throw new Error(
+          `No price ID in subscription ${subscriptionId} for user ${userId}`
+        );
       }
 
       const plan = mapPriceToPlan(priceId);
       if (!plan) {
-        logWebhookError(`Unknown price ID: ${priceId}`);
-        return;
+        throw new Error(
+          `Unknown price ID ${priceId} in subscription ${subscriptionId} for user ${userId}`
+        );
       }
 
       // Verify subscription amount
       const price = subscription.items.data[0]?.price;
       if (!price) {
-        logWebhookError("No price object in subscription items");
-        return;
+        throw new Error(
+          `No price object in subscription ${subscriptionId} for user ${userId}`
+        );
       }
 
       const amount = price.unit_amount || 0;
-      const currency = price.currency || 'usd';
+      const currency = price.currency || "usd";
 
       const verification = verifyPaymentAmount(plan, currency, amount, true);
 
       if (!verification.valid) {
-        logWebhookError('🚨 Amount verification failed at checkout - NOT updating plan', {
-          handler: 'handleCheckoutCompleted',
-          plan,
-          expected: formatAmount(verification.expected),
-          actual: formatAmount(verification.actual),
-          variance: verification.variance,
-          currency: verification.currency,
-          subscriptionId: subscription.id,
-          userId,
-          priceId,
-          severity: 'HIGH',
-        });
-        return;
+        logWebhookError(
+          "🚨 Amount verification failed at checkout - NOT updating plan",
+          {
+            handler: "handleCheckoutCompleted",
+            plan,
+            expected: formatAmount(verification.expected),
+            actual: formatAmount(verification.actual),
+            variance: verification.variance,
+            currency: verification.currency,
+            subscriptionId: subscription.id,
+            userId,
+            priceId,
+            severity: "HIGH",
+          }
+        );
+        throw new Error(
+          `Amount verification failed for subscription ${subscriptionId} - expected ${verification.expected}, got ${verification.actual}`
+        );
       }
 
-      logWebhookSuccess('✅ Amount verification passed at checkout', {
+      logWebhookSuccess("✅ Amount verification passed at checkout", {
         plan,
         amount: formatAmount(verification.actual),
         currency: verification.currency,
@@ -368,7 +433,9 @@ async function handleCheckoutCompleted(session: any) {
         })
         .where(eq(profile.id, userId));
 
-      logWebhookSuccess(`Updated plan_selected to '${plan}' for user: ${userId} at checkout`);
+      logWebhookSuccess(
+        `Updated plan_selected to '${plan}' for user: ${userId} at checkout`
+      );
     } catch (error) {
       logWebhookError("Error processing subscription at checkout", error);
       throw error;
@@ -410,64 +477,79 @@ async function handleCheckoutCompleted(session: any) {
         const ownership = await verifyCustomerOwnership(customerId, userId);
 
         if (!ownership.valid) {
-          logWebhookError('Customer-User correlation check failed for lifetime purchase', {
-            handler: 'handleCheckoutCompleted',
-            mode: 'payment',
-            claimedUserId: userId,
-            actualUserId: ownership.actualUserId,
-            stripeCustomerId: customerId,
-            sessionId: session.id,
-            severity: 'HIGH',
-          });
+          logWebhookError(
+            "Customer-User correlation check failed for lifetime purchase",
+            {
+              handler: "handleCheckoutCompleted",
+              mode: "payment",
+              claimedUserId: userId,
+              actualUserId: ownership.actualUserId,
+              stripeCustomerId: customerId,
+              sessionId: session.id,
+              severity: "HIGH",
+            }
+          );
           return; // ❌ DO NOT GRANT LIFETIME ACCESS
         }
 
-        logWebhookDebug('Customer-User correlation verified for lifetime purchase', {
-          userId,
-          customerId,
-        });
+        logWebhookDebug(
+          "Customer-User correlation verified for lifetime purchase",
+          {
+            userId,
+            customerId,
+          }
+        );
       }
 
       // Continue with existing payment status logic (no changes below)...
       // ✅ NEW: Check payment status before granting access
       const paymentStatus = session.payment_status;
-      logWebhookDebug("Payment status", { paymentStatus, sessionId: session.id });
+      logWebhookDebug("Payment status", {
+        paymentStatus,
+        sessionId: session.id,
+      });
 
       // ✅ NEW: Verify line item price (NOT session total, to support 100% coupons)
       const lineItemPrice = lineItems.data[0]?.price;
       if (!lineItemPrice) {
-        logWebhookError("No price found in line items", { sessionId: session.id });
+        logWebhookError("No price found in line items", {
+          sessionId: session.id,
+        });
         return;
       }
 
       const verification = verifyPaymentAmount(
         plan,
-        lineItemPrice.currency || 'usd',
+        lineItemPrice.currency || "usd",
         lineItemPrice.unit_amount || 0,
         false // lifetime is one-time payment
       );
 
       if (!verification.valid) {
-        logWebhookError('🚨 CRITICAL: Amount verification failed - NOT granting access', {
-          handler: 'handleCheckoutCompleted',
-          mode: 'payment',
-          plan,
-          expected: formatAmount(verification.expected),
-          actual: formatAmount(verification.actual),
-          variance: verification.variance,
-          currency: verification.currency,
-          sessionId: session.id,
-          userId,
-          priceId,
-          severity: 'HIGH',
-          action: 'Check environment variables and Stripe price configuration',
-        });
+        logWebhookError(
+          "🚨 CRITICAL: Amount verification failed - NOT granting access",
+          {
+            handler: "handleCheckoutCompleted",
+            mode: "payment",
+            plan,
+            expected: formatAmount(verification.expected),
+            actual: formatAmount(verification.actual),
+            variance: verification.variance,
+            currency: verification.currency,
+            sessionId: session.id,
+            userId,
+            priceId,
+            severity: "HIGH",
+            action:
+              "Check environment variables and Stripe price configuration",
+          }
+        );
 
         // ❌ DO NOT GRANT ACCESS - Return early
         return;
       }
 
-      logWebhookSuccess('✅ Amount verification passed', {
+      logWebhookSuccess("✅ Amount verification passed", {
         plan,
         amount: formatAmount(verification.actual),
         currency: verification.currency,
@@ -475,7 +557,9 @@ async function handleCheckoutCompleted(session: any) {
 
       if (paymentStatus === "paid") {
         // Payment confirmed - grant access immediately
-        logPaymentEvent(`Payment confirmed - granting ${plan} access to user ${userId}`);
+        logPaymentEvent(
+          `Payment confirmed - granting ${plan} access to user ${userId}`
+        );
 
         try {
           await db
@@ -495,36 +579,44 @@ async function handleCheckoutCompleted(session: any) {
           logWebhookError(`Error updating plan for user ${userId}`, dbError);
           throw dbError;
         }
-
       } else if (paymentStatus === "unpaid") {
         // Payment pending - store for later processing
-        logPaymentEvent(`Payment pending for user ${userId} - waiting for payment_intent.succeeded`);
+        logPaymentEvent(
+          `Payment pending for user ${userId} - waiting for payment_intent.succeeded`
+        );
 
         try {
-          await db.insert(pendingLifetimePurchases).values({
-            userId,
-            checkoutSessionId: session.id,
-            paymentIntentId: session.payment_intent as string,
-            priceId,
-            plan: plan as "lifetime",
-            status: "pending",
-          }).onConflictDoUpdate({
-            target: pendingLifetimePurchases.checkoutSessionId,
-            set: {
-              updatedAt: new Date(),
-              paymentIntentId: session.payment_intent as string, // Update if webhook retries
-            },
-          });
+          await db
+            .insert(pendingLifetimePurchases)
+            .values({
+              userId,
+              checkoutSessionId: session.id,
+              paymentIntentId: session.payment_intent as string,
+              priceId,
+              plan: plan as "lifetime",
+              status: "pending",
+            })
+            .onConflictDoUpdate({
+              target: pendingLifetimePurchases.checkoutSessionId,
+              set: {
+                updatedAt: new Date(),
+                paymentIntentId: session.payment_intent as string, // Update if webhook retries
+              },
+            });
 
           logWebhookInfo(`Stored pending lifetime purchase for user ${userId}`);
         } catch (dbError) {
-          logWebhookError(`Error storing pending purchase for user ${userId}`, dbError);
+          logWebhookError(
+            `Error storing pending purchase for user ${userId}`,
+            dbError
+          );
           throw dbError;
         }
-
       } else if (paymentStatus === "no_payment_required") {
         // Free checkout (100% coupon) - grant access
-        logPaymentEvent(`No payment required - granting ${plan} access to user ${userId}`);
+        logPaymentEvent(
+          `No payment required - granting ${plan} access to user ${userId}`
+        );
 
         try {
           await db
@@ -539,17 +631,19 @@ async function handleCheckoutCompleted(session: any) {
             })
             .where(eq(profile.id, userId));
 
-          logWebhookSuccess(`Granted ${plan} access to user ${userId} (no payment required)`);
+          logWebhookSuccess(
+            `Granted ${plan} access to user ${userId} (no payment required)`
+          );
         } catch (dbError) {
           logWebhookError(`Error updating plan for user ${userId}`, dbError);
           throw dbError;
         }
-
       } else {
         // Unknown payment status
-        logWebhookWarning(`Unknown payment status: ${paymentStatus} for session ${session.id}`);
+        logWebhookWarning(
+          `Unknown payment status: ${paymentStatus} for session ${session.id}`
+        );
       }
-
     } catch (error) {
       logWebhookError("Error processing payment mode checkout", error);
       throw error;
@@ -575,44 +669,58 @@ async function handlePaymentIntentSucceeded(paymentIntent: any) {
 
     if (pendingResults.length === 0) {
       // Not a lifetime purchase or already processed
-      logWebhookInfo(`No pending lifetime purchase found for payment intent ${paymentIntentId}`);
+      logWebhookInfo(
+        `No pending lifetime purchase found for payment intent ${paymentIntentId}`
+      );
       return;
     }
 
     const purchase = pendingResults[0];
 
     // Grant lifetime access
-    logPaymentEvent(`Granting ${purchase.plan} access to user ${purchase.userId} after payment confirmation`);
+    logPaymentEvent(
+      `Granting ${purchase.plan} access to user ${purchase.userId} after payment confirmation`
+    );
 
     try {
-      await db.update(profile).set({
-        planSelected: purchase.plan,
-        planSelectedAt: new Date(),
-        subscriptionStatus: "active",
-        currentPeriodEnd: null,
-        cancelAtPeriodEnd: false,
-        billingVersion: sql`billing_version + 1`,
-      }).where(eq(profile.id, purchase.userId));
+      await db
+        .update(profile)
+        .set({
+          planSelected: purchase.plan,
+          planSelectedAt: new Date(),
+          subscriptionStatus: "active",
+          currentPeriodEnd: null,
+          cancelAtPeriodEnd: false,
+          billingVersion: sql`billing_version + 1`,
+        })
+        .where(eq(profile.id, purchase.userId));
 
-      logWebhookSuccess(`Granted ${purchase.plan} access to user ${purchase.userId}`);
+      logWebhookSuccess(
+        `Granted ${purchase.plan} access to user ${purchase.userId}`
+      );
     } catch (dbError) {
-      logWebhookError(`Error updating plan for user ${purchase.userId}`, dbError);
+      logWebhookError(
+        `Error updating plan for user ${purchase.userId}`,
+        dbError
+      );
       throw dbError;
     }
 
     // Mark purchase as paid
     try {
-      await db.update(pendingLifetimePurchases).set({
-        status: "paid",
-        updatedAt: new Date(),
-      }).where(eq(pendingLifetimePurchases.id, purchase.id));
+      await db
+        .update(pendingLifetimePurchases)
+        .set({
+          status: "paid",
+          updatedAt: new Date(),
+        })
+        .where(eq(pendingLifetimePurchases.id, purchase.id));
 
       logWebhookSuccess(`Marked pending purchase ${purchase.id} as paid`);
     } catch (dbError) {
       logWebhookError(`Error updating pending purchase status`, dbError);
       // Don't throw - access was granted successfully
     }
-
   } catch (error) {
     logWebhookError("Error processing payment intent succeeded", error);
     throw error;
@@ -637,7 +745,9 @@ async function handlePaymentIntentFailed(paymentIntent: any) {
 
     if (pendingResults.length === 0) {
       // Not a lifetime purchase or already processed
-      logWebhookInfo(`No pending lifetime purchase found for failed payment intent ${paymentIntentId}`);
+      logWebhookInfo(
+        `No pending lifetime purchase found for failed payment intent ${paymentIntentId}`
+      );
       return;
     }
 
@@ -645,12 +755,17 @@ async function handlePaymentIntentFailed(paymentIntent: any) {
 
     // Mark purchase as failed
     try {
-      await db.update(pendingLifetimePurchases).set({
-        status: "failed",
-        updatedAt: new Date(),
-      }).where(eq(pendingLifetimePurchases.id, purchase.id));
+      await db
+        .update(pendingLifetimePurchases)
+        .set({
+          status: "failed",
+          updatedAt: new Date(),
+        })
+        .where(eq(pendingLifetimePurchases.id, purchase.id));
 
-      logWebhookWarning(`Payment failed for user ${purchase.userId} - marked pending purchase ${purchase.id} as failed`);
+      logWebhookWarning(
+        `Payment failed for user ${purchase.userId} - marked pending purchase ${purchase.id} as failed`
+      );
     } catch (dbError) {
       logWebhookError(`Error marking pending purchase as failed`, dbError);
       throw dbError;
@@ -658,7 +773,6 @@ async function handlePaymentIntentFailed(paymentIntent: any) {
 
     // TODO: Send email notification to user (separate ticket)
     // TODO: Consider cleanup job for old failed purchases (separate ticket)
-
   } catch (error) {
     logWebhookError("Error processing payment intent failed", error);
     throw error;
@@ -679,8 +793,9 @@ async function handleInvoicePaymentFailed(invoice: any) {
   );
 
   if (!subscriptionId) {
-    logWebhookWarning("Invoice has no subscription ID");
-    return;
+    throw new Error(
+      `Invoice ${invoice.id} has no subscription ID - cannot update user status`
+    );
   }
 
   try {
@@ -689,30 +804,33 @@ async function handleInvoicePaymentFailed(invoice: any) {
     const userId = subscription.metadata?.supabase_user_id;
 
     if (!userId) {
-      logWebhookError("No user ID in subscription metadata", {
-        subscriptionId,
-        customerId,
-      });
-      return;
+      throw new Error(
+        `No user ID in subscription ${subscriptionId} metadata for failed invoice ${invoice.id}`
+      );
     }
 
     // Verify customer ownership (security check)
     const ownership = await verifyCustomerOwnership(customerId, userId);
 
     if (!ownership.valid) {
-      logWebhookError('Customer-User correlation check failed for invoice payment failure', {
-        handler: 'handleInvoicePaymentFailed',
-        claimedUserId: userId,
-        actualUserId: ownership.actualUserId,
-        stripeCustomerId: customerId,
-        subscriptionId,
-        invoiceId: invoice.id,
-        severity: 'HIGH',
-      });
-      return; // ❌ DO NOT UPDATE STATUS
+      logWebhookError(
+        "Customer-User correlation check failed for invoice payment failure",
+        {
+          handler: "handleInvoicePaymentFailed",
+          claimedUserId: userId,
+          actualUserId: ownership.actualUserId,
+          stripeCustomerId: customerId,
+          subscriptionId,
+          invoiceId: invoice.id,
+          severity: "HIGH",
+        }
+      );
+      throw new Error(
+        `Customer-User mismatch for failed invoice ${invoice.id}`
+      );
     }
 
-    logWebhookDebug('Customer-User correlation verified for invoice failure', {
+    logWebhookDebug("Customer-User correlation verified for invoice failure", {
       userId,
       customerId,
       subscriptionId,
@@ -749,7 +867,6 @@ async function handleInvoicePaymentFailed(invoice: any) {
     //   attemptCount,
     //   nextAttemptDate: nextPaymentAttempt ? new Date(nextPaymentAttempt * 1000) : null,
     // });
-
   } catch (error) {
     logWebhookError("Error processing invoice payment failure", error);
     throw error; // Trigger Stripe retry
@@ -769,7 +886,10 @@ async function handleChargeRefunded(charge: any) {
   const isFullRefund = amountRefunded === amountCharged;
 
   logPaymentEvent(
-    `Charge refunded: ${chargeId} (${formatAmount(amountRefunded, currency)} refunded)`
+    `Charge refunded: ${chargeId} (${formatAmount(
+      amountRefunded,
+      currency
+    )} refunded)`
   );
 
   if (!customerId) {
@@ -813,7 +933,7 @@ async function handleChargeRefunded(charge: any) {
     const currentPlan = userProfile[0].planSelected;
 
     // Log refund details
-    logWebhookDebug('Refund details', {
+    logWebhookDebug("Refund details", {
       userId,
       currentPlan,
       isFullRefund,
@@ -845,7 +965,6 @@ async function handleChargeRefunded(charge: any) {
 
       // TODO: Send email notification (separate ticket)
       // await sendRefundNotificationEmail({ userId, amount: amountRefunded });
-
     } else if (isFullRefund) {
       // Full refund for subscription - let subscription.deleted handle it
       logWebhookInfo(
@@ -854,10 +973,12 @@ async function handleChargeRefunded(charge: any) {
     } else {
       // Partial refund - no action needed
       logWebhookInfo(
-        `Partial refund (${formatAmount(amountRefunded, currency)}) for user ${userId} - no access changes`
+        `Partial refund (${formatAmount(
+          amountRefunded,
+          currency
+        )}) for user ${userId} - no access changes`
       );
     }
-
   } catch (error) {
     logWebhookError("Error processing charge refund", error);
     throw error; // Trigger Stripe retry
@@ -874,10 +995,13 @@ async function handleDisputeCreated(dispute: any) {
   const amount = dispute.amount;
   const reason = dispute.reason;
   const status = dispute.status;
-  const currency = dispute.currency || 'usd';
+  const currency = dispute.currency || "usd";
 
   logPaymentEvent(
-    `Dispute created: ${disputeId} for charge ${chargeId} (${formatAmount(amount, currency)})`
+    `Dispute created: ${disputeId} for charge ${chargeId} (${formatAmount(
+      amount,
+      currency
+    )})`
   );
 
   try {
@@ -901,14 +1025,11 @@ async function handleDisputeCreated(dispute: any) {
       .limit(1);
 
     if (customerRecord.length === 0) {
-      logWebhookWarning(
-        `No user found for disputed customer ${customerId}`,
-        {
-          disputeId,
-          chargeId,
-          customerId,
-        }
-      );
+      logWebhookWarning(`No user found for disputed customer ${customerId}`, {
+        disputeId,
+        chargeId,
+        customerId,
+      });
       return;
     }
 
@@ -921,10 +1042,10 @@ async function handleDisputeCreated(dispute: any) {
       .where(eq(profile.id, userId))
       .limit(1);
 
-    const currentPlan = userProfile[0]?.planSelected || 'unknown';
+    const currentPlan = userProfile[0]?.planSelected || "unknown";
 
     // Log security alert for manual review
-    console.error('🚨 SECURITY ALERT: Charge dispute filed', {
+    console.error("🚨 SECURITY ALERT: Charge dispute filed", {
       disputeId,
       chargeId,
       userId,
@@ -934,8 +1055,8 @@ async function handleDisputeCreated(dispute: any) {
       reason,
       status,
       timestamp: new Date().toISOString(),
-      action: 'MANUAL_REVIEW_REQUIRED',
-      severity: 'HIGH',
+      action: "MANUAL_REVIEW_REQUIRED",
+      severity: "HIGH",
     });
 
     logWebhookWarning(
@@ -962,9 +1083,8 @@ async function handleDisputeCreated(dispute: any) {
     // IMPORTANT: Do NOT automatically revoke access
     // Wait for dispute resolution (charge.dispute.closed)
     logWebhookInfo(
-      'No automatic action taken - waiting for dispute resolution'
+      "No automatic action taken - waiting for dispute resolution"
     );
-
   } catch (error) {
     logWebhookError("Error processing dispute notification", error);
     throw error; // Trigger Stripe retry
@@ -979,26 +1099,32 @@ async function handleSubscriptionChange(subscription: any) {
   const customerId = subscription.customer; // Stripe customer ID
 
   if (!userId) {
-    logWebhookError("No supabase_user_id in subscription metadata");
-    return;
+    throw new Error(
+      `Missing supabase_user_id in subscription ${subscription.id} - cannot update plan`
+    );
   }
 
   // ✅ NEW: Verify customer belongs to this user
   const ownership = await verifyCustomerOwnership(customerId, userId);
 
   if (!ownership.valid) {
-    logWebhookError('Customer-User correlation check failed - NOT updating plan', {
-      handler: 'handleSubscriptionChange',
-      claimedUserId: userId,
-      actualUserId: ownership.actualUserId,
-      stripeCustomerId: customerId,
-      subscriptionId: subscription.id,
-      severity: 'HIGH',
-    });
-    return; // ❌ DO NOT UPDATE PROFILE
+    logWebhookError(
+      "Customer-User correlation check failed - NOT updating plan",
+      {
+        handler: "handleSubscriptionChange",
+        claimedUserId: userId,
+        actualUserId: ownership.actualUserId,
+        stripeCustomerId: customerId,
+        subscriptionId: subscription.id,
+        severity: "HIGH",
+      }
+    );
+    throw new Error(
+      `Customer-User mismatch: subscription ${subscription.id} claims user ${userId} but customer ${customerId} belongs to ${ownership.actualUserId}`
+    );
   }
 
-  logWebhookDebug('Customer-User correlation verified', {
+  logWebhookDebug("Customer-User correlation verified", {
     userId,
     customerId,
   });
@@ -1006,25 +1132,28 @@ async function handleSubscriptionChange(subscription: any) {
   // Continue with existing logic (no changes below)...
   const priceId = subscription.items.data[0]?.price.id;
   if (!priceId) {
-    logWebhookError("No price ID in subscription");
-    return;
+    throw new Error(
+      `No price ID in subscription ${subscription.id} for user ${userId}`
+    );
   }
 
   const plan = mapPriceToPlan(priceId);
   if (!plan) {
-    logWebhookError(`Unknown price ID: ${priceId}`);
-    return;
+    throw new Error(
+      `Unknown price ID ${priceId} in subscription ${subscription.id} for user ${userId}`
+    );
   }
 
   // ✅ NEW: Verify subscription amount
   const price = subscription.items.data[0]?.price;
   if (!price) {
-    logWebhookError("No price object in subscription items");
-    return;
+    throw new Error(
+      `No price object in subscription ${subscription.id} for user ${userId}`
+    );
   }
 
   const amount = price.unit_amount || 0;
-  const currency = price.currency || 'usd';
+  const currency = price.currency || "usd";
 
   const verification = verifyPaymentAmount(
     plan,
@@ -1034,25 +1163,28 @@ async function handleSubscriptionChange(subscription: any) {
   );
 
   if (!verification.valid) {
-    logWebhookError('🚨 CRITICAL: Subscription amount verification failed - NOT updating plan', {
-      handler: 'handleSubscriptionChange',
-      plan,
-      expected: formatAmount(verification.expected),
-      actual: formatAmount(verification.actual),
-      variance: verification.variance,
-      currency: verification.currency,
-      subscriptionId: subscription.id,
-      userId,
-      priceId,
-      severity: 'HIGH',
-      action: 'Check environment variables and Stripe price configuration',
-    });
-
-    // ❌ DO NOT GRANT ACCESS - Return early
-    return;
+    logWebhookError(
+      "🚨 CRITICAL: Subscription amount verification failed - NOT updating plan",
+      {
+        handler: "handleSubscriptionChange",
+        plan,
+        expected: formatAmount(verification.expected),
+        actual: formatAmount(verification.actual),
+        variance: verification.variance,
+        currency: verification.currency,
+        subscriptionId: subscription.id,
+        userId,
+        priceId,
+        severity: "HIGH",
+        action: "Check environment variables and Stripe price configuration",
+      }
+    );
+    throw new Error(
+      `Amount verification failed for subscription ${subscription.id}`
+    );
   }
 
-  logWebhookSuccess('✅ Subscription amount verification passed', {
+  logWebhookSuccess("✅ Subscription amount verification passed", {
     plan,
     amount: formatAmount(verification.actual),
     currency: verification.currency,
@@ -1092,22 +1224,28 @@ async function handleSubscriptionDeleted(subscription: any) {
   const customerId = subscription.customer;
 
   if (!userId) {
-    logWebhookError("No supabase_user_id in subscription metadata");
-    return;
+    throw new Error(
+      `Missing supabase_user_id in deleted subscription ${subscription.id} - cannot revert plan`
+    );
   }
 
   // ✅ NEW: Verify customer belongs to this user
   const ownership = await verifyCustomerOwnership(customerId, userId);
 
   if (!ownership.valid) {
-    logWebhookError('Customer-User correlation check failed - NOT reverting plan', {
-      handler: 'handleSubscriptionDeleted',
-      claimedUserId: userId,
-      actualUserId: ownership.actualUserId,
-      stripeCustomerId: customerId,
-      severity: 'HIGH',
-    });
-    return; // ❌ DO NOT REVERT PLAN
+    logWebhookError(
+      "Customer-User correlation check failed - NOT reverting plan",
+      {
+        handler: "handleSubscriptionDeleted",
+        claimedUserId: userId,
+        actualUserId: ownership.actualUserId,
+        stripeCustomerId: customerId,
+        severity: "HIGH",
+      }
+    );
+    throw new Error(
+      `Customer-User mismatch in subscription deletion ${subscription.id}`
+    );
   }
 
   // Continue with existing logic (no changes below)...
