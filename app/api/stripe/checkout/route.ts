@@ -110,8 +110,7 @@ export async function POST(request: NextRequest) {
     }
 
     console.log("Price ID:", priceId);
-    console.log("User ID:", user.id);
-    console.log("User Email:", user.email);
+    console.log("User:", user.id);
     console.log("Plan:", plan);
     console.log(
       "Success URL:",

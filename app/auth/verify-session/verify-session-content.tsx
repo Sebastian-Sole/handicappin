@@ -40,7 +40,7 @@ export function VerifySessionContent({
         console.log(
           `🔄 Verification attempt ${attemptCount + 1}/${MAX_RETRY_ATTEMPTS}`,
           {
-            userId,
+            userId, // Browser console - user sees their own UUID (no privacy issue)
             returnTo,
           }
         );
@@ -63,7 +63,7 @@ export function VerifySessionContent({
           console.log("🔍 app_metadata keys:", Object.keys(data.session.user.app_metadata));
         } else {
           console.error("🚨 app_metadata is completely missing!");
-          console.log("🔍 Full user object:", data?.session?.user);
+          // PII redacted - not logging full user object
         }
 
         // 🔍 DIAGNOSTIC: Check if profile exists in database
@@ -78,7 +78,12 @@ export function VerifySessionContent({
           if (profileError) {
             console.error("🚨 Profile query error:", profileError);
           } else {
-            console.log("🔍 Profile exists in database:", profileCheck);
+            console.log("🔍 Profile exists in database:", {
+              id: profileCheck.id, // UUID logged directly (browser console, user's own data)
+              plan_selected: profileCheck.plan_selected,
+              subscription_status: profileCheck.subscription_status,
+              billing_version: profileCheck.billing_version,
+            });
             if (!profileCheck.plan_selected) {
               console.warn("⚠️ Profile exists but plan_selected is NULL - user needs onboarding");
             }
@@ -130,7 +135,12 @@ export function VerifySessionContent({
                 console.error("❌ No profile found for user:", userId);
                 console.error("🚨 Missing profile row! This is why JWT hook can't populate claims.");
               } else {
-                console.log("✅ Profile exists in database:", profile);
+                console.log("✅ Profile exists in database:", {
+                  id: profile.id,
+                  plan_selected: profile.plan_selected,
+                  subscription_status: profile.subscription_status,
+                  billing_version: profile.billing_version,
+                });
                 console.error("🚨 Profile exists but JWT hook isn't populating claims!");
                 console.error("🚨 Check Supabase dashboard: Auth > Hooks > Custom Access Token Hook");
                 console.error("🚨 The hook should be enabled and pointing to: pg-functions://postgres/public/custom_access_token_hook");

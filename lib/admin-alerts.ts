@@ -4,6 +4,7 @@
  */
 
 import * as Sentry from "@sentry/nextjs";
+import { captureSentryError } from "@/lib/sentry-utils";
 
 export interface WebhookFailureAlert {
   userId: string;
@@ -34,54 +35,35 @@ export async function sendAdminWebhookAlert(failure: WebhookFailureAlert): Promi
   console.error('═══════════════════════════════════════════');
   console.error('🚨 CRITICAL WEBHOOK FAILURE - ADMIN ALERT');
   console.error('═══════════════════════════════════════════');
-  console.error(`User ID: ${failure.userId}`);
+  console.error(`User: ${failure.userId}`);
   console.error(`Event Type: ${failure.eventType}`);
   console.error(`Retry Count: ${failure.retryCount}`);
   console.error(`Error: ${failure.errorMessage}`);
   console.error('═══════════════════════════════════════════');
 
-  // Send to Sentry with rich context
-  Sentry.captureException(new Error(`Webhook failed after ${failure.retryCount} retries: ${failure.errorMessage}`), {
-    level: 'fatal', // Critical - requires immediate attention
-    tags: {
-      event_type: failure.eventType,
-      retry_count: failure.retryCount.toString(),
-      webhook_event_id: failure.eventId,
-    },
-    contexts: {
-      webhook: {
-        event_id: failure.eventId,
-        event_type: failure.eventType,
-        retry_count: failure.retryCount,
-        timestamp: failure.timestamp.toISOString(),
+  // Use centralized Sentry utility with PII redaction
+  captureSentryError(
+    new Error(`Webhook failed after ${failure.retryCount} retries: ${failure.errorMessage}`),
+    {
+      level: 'fatal',
+      userId: failure.userId,
+      sessionId: failure.sessionId,
+      customerId: failure.customerId,
+      subscriptionId: failure.subscriptionId,
+      eventType: failure.eventType,
+      eventId: failure.eventId,
+      tags: {
+        retry_count: failure.retryCount.toString(),
+        webhook_event_id: failure.eventId,
       },
-      user_context: {
-        user_id: failure.userId,
+      extra: {
+        remediation: {
+          database_table: 'webhook_events',
+          reconciliation_eta: '24 hours',
+        },
       },
-      stripe: {
-        session_id: failure.sessionId || 'N/A',
-        customer_id: failure.customerId || 'N/A',
-        subscription_id: failure.subscriptionId || 'N/A',
-      },
-      remediation: {
-        stripe_session_url: failure.sessionId
-          ? `https://dashboard.stripe.com/test/checkout/sessions/${failure.sessionId}`
-          : 'N/A',
-        stripe_customer_url: failure.customerId
-          ? `https://dashboard.stripe.com/test/customers/${failure.customerId}`
-          : 'N/A',
-        stripe_subscription_url: failure.subscriptionId
-          ? `https://dashboard.stripe.com/test/subscriptions/${failure.subscriptionId}`
-          : 'N/A',
-        database_table: 'webhook_events',
-        reconciliation_eta: '24 hours',
-      },
-    },
-    fingerprint: [failure.eventId], // Group by event ID to avoid duplicate alerts
-    user: {
-      id: failure.userId,
-    },
-  });
+    }
+  );
 
-  console.log('✅ Critical webhook failure sent to Sentry');
+  console.log('✅ Critical webhook failure sent to Sentry (PII redacted)');
 }

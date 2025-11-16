@@ -1,4 +1,5 @@
 import { stripe } from "./stripe";
+import { redactEmail } from "./logging";
 
 /**
  * Get or create a Stripe customer for a user
@@ -87,7 +88,7 @@ export async function getOrCreateStripeCustomer({
     return customer.id;
   } catch (error) {
     console.error(`Error managing Stripe customer for user ${userId}:`, error);
-    console.error(`Email: ${email}`);
+    console.error(`Email: ${redactEmail(email)}`);
     // Return undefined - caller will use customer_email fallback
     return undefined;
   }

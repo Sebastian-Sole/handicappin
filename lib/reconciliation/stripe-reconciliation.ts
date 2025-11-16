@@ -294,7 +294,7 @@ function sendReconciliationAlert(result: ReconciliationResult) {
     auto_fixed: result.auto_fixed,
     manual_review: result.manual_review,
     errors: result.errors,
-    critical_issues: criticalIssues,
+    critical_issues: criticalIssues, // UUIDs logged directly (server-side, secure environment)
   });
 
   // TODO: Send email to admin (separate enhancement)

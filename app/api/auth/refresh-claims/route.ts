@@ -59,7 +59,7 @@ export async function POST(request: NextRequest) {
     const billing = data.user?.app_metadata?.billing;
 
     console.log("✅ JWT refresh successful:", {
-      userId: user.id,
+      user: user.id,
       billing,
     });
 

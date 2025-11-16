@@ -254,8 +254,9 @@ async function handleCustomerCreated(customer: any) {
   const userId = customer.metadata?.supabase_user_id;
 
   if (!userId) {
-    logWebhookError("No supabase_user_id in customer metadata");
-    return;
+    throw new Error(
+      `Missing supabase_user_id in customer ${customer.id} metadata - cannot link customer to user`
+    );
   }
 
   try {
@@ -285,7 +286,9 @@ async function handleCustomerCreated(customer: any) {
             severity: "HIGH",
           }
         );
-        return;
+        throw new Error(
+          `Security: User already has customer ${existingCustomer[0].stripeCustomerId}, cannot create duplicate customer ${customer.id}`
+        );
       }
     }
 
@@ -356,7 +359,7 @@ async function handleCheckoutCompleted(session: any) {
 
       if (!subscriptionId) {
         throw new Error(
-          `Missing subscription ID in checkout session ${session.id} for user ${userId}`
+          `Missing subscription ID in checkout session ${session.id}`
         );
       }
 
@@ -460,16 +463,18 @@ async function handleCheckoutCompleted(session: any) {
       });
 
       if (!priceId) {
-        logWebhookError("No price ID found in line items");
-        return;
+        throw new Error(
+          `No price ID found in line items for checkout session ${session.id}`
+        );
       }
 
       const plan = mapPriceToPlan(priceId);
       logWebhookDebug("Mapped price to plan", { priceId, plan });
 
       if (!plan) {
-        logWebhookError(`Unknown price ID: ${priceId}`);
-        return;
+        throw new Error(
+          `Unknown price ID ${priceId} in checkout session ${session.id} - cannot determine plan`
+        );
       }
 
       // ✅ NEW: Verify customer ownership if customer ID exists
@@ -512,10 +517,9 @@ async function handleCheckoutCompleted(session: any) {
       // ✅ NEW: Verify line item price (NOT session total, to support 100% coupons)
       const lineItemPrice = lineItems.data[0]?.price;
       if (!lineItemPrice) {
-        logWebhookError("No price found in line items", {
-          sessionId: session.id,
-        });
-        return;
+        throw new Error(
+          `No price found in line items for checkout session ${session.id}`
+        );
       }
 
       const verification = verifyPaymentAmount(
@@ -545,8 +549,10 @@ async function handleCheckoutCompleted(session: any) {
           }
         );
 
-        // ❌ DO NOT GRANT ACCESS - Return early
-        return;
+        // ❌ DO NOT GRANT ACCESS - Throw error for retry
+        throw new Error(
+          `Amount verification failed for checkout session ${session.id}: expected ${formatAmount(verification.expected)}, got ${formatAmount(verification.actual)}`
+        );
       }
 
       logWebhookSuccess("✅ Amount verification passed", {
@@ -576,7 +582,7 @@ async function handleCheckoutCompleted(session: any) {
 
           logWebhookSuccess(`Granted ${plan} access to user ${userId}`);
         } catch (dbError) {
-          logWebhookError(`Error updating plan for user ${userId}`, dbError);
+          logWebhookError("Error updating plan", dbError);
           throw dbError;
         }
       } else if (paymentStatus === "unpaid") {
@@ -606,10 +612,7 @@ async function handleCheckoutCompleted(session: any) {
 
           logWebhookInfo(`Stored pending lifetime purchase for user ${userId}`);
         } catch (dbError) {
-          logWebhookError(
-            `Error storing pending purchase for user ${userId}`,
-            dbError
-          );
+          logWebhookError("Error storing pending purchase", dbError);
           throw dbError;
         }
       } else if (paymentStatus === "no_payment_required") {
@@ -635,7 +638,7 @@ async function handleCheckoutCompleted(session: any) {
             `Granted ${plan} access to user ${userId} (no payment required)`
           );
         } catch (dbError) {
-          logWebhookError(`Error updating plan for user ${userId}`, dbError);
+          logWebhookError("Error updating plan", dbError);
           throw dbError;
         }
       } else {
@@ -699,10 +702,7 @@ async function handlePaymentIntentSucceeded(paymentIntent: any) {
         `Granted ${purchase.plan} access to user ${purchase.userId}`
       );
     } catch (dbError) {
-      logWebhookError(
-        `Error updating plan for user ${purchase.userId}`,
-        dbError
-      );
+      logWebhookError("Error updating plan", dbError);
       throw dbError;
     }
 
@@ -856,7 +856,6 @@ async function handleInvoicePaymentFailed(invoice: any) {
         {
           attemptCount,
           subscriptionId,
-          userId,
         }
       );
     }
@@ -923,11 +922,9 @@ async function handleChargeRefunded(charge: any) {
       .limit(1);
 
     if (userProfile.length === 0) {
-      logWebhookError(`No profile found for user ${userId}`, {
-        userId,
-        chargeId,
-      });
-      return;
+      throw new Error(
+        `No profile found for user in charge refund ${chargeId}`
+      );
     }
 
     const currentPlan = userProfile[0].planSelected;
@@ -1120,7 +1117,7 @@ async function handleSubscriptionChange(subscription: any) {
       }
     );
     throw new Error(
-      `Customer-User mismatch: subscription ${subscription.id} claims user ${userId} but customer ${customerId} belongs to ${ownership.actualUserId}`
+      `Customer-User mismatch for subscription ${subscription.id}`
     );
   }
 
@@ -1209,7 +1206,7 @@ async function handleSubscriptionChange(subscription: any) {
         `Updated plan_selected to '${plan}' for user: ${userId}`
       );
     } catch (error) {
-      logWebhookError(`Error updating plan for user ${userId}`, error);
+      logWebhookError("Error updating plan", error);
       // Throw error to trigger webhook retry by Stripe
       throw error;
     }
@@ -1265,7 +1262,7 @@ async function handleSubscriptionDeleted(subscription: any) {
 
     logWebhookSuccess(`Reverted to free tier for user: ${userId}`);
   } catch (error) {
-    logWebhookError(`Error reverting user ${userId} to free tier`, error);
+    logWebhookError("Error reverting user to free tier", error);
     // Throw error to trigger webhook retry by Stripe
     throw error;
   }

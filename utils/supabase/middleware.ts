@@ -244,7 +244,7 @@ export async function updateSession(request: NextRequest) {
         console.warn(
           `🐌 Slow middleware detected: ${duration.toFixed(2)}ms (threshold: 10ms)`,
           {
-            userId: enrichedUser.id,
+            user: enrichedUser.id,
             pathname,
           }
         );

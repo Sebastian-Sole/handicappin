@@ -13,67 +13,71 @@
  * - Run in CI/CD before deployment
  */
 
-import { stripe, PLAN_TO_PRICE_MAP } from '@/lib/stripe';
-import { PLAN_PRICING } from '@/utils/billing/pricing';
-import { describe, test, expect } from 'vitest';
+import { stripe, PLAN_TO_PRICE_MAP } from "@/lib/stripe";
+import { PLAN_PRICING } from "@/utils/billing/pricing";
+import { describe, test, expect } from "vitest";
 
 // Skip tests if Stripe not configured (e.g., in CI without secrets)
 const describeIfStripeConfigured = process.env.STRIPE_SECRET_KEY
   ? describe
   : describe.skip;
 
-describeIfStripeConfigured('Stripe Price Configuration', () => {
-  test('Premium price ID matches expected amount', async () => {
+describeIfStripeConfigured("Stripe Price Configuration", () => {
+  test("Premium price ID matches expected amount", async () => {
     const priceId = PLAN_TO_PRICE_MAP.premium;
 
     if (!priceId) {
-      throw new Error('STRIPE_PREMIUM_PRICE_ID not configured in environment');
+      throw new Error("STRIPE_PREMIUM_PRICE_ID not configured in environment");
     }
 
     const price = await stripe.prices.retrieve(priceId);
 
     expect(price.unit_amount).toBe(PLAN_PRICING.premium.monthly.usd);
-    expect(price.currency).toBe('usd');
-    expect(price.type).toBe('recurring');
-    expect(price.recurring?.interval).toBe('month');
+    expect(price.currency).toBe("usd");
+    expect(price.type).toBe("recurring");
+    expect(price.recurring?.interval).toBe("year");
   }, 10000); // 10s timeout for API call
 
-  test('Unlimited price ID matches expected amount', async () => {
+  test("Unlimited price ID matches expected amount", async () => {
     const priceId = PLAN_TO_PRICE_MAP.unlimited;
 
     if (!priceId) {
-      throw new Error('STRIPE_UNLIMITED_PRICE_ID not configured in environment');
+      throw new Error(
+        "STRIPE_UNLIMITED_PRICE_ID not configured in environment"
+      );
     }
 
     const price = await stripe.prices.retrieve(priceId);
 
     expect(price.unit_amount).toBe(PLAN_PRICING.unlimited.monthly.usd);
-    expect(price.currency).toBe('usd');
-    expect(price.type).toBe('recurring');
-    expect(price.recurring?.interval).toBe('month');
+    expect(price.currency).toBe("usd");
+    expect(price.type).toBe("recurring");
+    expect(price.recurring?.interval).toBe("year");
   }, 10000);
 
-  test('Lifetime price ID matches expected amount', async () => {
+  test("Lifetime price ID matches expected amount", async () => {
     const priceId = PLAN_TO_PRICE_MAP.lifetime;
 
     if (!priceId) {
-      throw new Error('STRIPE_UNLIMITED_LIFETIME_PRICE_ID not configured in environment');
+      throw new Error(
+        "STRIPE_UNLIMITED_LIFETIME_PRICE_ID not configured in environment"
+      );
     }
 
     const price = await stripe.prices.retrieve(priceId);
 
     expect(price.unit_amount).toBe(PLAN_PRICING.lifetime.oneTime.usd);
-    expect(price.currency).toBe('usd');
-    expect(price.type).toBe('one_time');
+    expect(price.currency).toBe("usd");
+    expect(price.type).toBe("one_time");
   }, 10000);
 
-  test('All price IDs are configured', () => {
+  test("All price IDs are configured", () => {
     expect(PLAN_TO_PRICE_MAP.premium).toBeTruthy();
     expect(PLAN_TO_PRICE_MAP.unlimited).toBeTruthy();
     expect(PLAN_TO_PRICE_MAP.lifetime).toBeTruthy();
   });
 
-  test('All price IDs are different', () => {
+  test("All price IDs are different", () => {
     const priceIds = [
       PLAN_TO_PRICE_MAP.premium,
       PLAN_TO_PRICE_MAP.unlimited,
@@ -85,8 +89,8 @@ describeIfStripeConfigured('Stripe Price Configuration', () => {
   });
 });
 
-describeIfStripeConfigured('Stripe Price Metadata', () => {
-  test('Premium price has correct product reference', async () => {
+describeIfStripeConfigured("Stripe Price Metadata", () => {
+  test("Premium price has correct product reference", async () => {
     const priceId = PLAN_TO_PRICE_MAP.premium;
     if (!priceId) return;
 
@@ -94,7 +98,7 @@ describeIfStripeConfigured('Stripe Price Metadata', () => {
     expect(price.product).toBeTruthy();
   }, 10000);
 
-  test('Unlimited price has correct product reference', async () => {
+  test("Unlimited price has correct product reference", async () => {
     const priceId = PLAN_TO_PRICE_MAP.unlimited;
     if (!priceId) return;
 
@@ -102,7 +106,7 @@ describeIfStripeConfigured('Stripe Price Metadata', () => {
     expect(price.product).toBeTruthy();
   }, 10000);
 
-  test('Lifetime price has correct product reference', async () => {
+  test("Lifetime price has correct product reference", async () => {
     const priceId = PLAN_TO_PRICE_MAP.lifetime;
     if (!priceId) return;
 
