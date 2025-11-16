@@ -9,6 +9,7 @@ import {
   boolean,
   serial,
   integer,
+  bigint,
   timestamp,
   pgSchema,
   index,
@@ -45,7 +46,7 @@ export const profile = pgTable(
     // NEW: Subscription status tracking for JWT claims
     subscriptionStatus: text("subscription_status")
       .$type<"active" | "trialing" | "past_due" | "canceled" | "paused" | "incomplete" | "incomplete_expired" | "unpaid" | null>(),
-    currentPeriodEnd: integer("current_period_end"), // bigint stored as integer
+    currentPeriodEnd: bigint("current_period_end", { mode: "number" }), // Y2038-proof unix timestamp
     cancelAtPeriodEnd: boolean("cancel_at_period_end").default(false).notNull(),
     billingVersion: integer("billing_version").default(1).notNull(),
   },

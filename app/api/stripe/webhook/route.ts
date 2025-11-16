@@ -430,7 +430,7 @@ async function handleCheckoutCompleted(session: any) {
           planSelected: plan,
           planSelectedAt: new Date(),
           subscriptionStatus: subscription.status,
-          currentPeriodEnd: subscription.current_period_end,
+          currentPeriodEnd: subscription.items.data[0]?.current_period_end,
           cancelAtPeriodEnd: subscription.cancel_at_period_end || false,
           billingVersion: sql`billing_version + 1`,
         })
@@ -1196,7 +1196,7 @@ async function handleSubscriptionChange(subscription: any) {
           planSelected: plan,
           planSelectedAt: new Date(),
           subscriptionStatus: subscription.status, // NEW: active, trialing, etc.
-          currentPeriodEnd: subscription.current_period_end, // NEW: unix timestamp
+          currentPeriodEnd: subscription.items.data[0]?.current_period_end, // NEW: unix timestamp
           cancelAtPeriodEnd: subscription.cancel_at_period_end || false, // NEW: Critical for graceful cancellation
           billingVersion: sql`billing_version + 1`, // NEW: Increment version
         })
