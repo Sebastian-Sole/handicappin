@@ -17,6 +17,7 @@ import {
 import { sql } from "drizzle-orm";
 import { createSelectSchema } from "drizzle-zod";
 import type { InferSelectModel } from "drizzle-orm";
+import type { PlanType, SubscriptionStatus } from "@/lib/stripe-types";
 
 const authSchema = pgSchema("auth");
 
@@ -38,14 +39,11 @@ export const profile = pgTable(
       .notNull(),
 
     // Billing/plan tracking fields
-    planSelected: text("plan_selected").$type<
-      "free" | "premium" | "unlimited" | "lifetime" | null
-    >(),
+    planSelected: text("plan_selected").$type<PlanType | null>(),
     planSelectedAt: timestamp("plan_selected_at"),
 
     // NEW: Subscription status tracking for JWT claims
-    subscriptionStatus: text("subscription_status")
-      .$type<"active" | "trialing" | "past_due" | "canceled" | "paused" | "incomplete" | "incomplete_expired" | "unpaid" | null>(),
+    subscriptionStatus: text("subscription_status").$type<SubscriptionStatus | null>(),
     currentPeriodEnd: bigint("current_period_end", { mode: "number" }), // Y2038-proof unix timestamp
     cancelAtPeriodEnd: boolean("cancel_at_period_end").default(false).notNull(),
     billingVersion: integer("billing_version").default(1).notNull(),

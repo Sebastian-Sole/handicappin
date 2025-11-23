@@ -1,5 +1,6 @@
 import Stripe from "stripe";
 import { getOrCreateStripeCustomer } from "./stripe-customer";
+import type { PlanType } from "./stripe-types";
 
 // Initialize Stripe client
 export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY ?? "", {
@@ -17,7 +18,7 @@ export const PLAN_TO_PRICE_MAP = {
 // Reverse mapping: price ID to plan type
 export function mapPriceToPlan(
   priceId: string
-): "premium" | "unlimited" | "lifetime" | null {
+): Exclude<PlanType, "free"> | null {
   if (priceId === PLAN_TO_PRICE_MAP.premium) return "premium";
   if (priceId === PLAN_TO_PRICE_MAP.unlimited) return "unlimited";
   if (priceId === PLAN_TO_PRICE_MAP.lifetime) return "lifetime";
@@ -135,7 +136,7 @@ export async function updateSubscription({
   newPlan,
 }: {
   userId: string;
-  newPlan: "free" | "premium" | "unlimited" | "lifetime";
+  newPlan: PlanType;
 }) {
   const { db } = await import("@/db");
   const { stripeCustomers } = await import("@/db/schema");
