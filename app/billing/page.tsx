@@ -78,9 +78,9 @@ export default async function BillingPage() {
                 <div className="flex items-start">
                   <span className="text-green-500 mr-3">✓</span>
                   <div>
-                    <p className="font-medium">25 Rounds</p>
+                    <p className="font-medium">Round Logging</p>
                     <p className="text-gray-600 text-sm">
-                      Track up to 25 rounds with the free plan
+                      Basic round tracking functionality
                     </p>
                   </div>
                 </div>
@@ -93,13 +93,58 @@ export default async function BillingPage() {
                     </p>
                   </div>
                 </div>
+                <div className="flex items-start">
+                  <span className="text-green-500 mr-3">✓</span>
+                  <div>
+                    <p className="font-medium">Score History</p>
+                    <p className="text-gray-600 text-sm">
+                      View your past rounds and scores
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-start">
+                  <span className="text-green-500 mr-3">✓</span>
+                  <div>
+                    <p className="font-medium">Up to 25 Rounds</p>
+                    <p className="text-gray-600 text-sm">
+                      Track up to 25 rounds with the free plan
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-start">
+                  <span className="text-red-500 mr-3">✗</span>
+                  <div>
+                    <p className="font-medium text-gray-400">Round Calculation Insights</p>
+                    <p className="text-gray-400 text-sm">
+                      Upgrade to see detailed score analysis
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-start">
+                  <span className="text-red-500 mr-3">✗</span>
+                  <div>
+                    <p className="font-medium text-gray-400">Advanced Calculators</p>
+                    <p className="text-gray-400 text-sm">
+                      Upgrade to access all calculation tools
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-start">
+                  <span className="text-red-500 mr-3">✗</span>
+                  <div>
+                    <p className="font-medium text-gray-400">Personal Statistics</p>
+                    <p className="text-gray-400 text-sm">
+                      Upgrade to view detailed performance stats
+                    </p>
+                  </div>
+                </div>
               </>
-            ) : (
+            ) : access.plan === "premium" ? (
               <>
                 <div className="flex items-start">
                   <span className="text-green-500 mr-3">✓</span>
                   <div>
-                    <p className="font-medium">Unlimited Rounds</p>
+                    <p className="font-medium">Unlimited Round Logging</p>
                     <p className="text-gray-600 text-sm">
                       Track as many rounds as you want
                     </p>
@@ -108,9 +153,57 @@ export default async function BillingPage() {
                 <div className="flex items-start">
                   <span className="text-green-500 mr-3">✓</span>
                   <div>
-                    <p className="font-medium">Dashboard Analytics</p>
+                    <p className="font-medium">Everything from Free Tier</p>
                     <p className="text-gray-600 text-sm">
-                      View detailed statistics and trends
+                      All basic features with no round limits
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-start">
+                  <span className="text-red-500 mr-3">✗</span>
+                  <div>
+                    <p className="font-medium text-gray-400">Round Calculation Insights</p>
+                    <p className="text-gray-400 text-sm">
+                      Upgrade to Unlimited for detailed score analysis
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-start">
+                  <span className="text-red-500 mr-3">✗</span>
+                  <div>
+                    <p className="font-medium text-gray-400">Advanced Calculators</p>
+                    <p className="text-gray-400 text-sm">
+                      Upgrade to Unlimited to access all calculation tools
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-start">
+                  <span className="text-red-500 mr-3">✗</span>
+                  <div>
+                    <p className="font-medium text-gray-400">Personal Statistics</p>
+                    <p className="text-gray-400 text-sm">
+                      Upgrade to Unlimited for detailed performance stats
+                    </p>
+                  </div>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="flex items-start">
+                  <span className="text-green-500 mr-3">✓</span>
+                  <div>
+                    <p className="font-medium">Unlimited Round Logging</p>
+                    <p className="text-gray-600 text-sm">
+                      Track as many rounds as you want
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-start">
+                  <span className="text-green-500 mr-3">✓</span>
+                  <div>
+                    <p className="font-medium">Round Calculation Insights</p>
+                    <p className="text-gray-600 text-sm">
+                      See detailed analysis of your scores
                     </p>
                   </div>
                 </div>
@@ -120,6 +213,24 @@ export default async function BillingPage() {
                     <p className="font-medium">Advanced Calculators</p>
                     <p className="text-gray-600 text-sm">
                       Access all golf calculation tools
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-start">
+                  <span className="text-green-500 mr-3">✓</span>
+                  <div>
+                    <p className="font-medium">Personal Statistics</p>
+                    <p className="text-gray-600 text-sm">
+                      View detailed performance metrics
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-start">
+                  <span className="text-green-500 mr-3">✓</span>
+                  <div>
+                    <p className="font-medium">Early Access to New Features</p>
+                    <p className="text-gray-600 text-sm">
+                      Be the first to try new features
                     </p>
                   </div>
                 </div>

@@ -19,13 +19,13 @@
  */
 export const PLAN_PRICING = {
   premium: {
-    monthly: {
-      usd: 1900, // $19.00/month
+    yearly: {
+      usd: 1900, // $19.00/year
     },
   },
   unlimited: {
-    monthly: {
-      usd: 2900, // $29.00/month
+    yearly: {
+      usd: 2900, // $29.00/year
     },
   },
   lifetime: {
@@ -87,7 +87,7 @@ export function verifyPaymentAmount(
   if (plan === "lifetime") {
     expectedAmount = PLAN_PRICING.lifetime.oneTime.usd;
   } else {
-    expectedAmount = PLAN_PRICING[plan].monthly.usd;
+    expectedAmount = PLAN_PRICING[plan].yearly.usd;
   }
 
   const variance = Math.abs(actualAmount - expectedAmount);

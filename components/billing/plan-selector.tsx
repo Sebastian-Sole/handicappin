@@ -8,6 +8,8 @@ import { CheckCircle2, XCircle, Clock, X } from "lucide-react";
 import { createFreeTierSubscription } from "@/app/onboarding/actions";
 import { createCheckout, updateSubscription } from "@/lib/stripe-api-client";
 import type { PlanType } from "@/lib/stripe-types";
+import { PricingCard } from "./pricing-card";
+import { PLAN_FEATURES, PLAN_DETAILS } from "./plan-features";
 
 interface PlanSelectorProps {
   userId: string;
@@ -87,7 +89,8 @@ export function PlanSelector({
         setFeedbackMessage({
           type: "success",
           title: "Plan Updated",
-          message: result.data.message || "Your plan has been updated successfully.",
+          message:
+            result.data.message || "Your plan has been updated successfully.",
         });
 
         // Delay navigation to allow user to see success message
@@ -108,7 +111,8 @@ export function PlanSelector({
       setFeedbackMessage({
         type: "error",
         title: "Failed to Update Plan",
-        message: "We couldn't switch you to the free plan. Please try again or contact support if the issue persists.",
+        message:
+          "We couldn't switch you to the free plan. Please try again or contact support if the issue persists.",
       });
     } finally {
       setLoading(null);
@@ -150,7 +154,8 @@ export function PlanSelector({
         setFeedbackMessage({
           type: "success",
           title: "Plan Updated",
-          message: result.data.message || "Your plan has been updated successfully.",
+          message:
+            result.data.message || "Your plan has been updated successfully.",
         });
 
         // Delay navigation to allow user to see success message
@@ -188,7 +193,8 @@ export function PlanSelector({
       setFeedbackMessage({
         type: "error",
         title: "Failed to Process Plan Change",
-        message: "We couldn't complete your plan change. Please try again or contact support if the issue persists.",
+        message:
+          "We couldn't complete your plan change. Please try again or contact support if the issue persists.",
       });
       setLoading(null);
     }
@@ -200,7 +206,9 @@ export function PlanSelector({
       {feedbackMessage && (
         <div className="mb-6 animate-in fade-in-0 slide-in-from-top-2 duration-300">
           <Alert
-            variant={feedbackMessage.type === "error" ? "destructive" : "default"}
+            variant={
+              feedbackMessage.type === "error" ? "destructive" : "default"
+            }
             className={
               feedbackMessage.type === "success"
                 ? "border-green-500/50 bg-green-50 dark:bg-green-950/20 relative pr-12"
@@ -253,9 +261,9 @@ export function PlanSelector({
       <div
         className={`grid gap-6 ${
           availablePlans.length === 4
-            ? "md:grid-cols-4"
+            ? "xl:grid-cols-4 md:grid-cols-2"
             : availablePlans.length === 3
-            ? "md:grid-cols-3"
+            ? "lg:grid-cols-3"
             : availablePlans.length === 2
             ? "md:grid-cols-2"
             : "md:grid-cols-1"
@@ -263,203 +271,111 @@ export function PlanSelector({
       >
         {/* Free Plan */}
         {shouldShowPlan("free") && (
-          <div className="border rounded-lg p-8 shadow-md hover:shadow-lg transition relative">
-            {/* Current plan badge */}
-            {currentPlan === "free" && (
-              <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
-                <span className="bg-gray-500 text-white px-4 py-1 rounded-full text-sm font-semibold">
-                  Current Plan
-                </span>
-              </div>
-            )}
-            <h2 className="text-2xl font-bold mb-2">Free</h2>
-            <div className="text-3xl font-bold mb-4">$0</div>
-            <p className="text-gray-600 mb-6">Perfect for casual golfers</p>
-            <ul className="space-y-3 mb-8">
-              <li className="flex items-start">
-                <span className="text-green-500 mr-2">✓</span>
-                <span>Up to 25 rounds</span>
-              </li>
-              <li className="flex items-start">
-                <span className="text-green-500 mr-2">✓</span>
-                <span>Handicap tracking</span>
-              </li>
-              <li className="flex items-start">
-                <span className="text-green-500 mr-2">✓</span>
-                <span>Round history</span>
-              </li>
-              <li className="flex items-start">
-                <span className="text-red-500 mr-2">✗</span>
-                <span className="text-gray-400">Dashboard analytics</span>
-              </li>
-              <li className="flex items-start">
-                <span className="text-red-500 mr-2">✗</span>
-                <span className="text-gray-400">Advanced calculators</span>
-              </li>
-            </ul>
-            <Button
-              onClick={handleFreePlan}
-              disabled={loading !== null || currentPlan === "free"}
-              className="w-full"
-              variant="outline"
-            >
-              {currentPlan === "free"
+          <PricingCard
+            plan="free"
+            price={PLAN_DETAILS.free.price}
+            interval={PLAN_DETAILS.free.interval}
+            title={PLAN_DETAILS.free.title}
+            description={PLAN_DETAILS.free.description}
+            features={PLAN_FEATURES.free}
+            badge={
+              currentPlan === "free"
+                ? { text: "Current Plan", variant: "default" }
+                : undefined
+            }
+            buttonText={
+              currentPlan === "free"
                 ? "Current Plan"
                 : loading === "free"
                 ? "Setting up..."
-                : "Start Free"}
-            </Button>
-          </div>
+                : "Start Free"
+            }
+            onButtonClick={handleFreePlan}
+            buttonDisabled={loading !== null || currentPlan === "free"}
+            buttonVariant="outline"
+            currentPlan={currentPlan === "free"}
+          />
         )}
 
         {/* Premium Plan */}
         {shouldShowPlan("premium") && (
-          <div className="border-2 border-blue-500 rounded-lg p-8 shadow-lg hover:shadow-xl transition relative">
-            <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
-              <span className="bg-blue-500 text-white px-4 py-1 rounded-full text-sm font-semibold">
-                {currentPlan === "premium" ? "Current Plan" : "Most Popular"}
-              </span>
-            </div>
-            <h2 className="text-2xl font-bold mb-2">Premium</h2>
-            <div className="text-3xl font-bold mb-4">
-              $19.99<span className="text-lg text-gray-600">/mo</span>
-            </div>
-            <p className="text-gray-600 mb-6">For serious golfers</p>
-            <ul className="space-y-3 mb-8">
-              <li className="flex items-start">
-                <span className="text-green-500 mr-2">✓</span>
-                <span>Unlimited rounds</span>
-              </li>
-              <li className="flex items-start">
-                <span className="text-green-500 mr-2">✓</span>
-                <span>Handicap tracking</span>
-              </li>
-              <li className="flex items-start">
-                <span className="text-green-500 mr-2">✓</span>
-                <span>Round history</span>
-              </li>
-              <li className="flex items-start">
-                <span className="text-green-500 mr-2">✓</span>
-                <span>Dashboard analytics</span>
-              </li>
-              <li className="flex items-start">
-                <span className="text-green-500 mr-2">✓</span>
-                <span>Advanced calculators</span>
-              </li>
-            </ul>
-            <Button
-              onClick={() => handlePaidPlan("premium")}
-              disabled={loading !== null || currentPlan === "premium"}
-              className="w-full"
-            >
-              {currentPlan === "premium"
+          <PricingCard
+            plan="premium"
+            price={PLAN_DETAILS.premium.price}
+            interval={PLAN_DETAILS.premium.interval}
+            title={PLAN_DETAILS.premium.title}
+            description={PLAN_DETAILS.premium.description}
+            features={PLAN_FEATURES.premium}
+            badge={{
+              text: currentPlan === "premium" ? "Current Plan" : "Most Popular",
+              variant: "primary",
+            }}
+            buttonText={
+              currentPlan === "premium"
                 ? "Current Plan"
                 : loading === "premium"
                 ? "Loading..."
-                : "Subscribe"}
-            </Button>
-          </div>
+                : "Subscribe"
+            }
+            onButtonClick={() => handlePaidPlan("premium")}
+            buttonDisabled={loading !== null || currentPlan === "premium"}
+            highlighted
+            currentPlan={currentPlan === "premium"}
+          />
         )}
 
         {/* Unlimited Plan */}
         {shouldShowPlan("unlimited") && (
-          <div className="border rounded-lg p-8 shadow-md hover:shadow-lg transition relative">
-            {/* Current plan badge */}
-            {currentPlan === "unlimited" && (
-              <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
-                <span className="bg-gray-500 text-white px-4 py-1 rounded-full text-sm font-semibold">
-                  Current Plan
-                </span>
-              </div>
-            )}
-            <h2 className="text-2xl font-bold mb-2">Unlimited</h2>
-            <div className="text-3xl font-bold mb-4">
-              $29.99<span className="text-lg text-gray-600">/mo</span>
-            </div>
-            <p className="text-gray-600 mb-6">For golf enthusiasts</p>
-            <ul className="space-y-3 mb-8">
-              <li className="flex items-start">
-                <span className="text-green-500 mr-2">✓</span>
-                <span>Everything in Premium</span>
-              </li>
-              <li className="flex items-start">
-                <span className="text-green-500 mr-2">✓</span>
-                <span>Priority support</span>
-              </li>
-              <li className="flex items-start">
-                <span className="text-green-500 mr-2">✓</span>
-                <span>Early access to features</span>
-              </li>
-              <li className="flex items-start">
-                <span className="text-green-500 mr-2">✓</span>
-                <span>Custom course management</span>
-              </li>
-              <li className="flex items-start">
-                <span className="text-green-500 mr-2">✓</span>
-                <span>Advanced reporting</span>
-              </li>
-            </ul>
-            <Button
-              onClick={() => handlePaidPlan("unlimited")}
-              disabled={loading !== null || currentPlan === "unlimited"}
-              className="w-full"
-            >
-              {currentPlan === "unlimited"
+          <PricingCard
+            plan="unlimited"
+            price={PLAN_DETAILS.unlimited.price}
+            interval={PLAN_DETAILS.unlimited.interval}
+            title={PLAN_DETAILS.unlimited.title}
+            description={PLAN_DETAILS.unlimited.description}
+            features={PLAN_FEATURES.unlimited}
+            badge={
+              currentPlan === "unlimited"
+                ? { text: "Current Plan", variant: "default" }
+                : undefined
+            }
+            buttonText={
+              currentPlan === "unlimited"
                 ? "Current Plan"
                 : loading === "unlimited"
                 ? "Loading..."
-                : "Subscribe"}
-            </Button>
-          </div>
+                : "Subscribe"
+            }
+            onButtonClick={() => handlePaidPlan("unlimited")}
+            buttonDisabled={loading !== null || currentPlan === "unlimited"}
+            currentPlan={currentPlan === "unlimited"}
+          />
         )}
 
         {/* Lifetime Plan */}
         {shouldShowPlan("lifetime") && (
-          <div className="border-2 border-green-500 rounded-lg p-8 shadow-lg hover:shadow-xl transition relative">
-            <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
-              <span className="bg-green-500 text-white px-4 py-1 rounded-full text-sm font-semibold">
-                {currentPlan === "lifetime" ? "Current Plan" : "Best Value"}
-              </span>
-            </div>
-            <h2 className="text-2xl font-bold mb-2">Lifetime</h2>
-            <div className="text-3xl font-bold mb-4">
-              $199<span className="text-lg text-gray-600"> once</span>
-            </div>
-            <p className="text-gray-600 mb-6">Pay once, own forever</p>
-            <ul className="space-y-3 mb-8">
-              <li className="flex items-start">
-                <span className="text-green-500 mr-2">✓</span>
-                <span>Everything in Unlimited</span>
-              </li>
-              <li className="flex items-start">
-                <span className="text-green-500 mr-2">✓</span>
-                <span>One-time payment</span>
-              </li>
-              <li className="flex items-start">
-                <span className="text-green-500 mr-2">✓</span>
-                <span>Lifetime updates</span>
-              </li>
-              <li className="flex items-start">
-                <span className="text-green-500 mr-2">✓</span>
-                <span>All future features</span>
-              </li>
-              <li className="flex items-start">
-                <span className="text-green-500 mr-2">✓</span>
-                <span>Premium support forever</span>
-              </li>
-            </ul>
-            <Button
-              onClick={() => handlePaidPlan("lifetime")}
-              disabled={loading !== null || currentPlan === "lifetime"}
-              className="w-full bg-green-600 hover:bg-green-700"
-            >
-              {currentPlan === "lifetime"
+          <PricingCard
+            plan="lifetime"
+            price={PLAN_DETAILS.lifetime.price}
+            interval={PLAN_DETAILS.lifetime.interval}
+            title={PLAN_DETAILS.lifetime.title}
+            description={PLAN_DETAILS.lifetime.description}
+            features={PLAN_FEATURES.lifetime}
+            badge={{
+              text: currentPlan === "lifetime" ? "Current Plan" : "Best Value",
+              variant: "success",
+            }}
+            buttonText={
+              currentPlan === "lifetime"
                 ? "Current Plan"
                 : loading === "lifetime"
                 ? "Loading..."
-                : "Buy Lifetime"}
-            </Button>
-          </div>
+                : "Buy Lifetime"
+            }
+            onButtonClick={() => handlePaidPlan("lifetime")}
+            buttonDisabled={loading !== null || currentPlan === "lifetime"}
+            highlighted
+            currentPlan={currentPlan === "lifetime"}
+          />
         )}
       </div>
     </>

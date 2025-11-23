@@ -127,11 +127,11 @@ describe('formatAmount', () => {
 
 describe('PLAN_PRICING constants', () => {
   test('should have correct premium pricing', () => {
-    expect(PLAN_PRICING.premium.monthly.usd).toBe(1900);
+    expect(PLAN_PRICING.premium.yearly.usd).toBe(1900);
   });
 
   test('should have correct unlimited pricing', () => {
-    expect(PLAN_PRICING.unlimited.monthly.usd).toBe(2900);
+    expect(PLAN_PRICING.unlimited.yearly.usd).toBe(2900);
   });
 
   test('should have correct lifetime pricing', () => {

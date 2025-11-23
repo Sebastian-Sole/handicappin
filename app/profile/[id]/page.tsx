@@ -1,5 +1,4 @@
 import UserProfile from "@/components/profile/user-profile";
-import { toast } from "@/components/ui/use-toast";
 import { api } from "@/trpc/server";
 import { createServerComponentClient } from "@/utils/supabase/server";
 import { redirect } from "next/navigation";
@@ -25,12 +24,6 @@ const ProfilePage = async (props: { params: Promise<{ id: string }> }) => {
   }
 
   if (data.user.id !== profileId) {
-    // TODO: Is this the correct instantiation of the toast?
-    toast({
-      title: "Unauthorized",
-      description: "You do not have permission to view this profile",
-      variant: "destructive",
-    });
     redirect("/404");
   }
 

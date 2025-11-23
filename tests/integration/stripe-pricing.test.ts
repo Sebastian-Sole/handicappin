@@ -32,7 +32,7 @@ describeIfStripeConfigured("Stripe Price Configuration", () => {
 
     const price = await stripe.prices.retrieve(priceId);
 
-    expect(price.unit_amount).toBe(PLAN_PRICING.premium.monthly.usd);
+    expect(price.unit_amount).toBe(PLAN_PRICING.premium.yearly.usd);
     expect(price.currency).toBe("usd");
     expect(price.type).toBe("recurring");
     expect(price.recurring?.interval).toBe("year");
@@ -49,7 +49,7 @@ describeIfStripeConfigured("Stripe Price Configuration", () => {
 
     const price = await stripe.prices.retrieve(priceId);
 
-    expect(price.unit_amount).toBe(PLAN_PRICING.unlimited.monthly.usd);
+    expect(price.unit_amount).toBe(PLAN_PRICING.unlimited.yearly.usd);
     expect(price.currency).toBe("usd");
     expect(price.type).toBe("recurring");
     expect(price.recurring?.interval).toBe("year");

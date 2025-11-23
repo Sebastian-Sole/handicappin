@@ -17,6 +17,11 @@ import {
 import { createServerComponentClient } from "@/utils/supabase/server";
 import ThemeImage from "@/components/homepage/theme-image";
 import Link from "next/link";
+import { PricingCard } from "@/components/billing/pricing-card";
+import {
+  PLAN_FEATURES,
+  PLAN_DETAILS,
+} from "@/components/billing/plan-features";
 
 export default async function Landing() {
   const supabase = await createServerComponentClient();
@@ -60,7 +65,7 @@ export default async function Landing() {
               Track every round, calculate your handicap automatically, and
               understand the calculations behind the scenes.
             </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <div className="flex flex-col md:flex-row gap-4 justify-center">
               <Link href="/signup">
                 <Button size="lg" className="text-lg px-8">
                   Start Free Forever
@@ -334,137 +339,61 @@ export default async function Landing() {
             </p>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
-            <Card className="border-2 border-primary shadow-lg relative dark:bg-primary/10">
-              <Badge className="absolute -top-3 left-1/2 -translate-x-1/2 whitespace-nowrap min-h-6 flex items-center">
-                Launch Offer!
-              </Badge>
-              <CardHeader>
-                <CardTitle>
-                  Free
-                  <p className="text-xs text-muted-foreground">
-                    First 100 users, forever
-                  </p>
-                </CardTitle>
-                <CardDescription>
-                  Perfect for casual golfers who want to try it out.
-                </CardDescription>
-                <div className="mt-4">
-                  <span className="text-3xl font-bold">0$</span>
-                  <span className="text-muted-foreground">/forever</span>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <Link href="/signup">
-                  <Button className="w-full mb-6">Sign Up</Button>
-                </Link>
-                <ul className="space-y-3 text-sm">
-                  <li className="flex items-center gap-2">
-                    <CheckCircle className="h-4 w-4 min-h-4 min-w-4 flex-shrink-0 text-primary" />
-                    Round logging
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <CheckCircle className="h-4 w-4 min-h-4 min-w-4 flex-shrink-0 text-primary" />
-                    Basic handicap calculation
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <CheckCircle className="h-4 w-4 min-h-4 min-w-4 flex-shrink-0 text-primary" />
-                    Score history
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <CheckCircle className="h-4 w-4 min-h-4 min-w-4 flex-shrink-0 text-primary" />
-                    Up to 20 rounds
-                  </li>
-                </ul>
-              </CardContent>
-            </Card>
+          <div className="grid md:grid-cols-2 xl:grid-cols-4 gap-8 max-w-7xl mx-auto">
+            <Link href="/signup" className="block">
+              <PricingCard
+                plan="free"
+                price={PLAN_DETAILS.free.price}
+                interval={PLAN_DETAILS.free.interval}
+                title={PLAN_DETAILS.free.title}
+                description={PLAN_DETAILS.free.description}
+                features={PLAN_FEATURES.free}
+                badge={{ text: "Launch Offer!", variant: "primary" }}
+                buttonText="Sign Up"
+                buttonDisabled={false}
+              />
+            </Link>
 
-            <Card className="border-0 shadow-lg dark:bg-primary/10">
-              <CardHeader>
-                <CardTitle>
-                  Premium
-                  <p className="text-xs text-muted-foreground invisible">
-                    Hidden
-                  </p>
-                </CardTitle>
+            <Link href="/signup" className="block">
+              <PricingCard
+                plan="premium"
+                price={PLAN_DETAILS.premium.price}
+                interval={PLAN_DETAILS.premium.interval}
+                title={PLAN_DETAILS.premium.title}
+                description={PLAN_DETAILS.premium.description}
+                features={PLAN_FEATURES.premium}
+                buttonText="Sign Up"
+                buttonDisabled={false}
+              />
+            </Link>
 
-                <CardDescription>
-                  Expanded features to provide detailed insights
-                </CardDescription>
-                <div className="mt-4">
-                  <span className="text-3xl font-bold">$9</span>
-                  <span className="text-muted-foreground">/year</span>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <Link href="/signup">
-                  <Button className="w-full mb-6">Sign Up</Button>
-                </Link>
-                <ul className="space-y-3 text-sm">
-                  <li className="flex items-center gap-2">
-                    <CheckCircle className="h-4 w-4 min-h-4 min-w-4 flex-shrink-0 text-primary" />
-                    Everything in Starter
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <CheckCircle className="h-4 w-4 min-h-4 min-w-4 flex-shrink-0 text-primary" />
-                    Up to 100 rounds
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <CheckCircle className="h-4 w-4 min-h-4 min-w-4 flex-shrink-0 text-primary" />
-                    Round calculation insights
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <CheckCircle className="h-4 w-4 min-h-4 min-w-4 flex-shrink-0 text-primary" />
-                    Personal statistics
-                  </li>
-                </ul>
-              </CardContent>
-            </Card>
+            <Link href="/signup" className="block">
+              <PricingCard
+                plan="unlimited"
+                price={PLAN_DETAILS.unlimited.price}
+                interval={PLAN_DETAILS.unlimited.interval}
+                title={PLAN_DETAILS.unlimited.title}
+                description={PLAN_DETAILS.unlimited.description}
+                features={PLAN_FEATURES.unlimited}
+                buttonText="Sign Up"
+                buttonDisabled={false}
+              />
+            </Link>
 
-            <Card className="border-0 shadow-lg dark:bg-primary/10">
-              <CardHeader>
-                <CardTitle>
-                  Unlimited
-                  <p className="text-xs text-muted-foreground invisible">
-                    Hidden
-                  </p>
-                </CardTitle>
-                <CardDescription>
-                  Unlock your full potential with unlimited usage.
-                </CardDescription>
-                <div className="mt-4">
-                  <span className="text-3xl font-bold">$19</span>
-                  <span className="text-muted-foreground">/year</span>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <Link href="/signup">
-                  <Button className="w-full mb-6">Sign Up</Button>
-                </Link>
-                <ul className="space-y-3 text-sm">
-                  <li className="flex items-center gap-2">
-                    <CheckCircle className="h-4 w-4 min-h-4 min-w-4 flex-shrink-0 text-primary" />
-                    Everything in Pro
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <CheckCircle className="h-4 w-4 min-h-4 min-w-4 flex-shrink-0 text-primary" />
-                    Unlimited rounds
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <CheckCircle className="h-4 w-4 min-h-4 min-w-4 flex-shrink-0 text-primary" />
-                    Exclusive access to new features
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <CheckCircle className="h-4 w-4 min-h-4 min-w-4 flex-shrink-0 text-primary" />
-                    Priority support
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <CheckCircle className="h-4 w-4 min-h-4 min-w-4 flex-shrink-0 text-primary" />
-                    Access to advanced calculators
-                  </li>
-                </ul>
-              </CardContent>
-            </Card>
+            <Link href="/signup" className="block">
+              <PricingCard
+                plan="lifetime"
+                price={PLAN_DETAILS.lifetime.price}
+                interval={PLAN_DETAILS.lifetime.interval}
+                title={PLAN_DETAILS.lifetime.title}
+                description={PLAN_DETAILS.lifetime.description}
+                features={PLAN_FEATURES.lifetime}
+                badge={{ text: "Best Value", variant: "success" }}
+                buttonText="Sign Up"
+                buttonDisabled={false}
+                highlighted
+              />
+            </Link>
           </div>
         </div>
       </section>
