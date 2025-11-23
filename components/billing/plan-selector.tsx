@@ -4,6 +4,8 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { createFreeTierSubscription } from "@/app/onboarding/actions";
+import { createCheckout, updateSubscription } from "@/lib/stripe-api-client";
+import type { PlanType } from "@/lib/stripe-types";
 
 interface PlanSelectorProps {
   userId: string;
@@ -55,20 +57,15 @@ export function PlanSelector({
 
       // If in upgrade mode and user has a paid plan, use subscription update API
       if (mode === "upgrade" && currentPlan && currentPlan !== "free") {
-        const response = await fetch("/api/stripe/subscription", {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ newPlan: "free" }),
-        });
+        // ✅ NEW: Use type-safe client
+        const result = await updateSubscription({ newPlan: "free" });
 
-        const result = await response.json();
-
-        if (!response.ok) {
-          throw new Error(result.error || "Failed to update subscription");
+        if (!result.success) {
+          throw new Error(result.error.error);
         }
 
         // Show success message
-        alert(result.message);
+        alert(result.data.message);
         router.push("/billing");
         router.refresh();
         return;
@@ -92,59 +89,54 @@ export function PlanSelector({
 
       // If in upgrade mode and user has a paid plan, use subscription update API
       if (mode === "upgrade" && currentPlan && currentPlan !== "free") {
-        const response = await fetch("/api/stripe/subscription", {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ newPlan: plan }),
-        });
+        // ✅ NEW: Use type-safe client
+        const result = await updateSubscription({ newPlan: plan });
 
-        const result = await response.json();
-
-        if (!response.ok) {
-          throw new Error(result.error || "Failed to update subscription");
+        if (!result.success) {
+          // ✅ NEW: Type-safe error handling with retryAfter
+          if (result.error.retryAfter) {
+            alert(
+              `Too many requests. Please wait ${result.error.retryAfter} seconds and try again.`
+            );
+          } else {
+            throw new Error(result.error.error);
+          }
+          setLoading(null);
+          return;
         }
 
         // If lifetime, redirect to checkout
-        if (result.checkoutUrl) {
-          window.location.href = result.checkoutUrl;
+        if (result.data.checkoutUrl) {
+          window.location.href = result.data.checkoutUrl;
           return;
         }
 
         // Show success message
-        alert(result.message);
+        alert(result.data.message);
         router.push("/billing");
         router.refresh();
         return;
       }
 
       // Otherwise, create new checkout (existing logic for onboarding or free users upgrading)
-      const response = await fetch("/api/stripe/checkout", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ plan, userId }),
-      });
+      // ✅ NEW: Use type-safe client
+      const result = await createCheckout({ plan });
 
-      const data = await response.json();
-
-      // ✅ NEW: Handle rate limit specifically
-      if (response.status === 429) {
-        const retryAfter = data.retryAfter || 60;
-        alert(
-          `Too many requests. Please wait ${retryAfter} seconds and try again.`
-        );
+      if (!result.success) {
+        // ✅ NEW: Type-safe error handling with retryAfter
+        if (result.error.retryAfter) {
+          alert(
+            `Too many requests. Please wait ${result.error.retryAfter} seconds and try again.`
+          );
+        } else {
+          throw new Error(result.error.error);
+        }
         setLoading(null);
         return;
       }
 
-      if (!response.ok) {
-        throw new Error(data.error || "Failed to create checkout session");
-      }
-
-      if (data.url) {
-        window.location.href = data.url;
-      } else {
-        throw new Error("No checkout URL returned");
-      }
+      // ✅ NEW: TypeScript knows result.data.url exists
+      window.location.href = result.data.url;
     } catch (error) {
       console.error("Error with plan change:", error);
       alert("Failed to process plan change. Please try again.");

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { createPortal } from "@/lib/stripe-api-client";
 
 export function ManageSubscriptionButton() {
   const [loading, setLoading] = useState(false);
@@ -9,28 +10,24 @@ export function ManageSubscriptionButton() {
   const handleManageSubscription = async () => {
     try {
       setLoading(true);
-      const response = await fetch("/api/stripe/portal", {
-        method: "POST",
-      });
 
-      const data = await response.json();
+      // ✅ NEW: Use type-safe client
+      const result = await createPortal();
 
-      // ✅ NEW: Handle rate limit specifically
-      if (response.status === 429) {
-        const retryAfter = data.retryAfter || 60;
-        alert(`Too many requests. Please wait ${retryAfter} seconds and try again.`);
+      if (!result.success) {
+        // ✅ NEW: Type-safe error handling with retryAfter
+        if (result.error.retryAfter) {
+          alert(
+            `Too many requests. Please wait ${result.error.retryAfter} seconds and try again.`
+          );
+        } else {
+          throw new Error(result.error.error);
+        }
         return;
       }
 
-      if (!response.ok) {
-        throw new Error(data.error || "Failed to open portal");
-      }
-
-      if (data.url) {
-        window.location.href = data.url;
-      } else {
-        throw new Error("No portal URL returned");
-      }
+      // ✅ NEW: TypeScript knows result.data.url exists
+      window.location.href = result.data.url;
     } catch (error) {
       console.error("Error opening customer portal:", error);
       alert("Failed to open subscription management. Please try again.");
