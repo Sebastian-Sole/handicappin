@@ -7,6 +7,11 @@ import {
   PLAN_TO_PRICE_MAP,
   createLifetimeCheckoutSession,
 } from "@/lib/stripe";
+import {
+  sendSubscriptionUpgradedEmail,
+  sendSubscriptionDowngradedEmail,
+  sendSubscriptionCancelledEmail,
+} from "@/lib/email-service";
 
 export async function GET(request: NextRequest) {
   try {
@@ -96,11 +101,76 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ error: "Invalid plan" }, { status: 400 });
     }
 
+    // Get current plan before update
+    const { data: currentProfile } = await supabase
+      .from("profile")
+      .select("plan_selected")
+      .eq("id", user.id)
+      .single();
+
+    const currentPlan = currentProfile?.plan_selected || "free";
+
     // Update subscription via Stripe
     const result = await updateSubscription({
       userId: user.id,
       newPlan,
     });
+
+    // Send email notification (non-blocking)
+    const billingUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/billing`;
+
+    try {
+      if (result.changeType === "upgrade" && user.email) {
+        // Calculate prorated charge from subscription
+        const proratedCharge =
+          result.subscription?.latest_invoice &&
+          typeof result.subscription.latest_invoice !== "string"
+            ? (result.subscription.latest_invoice as any).amount_due || 0
+            : 0;
+
+        const currency =
+          result.subscription?.items.data[0]?.price.currency || "usd";
+
+        await sendSubscriptionUpgradedEmail({
+          to: user.email,
+          oldPlan: currentPlan,
+          newPlan,
+          proratedCharge,
+          currency,
+          billingUrl,
+        });
+      } else if (result.changeType === "downgrade" && user.email) {
+        // Calculate effective date (end of current period)
+        const periodEnd = result.subscription?.items?.data[0]?.current_period_end;
+        const effectiveDate = periodEnd
+          ? new Date(periodEnd * 1000)
+          : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+
+        await sendSubscriptionDowngradedEmail({
+          to: user.email,
+          oldPlan: currentPlan,
+          newPlan,
+          effectiveDate,
+          billingUrl,
+        });
+      } else if (result.changeType === "cancel" && user.email) {
+        // Calculate end date (end of current period)
+        const periodEnd = result.subscription?.items?.data[0]?.current_period_end;
+        const endDate = periodEnd
+          ? new Date(periodEnd * 1000)
+          : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+
+        await sendSubscriptionCancelledEmail({
+          to: user.email,
+          plan: currentPlan,
+          endDate,
+          billingUrl,
+        });
+      }
+    } catch (emailError) {
+      // Log but don't fail the API request - email is secondary
+      console.error("Failed to send subscription change email:", emailError);
+    }
 
     // If changing to lifetime, return checkout URL
     if (result.requiresCheckout) {

@@ -23,6 +23,7 @@ import { verifyCustomerOwnership } from "@/lib/stripe-security";
 import { verifyPaymentAmount, formatAmount } from "@/utils/billing/pricing";
 import { webhookRateLimit, getIdentifier } from "@/lib/rate-limit";
 import { shouldAlertAdmin, sendAdminWebhookAlert } from "@/lib/admin-alerts";
+import { sendWelcomeEmail } from "@/lib/email-service";
 
 export async function POST(request: NextRequest) {
   let event: any = null; // Declare in outer scope for failure recording
@@ -423,6 +424,17 @@ async function handleCheckoutCompleted(session: any) {
         currency: verification.currency,
       });
 
+      // Get user's old plan before updating
+      const userProfile = await db
+        .select()
+        .from(profile)
+        .where(eq(profile.id, userId))
+        .limit(1);
+
+      const oldPlan = userProfile[0]?.planSelected || "free";
+      const userEmail = userProfile[0]?.email;
+      const isFirstTimeSubscription = oldPlan === "free";
+
       // Update plan immediately
       await db
         .update(profile)
@@ -439,6 +451,34 @@ async function handleCheckoutCompleted(session: any) {
       logWebhookSuccess(
         `Updated plan_selected to '${plan}' for user: ${userId} at checkout`
       );
+
+      // ✅ Send welcome email for first-time subscriptions
+      if (isFirstTimeSubscription && userEmail) {
+        try {
+          const dashboardUrl = `${process.env.NEXT_PUBLIC_APP_URL}/dashboard`;
+
+          const emailResult = await sendWelcomeEmail({
+            to: userEmail,
+            plan,
+            dashboardUrl,
+          });
+
+          if (!emailResult.success) {
+            logWebhookWarning(
+              `Welcome email failed for user ${userId}, but subscription processing continues`,
+              {
+                error: emailResult.error,
+              }
+            );
+          }
+        } catch (emailError) {
+          // Log but don't throw - email failure shouldn't break webhook
+          logWebhookError(
+            `Error sending welcome email for user ${userId} (webhook processing continues)`,
+            emailError
+          );
+        }
+      }
     } catch (error) {
       logWebhookError("Error processing subscription at checkout", error);
       throw error;
@@ -567,6 +607,17 @@ async function handleCheckoutCompleted(session: any) {
           `Payment confirmed - granting ${plan} access to user ${userId}`
         );
 
+        // Get user's old plan before updating
+        const userProfile = await db
+          .select()
+          .from(profile)
+          .where(eq(profile.id, userId))
+          .limit(1);
+
+        const oldPlan = userProfile[0]?.planSelected || "free";
+        const userEmail = userProfile[0]?.email;
+        const isFirstTimePurchase = oldPlan === "free";
+
         try {
           await db
             .update(profile)
@@ -584,6 +635,34 @@ async function handleCheckoutCompleted(session: any) {
         } catch (dbError) {
           logWebhookError("Error updating plan", dbError);
           throw dbError;
+        }
+
+        // ✅ Send welcome email for first-time purchases
+        if (isFirstTimePurchase && userEmail) {
+          try {
+            const dashboardUrl = `${process.env.NEXT_PUBLIC_APP_URL}/dashboard`;
+
+            const emailResult = await sendWelcomeEmail({
+              to: userEmail,
+              plan,
+              dashboardUrl,
+            });
+
+            if (!emailResult.success) {
+              logWebhookWarning(
+                `Welcome email failed for user ${userId}, but plan grant continues`,
+                {
+                  error: emailResult.error,
+                }
+              );
+            }
+          } catch (emailError) {
+            // Log but don't throw - email failure shouldn't break webhook
+            logWebhookError(
+              `Error sending welcome email for user ${userId} (webhook processing continues)`,
+              emailError
+            );
+          }
         }
       } else if (paymentStatus === "unpaid") {
         // Payment pending - store for later processing
@@ -621,6 +700,17 @@ async function handleCheckoutCompleted(session: any) {
           `No payment required - granting ${plan} access to user ${userId}`
         );
 
+        // Get user's old plan before updating
+        const userProfile = await db
+          .select()
+          .from(profile)
+          .where(eq(profile.id, userId))
+          .limit(1);
+
+        const oldPlan = userProfile[0]?.planSelected || "free";
+        const userEmail = userProfile[0]?.email;
+        const isFirstTimePurchase = oldPlan === "free";
+
         try {
           await db
             .update(profile)
@@ -640,6 +730,34 @@ async function handleCheckoutCompleted(session: any) {
         } catch (dbError) {
           logWebhookError("Error updating plan", dbError);
           throw dbError;
+        }
+
+        // ✅ Send welcome email for first-time purchases
+        if (isFirstTimePurchase && userEmail) {
+          try {
+            const dashboardUrl = `${process.env.NEXT_PUBLIC_APP_URL}/dashboard`;
+
+            const emailResult = await sendWelcomeEmail({
+              to: userEmail,
+              plan,
+              dashboardUrl,
+            });
+
+            if (!emailResult.success) {
+              logWebhookWarning(
+                `Welcome email failed for user ${userId}, but plan grant continues`,
+                {
+                  error: emailResult.error,
+                }
+              );
+            }
+          } catch (emailError) {
+            // Log but don't throw - email failure shouldn't break webhook
+            logWebhookError(
+              `Error sending welcome email for user ${userId} (webhook processing continues)`,
+              emailError
+            );
+          }
         }
       } else {
         // Unknown payment status
@@ -685,6 +803,17 @@ async function handlePaymentIntentSucceeded(paymentIntent: any) {
       `Granting ${purchase.plan} access to user ${purchase.userId} after payment confirmation`
     );
 
+    // Get user's old plan before updating
+    const userProfile = await db
+      .select()
+      .from(profile)
+      .where(eq(profile.id, purchase.userId))
+      .limit(1);
+
+    const oldPlan = userProfile[0]?.planSelected || "free";
+    const userEmail = userProfile[0]?.email;
+    const isFirstTimePurchase = oldPlan === "free";
+
     try {
       await db
         .update(profile)
@@ -704,6 +833,34 @@ async function handlePaymentIntentSucceeded(paymentIntent: any) {
     } catch (dbError) {
       logWebhookError("Error updating plan", dbError);
       throw dbError;
+    }
+
+    // ✅ Send welcome email for first-time purchases
+    if (isFirstTimePurchase && userEmail) {
+      try {
+        const dashboardUrl = `${process.env.NEXT_PUBLIC_APP_URL}/dashboard`;
+
+        const emailResult = await sendWelcomeEmail({
+          to: userEmail,
+          plan: purchase.plan,
+          dashboardUrl,
+        });
+
+        if (!emailResult.success) {
+          logWebhookWarning(
+            `Welcome email failed for user ${purchase.userId}, but plan grant continues`,
+            {
+              error: emailResult.error,
+            }
+          );
+        }
+      } catch (emailError) {
+        // Log but don't throw - email failure shouldn't break webhook
+        logWebhookError(
+          `Error sending welcome email for user ${purchase.userId} (webhook processing continues)`,
+          emailError
+        );
+      }
     }
 
     // Mark purchase as paid
@@ -771,7 +928,11 @@ async function handlePaymentIntentFailed(paymentIntent: any) {
       throw dbError;
     }
 
-    // TODO: Send email notification to user (separate ticket)
+    // NOTE: Payment failure emails removed - Stripe Checkout shows errors in real-time
+    // Users are unlikely to leave the page before seeing the error
+    // For async failures (rare), the /billing/success page polls for status
+    // If needed in future, Stripe can be configured to send built-in payment failure emails
+
     // TODO: Consider cleanup job for old failed purchases (separate ticket)
   } catch (error) {
     logWebhookError("Error processing payment intent failed", error);
