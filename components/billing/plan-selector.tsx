@@ -1,8 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { CheckCircle2, XCircle, Clock, X } from "lucide-react";
 import { createFreeTierSubscription } from "@/app/onboarding/actions";
 import { createCheckout, updateSubscription } from "@/lib/stripe-api-client";
 import type { PlanType } from "@/lib/stripe-types";
@@ -47,6 +49,22 @@ export function PlanSelector({
 }: PlanSelectorProps) {
   const router = useRouter();
   const [loading, setLoading] = useState<string | null>(null);
+  const [feedbackMessage, setFeedbackMessage] = useState<{
+    type: "success" | "error";
+    title: string;
+    message: string;
+  } | null>(null);
+
+  // Auto-dismiss success messages after 5 seconds
+  useEffect(() => {
+    if (feedbackMessage?.type === "success") {
+      const timer = setTimeout(() => {
+        setFeedbackMessage(null);
+      }, 5000);
+
+      return () => clearTimeout(timer);
+    }
+  }, [feedbackMessage]);
 
   const availablePlans = getAvailablePlans(currentPlan, mode);
   const shouldShowPlan = (plan: string) => availablePlans.includes(plan);
@@ -54,6 +72,7 @@ export function PlanSelector({
   const handleFreePlan = async () => {
     try {
       setLoading("free");
+      setFeedbackMessage(null); // Clear any previous feedback
 
       // If in upgrade mode and user has a paid plan, use subscription update API
       if (mode === "upgrade" && currentPlan && currentPlan !== "free") {
@@ -65,9 +84,18 @@ export function PlanSelector({
         }
 
         // Show success message
-        alert(result.data.message);
-        router.push("/billing");
-        router.refresh();
+        setFeedbackMessage({
+          type: "success",
+          title: "Plan Updated",
+          message: result.data.message || "Your plan has been updated successfully.",
+        });
+
+        // Delay navigation to allow user to see success message
+        setTimeout(() => {
+          router.push("/billing");
+          router.refresh();
+        }, 2000); // 2 second delay (message stays for 5 total)
+
         return;
       }
 
@@ -77,7 +105,11 @@ export function PlanSelector({
       router.refresh();
     } catch (error) {
       console.error("Error selecting free plan:", error);
-      alert("Failed to select free plan. Please try again.");
+      setFeedbackMessage({
+        type: "error",
+        title: "Failed to Update Plan",
+        message: "We couldn't switch you to the free plan. Please try again or contact support if the issue persists.",
+      });
     } finally {
       setLoading(null);
     }
@@ -86,6 +118,7 @@ export function PlanSelector({
   const handlePaidPlan = async (plan: "premium" | "unlimited" | "lifetime") => {
     try {
       setLoading(plan);
+      setFeedbackMessage(null); // Clear any previous feedback
 
       // If in upgrade mode and user has a paid plan, use subscription update API
       if (mode === "upgrade" && currentPlan && currentPlan !== "free") {
@@ -95,9 +128,11 @@ export function PlanSelector({
         if (!result.success) {
           // ✅ NEW: Type-safe error handling with retryAfter
           if (result.error.retryAfter) {
-            alert(
-              `Too many requests. Please wait ${result.error.retryAfter} seconds and try again.`
-            );
+            setFeedbackMessage({
+              type: "error",
+              title: "Too Many Requests",
+              message: `Please wait ${result.error.retryAfter} seconds before trying again to avoid rate limiting.`,
+            });
           } else {
             throw new Error(result.error.error);
           }
@@ -112,9 +147,18 @@ export function PlanSelector({
         }
 
         // Show success message
-        alert(result.data.message);
-        router.push("/billing");
-        router.refresh();
+        setFeedbackMessage({
+          type: "success",
+          title: "Plan Updated",
+          message: result.data.message || "Your plan has been updated successfully.",
+        });
+
+        // Delay navigation to allow user to see success message
+        setTimeout(() => {
+          router.push("/billing");
+          router.refresh();
+        }, 2000);
+
         return;
       }
 
@@ -125,9 +169,11 @@ export function PlanSelector({
       if (!result.success) {
         // ✅ NEW: Type-safe error handling with retryAfter
         if (result.error.retryAfter) {
-          alert(
-            `Too many requests. Please wait ${result.error.retryAfter} seconds and try again.`
-          );
+          setFeedbackMessage({
+            type: "error",
+            title: "Too Many Requests",
+            message: `Please wait ${result.error.retryAfter} seconds before trying again to avoid rate limiting.`,
+          });
         } else {
           throw new Error(result.error.error);
         }
@@ -139,13 +185,52 @@ export function PlanSelector({
       window.location.href = result.data.url;
     } catch (error) {
       console.error("Error with plan change:", error);
-      alert("Failed to process plan change. Please try again.");
+      setFeedbackMessage({
+        type: "error",
+        title: "Failed to Process Plan Change",
+        message: "We couldn't complete your plan change. Please try again or contact support if the issue persists.",
+      });
       setLoading(null);
     }
   };
 
   return (
     <>
+      {/* Inline Feedback Alert */}
+      {feedbackMessage && (
+        <div className="mb-6 animate-in fade-in-0 slide-in-from-top-2 duration-300">
+          <Alert
+            variant={feedbackMessage.type === "error" ? "destructive" : "default"}
+            className={
+              feedbackMessage.type === "success"
+                ? "border-green-500/50 bg-green-50 dark:bg-green-950/20 relative pr-12"
+                : "relative pr-12"
+            }
+          >
+            {feedbackMessage.type === "success" ? (
+              <CheckCircle2 className="h-4 w-4 text-green-600 dark:text-green-500" />
+            ) : feedbackMessage.title === "Too Many Requests" ? (
+              <Clock className="h-4 w-4" />
+            ) : (
+              <XCircle className="h-4 w-4" />
+            )}
+            <AlertTitle>{feedbackMessage.title}</AlertTitle>
+            <AlertDescription>{feedbackMessage.message}</AlertDescription>
+
+            {/* Close button for error messages */}
+            {feedbackMessage.type === "error" && (
+              <button
+                onClick={() => setFeedbackMessage(null)}
+                className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                aria-label="Dismiss error message"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            )}
+          </Alert>
+        </div>
+      )}
+
       {/* Context-specific messaging for upgrade mode */}
       {mode === "upgrade" && currentPlan && (
         <div className="mb-8 text-center">
