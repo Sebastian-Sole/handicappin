@@ -6,7 +6,7 @@ ALTER TABLE "profile" ADD COLUMN IF NOT EXISTS "subscription_status" text DEFAUL
 --> statement-breakpoint
 
 -- Add subscription period end (bigint/integer for unix timestamp)
-ALTER TABLE "profile" ADD COLUMN IF NOT EXISTS "current_period_end" integer;
+ALTER TABLE "profile" ADD COLUMN IF NOT EXISTS "current_period_end" bigint;
 --> statement-breakpoint
 
 -- Add cancel_at_period_end flag
