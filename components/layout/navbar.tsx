@@ -98,7 +98,7 @@ export async function Navbar() {
                       Profile
                     </DropdownMenuItem>
                   </Link>
-                  <Link href={"/settings"}>
+                  <Link href={`/profile/${data.user.id}?tab=settings`}>
                     <DropdownMenuItem>
                       <SettingsIcon className="h-4 w-4 mr-2" />
                       Settings
