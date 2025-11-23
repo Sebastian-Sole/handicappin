@@ -1,3 +1,10 @@
+/**
+ * @deprecated This component has been replaced by PersonalInformationTab
+ * within the TabbedProfilePage. This file is kept for reference but should
+ * not be used in new code.
+ *
+ * See: components/profile/tabs/personal-information-tab.tsx
+ */
 "use client";
 
 import { useState } from "react";
