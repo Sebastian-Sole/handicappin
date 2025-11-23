@@ -86,9 +86,7 @@ export function PlanSelector({
     }
   };
 
-  const handlePaidPlan = async (
-    plan: "premium" | "unlimited" | "lifetime"
-  ) => {
+  const handlePaidPlan = async (plan: "premium" | "unlimited" | "lifetime") => {
     try {
       setLoading(plan);
 
@@ -131,7 +129,9 @@ export function PlanSelector({
       // ✅ NEW: Handle rate limit specifically
       if (response.status === 429) {
         const retryAfter = data.retryAfter || 60;
-        alert(`Too many requests. Please wait ${retryAfter} seconds and try again.`);
+        alert(
+          `Too many requests. Please wait ${retryAfter} seconds and try again.`
+        );
         setLoading(null);
         return;
       }
@@ -245,7 +245,7 @@ export function PlanSelector({
             </div>
             <h2 className="text-2xl font-bold mb-2">Premium</h2>
             <div className="text-3xl font-bold mb-4">
-              $9.99<span className="text-lg text-gray-600">/mo</span>
+              $19.99<span className="text-lg text-gray-600">/mo</span>
             </div>
             <p className="text-gray-600 mb-6">For serious golfers</p>
             <ul className="space-y-3 mb-8">
@@ -297,7 +297,7 @@ export function PlanSelector({
             )}
             <h2 className="text-2xl font-bold mb-2">Unlimited</h2>
             <div className="text-3xl font-bold mb-4">
-              $14.99<span className="text-lg text-gray-600">/mo</span>
+              $29.99<span className="text-lg text-gray-600">/mo</span>
             </div>
             <p className="text-gray-600 mb-6">For golf enthusiasts</p>
             <ul className="space-y-3 mb-8">
