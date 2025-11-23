@@ -60,7 +60,10 @@ export function VerifySessionContent({
         // 🔍 DIAGNOSTIC: Log the entire app_metadata to see what's actually there
         if (data?.session?.user?.app_metadata) {
           console.log("🔍 Full app_metadata:", data.session.user.app_metadata);
-          console.log("🔍 app_metadata keys:", Object.keys(data.session.user.app_metadata));
+          console.log(
+            "🔍 app_metadata keys:",
+            Object.keys(data.session.user.app_metadata)
+          );
         } else {
           console.error("🚨 app_metadata is completely missing!");
           // PII redacted - not logging full user object
@@ -71,7 +74,9 @@ export function VerifySessionContent({
         try {
           const { data: profileCheck, error: profileError } = await supabase
             .from("profile")
-            .select("id, plan_selected, subscription_status, current_period_end, billing_version")
+            .select(
+              "id, plan_selected, subscription_status, current_period_end, billing_version"
+            )
             .eq("id", userId)
             .single();
 
@@ -85,7 +90,9 @@ export function VerifySessionContent({
               billing_version: profileCheck.billing_version,
             });
             if (!profileCheck.plan_selected) {
-              console.warn("⚠️ Profile exists but plan_selected is NULL - user needs onboarding");
+              console.warn(
+                "⚠️ Profile exists but plan_selected is NULL - user needs onboarding"
+              );
             }
           }
         } catch (diagError) {
@@ -107,7 +114,9 @@ export function VerifySessionContent({
 
         if (!billing) {
           console.warn(
-            `⚠️ Billing claims still missing after refresh (attempt ${attemptCount + 1})`
+            `⚠️ Billing claims still missing after refresh (attempt ${
+              attemptCount + 1
+            })`
           );
 
           // Retry if we haven't exceeded max attempts
@@ -119,21 +128,29 @@ export function VerifySessionContent({
             return; // useEffect will re-run due to attemptCount change
           } else {
             // Last attempt failed - try diagnostic database query
-            console.error("🔍 JWT hook appears to be failing. Checking database directly for diagnosis...");
+            console.error(
+              "🔍 JWT hook appears to be failing. Checking database directly for diagnosis..."
+            );
 
             try {
               const { data: profile, error: profileError } = await supabase
                 .from("profile")
-                .select("id, plan_selected, subscription_status, current_period_end, cancel_at_period_end, billing_version")
+                .select(
+                  "id, plan_selected, subscription_status, current_period_end, cancel_at_period_end, billing_version"
+                )
                 .eq("id", userId)
                 .single();
 
               if (profileError) {
                 console.error("❌ Profile query failed:", profileError);
-                console.error("🚨 This suggests the profile table might not have a row for this user!");
+                console.error(
+                  "🚨 This suggests the profile table might not have a row for this user!"
+                );
               } else if (!profile) {
                 console.error("❌ No profile found for user:", userId);
-                console.error("🚨 Missing profile row! This is why JWT hook can't populate claims.");
+                console.error(
+                  "🚨 Missing profile row! This is why JWT hook can't populate claims."
+                );
               } else {
                 console.log("✅ Profile exists in database:", {
                   id: profile.id,
@@ -141,9 +158,15 @@ export function VerifySessionContent({
                   subscription_status: profile.subscription_status,
                   billing_version: profile.billing_version,
                 });
-                console.error("🚨 Profile exists but JWT hook isn't populating claims!");
-                console.error("🚨 Check Supabase dashboard: Auth > Hooks > Custom Access Token Hook");
-                console.error("🚨 The hook should be enabled and pointing to: pg-functions://postgres/public/custom_access_token_hook");
+                console.error(
+                  "🚨 Profile exists but JWT hook isn't populating claims!"
+                );
+                console.error(
+                  "🚨 Check Supabase dashboard: Auth > Hooks > Custom Access Token Hook"
+                );
+                console.error(
+                  "🚨 The hook should be enabled and pointing to: pg-functions://postgres/public/custom_access_token_hook"
+                );
               }
             } catch (diagError) {
               console.error("❌ Diagnostic query failed:", diagError);
@@ -299,7 +322,7 @@ export function VerifySessionContent({
                 Sign In Again
               </button>
               <a
-                href="mailto:support@handicappin.com"
+                href="mailto:sebastiansole@handicappin.com"
                 className="block w-full border border-gray-300 px-6 py-3 rounded-lg hover:bg-gray-50 transition"
               >
                 Contact Support
