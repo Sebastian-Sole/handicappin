@@ -47,3 +47,5 @@ handicappin.code-workspace
 
 # Sentry Config File
 .env.sentry-build-plugin
+
+.claude
