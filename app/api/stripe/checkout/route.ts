@@ -8,6 +8,8 @@ import {
 } from "@/lib/stripe";
 import { verifyPaymentAmount, formatAmount } from '@/utils/billing/pricing';
 import { checkoutRateLimit, getIdentifier } from '@/lib/rate-limit';
+import { validateRequest, successResponse, errorResponse } from "@/lib/api-validation";
+import { CheckoutRequestSchema, CheckoutResponseSchema } from "@/lib/stripe-types";
 
 export async function POST(request: NextRequest) {
   try {
@@ -17,7 +19,7 @@ export async function POST(request: NextRequest) {
     } = await supabase.auth.getUser();
 
     if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return errorResponse("Unauthorized", 401);
     }
 
     // ✅ NEW: Rate limiting check
@@ -52,20 +54,17 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { plan } = (await request.json()) as { plan: string };
-
-    if (plan !== "premium" && plan !== "unlimited" && plan !== "lifetime") {
-      return NextResponse.json({ error: "Invalid plan" }, { status: 400 });
+    // ✅ NEW: Validate request with Zod
+    const validation = await validateRequest(request, CheckoutRequestSchema);
+    if ("error" in validation) {
+      return validation.error;
     }
+    const { plan } = validation.data;
 
-    const priceId =
-      PLAN_TO_PRICE_MAP[plan as "premium" | "unlimited" | "lifetime"];
+    const priceId = PLAN_TO_PRICE_MAP[plan];
 
     if (!priceId) {
-      return NextResponse.json(
-        { error: "Price ID not configured for this plan" },
-        { status: 500 }
-      );
+      return errorResponse("Price ID not configured for this plan", 500);
     }
 
     // ✅ NEW: Verify price ID points to correct amount (Defense in Depth)
@@ -73,7 +72,7 @@ export async function POST(request: NextRequest) {
       const price = await stripe.prices.retrieve(priceId);
 
       const verification = verifyPaymentAmount(
-        plan as "premium" | "unlimited" | "lifetime",
+        plan,
         price.currency,
         price.unit_amount || 0,
         price.type === 'recurring'
@@ -90,10 +89,7 @@ export async function POST(request: NextRequest) {
           action: 'Check environment variables and Stripe dashboard',
         });
 
-        return NextResponse.json(
-          { error: 'Pricing configuration error. Please contact support.' },
-          { status: 500 }
-        );
+        return errorResponse('Pricing configuration error. Please contact support.', 500);
       }
 
       console.log('✅ Price verification passed at checkout', {
@@ -103,10 +99,7 @@ export async function POST(request: NextRequest) {
       });
     } catch (error) {
       console.error('❌ Failed to verify price during checkout', error);
-      return NextResponse.json(
-        { error: 'Failed to verify pricing' },
-        { status: 500 }
-      );
+      return errorResponse('Failed to verify pricing', 500);
     }
 
     console.log("Price ID:", priceId);
@@ -141,13 +134,13 @@ export async function POST(request: NextRequest) {
 
     console.log("Checkout session created:", session);
 
-    // ✅ NEW: Include rate limit headers in success response
-    return NextResponse.json({ url: session.url }, { headers: rateLimitHeaders });
+    // ✅ NEW: Return validated response
+    return successResponse(
+      CheckoutResponseSchema.parse({ url: session.url }),
+      rateLimitHeaders
+    );
   } catch (error) {
     console.error("Error creating checkout session:", error);
-    return NextResponse.json(
-      { error: "Failed to create checkout session" },
-      { status: 500 }
-    );
+    return errorResponse("Failed to create checkout session");
   }
 }

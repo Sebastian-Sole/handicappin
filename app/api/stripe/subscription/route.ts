@@ -12,6 +12,12 @@ import {
   sendSubscriptionDowngradedEmail,
   sendSubscriptionCancelledEmail,
 } from "@/lib/email-service";
+import { validateRequest, successResponse, errorResponse } from "@/lib/api-validation";
+import {
+  GetSubscriptionResponseSchema,
+  UpdateSubscriptionRequestSchema,
+  UpdateSubscriptionResponseSchema,
+} from "@/lib/stripe-types";
 
 export async function GET(request: NextRequest) {
   try {
@@ -21,7 +27,7 @@ export async function GET(request: NextRequest) {
     } = await supabase.auth.getUser();
 
     if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return errorResponse("Unauthorized", 401);
     }
 
     // Get the Stripe customer ID from the database
@@ -68,17 +74,17 @@ export async function GET(request: NextRequest) {
       };
     });
 
-    return NextResponse.json({
+    // ✅ NEW: Validate response before returning
+    const response = GetSubscriptionResponseSchema.parse({
       hasStripeCustomer: true,
       stripeCustomerId: stripeCustomer.stripe_customer_id,
       subscriptions: subscriptionData,
     });
+
+    return successResponse(response);
   } catch (error) {
     console.error("Error fetching Stripe subscription:", error);
-    return NextResponse.json(
-      { error: "Failed to fetch subscription data" },
-      { status: 500 }
-    );
+    return errorResponse("Failed to fetch subscription data");
   }
 }
 
@@ -90,16 +96,15 @@ export async function PUT(request: NextRequest) {
     } = await supabase.auth.getUser();
 
     if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return errorResponse("Unauthorized", 401);
     }
 
-    const { newPlan } = (await request.json()) as {
-      newPlan: "free" | "premium" | "unlimited" | "lifetime";
-    };
-
-    if (!["free", "premium", "unlimited", "lifetime"].includes(newPlan)) {
-      return NextResponse.json({ error: "Invalid plan" }, { status: 400 });
+    // ✅ NEW: Validate request with Zod
+    const validation = await validateRequest(request, UpdateSubscriptionRequestSchema);
+    if ("error" in validation) {
+      return validation.error;
     }
+    const { newPlan } = validation.data;
 
     // Get current plan before update
     const { data: currentProfile } = await supabase
@@ -184,33 +189,39 @@ export async function PUT(request: NextRequest) {
         cancelUrl: `${process.env.NEXT_PUBLIC_SITE_URL}/upgrade`,
       });
 
-      return NextResponse.json({
+      // ✅ NEW: Return validated response
+      const response = UpdateSubscriptionResponseSchema.parse({
         success: true,
         changeType: "lifetime",
         checkoutUrl: session.url,
       });
+
+      return successResponse(response);
     }
 
-    return NextResponse.json({
+    // ✅ NEW: Return validated response
+    const message =
+      result.changeType === "cancel"
+        ? (result as any).alreadyCancelled
+          ? "Your subscription has been cancelled. You're now on the free plan."
+          : "Subscription will cancel at the end of your billing period"
+        : result.changeType === "upgrade"
+        ? "Plan upgraded! You'll be charged the prorated difference."
+        : "Plan change scheduled for end of billing period";
+
+    const response = UpdateSubscriptionResponseSchema.parse({
       success: true,
       changeType: result.changeType,
-      message:
-        result.changeType === "cancel"
-          ? (result as any).alreadyCancelled
-            ? "Your subscription has been cancelled. You're now on the free plan."
-            : "Subscription will cancel at the end of your billing period"
-          : result.changeType === "upgrade"
-          ? "Plan upgraded! You'll be charged the prorated difference."
-          : "Plan change scheduled for end of billing period",
+      message,
     });
+
+    return successResponse(response);
   } catch (error) {
     console.error("Error updating subscription:", error);
-    return NextResponse.json(
-      {
-        error: "Failed to update subscription",
-        details: error instanceof Error ? error.message : "Unknown error",
-      },
-      { status: 500 }
+    return errorResponse(
+      "Failed to update subscription",
+      500,
+      { details: error instanceof Error ? error.message : "Unknown error" }
     );
   }
 }

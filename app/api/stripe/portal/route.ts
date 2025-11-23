@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { createServerComponentClient } from "@/utils/supabase/server";
 import { createPortalSession, stripe } from "@/lib/stripe";
 import { portalRateLimit, getIdentifier } from '@/lib/rate-limit';
+import { successResponse, errorResponse } from "@/lib/api-validation";
+import { PortalResponseSchema } from "@/lib/stripe-types";
 
 export async function POST(request: NextRequest) {
   try {
@@ -11,7 +13,7 @@ export async function POST(request: NextRequest) {
     } = await supabase.auth.getUser();
 
     if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return errorResponse("Unauthorized", 401);
     }
 
     // ✅ NEW: Rate limiting check
@@ -54,10 +56,7 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (!stripeCustomer?.stripe_customer_id) {
-      return NextResponse.json(
-        { error: "No Stripe customer found" },
-        { status: 404 }
-      );
+      return errorResponse("No Stripe customer found", 404);
     }
 
     // Create a portal session
@@ -66,13 +65,13 @@ export async function POST(request: NextRequest) {
       returnUrl: `${process.env.NEXT_PUBLIC_SITE_URL}/billing`,
     });
 
-    // ✅ NEW: Include rate limit headers in success response
-    return NextResponse.json({ url: session.url }, { headers: rateLimitHeaders });
+    // ✅ NEW: Return validated response
+    return successResponse(
+      PortalResponseSchema.parse({ url: session.url }),
+      rateLimitHeaders
+    );
   } catch (error) {
     console.error("Error creating portal session:", error);
-    return NextResponse.json(
-      { error: "Failed to create portal session" },
-      { status: 500 }
-    );
+    return errorResponse("Failed to create portal session");
   }
 }
