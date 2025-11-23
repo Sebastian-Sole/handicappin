@@ -62,7 +62,7 @@ export async function POST(request: NextRequest) {
     // Create a portal session
     const session = await createPortalSession({
       customerId: stripeCustomer.stripe_customer_id,
-      returnUrl: `${process.env.NEXT_PUBLIC_SITE_URL}/billing`,
+      returnUrl: `${process.env.NEXT_PUBLIC_SITE_URL}/profile/${user.id}?tab=billing`,
     });
 
     // ✅ NEW: Return validated response

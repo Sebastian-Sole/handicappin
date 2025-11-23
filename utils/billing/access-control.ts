@@ -226,7 +226,7 @@ export async function getComprehensiveUserAccess(
         remainingRounds: Infinity,
         status: profile.subscription_status,
         isLifetime: false,
-        currentPeriodEnd: profile.current_period_end ? new Date(profile.current_period_end) : null,
+        currentPeriodEnd: profile.current_period_end ? new Date(profile.current_period_end * 1000) : null,
         cancelAtPeriodEnd: profile.cancel_at_period_end || false,
       };
     }
