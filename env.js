@@ -17,6 +17,7 @@ export const env = createEnv({
     STRIPE_UNLIMITED_PRICE_ID: z.string().optional(),
     STRIPE_UNLIMITED_LIFETIME_PRICE_ID: z.string().optional(),
     RESET_TOKEN_SECRET: z.string().optional(),
+    SENTRY_DSN: z.string()
   },
 
   /**
@@ -47,6 +48,7 @@ export const env = createEnv({
     NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
     NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
     NEXT_PUBLIC_BASE_URL: process.env.NEXT_PUBLIC_BASE_URL,
+    SENTRY_DSN: process.env.SENTRY_DSN
     // NEXT_PUBLIC_CLIENTVAR: process.env.NEXT_PUBLIC_CLIENTVAR,
   },
   /**
