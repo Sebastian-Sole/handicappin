@@ -29,9 +29,6 @@ const DashboardPage = async (props: { params: Promise<{ id: string }> }) => {
   // Check premium access
   const access = await getComprehensiveUserAccess(id);
 
-  // Check premium access for dashboard
-  const access = await getComprehensiveUserAccess(id);
-
   if (!access.hasPremiumAccess) {
     redirect("/upgrade");
   }
