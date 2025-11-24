@@ -3,7 +3,6 @@
  * Sends Sentry alerts when webhooks fail 3+ times
  */
 
-import * as Sentry from "@sentry/nextjs";
 import { captureSentryError } from "@/lib/sentry-utils";
 
 export interface WebhookFailureAlert {
