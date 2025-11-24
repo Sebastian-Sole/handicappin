@@ -11,6 +11,7 @@ import {
   Text,
   Tailwind,
 } from "@react-email/components";
+import { hasUnlimitedRounds } from "@/utils/billing/access-helpers";
 
 interface WelcomeEmailProps {
   plan: string;
@@ -61,7 +62,7 @@ export default function WelcomeEmail({
                   What's included with {capitalizedPlan}?
                 </Heading>
                 <Text className="text-gray-600 mb-0">
-                  {plan === "unlimited" || plan === "lifetime" ? (
+                  {hasUnlimitedRounds(plan) ? (
                     <>
                       • Unlimited round tracking
                       <br />
