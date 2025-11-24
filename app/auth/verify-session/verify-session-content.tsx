@@ -10,7 +10,6 @@ const RETRY_DELAY_MS = 2000; // 2 seconds between retries
 type VerificationState =
   | "verifying"
   | "retrying"
-  | "success"
   | "failed"
   | "error";
 
@@ -202,20 +201,15 @@ export function VerifySessionContent({
           timestamp: new Date().toISOString(),
         });
 
-        setState("success");
-
-        // Wait a moment to show success message, then redirect
-        setTimeout(() => {
-          // Check if user needs onboarding (no plan selected)
-          if (!billing.plan || billing.plan === null) {
-            console.log(`↪️ No plan selected, redirecting to onboarding`);
-            router.push("/onboarding");
-          } else {
-            console.log(`↪️ Redirecting to: ${returnTo}`);
-            router.push(returnTo);
-          }
-          router.refresh(); // Force middleware to re-run
-        }, 1000);
+        // Check if user needs onboarding (no plan selected)
+        if (!billing.plan || billing.plan === null) {
+          console.log(`↪️ No plan selected, redirecting to onboarding`);
+          router.push("/onboarding");
+        } else {
+          console.log(`↪️ Redirecting to: ${returnTo}`);
+          router.push(returnTo);
+        }
+        router.refresh(); // Force middleware to re-run
       } catch (error) {
         console.error("❌ Verification error:", error);
 
@@ -294,17 +288,6 @@ export function VerifySessionContent({
                 <div className="w-3 h-3 bg-yellow-600 rounded-full"></div>
               </div>
             </div>
-          </>
-        )}
-
-        {/* Success State */}
-        {state === "success" && (
-          <>
-            <div className="text-6xl mb-4">✅</div>
-            <h1 className="text-2xl font-bold mb-2">Session Verified!</h1>
-            <p className="text-gray-600 mb-6">
-              Redirecting you back to where you were...
-            </p>
           </>
         )}
 
