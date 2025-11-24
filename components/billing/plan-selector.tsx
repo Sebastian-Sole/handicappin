@@ -104,6 +104,25 @@ export function PlanSelector({
 
       // Otherwise, for onboarding or already-free users, use direct action
       await createFreeTierSubscription(userId);
+
+      // Manually refresh JWT to get new billing claims (billing_version incremented)
+      // This is necessary because the redirect happens before BillingSync receives Realtime notification
+      const { createClientComponentClient } = await import("@/utils/supabase/client");
+      const supabase = createClientComponentClient();
+
+      console.log("🔄 Refreshing session after free plan selection...");
+      const { error: refreshError } = await supabase.auth.refreshSession();
+
+      if (refreshError) {
+        console.error("❌ Failed to refresh session:", refreshError);
+        // Continue anyway - BillingSync will catch it eventually
+      } else {
+        console.log("✅ Session refreshed with new billing data");
+      }
+
+      // Wait briefly to ensure middleware picks up new JWT claims
+      await new Promise(resolve => setTimeout(resolve, 500));
+
       router.push("/");
       router.refresh();
     } catch (error) {

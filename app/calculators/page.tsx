@@ -9,8 +9,6 @@ import {
 } from "@/components/ui/dialog";
 import { createServerComponentClient } from "@/utils/supabase/server";
 import { DialogTrigger } from "@radix-ui/react-dialog";
-import { getComprehensiveUserAccess } from "@/utils/billing/access-control";
-import { redirect } from "next/navigation";
 
 const CalculatorsPage = async () => {
   const supabase = await createServerComponentClient();
@@ -18,17 +16,8 @@ const CalculatorsPage = async () => {
     data: { user },
   } = await supabase.auth.getUser();
 
-  // Check premium access
-  if (user) {
-    const access = await getComprehensiveUserAccess(user.id);
-
-    if (!access.hasPremiumAccess) {
-      redirect("/upgrade");
-    }
-  } else {
-    // No user = redirect to login
-    redirect("/login");
-  }
+  // Note: Premium access check is handled by middleware
+  // This page is listed in PREMIUM_PATHS, so middleware redirects non-premium users
 
   return (
     <div className="flex flex-col items-center justify-center min-h-[calc(100vh-12rem)] bg-background px-4 py-12">

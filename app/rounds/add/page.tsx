@@ -73,7 +73,6 @@ const AddRoundPage = async () => {
         <GolfScorecard
           profile={profile}
           access={access}
-          isAtLimit={access.plan === "free" && access.remainingRounds <= 0}
         />
       </div>
     </Suspense>

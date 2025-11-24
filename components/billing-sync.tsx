@@ -28,14 +28,6 @@ export function BillingSync() {
   useEffect(() => {
     if (!userId) return;
 
-    // Skip in local development if using local Supabase without Realtime
-    const isLocalDev = process.env.NEXT_PUBLIC_SUPABASE_URL?.includes('127.0.0.1');
-
-    if (isLocalDev) {
-      console.log(`🔄 BillingSync: Skipped in local dev (Realtime not available)`);
-      return;
-    }
-
     console.log(`🔄 BillingSync mounted for user ${userId}`);
 
     // Subscribe to profile changes for this user
