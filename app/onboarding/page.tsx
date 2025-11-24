@@ -17,14 +17,7 @@ export default async function OnboardingPage() {
   const access = await getComprehensiveUserAccess(user.id);
 
   if (access.hasAccess) {
-    // User already has a plan selected - redirect to appropriate page
-    if (access.plan === "free") {
-      // Free users should see billing page or upgrade
-      redirect("/billing");
-    } else if (access.hasPremiumAccess) {
-      // Paid users go to billing dashboard
-      redirect("/billing");
-    }
+    redirect("/billing");
   }
 
   // If no access, show onboarding
