@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ZodSchema, ZodError } from "zod";
-import { ErrorResponseSchema } from "./stripe-types";
 
 /**
  * Validate request body against a Zod schema
@@ -51,10 +50,5 @@ export function errorResponse(
   status: number = 500,
   details?: { retryAfter?: number; details?: string }
 ) {
-  const response = ErrorResponseSchema.parse({
-    error,
-    ...details,
-  });
-
-  return NextResponse.json(response, { status });
+  return NextResponse.json({ error, ...details }, { status });
 }
