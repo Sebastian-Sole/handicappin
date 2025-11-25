@@ -58,13 +58,11 @@ import { FeatureAccess } from "@/types/billing";
 interface GolfScorecardProps {
   profile: Tables<"profile">;
   access: FeatureAccess;
-  isAtLimit: boolean;
 }
 
 export default function GolfScorecard({
   profile,
   access,
-  isAtLimit,
 }: GolfScorecardProps) {
   const isMounted = useMounted();
   const router = useRouter();
@@ -279,16 +277,6 @@ export default function GolfScorecard({
   const submitScorecardMutation = api.round.submitScorecard.useMutation();
 
   const onSubmit = async (data: Scorecard) => {
-    // Prevent submission if at limit
-    if (isAtLimit) {
-      toast({
-        title: "Round Limit Reached",
-        description: "Please upgrade to continue tracking rounds",
-        variant: "destructive",
-      });
-      return;
-    }
-
     setIsSubmitting(true);
     await new Promise((resolve) => setTimeout(resolve, 1000));
     try {
@@ -418,11 +406,7 @@ export default function GolfScorecard({
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit, onError)} role="form">
-        <div className={`relative ${isAtLimit ? "pointer-events-none" : ""}`}>
-          {isAtLimit && (
-            <div className="absolute inset-0 bg-background/80 backdrop-blur-sm z-10 rounded-lg" />
-          )}
-          <Card className={`w-full mx-auto ${isAtLimit ? "opacity-50" : ""}`}>
+          <Card className="w-full mx-auto">
             <CardContent className="p-6">
             <div className="mb-6 grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-8">
               <Card>
@@ -777,21 +761,20 @@ export default function GolfScorecard({
             {/* Desktop submit button */}
             {selectedTeeKey && (
               <div className="mt-4 justify-end hidden md:flex">
-                <Button type="submit" disabled={isSubmitting || isAtLimit}>
+                <Button type="submit" disabled={isSubmitting}>
                   {isSubmitting ? "Submitting..." : "Submit Scorecard"}
                 </Button>
               </div>
             )}
           </CardContent>
         </Card>
-        </div>
         {/* Sticky mobile submit button */}
         {selectedTeeKey && (
           <div className="fixed bottom-0 left-0 right-0 z-50 bg-background border-t border-border p-4 flex justify-center md:hidden">
             <Button
               type="submit"
               className="w-full max-w-md"
-              disabled={isSubmitting || isAtLimit}
+              disabled={isSubmitting}
             >
               {isSubmitting ? "Submitting..." : "Submit Scorecard"}
             </Button>

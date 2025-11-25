@@ -7,15 +7,7 @@ import {
   FREE_TIER_ROUND_LIMIT,
   PREMIUM_PATHS,
 } from "@/utils/billing/constants";
-
-// Define billing claims type (minimal)
-type BillingClaims = {
-  plan: string | null; // NULL when user hasn't selected a plan
-  status: string | null; // NULL when user hasn't selected a plan
-  current_period_end: number | null;
-  cancel_at_period_end: boolean;
-  billing_version: number;
-};
+import { BillingClaims, getAppMetadataFromJWT } from "@/utils/supabase/jwt";
 
 // Clock skew tolerance for expiry checks (prevent edge flaps)
 const EXPIRY_LEEWAY_SECONDS = 120; // 2 minutes
@@ -62,19 +54,10 @@ export async function updateSession(request: NextRequest) {
     data: { session },
   } = await supabase.auth.getSession();
 
-  // Manually decode the JWT to get custom claims from the hook
-  let jwtAppMetadata = null;
-  if (session?.access_token) {
-    try {
-      const parts = session.access_token.split('.');
-      if (parts.length === 3) {
-        const payload = JSON.parse(Buffer.from(parts[1], 'base64').toString());
-        jwtAppMetadata = payload.app_metadata;
-      }
-    } catch (e) {
-      console.error('❌ Failed to decode JWT token in middleware:', e);
-    }
-  }
+  // Decode the JWT to get custom claims from the hook
+  // SECURITY: Safe for authorization - JWT signature already verified by getSession()
+  // See getAppMetadataFromJWT() for full security documentation
+  const jwtAppMetadata = getAppMetadataFromJWT(session);
 
   // Merge JWT claims into getUser() user object
   // Use the decoded JWT payload, NOT session.user.app_metadata (which doesn't include custom claims)

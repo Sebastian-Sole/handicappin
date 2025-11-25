@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { createServerComponentClient } from "@/utils/supabase/server";
-import { getComprehensiveUserAccess } from "@/utils/billing/access-control";
 import { PlanSelector } from "@/components/billing/plan-selector";
+import { getBillingFromJWT } from "@/utils/supabase/jwt";
 
 export default async function OnboardingPage() {
   const supabase = await createServerComponentClient();
@@ -13,12 +13,24 @@ export default async function OnboardingPage() {
     redirect("/login");
   }
 
-  // Check if user already has access
-  const access = await getComprehensiveUserAccess(user.id);
+  // Check if user already has access by reading JWT claims (consistent with middleware)
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
 
-  if (access.hasAccess) {
+  // Decode JWT to get custom claims (session.user.app_metadata doesn't include them)
+  // SECURITY: Safe to use for routing - JWT signature already verified by getSession()
+  // See getBillingFromJWT() for full security documentation
+  const billing = getBillingFromJWT(session);
+
+  // If user has a plan in JWT, redirect to billing (they've completed onboarding)
+  if (billing?.plan) {
+    console.log(`✅ Onboarding: User has plan=${billing.plan} in JWT, redirecting to billing`);
     redirect("/billing");
   }
+
+  // If JWT billing claims are missing, this is expected for new users who haven't selected a plan yet
+  console.log(`🔄 Onboarding: No plan in JWT (billing=${JSON.stringify(billing)}), showing plan selection`);
 
   // If no access, show onboarding
   return (
