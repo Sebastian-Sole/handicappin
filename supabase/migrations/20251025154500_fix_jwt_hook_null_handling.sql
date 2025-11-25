@@ -10,7 +10,7 @@ CREATE OR REPLACE FUNCTION public.custom_access_token_hook(event jsonb)
 RETURNS jsonb
 LANGUAGE plpgsql
 -- NO SECURITY DEFINER per Supabase docs - use explicit grants instead
-SET search_path = public  -- Prevent search_path attacks
+SET search_path = ''  -- Prevent search_path attacks
 STABLE  -- Function doesn't modify database
 AS $$
 DECLARE

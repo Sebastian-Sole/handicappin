@@ -1,5 +1,5 @@
 "use client";
-
+import Link from "next/link";
 import { AlertCircle, TrendingUp, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -112,8 +112,6 @@ export function UsageLimitAlert({
     </div>
   );
 }
-
-import Link from "next/link";
 
 export function UsageLimitReachedView() {
   return (

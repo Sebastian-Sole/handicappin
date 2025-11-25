@@ -7,12 +7,10 @@ import { Switch } from "@/components/ui/switch";
 import { useTheme } from "next-themes";
 import { Moon, Sun, Monitor, Check } from "lucide-react";
 
-interface SettingsTabProps {
-  userId: string;
-}
-
-export function SettingsTab({ userId }: SettingsTabProps) {
-  const [saveState, setSaveState] = useState<"idle" | "saving" | "saved">("idle");
+export function SettingsTab() {
+  const [saveState, setSaveState] = useState<"idle" | "saving" | "saved">(
+    "idle"
+  );
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
 
@@ -31,7 +29,7 @@ export function SettingsTab({ userId }: SettingsTabProps) {
 
     // TODO: Implement settings save logic via tRPC or API
     // For now, just simulate save
-    await new Promise(resolve => setTimeout(resolve, 800));
+    await new Promise((resolve) => setTimeout(resolve, 800));
 
     setSaveState("saved");
 

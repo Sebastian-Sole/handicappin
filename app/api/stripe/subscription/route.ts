@@ -7,6 +7,7 @@ import {
   PLAN_TO_PRICE_MAP,
   createLifetimeCheckoutSession,
 } from "@/lib/stripe";
+import Stripe from "stripe";
 import {
   sendSubscriptionUpgradedEmail,
   sendSubscriptionDowngradedEmail,
@@ -130,7 +131,7 @@ export async function PUT(request: NextRequest) {
         const proratedCharge =
           result.subscription?.latest_invoice &&
           typeof result.subscription.latest_invoice !== "string"
-            ? (result.subscription.latest_invoice as any).amount_due || 0
+            ? (result.subscription.latest_invoice as Stripe.Invoice).amount_due || 0
             : 0;
 
         const currency =
