@@ -167,9 +167,6 @@ export async function updateSubscription({
   // Special case: User wants to downgrade to free but no active subscription exists
   // This can happen if subscription was already cancelled/expired in Stripe but DB not synced
   if (!subscription && newPlan === "free") {
-    // Subscription already gone - manually sync DB to free
-    console.log("No active subscription found, but user wants free plan. Syncing DB to free.");
-
     const { profile } = await import("@/db/schema");
     const { sql } = await import("drizzle-orm");
 
