@@ -6,10 +6,17 @@ import {
   PLAN_TO_PRICE_MAP,
   stripe,
 } from "@/lib/stripe";
-import { verifyPaymentAmount, formatAmount } from '@/utils/billing/pricing';
-import { checkoutRateLimit, getIdentifier } from '@/lib/rate-limit';
-import { validateRequest, successResponse, errorResponse } from "@/lib/api-validation";
-import { CheckoutRequestSchema, CheckoutResponseSchema } from "@/lib/stripe-types";
+import { verifyPaymentAmount, formatAmount } from "@/utils/billing/pricing";
+import { checkoutRateLimit, getIdentifier } from "@/lib/rate-limit";
+import {
+  validateRequest,
+  successResponse,
+  errorResponse,
+} from "@/lib/api-validation";
+import {
+  CheckoutRequestSchema,
+  CheckoutResponseSchema,
+} from "@/lib/stripe-types";
 
 export async function POST(request: NextRequest) {
   try {
@@ -24,31 +31,35 @@ export async function POST(request: NextRequest) {
 
     // ✅ NEW: Rate limiting check
     const identifier = getIdentifier(request, user.id);
-    const { success, limit, remaining, reset } = await checkoutRateLimit.limit(identifier);
+    const { success, limit, remaining, reset } = await checkoutRateLimit.limit(
+      identifier
+    );
 
     // Build rate limit headers
     const rateLimitHeaders = {
-      'X-RateLimit-Limit': limit.toString(),
-      'X-RateLimit-Remaining': remaining.toString(),
-      'X-RateLimit-Reset': new Date(reset).toISOString(),
+      "X-RateLimit-Limit": limit.toString(),
+      "X-RateLimit-Remaining": remaining.toString(),
+      "X-RateLimit-Reset": new Date(reset).toISOString(),
     };
 
     // If rate limit exceeded, return 429
     if (!success) {
       const retryAfterSeconds = Math.ceil((reset - Date.now()) / 1000);
 
-      console.warn(`[Rate Limit] Checkout rate limit exceeded for ${identifier}`);
+      console.warn(
+        `[Rate Limit] Checkout rate limit exceeded for ${identifier}`
+      );
 
       return NextResponse.json(
         {
-          error: 'Too many checkout requests. Please try again in a moment.',
+          error: "Too many checkout requests. Please try again in a moment.",
           retryAfter: retryAfterSeconds,
         },
         {
           status: 429,
           headers: {
             ...rateLimitHeaders,
-            'Retry-After': retryAfterSeconds.toString(),
+            "Retry-After": retryAfterSeconds.toString(),
           },
         }
       );
@@ -75,44 +86,29 @@ export async function POST(request: NextRequest) {
         plan,
         price.currency,
         price.unit_amount || 0,
-        price.type === 'recurring'
+        price.type === "recurring"
       );
 
       if (!verification.valid) {
-        console.error('❌ CRITICAL: Price verification failed at checkout', {
+        console.error("❌ CRITICAL: Price verification failed at checkout", {
           plan,
           priceId,
           expected: formatAmount(verification.expected),
           actual: formatAmount(verification.actual),
           variance: verification.variance,
-          severity: 'HIGH',
-          action: 'Check environment variables and Stripe dashboard',
+          severity: "HIGH",
+          action: "Check environment variables and Stripe dashboard",
         });
 
-        return errorResponse('Pricing configuration error. Please contact support.', 500);
+        return errorResponse(
+          "Pricing configuration error. Please contact support.",
+          500
+        );
       }
-
-      console.log('✅ Price verification passed at checkout', {
-        plan,
-        amount: formatAmount(verification.actual),
-        currency: price.currency,
-      });
     } catch (error) {
-      console.error('❌ Failed to verify price during checkout', error);
-      return errorResponse('Failed to verify pricing', 500);
+      console.error("❌ Failed to verify price during checkout", error);
+      return errorResponse("Failed to verify pricing", 500);
     }
-
-    console.log("Price ID:", priceId);
-    console.log("User:", user.id);
-    console.log("Plan:", plan);
-    console.log(
-      "Success URL:",
-      `${process.env.NEXT_PUBLIC_SITE_URL}/billing/success?session_id={CHECKOUT_SESSION_ID}`
-    );
-    console.log(
-      "Cancel URL:",
-      `${process.env.NEXT_PUBLIC_SITE_URL}/onboarding`
-    );
 
     // Create the checkout session (lifetime uses payment mode, others use subscription mode)
     const session =
@@ -131,8 +127,6 @@ export async function POST(request: NextRequest) {
             successUrl: `${process.env.NEXT_PUBLIC_SITE_URL}/billing/success?session_id={CHECKOUT_SESSION_ID}`,
             cancelUrl: `${process.env.NEXT_PUBLIC_SITE_URL}/onboarding`,
           });
-
-    console.log("Checkout session created:", session);
 
     // ✅ NEW: Return validated response
     return successResponse(
