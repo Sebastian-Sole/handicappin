@@ -9,6 +9,15 @@ interface BillingTabProps {
   access: FeatureAccess;
 }
 
+// Format date consistently for SSR/client hydration
+function formatDate(date: Date): string {
+  return new Intl.DateTimeFormat("en-US", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  }).format(date);
+}
+
 export function BillingTab({ access }: BillingTabProps) {
   return (
     <div className="space-y-6">
@@ -38,8 +47,8 @@ export function BillingTab({ access }: BillingTabProps) {
             {access.currentPeriodEnd && !access.isLifetime && (
               <p className="text-muted-foreground">
                 {access.cancelAtPeriodEnd
-                  ? `Cancels on ${access.currentPeriodEnd.toLocaleDateString()}`
-                  : `Renews on ${access.currentPeriodEnd.toLocaleDateString()}`}
+                  ? `Cancels on ${formatDate(access.currentPeriodEnd)}`
+                  : `Renews on ${formatDate(access.currentPeriodEnd)}`}
               </p>
             )}
 

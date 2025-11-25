@@ -127,6 +127,12 @@ export async function createPortalSession({
   return session;
 }
 
+type UpdateSubscriptionResult =
+  | { subscription: Stripe.Subscription; changeType: "cancel" }
+  | { subscription: null; changeType: "cancel"; alreadyCancelled: true }
+  | { subscription: null; changeType: "lifetime"; requiresCheckout: true }
+  | { subscription: Stripe.Subscription; changeType: "upgrade" | "downgrade" };
+
 /**
  * Update an existing subscription to a new price
  * Handles both upgrades (immediate with proration) and downgrades (end of cycle)
@@ -137,7 +143,7 @@ export async function updateSubscription({
 }: {
   userId: string;
   newPlan: PlanType;
-}) {
+}): Promise<UpdateSubscriptionResult> {
   const { db } = await import("@/db");
   const { stripeCustomers } = await import("@/db/schema");
   const { eq } = await import("drizzle-orm");

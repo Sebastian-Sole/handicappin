@@ -179,7 +179,7 @@ export async function PUT(request: NextRequest) {
     }
 
     // If changing to lifetime, return checkout URL
-    if (result.requiresCheckout) {
+    if ("requiresCheckout" in result && result.requiresCheckout) {
       const priceId = PLAN_TO_PRICE_MAP.lifetime;
 
       const session = await createLifetimeCheckoutSession({
@@ -203,7 +203,7 @@ export async function PUT(request: NextRequest) {
     // ✅ NEW: Return validated response
     const message =
       result.changeType === "cancel"
-        ? (result as any).alreadyCancelled
+        ? "alreadyCancelled" in result
           ? "Your subscription has been cancelled. You're now on the free plan."
           : "Subscription will cancel at the end of your billing period"
         : result.changeType === "upgrade"
