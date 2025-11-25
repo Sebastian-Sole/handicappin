@@ -31,7 +31,7 @@ export default async function UpgradePage() {
   }
 
   const validPlans = ["free", "premium", "unlimited", "lifetime"] as const;
-  const currentPlan = validPlans.includes(billing.plan)
+  const currentPlan = (validPlans as readonly string[]).includes(billing.plan)
     ? billing.plan as typeof validPlans[number]
     : "free";
 
