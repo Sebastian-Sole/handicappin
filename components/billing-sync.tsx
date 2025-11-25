@@ -1,32 +1,32 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { createClientComponentClient } from "@/utils/supabase/client";
 import { useRouter } from "next/navigation";
+
+interface BillingSyncProps {
+  userId: string;
+}
 
 /**
  * Background component that listens for billing changes via Supabase Realtime
  * and triggers JWT refresh when billing_version increments.
  *
- * Mounted in root layout, detects auth state client-side.
+ * Mounted in root layout for all authenticated users.
  * No UI - purely functional.
  */
-export function BillingSync() {
+export function BillingSync({ userId }: BillingSyncProps) {
   const supabase = createClientComponentClient();
   const router = useRouter();
-  const [userId, setUserId] = useState<string | null>(null);
 
   useEffect(() => {
-    // Get current user
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      if (user) {
-        setUserId(user.id);
-      }
-    });
-  }, [supabase]);
+    // Skip in local development if using local Supabase without Realtime
+    const isLocalDev = process.env.NEXT_PUBLIC_SUPABASE_URL?.includes('127.0.0.1');
 
-  useEffect(() => {
-    if (!userId) return;
+    if (isLocalDev) {
+      console.log(`🔄 BillingSync: Skipped in local dev (Realtime not available)`);
+      return;
+    }
 
     console.log(`🔄 BillingSync mounted for user ${userId}`);
 

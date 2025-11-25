@@ -120,8 +120,26 @@ export function PlanSelector({
         console.log("✅ Session refreshed with new billing data");
       }
 
-      // Wait briefly to ensure middleware picks up new JWT claims
-      await new Promise(resolve => setTimeout(resolve, 500));
+      // Poll session until billing claims reflect the new plan
+      const maxAttempts = 20; // 2 seconds max (20 * 100ms)
+      let attempt = 0;
+      while (attempt < maxAttempts) {
+        const { data: { session } } = await supabase.auth.getSession();
+        const jwtClaims = session?.user?.app_metadata;
+
+        // Check if JWT has updated billing claims (plan === "free")
+        if (jwtClaims?.plan === "free") {
+          console.log("✅ JWT claims updated, proceeding with redirect");
+          break;
+        }
+
+        await new Promise(resolve => setTimeout(resolve, 100));
+        attempt++;
+      }
+
+      if (attempt === maxAttempts) {
+        console.warn("⚠️ JWT claims not updated after polling, BillingSync will catch up");
+      }
 
       router.push("/");
       router.refresh();

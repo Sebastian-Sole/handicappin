@@ -104,7 +104,7 @@ export function captureSentryError(
   // Include original error message in extra context (for debugging, but not in primary error.message)
   const extraContext = {
     ...context.extra,
-    original_error_message: error.message, // Original message already sanitized above
+    original_error_message: sanitizeErrorMessage(error.message), // Also sanitized for safety
   };
 
   Sentry.captureException(sanitizedError, {
