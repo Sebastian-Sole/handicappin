@@ -30,7 +30,10 @@ export default async function UpgradePage() {
     redirect("/onboarding");
   }
 
-  const currentPlan = billing.plan as "free" | "premium" | "unlimited" | "lifetime";
+  const validPlans = ["free", "premium", "unlimited", "lifetime"] as const;
+  const currentPlan = validPlans.includes(billing.plan)
+    ? billing.plan as typeof validPlans[number]
+    : "free";
 
   return (
     <div className="container mx-auto px-4 py-16">
