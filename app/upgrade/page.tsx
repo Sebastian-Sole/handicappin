@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { createServerComponentClient } from "@/utils/supabase/server";
 import { PlanSelector } from "@/components/billing/plan-selector";
 import Link from "next/link";
+import { getBillingFromJWT } from "@/utils/supabase/jwt";
 
 export default async function UpgradePage() {
   const supabase = await createServerComponentClient();
@@ -18,19 +19,8 @@ export default async function UpgradePage() {
     data: { session },
   } = await supabase.auth.getSession();
 
-  // Manually decode JWT to get custom claims
-  let billing = null;
-  if (session?.access_token) {
-    try {
-      const parts = session.access_token.split('.');
-      if (parts.length === 3) {
-        const payload = JSON.parse(Buffer.from(parts[1], 'base64').toString());
-        billing = payload.app_metadata?.billing;
-      }
-    } catch (e) {
-      console.error('❌ Failed to decode JWT token in upgrade page:', e);
-    }
-  }
+  // Decode JWT to get custom claims
+  const billing = getBillingFromJWT(session);
 
   // No plan in JWT - redirect to onboarding
   if (!billing?.plan) {

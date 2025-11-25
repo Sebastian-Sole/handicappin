@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { createServerComponentClient } from "@/utils/supabase/server";
 import { PlanSelector } from "@/components/billing/plan-selector";
+import { getBillingFromJWT } from "@/utils/supabase/jwt";
 
 export default async function OnboardingPage() {
   const supabase = await createServerComponentClient();
@@ -17,19 +18,8 @@ export default async function OnboardingPage() {
     data: { session },
   } = await supabase.auth.getSession();
 
-  // Manually decode JWT to get custom claims (session.user.app_metadata doesn't include them)
-  let billing = null;
-  if (session?.access_token) {
-    try {
-      const parts = session.access_token.split('.');
-      if (parts.length === 3) {
-        const payload = JSON.parse(Buffer.from(parts[1], 'base64').toString());
-        billing = payload.app_metadata?.billing;
-      }
-    } catch (e) {
-      console.error('❌ Failed to decode JWT token in onboarding:', e);
-    }
-  }
+  // Decode JWT to get custom claims (session.user.app_metadata doesn't include them)
+  const billing = getBillingFromJWT(session);
 
   // If user has a plan in JWT, redirect to billing (they've completed onboarding)
   if (billing?.plan) {
