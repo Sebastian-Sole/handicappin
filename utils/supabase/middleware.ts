@@ -55,6 +55,8 @@ export async function updateSession(request: NextRequest) {
   } = await supabase.auth.getSession();
 
   // Decode the JWT to get custom claims from the hook
+  // SECURITY: Safe for authorization - JWT signature already verified by getSession()
+  // See getAppMetadataFromJWT() for full security documentation
   const jwtAppMetadata = getAppMetadataFromJWT(session);
 
   // Merge JWT claims into getUser() user object

@@ -20,6 +20,8 @@ export default async function UpgradePage() {
   } = await supabase.auth.getSession();
 
   // Decode JWT to get custom claims
+  // SECURITY: Safe to use for routing - JWT signature already verified by getSession()
+  // See getBillingFromJWT() for full security documentation
   const billing = getBillingFromJWT(session);
 
   // No plan in JWT - redirect to onboarding

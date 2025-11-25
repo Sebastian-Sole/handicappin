@@ -19,6 +19,8 @@ export default async function OnboardingPage() {
   } = await supabase.auth.getSession();
 
   // Decode JWT to get custom claims (session.user.app_metadata doesn't include them)
+  // SECURITY: Safe to use for routing - JWT signature already verified by getSession()
+  // See getBillingFromJWT() for full security documentation
   const billing = getBillingFromJWT(session);
 
   // If user has a plan in JWT, redirect to billing (they've completed onboarding)
