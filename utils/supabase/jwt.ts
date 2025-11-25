@@ -37,7 +37,7 @@ export function getBillingFromJWT(session: Session | null): BillingClaims | null
   try {
     const parts = session.access_token.split('.');
     if (parts.length === 3) {
-      const payload = JSON.parse(Buffer.from(parts[1], 'base64').toString());
+      const payload = JSON.parse(Buffer.from(parts[1], 'base64url').toString());
       return payload.app_metadata?.billing || null;
     }
   } catch (e) {
@@ -74,7 +74,7 @@ export function getAppMetadataFromJWT(session: Session | null): Record<string, a
   try {
     const parts = session.access_token.split('.');
     if (parts.length === 3) {
-      const payload = JSON.parse(Buffer.from(parts[1], 'base64').toString());
+      const payload = JSON.parse(Buffer.from(parts[1], 'base64url').toString());
       return payload.app_metadata || null;
     }
   } catch (e) {
