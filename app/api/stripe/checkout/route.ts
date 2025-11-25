@@ -29,6 +29,10 @@ export async function POST(request: NextRequest) {
       return errorResponse("Unauthorized", 401);
     }
 
+    if (!user.email) {
+      return errorResponse("Email required for checkout", 400);
+    }
+
     // ✅ NEW: Rate limiting check
     const identifier = getIdentifier(request, user.id);
     const { success, limit, remaining, reset } = await checkoutRateLimit.limit(
@@ -115,14 +119,14 @@ export async function POST(request: NextRequest) {
       plan === "lifetime"
         ? await createLifetimeCheckoutSession({
             userId: user.id,
-            email: user.email!,
+            email: user.email,
             priceId,
             successUrl: `${process.env.NEXT_PUBLIC_SITE_URL}/billing/success?session_id={CHECKOUT_SESSION_ID}`,
             cancelUrl: `${process.env.NEXT_PUBLIC_SITE_URL}/onboarding`,
           })
         : await createCheckoutSession({
             userId: user.id,
-            email: user.email!,
+            email: user.email,
             priceId,
             successUrl: `${process.env.NEXT_PUBLIC_SITE_URL}/billing/success?session_id={CHECKOUT_SESSION_ID}`,
             cancelUrl: `${process.env.NEXT_PUBLIC_SITE_URL}/onboarding`,

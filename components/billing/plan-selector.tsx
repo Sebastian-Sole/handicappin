@@ -149,7 +149,9 @@ export function PlanSelector({
         type: "error",
         title: "Failed to Update Plan",
         message:
-          "We couldn't switch you to the free plan. Please try again or contact support if the issue persists.",
+          error instanceof Error
+            ? error.message
+            : "We couldn't switch you to the free plan. Please try again or contact support if the issue persists.",
       });
     } finally {
       setLoading(null);
@@ -231,7 +233,9 @@ export function PlanSelector({
         type: "error",
         title: "Failed to Process Plan Change",
         message:
-          "We couldn't complete your plan change. Please try again or contact support if the issue persists.",
+          error instanceof Error
+            ? error.message
+            : "We couldn't complete your plan change. Please try again or contact support if the issue persists.",
       });
       setLoading(null);
     }
