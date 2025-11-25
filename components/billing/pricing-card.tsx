@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
 export type PlanTier = "free" | "premium" | "unlimited" | "lifetime";
@@ -66,14 +66,20 @@ export function PricingCard({
     ? borderColors.primary
     : borderColors.default;
 
-  const shadowClass = highlighted ? "shadow-lg hover:shadow-xl" : "shadow-md hover:shadow-lg";
+  const shadowClass = highlighted
+    ? "shadow-lg hover:shadow-xl"
+    : "shadow-md hover:shadow-lg";
 
   return (
-    <Card className={`${borderClass} rounded-lg p-8 ${shadowClass} transition relative dark:bg-primary/10 ${className} flex flex-col h-full`}>
+    <Card
+      className={`${borderClass} rounded-lg p-8 ${shadowClass} transition relative dark:bg-primary/10 ${className} flex flex-col h-full`}
+    >
       {badge && (
         <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
           <Badge
-            className={`${badge.variant ? badgeColors[badge.variant] : "bg-gray-500"} text-white px-4 py-1 rounded-full text-sm font-semibold whitespace-nowrap min-h-6 flex items-center`}
+            className={`${
+              badge.variant ? badgeColors[badge.variant] : "bg-gray-500"
+            } text-white px-4 py-1 rounded-full text-sm font-semibold whitespace-nowrap min-h-6 flex items-center`}
           >
             {badge.text}
           </Badge>
@@ -83,17 +89,17 @@ export function PricingCard({
       <div className="mb-4">
         <h2 className="text-2xl font-bold mb-2">{title}</h2>
         {badge && plan === "free" && (
-          <p className="text-xs text-muted-foreground">First 100 users, forever</p>
+          <p className="text-xs text-muted-foreground">
+            First 100 users, forever
+          </p>
         )}
-        {!badge && (
-          <p className="text-xs text-muted-foreground invisible">Hidden</p>
-        )}
+        {!badge && <div className="h-4" aria-hidden="true" />}
         <p className="text-gray-600 mt-2 mb-4">{description}</p>
         <div className="mb-4">
           <span className="text-3xl font-bold">
             {typeof price === "number" ? `$${price}` : price}
           </span>
-          <span className="text-lg text-gray-600 text-muted-foreground">
+          <span className="text-lg text-gray-600">
             {interval === "year" && "/year"}
             {interval === "month" && "/mo"}
             {interval === "once" && " once"}

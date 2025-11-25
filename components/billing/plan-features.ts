@@ -21,7 +21,6 @@ export const PLAN_FEATURES: Record<string, Feature[]> = {
   premium: [
     { text: "Everything from Free tier", included: true },
     { text: "Unlimited round logging", included: true },
-    { text: "No round limits", included: true },
     { text: "Round calculation insights", included: false },
     { text: "Advanced calculators", included: false },
     { text: "Personal statistics", included: false },
