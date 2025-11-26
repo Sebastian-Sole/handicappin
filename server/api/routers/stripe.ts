@@ -59,7 +59,7 @@ export const stripeRouter = createTRPCRouter({
       })
     )
     .mutation(async ({ ctx, input }) => {
-      const { user, supabase } = ctx;
+      const { user } = ctx;
 
       if (!user.email) {
         throw new TRPCError({
