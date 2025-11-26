@@ -56,40 +56,45 @@ export async function reconcileStripeSubscriptions(): Promise<ReconciliationResu
 
   console.log(`📊 Found ${paidUsers.length} users with paid plans`);
 
-  for (const user of paidUsers) {
-    result.checked++;
+  // Process in parallel batches to respect Stripe's rate limits without blocking
+  const BATCH_SIZE = 100;
+  for (let i = 0; i < paidUsers.length; i += BATCH_SIZE) {
+    const batch = paidUsers.slice(i, i + BATCH_SIZE);
 
-    try {
-      const issue = await reconcileUser(user);
-
-      if (issue) {
-        result.drift_detected++;
-        result.issues.push(issue);
-
-        if (issue.action === "auto_fixed") {
-          result.auto_fixed++;
-        } else if (issue.action === "manual_review") {
-          result.manual_review++;
+    await Promise.all(
+      batch.map(async (user) => {
+        result.checked++;
+        try {
+          const issue = await reconcileUser(user);
+          if (issue) {
+            result.drift_detected++;
+            result.issues.push(issue);
+            if (issue.action === "auto_fixed") {
+              result.auto_fixed++;
+            } else if (issue.action === "manual_review") {
+              result.manual_review++;
+            }
+          }
+        } catch (error) {
+          result.errors++;
+          console.error(`❌ Error reconciling user ${user.id}:`, error);
+          result.issues.push({
+            userId: user.id,
+            field: "reconciliation",
+            database_value: user.planSelected,
+            stripe_value: "error",
+            severity: "high",
+            action: "error",
+            error: error instanceof Error ? error.message : String(error),
+          });
         }
-      }
-    } catch (error) {
-      result.errors++;
-      console.error(`❌ Error reconciling user ${user.id}:`, error);
+      })
+    );
 
-      result.issues.push({
-        userId: user.id,
-        field: "reconciliation",
-        database_value: user.planSelected,
-        stripe_value: "error",
-        severity: "high",
-        action: "error",
-        error: error instanceof Error ? error.message : String(error),
-      });
+    // Sleep between batches to respect rate limits
+    if (i + BATCH_SIZE < paidUsers.length) {
+      await sleep(1000); // 1 second between batches
     }
-
-    // Rate limiting: 100 requests/second to Stripe
-    // Sleep 10ms between users = ~100 req/sec
-    await sleep(10);
   }
 
   result.duration_ms = Date.now() - startTime;
