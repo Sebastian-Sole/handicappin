@@ -1434,15 +1434,6 @@ async function handleSubscriptionDeleted(subscription: any) {
  * Handles different event structures (customer, session, subscription)
  */
 function extractUserId(event: any): string | null {
-  // Try subscription metadata
-  if (event.data.object.metadata?.supabase_user_id) {
-    return event.data.object.metadata.supabase_user_id;
-  }
-
-  // Try session/checkout metadata
-  if (event.data.object.metadata?.supabase_user_id) {
-    return event.data.object.metadata.supabase_user_id;
-  }
-
-  return null;
+  // Try metadata from event object
+  return event.data.object.metadata?.supabase_user_id || null;
 }
