@@ -328,6 +328,13 @@ export const stripeRouter = createTRPCRouter({
           });
         }
 
+        if (!user.email) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "Email required for checkout",
+          });
+        }
+
         const session = await createLifetimeCheckoutSession({
           userId: user.id,
           email: user.email!,
