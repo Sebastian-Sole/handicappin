@@ -433,7 +433,13 @@ export const pendingLifetimePurchases = pgTable(
     })
       .onUpdate("cascade")
       .onDelete("cascade"), // Delete pending purchases when user is deleted
-    // Note: No RLS policies - this is a system table accessed only by webhook handler
+    pgPolicy("Users can view their own pending purchases", {
+      as: "permissive",
+      for: "select",
+      to: ["authenticated"],
+      using: sql`(auth.uid()::uuid = user_id)`,
+    }),
+    // Note: Write operations handled by service role via webhooks
   ]
 );
 

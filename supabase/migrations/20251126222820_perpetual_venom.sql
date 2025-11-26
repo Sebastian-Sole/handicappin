@@ -1,0 +1,2 @@
+ALTER TABLE "pending_lifetime_purchases" ENABLE ROW LEVEL SECURITY;--> statement-breakpoint
+CREATE POLICY "Users can view their own pending purchases" ON "pending_lifetime_purchases" AS PERMISSIVE FOR SELECT TO "authenticated" USING ((auth.uid()::uuid = user_id));
