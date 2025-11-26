@@ -7,87 +7,6 @@ import {
 } from "./access-helpers";
 
 /**
- * ⚠️ DEPRECATED: This function is NO LONGER used in middleware!
- *
- * Lightweight version of access control for Edge Runtime (middleware).
- * Reads MINIMAL billing info from database WITHOUT Stripe verification.
- *
- * ⚠️ SECURITY WARNING: This function does NOT verify with Stripe and should
- * NOT be used for authorization decisions!
- *
- * ⚠️ MIDDLEWARE NOTE: Middleware no longer calls this function. Missing JWT
- * claims now trigger a redirect to /auth/verify-session for controlled recovery.
- *
- * ✅ USE INSTEAD:
- * - Middleware: Read billing data from JWT claims (user.app_metadata.billing)
- * - Server Actions: Use getComprehensiveUserAccess() which verifies with Stripe
- *
- * This function is kept for backward compatibility in case other code uses it,
- * but should be removed entirely once all usages are migrated.
- *
- * @deprecated Use JWT claims in middleware or getComprehensiveUserAccess() in server actions
- */
-export async function getBasicUserAccess(
-  userId: string
-): Promise<FeatureAccess> {
-  console.warn(
-    "⚠️ DEPRECATED: getBasicUserAccess() called - this should NOT be used for authorization!",
-    {
-      userId,
-      caller: new Error().stack?.split("\n")[2]?.trim(), // Log caller for debugging
-    }
-  );
-  const supabase = await createServerComponentClient();
-
-  // Get user profile
-  const { data: profile, error: profileError } = await supabase
-    .from("profile")
-    .select("plan_selected")
-    .eq("id", userId)
-    .single();
-
-  if (profileError) {
-    console.error("Error fetching profile:", profileError);
-    return createNoAccessResponse();
-  }
-
-  // No plan selected yet
-  if (!profile.plan_selected) {
-    return createNoAccessResponse();
-  }
-
-  // Free plan - COUNT rounds from database
-  if (profile.plan_selected === "free") {
-    const { count, error: countError } = await supabase
-      .from("round")
-      .select("*", { count: "exact", head: true })
-      .eq("userId", userId);
-
-    if (countError) {
-      console.error("Error counting rounds:", countError);
-      return createFreeTierResponse(0);
-    }
-
-    return createFreeTierResponse(count || 0);
-  }
-
-  // Paid plan (trust database, Stripe verification happens in page components)
-  return {
-    plan: profile.plan_selected as "premium" | "unlimited" | "lifetime",
-    hasAccess: true,
-    hasPremiumAccess: true,
-    hasUnlimitedRounds: hasUnlimitedRounds(profile.plan_selected),
-    remainingRounds: Infinity,
-    status: "active",
-    isLifetime: profile.plan_selected === "lifetime",
-    currentPeriodEnd:
-      profile.plan_selected === "lifetime"
-        ? new Date("2099-12-31T23:59:59.000Z")
-        : null,
-  };
-}
-
-/**
  * Checks if user has active Stripe subscription (premium/unlimited)
  * Returns access info based on Stripe subscription status
  */
@@ -108,7 +27,6 @@ async function getUserAccess(userId: string): Promise<FeatureAccess | null> {
 
     // Query Stripe for active subscriptions
     // Note: This function should not be called from middleware (edge runtime)
-    // Use getBasicUserAccess() for middleware instead
     const { stripe, mapPriceToPlan } = await import("@/lib/stripe");
     const subscriptions = await stripe.subscriptions.list({
       customer: stripeCustomer.stripe_customer_id,
