@@ -355,45 +355,35 @@ async function handleCheckoutCompleted(session: any) {
     logSubscriptionEvent("Subscription checkout - updating plan immediately");
 
     try {
-      // Get subscription ID from session
-      const subscriptionId = session.subscription;
-
-      if (!subscriptionId) {
-        throw new Error(
-          `Missing subscription ID in checkout session ${session.id}`
-        );
-      }
-
-      // Retrieve full subscription details from Stripe
-      const subscription: any = await stripe.subscriptions.retrieve(
-        subscriptionId as string
+      // Get price ID from line items (avoids extra subscription.retrieve call)
+      const lineItems = await stripe.checkout.sessions.listLineItems(
+        session.id
       );
+      const priceId = lineItems.data[0]?.price?.id;
 
-      // Get price ID from subscription
-      const priceId = subscription.items.data[0]?.price.id;
       if (!priceId) {
         throw new Error(
-          `No price ID in subscription ${subscriptionId} for user ${userId}`
+          `No price ID found in line items for checkout session ${session.id}`
         );
       }
 
       const plan = mapPriceToPlan(priceId);
       if (!plan) {
         throw new Error(
-          `Unknown price ID ${priceId} in subscription ${subscriptionId} for user ${userId}`
+          `Unknown price ID ${priceId} in checkout session ${session.id} - cannot determine plan`
         );
       }
 
       // Verify subscription amount
-      const price = subscription.items.data[0]?.price;
-      if (!price) {
+      const lineItemPrice = lineItems.data[0]?.price;
+      if (!lineItemPrice) {
         throw new Error(
-          `No price object in subscription ${subscriptionId} for user ${userId}`
+          `No price found in line items for checkout session ${session.id}`
         );
       }
 
-      const amount = price.unit_amount || 0;
-      const currency = price.currency || "usd";
+      const amount = lineItemPrice.unit_amount || 0;
+      const currency = lineItemPrice.currency || "usd";
 
       const verification = verifyPaymentAmount(plan, currency, amount, true);
 
@@ -407,14 +397,14 @@ async function handleCheckoutCompleted(session: any) {
             actual: formatAmount(verification.actual),
             variance: verification.variance,
             currency: verification.currency,
-            subscriptionId: subscription.id,
+            sessionId: session.id,
             userId,
             priceId,
             severity: "HIGH",
           }
         );
         throw new Error(
-          `Amount verification failed for subscription ${subscriptionId} - expected ${verification.expected}, got ${verification.actual}`
+          `Amount verification failed for checkout session ${session.id} - expected ${verification.expected}, got ${verification.actual}`
         );
       }
 
@@ -435,21 +425,18 @@ async function handleCheckoutCompleted(session: any) {
       const userEmail = userProfile[0]?.email;
       const isFirstTimeSubscription = oldPlan === "free";
 
-      // Update plan immediately
+      // Update plan immediately (status fields updated by subscription.created event)
       await db
         .update(profile)
         .set({
           planSelected: plan,
           planSelectedAt: new Date(),
-          subscriptionStatus: subscription.status,
-          currentPeriodEnd: subscription.items.data[0]?.current_period_end,
-          cancelAtPeriodEnd: subscription.cancel_at_period_end || false,
           billingVersion: sql`billing_version + 1`,
         })
         .where(eq(profile.id, userId));
 
       logWebhookSuccess(
-        `Updated plan_selected to '${plan}' for user: ${userId} at checkout`
+        `Updated plan_selected to '${plan}' for user: ${userId} at checkout (status will be updated by subscription.created)`
       );
 
       // ✅ Send welcome email for first-time subscriptions
