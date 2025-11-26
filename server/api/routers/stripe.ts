@@ -69,7 +69,7 @@ export const stripeRouter = createTRPCRouter({
       }
 
       // Rate limiting check
-      const identifier = user.id;
+      const identifier = `user:${user.id}`;
       await checkRateLimit(identifier, checkoutRateLimit);
 
       const priceId = PLAN_TO_PRICE_MAP[input.plan];
