@@ -321,6 +321,13 @@ export const stripeRouter = createTRPCRouter({
       if ("requiresCheckout" in result && result.requiresCheckout) {
         const priceId = PLAN_TO_PRICE_MAP.lifetime;
 
+        if (!priceId) {
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "Price ID not configured for lifetime plan",
+          });
+        }
+
         const session = await createLifetimeCheckoutSession({
           userId: user.id,
           email: user.email!,
