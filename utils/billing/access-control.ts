@@ -1,79 +1,9 @@
 import { createServerComponentClient } from "@/utils/supabase/server";
-import { FeatureAccess, SubscriptionStatus } from "@/types/billing";
+import { FeatureAccess } from "@/types/billing";
 import {
   createNoAccessResponse,
   createFreeTierResponse,
-  hasUnlimitedRounds,
 } from "./access-helpers";
-
-/**
- * Checks if user has active Stripe subscription (premium/unlimited)
- * Returns access info based on Stripe subscription status
- */
-async function getUserAccess(userId: string): Promise<FeatureAccess | null> {
-  try {
-    const supabase = await createServerComponentClient();
-
-    // Get stripe customer ID
-    const { data: stripeCustomer } = await supabase
-      .from("stripe_customers")
-      .select("stripe_customer_id")
-      .eq("user_id", userId)
-      .single();
-
-    if (!stripeCustomer) {
-      return null;
-    }
-
-    // Query Stripe for active subscriptions
-    // Note: This function should not be called from middleware (edge runtime)
-    const { stripe, mapPriceToPlan } = await import("@/lib/stripe");
-    const subscriptions = await stripe.subscriptions.list({
-      customer: stripeCustomer.stripe_customer_id,
-      status: "active",
-      limit: 1,
-    });
-
-    const activeSubscription = subscriptions.data[0];
-
-    if (activeSubscription) {
-      const priceId = activeSubscription.items.data[0]?.price.id;
-      const plan = mapPriceToPlan(priceId || "");
-
-      if (!plan) {
-        console.error("Unknown price ID:", priceId);
-        return null;
-      }
-
-      // Get subscription period from the subscription items
-      const item = activeSubscription.items.data[0];
-      const periodEnd = item?.current_period_end
-        ? new Date(item.current_period_end * 1000)
-        : new Date();
-
-      return {
-        plan,
-        hasAccess: true,
-        hasPremiumAccess: true,
-        hasUnlimitedRounds:
-          plan === "premium" || plan === "unlimited" || plan === "lifetime",
-        remainingRounds:
-          plan === "premium" || plan === "unlimited" || plan === "lifetime"
-            ? Infinity
-            : 100,
-        status: "active" as SubscriptionStatus,
-        currentPeriodEnd: periodEnd,
-        isLifetime: plan === "lifetime",
-        cancelAtPeriodEnd: activeSubscription.cancel_at_period_end,
-      };
-    }
-
-    return null;
-  } catch (error) {
-    console.error("Error checking Stripe subscription:", error);
-    return null;
-  }
-}
 
 /**
  * Comprehensive access check that determines user's plan and permissions
