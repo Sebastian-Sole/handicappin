@@ -3,10 +3,7 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { jwtVerify } from "jose"; // Import the `jose` library
 import { PasswordResetPayload } from "@/types/auth";
-import {
-  FREE_TIER_ROUND_LIMIT,
-  PREMIUM_PATHS,
-} from "@/utils/billing/constants";
+import { PREMIUM_PATHS } from "@/utils/billing/constants";
 import { BillingClaims, getAppMetadataFromJWT } from "@/utils/supabase/jwt";
 
 // Clock skew tolerance for expiry checks (prevent edge flaps)
@@ -251,25 +248,6 @@ export async function updateSession(request: NextRequest) {
         return NextResponse.redirect(url);
       }
 
-      // Check if user is trying to add a round when at limit (free tier only)
-      if (pathname.startsWith("/rounds/add") && plan === "free") {
-        // Count rounds from database (fast query due to index)
-        const { count: roundCount, error: countError } = await supabase
-          .from("round")
-          .select("*", { count: "exact", head: true })
-          .eq("userId", enrichedUser.id);
-
-        if (countError) {
-          console.error("❌ Middleware: Error counting rounds:", countError);
-        } else {
-          if (roundCount !== null && roundCount >= FREE_TIER_ROUND_LIMIT) {
-            const url = request.nextUrl.clone();
-            url.pathname = "/upgrade";
-            url.searchParams.set("reason", "round_limit");
-            return NextResponse.redirect(url);
-          }
-        }
-      }
     } catch (error) {
       // ✅ NEW: On error, redirect to verification page (not onboarding)
       console.error("❌ Middleware error - redirecting to session verification:", error);
