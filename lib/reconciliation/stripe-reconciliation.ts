@@ -247,6 +247,16 @@ async function reconcileSubscription(
         severity: "high",
         action: "auto_fixed",
       };
+    } else {
+      // Price mapping failed - needs manual review
+      return {
+        userId: user.id,
+        field: "plan_mapping",
+        database_value: user.planSelected,
+        stripe_value: priceId,
+        severity: "high",
+        action: "manual_review",
+      };
     }
   }
 
