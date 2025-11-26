@@ -142,7 +142,7 @@ export async function updateSession(request: NextRequest) {
       const billing = enrichedUser.app_metadata?.billing as BillingClaims | undefined;
 
       let plan: string | null = null;
-      let status: string | null = "active";
+      let status: string | null = null;
       let hasPremiumAccess: boolean = false;
 
       // Check if billing claims are present
