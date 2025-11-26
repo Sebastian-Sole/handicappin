@@ -1,3 +1,4 @@
+import type Stripe from "stripe";
 import { stripe, mapPriceToPlan } from "@/lib/stripe";
 import { db } from "@/db";
 import { profile, stripeCustomers } from "@/db/schema";
@@ -16,8 +17,8 @@ type ReconciliationResult = {
 type DriftIssue = {
   userId: string;
   field: string;
-  database_value: any;
-  stripe_value: any;
+  database_value: string | number | boolean | null;
+  stripe_value: string | number | boolean | null;
   severity: "low" | "medium" | "high";
   action: "auto_fixed" | "manual_review" | "error";
   error?: string;
@@ -182,7 +183,7 @@ async function reconcileSubscription(
     limit: 10,
   });
 
-  const activeSubscription: any = subscriptions.data.find(
+  const activeSubscription: Stripe.Subscription | undefined = subscriptions.data.find(
     (s) => s.status === "active" || s.status === "trialing"
   );
 
@@ -232,8 +233,8 @@ async function reconcileSubscription(
           planSelected: plan,
           planSelectedAt: new Date(),
           subscriptionStatus: activeSubscription.status,
-          currentPeriodEnd: activeSubscription.current_period_end as number,
-          cancelAtPeriodEnd: activeSubscription.cancel_at_period_end || false,
+          currentPeriodEnd: activeSubscription.items.data[0]?.current_period_end,
+          cancelAtPeriodEnd: activeSubscription.cancel_at_period_end,
           billingVersion: sql`billing_version + 1`,
         })
         .where(eq(profile.id, user.id));
