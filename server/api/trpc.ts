@@ -55,6 +55,12 @@ const t = initTRPC.context<typeof createTRPCContext>().create({
         ...shape.data,
         zodError:
           error.cause instanceof ZodError ? error.cause.flatten() : null,
+        // Include cause for non-Error objects (e.g., rate limit metadata)
+        // Exclude Error instances to prevent leaking stack traces
+        cause:
+          error.cause instanceof ZodError || error.cause instanceof Error
+            ? undefined
+            : error.cause,
       },
     };
   },
