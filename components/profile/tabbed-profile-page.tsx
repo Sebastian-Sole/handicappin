@@ -48,13 +48,19 @@ export function TabbedProfilePage({
     setActiveTab(newTab);
     const newParams = new URLSearchParams(searchParams.toString());
     newParams.set("tab", newTab);
-    router.replace(`/profile/${authUser.id}?${newParams.toString()}`, { scroll: false });
+    router.replace(`/profile/${authUser.id}?${newParams.toString()}`, {
+      scroll: false,
+    });
   };
 
   // Only sync state when URL changes externally (e.g., browser back/forward)
   useEffect(() => {
     const urlTab = searchParams.get("tab") as TabId;
-    const validTab = urlTab && (urlTab === "personal" || urlTab === "billing" || urlTab === "settings") ? urlTab : "personal";
+    const validTab =
+      urlTab &&
+      (urlTab === "personal" || urlTab === "billing" || urlTab === "settings")
+        ? urlTab
+        : "personal";
 
     // Only update if different from current state
     if (validTab !== activeTab) {
@@ -107,12 +113,8 @@ export function TabbedProfilePage({
             {activeTab === "personal" && (
               <PersonalInformationTab authUser={authUser} profile={profile} />
             )}
-            {activeTab === "billing" && (
-              <BillingTab access={access} />
-            )}
-            {activeTab === "settings" && (
-              <SettingsTab userId={authUser.id} />
-            )}
+            {activeTab === "billing" && <BillingTab access={access} />}
+            {activeTab === "settings" && <SettingsTab />}
           </div>
         </div>
       </div>
