@@ -44,24 +44,9 @@ export const UpdateSubscriptionRequestSchema = z.object({
 
 export type UpdateSubscriptionRequest = z.infer<typeof UpdateSubscriptionRequestSchema>;
 
-// No input needed for portal (authenticated endpoint)
-export type PortalRequest = Record<string, never>;
-
 // ============================================
-// API Response Schemas
+// Subscription Info Schema
 // ============================================
-
-export const CheckoutResponseSchema = z.object({
-  url: z.string().url(),
-});
-
-export type CheckoutResponse = z.infer<typeof CheckoutResponseSchema>;
-
-export const PortalResponseSchema = z.object({
-  url: z.string().url(),
-});
-
-export type PortalResponse = z.infer<typeof PortalResponseSchema>;
 
 export const SubscriptionInfoSchema = z.object({
   id: z.string(),
@@ -76,41 +61,3 @@ export const SubscriptionInfoSchema = z.object({
 });
 
 export type SubscriptionInfo = z.infer<typeof SubscriptionInfoSchema>;
-
-export const GetSubscriptionResponseSchema = z.object({
-  hasStripeCustomer: z.boolean(),
-  stripeCustomerId: z.string().optional(),
-  subscriptions: z.array(SubscriptionInfoSchema),
-  error: z.string().optional(),
-});
-
-export type GetSubscriptionResponse = z.infer<typeof GetSubscriptionResponseSchema>;
-
-export const UpdateSubscriptionResponseSchema = z.object({
-  success: z.boolean(),
-  changeType: z.enum(["upgrade", "downgrade", "cancel", "lifetime"]),
-  checkoutUrl: z.string().url().optional(),
-  message: z.string().optional(),
-});
-
-export type UpdateSubscriptionResponse = z.infer<typeof UpdateSubscriptionResponseSchema>;
-
-// ============================================
-// Error Response Schema
-// ============================================
-
-export const ErrorResponseSchema = z.object({
-  error: z.string(),
-  retryAfter: z.number().optional(), // For rate limit errors
-  details: z.string().optional(),
-});
-
-export type ErrorResponse = z.infer<typeof ErrorResponseSchema>;
-
-// ============================================
-// API Result Type (Success or Error)
-// ============================================
-
-export type ApiResult<T> =
-  | { success: true; data: T }
-  | { success: false; error: ErrorResponse };

@@ -2,35 +2,29 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { createPortal } from "@/lib/stripe-api-client";
+import { api } from "@/trpc/react";
 
 export function ManageSubscriptionButton() {
   const [loading, setLoading] = useState(false);
+  const createPortalMutation = api.stripe.createPortal.useMutation();
 
   const handleManageSubscription = async () => {
     try {
       setLoading(true);
 
-      // ✅ NEW: Use type-safe client
-      const result = await createPortal();
+      const result = await createPortalMutation.mutateAsync();
 
-      if (!result.success) {
-        // ✅ NEW: Type-safe error handling with retryAfter
-        if (result.error.retryAfter) {
-          alert(
-            `Too many requests. Please wait ${result.error.retryAfter} seconds and try again.`
-          );
-        } else {
-          throw new Error(result.error.error);
-        }
-        return;
-      }
-
-      // ✅ NEW: TypeScript knows result.data.url exists
-      window.location.href = result.data.url;
-    } catch (error) {
+      window.location.href = result.url;
+    } catch (error: any) {
       console.error("Error opening customer portal:", error);
-      alert("Failed to open subscription management. Please try again.");
+
+      if (error?.data?.code === "TOO_MANY_REQUESTS" && error?.data?.cause?.retryAfter) {
+        alert(
+          `Too many requests. Please wait ${error.data.cause.retryAfter} seconds and try again.`
+        );
+      } else {
+        alert("Failed to open subscription management. Please try again.");
+      }
     } finally {
       setLoading(false);
     }

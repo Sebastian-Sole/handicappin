@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { CheckCircle2, XCircle, Clock, X } from "lucide-react";
 import { createFreeTierSubscription } from "@/app/onboarding/actions";
-import { createCheckout, updateSubscription } from "@/lib/stripe-api-client";
+import { api } from "@/trpc/react";
 import type { PlanType } from "@/lib/stripe-types";
 import { PricingCard } from "./pricing-card";
 import { PLAN_FEATURES, PLAN_DETAILS } from "./plan-features";
@@ -57,6 +57,10 @@ export function PlanSelector({
     message: string;
   } | null>(null);
 
+  // tRPC mutations
+  const updateSubscriptionMutation = api.stripe.updateSubscription.useMutation();
+  const createCheckoutMutation = api.stripe.createCheckout.useMutation();
+
   // Auto-dismiss success messages after 5 seconds
   useEffect(() => {
     if (feedbackMessage?.type === "success") {
@@ -78,19 +82,13 @@ export function PlanSelector({
 
       // If in upgrade mode and user has a paid plan, use subscription update API
       if (mode === "upgrade" && currentPlan && currentPlan !== "free") {
-        // ✅ NEW: Use type-safe client
-        const result = await updateSubscription({ newPlan: "free" });
-
-        if (!result.success) {
-          throw new Error(result.error.error);
-        }
+        const result = await updateSubscriptionMutation.mutateAsync({ newPlan: "free" });
 
         // Show success message
         setFeedbackMessage({
           type: "success",
           title: "Plan Updated",
-          message:
-            result.data.message || "Your plan has been updated successfully.",
+          message: result.message || "Your plan has been updated successfully.",
         });
 
         // Delay navigation to allow user to see success message
@@ -143,16 +141,23 @@ export function PlanSelector({
 
       router.push("/");
       router.refresh();
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error selecting free plan:", error);
-      setFeedbackMessage({
-        type: "error",
-        title: "Failed to Update Plan",
-        message:
-          error instanceof Error
-            ? error.message
-            : "We couldn't switch you to the free plan. Please try again or contact support if the issue persists.",
-      });
+
+      // Check if it's a rate limit error
+      if (error?.data?.code === "TOO_MANY_REQUESTS" && error?.data?.cause?.retryAfter) {
+        setFeedbackMessage({
+          type: "error",
+          title: "Too Many Requests",
+          message: `Please wait ${error.data.cause.retryAfter} seconds before trying again. This helps us keep the service running smoothly for everyone.`,
+        });
+      } else {
+        setFeedbackMessage({
+          type: "error",
+          title: "Failed to Update Plan",
+          message: error?.message || "We couldn't switch you to the free plan. Please try again or contact support if the issue persists.",
+        });
+      }
     } finally {
       setLoading(null);
     }
@@ -165,27 +170,11 @@ export function PlanSelector({
 
       // If in upgrade mode and user has a paid plan, use subscription update API
       if (mode === "upgrade" && currentPlan && currentPlan !== "free") {
-        // ✅ NEW: Use type-safe client
-        const result = await updateSubscription({ newPlan: plan });
-
-        if (!result.success) {
-          // ✅ NEW: Type-safe error handling with retryAfter
-          if (result.error.retryAfter) {
-            setFeedbackMessage({
-              type: "error",
-              title: "Too Many Requests",
-              message: `Please wait ${result.error.retryAfter} seconds before trying again to avoid rate limiting.`,
-            });
-          } else {
-            throw new Error(result.error.error);
-          }
-          setLoading(null);
-          return;
-        }
+        const result = await updateSubscriptionMutation.mutateAsync({ newPlan: plan });
 
         // If lifetime, redirect to checkout
-        if (result.data.checkoutUrl) {
-          window.location.href = result.data.checkoutUrl;
+        if (result.checkoutUrl) {
+          window.location.href = result.checkoutUrl;
           return;
         }
 
@@ -193,8 +182,7 @@ export function PlanSelector({
         setFeedbackMessage({
           type: "success",
           title: "Plan Updated",
-          message:
-            result.data.message || "Your plan has been updated successfully.",
+          message: result.message || "Your plan has been updated successfully.",
         });
 
         // Delay navigation to allow user to see success message
@@ -207,36 +195,26 @@ export function PlanSelector({
       }
 
       // Otherwise, create new checkout (existing logic for onboarding or free users upgrading)
-      // ✅ NEW: Use type-safe client
-      const result = await createCheckout({ plan });
+      const result = await createCheckoutMutation.mutateAsync({ plan });
 
-      if (!result.success) {
-        // ✅ NEW: Type-safe error handling with retryAfter
-        if (result.error.retryAfter) {
-          setFeedbackMessage({
-            type: "error",
-            title: "Too Many Requests",
-            message: `Please wait ${result.error.retryAfter} seconds before trying again to avoid rate limiting.`,
-          });
-        } else {
-          throw new Error(result.error.error);
-        }
-        setLoading(null);
-        return;
-      }
-
-      // ✅ NEW: TypeScript knows result.data.url exists
-      window.location.href = result.data.url;
-    } catch (error) {
+      window.location.href = result.url;
+    } catch (error: any) {
       console.error("Error with plan change:", error);
-      setFeedbackMessage({
-        type: "error",
-        title: "Failed to Process Plan Change",
-        message:
-          error instanceof Error
-            ? error.message
-            : "We couldn't complete your plan change. Please try again or contact support if the issue persists.",
-      });
+
+      // Check if it's a rate limit error
+      if (error?.data?.code === "TOO_MANY_REQUESTS" && error?.data?.cause?.retryAfter) {
+        setFeedbackMessage({
+          type: "error",
+          title: "Too Many Requests",
+          message: `Please wait ${error.data.cause.retryAfter} seconds before trying again. This helps us keep the service running smoothly for everyone.`,
+        });
+      } else {
+        setFeedbackMessage({
+          type: "error",
+          title: "Failed to Process Plan Change",
+          message: error?.message || "We couldn't complete your plan change. Please try again or contact support if the issue persists.",
+        });
+      }
       setLoading(null);
     }
   };
