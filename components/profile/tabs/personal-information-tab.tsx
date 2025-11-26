@@ -38,8 +38,6 @@ export function PersonalInformationTab({
   authUser,
 }: PersonalInformationTabProps) {
   const { id, name: profileName } = profile;
-  const [email, setEmail] = useState<string>(authUser.email || "");
-  const [name, setName] = useState<string>(profileName || "");
   const [saveState, setSaveState] = useState<"idle" | "saving" | "saved">("idle");
   const supabase = createClientComponentClient();
 
@@ -66,8 +64,8 @@ export function PersonalInformationTab({
     resolver: zodResolver(updateProfileSchema),
     defaultValues: {
       id: id,
-      name: name,
-      email: email,
+      name: profileName || "",
+      email: authUser.email || "",
     },
   });
 
@@ -117,11 +115,6 @@ export function PersonalInformationTab({
                     type="text"
                     required
                     {...field}
-                    value={name}
-                    onChange={(e) => {
-                      setName(e.target.value);
-                      form.setValue("name", e.target.value);
-                    }}
                   />
                 </FormControl>
                 <FormMessage />
@@ -141,11 +134,6 @@ export function PersonalInformationTab({
                     type="email"
                     required
                     {...field}
-                    value={email}
-                    onChange={(e) => {
-                      setEmail(e.target.value);
-                      form.setValue("email", e.target.value);
-                    }}
                   />
                 </FormControl>
                 <FormMessage />
