@@ -45,6 +45,7 @@ export default function BillingSuccessPage() {
       } = await supabase.auth.getUser();
 
       if (!initialUser) {
+        console.log("No logged in user");
         window.location.href = "/login";
         return;
       }
