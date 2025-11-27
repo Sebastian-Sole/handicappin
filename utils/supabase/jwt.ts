@@ -29,6 +29,32 @@ export type BillingClaims = {
  * @param session - The Supabase session object containing the access token
  * @returns The billing claims from the JWT, or null if not available
  */
+/**
+ * Decode base64url string (works in both Node.js and browser)
+ */
+function base64urlDecode(str: string): string {
+  // Convert base64url to base64
+  let base64 = str.replace(/-/g, '+').replace(/_/g, '/');
+
+  // Add padding if needed
+  const pad = base64.length % 4;
+  if (pad) {
+    if (pad === 1) {
+      throw new Error('Invalid base64url string');
+    }
+    base64 += '='.repeat(4 - pad);
+  }
+
+  // Decode base64
+  if (typeof window !== 'undefined') {
+    // Browser environment
+    return atob(base64);
+  } else {
+    // Node.js environment
+    return Buffer.from(base64, 'base64').toString('utf-8');
+  }
+}
+
 export function getBillingFromJWT(session: Session | null): BillingClaims | null {
   if (!session?.access_token) {
     return null;
@@ -37,7 +63,7 @@ export function getBillingFromJWT(session: Session | null): BillingClaims | null
   try {
     const parts = session.access_token.split('.');
     if (parts.length === 3) {
-      const payload = JSON.parse(Buffer.from(parts[1], 'base64url').toString());
+      const payload = JSON.parse(base64urlDecode(parts[1]));
       return payload.app_metadata?.billing || null;
     }
   } catch (e) {
@@ -74,7 +100,7 @@ export function getAppMetadataFromJWT(session: Session | null): Record<string, a
   try {
     const parts = session.access_token.split('.');
     if (parts.length === 3) {
-      const payload = JSON.parse(Buffer.from(parts[1], 'base64url').toString());
+      const payload = JSON.parse(base64urlDecode(parts[1]));
       return payload.app_metadata || null;
     }
   } catch (e) {

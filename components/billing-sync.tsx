@@ -2,7 +2,10 @@
 
 import { useEffect, useState } from "react";
 import { createClientComponentClient } from "@/utils/supabase/client";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
+import { getBillingFromJWT } from "@/utils/supabase/jwt";
+import { useToast } from "@/components/ui/use-toast";
+import { PREMIUM_PATHS } from "@/utils/billing/constants";
 
 /**
  * Background component that listens for billing changes via Supabase Realtime
@@ -15,6 +18,8 @@ import { useRouter } from "next/navigation";
 export function BillingSync() {
   const supabase = createClientComponentClient();
   const router = useRouter();
+  const pathname = usePathname();
+  const { toast } = useToast();
   const [userId, setUserId] = useState<string | null>(null);
 
   // Detect authenticated user
@@ -34,11 +39,18 @@ export function BillingSync() {
     }
 
     // Skip in local development if using local Supabase without Realtime
+    // Can be overridden with NEXT_PUBLIC_ENABLE_BILLING_SYNC=true for testing
     const isLocalDev = process.env.NEXT_PUBLIC_SUPABASE_URL?.includes('127.0.0.1');
+    const forceEnable = process.env.NEXT_PUBLIC_ENABLE_BILLING_SYNC === 'true';
 
-    if (isLocalDev) {
+    if (isLocalDev && !forceEnable) {
       console.log(`🔄 BillingSync: Skipped in local dev (Realtime not available)`);
+      console.log(`💡 To enable for testing, set NEXT_PUBLIC_ENABLE_BILLING_SYNC=true`);
       return;
+    }
+
+    if (forceEnable && isLocalDev) {
+      console.log(`🔄 BillingSync: Force-enabled in local dev for testing`);
     }
 
     console.log(`🔄 BillingSync mounted for user ${userId}`);
@@ -75,22 +87,92 @@ export function BillingSync() {
             );
 
             try {
-              // Force JWT refresh to get new billing claims
-              const { data, error } = await supabase.auth.refreshSession();
+              console.log("🔄 Detected billing update - refreshing session...");
 
-              if (error) {
-                console.error("❌ JWT refresh failed:", error);
+              // Step 1: Refresh client-side session first
+              const { data: clientData, error: clientError } = await supabase.auth.refreshSession();
+
+              if (clientError) {
+                console.error("❌ Client-side JWT refresh failed:", clientError);
                 return;
               }
 
-              if (data.session) {
-                console.log("✅ JWT refreshed with new billing data");
+              console.log("✅ Client-side JWT refreshed");
 
-                // Refresh server components to reflect new JWT claims
-                router.refresh();
+              // Step 2: Force server-side cookie update via API route
+              try {
+                const response = await fetch("/api/auth/sync-session", {
+                  method: "POST",
+                  credentials: "include", // Include cookies
+                });
+
+                if (!response.ok) {
+                  console.error("❌ Server-side session sync failed:", response.status);
+                  // Continue anyway - client-side refresh may be enough
+                } else {
+                  const result = await response.json();
+                  console.log("✅ Server-side session synced, new billing:", result.billing);
+                }
+              } catch (fetchError) {
+                console.error("❌ Failed to call sync-session API:", fetchError);
+                // Continue anyway - client-side refresh may be enough
               }
+
+              // Step 3: Check if user lost premium access while on a premium page
+              const newBilling = getBillingFromJWT(clientData.session);
+              const isOnPremiumPage = PREMIUM_PATHS.some((path) => pathname.startsWith(path));
+
+              if (newBilling) {
+                const { plan, status, current_period_end, cancel_at_period_end } = newBilling;
+
+                // Determine if user has premium access (mirrors middleware logic)
+                let hasPremiumAccess = false;
+
+                if (status === "past_due" || status === "incomplete" || status === "paused") {
+                  hasPremiumAccess = false;
+                } else if (status === "canceled") {
+                  if (cancel_at_period_end && current_period_end) {
+                    const nowSeconds = Date.now() / 1000;
+                    const EXPIRY_LEEWAY_SECONDS = 120; // Match middleware
+                    const isExpired = nowSeconds > current_period_end + EXPIRY_LEEWAY_SECONDS;
+                    hasPremiumAccess = !isExpired && (plan === "premium" || plan === "unlimited" || plan === "lifetime");
+                  } else {
+                    hasPremiumAccess = false;
+                  }
+                } else if (
+                  current_period_end &&
+                  Date.now() / 1000 > current_period_end + 120
+                ) {
+                  hasPremiumAccess = false;
+                } else {
+                  hasPremiumAccess =
+                    plan === "premium" || plan === "unlimited" || plan === "lifetime";
+                }
+
+                console.log("🔐 Access check:", { hasPremiumAccess, isOnPremiumPage, plan, status });
+
+                // Step 4: Redirect if access was revoked while on premium page
+                if (isOnPremiumPage && !hasPremiumAccess) {
+                  console.warn("⚠️ Access revoked while on premium page - redirecting to /upgrade");
+
+                  toast({
+                    title: "Subscription Expired",
+                    description: "Your premium access has ended. Please upgrade to continue.",
+                    variant: "destructive",
+                  });
+
+                  // Redirect to upgrade page
+                  router.push("/upgrade");
+                  return; // Don't call router.refresh() - we're navigating
+                }
+              }
+
+              // Step 5: Refresh server components to reflect new JWT
+              router.refresh();
+
+              console.log("✅ Billing sync complete");
             } catch (err) {
-              console.error("❌ Error during JWT refresh:", err);
+              console.error("❌ Error during billing sync:", err);
             }
           }
         }
@@ -108,7 +190,7 @@ export function BillingSync() {
       console.log(`🔄 BillingSync unmounting for user ${userId}`);
       supabase.removeChannel(channel);
     };
-  }, [userId, supabase, router]);
+  }, [userId, supabase, router, pathname, toast]);
 
   // No UI - this component is invisible
   return null;
