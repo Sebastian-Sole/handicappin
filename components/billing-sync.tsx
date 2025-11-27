@@ -93,8 +93,9 @@ export function BillingSync() {
               // Step 1: Refresh client-side session first
               const { data: clientData, error: clientError } = await supabase.auth.refreshSession();
 
-              if (clientError) {
-                console.error("❌ Client-side JWT refresh failed:", clientError);
+              if (clientError || !clientData?.session) {
+                console.error("❌ Client-side JWT refresh failed:",
+                  clientError || "No session returned");
                 return;
               }
 
