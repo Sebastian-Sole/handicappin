@@ -6,6 +6,7 @@ import { useRouter, usePathname } from "next/navigation";
 import { getBillingFromJWT } from "@/utils/supabase/jwt";
 import { useToast } from "@/components/ui/use-toast";
 import { PREMIUM_PATHS } from "@/utils/billing/constants";
+import { hasPremiumAccess } from "@/utils/billing/access";
 
 /**
  * Background component that listens for billing changes via Supabase Realtime
@@ -123,36 +124,18 @@ export function BillingSync() {
               const isOnPremiumPage = PREMIUM_PATHS.some((path) => pathname.startsWith(path));
 
               if (newBilling) {
-                const { plan, status, current_period_end, cancel_at_period_end } = newBilling;
+                // Use shared access control logic (same as middleware)
+                const userHasPremiumAccess = hasPremiumAccess(newBilling);
 
-                // Determine if user has premium access (mirrors middleware logic)
-                let hasPremiumAccess = false;
-
-                if (status === "past_due" || status === "incomplete" || status === "paused") {
-                  hasPremiumAccess = false;
-                } else if (status === "canceled") {
-                  if (cancel_at_period_end && current_period_end) {
-                    const nowSeconds = Date.now() / 1000;
-                    const EXPIRY_LEEWAY_SECONDS = 120; // Match middleware
-                    const isExpired = nowSeconds > current_period_end + EXPIRY_LEEWAY_SECONDS;
-                    hasPremiumAccess = !isExpired && (plan === "premium" || plan === "unlimited" || plan === "lifetime");
-                  } else {
-                    hasPremiumAccess = false;
-                  }
-                } else if (
-                  current_period_end &&
-                  Date.now() / 1000 > current_period_end + 120
-                ) {
-                  hasPremiumAccess = false;
-                } else {
-                  hasPremiumAccess =
-                    plan === "premium" || plan === "unlimited" || plan === "lifetime";
-                }
-
-                console.log("🔐 Access check:", { hasPremiumAccess, isOnPremiumPage, plan, status });
+                console.log("🔐 Access check:", {
+                  hasPremiumAccess: userHasPremiumAccess,
+                  isOnPremiumPage,
+                  plan: newBilling.plan,
+                  status: newBilling.status
+                });
 
                 // Step 4: Redirect if access was revoked while on premium page
-                if (isOnPremiumPage && !hasPremiumAccess) {
+                if (isOnPremiumPage && !userHasPremiumAccess) {
                   console.warn("⚠️ Access revoked while on premium page - redirecting to /upgrade");
 
                   toast({

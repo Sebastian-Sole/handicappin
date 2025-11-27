@@ -5,9 +5,7 @@ import { jwtVerify } from "jose"; // Import the `jose` library
 import { PasswordResetPayload } from "@/types/auth";
 import { PREMIUM_PATHS } from "@/utils/billing/constants";
 import { BillingClaims, getAppMetadataFromJWT } from "@/utils/supabase/jwt";
-
-// Clock skew tolerance for expiry checks (prevent edge flaps)
-const EXPIRY_LEEWAY_SECONDS = 120; // 2 minutes
+import { hasPremiumAccess } from "@/utils/billing/access";
 
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({
@@ -142,10 +140,6 @@ export async function updateSession(request: NextRequest) {
       // Read billing info from JWT claims (manually decoded from cookie)
       const billing = enrichedUser.app_metadata?.billing as BillingClaims | undefined;
 
-      let plan: string | null = null;
-      let status: string | null = null;
-      let hasPremiumAccess: boolean = false;
-
       // Check if billing claims are present
       if (!billing) {
         // No billing claims in JWT - redirect to verification to refresh token
@@ -169,50 +163,10 @@ export async function updateSession(request: NextRequest) {
       // ✅ SUCCESS: Using JWT claims from custom access token hook
       console.log(`✅ JWT Auth: plan=${billing.plan}, status=${billing.status}, user=${enrichedUser.id}, version=${billing.billing_version}`);
 
-      // Use JWT claims
-      plan = billing.plan;
-      status = billing.status;
-
-      // Check for edge cases using status and period_end
-      if (
-        status === "past_due" ||
-        status === "incomplete" ||
-        status === "paused"
-      ) {
-        console.warn(`⚠️ Subscription ${status} for user ${enrichedUser.id}`);
-        hasPremiumAccess = false;
-      }
-      else if (status === "canceled") {
-        if (billing.cancel_at_period_end && billing.current_period_end) {
-          const nowSeconds = Date.now() / 1000;
-          const isExpired =
-            nowSeconds > billing.current_period_end + EXPIRY_LEEWAY_SECONDS;
-
-          if (isExpired) {
-            console.warn(`⚠️ Canceled subscription expired for user ${enrichedUser.id}`);
-            hasPremiumAccess = false;
-          } else {
-            hasPremiumAccess =
-              plan === "premium" ||
-              plan === "unlimited" ||
-              plan === "lifetime";
-          }
-        } else {
-          console.warn(`⚠️ Subscription canceled (immediate) for user ${enrichedUser.id}`);
-          hasPremiumAccess = false;
-        }
-      }
-      else if (
-        billing.current_period_end &&
-        Date.now() / 1000 > billing.current_period_end + EXPIRY_LEEWAY_SECONDS
-      ) {
-        console.warn(`⚠️ Subscription expired for user ${enrichedUser.id}`);
-        hasPremiumAccess = false;
-      }
-      else {
-        hasPremiumAccess =
-          plan === "premium" || plan === "unlimited" || plan === "lifetime";
-      }
+      // Use shared access control logic
+      const userHasPremiumAccess = hasPremiumAccess(billing);
+      const plan = billing.plan;
+      const status = billing.status;
 
       const endTime = performance.now();
       const duration = endTime - startTime;
@@ -243,7 +197,7 @@ export async function updateSession(request: NextRequest) {
         pathname.startsWith(path)
       );
 
-      if (isPremiumRoute && !hasPremiumAccess) {
+      if (isPremiumRoute && !userHasPremiumAccess) {
         const url = request.nextUrl.clone();
         url.pathname = "/upgrade";
         return NextResponse.redirect(url);
