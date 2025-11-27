@@ -24,7 +24,9 @@ export default async function VerifySessionPage({
 
   // Not authenticated → redirect to login
   if (!user) {
-    const loginUrl = new URL("/login", process.env.NEXT_PUBLIC_SITE_URL);
+    // Server-side only, so no NEXT_PUBLIC_ prefix needed
+    const baseUrl = process.env.SITE_URL || "http://localhost:3000";
+    const loginUrl = new URL("/login", baseUrl);
     loginUrl.searchParams.set("error", "session_expired");
     if (params.returnTo) {
       loginUrl.searchParams.set("returnTo", params.returnTo);

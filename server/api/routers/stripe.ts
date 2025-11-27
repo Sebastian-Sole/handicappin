@@ -50,6 +50,22 @@ async function checkRateLimit(
   return { limit, remaining, reset };
 }
 
+// Helper to get the base URL for server-side operations
+// Uses VERCEL_URL (automatically available in Vercel) or SITE_URL for local dev
+function getServerBaseUrl(): string {
+  // Production/Preview: Use Vercel's automatic URL (no configuration needed)
+  if (process.env.VERCEL_URL) {
+    return `https://${process.env.VERCEL_URL}`;
+  }
+  // Local development: Use SITE_URL from .env.development
+  // Note: No NEXT_PUBLIC_ prefix needed since this is server-side only
+  if (process.env.SITE_URL) {
+    return process.env.SITE_URL;
+  }
+  // Fallback to localhost
+  return "http://localhost:3000";
+}
+
 export const stripeRouter = createTRPCRouter({
   // POST /api/stripe/checkout
   createCheckout: authedProcedure
@@ -118,6 +134,11 @@ export const stripeRouter = createTRPCRouter({
         });
       }
 
+      // Get base URL and construct redirect URLs
+      const baseUrl = getServerBaseUrl();
+      const successUrl = `${baseUrl}/billing/success?session_id={CHECKOUT_SESSION_ID}`;
+      const cancelUrl = `${baseUrl}/onboarding`;
+
       // Create the checkout session
       const session =
         input.plan === "lifetime"
@@ -125,15 +146,15 @@ export const stripeRouter = createTRPCRouter({
               userId: user.id,
               email: user.email,
               priceId,
-              successUrl: `${process.env.NEXT_PUBLIC_SITE_URL}/billing/success?session_id={CHECKOUT_SESSION_ID}`,
-              cancelUrl: `${process.env.NEXT_PUBLIC_SITE_URL}/onboarding`,
+              successUrl,
+              cancelUrl,
             })
           : await createCheckoutSession({
               userId: user.id,
               email: user.email,
               priceId,
-              successUrl: `${process.env.NEXT_PUBLIC_SITE_URL}/billing/success?session_id={CHECKOUT_SESSION_ID}`,
-              cancelUrl: `${process.env.NEXT_PUBLIC_SITE_URL}/onboarding`,
+              successUrl,
+              cancelUrl,
             });
 
       if (!session.url) {
@@ -171,9 +192,10 @@ export const stripeRouter = createTRPCRouter({
     }
 
     // Create a portal session
+    const baseUrl = getServerBaseUrl();
     const session = await createPortalSession({
       customerId: stripeCustomer.stripe_customer_id,
-      returnUrl: `${process.env.NEXT_PUBLIC_SITE_URL}/profile/${user.id}?tab=billing`,
+      returnUrl: `${baseUrl}/profile/${user.id}?tab=billing`,
     });
 
     if (!session.url) {
@@ -266,7 +288,8 @@ export const stripeRouter = createTRPCRouter({
       });
 
       // Send email notification (non-blocking)
-      const billingUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/billing`;
+      const baseUrl = getServerBaseUrl();
+      const billingUrl = `${baseUrl}/billing`;
 
       try {
         if (result.changeType === "upgrade" && user.email) {
@@ -339,8 +362,8 @@ export const stripeRouter = createTRPCRouter({
           userId: user.id,
           email: user.email!,
           priceId,
-          successUrl: `${process.env.NEXT_PUBLIC_SITE_URL}/billing/success?session_id={CHECKOUT_SESSION_ID}`,
-          cancelUrl: `${process.env.NEXT_PUBLIC_SITE_URL}/upgrade`,
+          successUrl: `${baseUrl}/billing/success?session_id={CHECKOUT_SESSION_ID}`,
+          cancelUrl: `${baseUrl}/upgrade`,
         });
 
         if (!session.url) {
