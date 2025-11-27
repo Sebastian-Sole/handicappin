@@ -51,18 +51,31 @@ async function checkRateLimit(
 }
 
 // Helper to get the base URL for server-side operations
-// Uses VERCEL_URL (automatically available in Vercel) or SITE_URL for local dev
+// Uses stable Vercel branch URL or SITE_URL for local dev
 function getServerBaseUrl(): string {
-  // Production/Preview: Use Vercel's automatic URL (no configuration needed)
+  // Production: Use production URL
+  if (process.env.VERCEL_ENV === "production" && process.env.VERCEL_PROJECT_PRODUCTION_URL) {
+    return `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`;
+  }
+
+  // Preview/Development: Use stable branch URL (not commit-specific URL)
+  // VERCEL_BRANCH_URL is stable for the branch (e.g., project-feat-payments.vercel.app)
+  // VERCEL_URL changes every commit (e.g., project-git-abc123.vercel.app)
+  if (process.env.VERCEL_BRANCH_URL) {
+    return `https://${process.env.VERCEL_BRANCH_URL}`;
+  }
+
+  // Fallback to commit URL if branch URL not available
   if (process.env.VERCEL_URL) {
     return `https://${process.env.VERCEL_URL}`;
   }
+
   // Local development: Use SITE_URL from .env.development
-  // Note: No NEXT_PUBLIC_ prefix needed since this is server-side only
   if (process.env.SITE_URL) {
     return process.env.SITE_URL;
   }
-  // Fallback to localhost
+
+  // Final fallback to localhost
   return "http://localhost:3000";
 }
 
@@ -396,4 +409,5 @@ export const stripeRouter = createTRPCRouter({
         message,
       };
     }),
+
 });

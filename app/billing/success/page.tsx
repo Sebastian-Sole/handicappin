@@ -41,73 +41,20 @@ export default function BillingSuccessPage() {
 
       // Get current user
       const {
-        data: { user: initialUser },
+        data: { user: currentUser },
       } = await supabase.auth.getUser();
 
-      let currentUser = initialUser;
-
       if (!currentUser) {
-        console.log("⚠️ No logged in user detected - attempting session recovery...");
-        console.log("🔍 Environment:", process.env.NODE_ENV);
-        console.log("🔍 URL:", window.location.href);
-
-        // First, try to get session from cookies
-        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-
-        console.log("🔍 Session check:", {
-          hasSession: !!session,
-          hasAccessToken: !!session?.access_token,
-          expiresAt: session?.expires_at,
-          error: sessionError?.message,
-        });
-
-        if (!session) {
-          // No session at all - redirect to login with return URL
-          console.error("❌ No session found - redirecting to login");
-          const params = new URLSearchParams(window.location.search);
-          const sessionId = params.get("session_id");
-          const returnUrl = `/billing/success${sessionId ? `?session_id=${sessionId}` : ""}`;
-          window.location.href = `/login?returnTo=${encodeURIComponent(returnUrl)}`;
-          return;
-        }
-
-        // We have a session, but try refreshing it in case it's stale
-        console.log("🔄 Session exists, attempting refresh...");
-        const { error: refreshError } = await supabase.auth.refreshSession();
-
-        if (refreshError) {
-          console.error("❌ Session refresh failed:", refreshError.message);
-          // Try with existing session anyway
-        } else {
-          console.log("✅ Session refreshed successfully");
-        }
-
-        // Try to get user again (with refreshed or existing session)
-        const { data: { user: recoveredUser }, error: userError } = await supabase.auth.getUser();
-
-        console.log("🔍 User recovery attempt:", {
-          hasUser: !!recoveredUser,
-          userId: recoveredUser?.id,
-          error: userError?.message,
-        });
-
-        if (recoveredUser) {
-          console.log("✅ Session recovered successfully - User:", recoveredUser.id);
-          currentUser = recoveredUser;
-          setUserId(recoveredUser.id);
-        } else {
-          // Session exists but can't get user - likely expired/invalid
-          console.error("❌ Session exists but user not recoverable - redirecting to login");
-          const params = new URLSearchParams(window.location.search);
-          const sessionId = params.get("session_id");
-          const returnUrl = `/billing/success${sessionId ? `?session_id=${sessionId}` : ""}`;
-          window.location.href = `/login?returnTo=${encodeURIComponent(returnUrl)}`;
-          return;
-        }
-      } else {
-        console.log("✅ User found immediately:", currentUser.id);
-        setUserId(currentUser.id);
+        console.log("⚠️ No user session - redirecting to login");
+        const params = new URLSearchParams(window.location.search);
+        const stripeSessionId = params.get("session_id");
+        const returnUrl = `/billing/success${stripeSessionId ? `?session_id=${stripeSessionId}` : ""}`;
+        window.location.href = `/login?returnTo=${encodeURIComponent(returnUrl)}`;
+        return;
       }
+
+      console.log("✅ User authenticated:", currentUser.id);
+      setUserId(currentUser.id);
 
       console.log("🔄 Checking webhook status...");
 
@@ -174,6 +121,11 @@ export default function BillingSuccessPage() {
           await new Promise((resolve) => setTimeout(resolve, 1000));
 
           console.log("🚀 Redirecting to dashboard...");
+          if (!currentUser) {
+            console.error("❌ No currentUser at redirect - this should not happen!");
+            window.location.href = "/";
+            return;
+          }
           window.location.href = `/dashboard/${currentUser.id}`;
           return;
         } else if (data.status === "failed") {
