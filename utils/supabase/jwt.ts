@@ -30,7 +30,9 @@ export type BillingClaims = {
  * @returns The billing claims from the JWT, or null if not available
  */
 /**
- * Decode base64url string (works in both Node.js and browser)
+ * Decodes a base64url-encoded string (works in both Node.js and browser).
+ * @param str - Base64url encoded string to decode
+ * @returns Decoded UTF-8 string
  */
 function base64urlDecode(str: string): string {
   // Convert base64url to base64
