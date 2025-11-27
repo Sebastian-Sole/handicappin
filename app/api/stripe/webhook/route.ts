@@ -1409,6 +1409,7 @@ async function handleSubscriptionDeleted(subscription: any) {
       .where(eq(profile.id, userId));
 
     logWebhookSuccess(`Reverted to free tier for user: ${userId}`);
+    console.log(`📊 [Webhook] Billing version incremented for user ${userId} - BillingSync should detect within seconds`);
   } catch (error) {
     logWebhookError("Error reverting user to free tier", error);
     // Throw error to trigger webhook retry by Stripe

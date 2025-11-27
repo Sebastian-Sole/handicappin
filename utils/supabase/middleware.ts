@@ -167,7 +167,7 @@ export async function updateSession(request: NextRequest) {
       }
 
       // ✅ SUCCESS: Using JWT claims from custom access token hook
-      console.log(`✅ JWT Auth: plan=${billing.plan}, status=${billing.status}, user=${enrichedUser.id}`);
+      console.log(`✅ JWT Auth: plan=${billing.plan}, status=${billing.status}, user=${enrichedUser.id}, version=${billing.billing_version}`);
 
       // Use JWT claims
       plan = billing.plan;
