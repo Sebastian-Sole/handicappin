@@ -104,7 +104,6 @@ export function BillingSync() {
               try {
                 const response = await fetch("/api/auth/sync-session", {
                   method: "POST",
-                  credentials: "include", // Include cookies
                 });
 
                 if (!response.ok) {
