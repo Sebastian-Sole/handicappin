@@ -72,6 +72,7 @@ export async function updateSession(request: NextRequest) {
     "/api",
     "/verify-email",
     "/forgot-password",
+    "/billing/success", // Allow access after Stripe redirect (session may be temporarily lost)
   ];
 
   // Special case: "/" is public, but not paths that start with "/"

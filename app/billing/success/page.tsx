@@ -44,13 +44,37 @@ export default function BillingSuccessPage() {
         data: { user: initialUser },
       } = await supabase.auth.getUser();
 
-      if (!initialUser) {
-        console.log("No logged in user");
-        window.location.href = "/login";
-        return;
-      }
+      let currentUser = initialUser;
 
-      setUserId(initialUser.id);
+      if (!currentUser) {
+        console.log("⚠️ No logged in user detected - attempting session recovery...");
+
+        // Try to refresh the session in case cookies were temporarily lost during Stripe redirect
+        const { data: { session } } = await supabase.auth.getSession();
+
+        if (!session) {
+          // Still no session - redirect to login with return URL
+          console.error("❌ Session not recoverable - redirecting to login");
+          const params = new URLSearchParams(window.location.search);
+          const sessionId = params.get("session_id");
+          const returnUrl = `/billing/success${sessionId ? `?session_id=${sessionId}` : ""}`;
+          window.location.href = `/login?returnTo=${encodeURIComponent(returnUrl)}`;
+          return;
+        }
+
+        // Session recovered! Get user again
+        const { data: { user: recoveredUser } } = await supabase.auth.getUser();
+        if (recoveredUser) {
+          console.log("✅ Session recovered successfully");
+          currentUser = recoveredUser;
+          setUserId(recoveredUser.id);
+        } else {
+          window.location.href = "/login";
+          return;
+        }
+      } else {
+        setUserId(currentUser.id);
+      }
 
       console.log("🔄 Checking webhook status...");
 
@@ -117,7 +141,7 @@ export default function BillingSuccessPage() {
           await new Promise((resolve) => setTimeout(resolve, 1000));
 
           console.log("🚀 Redirecting to dashboard...");
-          window.location.href = `/dashboard/${initialUser.id}`;
+          window.location.href = `/dashboard/${currentUser.id}`;
           return;
         } else if (data.status === "failed") {
           console.error(`❌ Webhook failed ${data.failureCount} times`);
