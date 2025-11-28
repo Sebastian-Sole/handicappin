@@ -755,9 +755,9 @@ export default function GolfScorecard({ profile, access }: GolfScorecardProps) {
                 </div>
               </div>
             )}
-            {/* Desktop submit button */}
+            {/* Submit button */}
             {selectedTeeKey && (
-              <div className="mt-4 justify-end hidden md:flex">
+              <div className="mt-4 justify-end flex">
                 <Button type="submit" disabled={isSubmitting}>
                   {isSubmitting ? "Submitting..." : "Submit Scorecard"}
                 </Button>
@@ -765,18 +765,6 @@ export default function GolfScorecard({ profile, access }: GolfScorecardProps) {
             )}
           </CardContent>
         </Card>
-        {/* Sticky mobile submit button */}
-        {selectedTeeKey && (
-          <div className="fixed bottom-0 left-0 right-0 z-50 bg-background border-t border-border p-4 flex justify-center md:hidden">
-            <Button
-              type="submit"
-              className="w-full max-w-md"
-              disabled={isSubmitting}
-            >
-              {isSubmitting ? "Submitting..." : "Submit Scorecard"}
-            </Button>
-          </div>
-        )}
       </form>
     </Form>
   );
