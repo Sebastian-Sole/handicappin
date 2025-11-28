@@ -404,7 +404,7 @@ export default function GolfScorecard({ profile, access }: GolfScorecardProps) {
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit, onError)} role="form">
         <Card className="w-full mx-auto bg-background border-none shadow-none">
-          <CardContent className="p-6 max-w-[450px] sm:max-w-[450px] md:max-w-[600px] lg:max-w-[725px] xl:max-w-[975px] 2xl:max-w-[1225px] 3xl:max-w-[1325px] mx-auto">
+          <CardContent className="p-6 sm:w-[1325px] max-w-[450px] sm:max-w-[450px] md:max-w-[600px] lg:max-w-[725px] xl:max-w-[975px] 2xl:max-w-[1225px] 3xl:max-w-[1325px] mx-auto">
             <div className="mb-6 grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-8">
               <Card>
                 <CardContent className="p-4">

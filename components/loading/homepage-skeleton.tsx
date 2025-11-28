@@ -9,7 +9,7 @@ export default function HomepageSkeleton() {
           <div className="sm:container px-4 lg:px-6">
             <div className="grid gap-6 xl:grid-cols-[1fr_460px] xl:gap-12 2xl:grid-cols-[1fr_600px]">
               {/* Left: Welcome and Actions */}
-              <div className="flex flex-col justify-between space-y-4 backdrop-blur-xs rounded-xl shadow-lg h-full p-6">
+              <div className="flex flex-col justify-between space-y-4 backdrop-blur-xs h-full p-6">
                 <div className="space-y-4">
                   <Skeleton className="h-8 sm:w-1/2 w-7/8 mb-2" />
                   <Skeleton className="h-4 sm:w-1/3 w-6/8 mb-4" />

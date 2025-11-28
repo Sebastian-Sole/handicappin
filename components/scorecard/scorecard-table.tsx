@@ -209,8 +209,8 @@ export function ScorecardTable({
           <div className="text-sm font-medium text-secondary-foreground dark:text-muted-foreground mb-2">
             {selectedTee?.name.toUpperCase()} TEE
           </div>
-          <div className="grid grid-cols-2 gap-2 text-sm">
-            <div className="flex justify-between">
+          <div className="flex w-full md:justify-start md:gap-8 justify-between gap-2 text-sm">
+            <div className="flex justify-start gap-2">
               <span className="text-muted-foreground">Total Distance:</span>
               <span className="font-medium">
                 {holeCount === CONSTANTS.EIGHTEEN_HOLES
@@ -218,7 +218,7 @@ export function ScorecardTable({
                   : selectedTee?.outDistance}
               </span>
             </div>
-            <div className="flex justify-between">
+            <div className="flex justify-end gap-2">
               <span className="text-muted-foreground">Total Par:</span>
               <span className="font-medium">
                 {holeCount === CONSTANTS.EIGHTEEN_HOLES
@@ -233,124 +233,120 @@ export function ScorecardTable({
         <div className="rounded-lg border overflow-hidden">
           <div className="overflow-y-auto">
             <Table className="w-full">
-            <TableHeader>
-              <TableRow>
-                <TableHead className="bg-accent dark:bg-muted dark:text-muted-foreground text-secondary-foreground text-center w-16">
-                  HOLE
-                </TableHead>
-                <TableHead className="bg-accent dark:bg-muted dark:text-muted-foreground text-secondary-foreground text-center w-16">
-                  PAR
-                </TableHead>
-                <TableHead className="bg-accent dark:bg-muted dark:text-muted-foreground text-secondary-foreground text-center w-16">
-                  HCP
-                </TableHead>
-                <TableHead className="bg-accent dark:bg-muted dark:text-muted-foreground text-secondary-foreground text-center w-24">
-                  SCORE
-                </TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {displayedHoles.map((hole, i) => (
-                <TableRow key={i} className="hover:bg-inherit">
-                  <TableCell className="text-center font-medium bg-accent dark:bg-muted dark:text-muted-foreground text-secondary-foreground">
-                    {i + 1}
-                  </TableCell>
-                  <TableCell className="text-center bg-background-alternate">
-                    {hole.par}
-                  </TableCell>
-                  <TableCell className="text-center bg-background">
-                    {hole.hcp}
-                  </TableCell>
-                  <TableCell className="p-2 bg-background-alternate w-24">
-                    <Input
-                      className="border border-border h-12 text-center w-full text-lg"
-                      type="number"
-                      value={scores[i]?.strokes || ""}
-                      disabled={disabled}
-                      onChange={(e) => {
-                        if (
-                          e.target.value.length > CONSTANTS.MAX_SCORE_LENGTH
-                        ) {
-                          return;
-                        }
-                        let parsed = parseInt(e.target.value) || 0;
-                        if (parsed < CONSTANTS.MIN_SCORE) {
-                          parsed = CONSTANTS.MIN_SCORE;
-                          toast({
-                            title: "Invalid score",
-                            description: "Score cannot be negative",
-                            variant: "destructive",
-                          });
-                        }
-                        onScoreChange(i, parsed);
-                      }}
-                      onWheel={(e) => {
-                        e.currentTarget.blur();
-                      }}
-                    />
-                  </TableCell>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="bg-accent dark:bg-muted dark:text-muted-foreground text-secondary-foreground text-center w-16">
+                    HOLE
+                  </TableHead>
+                  <TableHead className="bg-accent dark:bg-muted dark:text-muted-foreground text-secondary-foreground text-center w-16">
+                    PAR
+                  </TableHead>
+                  <TableHead className="bg-accent dark:bg-muted dark:text-muted-foreground text-secondary-foreground text-center w-16">
+                    HCP
+                  </TableHead>
+                  <TableHead className="bg-accent dark:bg-muted dark:text-muted-foreground text-secondary-foreground text-center w-24">
+                    SCORE
+                  </TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {displayedHoles.map((hole, i) => (
+                  <TableRow key={i} className="hover:bg-inherit">
+                    <TableCell className="text-center font-medium bg-accent dark:bg-muted dark:text-muted-foreground text-secondary-foreground">
+                      {i + 1}
+                    </TableCell>
+                    <TableCell className="text-center bg-background-alternate">
+                      {hole.par}
+                    </TableCell>
+                    <TableCell className="text-center bg-background">
+                      {hole.hcp}
+                    </TableCell>
+                    <TableCell className="p-2 bg-background-alternate w-24">
+                      <Input
+                        className="border border-border h-12 text-center w-full text-lg"
+                        type="number"
+                        value={scores[i]?.strokes || ""}
+                        disabled={disabled}
+                        onChange={(e) => {
+                          if (
+                            e.target.value.length > CONSTANTS.MAX_SCORE_LENGTH
+                          ) {
+                            return;
+                          }
+                          let parsed = parseInt(e.target.value) || 0;
+                          if (parsed < CONSTANTS.MIN_SCORE) {
+                            parsed = CONSTANTS.MIN_SCORE;
+                            toast({
+                              title: "Invalid score",
+                              description: "Score cannot be negative",
+                              variant: "destructive",
+                            });
+                          }
+                          onScoreChange(i, parsed);
+                        }}
+                        onWheel={(e) => {
+                          e.currentTarget.blur();
+                        }}
+                      />
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
         </div>
-      </div>
 
         {/* Score Summary - Below table */}
         <div className="rounded-lg border bg-background p-3">
-            <div className="text-sm font-medium mb-2">Score Summary</div>
-            {holeCount === CONSTANTS.EIGHTEEN_HOLES ? (
-              <div className="grid grid-cols-3 gap-3 text-center">
-                <div className="rounded bg-background-alternate p-2">
-                  <div className="text-xs text-muted-foreground mb-1">OUT</div>
-                  <div className="text-lg font-bold">
-                    {calculateTotal(scores, 0, CONSTANTS.NINE_HOLES)}
-                  </div>
-                  <div className="text-xs text-muted-foreground">
-                    Par {selectedTee?.outPar}
-                  </div>
+          <div className="text-sm font-medium mb-2">Score Summary</div>
+          {holeCount === CONSTANTS.EIGHTEEN_HOLES ? (
+            <div className="grid grid-cols-3 gap-3 text-center">
+              <div className="rounded bg-background-alternate p-2">
+                <div className="text-xs text-muted-foreground mb-1">OUT</div>
+                <div className="text-lg font-bold">
+                  {calculateTotal(scores, 0, CONSTANTS.NINE_HOLES)}
                 </div>
-                <div className="rounded bg-background-alternate p-2">
-                  <div className="text-xs text-muted-foreground mb-1">IN</div>
-                  <div className="text-lg font-bold">
-                    {calculateTotal(
-                      scores,
-                      CONSTANTS.NINE_HOLES,
-                      CONSTANTS.EIGHTEEN_HOLES
-                    )}
-                  </div>
-                  <div className="text-xs text-muted-foreground">
-                    Par {selectedTee?.inPar}
-                  </div>
-                </div>
-                <div className="rounded bg-primary/10 p-2">
-                  <div className="text-xs text-muted-foreground mb-1">
-                    TOTAL
-                  </div>
-                  <div className="text-lg font-bold text-primary">
-                    {calculateTotal(scores, 0, holeCount)}
-                  </div>
-                  <div className="text-xs text-muted-foreground">
-                    Par {selectedTee?.totalPar}
-                  </div>
+                <div className="text-xs text-muted-foreground">
+                  Par {selectedTee?.outPar}
                 </div>
               </div>
-            ) : (
-              <div className="flex justify-center">
-                <div className="rounded bg-primary/10 p-3 min-w-[120px] text-center">
-                  <div className="text-xs text-muted-foreground mb-1">
-                    TOTAL
-                  </div>
-                  <div className="text-2xl font-bold text-primary">
-                    {calculateTotal(scores, 0, holeCount)}
-                  </div>
-                  <div className="text-xs text-muted-foreground">
-                    Par {selectedTee?.outPar}
-                  </div>
+              <div className="rounded bg-background-alternate p-2">
+                <div className="text-xs text-muted-foreground mb-1">IN</div>
+                <div className="text-lg font-bold">
+                  {calculateTotal(
+                    scores,
+                    CONSTANTS.NINE_HOLES,
+                    CONSTANTS.EIGHTEEN_HOLES
+                  )}
+                </div>
+                <div className="text-xs text-muted-foreground">
+                  Par {selectedTee?.inPar}
                 </div>
               </div>
-            )}
-          </div>
+              <div className="rounded bg-primary/10 p-2">
+                <div className="text-xs text-muted-foreground mb-1">TOTAL</div>
+                <div className="text-lg font-bold text-primary">
+                  {calculateTotal(scores, 0, holeCount)}
+                </div>
+                <div className="text-xs text-muted-foreground">
+                  Par {selectedTee?.totalPar}
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="flex justify-center">
+              <div className="rounded bg-primary/10 p-3 min-w-[120px] text-center">
+                <div className="text-xs text-muted-foreground mb-1">TOTAL</div>
+                <div className="text-2xl font-bold text-primary">
+                  {calculateTotal(scores, 0, holeCount)}
+                </div>
+                <div className="text-xs text-muted-foreground">
+                  Par {selectedTee?.outPar}
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
     </>
   );
