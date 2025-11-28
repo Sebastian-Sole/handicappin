@@ -22,6 +22,7 @@ import {
   PLAN_FEATURES,
   PLAN_DETAILS,
 } from "@/components/billing/plan-features";
+import { getPromotionCodeDetails } from "@/lib/stripe";
 
 export default async function Landing() {
   const supabase = await createServerComponentClient();
@@ -37,6 +38,9 @@ export default async function Landing() {
   const { data: numberOfCourses, error: coursesError } = await supabase.rpc(
     "get_public_course_count"
   );
+
+  // Fetch promo code details for launch offer
+  const promoDetails = await getPromotionCodeDetails("EARLY100");
 
   const usersCount =
     usersError || numberOfUsers === null ? 10 : numberOfUsers || 10;
@@ -348,7 +352,7 @@ export default async function Landing() {
                 title={PLAN_DETAILS.free.title}
                 description={PLAN_DETAILS.free.description}
                 features={PLAN_FEATURES.free}
-                badge={{ text: "Launch Offer!", variant: "primary" }}
+                // badge={{ text: "Launch Offer!", variant: "primary" }}
                 buttonText="Sign Up"
                 buttonDisabled={false}
               />
@@ -364,6 +368,7 @@ export default async function Landing() {
                 features={PLAN_FEATURES.premium}
                 buttonText="Sign Up"
                 buttonDisabled={false}
+                costComparison={PLAN_DETAILS.premium.costComparison}
               />
             </Link>
 
@@ -375,23 +380,29 @@ export default async function Landing() {
                 title={PLAN_DETAILS.unlimited.title}
                 description={PLAN_DETAILS.unlimited.description}
                 features={PLAN_FEATURES.unlimited}
+                badge={{ text: "Best Value", variant: "value" }}
                 buttonText="Sign Up"
                 buttonDisabled={false}
+                costComparison={PLAN_DETAILS.unlimited.costComparison}
+                highlighted
               />
             </Link>
 
             <Link href="/signup" className="block">
               <PricingCard
                 plan="lifetime"
-                price={PLAN_DETAILS.lifetime.price}
+                price="FREE"
+                originalPrice={PLAN_DETAILS.lifetime.price}
                 interval={PLAN_DETAILS.lifetime.interval}
                 title={PLAN_DETAILS.lifetime.title}
                 description={PLAN_DETAILS.lifetime.description}
                 features={PLAN_FEATURES.lifetime}
-                badge={{ text: "Best Value", variant: "success" }}
-                buttonText="Sign Up"
-                buttonDisabled={false}
+                badge={{ text: "Launch Offer!", variant: "launch" }}
+                buttonText="Claim Free Lifetime"
                 highlighted
+                buttonDisabled={false}
+                costComparison={PLAN_DETAILS.lifetime.costComparison}
+                slotsRemaining={promoDetails?.remaining}
               />
             </Link>
           </div>

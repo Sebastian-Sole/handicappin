@@ -52,17 +52,20 @@ export const PLAN_DETAILS = {
     description: "For serious golfers",
     price: "$19",
     interval: "year" as const,
+    costComparison: "Less than half a golf ball/month",
   },
   unlimited: {
     title: "Unlimited",
     description: "For golf enthusiasts",
     price: "$29",
     interval: "year" as const,
+    costComparison: "Less than 1 golf ball/month",
   },
   lifetime: {
     title: "Lifetime",
     description: "Pay once, own forever",
     price: "$149",
     interval: "once" as const,
+    costComparison: "~30 premium golf balls",
   },
 } as const;

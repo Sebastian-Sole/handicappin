@@ -408,6 +408,33 @@ async function handleCheckoutCompleted(session: any) {
         );
       }
 
+      // ✅ NEW: Verify EARLY100 promo code only used on lifetime plans
+      const checkoutSession = await stripe.checkout.sessions.retrieve(session.id, {
+        expand: ['total_details.breakdown'],
+      });
+
+      const discounts = checkoutSession.total_details?.breakdown?.discounts || [];
+      const hasEarly100 = discounts.some((discount: any) =>
+        discount.discount?.promotion_code?.code?.toUpperCase() === 'EARLY100'
+      );
+
+      if (hasEarly100 && plan !== "lifetime") {
+        logWebhookError(
+          "🚨 SECURITY: EARLY100 promo code used on non-lifetime plan - NOT granting access",
+          {
+            handler: "handleCheckoutCompleted",
+            plan,
+            userId,
+            sessionId: session.id,
+            severity: "CRITICAL",
+            action: "Verify Stripe promotion code restrictions are configured correctly",
+          }
+        );
+        throw new Error(
+          `EARLY100 promo code can only be used on lifetime plans - attempted use on ${plan}`
+        );
+      }
+
       logWebhookSuccess("✅ Amount verification passed at checkout", {
         plan,
         amount: formatAmount(verification.actual),
@@ -579,6 +606,34 @@ async function handleCheckoutCompleted(session: any) {
         // ❌ DO NOT GRANT ACCESS - Throw error for retry
         throw new Error(
           `Amount verification failed for checkout session ${session.id}: expected ${formatAmount(verification.expected)}, got ${formatAmount(verification.actual)}`
+        );
+      }
+
+      // ✅ NEW: Verify EARLY100 promo code only used on lifetime plans
+      const checkoutSessionFull = await stripe.checkout.sessions.retrieve(session.id, {
+        expand: ['total_details.breakdown'],
+      });
+
+      const paymentDiscounts = checkoutSessionFull.total_details?.breakdown?.discounts || [];
+      const hasEarly100Payment = paymentDiscounts.some((discount: any) =>
+        discount.discount?.promotion_code?.code?.toUpperCase() === 'EARLY100'
+      );
+
+      if (hasEarly100Payment && plan !== "lifetime") {
+        logWebhookError(
+          "🚨 SECURITY: EARLY100 promo code used on non-lifetime plan - NOT granting access",
+          {
+            handler: "handleCheckoutCompleted",
+            mode: "payment",
+            plan,
+            userId,
+            sessionId: session.id,
+            severity: "CRITICAL",
+            action: "Verify Stripe promotion code restrictions are configured correctly",
+          }
+        );
+        throw new Error(
+          `EARLY100 promo code can only be used on lifetime plans - attempted use on ${plan}`
         );
       }
 

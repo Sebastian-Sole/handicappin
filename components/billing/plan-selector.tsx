@@ -61,6 +61,9 @@ export function PlanSelector({
   const updateSubscriptionMutation = api.stripe.updateSubscription.useMutation();
   const createCheckoutMutation = api.stripe.createCheckout.useMutation();
 
+  // Fetch promo slots for lifetime plan
+  const { data: promoSlots } = api.stripe.getPromoSlots.useQuery();
+
   // Auto-dismiss success messages after 5 seconds
   useEffect(() => {
     if (feedbackMessage?.type === "success") {
@@ -340,6 +343,7 @@ export function PlanSelector({
             buttonDisabled={loading !== null || currentPlan === "premium"}
             highlighted
             currentPlan={currentPlan === "premium"}
+            costComparison={PLAN_DETAILS.premium.costComparison}
           />
         )}
 
@@ -352,11 +356,10 @@ export function PlanSelector({
             title={PLAN_DETAILS.unlimited.title}
             description={PLAN_DETAILS.unlimited.description}
             features={PLAN_FEATURES.unlimited}
-            badge={
-              currentPlan === "unlimited"
-                ? { text: "Current Plan", variant: "default" }
-                : undefined
-            }
+            badge={{
+              text: currentPlan === "unlimited" ? "Current Plan" : "Best Value",
+              variant: currentPlan === "unlimited" ? "default" : "success",
+            }}
             buttonText={
               currentPlan === "unlimited"
                 ? "Current Plan"
@@ -367,6 +370,8 @@ export function PlanSelector({
             onButtonClick={() => handlePaidPlan("unlimited")}
             buttonDisabled={loading !== null || currentPlan === "unlimited"}
             currentPlan={currentPlan === "unlimited"}
+            costComparison={PLAN_DETAILS.unlimited.costComparison}
+            highlighted
           />
         )}
 
@@ -374,26 +379,28 @@ export function PlanSelector({
         {shouldShowPlan("lifetime") && (
           <PricingCard
             plan="lifetime"
-            price={PLAN_DETAILS.lifetime.price}
+            price="FREE"
+            originalPrice={PLAN_DETAILS.lifetime.price}
             interval={PLAN_DETAILS.lifetime.interval}
             title={PLAN_DETAILS.lifetime.title}
             description={PLAN_DETAILS.lifetime.description}
             features={PLAN_FEATURES.lifetime}
             badge={{
-              text: currentPlan === "lifetime" ? "Current Plan" : "Best Value",
-              variant: "success",
+              text: currentPlan === "lifetime" ? "Current Plan" : "Launch Offer!",
+              variant: "primary",
             }}
             buttonText={
               currentPlan === "lifetime"
                 ? "Current Plan"
                 : loading === "lifetime"
                 ? "Loading..."
-                : "Buy Lifetime"
+                : "Claim Free Lifetime"
             }
             onButtonClick={() => handlePaidPlan("lifetime")}
             buttonDisabled={loading !== null || currentPlan === "lifetime"}
-            highlighted
             currentPlan={currentPlan === "lifetime"}
+            costComparison={PLAN_DETAILS.lifetime.costComparison}
+            slotsRemaining={promoSlots?.remaining}
           />
         )}
       </div>

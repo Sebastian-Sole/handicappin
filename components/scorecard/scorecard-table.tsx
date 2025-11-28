@@ -33,35 +33,33 @@ export function ScorecardTable({
     scores.slice(start, end).reduce((sum, score) => sum + score.strokes, 0);
 
   return (
-    <div
-      className={`rounded-lg border overflow-hidden max-w-[270px] sm:max-w-[350px] md:max-w-[600px] lg:max-w-[725px] xl:max-w-[975px] 2xl:max-w-[1225px] 3xl:max-w-[1325px]`}
-    >
-      <div className="overflow-x-auto max-w-full">
+    <div className="w-full rounded-lg border overflow-hidden">
+      <div className="overflow-x-auto">
         <Table className="w-full">
           <TableHeader>
             <TableRow>
-              <TableHead className="bg-secondary dark:bg-muted dark:text-muted-foreground text-secondary-foreground w-20">
+              <TableHead className="bg-accent dark:bg-muted dark:text-muted-foreground text-secondary-foreground w-20">
                 HOLE
               </TableHead>
               {[...Array(holeCount)].map((_, i) => (
                 <TableHead
                   key={i}
-                  className="bg-secondary dark:bg-muted dark:text-muted-foreground text-secondary-foreground text-center min-w-[40px]"
+                  className="bg-accent dark:bg-muted dark:text-muted-foreground text-secondary-foreground text-center min-w-[40px]"
                 >
                   {i + 1}
                 </TableHead>
               ))}
               {holeCount === CONSTANTS.EIGHTEEN_HOLES && (
                 <>
-                  <TableHead className="bg-secondary dark:bg-muted dark:text-muted-foreground text-secondary-foreground text-center min-w-[50px]">
+                  <TableHead className="bg-accent dark:bg-muted dark:text-muted-foreground text-secondary-foreground text-center min-w-[50px]">
                     OUT
                   </TableHead>
-                  <TableHead className="bg-secondary dark:bg-muted dark:text-muted-foreground text-secondary-foreground text-center min-w-[50px]">
+                  <TableHead className="bg-accent dark:bg-muted dark:text-muted-foreground text-secondary-foreground text-center min-w-[50px]">
                     IN
                   </TableHead>
                 </>
               )}
-              <TableHead className="bg-secondary dark:bg-muted dark:text-muted-foreground text-secondary-foreground text-center min-w-[50px]">
+              <TableHead className="bg-accent dark:bg-muted dark:text-muted-foreground text-secondary-foreground text-center min-w-[50px]">
                 TOT
               </TableHead>
             </TableRow>
@@ -69,7 +67,7 @@ export function ScorecardTable({
           <TableBody>
             {/* Distance Row */}
             <TableRow className="hover:bg-inherit">
-              <TableCell className="font-medium bg-secondary dark:bg-muted dark:text-muted-foreground text-secondary-foreground truncate text-ellipsis whitespace-nowrap">
+              <TableCell className="font-medium bg-accent dark:bg-muted dark:text-muted-foreground text-secondary-foreground truncate text-ellipsis whitespace-nowrap">
                 {selectedTee?.name.toUpperCase()} TEE
               </TableCell>
               {displayedHoles.map((hole, i) => (
@@ -96,7 +94,7 @@ export function ScorecardTable({
 
             {/* Par Row */}
             <TableRow className="hover:bg-inherit">
-              <TableCell className="font-medium bg-secondary dark:bg-muted dark:text-muted-foreground text-secondary-foreground">
+              <TableCell className="font-medium bg-accent dark:bg-muted dark:text-muted-foreground text-secondary-foreground">
                 PAR
               </TableCell>
               {displayedHoles.map((hole, i) => (
@@ -126,7 +124,7 @@ export function ScorecardTable({
 
             {/* Handicap Row */}
             <TableRow className="hover:bg-inherit">
-              <TableCell className="font-medium bg-secondary dark:bg-muted dark:text-muted-foreground text-secondary-foreground">
+              <TableCell className="font-medium bg-accent dark:bg-muted dark:text-muted-foreground text-secondary-foreground">
                 HANDICAP
               </TableCell>
               {displayedHoles.map((hole, i) => (
@@ -146,7 +144,7 @@ export function ScorecardTable({
 
             {/* Score Row */}
             <TableRow className="hover:bg-inherit">
-              <TableCell className="font-medium bg-secondary dark:bg-muted dark:text-muted-foreground text-secondary-foreground truncate text-ellipsis whitespace-nowrap">
+              <TableCell className="font-medium bg-accent dark:bg-muted dark:text-muted-foreground text-secondary-foreground truncate text-ellipsis whitespace-nowrap">
                 SCORE
               </TableCell>
               {scores.slice(0, holeCount).map((score, i) => (

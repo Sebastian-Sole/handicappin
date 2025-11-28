@@ -18,7 +18,7 @@ interface PricingCardProps {
   features: Feature[];
   badge?: {
     text: string;
-    variant?: "default" | "success" | "primary";
+    variant?: "default" | "primary" | "value" | "launch";
   };
   buttonText: string;
   onButtonClick?: () => void;
@@ -27,19 +27,22 @@ interface PricingCardProps {
   highlighted?: boolean;
   currentPlan?: boolean;
   className?: string;
+  costComparison?: string;
+  originalPrice?: string | number;
+  slotsRemaining?: number;
 }
 
 const badgeColors = {
-  default: "bg-gray-500",
-  success: "bg-green-500",
-  primary: "bg-blue-500",
+  default: "bg-accent",
+  primary: "bg-primary",
+  value: "bg-primary",
+  launch: "bg-accent",
 };
 
 const borderColors = {
   default: "border",
-  highlighted: "border-2 border-blue-500",
-  success: "border-2 border-green-500",
   primary: "border-2 border-primary",
+  launch: "border-2 border-accent",
 };
 
 export function PricingCard({
@@ -57,14 +60,21 @@ export function PricingCard({
   highlighted = false,
   currentPlan = false,
   className = "",
+  costComparison,
+  originalPrice,
+  slotsRemaining,
 }: PricingCardProps) {
   const borderClass = highlighted
     ? plan === "lifetime"
-      ? borderColors.success
-      : borderColors.highlighted
-    : plan === "free" && !currentPlan
+      ? borderColors.launch
+      : plan === "free" && !currentPlan
+      ? borderColors.primary
+      : badge?.variant === "value"
+      ? borderColors.primary
+      : borderColors.default
+    : badge?.variant === "value"
     ? borderColors.primary
-    : borderColors.default;
+    : "none";
 
   const shadowClass = highlighted
     ? "shadow-lg hover:shadow-xl"
@@ -88,23 +98,46 @@ export function PricingCard({
 
       <div className="mb-4">
         <h2 className="text-2xl font-bold mb-2">{title}</h2>
-        {badge && plan === "free" && (
+        {/* {badge && plan === "free" && (
           <p className="text-xs text-muted-foreground">
             First 100 users, forever
           </p>
-        )}
+        )} */}
         {!badge && <div className="h-4" aria-hidden="true" />}
         <p className="text-gray-600 mt-2 mb-4">{description}</p>
+        {slotsRemaining !== undefined && slotsRemaining !== null && (
+          <p className="text-sm font-semibold text-primary mb-2">
+            {slotsRemaining > 0
+              ? `${slotsRemaining} slot${slotsRemaining !== 1 ? "s" : ""} left!`
+              : "All slots claimed"}
+          </p>
+        )}
         <div className="mb-4">
-          <span className="text-3xl font-bold">
-            {typeof price === "number" ? `$${price}` : price}
-          </span>
-          <span className="text-lg text-gray-600">
-            {interval === "year" && "/year"}
-            {interval === "month" && "/mo"}
-            {interval === "once" && " once"}
-            {interval === "forever" && "/forever"}
-          </span>
+          {originalPrice && (
+            <div className="mb-1">
+              <span className="text-lg text-muted-foreground line-through">
+                {typeof originalPrice === "number"
+                  ? `$${originalPrice}`
+                  : originalPrice}
+              </span>
+            </div>
+          )}
+          <div>
+            <span className="text-3xl font-bold">
+              {typeof price === "number" ? `$${price}` : price}
+            </span>
+            <span className="text-lg text-gray-600">
+              {interval === "year" && "/year"}
+              {interval === "month" && "/mo"}
+              {interval === "once" && " once"}
+              {interval === "forever" && "/forever"}
+            </span>
+          </div>
+          {costComparison && (
+            <p className="text-xs text-muted-foreground mt-1 italic">
+              {costComparison}
+            </p>
+          )}
         </div>
       </div>
 
@@ -127,11 +160,7 @@ export function PricingCard({
         <Button
           onClick={onButtonClick}
           disabled={buttonDisabled}
-          className={`w-full ${
-            plan === "lifetime" && !currentPlan
-              ? "bg-green-600 hover:bg-green-700"
-              : ""
-          }`}
+          className={`w-full ${plan == "lifetime" && "bg-accent"}`}
           variant={buttonVariant}
         >
           {buttonText}
