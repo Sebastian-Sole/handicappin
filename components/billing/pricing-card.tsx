@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export type PlanTier = "free" | "premium" | "unlimited" | "lifetime";
 
@@ -52,14 +53,13 @@ function getBorderClass(
   currentPlan: boolean,
   badgeVariant?: variantcolor
 ): string {
-  // Value badge always gets primary border
-  if (badgeVariant === "value") {
-    return borderColors.primary;
-  }
-
   // Only highlighted cards get borders
   if (!highlighted) {
     return "none";
+  }
+  // Value badge always gets primary border
+  if (badgeVariant === "value" && highlighted) {
+    return borderColors.primary;
   }
 
   // Lifetime plan gets primary border
@@ -188,6 +188,46 @@ export function PricingCard({
         >
           {buttonText}
         </Button>
+      </div>
+    </Card>
+  );
+}
+
+export function PricingCardSkeleton() {
+  return (
+    <Card className="rounded-lg p-8 shadow-md flex flex-col h-full">
+      {/* Badge skeleton */}
+      <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
+        <Skeleton className="h-6 w-24 rounded-full" />
+      </div>
+
+      <div className="mb-4">
+        {/* Title */}
+        <Skeleton className="h-8 w-32 mb-2" />
+
+        {/* Description */}
+        <Skeleton className="h-4 w-full mt-2 mb-2" />
+        <Skeleton className="h-4 w-3/4 mb-4" />
+
+        {/* Price */}
+        <div className="mb-4">
+          <Skeleton className="h-10 w-40" />
+        </div>
+      </div>
+
+      <div className="flex-grow flex flex-col justify-between">
+        {/* Features */}
+        <ul className="space-y-3 mb-8">
+          {[1, 2, 3, 4].map((i) => (
+            <li key={i} className="flex items-start">
+              <Skeleton className="h-4 w-4 mr-2 rounded-full flex-shrink-0" />
+              <Skeleton className="h-4 flex-1" />
+            </li>
+          ))}
+        </ul>
+
+        {/* Button */}
+        <Skeleton className="h-10 w-full rounded-md" />
       </div>
     </Card>
   );
