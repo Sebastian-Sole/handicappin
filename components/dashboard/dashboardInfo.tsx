@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Button } from "../ui/button";
 import { H4, P } from "../ui/typography";
 
@@ -13,10 +14,12 @@ const DashboardIndex = ({ handicapIndex, header }: DashboardIndexProps) => {
       <div className="text-6xl font-bold text-primary">{handicapIndex}</div>
       <p className="text-muted-foreground">Current Handicap</p>
       <div className="mt-0">
-        {/* Todo: Implement link */}
-        <Button variant="link" className="text-primary underline px-0 mb-10">
-          How is my handicap calculated?{" "}
-        </Button>
+        <Link href={"/calculators"}>
+          <Button variant="link" className="text-primary underline px-0 mb-10">
+            How is my handicap calculated?{" "}
+          </Button>
+        </Link>
+
         <H4 className="mb-2!">{header}</H4>
         <P className="mt-4!">
           Handicappin&apos; believes in transparency and making golf accessible.
@@ -30,10 +33,16 @@ const DashboardIndex = ({ handicapIndex, header }: DashboardIndexProps) => {
           handicaps and scoring can be viewed by clicking the button below, or
           by viewing a specific round&apos;s calculation.
         </P>
-        {/* Todo: Implement link */}
-        <Button variant="link" className="text-primary underline px-0 mb-6">
-          Click here to learn more
-        </Button>
+        <Link
+          href={
+            "https://www.usga.org/handicapping/roh/rules-of-handicapping.html#cshid=rule51a"
+          }
+          target="_blank"
+        >
+          <Button variant="link" className="text-primary underline px-0 mb-6">
+            Click here to learn more
+          </Button>
+        </Link>
       </div>
     </div>
   );

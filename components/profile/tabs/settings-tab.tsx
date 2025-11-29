@@ -16,8 +16,6 @@ export function SettingsTab() {
 
   // Notification preferences
   const [emailNotifications, setEmailNotifications] = useState(true);
-  const [roundReminders, setRoundReminders] = useState(false);
-  const [weeklyDigest, setWeeklyDigest] = useState(true);
 
   // Prevent hydration mismatch by only rendering theme buttons after mount
   useEffect(() => {
@@ -64,34 +62,6 @@ export function SettingsTab() {
               id="email-notifications"
               checked={emailNotifications}
               onCheckedChange={setEmailNotifications}
-            />
-          </div>
-
-          <div className="flex items-center justify-between">
-            <div className="space-y-0.5">
-              <Label htmlFor="round-reminders">Round Reminders</Label>
-              <p className="text-sm text-muted-foreground">
-                Get reminded to log your rounds
-              </p>
-            </div>
-            <Switch
-              id="round-reminders"
-              checked={roundReminders}
-              onCheckedChange={setRoundReminders}
-            />
-          </div>
-
-          <div className="flex items-center justify-between">
-            <div className="space-y-0.5">
-              <Label htmlFor="weekly-digest">Weekly Digest</Label>
-              <p className="text-sm text-muted-foreground">
-                Receive a weekly summary of your progress
-              </p>
-            </div>
-            <Switch
-              id="weekly-digest"
-              checked={weeklyDigest}
-              onCheckedChange={setWeeklyDigest}
             />
           </div>
         </div>

@@ -16,8 +16,6 @@ import {
 } from "lucide-react";
 
 export default async function AboutPage() {
-  
-
   const supabase = await createServerComponentClient();
   const { count } = await supabase
     .from("round")
@@ -228,10 +226,8 @@ export default async function AboutPage() {
                   </div>
                 </div>
                 <div className="flex flex-col items-center space-y-2 rounded-lg border bg-card p-6 text-center w-full">
-                  <div className="text-2xl font-bold text-primary">100%</div>
-                  <div className="text-sm text-muted-foreground">
-                    GDPR Compliant
-                  </div>
+                  <div className="text-2xl font-bold text-primary">GDPR</div>
+                  <div className="text-sm text-muted-foreground">Compliant</div>
                 </div>
               </div>
             </div>

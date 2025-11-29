@@ -40,7 +40,7 @@ export default async function Landing() {
   );
 
   // Fetch promo code details for launch offer
-  const promoDetails = await getPromotionCodeDetails("EARLY100");
+  let promoDetails = await getPromotionCodeDetails("EARLY100");
 
   const usersCount =
     usersError || numberOfUsers === null ? 10 : numberOfUsers || 10;
@@ -49,6 +49,8 @@ export default async function Landing() {
   const coursesCount =
     coursesError || numberOfCourses === null ? 0 : numberOfCourses || 0;
 
+  const isActiveLifetimePromo = !!promoDetails?.remaining;
+  console.log(promoDetails);
   return (
     <div className="min-h-screen bg-background">
       {/* Hero Section */}
@@ -230,106 +232,7 @@ export default async function Landing() {
           </div>
         </div>
       </section>
-      {/* Testimonials */}
-      {/* <section id="testimonials" className="py-20 bg-muted/30">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">
-              Loved by golfers everywhere
-            </h2>
-            <p className="text-xl text-muted-foreground">
-              See how GolfTracker Pro is helping golfers improve their game
-            </p>
-          </div>
 
-          <div className="grid md:grid-cols-3 gap-8">
-            <Card className="border-0 shadow-lg">
-              <CardContent className="pt-6">
-                <div className="flex mb-4">
-                  {[...Array(5)].map((_, i) => (
-                    <Star
-                      key={i}
-                      className="h-5 w-5 fill-primary text-primary"
-                    />
-                  ))}
-                </div>
-                <p className="text-muted-foreground mb-4">
-                  &quot;Finally dropped below a 10 handicap! The analytics
-                  showed me exactly where I was losing strokes. Game
-                  changer.&quot;
-                </p>
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
-                    <Users className="h-5 w-5 text-primary" />
-                  </div>
-                  <div>
-                    <div className="font-semibold">Mike Johnson</div>
-                    <div className="text-sm text-muted-foreground">
-                      Handicap: 9.2
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="border-0 shadow-lg">
-              <CardContent className="pt-6">
-                <div className="flex mb-4">
-                  {[...Array(5)].map((_, i) => (
-                    <Star
-                      key={i}
-                      className="h-5 w-5 fill-primary text-primary"
-                    />
-                  ))}
-                </div>
-                <p className="text-muted-foreground mb-4">
-                  &quot;The course mapping and shot tracking are incredibly
-                  accurate. Love seeing my improvement over time.&quot;
-                </p>
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
-                    <Users className="h-5 w-5 text-primary" />
-                  </div>
-                  <div>
-                    <div className="font-semibold">Sarah Chen</div>
-                    <div className="text-sm text-muted-foreground">
-                      Handicap: 12.8
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="border-0 shadow-lg">
-              <CardContent className="pt-6">
-                <div className="flex mb-4">
-                  {[...Array(5)].map((_, i) => (
-                    <Star
-                      key={i}
-                      className="h-5 w-5 fill-primary text-primary"
-                    />
-                  ))}
-                </div>
-                <p className="text-muted-foreground mb-4">
-                  &quot;Best golf app I&apos;ve used. The handicap calculation
-                  is spot-on and the insights are incredibly helpful.&quot;
-                </p>
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
-                    <Users className="h-5 w-5 text-primary" />
-                  </div>
-                  <div>
-                    <div className="font-semibold">David Rodriguez</div>
-                    <div className="text-sm text-muted-foreground">
-                      Handicap: 6.4
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
-      </section> */}
       {/* Pricing */}
       <section id="pricing" className="py-20 bg-muted/30">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
@@ -352,7 +255,6 @@ export default async function Landing() {
                 title={PLAN_DETAILS.free.title}
                 description={PLAN_DETAILS.free.description}
                 features={PLAN_FEATURES.free}
-                // badge={{ text: "Launch Offer!", variant: "primary" }}
                 buttonText="Sign Up"
                 buttonDisabled={false}
               />
@@ -380,31 +282,57 @@ export default async function Landing() {
                 title={PLAN_DETAILS.unlimited.title}
                 description={PLAN_DETAILS.unlimited.description}
                 features={PLAN_FEATURES.unlimited}
-                badge={{ text: "Best Value", variant: "value" }}
+                badge={
+                  !isActiveLifetimePromo
+                    ? {
+                        text: "Best Value",
+                        variant: "value",
+                      }
+                    : undefined
+                }
                 buttonText="Sign Up"
                 buttonDisabled={false}
                 costComparison={PLAN_DETAILS.unlimited.costComparison}
                 highlighted
               />
             </Link>
+            {isActiveLifetimePromo && (
+              <Link href="/signup" className="block">
+                <PricingCard
+                  plan="lifetime"
+                  price="FREE"
+                  originalPrice={PLAN_DETAILS.lifetime_early_100.price}
+                  interval={PLAN_DETAILS.lifetime_early_100.interval}
+                  title={PLAN_DETAILS.lifetime_early_100.title}
+                  description={PLAN_DETAILS.lifetime_early_100.description}
+                  features={PLAN_FEATURES.lifetime}
+                  badge={{ text: "Launch Offer!", variant: "default" }}
+                  buttonText="Claim Free Lifetime"
+                  highlighted
+                  buttonDisabled={false}
+                  costComparison={
+                    PLAN_DETAILS.lifetime_early_100.costComparison
+                  }
+                  slotsRemaining={promoDetails?.remaining}
+                />
+              </Link>
+            )}
 
-            <Link href="/signup" className="block">
-              <PricingCard
-                plan="lifetime"
-                price="FREE"
-                originalPrice={PLAN_DETAILS.lifetime.price}
-                interval={PLAN_DETAILS.lifetime.interval}
-                title={PLAN_DETAILS.lifetime.title}
-                description={PLAN_DETAILS.lifetime.description}
-                features={PLAN_FEATURES.lifetime}
-                badge={{ text: "Launch Offer!", variant: "launch" }}
-                buttonText="Claim Free Lifetime"
-                highlighted
-                buttonDisabled={false}
-                costComparison={PLAN_DETAILS.lifetime.costComparison}
-                slotsRemaining={promoDetails?.remaining}
-              />
-            </Link>
+            {!isActiveLifetimePromo && (
+              <Link href="/signup" className="block">
+                <PricingCard
+                  plan="lifetime"
+                  price={PLAN_DETAILS.lifetime.price}
+                  interval={PLAN_DETAILS.lifetime.interval}
+                  title={PLAN_DETAILS.lifetime.title}
+                  description={PLAN_DETAILS.lifetime.description}
+                  features={PLAN_FEATURES.lifetime}
+                  buttonText="Sign Up"
+                  buttonDisabled={false}
+                  costComparison={PLAN_DETAILS.lifetime.costComparison}
+                />
+              </Link>
+            )}
           </div>
         </div>
       </section>

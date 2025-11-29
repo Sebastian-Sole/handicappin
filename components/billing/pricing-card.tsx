@@ -9,6 +9,8 @@ interface Feature {
   included: boolean;
 }
 
+type variantcolor = "default" | "value";
+
 interface PricingCardProps {
   plan: PlanTier;
   price: string | number;
@@ -18,7 +20,7 @@ interface PricingCardProps {
   features: Feature[];
   badge?: {
     text: string;
-    variant?: "default" | "primary" | "value" | "launch";
+    variant?: variantcolor;
   };
   buttonText: string;
   onButtonClick?: () => void;
@@ -33,17 +35,46 @@ interface PricingCardProps {
 }
 
 const badgeColors = {
-  default: "bg-accent",
-  primary: "bg-primary",
+  default: "bg-primary",
   value: "bg-primary",
-  launch: "bg-accent",
+  // launch: "bg-accent",
 };
 
 const borderColors = {
   default: "border",
   primary: "border-2 border-primary",
-  launch: "border-2 border-accent",
+  // launch: "border-2 border-accent",
 };
+
+function getBorderClass(
+  highlighted: boolean,
+  plan: PlanTier,
+  currentPlan: boolean,
+  badgeVariant?: variantcolor
+): string {
+  // Value badge always gets primary border
+  if (badgeVariant === "value") {
+    return borderColors.primary;
+  }
+
+  // Only highlighted cards get borders
+  if (!highlighted) {
+    return "none";
+  }
+
+  // Lifetime plan gets primary border
+  if (plan === "lifetime") {
+    return borderColors.primary;
+  }
+
+  // Free plan gets primary border if not the current plan
+  if (plan === "free" && !currentPlan) {
+    return borderColors.primary;
+  }
+
+  // Default border for other highlighted cards
+  return borderColors.default;
+}
 
 export function PricingCard({
   plan,
@@ -64,17 +95,12 @@ export function PricingCard({
   originalPrice,
   slotsRemaining,
 }: PricingCardProps) {
-  const borderClass = highlighted
-    ? plan === "lifetime"
-      ? borderColors.launch
-      : plan === "free" && !currentPlan
-      ? borderColors.primary
-      : badge?.variant === "value"
-      ? borderColors.primary
-      : borderColors.default
-    : badge?.variant === "value"
-    ? borderColors.primary
-    : "none";
+  const borderClass = getBorderClass(
+    highlighted,
+    plan,
+    currentPlan,
+    badge?.variant
+  );
 
   const shadowClass = highlighted
     ? "shadow-lg hover:shadow-xl"
@@ -103,26 +129,23 @@ export function PricingCard({
             First 100 users, forever
           </p>
         )} */}
-        {!badge && <div className="h-4" aria-hidden="true" />}
         <p className="text-gray-600 mt-2 mb-4">{description}</p>
         {slotsRemaining !== undefined && slotsRemaining !== null && (
-          <p className="text-sm font-semibold text-primary mb-2">
+          <p className="text-sm font-semibold text-destructive mb-2">
             {slotsRemaining > 0
               ? `${slotsRemaining} slot${slotsRemaining !== 1 ? "s" : ""} left!`
               : "All slots claimed"}
           </p>
         )}
         <div className="mb-4">
-          {originalPrice && (
-            <div className="mb-1">
-              <span className="text-lg text-muted-foreground line-through">
+          <div>
+            {originalPrice && (
+              <span className="text-lg text-muted-foreground line-through mr-2">
                 {typeof originalPrice === "number"
                   ? `$${originalPrice}`
                   : originalPrice}
               </span>
-            </div>
-          )}
-          <div>
+            )}
             <span className="text-3xl font-bold">
               {typeof price === "number" ? `$${price}` : price}
             </span>
@@ -160,7 +183,7 @@ export function PricingCard({
         <Button
           onClick={onButtonClick}
           disabled={buttonDisabled}
-          className={`w-full ${plan == "lifetime" && "bg-accent"}`}
+          className={`w-full`}
           variant={buttonVariant}
         >
           {buttonText}
