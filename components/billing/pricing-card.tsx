@@ -55,7 +55,7 @@ function getBorderClass(
 ): string {
   // Only highlighted cards get borders
   if (!highlighted) {
-    return "none";
+    return "";
   }
   // Value badge always gets primary border
   if (badgeVariant === "value" && highlighted) {
