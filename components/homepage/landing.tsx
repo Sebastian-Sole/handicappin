@@ -50,7 +50,6 @@ export default async function Landing() {
     coursesError || numberOfCourses === null ? 0 : numberOfCourses || 0;
 
   const isActiveLifetimePromo = !!promoDetails?.remaining;
-  console.log(promoDetails);
   return (
     <div className="min-h-screen bg-background">
       {/* Hero Section */}
