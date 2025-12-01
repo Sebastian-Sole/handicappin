@@ -59,7 +59,7 @@ export async function getPromotionCodeDetails(code: string): Promise<{
       total: maxRedemptions,
     };
   } catch (error) {
-    console.error("Failed to fetch promotion code details:", error);
+    console.error(`Failed to fetch promotion code details for "${code}":`, error);
     return null;
   }
 }
