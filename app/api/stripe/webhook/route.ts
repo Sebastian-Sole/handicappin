@@ -7,7 +7,7 @@ import {
   pendingLifetimePurchases,
 } from "@/db/schema";
 import { eq, sql } from "drizzle-orm";
-import Stripe from "stripe";
+import type Stripe from "stripe";
 import { stripe, mapPriceToPlan } from "@/lib/stripe";
 import {
   logWebhookReceived,
@@ -26,7 +26,7 @@ import { shouldAlertAdmin, sendAdminWebhookAlert } from "@/lib/admin-alerts";
 import { sendWelcomeEmail } from "@/lib/email-service";
 
 export async function POST(request: NextRequest) {
-  let event: any = null; // Declare in outer scope for failure recording
+  let event: Stripe.Event | null = null; // Declare in outer scope for failure recording
 
   try {
     // ✅ NEW: Rate limiting check (IP-based, no user context)
@@ -222,13 +222,14 @@ export async function POST(request: NextRequest) {
 
         // ✅ NEW: Alert admin if retry count >= 3
         if (shouldAlertAdmin(retryCount)) {
+          const eventObject = event.data.object as any;
           await sendAdminWebhookAlert({
             userId: userId || "unknown",
             eventId: event.id,
             eventType: event.type,
-            sessionId: event.data.object.id, // Checkout session ID if applicable
-            customerId: event.data.object.customer,
-            subscriptionId: event.data.object.subscription,
+            sessionId: eventObject.id, // Checkout session ID if applicable
+            customerId: eventObject.customer,
+            subscriptionId: eventObject.subscription,
             errorMessage,
             retryCount,
             timestamp: new Date(),
@@ -251,7 +252,7 @@ export async function POST(request: NextRequest) {
 /**
  * Handle customer creation
  */
-async function handleCustomerCreated(customer: any) {
+async function handleCustomerCreated(customer: Stripe.Customer) {
   const userId = customer.metadata?.supabase_user_id;
 
   if (!userId) {
@@ -311,9 +312,9 @@ async function handleCustomerCreated(customer: any) {
 /**
  * Handle checkout completion - update plan_selected
  */
-async function handleCheckoutCompleted(session: any) {
+async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
   const userId = session.metadata?.supabase_user_id;
-  const customerId = session.customer;
+  const customerId = typeof session.customer === 'string' ? session.customer : session.customer?.id;
 
   logWebhookDebug("Checkout session details", {
     sessionId: session.id,
@@ -349,6 +350,11 @@ async function handleCheckoutCompleted(session: any) {
   } else {
     logWebhookWarning("No customer ID in checkout session");
   }
+
+  // Retrieve expanded session data once for EARLY100 promo code validation
+  const expandedSession = await stripe.checkout.sessions.retrieve(session.id, {
+    expand: ['total_details.breakdown'],
+  });
 
   // For subscription mode, handle subscription immediately to avoid race condition
   if (session.mode === "subscription") {
@@ -409,14 +415,11 @@ async function handleCheckoutCompleted(session: any) {
       }
 
       // ✅ NEW: Verify EARLY100 promo code only used on lifetime plans
-      const checkoutSession = await stripe.checkout.sessions.retrieve(session.id, {
-        expand: ['total_details.breakdown'],
+      const discounts = expandedSession.total_details?.breakdown?.discounts || [];
+      const hasEarly100 = discounts.some((discount) => {
+        const promoCode = (discount as any)?.discount?.promotion_code?.code;
+        return typeof promoCode === 'string' && promoCode.toUpperCase() === 'EARLY100';
       });
-
-      const discounts = checkoutSession.total_details?.breakdown?.discounts || [];
-      const hasEarly100 = discounts.some((discount: any) =>
-        discount.discount?.promotion_code?.code?.toUpperCase() === 'EARLY100'
-      );
 
       if (hasEarly100 && plan !== "lifetime") {
         logWebhookError(
@@ -610,14 +613,11 @@ async function handleCheckoutCompleted(session: any) {
       }
 
       // ✅ NEW: Verify EARLY100 promo code only used on lifetime plans
-      const checkoutSessionFull = await stripe.checkout.sessions.retrieve(session.id, {
-        expand: ['total_details.breakdown'],
+      const paymentDiscounts = expandedSession.total_details?.breakdown?.discounts || [];
+      const hasEarly100Payment = paymentDiscounts.some((discount) => {
+        const promoCode = (discount as any)?.discount?.promotion_code?.code;
+        return typeof promoCode === 'string' && promoCode.toUpperCase() === 'EARLY100';
       });
-
-      const paymentDiscounts = checkoutSessionFull.total_details?.breakdown?.discounts || [];
-      const hasEarly100Payment = paymentDiscounts.some((discount: any) =>
-        discount.discount?.promotion_code?.code?.toUpperCase() === 'EARLY100'
-      );
 
       if (hasEarly100Payment && plan !== "lifetime") {
         logWebhookError(
@@ -817,7 +817,7 @@ async function handleCheckoutCompleted(session: any) {
 /**
  * Handle payment intent succeeded - grant access for pending lifetime purchases
  */
-async function handlePaymentIntentSucceeded(paymentIntent: any) {
+async function handlePaymentIntentSucceeded(paymentIntent: Stripe.PaymentIntent) {
   const paymentIntentId = paymentIntent.id;
 
   logPaymentEvent(`Payment intent succeeded: ${paymentIntentId}`);
@@ -929,7 +929,7 @@ async function handlePaymentIntentSucceeded(paymentIntent: any) {
 /**
  * Handle payment intent failed - mark pending lifetime purchase as failed
  */
-async function handlePaymentIntentFailed(paymentIntent: any) {
+async function handlePaymentIntentFailed(paymentIntent: Stripe.PaymentIntent) {
   const paymentIntentId = paymentIntent.id;
 
   logPaymentEvent(`Payment intent failed: ${paymentIntentId}`);
@@ -986,9 +986,11 @@ async function handlePaymentIntentFailed(paymentIntent: any) {
  * Handle failed invoice payment (subscription payment declined)
  * Updates subscription status to reflect payment failure
  */
-async function handleInvoicePaymentFailed(invoice: any) {
-  const subscriptionId = invoice.subscription;
-  const customerId = invoice.customer;
+async function handleInvoicePaymentFailed(invoice: Stripe.Invoice) {
+  // Type assertion needed as invoice.subscription exists but may not be in type definitions
+  const invoiceData = invoice as Stripe.Invoice & { subscription?: string | Stripe.Subscription | null };
+  const subscriptionId = typeof invoiceData.subscription === 'string' ? invoiceData.subscription : invoiceData.subscription?.id;
+  const customerId = typeof invoice.customer === 'string' ? invoice.customer : invoice.customer?.id;
   const attemptCount = invoice.attempt_count;
 
   logPaymentEvent(
@@ -1013,6 +1015,9 @@ async function handleInvoicePaymentFailed(invoice: any) {
     }
 
     // Verify customer ownership (security check)
+    if (!customerId) {
+      throw new Error(`Invoice ${invoice.id} has no customer ID`);
+    }
     const ownership = await verifyCustomerOwnership(customerId, userId);
 
     if (!ownership.valid) {
@@ -1079,9 +1084,9 @@ async function handleInvoicePaymentFailed(invoice: any) {
  * Handle charge refunds (full or partial)
  * Revokes access for full refunds of lifetime purchases
  */
-async function handleChargeRefunded(charge: any) {
+async function handleChargeRefunded(charge: Stripe.Charge) {
   const chargeId = charge.id;
-  const customerId = charge.customer;
+  const customerId = typeof charge.customer === 'string' ? charge.customer : charge.customer?.id;
   const amountRefunded = charge.amount_refunded; // In cents
   const amountCharged = charge.amount; // In cents
   const currency = charge.currency;
@@ -1189,9 +1194,9 @@ async function handleChargeRefunded(charge: any) {
  * Handle charge disputes (chargebacks)
  * Logs security alert for manual review - does NOT automatically revoke access
  */
-async function handleDisputeCreated(dispute: any) {
+async function handleDisputeCreated(dispute: Stripe.Dispute) {
   const disputeId = dispute.id;
-  const chargeId = dispute.charge;
+  const chargeId = typeof dispute.charge === 'string' ? dispute.charge : dispute.charge?.id;
   const amount = dispute.amount;
   const reason = dispute.reason;
   const status = dispute.status;
@@ -1203,6 +1208,11 @@ async function handleDisputeCreated(dispute: any) {
       currency
     )})`
   );
+
+  if (!chargeId) {
+    logWebhookWarning("Dispute has no charge ID", { disputeId });
+    return;
+  }
 
   try {
     // Get charge details to find customer
@@ -1294,13 +1304,19 @@ async function handleDisputeCreated(dispute: any) {
 /**
  * Handle subscription changes - update plan_selected
  */
-async function handleSubscriptionChange(subscription: any) {
+async function handleSubscriptionChange(subscription: Stripe.Subscription) {
   const userId = subscription.metadata?.supabase_user_id;
-  const customerId = subscription.customer; // Stripe customer ID
+  const customerId = typeof subscription.customer === 'string' ? subscription.customer : subscription.customer?.id;
 
   if (!userId) {
     throw new Error(
       `Missing supabase_user_id in subscription ${subscription.id} - cannot update plan`
+    );
+  }
+
+  if (!customerId) {
+    throw new Error(
+      `Missing customer ID in subscription ${subscription.id}`
     );
   }
 
@@ -1419,13 +1435,19 @@ async function handleSubscriptionChange(subscription: any) {
 /**
  * Handle subscription deletion - revert to free tier
  */
-async function handleSubscriptionDeleted(subscription: any) {
+async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
   const userId = subscription.metadata?.supabase_user_id;
-  const customerId = subscription.customer;
+  const customerId = typeof subscription.customer === 'string' ? subscription.customer : subscription.customer?.id;
 
   if (!userId) {
     throw new Error(
       `Missing supabase_user_id in deleted subscription ${subscription.id} - cannot revert plan`
+    );
+  }
+
+  if (!customerId) {
+    throw new Error(
+      `Missing customer ID in deleted subscription ${subscription.id}`
     );
   }
 
@@ -1476,7 +1498,8 @@ async function handleSubscriptionDeleted(subscription: any) {
  * Extract user ID from event metadata
  * Handles different event structures (customer, session, subscription)
  */
-function extractUserId(event: any): string | null {
+function extractUserId(event: Stripe.Event): string | null {
   // Try metadata from event object
-  return event.data.object.metadata?.supabase_user_id || null;
+  const object = event.data.object as any; // Stripe events have various object types
+  return object.metadata?.supabase_user_id || null;
 }

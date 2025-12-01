@@ -38,13 +38,11 @@ interface PricingCardProps {
 const badgeColors = {
   default: "bg-primary",
   value: "bg-primary",
-  // launch: "bg-accent",
 };
 
 const borderColors = {
   default: "border",
   primary: "border-2 border-primary",
-  // launch: "border-2 border-accent",
 };
 
 function getBorderClass(
