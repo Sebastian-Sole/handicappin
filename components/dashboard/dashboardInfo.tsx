@@ -38,6 +38,7 @@ const DashboardIndex = ({ handicapIndex, header }: DashboardIndexProps) => {
             "https://www.usga.org/handicapping/roh/rules-of-handicapping.html#cshid=rule51a"
           }
           target="_blank"
+          rel="noopener noreferrer"
         >
           <Button variant="link" className="text-primary underline px-0 mb-6">
             Click here to learn more
