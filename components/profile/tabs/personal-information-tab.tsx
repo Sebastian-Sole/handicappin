@@ -7,6 +7,7 @@ import { Tables } from "@/types/supabase";
 import {
   Form,
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -38,7 +39,9 @@ export function PersonalInformationTab({
   authUser,
 }: PersonalInformationTabProps) {
   const { id, name: profileName } = profile;
-  const [saveState, setSaveState] = useState<"idle" | "saving" | "saved">("idle");
+  const [saveState, setSaveState] = useState<"idle" | "saving" | "saved">(
+    "idle"
+  );
   const supabase = createClientComponentClient();
 
   const { mutate } = api.auth.updateProfile.useMutation({
@@ -92,6 +95,14 @@ export function PersonalInformationTab({
     });
   };
 
+  const copySupportEmailToClipboard = () => {
+    navigator.clipboard.writeText("sebastiansole@handicappin.com");
+    toast({
+      title: "Email copied",
+      description: "Support email has been copied to your clipboard",
+    });
+  };
+
   return (
     <div className="space-y-6">
       <div>
@@ -110,12 +121,7 @@ export function PersonalInformationTab({
               <FormItem>
                 <FormLabel>Name</FormLabel>
                 <FormControl>
-                  <Input
-                    id="name"
-                    type="text"
-                    required
-                    {...field}
-                  />
+                  <Input id="name" type="text" required {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -129,13 +135,19 @@ export function PersonalInformationTab({
               <FormItem>
                 <FormLabel>Email</FormLabel>
                 <FormControl>
-                  <Input
-                    id="email"
-                    type="email"
-                    required
-                    {...field}
-                  />
+                  <Input id="email" type="email" required {...field} disabled />
                 </FormControl>
+                <FormDescription>
+                  Want to update your email?{" "}
+                  <Button
+                    type="button"
+                    variant={"link"}
+                    onClick={copySupportEmailToClipboard}
+                    className="px-0 h-auto"
+                  >
+                    Contact Support
+                  </Button>
+                </FormDescription>
                 <FormMessage />
               </FormItem>
             )}
