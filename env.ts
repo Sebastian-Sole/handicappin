@@ -7,17 +7,28 @@ export const env = createEnv({
    * isn't built with invalid env vars.
    */
   server: {
-    DATABASE_URL: z.string().url(),
-    DIRECT_URL: z.string().url(),
+    DATABASE_URL: z.url(),
+    RESEND_API_KEY: z.string(),
+    SEND_EMAIL_HOOK_SECRET: z.string(),
+
+    STRIPE_SECRET_KEY: z.string(),
+    STRIPE_WEBHOOK_SECRET: z.string(),
+    STRIPE_PREMIUM_PRICE_ID: z.string(),
+    STRIPE_UNLIMITED_PRICE_ID: z.string(),
+    STRIPE_UNLIMITED_LIFETIME_PRICE_ID: z.string(),
+
+    KV_URL: z.url(),
+    KV_REST_API_URL: z.url(),
+    KV_REST_API_TOKEN: z.string(),
+    KV_REST_API_READ_ONLY_TOKEN: z.string(),
+    REDIS_URL: z.url(),
+
+    ADMIN_ALERT_EMAILS: z.string(),
+    RESET_TOKEN_SECRET: z.string(),
+
     NODE_ENV: z
       .enum(["development", "test", "production"])
       .default("development"),
-    STRIPE_SECRET_KEY: z.string().optional(),
-    STRIPE_PREMIUM_PRICE_ID: z.string().optional(),
-    STRIPE_UNLIMITED_PRICE_ID: z.string().optional(),
-    STRIPE_UNLIMITED_LIFETIME_PRICE_ID: z.string().optional(),
-    RESET_TOKEN_SECRET: z.string().optional(),
-    SENTRY_DSN: z.string()
   },
 
   /**
@@ -27,9 +38,9 @@ export const env = createEnv({
    */
   client: {
     // NEXT_PUBLIC_CLIENTVAR: z.string(),
-    NEXT_PUBLIC_SUPABASE_URL: z.string().url(),
+    NEXT_PUBLIC_SUPABASE_URL: z.url(),
     NEXT_PUBLIC_SUPABASE_ANON_KEY: z.string(),
-    NEXT_PUBLIC_BASE_URL: z.string().url().optional(),
+    NEXT_PUBLIC_SENTRY_DSN: z.string(),
   },
 
   /**
@@ -38,18 +49,25 @@ export const env = createEnv({
    */
   runtimeEnv: {
     DATABASE_URL: process.env.DATABASE_URL,
-    DIRECT_URL: process.env.DIRECT_URL,
-    NODE_ENV: process.env.NODE_ENV,
+    RESEND_API_KEY: process.env.RESEND_API_KEY,
+    SEND_EMAIL_HOOK_SECRET: process.env.SEND_EMAIL_HOOK_SECRET,
     STRIPE_SECRET_KEY: process.env.STRIPE_SECRET_KEY,
+    STRIPE_WEBHOOK_SECRET: process.env.STRIPE_WEBHOOK_SECRET,
     STRIPE_PREMIUM_PRICE_ID: process.env.STRIPE_PREMIUM_PRICE_ID,
     STRIPE_UNLIMITED_PRICE_ID: process.env.STRIPE_UNLIMITED_PRICE_ID,
-    STRIPE_UNLIMITED_LIFETIME_PRICE_ID: process.env.STRIPE_UNLIMITED_LIFETIME_PRICE_ID,
+    STRIPE_UNLIMITED_LIFETIME_PRICE_ID:
+      process.env.STRIPE_UNLIMITED_LIFETIME_PRICE_ID,
+    KV_URL: process.env.KV_URL,
+    KV_REST_API_URL: process.env.KV_REST_API_URL,
+    KV_REST_API_TOKEN: process.env.KV_REST_API_TOKEN,
+    KV_REST_API_READ_ONLY_TOKEN: process.env.KV_REST_API_READ_ONLY_TOKEN,
+    REDIS_URL: process.env.REDIS_URL,
+    ADMIN_ALERT_EMAILS: process.env.ADMIN_ALERT_EMAILS,
     RESET_TOKEN_SECRET: process.env.RESET_TOKEN_SECRET,
-    NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+    NODE_ENV: process.env.NODE_ENV,
     NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
-    NEXT_PUBLIC_BASE_URL: process.env.NEXT_PUBLIC_BASE_URL,
-    SENTRY_DSN: process.env.SENTRY_DSN
-    // NEXT_PUBLIC_CLIENTVAR: process.env.NEXT_PUBLIC_CLIENTVAR,
+    NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+    NEXT_PUBLIC_SENTRY_DSN: process.env.NEXT_PUBLIC_SENTRY_DSN,
   },
   /**
    * Run `build` or `dev` with `SKIP_ENV_VALIDATION` to skip env validation. This is especially
