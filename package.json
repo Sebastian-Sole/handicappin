@@ -69,7 +69,7 @@
     "require-in-the-middle": "^8.0.1",
     "resend": "^6.0.1",
     "server-only": "^0.0.1",
-    "stripe": "^19.1.0",
+    "stripe": "^20.0.0",
     "superjson": "^2.2.1",
     "tailwind-merge": "^3.3.1",
     "tailwindcss-animate": "^1.0.7",

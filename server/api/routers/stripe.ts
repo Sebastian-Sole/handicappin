@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
-import { createTRPCRouter, authedProcedure } from "../trpc";
+import { createTRPCRouter, authedProcedure, publicProcedure } from "../trpc";
 import {
   createCheckoutSession,
   createLifetimeCheckoutSession,
@@ -9,6 +9,7 @@ import {
   PLAN_TO_PRICE_MAP,
   stripe,
   mapPriceToPlan,
+  getPromotionCodeDetails,
 } from "@/lib/stripe";
 import { verifyPaymentAmount, formatAmount } from "@/utils/billing/pricing";
 import {
@@ -409,5 +410,24 @@ export const stripeRouter = createTRPCRouter({
         message,
       };
     }),
+
+  // GET /api/stripe/promo-slots - Public endpoint to show remaining launch offer slots
+  getPromoSlots: publicProcedure.query(async () => {
+    const promoDetails = await getPromotionCodeDetails("EARLY100");
+
+    if (!promoDetails) {
+      return {
+        available: false,
+        remaining: 0,
+        total: 0,
+      };
+    }
+
+    return {
+      available: promoDetails.remaining > 0,
+      remaining: promoDetails.remaining,
+      total: promoDetails.total,
+    };
+  }),
 
 });

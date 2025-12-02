@@ -8,7 +8,7 @@ import { CheckCircle2, XCircle, Clock, X } from "lucide-react";
 import { createFreeTierSubscription } from "@/app/onboarding/actions";
 import { api } from "@/trpc/react";
 import type { PlanType } from "@/lib/stripe-types";
-import { PricingCard } from "./pricing-card";
+import { PricingCard, PricingCardSkeleton } from "./pricing-card";
 import { PLAN_FEATURES, PLAN_DETAILS } from "./plan-features";
 
 interface PlanSelectorProps {
@@ -23,24 +23,12 @@ const getAvailablePlans = (
   currentPlan: string | null | undefined,
   mode: "onboarding" | "upgrade"
 ) => {
+  const validPlans = ["free", "premium", "unlimited", "lifetime"];
   // Onboarding: show all plans
   if (mode === "onboarding" || !currentPlan) {
-    return ["free", "premium", "unlimited", "lifetime"];
+    return validPlans;
   }
-
-  // Upgrade mode: filter based on current plan
-  switch (currentPlan) {
-    case "free":
-      return ["premium", "unlimited", "lifetime"]; // Only upgrades
-    case "premium":
-      return ["unlimited", "lifetime", "free"]; // Upgrades + downgrade
-    case "unlimited":
-      return ["lifetime", "premium", "free"]; // Upgrade + downgrades
-    case "lifetime":
-      return []; // No changes available - lifetime is permanent
-    default:
-      return ["free", "premium", "unlimited", "lifetime"];
-  }
+  return validPlans.filter((plan) => plan != currentPlan);
 };
 
 export function PlanSelector({
@@ -58,8 +46,14 @@ export function PlanSelector({
   } | null>(null);
 
   // tRPC mutations
-  const updateSubscriptionMutation = api.stripe.updateSubscription.useMutation();
+  const updateSubscriptionMutation =
+    api.stripe.updateSubscription.useMutation();
   const createCheckoutMutation = api.stripe.createCheckout.useMutation();
+
+  // Fetch promo slots for lifetime plan
+  const { data: promoSlots, isLoading: isLoadingPromoSlots } =
+    api.stripe.getPromoSlots.useQuery();
+  const isActiveLifetimePromo = !!promoSlots?.remaining;
 
   // Auto-dismiss success messages after 5 seconds
   useEffect(() => {
@@ -82,7 +76,9 @@ export function PlanSelector({
 
       // If in upgrade mode and user has a paid plan, use subscription update API
       if (mode === "upgrade" && currentPlan && currentPlan !== "free") {
-        const result = await updateSubscriptionMutation.mutateAsync({ newPlan: "free" });
+        const result = await updateSubscriptionMutation.mutateAsync({
+          newPlan: "free",
+        });
 
         // Show success message
         setFeedbackMessage({
@@ -105,7 +101,9 @@ export function PlanSelector({
 
       // Manually refresh JWT to get new billing claims (billing_version incremented)
       // This is necessary because the redirect happens before BillingSync receives Realtime notification
-      const { createClientComponentClient } = await import("@/utils/supabase/client");
+      const { createClientComponentClient } = await import(
+        "@/utils/supabase/client"
+      );
       const supabase = createClientComponentClient();
 
       console.log("🔄 Refreshing session after free plan selection...");
@@ -122,7 +120,9 @@ export function PlanSelector({
       const maxAttempts = 20; // 2 seconds max (20 * 100ms)
       let attempt = 0;
       while (attempt < maxAttempts) {
-        const { data: { session } } = await supabase.auth.getSession();
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
         const jwtClaims = session?.user?.app_metadata;
 
         // Check if JWT has updated billing claims (plan === "free")
@@ -131,12 +131,14 @@ export function PlanSelector({
           break;
         }
 
-        await new Promise(resolve => setTimeout(resolve, 100));
+        await new Promise((resolve) => setTimeout(resolve, 100));
         attempt++;
       }
 
       if (attempt === maxAttempts) {
-        console.warn("⚠️ JWT claims not updated after polling, BillingSync will catch up");
+        console.warn(
+          "⚠️ JWT claims not updated after polling, BillingSync will catch up"
+        );
       }
 
       router.push("/");
@@ -145,7 +147,10 @@ export function PlanSelector({
       console.error("Error selecting free plan:", error);
 
       // Check if it's a rate limit error
-      if (error?.data?.code === "TOO_MANY_REQUESTS" && error?.data?.cause?.retryAfter) {
+      if (
+        error?.data?.code === "TOO_MANY_REQUESTS" &&
+        error?.data?.cause?.retryAfter
+      ) {
         setFeedbackMessage({
           type: "error",
           title: "Too Many Requests",
@@ -155,7 +160,9 @@ export function PlanSelector({
         setFeedbackMessage({
           type: "error",
           title: "Failed to Update Plan",
-          message: error?.message || "We couldn't switch you to the free plan. Please try again or contact support if the issue persists.",
+          message:
+            error?.message ||
+            "We couldn't switch you to the free plan. Please try again or contact support if the issue persists.",
         });
       }
     } finally {
@@ -170,7 +177,9 @@ export function PlanSelector({
 
       // If in upgrade mode and user has a paid plan, use subscription update API
       if (mode === "upgrade" && currentPlan && currentPlan !== "free") {
-        const result = await updateSubscriptionMutation.mutateAsync({ newPlan: plan });
+        const result = await updateSubscriptionMutation.mutateAsync({
+          newPlan: plan,
+        });
 
         // If lifetime, redirect to checkout
         if (result.checkoutUrl) {
@@ -202,7 +211,10 @@ export function PlanSelector({
       console.error("Error with plan change:", error);
 
       // Check if it's a rate limit error
-      if (error?.data?.code === "TOO_MANY_REQUESTS" && error?.data?.cause?.retryAfter) {
+      if (
+        error?.data?.code === "TOO_MANY_REQUESTS" &&
+        error?.data?.cause?.retryAfter
+      ) {
         setFeedbackMessage({
           type: "error",
           title: "Too Many Requests",
@@ -212,7 +224,9 @@ export function PlanSelector({
         setFeedbackMessage({
           type: "error",
           title: "Failed to Process Plan Change",
-          message: error?.message || "We couldn't complete your plan change. Please try again or contact support if the issue persists.",
+          message:
+            error?.message ||
+            "We couldn't complete your plan change. Please try again or contact support if the issue persists.",
         });
       }
       setLoading(null);
@@ -277,7 +291,15 @@ export function PlanSelector({
         </div>
       )}
 
-      <div
+      {/* Show skeletons while loading promo slots */}
+      {isLoadingPromoSlots ? (
+        <div className="grid gap-6 xl:grid-cols-4 md:grid-cols-2">
+          {[1, 2, 3, 4].map((i) => (
+            <PricingCardSkeleton key={i} />
+          ))}
+        </div>
+      ) : (
+        <div
         className={`grid gap-6 ${
           availablePlans.length === 4
             ? "xl:grid-cols-4 md:grid-cols-2"
@@ -325,10 +347,14 @@ export function PlanSelector({
             title={PLAN_DETAILS.premium.title}
             description={PLAN_DETAILS.premium.description}
             features={PLAN_FEATURES.premium}
-            badge={{
-              text: currentPlan === "premium" ? "Current Plan" : "Most Popular",
-              variant: "primary",
-            }}
+            badge={
+              currentPlan === "premium"
+                ? {
+                    text: "Current Plan",
+                    variant: "default",
+                  }
+                : undefined
+            }
             buttonText={
               currentPlan === "premium"
                 ? "Current Plan"
@@ -338,8 +364,8 @@ export function PlanSelector({
             }
             onButtonClick={() => handlePaidPlan("premium")}
             buttonDisabled={loading !== null || currentPlan === "premium"}
-            highlighted
             currentPlan={currentPlan === "premium"}
+            costComparison={PLAN_DETAILS.premium.costComparison}
           />
         )}
 
@@ -355,7 +381,7 @@ export function PlanSelector({
             badge={
               currentPlan === "unlimited"
                 ? { text: "Current Plan", variant: "default" }
-                : undefined
+                : { text: "Best Value", variant: "value" }
             }
             buttonText={
               currentPlan === "unlimited"
@@ -367,11 +393,43 @@ export function PlanSelector({
             onButtonClick={() => handlePaidPlan("unlimited")}
             buttonDisabled={loading !== null || currentPlan === "unlimited"}
             currentPlan={currentPlan === "unlimited"}
+            costComparison={PLAN_DETAILS.unlimited.costComparison}
+            highlighted={false || !isActiveLifetimePromo}
           />
         )}
 
         {/* Lifetime Plan */}
-        {shouldShowPlan("lifetime") && (
+        {shouldShowPlan("lifetime") && isActiveLifetimePromo && (
+          <PricingCard
+            plan="lifetime"
+            price="FREE"
+            originalPrice={PLAN_DETAILS.lifetime_early_100.price}
+            interval={PLAN_DETAILS.lifetime_early_100.interval}
+            title={PLAN_DETAILS.lifetime_early_100.title}
+            description={PLAN_DETAILS.lifetime_early_100.description}
+            features={PLAN_FEATURES.lifetime}
+            badge={{
+              text:
+                currentPlan === "lifetime" ? "Current Plan" : "Launch Offer!",
+              variant: "default",
+            }}
+            buttonText={
+              currentPlan === "lifetime"
+                ? "Current Plan"
+                : loading === "lifetime"
+                ? "Loading..."
+                : "Claim Free Lifetime"
+            }
+            onButtonClick={() => handlePaidPlan("lifetime")}
+            buttonDisabled={loading !== null || currentPlan === "lifetime"}
+            currentPlan={currentPlan === "lifetime"}
+            costComparison={PLAN_DETAILS.lifetime_early_100.costComparison}
+            slotsRemaining={promoSlots?.remaining}
+            highlighted
+          />
+        )}
+
+        {shouldShowPlan("lifetime") && !isActiveLifetimePromo && (
           <PricingCard
             plan="lifetime"
             price={PLAN_DETAILS.lifetime.price}
@@ -379,24 +437,26 @@ export function PlanSelector({
             title={PLAN_DETAILS.lifetime.title}
             description={PLAN_DETAILS.lifetime.description}
             features={PLAN_FEATURES.lifetime}
-            badge={{
-              text: currentPlan === "lifetime" ? "Current Plan" : "Best Value",
-              variant: "success",
-            }}
+            badge={
+              currentPlan === "lifetime"
+                ? { text: "Current Plan", variant: "default" }
+                : undefined
+            }
             buttonText={
               currentPlan === "lifetime"
                 ? "Current Plan"
                 : loading === "lifetime"
                 ? "Loading..."
-                : "Buy Lifetime"
+                : "Subscribe"
             }
             onButtonClick={() => handlePaidPlan("lifetime")}
             buttonDisabled={loading !== null || currentPlan === "lifetime"}
-            highlighted
             currentPlan={currentPlan === "lifetime"}
+            costComparison={PLAN_DETAILS.lifetime.costComparison}
           />
         )}
-      </div>
+        </div>
+      )}
     </>
   );
 }

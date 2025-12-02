@@ -168,8 +168,8 @@ importers:
         specifier: ^0.0.1
         version: 0.0.1
       stripe:
-        specifier: ^19.1.0
-        version: 19.1.0(@types/node@24.3.0)
+        specifier: ^20.0.0
+        version: 20.0.0(@types/node@24.3.0)
       superjson:
         specifier: ^2.2.1
         version: 2.2.2
@@ -5801,8 +5801,8 @@ packages:
   strip-literal@3.0.0:
     resolution: {integrity: sha512-TcccoMhJOM3OebGhSBEmp3UZ2SfDMZUEBdRA/9ynfLi8yYajyWX3JiXArcJt4Umh4vISpspkQIY8ZZoCqjbviA==}
 
-  stripe@19.1.0:
-    resolution: {integrity: sha512-FjgIiE98dMMTNssfdjMvFdD4eZyEzdWAOwPYqzhPRNZeg9ggFWlPXmX1iJKD5pPIwZBaPlC3SayQQkwsPo6/YQ==}
+  stripe@20.0.0:
+    resolution: {integrity: sha512-EaZeWpbJOCcDytdjKSwdrL5BxzbDGNueiCfHjHXlPdBQvLqoxl6AAivC35SPzTmVXJb5duXQlXFGS45H0+e6Gg==}
     engines: {node: '>=16'}
     peerDependencies:
       '@types/node': '>=16'
@@ -12044,7 +12044,7 @@ snapshots:
     dependencies:
       js-tokens: 9.0.1
 
-  stripe@19.1.0(@types/node@24.3.0):
+  stripe@20.0.0(@types/node@24.3.0):
     dependencies:
       qs: 6.14.0
     optionalDependencies:

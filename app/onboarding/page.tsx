@@ -25,12 +25,18 @@ export default async function OnboardingPage() {
 
   // If user has a plan in JWT, redirect to billing (they've completed onboarding)
   if (billing?.plan) {
-    console.log(`✅ Onboarding: User has plan=${billing.plan} in JWT, redirecting to billing`);
+    console.log(
+      `✅ Onboarding: User has plan=${billing.plan} in JWT, redirecting to billing`
+    );
     redirect("/billing");
   }
 
   // If JWT billing claims are missing, this is expected for new users who haven't selected a plan yet
-  console.log(`🔄 Onboarding: No plan in JWT (billing=${JSON.stringify(billing)}), showing plan selection`);
+  console.log(
+    `🔄 Onboarding: No plan in JWT (billing=${JSON.stringify(
+      billing
+    )}), showing plan selection`
+  );
 
   // If no access, show onboarding
   return (

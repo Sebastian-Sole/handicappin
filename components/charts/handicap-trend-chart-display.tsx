@@ -41,6 +41,7 @@ const HandicapTrendChartDisplay = ({
         </React.Fragment>
         <div className="flex items-center space-x-2">
           <span className="sm:text-2xl text-xl font-bold">{handicapIndex}</span>
+          {/* TODO: Conditionally render only if more than 5 rounds */}
           <div className="min-[340px]:block hidden">
             {percentageChange < 0 && (
               <span className="flex items-center text-sm text-green-500">

@@ -98,7 +98,7 @@ export function TeeDialog({
             type="button"
             variant="outline"
             size="lg"
-            className="h-10 sm:flex md:hidden "
+            className="h-10 sm:flex md:hidden"
             disabled={disabled}
           >
             <Pencil className="h-4 w-4 mr-2" />
@@ -108,12 +108,12 @@ export function TeeDialog({
       );
     } else {
       return (
-        <div className="flex gap-2 justify-between flex-wrap sm:flex-row flex-col">
+        <div className="flex gap-2 justify-between flex-wrap sm:flex-row flex-col w-full">
           <Button
             type="button"
             variant="outline"
             size="sm"
-            className="h-10 hidden  md:flex"
+            className="h-10 hidden  md:flex w-full"
             disabled={disabled}
           >
             <Plus className="h-4 w-4" />
@@ -122,7 +122,7 @@ export function TeeDialog({
             type="button"
             variant="outline"
             size="lg"
-            className="h-10  sm:flex md:hidden"
+            className="h-10  sm:flex md:hidden w-full"
             disabled={disabled}
           >
             <Plus className="h-4 w-4 mr-2" />

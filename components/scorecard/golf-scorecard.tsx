@@ -60,10 +60,7 @@ interface GolfScorecardProps {
   access: FeatureAccess;
 }
 
-export default function GolfScorecard({
-  profile,
-  access,
-}: GolfScorecardProps) {
+export default function GolfScorecard({ profile, access }: GolfScorecardProps) {
   const isMounted = useMounted();
   const router = useRouter();
   // Use the tee management hook
@@ -406,8 +403,8 @@ export default function GolfScorecard({
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit, onError)} role="form">
-          <Card className="w-full mx-auto">
-            <CardContent className="p-6">
+        <Card className="w-full mx-auto bg-background border-none shadow-none">
+          <CardContent className="p-6 sm:w-[1325px] max-w-[450px] sm:max-w-[450px] md:max-w-[600px] lg:max-w-[725px] xl:max-w-[975px] 2xl:max-w-[1225px] 3xl:max-w-[1325px] mx-auto">
             <div className="mb-6 grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-8">
               <Card>
                 <CardContent className="p-4">
@@ -740,27 +737,27 @@ export default function GolfScorecard({
             {selectedTeeKey &&
               getEffectiveTees(selectedCourseId) &&
               displayedHoles && (
-                <ScorecardTable
-                  selectedTee={selectedTee}
-                  displayedHoles={displayedHoles}
-                  holeCount={holeCount}
-                  scores={form.watch("scores")}
-                  onScoreChange={handleScoreChange}
-                  disabled={isSubmitting}
-                />
+                <div className="w-full">
+                  <ScorecardTable
+                    selectedTee={selectedTee}
+                    displayedHoles={displayedHoles}
+                    holeCount={holeCount}
+                    scores={form.watch("scores")}
+                    onScoreChange={handleScoreChange}
+                    disabled={isSubmitting}
+                  />
+                </div>
               )}
             {!selectedTeeKey && (
-              <div
-                className={`h-32 sm:w-[270px] md:w-[600px] lg:w-[725px] xl:w-[975px] 2xl:w-[1225px] 3xl:w-[1325px]`}
-              >
+              <div className="h-32 w-full">
                 <div className="flex items-center justify-center h-full">
                   <Lead>Select a course and tee to submit your scorecard</Lead>
                 </div>
               </div>
             )}
-            {/* Desktop submit button */}
+            {/* Submit button */}
             {selectedTeeKey && (
-              <div className="mt-4 justify-end hidden md:flex">
+              <div className="mt-4 justify-end flex">
                 <Button type="submit" disabled={isSubmitting}>
                   {isSubmitting ? "Submitting..." : "Submit Scorecard"}
                 </Button>
@@ -768,18 +765,6 @@ export default function GolfScorecard({
             )}
           </CardContent>
         </Card>
-        {/* Sticky mobile submit button */}
-        {selectedTeeKey && (
-          <div className="fixed bottom-0 left-0 right-0 z-50 bg-background border-t border-border p-4 flex justify-center md:hidden">
-            <Button
-              type="submit"
-              className="w-full max-w-md"
-              disabled={isSubmitting}
-            >
-              {isSubmitting ? "Submitting..." : "Submit Scorecard"}
-            </Button>
-          </div>
-        )}
       </form>
     </Form>
   );

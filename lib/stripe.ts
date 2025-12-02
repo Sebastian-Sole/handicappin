@@ -4,9 +4,12 @@ import type { PlanType } from "./stripe-types";
 
 // Initialize Stripe client
 export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY ?? "", {
-  apiVersion: "2025-09-30.clover",
+  apiVersion: "2025-11-17.clover",
   typescript: true,
 });
+
+// Launch promotion code for lifetime plan
+const LAUNCH_PROMO_CODE = "EARLY100";
 
 // Price IDs for different plans (set these in your .env file)
 export const PLAN_TO_PRICE_MAP = {
@@ -23,6 +26,42 @@ export function mapPriceToPlan(
   if (priceId === PLAN_TO_PRICE_MAP.unlimited) return "unlimited";
   if (priceId === PLAN_TO_PRICE_MAP.lifetime) return "lifetime";
   return null;
+}
+
+/**
+ * Get promotion code details and remaining redemptions
+ */
+export async function getPromotionCodeDetails(code: string): Promise<{
+  id: string | null;
+  remaining: number;
+  total: number;
+} | null> {
+  try {
+    const promoCodes = await stripe.promotionCodes.list({
+      code,
+      active: true,
+      limit: 1,
+    });
+
+    const promoCode = promoCodes.data[0];
+
+    if (!promoCode) {
+      return null;
+    }
+
+    const maxRedemptions = promoCode.max_redemptions || 0;
+    const timesRedeemed = promoCode.times_redeemed || 0;
+    const remaining = Math.max(0, maxRedemptions - timesRedeemed);
+
+    return {
+      id: promoCode.id,
+      remaining,
+      total: maxRedemptions,
+    };
+  } catch (error) {
+    console.error(`Failed to fetch promotion code details for "${code}":`, error);
+    return null;
+  }
 }
 
 /**
@@ -56,6 +95,8 @@ export async function createCheckoutSession({
     ],
     success_url: successUrl,
     cancel_url: cancelUrl,
+    // Don't allow promo codes on subscriptions (only on lifetime via auto-apply)
+    allow_promotion_codes: false,
     metadata: {
       supabase_user_id: userId,
     },
@@ -88,7 +129,11 @@ export async function createLifetimeCheckoutSession({
   // Get or create Stripe customer
   const customerId = await getOrCreateStripeCustomer({ email, userId });
 
-  const session = await stripe.checkout.sessions.create({
+  // Get the launch promotion code and auto-apply if available
+  const promoDetails = await getPromotionCodeDetails(LAUNCH_PROMO_CODE);
+  const hasAvailableSlots = promoDetails && promoDetails.remaining > 0;
+
+  const sessionConfig: Stripe.Checkout.SessionCreateParams = {
     mode: "payment",
     payment_method_types: ["card"],
     ...(customerId ? { customer: customerId } : { customer_email: email }),
@@ -104,7 +149,16 @@ export async function createLifetimeCheckoutSession({
       supabase_user_id: userId,
       plan_type: "lifetime",
     },
-  });
+  };
+
+  // Auto-apply promo code if slots are available, otherwise allow manual entry
+  if (hasAvailableSlots && promoDetails.id) {
+    sessionConfig.discounts = [{ promotion_code: promoDetails.id }];
+  } else {
+    sessionConfig.allow_promotion_codes = true;
+  }
+
+  const session = await stripe.checkout.sessions.create(sessionConfig);
 
   return session;
 }
