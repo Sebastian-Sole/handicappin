@@ -206,10 +206,11 @@ export const stripeRouter = createTRPCRouter({
     }
 
     // Create a portal session
+    // Use server-side handler for JWT refresh on return
     const baseUrl = getServerBaseUrl();
     const session = await createPortalSession({
       customerId: stripeCustomer.stripe_customer_id,
-      returnUrl: `${baseUrl}/profile/${user.id}?tab=billing`,
+      returnUrl: `${baseUrl}/api/stripe/portal-return?user_id=${user.id}&tab=billing`,
     });
 
     if (!session.url) {

@@ -99,6 +99,8 @@ export default function BillingSuccessPage() {
 
           // Refresh session to update JWT claims before redirecting
           console.log("🔄 Refreshing session to update JWT claims...");
+
+          // Step 1: Client-side refresh
           const { error: refreshError } = await supabase.auth.refreshSession();
 
           if (refreshError) {
@@ -114,7 +116,24 @@ export default function BillingSuccessPage() {
             }
             // Continue anyway - JWT will refresh on navigation
           } else {
-            console.log("✅ Session refreshed successfully!");
+            console.log("✅ Client-side session refreshed successfully!");
+          }
+
+          // Step 2: Server-side cookie sync to ensure middleware gets updated JWT
+          try {
+            console.log("🔄 Syncing server-side session cookies...");
+            const response = await fetch("/api/auth/sync-session", {
+              method: "POST",
+            });
+
+            if (!response.ok) {
+              console.error("❌ Server-side JWT sync failed:", response.status);
+            } else {
+              console.log("✅ Server-side session synced successfully!");
+            }
+          } catch (syncError) {
+            console.error("❌ Failed to sync server-side session:", syncError);
+            // Continue anyway - critical for user experience
           }
 
           // Wait 1 more second to ensure middleware picks up new claims
