@@ -12,14 +12,14 @@ import {
   applyHandicapCaps,
   addHcpStrokesToScores,
   ProcessedRound,
-} from "../handicap-engine/utils.ts";
+} from "../handicap-shared/utils.ts";
 
 import {
   holeResponseSchema,
   roundResponseSchema,
   scoreResponseSchema,
   teeResponseSchema,
-} from "../handicap-engine/scorecard.ts";
+} from "../handicap-shared/scorecard.ts";
 
 const EXCEPTIONAL_ROUND_THRESHOLD = 7;
 const MAX_SCORE_DIFFERENTIAL = 54;
@@ -106,7 +106,7 @@ Deno.serve(async (req) => {
 
 /**
  * Process handicap calculation for a single user
- * This reuses the logic from handicap-engine/index.ts
+ * Uses shared utilities from handicap-shared/utils.ts
  */
 async function processUserHandicap(
   supabase: any,
@@ -216,7 +216,7 @@ async function processUserHandicap(
     }
     const scores = parsedScores.data;
 
-    // Build in-memory maps (same as handicap-engine)
+    // Build in-memory maps
     const teeMap = new Map(tees.map((tee) => [tee.id, tee]));
     const roundScoresMap = new Map(
       roundIds.map((roundId) => [
