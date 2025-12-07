@@ -40,7 +40,9 @@ BEGIN
   ON CONFLICT (user_id)
   DO UPDATE SET
     last_updated = NOW(),
-    event_type = EXCLUDED.event_type;  -- Update to most recent event type
+    event_type = EXCLUDED.event_type,  -- Update to most recent event type
+    status = 'pending',
+    attempts = 0;
 
   -- Return appropriate value for trigger
   IF TG_OP = 'DELETE' THEN
