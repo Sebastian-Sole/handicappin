@@ -453,3 +453,46 @@ export const pendingLifetimePurchases = pgTable(
 
 export const pendingLifetimePurchasesSchema = createSelectSchema(pendingLifetimePurchases);
 export type PendingLifetimePurchase = InferSelectModel<typeof pendingLifetimePurchases>;
+
+// Handicap calculation queue - tracks users needing handicap recalculation
+export const handicapCalculationQueue = pgTable(
+  "handicap_calculation_queue",
+  {
+    id: serial("id").primaryKey(),
+    userId: uuid("user_id").notNull().unique(),
+    eventType: text("event_type").notNull(),
+    createdAt: timestamp("created_at")
+      .default(sql`CURRENT_TIMESTAMP`)
+      .notNull(),
+    lastUpdated: timestamp("last_updated")
+      .default(sql`CURRENT_TIMESTAMP`)
+      .notNull(),
+    status: text("status")
+      .$type<"pending" | "failed">()
+      .default("pending")
+      .notNull(),
+    attempts: integer("attempts").default(0).notNull(),
+    errorMessage: text("error_message"),
+  },
+  (table) => [
+    index("idx_handicap_queue_status_created").on(
+      table.status,
+      table.createdAt
+    ),
+    index("idx_handicap_queue_user_id").on(table.userId),
+    foreignKey({
+      columns: [table.userId],
+      foreignColumns: [profile.id],
+      name: "handicap_calculation_queue_user_id_fkey",
+    })
+      .onUpdate("cascade")
+      .onDelete("cascade"),
+  ]
+);
+
+export const handicapCalculationQueueSchema = createSelectSchema(
+  handicapCalculationQueue
+);
+export type HandicapCalculationQueue = InferSelectModel<
+  typeof handicapCalculationQueue
+>;

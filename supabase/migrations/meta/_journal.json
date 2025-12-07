@@ -92,6 +92,13 @@
       "when": 1764198013866,
       "tag": "20251126230013_nifty_quicksilver",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1765119711501,
+      "tag": "20251207150151_exotic_sabra",
+      "breakpoints": true
     }
   ]
 }
