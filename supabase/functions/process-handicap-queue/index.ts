@@ -395,15 +395,22 @@ async function processUserHandicap(
     const newAttempts = job.attempts + 1;
     const newStatus = newAttempts >= MAX_RETRIES ? "failed" : "pending";
 
-    await supabase
-      .from("handicap_calculation_queue")
-      .update({
-        attempts: newAttempts,
-        error_message: errorMessage,
-        status: newStatus,
-        last_updated: new Date().toISOString(),
-      })
-      .eq("id", job.id);
+    try {
+      await supabase
+        .from("handicap_calculation_queue")
+        .update({
+          attempts: newAttempts,
+          error_message: errorMessage,
+          status: newStatus,
+          last_updated: new Date().toISOString(),
+        })
+        .eq("id", job.id);
+    } catch (updateError) {
+      console.error(
+        `Failed to update error status for job ${job.id} in handicap_calculation_queue:`,
+        updateError
+      );
+    }
 
     // Re-throw so Promise.allSettled marks as rejected
     throw error;
