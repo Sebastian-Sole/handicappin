@@ -153,18 +153,20 @@ async function processUserHandicap(
 
     const userRounds = parsedRounds.data;
 
-    // If no approved rounds, set handicap to maximum
+    // If no approved rounds, set handicap to maximum using stored procedure
     if (!userRounds.length) {
-      await supabase
-        .from("profile")
-        .update({ handicapIndex: MAX_SCORE_DIFFERENTIAL })
-        .eq("id", userId);
+      const { error: rpcError } = await supabase.rpc(
+        "process_handicap_no_rounds",
+        {
+          user_id: userId,
+          max_handicap: MAX_SCORE_DIFFERENTIAL,
+          queue_job_id: job.id,
+        }
+      );
 
-      // Delete job from queue (success)
-      await supabase
-        .from("handicap_calculation_queue")
-        .delete()
-        .eq("id", job.id);
+      if (rpcError) {
+        throw rpcError;
+      }
 
       console.log(`No approved rounds for user ${userId}, handicap set to max`);
       return;
@@ -356,33 +358,32 @@ async function processUserHandicap(
       );
     }
 
-    // Update all rounds in database
-    for (const pr of processedRounds) {
-      await supabase
-        .from("round")
-        .update({
-          existingHandicapIndex: pr.existingHandicapIndex,
-          scoreDifferential: pr.finalDifferential,
-          updatedHandicapIndex: pr.updatedHandicapIndex,
-          exceptionalScoreAdjustment: pr.esrOffset,
-          adjustedGrossScore: pr.adjustedGrossScore,
-          courseHandicap: pr.courseHandicap,
-          adjustedPlayedScore: pr.adjustedPlayedScore,
-        })
-        .eq("id", pr.id);
-    }
+    // Perform all DB updates atomically in a single transaction via stored procedure
+    const roundUpdates = processedRounds.map((pr) => ({
+      id: pr.id,
+      existingHandicapIndex: pr.existingHandicapIndex,
+      scoreDifferential: pr.finalDifferential,
+      updatedHandicapIndex: pr.updatedHandicapIndex,
+      exceptionalScoreAdjustment: pr.esrOffset,
+      adjustedGrossScore: pr.adjustedGrossScore,
+      courseHandicap: pr.courseHandicap,
+      adjustedPlayedScore: pr.adjustedPlayedScore,
+    }));
 
-    // Update user's final handicap index
-    await supabase
-      .from("profile")
-      .update({
-        handicapIndex:
+    const { data: rpcResult, error: rpcError } = await supabase.rpc(
+      "process_handicap_updates",
+      {
+        round_updates: roundUpdates,
+        user_id: userId,
+        new_handicap_index:
           processedRounds[processedRounds.length - 1].updatedHandicapIndex,
-      })
-      .eq("id", userId);
+        queue_job_id: job.id,
+      }
+    );
 
-    // Delete job from queue (success)
-    await supabase.from("handicap_calculation_queue").delete().eq("id", job.id);
+    if (rpcError) {
+      throw rpcError;
+    }
 
     console.log(`Successfully processed handicap for user ${userId}`);
   } catch (error: unknown) {
