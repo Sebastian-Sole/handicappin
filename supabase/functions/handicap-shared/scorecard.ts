@@ -83,7 +83,7 @@ export const roundSchema = z.object({
   updatedHandicapIndex: z.number().min(0).max(54),
   exceptionalScoreAdjustment: z.number().min(0).max(10),
   approvalStatus: z.literal("pending").or(z.literal("approved")).or(z.literal("rejected")),
-  notes: z.string().optional(),
+  notes: z.string().nullable().optional(),
   createdAt: z.string(),
 })
 

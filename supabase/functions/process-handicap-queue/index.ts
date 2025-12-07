@@ -1,122 +1,121 @@
-// Follow this setup guide to integrate the Deno language server with your editor:
-// https://deno.land/manual/getting_started/setup_your_environment
-// This enables autocomplete, go to definition, etc.
-
 import { createClient } from "jsr:@supabase/supabase-js@2";
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
+
+// Import existing handicap calculation logic
 import {
-  addHcpStrokesToScores,
-  applyHandicapCaps,
+  calculateHandicapIndex,
+  calculateScoreDifferential,
+  calculateCourseHandicap,
   calculateAdjustedGrossScore,
   calculateAdjustedPlayedScore,
-  calculateCourseHandicap,
-  calculateHandicapIndex,
   calculateLowHandicapIndex,
-  calculateScoreDifferential,
+  applyHandicapCaps,
+  addHcpStrokesToScores,
   ProcessedRound,
-} from "./utils.ts";
+} from "../handicap-shared/utils.ts";
 
 import {
   holeResponseSchema,
   roundResponseSchema,
   scoreResponseSchema,
   teeResponseSchema,
-} from "./scorecard.ts";
-
-export const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-};
+} from "../handicap-shared/scorecard.ts";
 
 const EXCEPTIONAL_ROUND_THRESHOLD = 7;
 const MAX_SCORE_DIFFERENTIAL = 54;
 const ESR_WINDOW_SIZE = 20;
 
+// Configuration from environment variables
+const BATCH_SIZE = parseInt(Deno.env.get("HANDICAP_QUEUE_BATCH_SIZE") || "25");
+const MAX_RETRIES = parseInt(Deno.env.get("HANDICAP_MAX_RETRIES") || "3");
+
+interface QueueJob {
+  id: number;
+  user_id: string;
+  event_type: string;
+  attempts: number;
+}
+
 Deno.serve(async (req) => {
-  if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders, status: 204 });
-  }
-
-  console.log("Handicap engine called");
-
-  let payload;
-  try {
-    payload = await req.json();
-  } catch {
-    return new Response(JSON.stringify({ error: "Invalid JSON" }), {
-      status: 400,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
-  }
-
-  console.log("payload", payload);
-
-  // Supabase webhook event type: 'INSERT', 'UPDATE', 'DELETE'
-  const eventType = payload.type || payload.eventType; // adjust as per your webhook payload
-  const newRecord = payload.record || payload.new;
-  const oldRecord = payload.old_record;
-
-  let shouldRun = false;
-  let userId = null;
-
-  if (eventType === "INSERT") {
-    shouldRun = newRecord?.approvalStatus === "approved";
-    userId = newRecord?.userId;
-  } else if (eventType === "UPDATE") {
-    shouldRun =
-      oldRecord?.approvalStatus !== "approved" &&
-      newRecord?.approvalStatus === "approved";
-    userId = newRecord?.userId;
-  } else if (eventType === "DELETE") {
-    shouldRun = true;
-    userId = oldRecord?.userId;
-  }
-
-  if (!shouldRun) {
-    console.log(
-      `No action required for this event: ${eventType}, new apr:${newRecord?.approvalStatus}, old apr: ${oldRecord?.approvalStatus}`
-    );
-    return new Response(
-      JSON.stringify({ message: "No action required for this event." }),
-      {
-        status: 200,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      }
-    );
-  }
+  console.log("Queue processor invoked");
 
   try {
-    if (!userId) {
-      console.error("Missing required field: userId");
-      return new Response(
-        JSON.stringify({ error: "Missing required field: userId" }),
-        {
-          status: 400,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        }
-      );
-    }
-
-    const supabaseUrl =
-      Deno.env.get("SUPABASE_URL") ?? Deno.env.get("LOCAL_SUPABASE_URL");
-    const supabaseServiceRoleKey =
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ??
-      Deno.env.get("LOCAL_SUPABASE_SERVICE_ROLE_KEY");
+    const supabaseUrl = Deno.env.get("SUPABASE_URL");
+    const supabaseServiceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
 
     if (!supabaseUrl || !supabaseServiceRoleKey) {
-      console.error("Missing Supabase environment variables");
-      return new Response(
-        JSON.stringify({ error: "Missing Supabase environment variables" }),
-        {
-          status: 500,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        }
-      );
+      throw new Error("Missing Supabase environment variables");
     }
 
     const supabase = createClient(supabaseUrl, supabaseServiceRoleKey);
+
+    // Fetch pending jobs from queue (up to BATCH_SIZE users)
+    const { data: pendingJobs, error: fetchError } = await supabase
+      .from("handicap_calculation_queue")
+      .select("*")
+      .eq("status", "pending")
+      .order("created_at", { ascending: true })
+      .limit(BATCH_SIZE);
+
+    if (fetchError) {
+      throw fetchError;
+    }
+
+    if (!pendingJobs || pendingJobs.length === 0) {
+      console.log("No pending jobs in queue");
+      return new Response(
+        JSON.stringify({ message: "No pending jobs", processed: 0 }),
+        { status: 200, headers: { "Content-Type": "application/json" } }
+      );
+    }
+
+    console.log(`Processing ${pendingJobs.length} users from queue`);
+
+    // Process all jobs in parallel using Promise.allSettled
+    const results = await Promise.allSettled(
+      pendingJobs.map((job: QueueJob) => processUserHandicap(supabase, job))
+    );
+
+    // Count successes and failures
+    const succeeded = results.filter((r) => r.status === "fulfilled").length;
+    const failed = results.filter((r) => r.status === "rejected").length;
+
+    console.log(
+      `Queue processing complete: ${succeeded} succeeded, ${failed} failed`
+    );
+
+    return new Response(
+      JSON.stringify({
+        message: "Queue processing complete",
+        processed: pendingJobs.length,
+        succeeded,
+        failed,
+      }),
+      { status: 200, headers: { "Content-Type": "application/json" } }
+    );
+  } catch (error: unknown) {
+    console.error("Queue processor error:", error);
+    const errorMessage =
+      error instanceof Error ? error.message : "Unknown error";
+    return new Response(JSON.stringify({ error: errorMessage }), {
+      status: 500,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
+});
+
+/**
+ * Process handicap calculation for a single user
+ * Uses shared utilities from handicap-shared/utils.ts
+ */
+async function processUserHandicap(
+  supabase: any,
+  job: QueueJob
+): Promise<void> {
+  try {
+    console.log(`Processing user ${job.user_id}, attempt ${job.attempts + 1}`);
+
+    const userId = job.user_id;
 
     // 1. Fetch user profile
     const { data: userProfile, error: profileError } = await supabase
@@ -126,13 +125,9 @@ Deno.serve(async (req) => {
       .single();
 
     if (profileError || !userProfile) {
-      return new Response(JSON.stringify({ error: "User profile not found" }), {
-        status: 404,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      throw new Error(`User profile not found for ${userId}`);
     }
 
-    // Get initial handicap index from profile, fallback to MAX_SCORE_DIFFERENTIAL
     const initialHandicapIndex =
       userProfile.initialHandicapIndex !== undefined &&
       userProfile.initialHandicapIndex !== null
@@ -152,96 +147,83 @@ Deno.serve(async (req) => {
     }
 
     const parsedRounds = roundResponseSchema.safeParse(userRoundsRaw);
-
     if (!parsedRounds.success) {
       throw new Error("Invalid rounds data: " + parsedRounds.error.message);
     }
 
     const userRounds = parsedRounds.data;
 
+    // If no approved rounds, set handicap to maximum using stored procedure
     if (!userRounds.length) {
-      // No approved rounds, set user index to maximum
-      await supabase
-        .from("profile")
-        .update({ handicapIndex: MAX_SCORE_DIFFERENTIAL })
-        .eq("id", userId);
-      return new Response(
-        JSON.stringify({
-          message: "No approved rounds found, handicap set to maximum",
-        }),
+      const { error: rpcError } = await supabase.rpc(
+        "process_handicap_no_rounds",
         {
-          status: 200,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          user_id: userId,
+          max_handicap: MAX_SCORE_DIFFERENTIAL,
+          queue_job_id: job.id,
         }
       );
+
+      if (rpcError) {
+        throw rpcError;
+      }
+
+      console.log(`No approved rounds for user ${userId}, handicap set to max`);
+      return;
     }
 
-    // 3. Fetch all teeInfo needed
+    // 3. Fetch tee info
     const teeIds = new Set(userRounds.map((r) => r.teeId));
     const { data: teesRaw, error: teesError } = await supabase
       .from("teeInfo")
       .select("*")
       .in("id", Array.from(teeIds));
 
-    if (teesError) {
-      throw teesError;
-    }
+    if (teesError) throw teesError;
 
     const parsedTees = teeResponseSchema.safeParse(teesRaw);
-
     if (!parsedTees.success) {
       throw new Error("Invalid tees data: " + parsedTees.error.message);
     }
-
     const tees = parsedTees.data;
 
-    // 4. Fetch all holes for those teeIds
+    // 4. Fetch holes
     const { data: holesRaw, error: holesError } = await supabase
       .from("hole")
       .select("*")
       .in("teeId", Array.from(teeIds));
 
-    if (holesError) {
-      throw holesError;
-    }
+    if (holesError) throw holesError;
 
     const parsedHoles = holeResponseSchema.safeParse(holesRaw);
-
     if (!parsedHoles.success) {
       throw new Error("Invalid holes data: " + parsedHoles.error.message);
     }
-
     const holes = parsedHoles.data;
 
-    // 5. Fetch all scores for these rounds
+    // 5. Fetch scores
     const roundIds = userRounds.map((r) => r.id);
     const { data: scoresRaw, error: scoresError } = await supabase
       .from("score")
       .select("*")
       .in("roundId", roundIds);
 
-    if (scoresError) {
-      throw scoresError;
-    }
+    if (scoresError) throw scoresError;
 
     const parsedScores = scoreResponseSchema.safeParse(scoresRaw);
-
     if (!parsedScores.success) {
       throw new Error("Invalid scores data: " + parsedScores.error.message);
     }
-
     const scores = parsedScores.data;
 
     // Build in-memory maps
     const teeMap = new Map(tees.map((tee) => [tee.id, tee]));
-
     const roundScoresMap = new Map(
       roundIds.map((roundId) => [
         roundId,
         scores.filter((s) => s.roundId === roundId),
       ])
     );
-
     const holesMap = new Map(
       Array.from(teeIds).map((teeId) => [
         teeId,
@@ -376,63 +358,61 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Update all rounds in a single pass
-    for (const pr of processedRounds) {
-      await supabase
-        .from("round")
-        .update({
-          existingHandicapIndex: pr.existingHandicapIndex,
-          scoreDifferential: pr.finalDifferential,
-          updatedHandicapIndex: pr.updatedHandicapIndex,
-          exceptionalScoreAdjustment: pr.esrOffset,
-          adjustedGrossScore: pr.adjustedGrossScore,
-          courseHandicap: pr.courseHandicap,
-          adjustedPlayedScore: pr.adjustedPlayedScore,
-        })
-        .eq("id", pr.id);
-    }
+    // Perform all DB updates atomically in a single transaction via stored procedure
+    const roundUpdates = processedRounds.map((pr) => ({
+      id: pr.id,
+      existingHandicapIndex: pr.existingHandicapIndex,
+      scoreDifferential: pr.finalDifferential,
+      updatedHandicapIndex: pr.updatedHandicapIndex,
+      exceptionalScoreAdjustment: pr.esrOffset,
+      adjustedGrossScore: pr.adjustedGrossScore,
+      courseHandicap: pr.courseHandicap,
+      adjustedPlayedScore: pr.adjustedPlayedScore,
+    }));
 
-    // Update user's final handicap index
-    await supabase
-      .from("profile")
-      .update({
-        handicapIndex:
-          processedRounds[processedRounds.length - 1].updatedHandicapIndex,
-      })
-      .eq("id", userId);
-
-    console.log("Handicap calculation completed successfully");
-
-    return new Response(
-      JSON.stringify({
-        message: "Handicap calculation completed successfully",
-        finalHandicapIndex:
-          processedRounds[processedRounds.length - 1].updatedHandicapIndex,
-      }),
+    const { data: rpcResult, error: rpcError } = await supabase.rpc(
+      "process_handicap_updates",
       {
-        status: 200,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        round_updates: roundUpdates,
+        user_id: userId,
+        new_handicap_index:
+          processedRounds[processedRounds.length - 1].updatedHandicapIndex,
+        queue_job_id: job.id,
       }
     );
+
+    if (rpcError) {
+      throw rpcError;
+    }
+
+    console.log(`Successfully processed handicap for user ${userId}`);
   } catch (error: unknown) {
-    console.error(error);
+    // Handle failure: update queue entry with error
+    console.error(`Failed to process user ${job.user_id}:`, error);
+
     const errorMessage =
-      error instanceof Error ? error.message : "An unknown error occurred";
-    return new Response(JSON.stringify({ error: errorMessage }), {
-      status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+      error instanceof Error ? error.message : "Unknown error";
+    const newAttempts = job.attempts + 1;
+    const newStatus = newAttempts >= MAX_RETRIES ? "failed" : "pending";
+
+    try {
+      await supabase
+        .from("handicap_calculation_queue")
+        .update({
+          attempts: newAttempts,
+          error_message: errorMessage,
+          status: newStatus,
+          last_updated: new Date().toISOString(),
+        })
+        .eq("id", job.id);
+    } catch (updateError) {
+      console.error(
+        `Failed to update error status for job ${job.id} in handicap_calculation_queue:`,
+        updateError
+      );
+    }
+
+    // Re-throw so Promise.allSettled marks as rejected
+    throw error;
   }
-});
-
-/* To invoke locally:
-
-  1. Run `supabase start` (see: https://supabase.com/docs/reference/cli/supabase-start)
-  2. Make an HTTP request:
-
-  curl -i --location --request POST 'http://127.0.0.1:54321/functions/v1/handicap-engine' \
-    --header 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0' \
-    --header 'Content-Type: application/json' \
-    --data '{"name":"Functions"}'
-
-*/
+}
