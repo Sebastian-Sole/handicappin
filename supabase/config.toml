@@ -142,3 +142,7 @@ secrets= "env(SEND_EMAIL_HOOK_SECRET)"
 [auth.hook.custom_access_token]
 enabled = true
 uri = "pg-functions://postgres/public/custom_access_token_hook"
+
+# Edge Functions configuration
+[functions.process-handicap-queue]
+verify_jwt = false  # Allow cron job to call without authentication
