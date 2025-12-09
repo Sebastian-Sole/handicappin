@@ -20,6 +20,7 @@ import { Input } from "../ui/input";
 import { useToast } from "../ui/use-toast";
 import { VerificationBox } from "./verification-box";
 import { useState } from "react";
+import { getBillingFromJWT } from "@/utils/supabase/jwt";
 
 export function Login() {
   const isMounted = useMounted();
@@ -59,8 +60,23 @@ export function Login() {
       });
       router.push("/error");
       setIsSubmitting(false);
+      return;
     }
-    router.push("/");
+
+    // Get fresh session with JWT billing claims
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+    const billing = getBillingFromJWT(session);
+
+    // Intelligent redirect based on plan status
+    if (!billing?.plan) {
+      // User has no plan - direct to onboarding (optimal UX)
+      router.push("/onboarding");
+    } else {
+      // User has plan - go to home
+      router.push("/");
+    }
     router.refresh();
   };
 

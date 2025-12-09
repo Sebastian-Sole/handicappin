@@ -128,8 +128,7 @@ export async function updateSession(request: NextRequest) {
 
   if (
     enrichedUser &&
-    !isPublic &&
-    !pathname.startsWith("/onboarding") &&
+    !pathname.startsWith("/api") && // Skip API routes (handled by API middleware)
     !pathname.startsWith("/billing") && // Includes /billing/success
     !pathname.startsWith("/upgrade") &&
     !pathname.startsWith("/auth/verify-session")
@@ -186,7 +185,8 @@ export async function updateSession(request: NextRequest) {
       }
 
       // Check if user needs onboarding (no plan selected)
-      if (!plan) {
+      // Only redirect if not already on onboarding to prevent loops
+      if (!plan && !pathname.startsWith("/onboarding")) {
         const url = request.nextUrl.clone();
         url.pathname = "/onboarding";
         return NextResponse.redirect(url);
