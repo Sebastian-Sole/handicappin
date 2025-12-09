@@ -101,9 +101,14 @@ export async function POST(request: NextRequest) {
         },
         { status: 200 }
       );
-    } else if (existingEvent.length > 0 && existingEvent[0].status === "failed") {
+    } else if (
+      existingEvent.length > 0 &&
+      existingEvent[0].status === "failed"
+    ) {
       logWebhookInfo(
-        `Retry detected for failed event ${event.id} (retry #${(existingEvent[0].retryCount || 0) + 1})`
+        `Retry detected for failed event ${event.id} (retry #${
+          (existingEvent[0].retryCount || 0) + 1
+        })`
       );
     }
 
@@ -314,7 +319,10 @@ async function handleCustomerCreated(customer: Stripe.Customer) {
  */
 async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
   const userId = session.metadata?.supabase_user_id;
-  const customerId = typeof session.customer === 'string' ? session.customer : session.customer?.id;
+  const customerId =
+    typeof session.customer === "string"
+      ? session.customer
+      : session.customer?.id;
 
   logWebhookDebug("Checkout session details", {
     sessionId: session.id,
@@ -353,7 +361,7 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
 
   // Retrieve expanded session data once for EARLY100 promo code validation
   const expandedSession = await stripe.checkout.sessions.retrieve(session.id, {
-    expand: ['total_details.breakdown'],
+    expand: ["total_details.breakdown"],
   });
 
   // For subscription mode, handle subscription immediately to avoid race condition
@@ -415,10 +423,14 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
       }
 
       // ✅ NEW: Verify EARLY100 promo code only used on lifetime plans
-      const discounts = expandedSession.total_details?.breakdown?.discounts || [];
+      const discounts =
+        expandedSession.total_details?.breakdown?.discounts || [];
       const hasEarly100 = discounts.some((discount) => {
         const promoCode = (discount as any)?.discount?.promotion_code?.code;
-        return typeof promoCode === 'string' && promoCode.toUpperCase() === 'EARLY100';
+        return (
+          typeof promoCode === "string" &&
+          promoCode.toUpperCase() === "EARLY100"
+        );
       });
 
       if (hasEarly100 && plan !== "lifetime") {
@@ -430,7 +442,8 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
             userId,
             sessionId: session.id,
             severity: "CRITICAL",
-            action: "Verify Stripe promotion code restrictions are configured correctly",
+            action:
+              "Verify Stripe promotion code restrictions are configured correctly",
           }
         );
         throw new Error(
@@ -608,15 +621,23 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
 
         // ❌ DO NOT GRANT ACCESS - Throw error for retry
         throw new Error(
-          `Amount verification failed for checkout session ${session.id}: expected ${formatAmount(verification.expected)}, got ${formatAmount(verification.actual)}`
+          `Amount verification failed for checkout session ${
+            session.id
+          }: expected ${formatAmount(
+            verification.expected
+          )}, got ${formatAmount(verification.actual)}`
         );
       }
 
       // ✅ NEW: Verify EARLY100 promo code only used on lifetime plans
-      const paymentDiscounts = expandedSession.total_details?.breakdown?.discounts || [];
+      const paymentDiscounts =
+        expandedSession.total_details?.breakdown?.discounts || [];
       const hasEarly100Payment = paymentDiscounts.some((discount) => {
         const promoCode = (discount as any)?.discount?.promotion_code?.code;
-        return typeof promoCode === 'string' && promoCode.toUpperCase() === 'EARLY100';
+        return (
+          typeof promoCode === "string" &&
+          promoCode.toUpperCase() === "EARLY100"
+        );
       });
 
       if (hasEarly100Payment && plan !== "lifetime") {
@@ -629,7 +650,8 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
             userId,
             sessionId: session.id,
             severity: "CRITICAL",
-            action: "Verify Stripe promotion code restrictions are configured correctly",
+            action:
+              "Verify Stripe promotion code restrictions are configured correctly",
           }
         );
         throw new Error(
@@ -817,7 +839,9 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
 /**
  * Handle payment intent succeeded - grant access for pending lifetime purchases
  */
-async function handlePaymentIntentSucceeded(paymentIntent: Stripe.PaymentIntent) {
+async function handlePaymentIntentSucceeded(
+  paymentIntent: Stripe.PaymentIntent
+) {
   const paymentIntentId = paymentIntent.id;
 
   logPaymentEvent(`Payment intent succeeded: ${paymentIntentId}`);
@@ -988,9 +1012,17 @@ async function handlePaymentIntentFailed(paymentIntent: Stripe.PaymentIntent) {
  */
 async function handleInvoicePaymentFailed(invoice: Stripe.Invoice) {
   // Type assertion needed as invoice.subscription exists but may not be in type definitions
-  const invoiceData = invoice as Stripe.Invoice & { subscription?: string | Stripe.Subscription | null };
-  const subscriptionId = typeof invoiceData.subscription === 'string' ? invoiceData.subscription : invoiceData.subscription?.id;
-  const customerId = typeof invoice.customer === 'string' ? invoice.customer : invoice.customer?.id;
+  const invoiceData = invoice as Stripe.Invoice & {
+    subscription?: string | Stripe.Subscription | null;
+  };
+  const subscriptionId =
+    typeof invoiceData.subscription === "string"
+      ? invoiceData.subscription
+      : invoiceData.subscription?.id;
+  const customerId =
+    typeof invoice.customer === "string"
+      ? invoice.customer
+      : invoice.customer?.id;
   const attemptCount = invoice.attempt_count;
 
   logPaymentEvent(
@@ -1086,7 +1118,8 @@ async function handleInvoicePaymentFailed(invoice: Stripe.Invoice) {
  */
 async function handleChargeRefunded(charge: Stripe.Charge) {
   const chargeId = charge.id;
-  const customerId = typeof charge.customer === 'string' ? charge.customer : charge.customer?.id;
+  const customerId =
+    typeof charge.customer === "string" ? charge.customer : charge.customer?.id;
   const amountRefunded = charge.amount_refunded; // In cents
   const amountCharged = charge.amount; // In cents
   const currency = charge.currency;
@@ -1130,9 +1163,7 @@ async function handleChargeRefunded(charge: Stripe.Charge) {
       .limit(1);
 
     if (userProfile.length === 0) {
-      throw new Error(
-        `No profile found for user in charge refund ${chargeId}`
-      );
+      throw new Error(`No profile found for user in charge refund ${chargeId}`);
     }
 
     const currentPlan = userProfile[0].planSelected;
@@ -1196,7 +1227,8 @@ async function handleChargeRefunded(charge: Stripe.Charge) {
  */
 async function handleDisputeCreated(dispute: Stripe.Dispute) {
   const disputeId = dispute.id;
-  const chargeId = typeof dispute.charge === 'string' ? dispute.charge : dispute.charge?.id;
+  const chargeId =
+    typeof dispute.charge === "string" ? dispute.charge : dispute.charge?.id;
   const amount = dispute.amount;
   const reason = dispute.reason;
   const status = dispute.status;
@@ -1306,7 +1338,10 @@ async function handleDisputeCreated(dispute: Stripe.Dispute) {
  */
 async function handleSubscriptionChange(subscription: Stripe.Subscription) {
   const userId = subscription.metadata?.supabase_user_id;
-  const customerId = typeof subscription.customer === 'string' ? subscription.customer : subscription.customer?.id;
+  const customerId =
+    typeof subscription.customer === "string"
+      ? subscription.customer
+      : subscription.customer?.id;
 
   if (!userId) {
     throw new Error(
@@ -1315,9 +1350,7 @@ async function handleSubscriptionChange(subscription: Stripe.Subscription) {
   }
 
   if (!customerId) {
-    throw new Error(
-      `Missing customer ID in subscription ${subscription.id}`
-    );
+    throw new Error(`Missing customer ID in subscription ${subscription.id}`);
   }
 
   // ✅ NEW: Verify customer belongs to this user
@@ -1406,29 +1439,99 @@ async function handleSubscriptionChange(subscription: Stripe.Subscription) {
     currency: verification.currency,
   });
 
+  // Log subscription details BEFORE condition check
+  console.log("🔍 [Webhook] Subscription change details:", {
+    subscriptionId: subscription.id,
+    userId,
+    status: subscription.status,
+    cancel_at_period_end: subscription.cancel_at_period_end,
+    cancel_at: subscription.cancel_at,
+    isCancelling: subscription.cancel_at_period_end || !!subscription.cancel_at,
+    currentPeriodEnd: subscription.items.data[0]?.current_period_end,
+    plan,
+  });
+
   // Only update if subscription is active
   if (subscription.status === "active" || subscription.status === "trialing") {
     try {
-      await db
+      logWebhookDebug("Subscription update details", {
+        userId,
+        plan,
+        status: subscription.status,
+        currentPeriodEnd: subscription.items.data[0]?.current_period_end,
+        cancelAtPeriodEnd: subscription.cancel_at_period_end,
+      });
+
+      console.log("RECIEVED SUB: ");
+      console.log(subscription);
+
+      // Check if subscription is set to cancel
+      // Stripe can represent this in two ways:
+      // 1. cancel_at_period_end: true
+      // 2. cancel_at: <timestamp> (scheduled cancellation)
+      const isCancelling = subscription.cancel_at_period_end || !!subscription.cancel_at;
+
+      const updateData = {
+        planSelected: plan,
+        planSelectedAt: new Date(),
+        subscriptionStatus: subscription.status, // NEW: active, trialing, etc.
+        currentPeriodEnd: subscription.items.data[0]?.current_period_end, // NEW: unix timestamp
+        cancelAtPeriodEnd: isCancelling, // FIX: Check both cancel_at_period_end AND cancel_at
+        billingVersion: sql`billing_version + 1`, // NEW: Increment version
+      };
+
+      console.log("🔍 [Webhook] About to update profile with:", {
+        userId,
+        cancelAtPeriodEnd_DB_Value: isCancelling,
+        stripe_cancel_at_period_end: subscription.cancel_at_period_end,
+        stripe_cancel_at: subscription.cancel_at,
+        updateData: {
+          ...updateData,
+          billingVersion: "incremented",
+        },
+      });
+
+      const result = await db
         .update(profile)
-        .set({
-          planSelected: plan,
-          planSelectedAt: new Date(),
-          subscriptionStatus: subscription.status, // NEW: active, trialing, etc.
-          currentPeriodEnd: subscription.items.data[0]?.current_period_end, // NEW: unix timestamp
-          cancelAtPeriodEnd: subscription.cancel_at_period_end || false, // NEW: Critical for graceful cancellation
-          billingVersion: sql`billing_version + 1`, // NEW: Increment version
-        })
+        .set(updateData)
         .where(eq(profile.id, userId));
 
+      console.log("🔍 [Webhook] Database update result:", result);
+
+      // Verify the update actually happened
+      const verifyProfile = await db
+        .select({
+          cancelAtPeriodEnd: profile.cancelAtPeriodEnd,
+          subscriptionStatus: profile.subscriptionStatus,
+          currentPeriodEnd: profile.currentPeriodEnd,
+        })
+        .from(profile)
+        .where(eq(profile.id, userId))
+        .limit(1);
+
+      console.log("🔍 [Webhook] Verified database state after update:", {
+        userId,
+        dbState: verifyProfile[0],
+      });
+
       logWebhookSuccess(
-        `Updated plan_selected to '${plan}' for user: ${userId}`
+        `Updated plan_selected to '${plan}' for user: ${userId} (status: ${subscription.status}, cancel_at_period_end: ${subscription.cancel_at_period_end}, cancel_at: ${subscription.cancel_at}, isCancelling: ${isCancelling})`
       );
     } catch (error) {
       logWebhookError("Error updating plan", error);
       // Throw error to trigger webhook retry by Stripe
       throw error;
     }
+  } else {
+    console.log(
+      "⚠️ [Webhook] Skipping database update - subscription status not active/trialing:",
+      {
+        subscriptionId: subscription.id,
+        userId,
+        status: subscription.status,
+        cancelAtPeriodEnd: subscription.cancel_at_period_end,
+      }
+    );
   }
 }
 
@@ -1437,7 +1540,10 @@ async function handleSubscriptionChange(subscription: Stripe.Subscription) {
  */
 async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
   const userId = subscription.metadata?.supabase_user_id;
-  const customerId = typeof subscription.customer === 'string' ? subscription.customer : subscription.customer?.id;
+  const customerId =
+    typeof subscription.customer === "string"
+      ? subscription.customer
+      : subscription.customer?.id;
 
   if (!userId) {
     throw new Error(
@@ -1486,7 +1592,9 @@ async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
       .where(eq(profile.id, userId));
 
     logWebhookSuccess(`Reverted to free tier for user: ${userId}`);
-    console.log(`📊 [Webhook] Billing version incremented for user ${userId} - BillingSync should detect within seconds`);
+    console.log(
+      `📊 [Webhook] Billing version incremented for user ${userId} - BillingSync should detect within seconds`
+    );
   } catch (error) {
     logWebhookError("Error reverting user to free tier", error);
     // Throw error to trigger webhook retry by Stripe
