@@ -106,7 +106,7 @@ export function AddCourseDialog({ onAdd }: AddCourseDialogProps) {
   return (
     <MultiPageDialog
       trigger={
-        <div className="flex gap-2 justify-between flex-wrap sm:flex-row flex-col">
+        <div className="flex gap-2 justify-between flex-wrap sm:flex-row flex-col w-full">
           <Button
             variant="outline"
             size="sm"
@@ -121,7 +121,7 @@ export function AddCourseDialog({ onAdd }: AddCourseDialogProps) {
           <Button
             variant="outline"
             size="lg"
-            className="h-10 md:hidden sm:flex"
+            className="h-10 md:hidden sm:flex w-full"
             onClick={() => {
               setOpen(true);
             }}

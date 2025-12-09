@@ -5,6 +5,7 @@ import { Suspense } from "react";
 import DashboardSkeleton from "@/components/dashboard/dashboardSkeleton";
 
 import { createServerComponentClient } from "@/utils/supabase/server";
+import { redirect } from "next/navigation";
 
 const DashboardPage = async (props: { params: Promise<{ id: string }> }) => {
   const params = await props.params;
@@ -23,6 +24,9 @@ const DashboardPage = async (props: { params: Promise<{ id: string }> }) => {
   if (data.user?.id !== id) {
     return <div>Invalid user, this is not your profile</div>;
   }
+
+  // Note: Premium access check is handled by middleware
+  // This page path (/dashboard/*) is listed in PREMIUM_PATHS, so middleware redirects non-premium users
 
   try {
     const scorecards = await api.scorecard.getAllScorecardsByUserId({

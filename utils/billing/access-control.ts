@@ -1,0 +1,107 @@
+import { createServerComponentClient } from "@/utils/supabase/server";
+import { FeatureAccess } from "@/types/billing";
+import {
+  createNoAccessResponse,
+  createFreeTierResponse,
+} from "./access-helpers";
+
+/**
+ * Comprehensive access check that determines user's plan and permissions
+ * This is the main function called by middleware and route guards
+ */
+export async function getComprehensiveUserAccess(
+  userId: string
+): Promise<FeatureAccess> {
+  const supabase = await createServerComponentClient();
+
+  // 1. Get user profile (exists for ALL users)
+  const { data: profile, error: profileError } = await supabase
+    .from("profile")
+    .select("plan_selected, subscription_status, current_period_end, cancel_at_period_end")
+    .eq("id", userId)
+    .single();
+
+  if (profileError) {
+    console.error("Error fetching profile:", profileError);
+    return createNoAccessResponse();
+  }
+
+  // 2. Check if user selected free plan - COUNT rounds from database
+  if (profile.plan_selected === "free") {
+    const { count, error: countError } = await supabase
+      .from("round")
+      .select("*", { count: "exact", head: true })
+      .eq("userId", userId);
+
+    if (countError) {
+      console.error("Error counting rounds:", countError);
+      return createFreeTierResponse(0);
+    }
+
+    return createFreeTierResponse(count || 0);
+  }
+
+  // 3. LIFETIME plan (one-time payment, NOT subscription)
+  if (profile.plan_selected === "lifetime") {
+    // Lifetime: Trust database value set by webhook after successful payment
+    // No need to query Stripe - if plan_selected='lifetime', payment succeeded
+    // Webhook validates payment via signature verification (cryptographically secure)
+    return {
+      plan: "lifetime",
+      hasAccess: true,
+      hasPremiumAccess: true,
+      hasUnlimitedRounds: true,
+      remainingRounds: Infinity,
+      status: "active",
+      isLifetime: true,
+      currentPeriodEnd: new Date("2099-12-31T23:59:59.000Z"), // Never expires
+    };
+  }
+
+  // 4. PREMIUM/UNLIMITED plans (recurring subscriptions)
+  if (
+    profile.plan_selected === "premium" ||
+    profile.plan_selected === "unlimited"
+  ) {
+    // Trust database values set by webhook - webhooks are the source of truth
+    // Webhook validates via Stripe signature and updates these fields
+    if (profile.subscription_status === "active" || profile.subscription_status === "trialing") {
+      return {
+        plan: profile.plan_selected,
+        hasAccess: true,
+        hasPremiumAccess: true,
+        hasUnlimitedRounds: true,
+        remainingRounds: Infinity,
+        status: profile.subscription_status,
+        isLifetime: false,
+        currentPeriodEnd: profile.current_period_end ? new Date(profile.current_period_end * 1000) : null,
+        cancelAtPeriodEnd: profile.cancel_at_period_end || false,
+      };
+    }
+
+    // Subscription expired/cancelled - fall back to free tier
+    console.log("Subscription not active in database, falling back to free tier", {
+      plan: profile.plan_selected,
+      status: profile.subscription_status,
+    });
+    // Note: Webhook should have updated plan_selected to 'free', but handle gracefully
+  }
+
+  // 5. No plan selected yet - needs onboarding
+  return createNoAccessResponse();
+}
+
+/**
+ * Helper to check if user can add more rounds (for free tier limit)
+ */
+export async function canAddRound(userId: string): Promise<boolean> {
+  const access = await getComprehensiveUserAccess(userId);
+
+  // Paid users can always add rounds
+  if (access.hasPremiumAccess) {
+    return true;
+  }
+
+  // Free users must have remaining rounds
+  return access.remainingRounds > 0;
+}

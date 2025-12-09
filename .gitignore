@@ -44,3 +44,8 @@ handicappin.code-workspace
 .env.production
 
 .vscode/
+
+# Sentry Config File
+.env.sentry-build-plugin
+
+.claude

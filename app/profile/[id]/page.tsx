@@ -1,10 +1,10 @@
-import UserProfile from "@/components/profile/user-profile";
-import { toast } from "@/components/ui/use-toast";
 import { api } from "@/trpc/server";
 import { createServerComponentClient } from "@/utils/supabase/server";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import ProfileSkeleton from "@/components/loading/profile-skeleton";
+import { getComprehensiveUserAccess } from "@/utils/billing/access-control";
+import { TabbedProfilePage } from "@/components/profile/tabbed-profile-page";
 
 const ProfilePage = async (props: { params: Promise<{ id: string }> }) => {
   const params = await props.params;
@@ -23,12 +23,6 @@ const ProfilePage = async (props: { params: Promise<{ id: string }> }) => {
   }
 
   if (data.user.id !== profileId) {
-    // TODO: Is this the correct instantiation of the toast?
-    toast({
-      title: "Unauthorized",
-      description: "You do not have permission to view this profile",
-      variant: "destructive",
-    });
     redirect("/404");
   }
 
@@ -38,9 +32,16 @@ const ProfilePage = async (props: { params: Promise<{ id: string }> }) => {
     redirect("/404");
   }
 
+  // Fetch billing access data for the billing tab
+  const access = await getComprehensiveUserAccess(data.user.id);
+
   return (
     <Suspense fallback={<ProfileSkeleton />}>
-      <UserProfile authUser={data.user} profile={profile} />
+      <TabbedProfilePage
+        authUser={data.user}
+        profile={profile}
+        access={access}
+      />
     </Suspense>
   );
 };

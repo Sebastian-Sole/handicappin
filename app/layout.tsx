@@ -7,6 +7,7 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { Navbar } from "@/components/layout/navbar";
 import Footer from "@/components/layout/footer";
 import { Analytics } from "@vercel/analytics/next";
+import { BillingSync } from "@/components/billing-sync";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -31,6 +32,9 @@ export default function RootLayout({
               enableSystem
               disableTransitionOnChange
             >
+              {/* BillingSync handles its own auth detection */}
+              <BillingSync />
+
               <Navbar />
               <section className="pt-16 grow bg-background">{children}</section>
               <Footer />

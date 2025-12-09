@@ -17,28 +17,39 @@ import {
 import { createServerComponentClient } from "@/utils/supabase/server";
 import ThemeImage from "@/components/homepage/theme-image";
 import Link from "next/link";
+import { PricingCard } from "@/components/billing/pricing-card";
+import {
+  PLAN_FEATURES,
+  PLAN_DETAILS,
+} from "@/components/billing/plan-features";
+import { getPromotionCodeDetails } from "@/lib/stripe";
 
 export default async function Landing() {
   const supabase = await createServerComponentClient();
 
-  const { data: users } = await supabase.from("profile").select("id");
-  if (!users) {
-    throw new Error("Failed to fetch number of users");
-  }
-  const numberOfUsers = Math.round(users.length / 10) * 10;
+  const { data: numberOfUsers, error: usersError } = await supabase.rpc(
+    "get_public_user_count"
+  );
 
-  const { data: rounds } = await supabase.from("round").select("id");
-  if (!rounds) {
-    throw new Error("Failed to fetch number of rounds");
-  }
-  const numberOfRounds = Math.round(rounds.length / 10) * 10;
+  const { data: numberOfRounds, error: roundsError } = await supabase.rpc(
+    "get_public_round_count"
+  );
 
-  const { data: courses } = await supabase.from("course").select("id");
-  if (!courses) {
-    throw new Error("Failed to fetch number of courses");
-  }
-  const numberOfCourses = Math.round(courses.length / 10) * 10;
+  const { data: numberOfCourses, error: coursesError } = await supabase.rpc(
+    "get_public_course_count"
+  );
 
+  // Fetch promo code details for launch offer
+  let promoDetails = await getPromotionCodeDetails("EARLY100");
+
+  const usersCount =
+    usersError || numberOfUsers === null ? 10 : numberOfUsers || 10;
+  const roundsCount =
+    roundsError || numberOfRounds === null ? 0 : numberOfRounds || 0;
+  const coursesCount =
+    coursesError || numberOfCourses === null ? 0 : numberOfCourses || 0;
+
+  const isActiveLifetimePromo = !!promoDetails?.remaining;
   return (
     <div className="min-h-screen bg-background">
       {/* Hero Section */}
@@ -59,7 +70,7 @@ export default async function Landing() {
               Track every round, calculate your handicap automatically, and
               understand the calculations behind the scenes.
             </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <div className="flex flex-col md:flex-row gap-4 justify-center">
               <Link href="/signup">
                 <Button size="lg" className="text-lg px-8">
                   Start Free Forever
@@ -201,125 +212,26 @@ export default async function Landing() {
           <div className="grid md:grid-cols-3 gap-8 text-center">
             <div>
               <div className="text-4xl font-bold text-primary mb-2">
-                {numberOfUsers > 0 ? numberOfUsers : "10"}+
+                {usersCount > 0 ? usersCount : "10"}+
               </div>
               <div className="text-muted-foreground">Active Users</div>
             </div>
             <div>
               <div className="text-4xl font-bold text-primary mb-2">
-                {numberOfRounds}+
+                {roundsCount}+
               </div>
               <div className="text-muted-foreground">Rounds Logged</div>
             </div>
             <div>
               <div className="text-4xl font-bold text-primary mb-2">
-                {numberOfCourses}+
+                {coursesCount}+
               </div>
               <div className="text-muted-foreground">Courses supported</div>
             </div>
           </div>
         </div>
       </section>
-      {/* Testimonials */}
-      {/* <section id="testimonials" className="py-20 bg-muted/30">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">
-              Loved by golfers everywhere
-            </h2>
-            <p className="text-xl text-muted-foreground">
-              See how GolfTracker Pro is helping golfers improve their game
-            </p>
-          </div>
 
-          <div className="grid md:grid-cols-3 gap-8">
-            <Card className="border-0 shadow-lg">
-              <CardContent className="pt-6">
-                <div className="flex mb-4">
-                  {[...Array(5)].map((_, i) => (
-                    <Star
-                      key={i}
-                      className="h-5 w-5 fill-primary text-primary"
-                    />
-                  ))}
-                </div>
-                <p className="text-muted-foreground mb-4">
-                  &quot;Finally dropped below a 10 handicap! The analytics
-                  showed me exactly where I was losing strokes. Game
-                  changer.&quot;
-                </p>
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
-                    <Users className="h-5 w-5 text-primary" />
-                  </div>
-                  <div>
-                    <div className="font-semibold">Mike Johnson</div>
-                    <div className="text-sm text-muted-foreground">
-                      Handicap: 9.2
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="border-0 shadow-lg">
-              <CardContent className="pt-6">
-                <div className="flex mb-4">
-                  {[...Array(5)].map((_, i) => (
-                    <Star
-                      key={i}
-                      className="h-5 w-5 fill-primary text-primary"
-                    />
-                  ))}
-                </div>
-                <p className="text-muted-foreground mb-4">
-                  &quot;The course mapping and shot tracking are incredibly
-                  accurate. Love seeing my improvement over time.&quot;
-                </p>
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
-                    <Users className="h-5 w-5 text-primary" />
-                  </div>
-                  <div>
-                    <div className="font-semibold">Sarah Chen</div>
-                    <div className="text-sm text-muted-foreground">
-                      Handicap: 12.8
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="border-0 shadow-lg">
-              <CardContent className="pt-6">
-                <div className="flex mb-4">
-                  {[...Array(5)].map((_, i) => (
-                    <Star
-                      key={i}
-                      className="h-5 w-5 fill-primary text-primary"
-                    />
-                  ))}
-                </div>
-                <p className="text-muted-foreground mb-4">
-                  &quot;Best golf app I&apos;ve used. The handicap calculation
-                  is spot-on and the insights are incredibly helpful.&quot;
-                </p>
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
-                    <Users className="h-5 w-5 text-primary" />
-                  </div>
-                  <div>
-                    <div className="font-semibold">David Rodriguez</div>
-                    <div className="text-sm text-muted-foreground">
-                      Handicap: 6.4
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
-      </section> */}
       {/* Pricing */}
       <section id="pricing" className="py-20 bg-muted/30">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
@@ -333,137 +245,93 @@ export default async function Landing() {
             </p>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
-            <Card className="border-2 border-primary shadow-lg relative dark:bg-primary/10">
-              <Badge className="absolute -top-3 left-1/2 -translate-x-1/2 whitespace-nowrap min-h-6 flex items-center">
-                Launch Offer!
-              </Badge>
-              <CardHeader>
-                <CardTitle>
-                  Free
-                  <p className="text-xs text-muted-foreground">
-                    First 100 users, forever
-                  </p>
-                </CardTitle>
-                <CardDescription>
-                  Perfect for casual golfers who want to try it out.
-                </CardDescription>
-                <div className="mt-4">
-                  <span className="text-3xl font-bold">0$</span>
-                  <span className="text-muted-foreground">/forever</span>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <Link href="/signup">
-                  <Button className="w-full mb-6">Sign Up</Button>
-                </Link>
-                <ul className="space-y-3 text-sm">
-                  <li className="flex items-center gap-2">
-                    <CheckCircle className="h-4 w-4 min-h-4 min-w-4 flex-shrink-0 text-primary" />
-                    Round logging
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <CheckCircle className="h-4 w-4 min-h-4 min-w-4 flex-shrink-0 text-primary" />
-                    Basic handicap calculation
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <CheckCircle className="h-4 w-4 min-h-4 min-w-4 flex-shrink-0 text-primary" />
-                    Score history
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <CheckCircle className="h-4 w-4 min-h-4 min-w-4 flex-shrink-0 text-primary" />
-                    Up to 20 rounds
-                  </li>
-                </ul>
-              </CardContent>
-            </Card>
+          <div className="grid md:grid-cols-2 xl:grid-cols-4 gap-8 max-w-7xl mx-auto">
+            <Link href="/signup" className="block">
+              <PricingCard
+                plan="free"
+                price={PLAN_DETAILS.free.price}
+                interval={PLAN_DETAILS.free.interval}
+                title={PLAN_DETAILS.free.title}
+                description={PLAN_DETAILS.free.description}
+                features={PLAN_FEATURES.free}
+                buttonText="Sign Up"
+                buttonDisabled={false}
+              />
+            </Link>
 
-            <Card className="border-0 shadow-lg dark:bg-primary/10">
-              <CardHeader>
-                <CardTitle>
-                  Premium
-                  <p className="text-xs text-muted-foreground invisible">
-                    Hidden
-                  </p>
-                </CardTitle>
+            <Link href="/signup" className="block">
+              <PricingCard
+                plan="premium"
+                price={PLAN_DETAILS.premium.price}
+                interval={PLAN_DETAILS.premium.interval}
+                title={PLAN_DETAILS.premium.title}
+                description={PLAN_DETAILS.premium.description}
+                features={PLAN_FEATURES.premium}
+                buttonText="Sign Up"
+                buttonDisabled={false}
+                costComparison={PLAN_DETAILS.premium.costComparison}
+              />
+            </Link>
 
-                <CardDescription>
-                  Expanded features to provide detailed insights
-                </CardDescription>
-                <div className="mt-4">
-                  <span className="text-3xl font-bold">$9</span>
-                  <span className="text-muted-foreground">/year</span>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <Link href="/signup">
-                  <Button className="w-full mb-6">Sign Up</Button>
-                </Link>
-                <ul className="space-y-3 text-sm">
-                  <li className="flex items-center gap-2">
-                    <CheckCircle className="h-4 w-4 min-h-4 min-w-4 flex-shrink-0 text-primary" />
-                    Everything in Starter
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <CheckCircle className="h-4 w-4 min-h-4 min-w-4 flex-shrink-0 text-primary" />
-                    Up to 100 rounds
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <CheckCircle className="h-4 w-4 min-h-4 min-w-4 flex-shrink-0 text-primary" />
-                    Round calculation insights
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <CheckCircle className="h-4 w-4 min-h-4 min-w-4 flex-shrink-0 text-primary" />
-                    Personal statistics
-                  </li>
-                </ul>
-              </CardContent>
-            </Card>
+            <Link href="/signup" className="block">
+              <PricingCard
+                plan="unlimited"
+                price={PLAN_DETAILS.unlimited.price}
+                interval={PLAN_DETAILS.unlimited.interval}
+                title={PLAN_DETAILS.unlimited.title}
+                description={PLAN_DETAILS.unlimited.description}
+                features={PLAN_FEATURES.unlimited}
+                badge={
+                  !isActiveLifetimePromo
+                    ? {
+                        text: "Best Value",
+                        variant: "value",
+                      }
+                    : undefined
+                }
+                buttonText="Sign Up"
+                buttonDisabled={false}
+                costComparison={PLAN_DETAILS.unlimited.costComparison}
+                highlighted
+              />
+            </Link>
+            {isActiveLifetimePromo && (
+              <Link href="/signup" className="block">
+                <PricingCard
+                  plan="lifetime"
+                  price="FREE"
+                  originalPrice={PLAN_DETAILS.lifetime_early_100.price}
+                  interval={PLAN_DETAILS.lifetime_early_100.interval}
+                  title={PLAN_DETAILS.lifetime_early_100.title}
+                  description={PLAN_DETAILS.lifetime_early_100.description}
+                  features={PLAN_FEATURES.lifetime}
+                  badge={{ text: "Launch Offer!", variant: "default" }}
+                  buttonText="Claim Free Lifetime"
+                  highlighted
+                  buttonDisabled={false}
+                  costComparison={
+                    PLAN_DETAILS.lifetime_early_100.costComparison
+                  }
+                  slotsRemaining={promoDetails?.remaining}
+                />
+              </Link>
+            )}
 
-            <Card className="border-0 shadow-lg dark:bg-primary/10">
-              <CardHeader>
-                <CardTitle>
-                  Unlimited
-                  <p className="text-xs text-muted-foreground invisible">
-                    Hidden
-                  </p>
-                </CardTitle>
-                <CardDescription>
-                  Unlock your full potential with unlimited usage.
-                </CardDescription>
-                <div className="mt-4">
-                  <span className="text-3xl font-bold">$19</span>
-                  <span className="text-muted-foreground">/year</span>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <Link href="/signup">
-                  <Button className="w-full mb-6">Sign Up</Button>
-                </Link>
-                <ul className="space-y-3 text-sm">
-                  <li className="flex items-center gap-2">
-                    <CheckCircle className="h-4 w-4 min-h-4 min-w-4 flex-shrink-0 text-primary" />
-                    Everything in Pro
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <CheckCircle className="h-4 w-4 min-h-4 min-w-4 flex-shrink-0 text-primary" />
-                    Unlimited rounds
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <CheckCircle className="h-4 w-4 min-h-4 min-w-4 flex-shrink-0 text-primary" />
-                    Exclusive access to new features
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <CheckCircle className="h-4 w-4 min-h-4 min-w-4 flex-shrink-0 text-primary" />
-                    Priority support
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <CheckCircle className="h-4 w-4 min-h-4 min-w-4 flex-shrink-0 text-primary" />
-                    Access to advanced calculators
-                  </li>
-                </ul>
-              </CardContent>
-            </Card>
+            {!isActiveLifetimePromo && (
+              <Link href="/signup" className="block">
+                <PricingCard
+                  plan="lifetime"
+                  price={PLAN_DETAILS.lifetime.price}
+                  interval={PLAN_DETAILS.lifetime.interval}
+                  title={PLAN_DETAILS.lifetime.title}
+                  description={PLAN_DETAILS.lifetime.description}
+                  features={PLAN_FEATURES.lifetime}
+                  buttonText="Sign Up"
+                  buttonDisabled={false}
+                  costComparison={PLAN_DETAILS.lifetime.costComparison}
+                />
+              </Link>
+            )}
           </div>
         </div>
       </section>

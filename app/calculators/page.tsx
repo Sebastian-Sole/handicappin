@@ -15,6 +15,10 @@ const CalculatorsPage = async () => {
   const {
     data: { user },
   } = await supabase.auth.getUser();
+
+  // Note: Premium access check is handled by middleware
+  // This page is listed in PREMIUM_PATHS, so middleware redirects non-premium users
+
   return (
     <div className="flex flex-col items-center justify-center min-h-[calc(100vh-12rem)] bg-background px-4 py-12">
       <div className="text-center">

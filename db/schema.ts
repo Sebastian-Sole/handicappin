@@ -9,13 +9,15 @@ import {
   boolean,
   serial,
   integer,
+  bigint,
   timestamp,
   pgSchema,
+  index,
 } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
 import { createSelectSchema } from "drizzle-zod";
-import { z } from "zod";
 import type { InferSelectModel } from "drizzle-orm";
+import type { PlanType, SubscriptionStatus } from "@/lib/stripe-types";
 
 const authSchema = pgSchema("auth");
 
@@ -35,6 +37,16 @@ export const profile = pgTable(
     createdAt: timestamp()
       .default(sql`CURRENT_TIMESTAMP`)
       .notNull(),
+
+    // Billing/plan tracking fields
+    planSelected: text("plan_selected").$type<PlanType | null>(),
+    planSelectedAt: timestamp("plan_selected_at"),
+
+    // NEW: Subscription status tracking for JWT claims
+    subscriptionStatus: text("subscription_status").$type<SubscriptionStatus | null>(),
+    currentPeriodEnd: bigint("current_period_end", { mode: "number" }), // Y2038-proof unix timestamp
+    cancelAtPeriodEnd: boolean("cancel_at_period_end").default(false).notNull(),
+    billingVersion: integer("billing_version").default(1).notNull(),
   },
   (table) => [
     uniqueIndex("profile_email_key").using(
@@ -59,6 +71,14 @@ export const profile = pgTable(
       for: "update",
       to: ["authenticated"],
       using: sql`(auth.uid()::uuid = id)`,
+      withCheck: sql`(
+        auth.uid()::uuid = id
+        AND plan_selected IS NOT DISTINCT FROM (SELECT plan_selected FROM profile WHERE id = auth.uid())
+        AND subscription_status IS NOT DISTINCT FROM (SELECT subscription_status FROM profile WHERE id = auth.uid())
+        AND current_period_end IS NOT DISTINCT FROM (SELECT current_period_end FROM profile WHERE id = auth.uid())
+        AND cancel_at_period_end IS NOT DISTINCT FROM (SELECT cancel_at_period_end FROM profile WHERE id = auth.uid())
+        AND billing_version IS NOT DISTINCT FROM (SELECT billing_version FROM profile WHERE id = auth.uid())
+      )`,
     }),
     pgPolicy("Users can insert their own profile", {
       as: "permissive",
@@ -216,6 +236,7 @@ export const round = pgTable(
       .notNull(),
   },
   (table) => [
+    index("idx_round_userId").on(table.userId),
     foreignKey({
       columns: [table.courseId],
       foreignColumns: [course.id],
@@ -328,3 +349,150 @@ export const score = pgTable(
 
 export const scoreSchema = createSelectSchema(score);
 export type Score = InferSelectModel<typeof score>;
+
+// Stripe customers table for managing Stripe customer IDs
+export const stripeCustomers = pgTable(
+  "stripe_customers",
+  {
+    userId: uuid("user_id").primaryKey().notNull(),
+    stripeCustomerId: text("stripe_customer_id").notNull().unique(),
+    createdAt: timestamp("created_at")
+      .default(sql`CURRENT_TIMESTAMP`)
+      .notNull(),
+  },
+  (table) => [
+    foreignKey({
+      columns: [table.userId],
+      foreignColumns: [profile.id],
+      name: "stripe_customers_user_id_fkey",
+    })
+      .onUpdate("cascade")
+      .onDelete("cascade"),
+    pgPolicy("Users can view their own stripe customer", {
+      as: "permissive",
+      for: "select",
+      to: ["authenticated"],
+      using: sql`(auth.uid()::uuid = user_id)`,
+    }),
+  ]
+);
+
+export const stripeCustomersSchema = createSelectSchema(stripeCustomers);
+export type StripeCustomer = InferSelectModel<typeof stripeCustomers>;
+
+// Webhook idempotency tracking table
+export const webhookEvents = pgTable(
+  "webhook_events",
+  {
+    eventId: text("event_id").primaryKey().notNull(),
+    eventType: text("event_type").notNull(),
+    processedAt: timestamp("processed_at")
+      .default(sql`CURRENT_TIMESTAMP`)
+      .notNull(),
+    status: text("status").$type<"success" | "failed">().notNull(),
+    errorMessage: text("error_message"),
+    retryCount: integer("retry_count").default(0).notNull(),
+    userId: uuid("user_id"),
+  },
+  (table) => [
+    index("idx_webhook_events_event_type").on(table.eventType),
+    index("idx_webhook_events_user_id").on(table.userId),
+    index("idx_webhook_events_processed_at").on(table.processedAt),
+    foreignKey({
+      columns: [table.userId],
+      foreignColumns: [profile.id],
+      name: "webhook_events_user_id_fkey",
+    })
+      .onUpdate("cascade")
+      .onDelete("set null"), // Don't delete events when user is deleted
+    // Note: No RLS policies - this is a system table accessed only by webhook handler
+  ]
+);
+
+export const webhookEventsSchema = createSelectSchema(webhookEvents);
+export type WebhookEvent = InferSelectModel<typeof webhookEvents>;
+
+// Pending lifetime purchases - tracks payment mode checkouts awaiting payment confirmation
+export const pendingLifetimePurchases = pgTable(
+  "pending_lifetime_purchases",
+  {
+    id: serial("id").primaryKey(),
+    userId: uuid("user_id").notNull(),
+    checkoutSessionId: text("checkout_session_id").notNull().unique(),
+    paymentIntentId: text("payment_intent_id"),
+    priceId: text("price_id").notNull(),
+    plan: text("plan").$type<"lifetime">().notNull(),
+    status: text("status").$type<"pending" | "paid" | "failed">().notNull(),
+    createdAt: timestamp("created_at")
+      .default(sql`CURRENT_TIMESTAMP`)
+      .notNull(),
+    updatedAt: timestamp("updated_at")
+      .default(sql`CURRENT_TIMESTAMP`)
+      .notNull(),
+  },
+  (table) => [
+    index("idx_pending_lifetime_user").on(table.userId),
+    index("idx_pending_lifetime_payment_intent").on(table.paymentIntentId),
+    index("idx_pending_lifetime_status").on(table.status),
+    foreignKey({
+      columns: [table.userId],
+      foreignColumns: [profile.id],
+      name: "pending_lifetime_purchases_user_id_fkey",
+    })
+      .onUpdate("cascade")
+      .onDelete("cascade"), // Delete pending purchases when user is deleted
+    pgPolicy("Users can view their own pending purchases", {
+      as: "permissive",
+      for: "select",
+      to: ["authenticated"],
+      using: sql`(auth.uid()::uuid = user_id)`,
+    }),
+    // Note: Write operations handled by service role via webhooks
+  ]
+);
+
+export const pendingLifetimePurchasesSchema = createSelectSchema(pendingLifetimePurchases);
+export type PendingLifetimePurchase = InferSelectModel<typeof pendingLifetimePurchases>;
+
+// Handicap calculation queue - tracks users needing handicap recalculation
+export const handicapCalculationQueue = pgTable(
+  "handicap_calculation_queue",
+  {
+    id: serial("id").primaryKey(),
+    userId: uuid("user_id").notNull().unique(),
+    eventType: text("event_type").notNull(),
+    createdAt: timestamp("created_at")
+      .default(sql`CURRENT_TIMESTAMP`)
+      .notNull(),
+    lastUpdated: timestamp("last_updated")
+      .default(sql`CURRENT_TIMESTAMP`)
+      .notNull(),
+    status: text("status")
+      .$type<"pending" | "failed">()
+      .default("pending")
+      .notNull(),
+    attempts: integer("attempts").default(0).notNull(),
+    errorMessage: text("error_message"),
+  },
+  (table) => [
+    index("idx_handicap_queue_status_created").on(
+      table.status,
+      table.createdAt
+    ),
+    index("idx_handicap_queue_user_id").on(table.userId),
+    foreignKey({
+      columns: [table.userId],
+      foreignColumns: [profile.id],
+      name: "handicap_calculation_queue_user_id_fkey",
+    })
+      .onUpdate("cascade")
+      .onDelete("cascade"),
+  ]
+);
+
+export const handicapCalculationQueueSchema = createSelectSchema(
+  handicapCalculationQueue
+);
+export type HandicapCalculationQueue = InferSelectModel<
+  typeof handicapCalculationQueue
+>;

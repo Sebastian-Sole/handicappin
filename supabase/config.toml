@@ -137,3 +137,12 @@ backend = "postgres"
 enabled=true
 uri = "http://host.docker.internal:54321/functions/v1/send-verification-email"
 secrets= "env(SEND_EMAIL_HOOK_SECRET)"
+
+# Custom Access Token Hook - Injects billing claims into JWT
+[auth.hook.custom_access_token]
+enabled = true
+uri = "pg-functions://postgres/public/custom_access_token_hook"
+
+# Edge Functions configuration
+[functions.process-handicap-queue]
+verify_jwt = false  # Allow cron job to call without authentication

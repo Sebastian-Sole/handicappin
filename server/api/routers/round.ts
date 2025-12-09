@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { createTRPCRouter, authedProcedure } from "@/server/api/trpc";
 import { round, score, profile, teeInfo, course, hole } from "@/db/schema";
-import { eq, and } from "drizzle-orm";
+import { eq, and, sql } from "drizzle-orm";
 
 import { db } from "@/db";
 import { Scorecard, scorecardSchema } from "@/types/scorecard";
@@ -11,6 +11,9 @@ import {
   calculateScoreDifferential,
   calculateAdjustedGrossScore,
 } from "@/utils/calculations/handicap";
+import { getComprehensiveUserAccess } from "@/utils/billing/access-control";
+import { TRPCError } from "@trpc/server";
+import { FREE_TIER_ROUND_LIMIT } from "@/utils/billing/constants";
 
 type RoundCalculations = {
   adjustedGrossScore: number;
@@ -164,6 +167,31 @@ export const roundRouter = createTRPCRouter({
       if (!teePlayed.holes) {
         throw new Error("Tee played has no holes");
       }
+
+      // 0. Check user access (plan selected)
+      const access = await getComprehensiveUserAccess(userId);
+
+      // 0a. First check: Has user selected a plan?
+      if (!access.hasAccess) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "Please select a plan to continue. Visit the onboarding page to get started.",
+        });
+      }
+
+      // 0b. Second check: Free tier round limit
+      if (access.plan === "free" && access.remainingRounds <= 0) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: `You've reached your free tier limit of ${FREE_TIER_ROUND_LIMIT} rounds. Please upgrade to continue tracking rounds.`,
+        });
+      }
+
+      console.log("✅ Access checks passed", {
+        plan: access.plan,
+        hasAccess: access.hasAccess,
+        remainingRounds: access.remainingRounds,
+      });
 
       // 1. Get user profile for handicap calculations
       const userProfile = await db
@@ -384,6 +412,37 @@ export const roundRouter = createTRPCRouter({
       await db.insert(score).values(scoreInserts);
 
       console.log("Scores inserted");
+
+      // Race condition protection: re-check count for free tier users
+      // This prevents parallel submissions from exceeding the limit
+      if (access.plan === "free") {
+        const { count, error: countError } = await ctx.supabase
+          .from("round")
+          .select("*", { count: "exact", head: true })
+          .eq("userId", userId);
+
+        if (countError) {
+          console.error("Error re-checking round count:", countError);
+          // Allow the submission - count check already passed pre-flight
+        } else if (count && count > FREE_TIER_ROUND_LIMIT) {
+          // User exceeded limit via race condition - rollback
+          console.warn(
+            `⚠️ Race condition detected: User ${userId} has ${count} rounds (limit: ${FREE_TIER_ROUND_LIMIT}). Rolling back round ${newRound.id}`
+          );
+
+          await db.delete(round).where(eq(round.id, newRound.id));
+
+          throw new TRPCError({
+            code: "FORBIDDEN",
+            message:
+              "Round limit exceeded due to concurrent submissions. Your submission was not saved. Please try again.",
+          });
+        }
+
+        console.log(
+          `✅ Post-insert check passed. User has ${count} rounds (limit: ${FREE_TIER_ROUND_LIMIT})`
+        );
+      }
 
       return newRound;
     }),
