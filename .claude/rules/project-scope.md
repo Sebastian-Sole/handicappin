@@ -34,9 +34,8 @@ Supabase Backend → tRPC API → Next.js Frontend
 
 - Golf course data providers
 - Tournament management systems
-- Payment processing (Stripe integration in progress)
 - Third-party handicap verification services
-- Mobile app development
+- Mobile app development (web-based mobile responsive only)
 
 ## ✅ **In Scope - What We Build**
 
@@ -74,17 +73,35 @@ Supabase Backend → tRPC API → Next.js Frontend
    - Hole-by-hole course details
 
 5. **Authentication & Security**
+
    - Supabase email/password authentication
    - User profile management
    - Row Level Security (RLS) policies
    - Session management and protection
    - Email verification flow
+   - JWT custom claims for billing status
+
+6. **Payment & Subscription Management**
+   - Stripe Checkout integration (recurring & one-time payments)
+   - Subscription plans: Free (25 rounds), Premium ($19/year), Unlimited ($29/year), Lifetime ($149)
+   - Stripe Customer Portal for subscription management
+   - Promotional codes (EARLY100 for first 100 lifetime users)
+   - Webhook-based subscription lifecycle management
+   - Real-time billing status sync via Supabase Realtime
+   - Automated Stripe reconciliation system
+   - Payment idempotency and retry handling
 
 ### **Technical Implementation**
 
 ```typescript
 // Core data flow
-User Input → React Hook Form → Zod Validation → tRPC → Supabase → Database
+User Input → React Hook Form → Zod Validation → tRPC → Drizzle ORM → Supabase DB (PostgreSQL)
+
+// Payment flow
+User → Stripe Checkout → Webhook → Database → JWT Refresh → Real-time Sync
+
+// Handicap calculation flow
+Round Submitted → Database Trigger → Calculation Queue → Cron Job → Updated Handicap
 
 // Key components
 <GolfScorecard
@@ -100,16 +117,21 @@ User Input → React Hook Form → Zod Validation → tRPC → Supabase → Data
   handicapIndex={userHandicap}
   courseRating={teeInfo}
 />
+<BillingSync /> // Real-time subscription status updates
 ```
 
 ### **Integration Points**
 
-- Supabase for backend services (database, auth, edge functions)
-- tRPC for type-safe API communication
-- React Query for server state management
-- Tailwind CSS with Radix UI for styling
-- Vitest for testing
-- Drizzle ORM for database operations
+- Supabase for backend services (PostgreSQL database, auth, realtime)
+- tRPC 11.5.0 for type-safe API communication
+- TanStack Query (React Query) 5.85.5 for server state management
+- Tailwind CSS 4.1.12 with Radix UI for styling
+- Vitest 3.2.4 for unit and integration testing
+- Drizzle ORM 0.44.5 for database operations
+- Stripe 20.0.0 for payment processing
+- Upstash Redis for rate limiting
+- Resend 6.0.1 for transactional emails
+- Sentry 10.25.0 for error monitoring
 
 ## 🚫 **Out of Scope - What We Don't Build**
 
@@ -149,9 +171,9 @@ User Input → React Hook Form → Zod Validation → tRPC → Supabase → Data
 
 - Golf course booking systems
 - Tournament management platforms
-- Social media integration
-- Third-party handicap verification
-- Payment processing (currently in progress)
+- Social media integration beyond basic sharing
+- Third-party handicap verification services
+- Golf GPS and shot tracking devices
 
 ## 🎮 **User Stories (In Scope)**
 
@@ -185,24 +207,36 @@ User Input → React Hook Form → Zod Validation → tRPC → Supabase → Data
 
 ```json
 {
-  "next": "15.5.1",
-  "react": "19.1.1",
+  "next": "15.5.7",
+  "react": "19.2.1",
+  "react-dom": "19.2.1",
   "@supabase/supabase-js": "^2.56.0",
+  "@supabase/ssr": "^0.7.0",
   "@trpc/server": "11.5.0",
   "@trpc/client": "11.5.0",
   "@trpc/react-query": "11.5.0",
+  "@tanstack/react-query": "^5.85.5",
   "tailwindcss": "^4.1.12",
   "vitest": "^3.2.4",
-  "drizzle-orm": "^0.44.5"
+  "drizzle-orm": "^0.44.5",
+  "stripe": "^20.0.0",
+  "@upstash/ratelimit": "^2.0.7",
+  "@upstash/redis": "^1.35.6",
+  "resend": "^6.0.1",
+  "@sentry/nextjs": "^10.25.0",
+  "react-hook-form": "^7.62.0",
+  "zod": "^4.1.3"
 }
 ```
 
 ### **External Services We Integrate**
 
-- Supabase (PostgreSQL database, authentication, edge functions)
-- Resend (email delivery for verification and notifications)
-- Vercel (hosting and deployment)
-- Stripe (payment processing - in progress)
+- Supabase (PostgreSQL database, authentication, realtime subscriptions)
+- Stripe (payment processing, subscription management, Customer Portal)
+- Upstash Redis (rate limiting for API endpoints and webhooks)
+- Resend (transactional email delivery)
+- Vercel (hosting, deployment, and cron jobs)
+- Sentry (error tracking and performance monitoring)
 
 ### **Browser Support**
 
@@ -247,13 +281,20 @@ User Input → React Hook Form → Zod Validation → tRPC → Supabase → Data
 - [ ] Authentication flow is seamless
 - [ ] Dashboard displays correct handicap and round data
 - [ ] Course search and selection function properly
+- [ ] Stripe checkout and subscription flows work end-to-end
+- [ ] Webhooks process subscription events reliably
+- [ ] Real-time billing status updates reflect in UI immediately
 
 ### **Technical**
 
 - [ ] Zero TypeScript compilation errors
 - [ ] All ESLint rules pass
 - [ ] Supabase integration handles errors gracefully
-- [ ] Stripe integration is secure
+- [ ] Stripe webhooks validate signatures and handle idempotency
+- [ ] Payment amount verification prevents pricing misconfiguration
+- [ ] Rate limiting protects API endpoints from abuse
+- [ ] Sentry captures and reports production errors
+- [ ] Test coverage for critical payment flows
 
 ### **User Experience**
 
@@ -269,16 +310,20 @@ User Input → React Hook Form → Zod Validation → tRPC → Supabase → Data
 
 - Advanced handicap analytics and insights
 - Tournament and competition tracking
-- Social features and friend connections
-- Enhanced calculator tools
+- Social features and friend connections (compare rounds with friends)
+- Enhanced calculator tools (what-if scenarios, goal setting)
 - Course rating and review system
+- Mobile app (iOS/Android native)
+- Team/group management features
+- Integration with golf GPS devices
 
 ### **Phase 3 Considerations** (Long-term)
 
-- Mobile app companion
-- Golf lesson integration
+- Golf lesson booking and scheduling integration
 - Equipment tracking and recommendations
-- Advanced statistical analysis
+- Advanced statistical analysis with ML predictions
+- API for third-party integrations
+- White-label solutions for golf clubs
 
 ### **Not Planned**
 
