@@ -44,7 +44,7 @@ If you encounter a mismatch:
 
 After implementing a phase:
 
-- Run the success criteria checks (usually `pnpm test` covers everything)
+- Run the success criteria checks, or prompt the user to conduct the manual verification checks before labelling as done.
 - Fix any issues before proceeding
 - Update your progress in both the plan and your todos
 - Check off completed items in the plan file itself using Edit
@@ -68,5 +68,27 @@ If the plan has existing checkmarks:
 - Trust that completed work is done
 - Pick up from the first unchecked item
 - Verify previous work only if something seems off
+
+## Documentation update
+
+After completing the implementation of a task where acceptance criteria is complete and user has verified:
+
+- Update documentation with regards to the .claude/rules/documentation-workflow.md rule
+- If there is future work, or the research yielded potential work, prompt the user with feedback so they can create tickets like this:
+
+```
+Potential new tickets:
+
+1. <Name>
+Issue: <Brief description>
+Where: <references to code files/lines>
+Why: <Why this should be addressed>
+
+2. <Name>
+Issue: <Brief description>
+...
+
+Run /create-ticket to create tickets
+```
 
 Remember: You're implementing a solution, not just checking boxes. Keep the end goal in mind and maintain forward momentum.

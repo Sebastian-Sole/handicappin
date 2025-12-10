@@ -42,19 +42,16 @@ Reduce bloat in the tickets directory by:
 For each ticket in `.claude/tickets/`, evaluate:
 
 1. **Completion Status**
-
    - Check for completion notes in the ticket
    - Look for `[x]` marks in acceptance criteria
    - Verify existence of associated experience files
 
 2. **Relevance Assessment**
-
    - Does this align with current project scope?
    - Is this ticket still technically feasible?
    - Would this ticket add value to the current MVP?
 
 3. **Priority Assessment**
-
    - What's the labeled priority (high/medium/low)?
    - Does this solve a current pain point?
    - Is this blocked by unresolved dependencies?
@@ -108,20 +105,17 @@ ls -1 .claude/tickets/*.md 2>/dev/null | grep -v archive || echo "No tickets fou
 For each ticket file, the command will:
 
 1. **Extract Metadata**
-
    - Parse ticket number and title from filename
    - Extract priority from labels section
    - Identify completion status from acceptance criteria
    - Look for completion notes sections
 
 2. **Check Completion Status**
-
    - Count `[x]` vs `[ ]` in acceptance criteria
    - Look for "✅ Completion Notes" or similar sections
    - Check for "Status: COMPLETED" markers
 
 3. **Assess Documentation Value**
-
    - Check for associated experience files in `.claude/experiences/`
    - Look for complex technical implementations
    - Identify architectural decisions or integration patterns
@@ -207,7 +201,6 @@ COMMANDS TO EXECUTE:
    ```
 
 3. **Iterate based on feedback** - be ready to:
-
    - Adjust ticket status assessments
    - Override priority evaluations
    - Modify recommendations based on business context
@@ -217,7 +210,6 @@ COMMANDS TO EXECUTE:
 4. **Continue refining** until the user approves the plan
 
 5. **Execute Actions** (only after user approval):
-
    - Run the generated commands to purge tickets
    - Verify the results match expectations
    - Commit the changes to maintain history

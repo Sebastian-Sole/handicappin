@@ -1,7 +1,3 @@
----
-alwaysApply: false
----
-
 # Unit Testing Rules
 
 ## Overview
@@ -22,8 +18,8 @@ Unit tests should be small, focused, and test individual functions or components
 - Import React explicitly for TSX files: `import React from 'react';`
 - Import testing utilities from appropriate packages:
   ```typescript
-  import { expect, test, vi, beforeEach } from 'vitest';
-  import { render, screen, fireEvent } from '@testing-library/react';
+  import { expect, test, vi, beforeEach } from "vitest";
+  import { render, screen, fireEvent } from "@testing-library/react";
   ```
 
 ## Test Structure & Naming
@@ -32,14 +28,14 @@ Unit tests should be small, focused, and test individual functions or components
 
 ```typescript
 // ✅ Good - Clear what is being tested
-test('Button renders with correct label and icon', () => {});
-test('formatRanking pads single digits with leading zero', () => {});
-test('scoreToRating returns empty string for invalid scores', () => {});
+test("Button renders with correct label and icon", () => {});
+test("formatRanking pads single digits with leading zero", () => {});
+test("scoreToRating returns empty string for invalid scores", () => {});
 
 // ❌ Bad - Vague or unclear
-test('Button works', () => {});
-test('formatting', () => {});
-test('edge case', () => {});
+test("Button works", () => {});
+test("formatting", () => {});
+test("edge case", () => {});
 ```
 
 ### Use Descriptive Test Names That Follow Pattern:
@@ -54,9 +50,9 @@ test('edge case', () => {});
 Test the main functionality with valid inputs:
 
 ```typescript
-test('formatRanking formats single digit numbers with leading zero', () => {
-  expect(formatRanking(1)).toBe('01');
-  expect(formatRanking(5)).toBe('05');
+test("formatRanking formats single digit numbers with leading zero", () => {
+  expect(formatRanking(1)).toBe("01");
+  expect(formatRanking(5)).toBe("05");
 });
 ```
 
@@ -65,9 +61,9 @@ test('formatRanking formats single digit numbers with leading zero', () => {
 Test boundary conditions and unusual but valid inputs:
 
 ```typescript
-test('scoreToRating handles boundary scores correctly', () => {
-  expect(scoreToRating(90)).toBe('Excellent'); // boundary
-  expect(scoreToRating(89)).toBe('Very good'); // just below boundary
+test("scoreToRating handles boundary scores correctly", () => {
+  expect(scoreToRating(90)).toBe("Excellent"); // boundary
+  expect(scoreToRating(89)).toBe("Very good"); // just below boundary
 });
 ```
 
@@ -76,11 +72,11 @@ test('scoreToRating handles boundary scores correctly', () => {
 Test invalid inputs and error conditions:
 
 ```typescript
-test('scoreToRating returns empty string for invalid scores', () => {
-  expect(scoreToRating(-1)).toBe('');
-  expect(scoreToRating(101)).toBe('');
-  expect(scoreToRating(NaN)).toBe('');
-  expect(scoreToRating(Infinity)).toBe('');
+test("scoreToRating returns empty string for invalid scores", () => {
+  expect(scoreToRating(-1)).toBe("");
+  expect(scoreToRating(101)).toBe("");
+  expect(scoreToRating(NaN)).toBe("");
+  expect(scoreToRating(Infinity)).toBe("");
 });
 ```
 
@@ -89,11 +85,11 @@ test('scoreToRating returns empty string for invalid scores', () => {
 Test user interactions and state changes:
 
 ```typescript
-test('Button calls onClick handler when clicked', () => {
+test("Button calls onClick handler when clicked", () => {
   const handleClick = vi.fn();
   render(<Button label="Test" icon="🚀" onClick={handleClick} />);
 
-  fireEvent.click(screen.getByRole('button'));
+  fireEvent.click(screen.getByRole("button"));
   expect(handleClick).toHaveBeenCalledTimes(1);
 });
 ```
@@ -105,16 +101,16 @@ test('Button calls onClick handler when clicked', () => {
 Structure tests clearly:
 
 ```typescript
-test('Button applies active styles when isActive is true', () => {
+test("Button applies active styles when isActive is true", () => {
   // Arrange
-  const props = { label: 'Test', icon: '✓', isActive: true };
+  const props = { label: "Test", icon: "✓", isActive: true };
 
   // Act
   render(<Button {...props} />);
 
   // Assert
-  const labelElement = screen.getByText('Test');
-  expect(labelElement).toHaveClass('td_underline');
+  const labelElement = screen.getByText("Test");
+  expect(labelElement).toHaveClass("td_underline");
 });
 ```
 
@@ -122,25 +118,25 @@ test('Button applies active styles when isActive is true', () => {
 
 ```typescript
 // ✅ Good - Clear what each value represents
-test('scoreToRating returns correct ratings for score ranges', () => {
-  expect(scoreToRating(100)).toBe('Excellent'); // perfect score
-  expect(scoreToRating(90)).toBe('Excellent'); // excellent threshold
-  expect(scoreToRating(89)).toBe('Very good'); // just below excellent
+test("scoreToRating returns correct ratings for score ranges", () => {
+  expect(scoreToRating(100)).toBe("Excellent"); // perfect score
+  expect(scoreToRating(90)).toBe("Excellent"); // excellent threshold
+  expect(scoreToRating(89)).toBe("Very good"); // just below excellent
 });
 
 // ❌ Bad - Magic numbers without context
-test('scoreToRating works', () => {
-  expect(scoreToRating(100)).toBe('Excellent');
-  expect(scoreToRating(42)).toBe('Fair');
+test("scoreToRating works", () => {
+  expect(scoreToRating(100)).toBe("Excellent");
+  expect(scoreToRating(42)).toBe("Fair");
 });
 ```
 
 ### Mock External Dependencies
 
 ```typescript
-test('Component calls external service correctly', () => {
-  const mockService = vi.fn().mockReturnValue('mocked result');
-  vi.mock('@/services/externalService', () => ({
+test("Component calls external service correctly", () => {
+  const mockService = vi.fn().mockReturnValue("mocked result");
+  vi.mock("@/services/externalService", () => ({
     callService: mockService,
   }));
 
@@ -149,17 +145,17 @@ test('Component calls external service correctly', () => {
 });
 ```
 
-### Test CSS Classes and Styling (PandaCSS)
+### Test CSS Classes and Styling (Tailwind)
 
 When testing styled components, verify CSS classes are applied:
 
 ```typescript
-test('Button applies correct PandaCSS classes', () => {
+test("Button applies correct Tailwind classes", () => {
   render(<Button label="Test" icon="🚀" isButtonGroup={true} />);
 
-  const button = screen.getByRole('button');
-  expect(button).toHaveClass('bg_bg.button');
-  expect(button).toHaveClass('p_10px_10px');
+  const button = screen.getByRole("button");
+  expect(button).toHaveClass("bg_bg.button");
+  expect(button).toHaveClass("p_10px_10px");
 });
 ```
 
@@ -169,15 +165,15 @@ test('Button applies correct PandaCSS classes', () => {
 
 ```typescript
 // ❌ Bad - Testing internal state/methods
-test('Component has correct internal state', () => {
+test("Component has correct internal state", () => {
   const component = render(<MyComponent />);
   expect(component.instance().internalStateVariable).toBe(someValue);
 });
 
 // ✅ Good - Test observable behavior
-test('Component displays loading state initially', () => {
+test("Component displays loading state initially", () => {
   render(<MyComponent />);
-  expect(screen.getByText('Loading...')).toBeInTheDocument();
+  expect(screen.getByText("Loading...")).toBeInTheDocument();
 });
 ```
 
@@ -185,10 +181,10 @@ test('Component displays loading state initially', () => {
 
 ```typescript
 // ❌ Bad - Testing API calls (this is integration/E2E)
-test('Component fetches data from API', async () => {
+test("Component fetches data from API", async () => {
   render(<MyComponent />);
   await waitFor(() => {
-    expect(fetch).toHaveBeenCalledWith('/api/data');
+    expect(fetch).toHaveBeenCalledWith("/api/data");
   });
 });
 ```
@@ -197,7 +193,7 @@ test('Component fetches data from API', async () => {
 
 ```typescript
 // ❌ Bad - Testing React itself
-test('useState works correctly', () => {
+test("useState works correctly", () => {
   // Don't test React's built-in functionality
 });
 ```
@@ -216,8 +212,8 @@ expect(mockHandler).toHaveBeenCalledWith(expectedArgs);
 ### Mock Modules
 
 ```typescript
-vi.mock('@/utils/externalModule', () => ({
-  utilityFunction: vi.fn().mockReturnValue('mocked value'),
+vi.mock("@/utils/externalModule", () => ({
+  utilityFunction: vi.fn().mockReturnValue("mocked value"),
 }));
 ```
 
@@ -241,10 +237,10 @@ beforeEach(() => {
 
 ```typescript
 // Group tests for the same function/component
-describe('scoreToRating', () => {
-  test('returns correct rating for excellent scores', () => {});
-  test('returns correct rating for poor scores', () => {});
-  test('handles edge cases correctly', () => {});
+describe("scoreToRating", () => {
+  test("returns correct rating for excellent scores", () => {});
+  test("returns correct rating for poor scores", () => {});
+  test("handles edge cases correctly", () => {});
 });
 ```
 
@@ -252,18 +248,18 @@ describe('scoreToRating', () => {
 
 ```typescript
 // ✅ Good - Single responsibility
-test('Button renders label correctly', () => {
+test("Button renders label correctly", () => {
   render(<Button label="Test Label" icon="🚀" />);
-  expect(screen.getByText('Test Label')).toBeInTheDocument();
+  expect(screen.getByText("Test Label")).toBeInTheDocument();
 });
 
-test('Button renders icon correctly', () => {
+test("Button renders icon correctly", () => {
   render(<Button label="Test" icon="🚀" />);
-  expect(screen.getByText('🚀')).toBeInTheDocument();
+  expect(screen.getByText("🚀")).toBeInTheDocument();
 });
 
 // ❌ Bad - Testing multiple concerns
-test('Button renders everything correctly', () => {
+test("Button renders everything correctly", () => {
   // Testing label, icon, styling, interactions all in one test
 });
 ```
@@ -273,11 +269,11 @@ test('Button renders everything correctly', () => {
 Always test error conditions:
 
 ```typescript
-test('function throws error for invalid input', () => {
-  expect(() => riskyFunction(invalidInput)).toThrow('Expected error message');
+test("function throws error for invalid input", () => {
+  expect(() => riskyFunction(invalidInput)).toThrow("Expected error message");
 });
 
-test('function returns fallback for invalid input', () => {
+test("function returns fallback for invalid input", () => {
   expect(safeFunctionWithFallback(invalidInput)).toBe(fallbackValue);
 });
 ```
@@ -288,9 +284,9 @@ Tests should serve as documentation:
 
 ```typescript
 // ✅ Good - Test name explains the business rule
-test('scoreToRating returns empty string for scores above 100', () => {
-  expect(scoreToRating(101)).toBe('');
-  expect(scoreToRating(150)).toBe('');
+test("scoreToRating returns empty string for scores above 100", () => {
+  expect(scoreToRating(101)).toBe("");
+  expect(scoreToRating(150)).toBe("");
 });
 
 // This test documents that scores > 100 are considered invalid

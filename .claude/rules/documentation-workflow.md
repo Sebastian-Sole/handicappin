@@ -1,7 +1,3 @@
----
-alwaysApply: true
----
-
 # Documentation Maintenance Workflow
 
 ## 🎯 **Core Principle**
@@ -69,7 +65,7 @@ Use `@create-ticket.md` command for:
 Examples:
 ✅ Success: projects-table-sorting-implementation.mdc
 ❌ Failure: hey-api-authentication-failed-attempts.mdc
-🔍 Discovery: panda-css-responsive-design-gotchas.mdc
+🔍 Discovery: tailwind-css-responsive-design-gotchas.mdc
 💡 Solution: nextauth-azure-ad-session-handling.mdc
 📚 Research: performance-metrics-visualization-research.mdc
 ```
@@ -238,7 +234,6 @@ How to check compliance with this rule.
    - Type definitions are wrong
    - Version compatibility problems
    - Hey API client generation problems
-   - Panda CSS recipe compilation errors
    - NextAuth Azure AD configuration issues
 
 2. **TypeScript/Compilation Errors**
@@ -246,7 +241,6 @@ How to check compliance with this rule.
    - Type system workarounds
    - Build configuration changes
    - Complex API type resolution
-   - Panda CSS type system workarounds
    - Next.js build configuration changes
 
 3. **Architecture Decisions**
@@ -335,7 +329,7 @@ The performance metrics dashboard implementation (ticket #0001) exemplifies the 
 
 #### **2. Experience Documentation** ✅
 - **File**: `.claude/experiences/projects-table-implementation-success.mdc`
-- **Content**: Comprehensive implementation details with working Panda CSS recipes
+- **Content**: Comprehensive implementation details with working tailwind CSS styling variants
 - **Value**: Future data table implementations can follow proven patterns
 - **Cross-references**: Links to related tickets, plans, and research
 
@@ -353,7 +347,7 @@ The performance metrics dashboard implementation (ticket #0001) exemplifies the 
 
 1. **Immediate Documentation**: Updated ticket status upon completion
 2. **Comprehensive Coverage**: Documented both successes and challenges
-3. **Future-Focused**: Included specific Panda CSS examples and gotchas
+3. **Future-Focused**: Included specific tailwind CSS examples and gotchas
 4. **Cross-Referenced**: Connected related documentation pieces
 5. **Actionable Insights**: Clear next steps and follow-up tickets identified
 

@@ -7,7 +7,6 @@ You are tasked with creating new tickets in the `.claude/tickets/` directory. Th
 When this command is invoked:
 
 1. **Check if parameters were provided**:
-
    - If a specific ticket description or reference was provided, skip the default message
    - Begin the ticket creation process immediately
 
@@ -32,14 +31,12 @@ Then wait for the user's input.
 ### Step 1: Context Gathering & Analysis
 
 1. **Read any mentioned files immediately and FULLY**:
-
    - Ticket references, experiences, research documents
    - Related implementation files or code
    - **IMPORTANT**: Use the Read tool WITHOUT limit/offset parameters to read entire files
    - **CRITICAL**: Read these files yourself in the main context before proceeding
 
 2. **Analyze the ticket requirements**:
-
    - Determine the scope and complexity
    - Identify technical dependencies
    - Consider user impact and priority
@@ -80,7 +77,8 @@ As a [user type], I want [functionality] so that [benefit/value]
 
 ### **Implementation Details**
 
-[Specific technical approach, code examples, or patterns to follow]
+[Specific technical approach, code examples, or patterns to follow if relevant]
+[You don't need to conduct in-depth research, but instead present "best-practice", industry standard suggestions and guidelines for users to follow when conducting research on this ticket.]
 
 ### **Dependencies**
 
@@ -127,7 +125,6 @@ As a [user type], I want [functionality] so that [benefit/value]
 ### Step 3: Number Assignment
 
 1. **Check existing tickets**:
-
    - List all existing ticket files in `.claude/tickets/`
    - Find the highest numbered ticket
    - Assign next sequential number
@@ -139,7 +136,6 @@ As a [user type], I want [functionality] so that [benefit/value]
 ### Step 4: Ticket Creation
 
 1. **Create the ticket file**:
-
    - Use the standardized format above
    - Fill in all sections based on user requirements
    - Include specific technical details and code examples
@@ -154,7 +150,6 @@ As a [user type], I want [functionality] so that [benefit/value]
 ### Step 5: Integration with Project Management
 
 1. **Update project overview**:
-
    - Reference the new ticket in relevant documentation
    - Update any project status or planning documents
 
@@ -170,7 +165,6 @@ As a [user type], I want [functionality] so that [benefit/value]
 When creating tickets based on completed tasks or research:
 
 1. **Read the completed work**:
-
    - Review implementation details
    - Understand what was accomplished
    - Identify any follow-up work needed
@@ -185,7 +179,6 @@ When creating tickets based on completed tasks or research:
 When creating tickets based on experience files:
 
 1. **Analyze the experience**:
-
    - Understand what was learned
    - Identify patterns or solutions
    - Extract actionable next steps
@@ -200,7 +193,6 @@ When creating tickets based on experience files:
 For feature enhancements or improvements:
 
 1. **Assess current state**:
-
    - Understand existing functionality
    - Identify improvement opportunities
    - Consider user feedback or requirements
@@ -216,11 +208,12 @@ For feature enhancements or improvements:
 
 - [ ] **Clear Description**: Anyone can understand what needs to be done
 - [ ] **Specific Acceptance Criteria**: Measurable requirements, not vague statements
-- [ ] **Technical Details**: Enough information to start implementation
+- [ ] **Technical Details**: Enough information to start investigation into technical implementation
 - [ ] **Proper Priority**: Reflects business value and urgency
 - [ ] **Appropriate Scope**: Not too large, not too small
 - [ ] **Testable**: Clear definition of done with verification steps
 - [ ] **Contextual**: Includes relevant background and constraints
+- [ ] **Concise**: Tickets should ideally be brief but concise descriptions, avoid tickets that are 500+ lines long if possible.
 
 ### Common Pitfalls to Avoid
 
@@ -248,7 +241,6 @@ For feature enhancements or improvements:
    ```
 
 2. **Iterate based on feedback**:
-
    - Adjust scope or requirements as needed
    - Refine acceptance criteria
    - Update priority if necessary

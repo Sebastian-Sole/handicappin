@@ -1,7 +1,3 @@
----
-alwaysApply: false
----
-
 # Integration Testing Rules
 
 ## Overview
@@ -32,8 +28,8 @@ APIs).
 - Import testing utilities and Vitest functions consistently:
 
   ```typescript
-  import { describe, expect, test, vi, beforeEach, afterEach } from 'vitest';
-  import { render, screen, waitFor } from '@testing-library/react';
+  import { describe, expect, test, vi, beforeEach, afterEach } from "vitest";
+  import { render, screen, waitFor } from "@testing-library/react";
   ```
 
 ## Test Structure & Naming
@@ -42,12 +38,12 @@ APIs).
 
 ```typescript
 // ✅ Good
-test('users page fetches data from backend and renders table rows', async () => {});
-test('login page handles 401 response from backend and shows error', async () => {});
+test("users page fetches data from backend and renders table rows", async () => {});
+test("login page handles 401 response from backend and shows error", async () => {});
 
 // ❌ Bad
-test('users page works', async () => {});
-test('login test', async () => {});
+test("users page works", async () => {});
+test("login test", async () => {});
 ```
 
 ### Use Pattern
@@ -63,9 +59,9 @@ Example: - `"UsersPage fetches from backend API and renders table data"`
 Verify successful communication between layers:
 
 ```typescript
-test('UsersPage fetches users and renders their names in table', async () => {
+test("UsersPage fetches users and renders their names in table", async () => {
   render(<UsersPage />);
-  const rows = await screen.findAllByRole('row');
+  const rows = await screen.findAllByRole("row");
   expect(rows.length).toBeGreaterThan(1);
 });
 ```
@@ -75,7 +71,7 @@ test('UsersPage fetches users and renders their names in table', async () => {
 Verify that API errors or service failures are handled correctly:
 
 ```typescript
-test('UsersPage shows error message on 500 response', async () => {
+test("UsersPage shows error message on 500 response", async () => {
   render(<UsersPage />);
   const error = await screen.findByText(/failed to load/i);
   expect(error).toBeInTheDocument();
@@ -87,7 +83,7 @@ test('UsersPage shows error message on 500 response', async () => {
 Verify edge cases with seeded test data:
 
 ```typescript
-test('UsersPage shows empty state when no users exist', async () => {
+test("UsersPage shows empty state when no users exist", async () => {
   render(<UsersPage />);
   const emptyMessage = await screen.findByText(/no users found/i);
   expect(emptyMessage).toBeInTheDocument();
@@ -101,7 +97,7 @@ test('UsersPage shows empty state when no users exist', async () => {
 Structure integration tests explicitly:
 
 ```typescript
-test('DashboardPage fetches statistics and displays them', async () => {
+test("DashboardPage fetches statistics and displays them", async () => {
   // Arrange - database seeded with test stats
 
   // Act
@@ -145,8 +141,8 @@ test('DashboardPage fetches statistics and displays them', async () => {
   Example: Payment providers, email/SMS gateways, 3rd party APIs
 
 ```typescript
-vi.mock('@/services/stripeClient', () => ({
-  charge: vi.fn().mockResolvedValue({ id: 'mock-charge' }),
+vi.mock("@/services/stripeClient", () => ({
+  charge: vi.fn().mockResolvedValue({ id: "mock-charge" }),
 }));
 ```
 
@@ -160,9 +156,9 @@ vi.mock('@/services/stripeClient', () => ({
 - Group related tests using `describe` blocks
 
 ```typescript
-describe('UsersPage integration', () => {
-  test('renders with seeded users', async () => {});
-  test('shows empty state with no users', async () => {});
+describe("UsersPage integration", () => {
+  test("renders with seeded users", async () => {});
+  test("shows empty state with no users", async () => {});
 });
 ```
 
@@ -171,8 +167,8 @@ describe('UsersPage integration', () => {
 Always test failure conditions between layers:
 
 ```typescript
-test('API returns 401 for unauthorized requests', async () => {
-  const response = await fetch('/api/secure-data');
+test("API returns 401 for unauthorized requests", async () => {
+  const response = await fetch("/api/secure-data");
   expect(response.status).toBe(401);
 });
 ```
@@ -183,7 +179,7 @@ Use test names and data to document system contracts:
 
 ```typescript
 // ✅ Documents that expired sessions return 401
-test('API returns 401 when session token is expired', async () => {});
+test("API returns 401 when session token is expired", async () => {});
 ```
 
 ## Common Pitfalls to Avoid

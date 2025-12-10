@@ -15,14 +15,12 @@ Then wait for the user's research query.
 ## Steps to follow after receiving the research query:
 
 1. **Read any directly mentioned files first:**
-
    - If the user mentions specific files (tickets, docs, JSON), read them FULLY first
    - **IMPORTANT**: Use the Read tool WITHOUT limit/offset parameters to read entire files
    - **CRITICAL**: Read these files yourself in the main context before spawning any sub-tasks
    - This ensures you have full context before decomposing the research
 
 2. **Analyze and decompose the research question:**
-
    - Break down the user's query into composable research areas
    - Take time to ultrathink about the underlying patterns, connections, and architectural implications the user might be seeking
    - Identify specific components, patterns, or concepts to investigate
@@ -30,23 +28,19 @@ Then wait for the user's research query.
    - Consider which directories, files, or architectural patterns are relevant
 
 3. **Spawn parallel sub-agent tasks for comprehensive research:**
-
    - Create multiple Task agents to research different aspects concurrently
    - We now have specialized agents that know how to do specific research tasks:
 
    **For codebase research:**
-
    - Use the **codebase-locator** agent to find WHERE files and components live
    - Use the **codebase-analyzer** agent to understand HOW specific code works
    - Use the **codebase-pattern-finder** agent if you need examples of similar implementations
 
    **For experiences research:**
-
    - Use the **experiences-locator** agent to find WHERE relevant experience files are located in the codebase
    - Use the **experiences-analyzer** agent to understand WHAT those experiences reveal about previous development, tasks, success/fail points, etc
 
    The key is to use these agents intelligently:
-
    - Start with locator agents to find what exists
    - Then use analyzer agents on the most promising findings
    - Run multiple agents in parallel when they're searching for different things
@@ -54,7 +48,6 @@ Then wait for the user's research query.
    - Don't write detailed prompts about HOW to search - the agents already know
 
 4. **Wait for all sub-agents to complete and synthesize findings:**
-
    - IMPORTANT: Wait for ALL sub-agent tasks to complete before proceeding
    - Compile all sub-agent results (both codebase and experience findings)
    - Prioritize live codebase findings as primary source of truth
@@ -126,7 +119,6 @@ Then wait for the user's research query.
   ```
 
 6. **Add GitHub permalinks (if applicable):**
-
    - Check if on main branch or if commit is pushed: `git branch --show-current` and `git status`
    - If on main/master or pushed, generate GitHub permalinks:
      - Get repo info: `gh repo view --json owner,name`
@@ -134,7 +126,6 @@ Then wait for the user's research query.
    - Replace local file references with permalinks in the document
 
 7. **Sync and present findings:**
-
    - Write the generated markdown to `.claude/experiences/research/<ticket-name>.md`, e.g. (`.claude/experiences/research/0001-add-button.md`)
    - Present a concise summary of findings to the user
    - Include key file references for easy navigation
