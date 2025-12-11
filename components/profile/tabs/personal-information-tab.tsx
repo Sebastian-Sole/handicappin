@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Tables } from "@/types/supabase";
@@ -21,7 +21,8 @@ import { api } from "@/trpc/react";
 import { toast } from "@/components/ui/use-toast";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Check } from "lucide-react";
+import { Check, AlertCircle } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface PersonalInformationTabProps {
   authUser: User;
@@ -42,6 +43,8 @@ export function PersonalInformationTab({
   const [saveState, setSaveState] = useState<"idle" | "saving" | "saved">(
     "idle"
   );
+  const [pendingEmail, setPendingEmail] = useState<string | null>(null);
+  const [isRequestingChange, setIsRequestingChange] = useState(false);
   const supabase = createClientComponentClient();
 
   const { mutate } = api.auth.updateProfile.useMutation({
@@ -63,6 +66,23 @@ export function PersonalInformationTab({
     },
   });
 
+  // Fetch pending email change
+  const { data: pendingChange } = api.auth.getPendingEmailChange.useQuery(
+    { userId: id },
+    {
+      enabled: !!id,
+      refetchOnWindowFocus: false,
+    }
+  );
+
+  useEffect(() => {
+    if (pendingChange) {
+      setPendingEmail(pendingChange.new_email);
+    } else {
+      setPendingEmail(null);
+    }
+  }, [pendingChange]);
+
   const form = useForm<z.infer<typeof updateProfileSchema>>({
     resolver: zodResolver(updateProfileSchema),
     defaultValues: {
@@ -74,34 +94,79 @@ export function PersonalInformationTab({
 
   const handleSubmit = async (values: z.infer<typeof updateProfileSchema>) => {
     setSaveState("saving");
-    const { data, error } = await supabase.auth.updateUser({
-      email: values.email,
-    });
 
-    if (error) {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      });
-      setSaveState("idle");
+    // Check if email changed
+    const emailChanged = values.email !== authUser.email;
+
+    if (emailChanged) {
+      // Request email change instead of direct update
+      setIsRequestingChange(true);
+      try {
+        const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+        const session = await supabase.auth.getSession();
+
+        if (!session.data.session) {
+          toast({
+            title: "Error",
+            description: "Session expired. Please log in again.",
+            variant: "destructive",
+          });
+          setSaveState("idle");
+          setIsRequestingChange(false);
+          return;
+        }
+
+        const response = await fetch(
+          `${supabaseUrl}/functions/v1/request-email-change`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${session.data.session.access_token}`,
+            },
+            body: JSON.stringify({ newEmail: values.email }),
+          }
+        );
+
+        const data = await response.json();
+
+        if (response.ok && data.success) {
+          toast({
+            title: "Verification email sent",
+            description: "Please check your new email address to verify the change.",
+          });
+          setPendingEmail(values.email);
+          // Reset email field to current email
+          form.setValue("email", authUser.email || "");
+        } else {
+          toast({
+            title: "Error",
+            description: data.error || "Failed to request email change",
+            variant: "destructive",
+          });
+        }
+      } catch (error) {
+        console.error("Email change request error:", error);
+        toast({
+          title: "Error",
+          description: "An unexpected error occurred",
+          variant: "destructive",
+        });
+      } finally {
+        setSaveState("idle");
+        setIsRequestingChange(false);
+      }
       return;
     }
 
+    // Update name only (no email change)
     mutate({
       id,
       name: values.name,
-      email: values.email,
+      email: authUser.email || "",
     });
   };
 
-  const copySupportEmailToClipboard = () => {
-    navigator.clipboard.writeText("sebastiansole@handicappin.com");
-    toast({
-      title: "Email copied",
-      description: "Support email has been copied to your clipboard",
-    });
-  };
 
   return (
     <div className="space-y-6">
@@ -135,18 +200,29 @@ export function PersonalInformationTab({
               <FormItem>
                 <FormLabel>Email</FormLabel>
                 <FormControl>
-                  <Input id="email" type="email" required {...field} disabled />
+                  <Input
+                    id="email"
+                    type="email"
+                    required
+                    {...field}
+                    // Email field is now ENABLED
+                  />
                 </FormControl>
+                {pendingEmail && (
+                  <Alert className="mt-2">
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertDescription>
+                      <strong>Pending verification:</strong> {pendingEmail}
+                      <br />
+                      <span className="text-sm text-muted-foreground">
+                        Check your email to verify this change.
+                      </span>
+                    </AlertDescription>
+                  </Alert>
+                )}
                 <FormDescription>
-                  Want to update your email?{" "}
-                  <Button
-                    type="button"
-                    variant={"link"}
-                    onClick={copySupportEmailToClipboard}
-                    className="px-0 h-auto"
-                  >
-                    Contact Support
-                  </Button>
+                  {!pendingEmail &&
+                    "You can update your email address. A verification email will be sent."}
                 </FormDescription>
                 <FormMessage />
               </FormItem>

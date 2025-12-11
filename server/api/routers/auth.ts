@@ -113,4 +113,27 @@ export const authRouter = createTRPCRouter({
 
       return data;
     }),
+
+  // Get pending email change for authenticated user
+  getPendingEmailChange: authedProcedure
+    .input(z.object({ userId: z.string().uuid() }))
+    .query(async ({ ctx, input }) => {
+      const { data, error } = await ctx.supabase
+        .from("pending_email_changes")
+        .select("*")
+        .eq("user_id", input.userId)
+        .single();
+
+      if (error) {
+        // No pending change found
+        if (error.code === "PGRST116") {
+          return null;
+        }
+
+        console.error("Error fetching pending email change:", error);
+        throw new Error(`Error fetching pending email change: ${error.message}`);
+      }
+
+      return data;
+    }),
 });

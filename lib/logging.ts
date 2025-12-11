@@ -34,6 +34,33 @@ export function redactEmail(email: string | null | undefined): string {
 }
 
 /**
+ * Mask email address for security notifications
+ * Example: john.doe@example.com → jo******@example.com
+ *
+ * @param email - Email to mask
+ * @returns Masked email with first 2 characters visible
+ *
+ * @example
+ * maskEmail("john.doe@example.com") // "jo****@example.com"
+ * maskEmail("test@gmail.com")       // "te****@gmail.com"
+ */
+export function maskEmail(email: string | null | undefined): string {
+  if (!email) return "***@***.***";
+
+  const atIndex = email.indexOf("@");
+  if (atIndex === -1) return "***@***.***";
+
+  const localPart = email.slice(0, atIndex);
+  const domain = email.slice(atIndex);
+
+  // Show first 2 characters of local part
+  const visibleChars = Math.min(2, localPart.length);
+  const masked = localPart.slice(0, visibleChars) + "****";
+
+  return masked + domain;
+}
+
+/**
  * Partially redact Stripe customer ID
  * Shows prefix and first few characters for debugging
  *
@@ -183,4 +210,31 @@ export function redactObject<T>(obj: T): T {
   }
 
   return redacted as T;
+}
+
+/**
+ * Log email change security events
+ */
+export function logEmailChangeEvent(
+  event: "requested" | "verified" | "cancelled" | "expired" | "failed",
+  userId: string,
+  details: {
+    oldEmail?: string;
+    newEmail?: string;
+    reason?: string;
+    ip?: string;
+  }
+) {
+  console.log("EMAIL_CHANGE_EVENT", {
+    event,
+    userId,
+    oldEmail: redactEmail(details.oldEmail),
+    newEmail: redactEmail(details.newEmail),
+    reason: details.reason,
+    ip: details.ip,
+    timestamp: new Date().toISOString(),
+  });
+
+  // TODO: Send to Sentry or other monitoring service
+  // This provides audit trail for security investigations
 }

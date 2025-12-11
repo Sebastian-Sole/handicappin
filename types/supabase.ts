@@ -169,6 +169,50 @@ export type Database = {
           },
         ]
       }
+      pending_email_changes: {
+        Row: {
+          created_at: string
+          expires_at: string
+          id: string
+          new_email: string
+          old_email: string
+          request_ip: string | null
+          token_hash: string
+          user_id: string
+          verification_attempts: number
+        }
+        Insert: {
+          created_at?: string
+          expires_at: string
+          id?: string
+          new_email: string
+          old_email: string
+          request_ip?: string | null
+          token_hash: string
+          user_id: string
+          verification_attempts?: number
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string
+          id?: string
+          new_email?: string
+          old_email?: string
+          request_ip?: string | null
+          token_hash?: string
+          user_id?: string
+          verification_attempts?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pending_email_changes_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profile"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       pending_lifetime_purchases: {
         Row: {
           checkout_session_id: string
@@ -220,6 +264,7 @@ export type Database = {
           createdAt: string
           current_period_end: number | null
           email: string
+          email_updated_at: string | null
           handicapIndex: number
           id: string
           initialHandicapIndex: number
@@ -235,6 +280,7 @@ export type Database = {
           createdAt?: string
           current_period_end?: number | null
           email: string
+          email_updated_at?: string | null
           handicapIndex?: number
           id: string
           initialHandicapIndex?: number
@@ -250,6 +296,7 @@ export type Database = {
           createdAt?: string
           current_period_end?: number | null
           email?: string
+          email_updated_at?: string | null
           handicapIndex?: number
           id?: string
           initialHandicapIndex?: number

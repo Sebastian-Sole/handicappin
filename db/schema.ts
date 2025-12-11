@@ -47,6 +47,9 @@ export const profile = pgTable(
     currentPeriodEnd: bigint("current_period_end", { mode: "number" }), // Y2038-proof unix timestamp
     cancelAtPeriodEnd: boolean("cancel_at_period_end").default(false).notNull(),
     billingVersion: integer("billing_version").default(1).notNull(),
+
+    // Email change tracking
+    emailUpdatedAt: timestamp("email_updated_at"),
   },
   (table) => [
     uniqueIndex("profile_email_key").using(
@@ -548,3 +551,41 @@ export const emailPreferences = pgTable(
 
 export const emailPreferencesSchema = createSelectSchema(emailPreferences);
 export type EmailPreferences = InferSelectModel<typeof emailPreferences>;
+
+// Pending email changes table - tracks email change verification workflow
+export const pendingEmailChanges = pgTable(
+  "pending_email_changes",
+  {
+    id: uuid().defaultRandom().primaryKey(),
+    userId: uuid("user_id").notNull().unique(),
+    oldEmail: text("old_email").notNull(),
+    newEmail: text("new_email").notNull(),
+    tokenHash: text("token_hash").notNull(),
+    expiresAt: timestamp("expires_at").notNull(),
+    createdAt: timestamp("created_at")
+      .default(sql`CURRENT_TIMESTAMP`)
+      .notNull(),
+    requestIp: text("request_ip"),
+    verificationAttempts: integer("verification_attempts").default(0).notNull(),
+  },
+  (table) => [
+    foreignKey({
+      columns: [table.userId],
+      foreignColumns: [profile.id],
+      name: "pending_email_changes_user_id_fkey",
+    })
+      .onUpdate("cascade")
+      .onDelete("cascade"),
+    uniqueIndex("pending_email_changes_user_id_unique").on(table.userId),
+    index("pending_email_changes_token_hash_idx").on(table.tokenHash),
+    pgPolicy("Users can view their own pending email changes", {
+      as: "permissive",
+      for: "select",
+      to: ["authenticated"],
+      using: sql`(auth.uid()::uuid = user_id)`,
+    }),
+  ]
+);
+
+export const pendingEmailChangesSchema = createSelectSchema(pendingEmailChanges);
+export type PendingEmailChange = InferSelectModel<typeof pendingEmailChanges>;
