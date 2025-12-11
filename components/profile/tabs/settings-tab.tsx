@@ -6,16 +6,55 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { useTheme } from "next-themes";
 import { Moon, Sun, Monitor, Check } from "lucide-react";
+import { api } from "@/trpc/react";
+import { useToast } from "@/components/ui/use-toast";
 
-export function SettingsTab() {
+interface SettingsTabProps {
+  userId: string;
+}
+
+export function SettingsTab({ userId }: SettingsTabProps) {
   const [saveState, setSaveState] = useState<"idle" | "saving" | "saved">(
     "idle"
   );
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
+  const { toast } = useToast();
 
-  // Notification preferences
-  const [emailNotifications, setEmailNotifications] = useState(true);
+  // Notification preferences - will be loaded from database
+  const [featureUpdates, setFeatureUpdates] = useState(true);
+
+  // Fetch email preferences on mount
+  const { data: preferences, isLoading } = api.auth.getEmailPreferences.useQuery(
+    { userId },
+    {
+      enabled: !!userId,
+      refetchOnWindowFocus: false,
+    }
+  );
+
+  // Update preferences mutation
+  const { mutate: updatePreferences } = api.auth.updateEmailPreferences.useMutation({
+    onSuccess: () => {
+      setSaveState("saved");
+      setTimeout(() => setSaveState("idle"), 2000);
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+      setSaveState("idle");
+    },
+  });
+
+  // Sync state with fetched preferences
+  useEffect(() => {
+    if (preferences) {
+      setFeatureUpdates(preferences.feature_updates);
+    }
+  }, [preferences]);
 
   // Prevent hydration mismatch by only rendering theme buttons after mount
   useEffect(() => {
@@ -25,16 +64,10 @@ export function SettingsTab() {
   const handleSaveSettings = async () => {
     setSaveState("saving");
 
-    // TODO: Implement settings save logic via tRPC or API
-    // For now, just simulate save
-    await new Promise((resolve) => setTimeout(resolve, 800));
-
-    setSaveState("saved");
-
-    // Reset button state after 2 seconds
-    setTimeout(() => {
-      setSaveState("idle");
-    }, 2000);
+    updatePreferences({
+      userId,
+      featureUpdates,
+    });
   };
 
   return (
@@ -50,21 +83,34 @@ export function SettingsTab() {
       {/* Notifications Section */}
       <div className="bg-card rounded-lg border p-6">
         <h3 className="text-xl font-semibold mb-4">Notifications</h3>
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div className="space-y-0.5">
-              <Label htmlFor="email-notifications">Email Notifications</Label>
-              <p className="text-sm text-muted-foreground">
-                Receive important updates via email
-              </p>
+        {isLoading ? (
+          <div className="space-y-4">
+            <div className="flex items-center justify-between animate-pulse">
+              <div className="space-y-2">
+                <div className="h-5 w-32 bg-muted rounded" />
+                <div className="h-4 w-64 bg-muted rounded" />
+              </div>
+              <div className="h-6 w-11 bg-muted rounded-full" />
             </div>
-            <Switch
-              id="email-notifications"
-              checked={emailNotifications}
-              onCheckedChange={setEmailNotifications}
-            />
           </div>
-        </div>
+        ) : (
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="space-y-0.5">
+                <Label htmlFor="feature-updates">Feature Updates</Label>
+                <p className="text-sm text-muted-foreground">
+                  Receive emails about new features and improvements
+                </p>
+              </div>
+              <Switch
+                id="feature-updates"
+                checked={featureUpdates}
+                onCheckedChange={setFeatureUpdates}
+                disabled={isLoading}
+              />
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Theme Section */}

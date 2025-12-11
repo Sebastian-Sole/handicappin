@@ -496,3 +496,55 @@ export const handicapCalculationQueueSchema = createSelectSchema(
 export type HandicapCalculationQueue = InferSelectModel<
   typeof handicapCalculationQueue
 >;
+
+// Email preferences table - tracks user email notification preferences
+export const emailPreferences = pgTable(
+  "email_preferences",
+  {
+    id: uuid().defaultRandom().primaryKey(),
+    userId: uuid("user_id").notNull().unique(),
+    featureUpdates: boolean("feature_updates").default(true).notNull(),
+    createdAt: timestamp("created_at")
+      .default(sql`CURRENT_TIMESTAMP`)
+      .notNull(),
+    updatedAt: timestamp("updated_at")
+      .default(sql`CURRENT_TIMESTAMP`)
+      .notNull(),
+  },
+  (table) => [
+    foreignKey({
+      columns: [table.userId],
+      foreignColumns: [profile.id],
+      name: "email_preferences_user_id_fkey",
+    })
+      .onUpdate("cascade")
+      .onDelete("cascade"),
+    pgPolicy("Users can view their own email preferences", {
+      as: "permissive",
+      for: "select",
+      to: ["authenticated"],
+      using: sql`(auth.uid()::uuid = user_id)`,
+    }),
+    pgPolicy("Users can insert their own email preferences", {
+      as: "permissive",
+      for: "insert",
+      to: ["authenticated"],
+      withCheck: sql`(auth.uid()::uuid = user_id)`,
+    }),
+    pgPolicy("Users can update their own email preferences", {
+      as: "permissive",
+      for: "update",
+      to: ["authenticated"],
+      using: sql`(auth.uid()::uuid = user_id)`,
+    }),
+    pgPolicy("Users can delete their own email preferences", {
+      as: "permissive",
+      for: "delete",
+      to: ["authenticated"],
+      using: sql`(auth.uid()::uuid = user_id)`,
+    }),
+  ]
+);
+
+export const emailPreferencesSchema = createSelectSchema(emailPreferences);
+export type EmailPreferences = InferSelectModel<typeof emailPreferences>;
