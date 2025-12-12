@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Tables } from "@/types/supabase";
@@ -22,6 +22,7 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Check, AlertCircle } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { useSearchParams, useRouter } from "next/navigation";
 
 interface PersonalInformationTabProps {
   authUser: User;
@@ -43,8 +44,11 @@ export function PersonalInformationTab({
     "idle"
   );
   const [isRequestingChange, setIsRequestingChange] = useState(false);
+  const [showCancelSuccess, setShowCancelSuccess] = useState(false);
   const supabase = createClientComponentClient();
   const utils = api.useUtils();
+  const searchParams = useSearchParams();
+  const router = useRouter();
 
   const { mutate } = api.auth.updateProfile.useMutation({
     onSuccess: () => {
@@ -86,8 +90,28 @@ export function PersonalInformationTab({
   });
 
   // Separate form for email (not part of profile update)
-  const [currentEmail, setCurrentEmail] = useState(authUser.email || "");
+  const [currentEmail] = useState(authUser.email || "");
   const [newEmail, setNewEmail] = useState(authUser.email || "");
+
+  // Check for cancelled query param and show success message
+  useEffect(() => {
+    if (searchParams.get("cancelled") === "true") {
+      setShowCancelSuccess(true);
+
+      // Remove the query param from URL
+      const newParams = new URLSearchParams(searchParams.toString());
+      newParams.delete("cancelled");
+      const newUrl = `/profile/${authUser.id}?${newParams.toString()}`;
+      router.replace(newUrl, { scroll: false });
+
+      // Hide after 5 seconds
+      const timer = setTimeout(() => {
+        setShowCancelSuccess(false);
+      }, 5000);
+
+      return () => clearTimeout(timer);
+    }
+  }, [searchParams, authUser.id, router]);
 
   const handleSubmit = async (values: z.infer<typeof updateProfileSchema>) => {
     setSaveState("saving");
@@ -178,6 +202,16 @@ export function PersonalInformationTab({
           Manage your account details and preferences
         </p>
       </div>
+
+      {/* Success alert for cancelled email change */}
+      {showCancelSuccess && (
+        <Alert className="bg-green-50 border-green-200 dark:bg-green-950 dark:border-green-800">
+          <Check className="h-4 w-4 text-green-600 dark:text-green-400" />
+          <AlertDescription className="text-green-800 dark:text-green-200">
+            Email change cancelled successfully. Your email address remains unchanged.
+          </AlertDescription>
+        </Alert>
+      )}
 
       <Form {...form}>
         <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">

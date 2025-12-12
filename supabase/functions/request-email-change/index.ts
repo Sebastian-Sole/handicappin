@@ -220,17 +220,9 @@ Deno.serve(async (req) => {
         Authorization: authHeader, // Forward auth
       },
       body: JSON.stringify({
-        verificationEmail: {
-          to: newEmail,
-          verificationUrl,
-          oldEmail: user.email!,
-          newEmail,
-        },
-        notificationEmail: {
-          to: user.email!,
-          cancelUrl,
-          newEmail,
-        },
+        newEmail,
+        verificationUrl,
+        cancelUrl,
       }),
     });
 

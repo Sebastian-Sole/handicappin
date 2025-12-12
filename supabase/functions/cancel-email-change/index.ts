@@ -92,6 +92,7 @@ Deno.serve(async (req) => {
       JSON.stringify({
         success: true,
         message: "Email change cancelled successfully.",
+        user_id: user_id,
       }),
       { status: 200, headers: corsHeaders }
     );

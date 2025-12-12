@@ -25,13 +25,10 @@ export function SettingsTab({ userId }: SettingsTabProps) {
   const [featureUpdates, setFeatureUpdates] = useState(true);
 
   // Fetch email preferences on mount
-  const { data: preferences, isLoading } = api.auth.getEmailPreferences.useQuery(
-    { userId },
-    {
-      enabled: !!userId,
-      refetchOnWindowFocus: false,
-    }
-  );
+  const { data: preferences, isLoading } = api.auth.getEmailPreferences.useQuery(undefined, {
+    enabled: !!userId,
+    refetchOnWindowFocus: false,
+  });
 
   // Update preferences mutation
   const { mutate: updatePreferences } = api.auth.updateEmailPreferences.useMutation({
@@ -66,7 +63,6 @@ export function SettingsTab({ userId }: SettingsTabProps) {
     setSaveState("saving");
 
     updatePreferences({
-      userId,
       featureUpdates,
     });
   };

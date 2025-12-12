@@ -4,6 +4,14 @@ import {
   sendEmailChangeVerification,
   sendEmailChangeNotification,
 } from "@/lib/email-service";
+import { z } from "zod";
+import { redactEmail } from "@/lib/logging";
+
+const bodySchema = z.object({
+  newEmail: z.string().email(),
+  verificationUrl: z.string().url(),
+  cancelUrl: z.string().url(),
+});
 
 export async function POST(request: Request) {
   try {
@@ -35,47 +43,79 @@ export async function POST(request: Request) {
     } = await supabase.auth.getUser();
 
     if (authError || !user) {
-      console.error("Auth error:", authError);
+      console.error("Auth error in send-email-change:", {
+        error: authError?.message,
+        status: authError?.status,
+      });
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const body = await request.json();
-    const { verificationEmail, notificationEmail } = body;
+    const parsed = bodySchema.safeParse(await request.json());
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: "Invalid request body", details: parsed.error.issues },
+        { status: 400 }
+      );
+    }
+
+    const { newEmail, verificationUrl, cancelUrl } = parsed.data;
+    const oldEmail = user.email;
+    if (!oldEmail) {
+      return NextResponse.json(
+        { error: "User email not available" },
+        { status: 400 }
+      );
+    }
 
     // Send both emails in parallel
     const [verificationResult, notificationResult] = await Promise.all([
-      sendEmailChangeVerification(verificationEmail),
-      sendEmailChangeNotification(notificationEmail),
+      sendEmailChangeVerification({
+        to: newEmail,
+        verificationUrl,
+        oldEmail,
+        newEmail,
+      }),
+      sendEmailChangeNotification({
+        to: oldEmail,
+        cancelUrl,
+        newEmail,
+      }),
     ]);
 
     // Check results
     if (!verificationResult.success || !notificationResult.success) {
       console.error("Email sending failed:", {
-        verification: verificationResult,
-        notification: notificationResult,
+        userId: user.id,
+        oldEmail: redactEmail(oldEmail),
+        newEmail: redactEmail(newEmail),
+        verificationSuccess: verificationResult.success,
+        notificationSuccess: notificationResult.success,
+        // Only log that an error occurred, not the error details
+        hasVerificationError: !!verificationResult.error,
+        hasNotificationError: !!notificationResult.error,
       });
 
       return NextResponse.json(
-        {
-          error: "Failed to send emails",
-          details: {
-            verification: verificationResult.error,
-            notification: notificationResult.error,
-          },
-        },
+        { error: "Failed to send emails" },
         { status: 500 }
       );
     }
 
+    // Log success with redacted emails for audit trail
+    console.log("Email change emails sent successfully:", {
+      userId: user.id,
+      oldEmail: redactEmail(oldEmail),
+      newEmail: redactEmail(newEmail),
+    });
+
     return NextResponse.json({
       success: true,
-      messageIds: {
-        verification: verificationResult.messageId,
-        notification: notificationResult.messageId,
-      },
     });
   } catch (error) {
-    console.error("Error in send-email-change API:", error);
+    console.error("Error in send-email-change API:", {
+      error: error instanceof Error ? error.message : "Unknown error",
+      stack: error instanceof Error ? error.stack : undefined,
+    });
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

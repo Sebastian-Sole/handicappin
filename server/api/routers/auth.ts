@@ -47,39 +47,36 @@ export const authRouter = createTRPCRouter({
     }),
 
   // Get email preferences for authenticated user
-  getEmailPreferences: authedProcedure
-    .input(z.object({ userId: z.string().uuid() }))
-    .query(async ({ ctx, input }) => {
-      const { data, error } = await ctx.supabase
-        .from("email_preferences")
-        .select("*")
-        .eq("user_id", input.userId)
-        .single();
+  getEmailPreferences: authedProcedure.query(async ({ ctx }) => {
+    const { data, error } = await ctx.supabase
+      .from("email_preferences")
+      .select("*")
+      .eq("user_id", ctx.user.id)
+      .single();
 
-      if (error) {
-        // If no preferences exist yet, return defaults
-        if (error.code === "PGRST116") {
-          return {
-            id: null,
-            user_id: input.userId,
-            feature_updates: true,
-            created_at: null,
-            updated_at: null,
-          };
-        }
-
-        console.error("Error fetching email preferences:", error);
-        throw new Error(`Error fetching email preferences: ${error.message}`);
+    if (error) {
+      // If no preferences exist yet, return defaults
+      if (error.code === "PGRST116") {
+        return {
+          id: null,
+          user_id: ctx.user.id,
+          feature_updates: true,
+          created_at: null,
+          updated_at: null,
+        };
       }
 
-      return data;
-    }),
+      console.error("Error fetching email preferences:", error);
+      throw new Error(`Error fetching email preferences: ${error.message}`);
+    }
+
+    return data;
+  }),
 
   // Update or insert email preferences
   updateEmailPreferences: authedProcedure
     .input(
       z.object({
-        userId: z.string().uuid(),
         featureUpdates: z.boolean(),
       })
     )
@@ -89,7 +86,7 @@ export const authRouter = createTRPCRouter({
         .from("email_preferences")
         .upsert(
           {
-            user_id: input.userId,
+            user_id: ctx.user.id,
             feature_updates: input.featureUpdates,
             updated_at: new Date().toISOString(),
           },

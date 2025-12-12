@@ -6,7 +6,7 @@ export async function GET(request: NextRequest) {
 
   if (!token) {
     return NextResponse.redirect(
-      new URL("/profile?error=invalid-cancel-link", request.url)
+      new URL("/login?error=invalid-cancel-link", request.url)
     );
   }
 
@@ -14,7 +14,7 @@ export async function GET(request: NextRequest) {
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
     if (!supabaseUrl) {
       return NextResponse.redirect(
-        new URL("/profile?error=cancel-failed", request.url)
+        new URL("/login?error=cancel-failed", request.url)
       );
     }
 
@@ -29,19 +29,20 @@ export async function GET(request: NextRequest) {
 
     const data = await response.json();
 
-    if (response.ok && data.success) {
+    if (response.ok && data.success && data.user_id) {
+      // Use the user_id from the token to redirect to their profile
       return NextResponse.redirect(
-        new URL("/profile?tab=personal&cancelled=true", request.url)
+        new URL(`/profile/${data.user_id}?tab=personal&cancelled=true`, request.url)
       );
     } else {
       return NextResponse.redirect(
-        new URL("/profile?error=cancel-failed", request.url)
+        new URL("/login?error=cancel-failed", request.url)
       );
     }
   } catch (error) {
     console.error("Cancel email change error:", error);
     return NextResponse.redirect(
-      new URL("/profile?error=cancel-failed", request.url)
+      new URL("/login?error=cancel-failed", request.url)
     );
   }
 }
