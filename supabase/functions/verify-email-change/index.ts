@@ -148,23 +148,60 @@ Deno.serve(async (req) => {
       })
       .eq("id", pendingChange.id);
 
-    // Update profile.email (trigger will sync to auth.users automatically)
-    const { error: profileError } = await supabaseAdmin
-      .from("profile")
-      .update({
-        email: new_email,
-        email_updated_at: new Date().toISOString(),
-      })
-      .eq("id", user_id);
+    // Update auth.users.email - this is the single source of truth
+    const { error: authUpdateError } = await supabaseAdmin.auth.admin.updateUserById(
+      user_id,
+      { email: new_email }
+    );
 
-    if (profileError) {
-      console.error("Failed to update profile email:", profileError);
+    if (authUpdateError) {
+      console.error("Failed to update auth.users email:", authUpdateError);
       return new Response(
         JSON.stringify({
           error: "Failed to update email. Please try again or contact support.",
         }),
         { status: 500, headers: corsHeaders }
       );
+    }
+
+    // Update Stripe customer email if they have a Stripe customer ID
+    try {
+      const { data: stripeCustomer } = await supabaseAdmin
+        .from("stripe_customers")
+        .select("stripe_customer_id")
+        .eq("user_id", user_id)
+        .single();
+
+      if (stripeCustomer?.stripe_customer_id) {
+        const stripeSecretKey = Deno.env.get("STRIPE_SECRET_KEY");
+
+        if (stripeSecretKey) {
+          console.log(`Updating Stripe customer ${stripeCustomer.stripe_customer_id} email to ${new_email}`);
+
+          const stripeResponse = await fetch(
+            `https://api.stripe.com/v1/customers/${stripeCustomer.stripe_customer_id}`,
+            {
+              method: "POST",
+              headers: {
+                "Authorization": `Bearer ${stripeSecretKey}`,
+                "Content-Type": "application/x-www-form-urlencoded",
+              },
+              body: `email=${encodeURIComponent(new_email)}`,
+            }
+          );
+
+          if (!stripeResponse.ok) {
+            const errorText = await stripeResponse.text();
+            console.error("Failed to update Stripe customer email:", errorText);
+            // Don't fail the entire operation - email was updated in auth.users
+          } else {
+            console.log("Successfully updated Stripe customer email");
+          }
+        }
+      }
+    } catch (stripeError) {
+      console.error("Error updating Stripe customer email:", stripeError);
+      // Don't fail the entire operation - email was updated in auth.users
     }
 
     // Delete pending change record (success!)

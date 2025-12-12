@@ -32,7 +32,7 @@ interface PersonalInformationTabProps {
 const updateProfileSchema = z.object({
   id: z.string(),
   name: z.string().min(1, "Name is required"),
-  email: z.string().email("Invalid email address"),
+  // Email is managed separately through email change workflow
 });
 
 export function PersonalInformationTab({
@@ -88,83 +88,90 @@ export function PersonalInformationTab({
     defaultValues: {
       id: id,
       name: profileName || "",
-      email: authUser.email || "",
     },
   });
+
+  // Separate form for email (not part of profile update)
+  const [currentEmail, setCurrentEmail] = useState(authUser.email || "");
+  const [newEmail, setNewEmail] = useState(authUser.email || "");
 
   const handleSubmit = async (values: z.infer<typeof updateProfileSchema>) => {
     setSaveState("saving");
 
-    // Check if email changed
-    const emailChanged = values.email !== authUser.email;
-
-    if (emailChanged) {
-      // Request email change instead of direct update
-      setIsRequestingChange(true);
-      try {
-        const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-        const session = await supabase.auth.getSession();
-
-        if (!session.data.session) {
-          toast({
-            title: "Error",
-            description: "Session expired. Please log in again.",
-            variant: "destructive",
-          });
-          setSaveState("idle");
-          setIsRequestingChange(false);
-          return;
-        }
-
-        const response = await fetch(
-          `${supabaseUrl}/functions/v1/request-email-change`,
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${session.data.session.access_token}`,
-            },
-            body: JSON.stringify({ newEmail: values.email }),
-          }
-        );
-
-        const data = await response.json();
-
-        if (response.ok && data.success) {
-          toast({
-            title: "Verification email sent",
-            description: "Please check your new email address to verify the change.",
-          });
-          setPendingEmail(values.email);
-          // Reset email field to current email
-          form.setValue("email", authUser.email || "");
-        } else {
-          toast({
-            title: "Error",
-            description: data.error || "Failed to request email change",
-            variant: "destructive",
-          });
-        }
-      } catch (error) {
-        console.error("Email change request error:", error);
-        toast({
-          title: "Error",
-          description: "An unexpected error occurred",
-          variant: "destructive",
-        });
-      } finally {
-        setSaveState("idle");
-        setIsRequestingChange(false);
-      }
-      return;
-    }
-
-    // Update name only (no email change)
+    // Update name only - email is managed separately
     mutate({
       id,
       name: values.name,
-      email: authUser.email || "",
     });
+  };
+
+  const handleEmailChange = async () => {
+    // Check if email changed
+    const emailChanged = newEmail !== currentEmail;
+
+    if (!emailChanged) {
+      toast({
+        title: "No change",
+        description: "Please enter a different email address",
+      });
+      return;
+    }
+
+    // Request email change
+    setIsRequestingChange(true);
+    try {
+      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+      const session = await supabase.auth.getSession();
+
+      if (!session.data.session) {
+        toast({
+          title: "Error",
+          description: "Session expired. Please log in again.",
+          variant: "destructive",
+        });
+        setIsRequestingChange(false);
+        return;
+      }
+
+      const response = await fetch(
+        `${supabaseUrl}/functions/v1/request-email-change`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${session.data.session.access_token}`,
+          },
+          body: JSON.stringify({ newEmail }),
+        }
+      );
+
+      const data = await response.json();
+
+      if (response.ok && data.success) {
+        toast({
+          title: "Verification email sent",
+          description: "Please check your new email address to verify the change.",
+        });
+        setPendingEmail(newEmail);
+        // Reset email field to current email
+        setNewEmail(currentEmail);
+      } else {
+        toast({
+          title: "Error",
+          description: data.error || "Failed to request email change",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error("Email change request error:", error);
+      toast({
+        title: "Error",
+        description: "An unexpected error occurred",
+        variant: "destructive",
+      });
+    } finally {
+      setIsRequestingChange(false);
+    }
   };
 
 
@@ -193,41 +200,42 @@ export function PersonalInformationTab({
             )}
           />
 
-          <FormField
-            control={form.control}
-            name="email"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Email</FormLabel>
-                <FormControl>
-                  <Input
-                    id="email"
-                    type="email"
-                    required
-                    {...field}
-                    // Email field is now ENABLED
-                  />
-                </FormControl>
-                {pendingEmail && (
-                  <Alert className="mt-2">
-                    <AlertCircle className="h-4 w-4" />
-                    <AlertDescription>
-                      <strong>Pending verification:</strong> {pendingEmail}
-                      <br />
-                      <span className="text-sm text-muted-foreground">
-                        Check your email to verify this change.
-                      </span>
-                    </AlertDescription>
-                  </Alert>
-                )}
-                <FormDescription>
-                  {!pendingEmail &&
-                    "You can update your email address. A verification email will be sent."}
-                </FormDescription>
-                <FormMessage />
-              </FormItem>
+          {/* Email section - managed separately */}
+          <div className="space-y-3">
+            <FormLabel>Email</FormLabel>
+            <div className="flex gap-2">
+              <Input
+                type="email"
+                value={newEmail}
+                onChange={(e) => setNewEmail(e.target.value)}
+                placeholder="Enter new email"
+              />
+              <Button
+                type="button"
+                onClick={handleEmailChange}
+                disabled={isRequestingChange || newEmail === currentEmail}
+              >
+                {isRequestingChange ? "Sending..." : "Change Email"}
+              </Button>
+            </div>
+            {pendingEmail && (
+              <Alert className="mt-2">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>
+                  <strong>Pending verification:</strong> {pendingEmail}
+                  <br />
+                  <span className="text-sm text-muted-foreground">
+                    Check your email to verify this change.
+                  </span>
+                </AlertDescription>
+              </Alert>
             )}
-          />
+            {!pendingEmail && (
+              <p className="text-sm text-muted-foreground">
+                A verification email will be sent to your new address.
+              </p>
+            )}
+          </div>
 
           <div className="flex items-center justify-between pt-4">
             <Link href="/forgot-password">

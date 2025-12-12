@@ -14,10 +14,7 @@ export const authRouter = createTRPCRouter({
 
       // console.log(profileError)
       if (profileData) {
-        console.log({
-          ...profileData,
-          email: redactEmail(profileData.email), // Only email needs redaction
-        });
+        console.log(profileData); // Email is no longer in profile - it's in auth.users
       }
 
       if (profileError) {
@@ -31,7 +28,7 @@ export const authRouter = createTRPCRouter({
       z.object({
         id: z.string(),
         name: z.string(),
-        email: z.string(),
+        // Email removed - it's stored in auth.users only
       })
     )
     .mutation(async ({ ctx, input }) => {
@@ -39,7 +36,6 @@ export const authRouter = createTRPCRouter({
         .from("profile")
         .update({
           name: input.name,
-          email: input.email,
         })
         .eq("id", input.id)
         .select();

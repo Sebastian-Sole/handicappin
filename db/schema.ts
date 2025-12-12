@@ -29,7 +29,7 @@ export const profile = pgTable(
   "profile",
   {
     id: uuid().primaryKey().notNull(),
-    email: text().notNull(),
+    // Note: email is stored in auth.users table only - join with auth.users for email access
     name: text(),
     handicapIndex: decimal<"number">().notNull().default(54),
     verified: boolean().default(false).notNull(),
@@ -47,15 +47,8 @@ export const profile = pgTable(
     currentPeriodEnd: bigint("current_period_end", { mode: "number" }), // Y2038-proof unix timestamp
     cancelAtPeriodEnd: boolean("cancel_at_period_end").default(false).notNull(),
     billingVersion: integer("billing_version").default(1).notNull(),
-
-    // Email change tracking
-    emailUpdatedAt: timestamp("email_updated_at"),
   },
   (table) => [
-    uniqueIndex("profile_email_key").using(
-      "btree",
-      table.email.asc().nullsLast().op("text_ops")
-    ),
     foreignKey({
       columns: [table.id],
       foreignColumns: [usersInAuth.id],
