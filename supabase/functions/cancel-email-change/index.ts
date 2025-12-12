@@ -2,13 +2,9 @@ import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "jsr:@supabase/supabase-js@2";
 import { verify } from "https://deno.land/x/djwt@v3.0.2/mod.ts";
 import { emailChangeJwtPayloadSchema } from "../types.ts";
+import { corsHeaders } from "../_shared/cors.ts";
 
-const JWT_SECRET = Deno.env.get("EMAIL_CHANGE_TOKEN_SECRET")!;
-
-export const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, apikey, content-type",
-};
+const JWT_SECRET = Deno.env.get("EMAIL_CHANGE_TOKEN_SECRET");
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -23,6 +19,14 @@ Deno.serve(async (req) => {
   }
 
   try {
+    if (!JWT_SECRET) {
+      console.error("Missing EMAIL_CHANGE_TOKEN_SECRET");
+      return new Response(
+        JSON.stringify({ error: "Server configuration error" }),
+        { status: 500, headers: corsHeaders }
+      );
+    }
+
     const supabaseUrl =
       Deno.env.get("SUPABASE_URL") ?? Deno.env.get("LOCAL_SUPABASE_URL");
     const supabaseServiceRoleKey =

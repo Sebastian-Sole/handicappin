@@ -1,12 +1,10 @@
 import { z } from "zod";
 import { authedProcedure, createTRPCRouter, publicProcedure } from "../trpc";
-import { redactEmail } from "@/lib/logging";
 
 export const authRouter = createTRPCRouter({
   getProfileFromUserId: publicProcedure
     .input(z.string())
     .query(async ({ ctx, input }) => {
-      console.log("input", input); // UUID logged directly (pseudonymous)
       const { data: profileData, error: profileError } = await ctx.supabase
         .from("profile")
         .select("*")
@@ -14,7 +12,7 @@ export const authRouter = createTRPCRouter({
 
       // console.log(profileError)
       if (profileData) {
-        console.log(profileData); // Email is no longer in profile - it's in auth.users
+        console.log(`Profile fetched for user: ${input}`); // Email is no longer in profile - it's in auth.users
       }
 
       if (profileError) {

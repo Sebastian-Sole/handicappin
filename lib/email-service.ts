@@ -11,7 +11,7 @@ import {
   logWebhookError,
   logWebhookSuccess,
 } from "./webhook-logger";
-import { maskEmail } from "./logging";
+import { maskEmail, redactEmail } from "./logging";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -44,7 +44,7 @@ export async function sendSubscriptionUpgradedEmail({
   billingUrl: string;
 }): Promise<SendEmailResult> {
   try {
-    logWebhookInfo(`Sending subscription upgraded email to ${to}`);
+    logWebhookInfo(`Sending subscription upgraded email to ${redactEmail(to)}`);
 
     const emailHtml = await render(
       SubscriptionUpgradedEmail({
@@ -67,7 +67,7 @@ export async function sendSubscriptionUpgradedEmail({
     });
 
     logWebhookSuccess(
-      `Subscription upgraded email sent successfully to ${to}`,
+      `Subscription upgraded email sent successfully to ${redactEmail(to)}`,
       {
         messageId: result.data?.id,
         oldPlan,
@@ -81,7 +81,7 @@ export async function sendSubscriptionUpgradedEmail({
     };
   } catch (error) {
     logWebhookError(
-      `Failed to send subscription upgraded email to ${to} (${oldPlan} → ${newPlan})`,
+      `Failed to send subscription upgraded email to ${redactEmail(to)} (${oldPlan} → ${newPlan})`,
       error
     );
 
@@ -109,7 +109,7 @@ export async function sendSubscriptionDowngradedEmail({
   billingUrl: string;
 }): Promise<SendEmailResult> {
   try {
-    logWebhookInfo(`Sending subscription downgraded email to ${to}`);
+    logWebhookInfo(`Sending subscription downgraded email to ${redactEmail(to)}`);
 
     const emailHtml = await render(
       SubscriptionDowngradedEmail({
@@ -131,7 +131,7 @@ export async function sendSubscriptionDowngradedEmail({
     });
 
     logWebhookSuccess(
-      `Subscription downgraded email sent successfully to ${to}`,
+      `Subscription downgraded email sent successfully to ${redactEmail(to)}`,
       {
         messageId: result.data?.id,
         oldPlan,
@@ -145,7 +145,7 @@ export async function sendSubscriptionDowngradedEmail({
     };
   } catch (error) {
     logWebhookError(
-      `Failed to send subscription downgraded email to ${to} (${oldPlan} → ${newPlan})`,
+      `Failed to send subscription downgraded email to ${redactEmail(to)} (${oldPlan} → ${newPlan})`,
       error
     );
 
@@ -171,7 +171,7 @@ export async function sendSubscriptionCancelledEmail({
   billingUrl: string;
 }): Promise<SendEmailResult> {
   try {
-    logWebhookInfo(`Sending subscription cancelled email to ${to}`);
+    logWebhookInfo(`Sending subscription cancelled email to ${redactEmail(to)}`);
 
     const emailHtml = await render(
       SubscriptionCancelledEmail({
@@ -190,7 +190,7 @@ export async function sendSubscriptionCancelledEmail({
     });
 
     logWebhookSuccess(
-      `Subscription cancelled email sent successfully to ${to}`,
+      `Subscription cancelled email sent successfully to ${redactEmail(to)}`,
       {
         messageId: result.data?.id,
         plan,
@@ -203,7 +203,7 @@ export async function sendSubscriptionCancelledEmail({
     };
   } catch (error) {
     logWebhookError(
-      `Failed to send subscription cancelled email to ${to} (plan: ${plan})`,
+      `Failed to send subscription cancelled email to ${redactEmail(to)} (plan: ${plan})`,
       error
     );
 
@@ -228,7 +228,7 @@ export async function sendWelcomeEmail({
   dashboardUrl: string;
 }): Promise<SendEmailResult> {
   try {
-    logWebhookInfo(`Sending welcome email to ${to}`);
+    logWebhookInfo(`Sending welcome email to ${redactEmail(to)}`);
 
     const emailHtml = await render(
       WelcomeEmail({
@@ -247,7 +247,7 @@ export async function sendWelcomeEmail({
       html: emailHtml,
     });
 
-    logWebhookSuccess(`Welcome email sent successfully to ${to}`, {
+    logWebhookSuccess(`Welcome email sent successfully to ${redactEmail(to)}`, {
       messageId: result.data?.id,
       plan,
     });
@@ -258,7 +258,7 @@ export async function sendWelcomeEmail({
     };
   } catch (error) {
     logWebhookError(
-      `Failed to send welcome email to ${to} (plan: ${plan})`,
+      `Failed to send welcome email to ${redactEmail(to)} (plan: ${plan})`,
       error
     );
 
@@ -285,7 +285,7 @@ export async function sendEmailChangeVerification({
   newEmail: string;
 }): Promise<SendEmailResult> {
   try {
-    logWebhookInfo(`Sending email change verification to ${to}`);
+    logWebhookInfo(`Sending email change verification to ${redactEmail(to)}`);
 
     const emailHtml = await render(
       EmailVerificationChange({
@@ -304,11 +304,11 @@ export async function sendEmailChangeVerification({
     });
 
     logWebhookSuccess(
-      `Email change verification sent successfully to ${to}`,
+      `Email change verification sent successfully to ${redactEmail(to)}`,
       {
         messageId: result.data?.id,
-        oldEmail,
-        newEmail,
+        oldEmail: redactEmail(oldEmail),
+        newEmail: redactEmail(newEmail),
       }
     );
 
@@ -318,7 +318,7 @@ export async function sendEmailChangeVerification({
     };
   } catch (error) {
     logWebhookError(
-      `Failed to send email change verification to ${to}`,
+      `Failed to send email change verification to ${redactEmail(to)}`,
       error
     );
 
@@ -343,7 +343,7 @@ export async function sendEmailChangeNotification({
   newEmail: string; // Will be masked before sending
 }): Promise<SendEmailResult> {
   try {
-    logWebhookInfo(`Sending email change notification to ${to}`);
+    logWebhookInfo(`Sending email change notification to ${redactEmail(to)}`);
 
     const emailHtml = await render(
       EmailChangeNotification({
@@ -361,7 +361,7 @@ export async function sendEmailChangeNotification({
     });
 
     logWebhookSuccess(
-      `Email change notification sent successfully to ${to}`,
+      `Email change notification sent successfully to ${redactEmail(to)}`,
       {
         messageId: result.data?.id,
       }
@@ -373,7 +373,7 @@ export async function sendEmailChangeNotification({
     };
   } catch (error) {
     logWebhookError(
-      `Failed to send email change notification to ${to}`,
+      `Failed to send email change notification to ${redactEmail(to)}`,
       error
     );
 

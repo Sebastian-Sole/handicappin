@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Tables } from "@/types/supabase";
@@ -42,9 +42,9 @@ export function PersonalInformationTab({
   const [saveState, setSaveState] = useState<"idle" | "saving" | "saved">(
     "idle"
   );
-  const [pendingEmail, setPendingEmail] = useState<string | null>(null);
   const [isRequestingChange, setIsRequestingChange] = useState(false);
   const supabase = createClientComponentClient();
+  const utils = api.useUtils();
 
   const { mutate } = api.auth.updateProfile.useMutation({
     onSuccess: () => {
@@ -74,13 +74,8 @@ export function PersonalInformationTab({
     }
   );
 
-  useEffect(() => {
-    if (pendingChange) {
-      setPendingEmail(pendingChange.new_email);
-    } else {
-      setPendingEmail(null);
-    }
-  }, [pendingChange]);
+  // Derive pendingEmail from query data instead of duplicating in state
+  const pendingEmail = pendingChange?.new_email ?? null;
 
   const form = useForm<z.infer<typeof updateProfileSchema>>({
     resolver: zodResolver(updateProfileSchema),
@@ -152,7 +147,8 @@ export function PersonalInformationTab({
           description:
             "Please check your new email address to verify the change.",
         });
-        setPendingEmail(newEmail);
+        // Invalidate query to refetch actual backend state
+        await utils.auth.getPendingEmailChange.invalidate({ userId: id });
         // Reset email field to current email
         setNewEmail(currentEmail);
       } else {
