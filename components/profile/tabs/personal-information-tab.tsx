@@ -7,7 +7,6 @@ import { Tables } from "@/types/supabase";
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -150,7 +149,8 @@ export function PersonalInformationTab({
       if (response.ok && data.success) {
         toast({
           title: "Verification email sent",
-          description: "Please check your new email address to verify the change.",
+          description:
+            "Please check your new email address to verify the change.",
         });
         setPendingEmail(newEmail);
         // Reset email field to current email
@@ -173,7 +173,6 @@ export function PersonalInformationTab({
       setIsRequestingChange(false);
     }
   };
-
 
   return (
     <div className="space-y-6">

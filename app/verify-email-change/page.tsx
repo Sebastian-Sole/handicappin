@@ -42,11 +42,6 @@ function VerifyEmailChangeContent() {
           setMessage(
             data.message || "Email address updated successfully!"
           );
-
-          // Redirect to profile after 3 seconds
-          setTimeout(() => {
-            router.push("/profile?tab=personal");
-          }, 3000);
         } else {
           setStatus("error");
           setMessage(data.error || "Verification failed");
@@ -60,6 +55,17 @@ function VerifyEmailChangeContent() {
 
     verifyEmail();
   }, [token, router]);
+
+  // Redirect after success with cleanup
+  useEffect(() => {
+    if (status !== "success") return;
+
+    const timeoutId = setTimeout(() => {
+      router.push("/profile?tab=personal");
+    }, 3000);
+
+    return () => clearTimeout(timeoutId);
+  }, [status, router]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">

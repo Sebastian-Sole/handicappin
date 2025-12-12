@@ -16,13 +16,21 @@ interface EmailVerificationChangeProps {
   verificationUrl: string;
   oldEmail: string;
   newEmail: string;
-  expiresInHours: number;
+  expiresInHours?: number;
 }
 
+// Preview props for local development only
+EmailVerificationChange.PreviewProps = {
+  verificationUrl: "https://handicappin.com/verify-email-change?token=abc123",
+  oldEmail: "old@example.com",
+  newEmail: "new@example.com",
+  expiresInHours: 48,
+} as EmailVerificationChangeProps;
+
 export default function EmailVerificationChange({
-  verificationUrl = "https://handicappin.com/verify-email-change?token=abc123",
-  oldEmail = "old@example.com",
-  newEmail = "new@example.com",
+  verificationUrl,
+  oldEmail,
+  newEmail,
   expiresInHours = 48,
 }: EmailVerificationChangeProps) {
   return (

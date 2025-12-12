@@ -62,6 +62,7 @@ export function SettingsTab({ userId }: SettingsTabProps) {
   }, []);
 
   const handleSaveSettings = async () => {
+    if (isLoading) return;
     setSaveState("saving");
 
     updatePreferences({
@@ -188,7 +189,7 @@ export function SettingsTab({ userId }: SettingsTabProps) {
       <div className="flex justify-end pt-4">
         <Button
           onClick={handleSaveSettings}
-          disabled={saveState === "saving" || saveState === "saved"}
+          disabled={saveState === "saving" || saveState === "saved" || isLoading}
           className={`transition-all duration-300 ${
             saveState === "saved"
               ? "bg-green-600 hover:bg-green-600"

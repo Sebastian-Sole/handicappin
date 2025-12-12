@@ -569,7 +569,6 @@ export const pendingEmailChanges = pgTable(
     })
       .onUpdate("cascade")
       .onDelete("cascade"),
-    uniqueIndex("pending_email_changes_user_id_unique").on(table.userId),
     index("pending_email_changes_token_hash_idx").on(table.tokenHash),
     pgPolicy("Users can view their own pending email changes", {
       as: "permissive",

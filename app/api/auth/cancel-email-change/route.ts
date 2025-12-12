@@ -12,6 +12,12 @@ export async function GET(request: NextRequest) {
 
   try {
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    if (!supabaseUrl) {
+      return NextResponse.redirect(
+        new URL("/profile?error=cancel-failed", request.url)
+      );
+    }
+
     const response = await fetch(
       `${supabaseUrl}/functions/v1/cancel-email-change`,
       {

@@ -89,8 +89,6 @@ Deno.serve(async (req) => {
     }
 
     // Check rate limiting - only 1 request per hour
-    // DISABLED FOR TESTING - uncomment to enable rate limiting
-    /*
     const { data: existingPending } = await supabaseAdmin
       .from("pending_email_changes")
       .select("created_at")
@@ -119,21 +117,23 @@ Deno.serve(async (req) => {
         );
       }
     }
-    */
 
-    // Check if new email is already in use by another user
-    const { data: existingUser } = await supabaseAdmin
-      .from("profile")
-      .select("id")
-      .eq("email", newEmail)
-      .single();
+    // Check if new email is already in use by another user in auth.users
+    const { data: existingAuthUser, error: authCheckError } = await supabaseAdmin.auth.admin
+      .listUsers();
 
-    if (existingUser && existingUser.id !== user.id) {
-      // Generic error to prevent email enumeration
-      return new Response(
-        JSON.stringify({ error: "This email address cannot be used" }),
-        { status: 400, headers: corsHeaders }
+    if (!authCheckError && existingAuthUser?.users) {
+      const emailInUse = existingAuthUser.users.some(
+        (u) => u.email?.toLowerCase() === newEmail.toLowerCase() && u.id !== user.id
       );
+
+      if (emailInUse) {
+        // Generic error to prevent email enumeration
+        return new Response(
+          JSON.stringify({ error: "This email address cannot be used" }),
+          { status: 400, headers: corsHeaders }
+        );
+      }
     }
 
     // Generate signed JWT token
@@ -145,9 +145,16 @@ Deno.serve(async (req) => {
       ["sign", "verify"]
     );
 
+    if (!user.email) {
+      return new Response(
+        JSON.stringify({ error: "User does not have an email address" }),
+        { status: 400, headers: corsHeaders }
+      );
+    }
+
     const payload = {
       user_id: user.id,
-      old_email: user.email!,
+      old_email: user.email,
       new_email: newEmail,
       exp: getNumericDate(48 * 60 * 60), // 48 hours
       metadata: { type: "email-change-verification" },

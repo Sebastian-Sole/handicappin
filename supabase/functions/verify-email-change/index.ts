@@ -176,8 +176,6 @@ Deno.serve(async (req) => {
         const stripeSecretKey = Deno.env.get("STRIPE_SECRET_KEY");
 
         if (stripeSecretKey) {
-          console.log(`Updating Stripe customer ${stripeCustomer.stripe_customer_id} email to ${new_email}`);
-
           const stripeResponse = await fetch(
             `https://api.stripe.com/v1/customers/${stripeCustomer.stripe_customer_id}`,
             {
