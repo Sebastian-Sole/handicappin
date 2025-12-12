@@ -1,13 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Tables } from "@/types/supabase";
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -21,7 +20,9 @@ import { api } from "@/trpc/react";
 import { toast } from "@/components/ui/use-toast";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Check } from "lucide-react";
+import { Check, AlertCircle } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { useSearchParams, useRouter } from "next/navigation";
 
 interface PersonalInformationTabProps {
   authUser: User;
@@ -31,7 +32,7 @@ interface PersonalInformationTabProps {
 const updateProfileSchema = z.object({
   id: z.string(),
   name: z.string().min(1, "Name is required"),
-  email: z.string().email("Invalid email address"),
+  // Email is managed separately through email change workflow
 });
 
 export function PersonalInformationTab({
@@ -42,7 +43,12 @@ export function PersonalInformationTab({
   const [saveState, setSaveState] = useState<"idle" | "saving" | "saved">(
     "idle"
   );
+  const [isRequestingChange, setIsRequestingChange] = useState(false);
+  const [showCancelSuccess, setShowCancelSuccess] = useState(false);
   const supabase = createClientComponentClient();
+  const utils = api.useUtils();
+  const searchParams = useSearchParams();
+  const router = useRouter();
 
   const { mutate } = api.auth.updateProfile.useMutation({
     onSuccess: () => {
@@ -63,44 +69,129 @@ export function PersonalInformationTab({
     },
   });
 
+  // Fetch pending email change
+  const { data: pendingChange } = api.auth.getPendingEmailChange.useQuery(
+    { userId: id },
+    {
+      enabled: !!id,
+      refetchOnWindowFocus: false,
+    }
+  );
+
+  // Derive pendingEmail from query data instead of duplicating in state
+  const pendingEmail = pendingChange?.new_email ?? null;
+
   const form = useForm<z.infer<typeof updateProfileSchema>>({
     resolver: zodResolver(updateProfileSchema),
     defaultValues: {
       id: id,
       name: profileName || "",
-      email: authUser.email || "",
     },
   });
 
+  // Separate form for email (not part of profile update)
+  const [currentEmail] = useState(authUser.email || "");
+  const [newEmail, setNewEmail] = useState(authUser.email || "");
+
+  // Check for cancelled query param and show success message
+  useEffect(() => {
+    if (searchParams.get("cancelled") === "true") {
+      setShowCancelSuccess(true);
+
+      // Remove the query param from URL
+      const newParams = new URLSearchParams(searchParams.toString());
+      newParams.delete("cancelled");
+      const newUrl = `/profile/${authUser.id}?${newParams.toString()}`;
+      router.replace(newUrl, { scroll: false });
+
+      // Hide after 5 seconds
+      const timer = setTimeout(() => {
+        setShowCancelSuccess(false);
+      }, 5000);
+
+      return () => clearTimeout(timer);
+    }
+  }, [searchParams, authUser.id, router]);
+
   const handleSubmit = async (values: z.infer<typeof updateProfileSchema>) => {
     setSaveState("saving");
-    const { data, error } = await supabase.auth.updateUser({
-      email: values.email,
-    });
 
-    if (error) {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      });
-      setSaveState("idle");
-      return;
-    }
-
+    // Update name only - email is managed separately
     mutate({
       id,
       name: values.name,
-      email: values.email,
     });
   };
 
-  const copySupportEmailToClipboard = () => {
-    navigator.clipboard.writeText("sebastiansole@handicappin.com");
-    toast({
-      title: "Email copied",
-      description: "Support email has been copied to your clipboard",
-    });
+  const handleEmailChange = async () => {
+    // Check if email changed
+    const emailChanged = newEmail !== currentEmail;
+
+    if (!emailChanged) {
+      toast({
+        title: "No change",
+        description: "Please enter a different email address",
+      });
+      return;
+    }
+
+    // Request email change
+    setIsRequestingChange(true);
+    try {
+      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+      const session = await supabase.auth.getSession();
+
+      if (!session.data.session) {
+        toast({
+          title: "Error",
+          description: "Session expired. Please log in again.",
+          variant: "destructive",
+        });
+        setIsRequestingChange(false);
+        return;
+      }
+
+      const response = await fetch(
+        `${supabaseUrl}/functions/v1/request-email-change`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${session.data.session.access_token}`,
+          },
+          body: JSON.stringify({ newEmail }),
+        }
+      );
+
+      const data = await response.json();
+
+      if (response.ok && data.success) {
+        toast({
+          title: "Verification email sent",
+          description:
+            "Please check your new email address to verify the change.",
+        });
+        // Invalidate query to refetch actual backend state
+        await utils.auth.getPendingEmailChange.invalidate({ userId: id });
+        // Reset email field to current email
+        setNewEmail(currentEmail);
+      } else {
+        toast({
+          title: "Error",
+          description: data.error || "Failed to request email change",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error("Email change request error:", error);
+      toast({
+        title: "Error",
+        description: "An unexpected error occurred",
+        variant: "destructive",
+      });
+    } finally {
+      setIsRequestingChange(false);
+    }
   };
 
   return (
@@ -111,6 +202,16 @@ export function PersonalInformationTab({
           Manage your account details and preferences
         </p>
       </div>
+
+      {/* Success alert for cancelled email change */}
+      {showCancelSuccess && (
+        <Alert className="bg-green-50 border-green-200 dark:bg-green-950 dark:border-green-800">
+          <Check className="h-4 w-4 text-green-600 dark:text-green-400" />
+          <AlertDescription className="text-green-800 dark:text-green-200">
+            Email change cancelled successfully. Your email address remains unchanged.
+          </AlertDescription>
+        </Alert>
+      )}
 
       <Form {...form}>
         <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
@@ -128,30 +229,42 @@ export function PersonalInformationTab({
             )}
           />
 
-          <FormField
-            control={form.control}
-            name="email"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Email</FormLabel>
-                <FormControl>
-                  <Input id="email" type="email" required {...field} disabled />
-                </FormControl>
-                <FormDescription>
-                  Want to update your email?{" "}
-                  <Button
-                    type="button"
-                    variant={"link"}
-                    onClick={copySupportEmailToClipboard}
-                    className="px-0 h-auto"
-                  >
-                    Contact Support
-                  </Button>
-                </FormDescription>
-                <FormMessage />
-              </FormItem>
+          {/* Email section - managed separately */}
+          <div className="space-y-3">
+            <FormLabel>Email</FormLabel>
+            <div className="flex gap-2">
+              <Input
+                type="email"
+                value={newEmail}
+                onChange={(e) => setNewEmail(e.target.value)}
+                placeholder="Enter new email"
+              />
+              <Button
+                type="button"
+                onClick={handleEmailChange}
+                disabled={isRequestingChange || newEmail === currentEmail}
+              >
+                {isRequestingChange ? "Sending..." : "Change Email"}
+              </Button>
+            </div>
+            {pendingEmail && (
+              <Alert className="mt-2">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>
+                  <strong>Pending verification:</strong> {pendingEmail}
+                  <br />
+                  <span className="text-sm text-muted-foreground">
+                    Check your email to verify this change.
+                  </span>
+                </AlertDescription>
+              </Alert>
             )}
-          />
+            {!pendingEmail && (
+              <p className="text-sm text-muted-foreground">
+                A verification email will be sent to your new address.
+              </p>
+            )}
+          </div>
 
           <div className="flex items-center justify-between pt-4">
             <Link href="/forgot-password">

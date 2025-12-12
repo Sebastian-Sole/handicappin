@@ -99,6 +99,20 @@
       "when": 1765119711501,
       "tag": "20251207150151_exotic_sabra",
       "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1765457262940,
+      "tag": "20251211124742_modern_moon_knight",
+      "breakpoints": true
+    },
+    {
+      "idx": 15,
+      "version": "7",
+      "when": 1765466167443,
+      "tag": "20251211151607_remarkable_firelord",
+      "breakpoints": true
     }
   ]
 }

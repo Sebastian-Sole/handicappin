@@ -465,7 +465,8 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
         .limit(1);
 
       const oldPlan = userProfile[0]?.planSelected || "free";
-      const userEmail = userProfile[0]?.email;
+      // Get email from session.customer_details (email is in auth.users, not profile)
+      const userEmail = session.customer_details?.email || session.customer_email;
       const isFirstTimeSubscription = oldPlan === "free";
 
       // Update plan immediately (status fields updated by subscription.created event)
@@ -679,7 +680,8 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
           .limit(1);
 
         const oldPlan = userProfile[0]?.planSelected || "free";
-        const userEmail = userProfile[0]?.email;
+        // Get email from Stripe session (email is in auth.users, not profile)
+      const userEmail = session.customer_details?.email || session.customer_email;
         const isFirstTimePurchase = oldPlan === "free";
 
         try {
@@ -772,7 +774,8 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
           .limit(1);
 
         const oldPlan = userProfile[0]?.planSelected || "free";
-        const userEmail = userProfile[0]?.email;
+        // Get email from Stripe session (email is in auth.users, not profile)
+      const userEmail = session.customer_details?.email || session.customer_email;
         const isFirstTimePurchase = oldPlan === "free";
 
         try {
@@ -877,7 +880,8 @@ async function handlePaymentIntentSucceeded(
       .limit(1);
 
     const oldPlan = userProfile[0]?.planSelected || "free";
-    const userEmail = userProfile[0]?.email;
+    // Get email from payment intent receipt_email or fetch from auth
+    const userEmail = paymentIntent.receipt_email || undefined;
     const isFirstTimePurchase = oldPlan === "free";
 
     try {

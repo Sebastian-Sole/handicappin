@@ -61,6 +61,79 @@ export type Database = {
         }
         Relationships: []
       }
+      email_preferences: {
+        Row: {
+          created_at: string
+          feature_updates: boolean
+          id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          feature_updates?: boolean
+          id?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          feature_updates?: boolean
+          id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "email_preferences_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profile"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      handicap_calculation_queue: {
+        Row: {
+          attempts: number
+          created_at: string
+          error_message: string | null
+          event_type: string
+          id: number
+          last_updated: string
+          status: string
+          user_id: string
+        }
+        Insert: {
+          attempts?: number
+          created_at?: string
+          error_message?: string | null
+          event_type: string
+          id?: number
+          last_updated?: string
+          status?: string
+          user_id: string
+        }
+        Update: {
+          attempts?: number
+          created_at?: string
+          error_message?: string | null
+          event_type?: string
+          id?: number
+          last_updated?: string
+          status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "handicap_calculation_queue_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profile"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       hole: {
         Row: {
           distance: number
@@ -92,6 +165,50 @@ export type Database = {
             columns: ["teeId"]
             isOneToOne: false
             referencedRelation: "teeInfo"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pending_email_changes: {
+        Row: {
+          created_at: string
+          expires_at: string
+          id: string
+          new_email: string
+          old_email: string
+          request_ip: string | null
+          token_hash: string
+          user_id: string
+          verification_attempts: number
+        }
+        Insert: {
+          created_at?: string
+          expires_at: string
+          id?: string
+          new_email: string
+          old_email: string
+          request_ip?: string | null
+          token_hash: string
+          user_id: string
+          verification_attempts?: number
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string
+          id?: string
+          new_email?: string
+          old_email?: string
+          request_ip?: string | null
+          token_hash?: string
+          user_id?: string
+          verification_attempts?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pending_email_changes_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profile"
             referencedColumns: ["id"]
           },
         ]
@@ -146,7 +263,6 @@ export type Database = {
           cancel_at_period_end: boolean
           createdAt: string
           current_period_end: number | null
-          email: string
           handicapIndex: number
           id: string
           initialHandicapIndex: number
@@ -161,7 +277,6 @@ export type Database = {
           cancel_at_period_end?: boolean
           createdAt?: string
           current_period_end?: number | null
-          email: string
           handicapIndex?: number
           id: string
           initialHandicapIndex?: number
@@ -176,7 +291,6 @@ export type Database = {
           cancel_at_period_end?: boolean
           createdAt?: string
           current_period_end?: number | null
-          email?: string
           handicapIndex?: number
           id?: string
           initialHandicapIndex?: number
@@ -414,42 +528,6 @@ export type Database = {
           },
         ]
       }
-      trigger_debug_log: {
-        Row: {
-          approval_status: string | null
-          created_at: string | null
-          http_post_result: Json | null
-          id: number
-          op: string
-          payload: Json | null
-          round_id: number | null
-          service_role_key_prefix: string | null
-          user_id: string | null
-        }
-        Insert: {
-          approval_status?: string | null
-          created_at?: string | null
-          http_post_result?: Json | null
-          id?: number
-          op: string
-          payload?: Json | null
-          round_id?: number | null
-          service_role_key_prefix?: string | null
-          user_id?: string | null
-        }
-        Update: {
-          approval_status?: string | null
-          created_at?: string | null
-          http_post_result?: Json | null
-          id?: number
-          op?: string
-          payload?: Json | null
-          round_id?: number | null
-          service_role_key_prefix?: string | null
-          user_id?: string | null
-        }
-        Relationships: []
-      }
       webhook_events: {
         Row: {
           error_message: string | null
@@ -497,6 +575,20 @@ export type Database = {
       get_public_course_count: { Args: never; Returns: number }
       get_public_round_count: { Args: never; Returns: number }
       get_public_user_count: { Args: never; Returns: number }
+      process_handicap_no_rounds: {
+        Args: { max_handicap: number; queue_job_id: number; user_id: string }
+        Returns: Json
+      }
+      process_handicap_updates: {
+        Args: {
+          new_handicap_index: number
+          queue_job_id: number
+          round_updates: Json
+          user_id: string
+        }
+        Returns: Json
+      }
+      setup_handicap_queue_cron: { Args: never; Returns: undefined }
     }
     Enums: {
       [_ in never]: never
