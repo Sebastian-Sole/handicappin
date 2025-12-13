@@ -5,6 +5,7 @@ import { useSearchParams, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { Check, X, Loader2 } from "lucide-react";
+import { createClientComponentClient } from "@/utils/supabase/client";
 
 function VerifyEmailChangeContent() {
   const searchParams = useSearchParams();
@@ -15,6 +16,17 @@ function VerifyEmailChangeContent() {
     "loading"
   );
   const [message, setMessage] = useState("");
+  const [userId, setUserId] = useState<string | null>(null);
+
+  // Get current session user for fallback profile links
+  useEffect(() => {
+    const supabase = createClientComponentClient();
+    supabase.auth.getUser().then(({ data }) => {
+      if (data.user && !userId) {
+        setUserId(data.user.id);
+      }
+    });
+  }, [userId]);
 
   useEffect(() => {
     if (!token) {
@@ -26,6 +38,16 @@ function VerifyEmailChangeContent() {
     async function verifyEmail() {
       try {
         const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+
+        if (!supabaseUrl) {
+          console.error("Missing NEXT_PUBLIC_SUPABASE_URL configuration");
+          setStatus("error");
+          setMessage(
+            "Configuration error: unable to verify email right now. Please contact support."
+          );
+          return;
+        }
+
         const response = await fetch(
           `${supabaseUrl}/functions/v1/verify-email-change`,
           {
@@ -42,6 +64,7 @@ function VerifyEmailChangeContent() {
           setMessage(
             data.message || "Email address updated successfully!"
           );
+          setUserId(data.user_id);
         } else {
           setStatus("error");
           setMessage(data.error || "Verification failed");
@@ -58,14 +81,14 @@ function VerifyEmailChangeContent() {
 
   // Redirect after success with cleanup
   useEffect(() => {
-    if (status !== "success") return;
+    if (status !== "success" || !userId) return;
 
     const timeoutId = setTimeout(() => {
-      router.push("/profile?tab=personal");
+      router.push(`/profile/${userId}?tab=personal&verified=true`);
     }, 3000);
 
     return () => clearTimeout(timeoutId);
-  }, [status, router]);
+  }, [status, userId, router]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
@@ -99,7 +122,7 @@ function VerifyEmailChangeContent() {
               Redirecting you to your profile...
             </p>
             <div className="text-center">
-              <Link href="/profile?tab=personal">
+              <Link href={userId ? `/profile/${userId}?tab=personal&verified=true` : "/login"}>
                 <Button>Go to Profile Now</Button>
               </Link>
             </div>
@@ -130,14 +153,22 @@ function VerifyEmailChangeContent() {
             </div>
 
             <div className="space-y-3">
-              <Link href="/profile?tab=personal" className="block">
-                <Button className="w-full">Request New Email Change</Button>
-              </Link>
-              <Link href="/profile" className="block">
-                <Button variant="outline" className="w-full">
-                  Return to Profile
-                </Button>
-              </Link>
+              {userId ? (
+                <>
+                  <Link href={`/profile/${userId}?tab=personal`} className="block">
+                    <Button className="w-full">Request New Email Change</Button>
+                  </Link>
+                  <Link href={`/profile/${userId}`} className="block">
+                    <Button variant="outline" className="w-full">
+                      Return to Profile
+                    </Button>
+                  </Link>
+                </>
+              ) : (
+                <Link href="/login" className="block">
+                  <Button className="w-full">Go to Login</Button>
+                </Link>
+              )}
             </div>
           </>
         )}

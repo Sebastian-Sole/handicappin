@@ -30,6 +30,11 @@ export const authRouter = createTRPCRouter({
       })
     )
     .mutation(async ({ ctx, input }) => {
+      // Authorization check: users can only update their own profile
+      if (input.id !== ctx.user.id) {
+        throw new Error("Unauthorized: You can only update your own profile");
+      }
+
       const { data: profileData, error: profileError } = await ctx.supabase
         .from("profile")
         .update({
@@ -107,12 +112,11 @@ export const authRouter = createTRPCRouter({
 
   // Get pending email change for authenticated user
   getPendingEmailChange: authedProcedure
-    .input(z.object({ userId: z.string().uuid() }))
-    .query(async ({ ctx, input }) => {
+    .query(async ({ ctx }) => {
       const { data, error } = await ctx.supabase
         .from("pending_email_changes")
         .select("*")
-        .eq("user_id", input.userId)
+        .eq("user_id", ctx.user.id)
         .single();
 
       if (error) {

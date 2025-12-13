@@ -9,11 +9,7 @@ import { Moon, Sun, Monitor, Check } from "lucide-react";
 import { api } from "@/trpc/react";
 import { useToast } from "@/components/ui/use-toast";
 
-interface SettingsTabProps {
-  userId: string;
-}
-
-export function SettingsTab({ userId }: SettingsTabProps) {
+export function SettingsTab() {
   const [saveState, setSaveState] = useState<"idle" | "saving" | "saved">(
     "idle"
   );
@@ -25,8 +21,8 @@ export function SettingsTab({ userId }: SettingsTabProps) {
   const [featureUpdates, setFeatureUpdates] = useState(true);
 
   // Fetch email preferences on mount
+  // Auth is enforced server-side by authedProcedure
   const { data: preferences, isLoading } = api.auth.getEmailPreferences.useQuery(undefined, {
-    enabled: !!userId,
     refetchOnWindowFocus: false,
   });
 

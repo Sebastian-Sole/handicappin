@@ -4,14 +4,10 @@ import { Resend } from "https://esm.sh/resend@4.0.0";
 import ResetPasswordEmail from "./email.tsx";
 import { render } from "https://esm.sh/@react-email/components@0.0.22?deps=react@18.2.0";
 import { create, getNumericDate } from "https://deno.land/x/djwt@v2.4/mod.ts";
+import { corsHeaders } from "../_shared/cors.ts";
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY")!);
 const JWT_SECRET = Deno.env.get("RESET_TOKEN_SECRET")!;
-
-export const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, apikey, content-type",
-};
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {

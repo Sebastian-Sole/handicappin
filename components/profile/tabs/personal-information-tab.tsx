@@ -45,6 +45,7 @@ export function PersonalInformationTab({
   );
   const [isRequestingChange, setIsRequestingChange] = useState(false);
   const [showCancelSuccess, setShowCancelSuccess] = useState(false);
+  const [showVerifySuccess, setShowVerifySuccess] = useState(false);
   const supabase = createClientComponentClient();
   const utils = api.useUtils();
   const searchParams = useSearchParams();
@@ -71,9 +72,8 @@ export function PersonalInformationTab({
 
   // Fetch pending email change
   const { data: pendingChange } = api.auth.getPendingEmailChange.useQuery(
-    { userId: id },
+    undefined,
     {
-      enabled: !!id,
       refetchOnWindowFocus: false,
     }
   );
@@ -112,6 +112,29 @@ export function PersonalInformationTab({
       return () => clearTimeout(timer);
     }
   }, [searchParams, authUser.id, router]);
+
+  // Check for verified query param and show success message
+  useEffect(() => {
+    if (searchParams.get("verified") === "true") {
+      setShowVerifySuccess(true);
+
+      // Remove the query param from URL
+      const newParams = new URLSearchParams(searchParams.toString());
+      newParams.delete("verified");
+      const newUrl = `/profile/${authUser.id}?${newParams.toString()}`;
+      router.replace(newUrl, { scroll: false });
+
+      // Invalidate query to refetch with updated email
+      utils.auth.getPendingEmailChange.invalidate();
+
+      // Hide after 5 seconds
+      const timer = setTimeout(() => {
+        setShowVerifySuccess(false);
+      }, 5000);
+
+      return () => clearTimeout(timer);
+    }
+  }, [searchParams, authUser.id, router, utils.auth.getPendingEmailChange]);
 
   const handleSubmit = async (values: z.infer<typeof updateProfileSchema>) => {
     setSaveState("saving");
@@ -172,7 +195,7 @@ export function PersonalInformationTab({
             "Please check your new email address to verify the change.",
         });
         // Invalidate query to refetch actual backend state
-        await utils.auth.getPendingEmailChange.invalidate({ userId: id });
+        await utils.auth.getPendingEmailChange.invalidate();
         // Reset email field to current email
         setNewEmail(currentEmail);
       } else {
@@ -209,6 +232,16 @@ export function PersonalInformationTab({
           <Check className="h-4 w-4 text-green-600 dark:text-green-400" />
           <AlertDescription className="text-green-800 dark:text-green-200">
             Email change cancelled successfully. Your email address remains unchanged.
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {/* Success alert for verified email change */}
+      {showVerifySuccess && (
+        <Alert className="bg-green-50 border-green-200 dark:bg-green-950 dark:border-green-800">
+          <Check className="h-4 w-4 text-green-600 dark:text-green-400" />
+          <AlertDescription className="text-green-800 dark:text-green-200">
+            Email address updated successfully!
           </AlertDescription>
         </Alert>
       )}

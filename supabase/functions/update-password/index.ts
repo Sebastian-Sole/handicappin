@@ -7,14 +7,9 @@ import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { verify } from "https://deno.land/x/djwt@v3.0.2/mod.ts";
 import { createClient } from "jsr:@supabase/supabase-js@2";
 import { passwordResetJwtPayloadSchema } from "../types.ts";
-
+import { corsHeaders } from "../_shared/cors.ts";
 
 const JWT_SECRET = Deno.env.get("RESET_TOKEN_SECRET")!;
-
-export const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, apikey, content-type",
-};
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {

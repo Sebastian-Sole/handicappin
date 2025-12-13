@@ -114,7 +114,7 @@ export function TabbedProfilePage({
               <PersonalInformationTab authUser={authUser} profile={profile} />
             )}
             {activeTab === "billing" && <BillingTab access={access} />}
-            {activeTab === "settings" && <SettingsTab userId={authUser.id} />}
+            {activeTab === "settings" && <SettingsTab />}
           </div>
         </div>
       </div>

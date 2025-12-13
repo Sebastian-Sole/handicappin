@@ -16,6 +16,21 @@ import { NextResponse, type NextRequest } from "next/server";
  */
 export async function POST(request: NextRequest) {
   try {
+    // Validate required environment variables
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+    if (!supabaseUrl || !supabaseAnonKey) {
+      console.error("Missing Supabase configuration:", {
+        hasUrl: !!supabaseUrl,
+        hasAnonKey: !!supabaseAnonKey,
+      });
+      return NextResponse.json(
+        { error: "Server configuration error" },
+        { status: 500 }
+      );
+    }
+
     const cookieStore = await cookies();
 
     // Collect cookies that need to be set
@@ -23,8 +38,8 @@ export async function POST(request: NextRequest) {
 
     // Create Supabase client with proper cookie handling for route handlers
     const supabase = createServerClient<Database>(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      supabaseUrl,
+      supabaseAnonKey,
       {
         cookies: {
           getAll() {

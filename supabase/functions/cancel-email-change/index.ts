@@ -74,11 +74,47 @@ Deno.serve(async (req) => {
 
     const { user_id } = parsed.data;
 
-    // Delete pending email change
+    // Hash token to look up the specific pending request
+    const tokenHashBuffer = await crypto.subtle.digest(
+      "SHA-256",
+      new TextEncoder().encode(token)
+    );
+    const tokenHash = Array.from(new Uint8Array(tokenHashBuffer))
+      .map((b) => b.toString(16).padStart(2, "0"))
+      .join("");
+
+    // Look up pending change by token_hash (not user_id)
+    // This ensures we only cancel the SPECIFIC request tied to this token
+    const { data: pendingChange, error: lookupError } = await supabaseAdmin
+      .from("pending_email_changes")
+      .select("*")
+      .eq("token_hash", tokenHash)
+      .single();
+
+    if (lookupError || !pendingChange) {
+      return new Response(
+        JSON.stringify({ error: "No pending email change found for this token" }),
+        { status: 404, headers: corsHeaders }
+      );
+    }
+
+    // Verify user_id matches (security check)
+    if (pendingChange.user_id !== user_id) {
+      console.error("User ID mismatch in cancel request", {
+        tokenUserId: user_id,
+        pendingUserId: pendingChange.user_id,
+      });
+      return new Response(
+        JSON.stringify({ error: "Invalid token" }),
+        { status: 401, headers: corsHeaders }
+      );
+    }
+
+    // Delete the specific pending change by token_hash
     const { error: deleteError } = await supabaseAdmin
       .from("pending_email_changes")
       .delete()
-      .eq("user_id", user_id);
+      .eq("token_hash", tokenHash);
 
     if (deleteError) {
       console.error("Failed to cancel email change:", deleteError);

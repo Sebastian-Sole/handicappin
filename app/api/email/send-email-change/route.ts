@@ -7,10 +7,17 @@ import {
 import { z } from "zod";
 import { redactEmail } from "@/lib/logging";
 
+// URL allowlist for validation
+const ALLOWED_ORIGINS = [
+  process.env.NEXT_PUBLIC_APP_URL || "https://handicappin.com",
+  process.env.NEXT_PUBLIC_SUPABASE_URL,
+  // Allow localhost variations for local development
+  "http://localhost:3000",
+  "http://127.0.0.1:3000",
+].filter(Boolean);
+
 const bodySchema = z.object({
-  newEmail: z.string().email(),
-  verificationUrl: z.string().url(),
-  cancelUrl: z.string().url(),
+  token: z.string(), // JWT token for URL generation
 });
 
 export async function POST(request: Request) {
@@ -22,10 +29,25 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    // Validate required environment variables
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+    if (!supabaseUrl || !supabaseAnonKey) {
+      console.error("Missing Supabase configuration:", {
+        hasUrl: !!supabaseUrl,
+        hasAnonKey: !!supabaseAnonKey,
+      });
+      return NextResponse.json(
+        { error: "Server configuration error" },
+        { status: 500 }
+      );
+    }
+
     // Create a Supabase client with the user's token
     const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      supabaseUrl,
+      supabaseAnonKey,
       {
         global: {
           headers: {
@@ -58,14 +80,81 @@ export async function POST(request: Request) {
       );
     }
 
-    const { newEmail, verificationUrl, cancelUrl } = parsed.data;
-    const oldEmail = user.email;
-    if (!oldEmail) {
+    const { token } = parsed.data;
+
+    // Fetch pending email change from database - DO NOT trust client-provided data
+    const { data: pendingChange, error: fetchError } = await supabase
+      .from("pending_email_changes")
+      .select("*")
+      .eq("user_id", user.id)
+      .single();
+
+    if (fetchError || !pendingChange) {
+      console.error("No pending email change found for user:", {
+        userId: user.id,
+        error: fetchError?.message,
+      });
       return NextResponse.json(
-        { error: "User email not available" },
+        { error: "No pending email change request found" },
+        { status: 404 }
+      );
+    }
+
+    // Check if expired
+    if (new Date(pendingChange.expires_at) < new Date()) {
+      return NextResponse.json(
+        { error: "Email change request has expired" },
+        { status: 410 }
+      );
+    }
+
+    // Use database values (never trust client input)
+    const newEmail = pendingChange.new_email;
+    const oldEmail = pendingChange.old_email;
+
+    // Generate URLs server-side
+    const origin = request.headers.get("origin") || process.env.NEXT_PUBLIC_APP_URL || "https://handicappin.com";
+
+    // Validate origin against allowlist
+    let originUrl: URL;
+    try {
+      originUrl = new URL(origin);
+    } catch (error) {
+      console.error("Invalid origin URL:", {
+        origin,
+        error: error instanceof Error ? error.message : String(error),
+      });
+      return NextResponse.json(
+        { error: "Invalid origin" },
         { status: 400 }
       );
     }
+
+    const isAllowedOrigin = ALLOWED_ORIGINS.some(allowed => {
+      if (!allowed) return false;
+      try {
+        const allowedUrl = new URL(allowed);
+        return allowedUrl.host === originUrl.host;
+      } catch {
+        return false;
+      }
+    });
+
+    if (!isAllowedOrigin) {
+      console.error("Unauthorized origin for email change:", {
+        origin,
+        originHost: originUrl.host,
+        allowedOrigins: ALLOWED_ORIGINS,
+      });
+      return NextResponse.json(
+        { error: "Unauthorized origin" },
+        { status: 403 }
+      );
+    }
+
+    // Generate verification and cancel URLs with the token
+    const verificationUrl = `${origin}/verify-email-change?token=${token}`;
+    const cancelUrl = `${origin}/api/auth/cancel-email-change?token=${token}`;
 
     // Send both emails in parallel
     const [verificationResult, notificationResult] = await Promise.all([

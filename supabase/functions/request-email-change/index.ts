@@ -199,36 +199,81 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Construct verification and cancel URLs
-    const originUrl = req.headers.get("origin") || "https://handicappin.com";
-    const baseUrl = originUrl;
-    const verificationUrl = `${baseUrl}/verify-email-change?token=${jwtToken}`;
-    const cancelUrl = `${baseUrl}/api/auth/cancel-email-change?token=${jwtToken}`;
-
     // Send emails (call Next.js API routes to use existing email service)
     // For local development, edge functions run in Docker and need to use host.docker.internal
-    const isLocal = baseUrl.includes("localhost") || baseUrl.includes("127.0.0.1");
-    const emailApiBaseUrl = isLocal
-      ? baseUrl.replace("localhost", "host.docker.internal").replace("127.0.0.1", "host.docker.internal")
-      : baseUrl;
-    const emailApiUrl = `${emailApiBaseUrl}/api/email/send-email-change`;
+    const originUrl = req.headers.get("origin") || "https://handicappin.com";
 
+    // Detect if we're running locally by checking Supabase URL env var
+    // In local Supabase, the URL is "http://kong:8000" (internal Docker network)
+    const isLocalEnv = supabaseUrl?.includes("localhost") ||
+                       supabaseUrl?.includes("127.0.0.1") ||
+                       supabaseUrl?.includes("kong:8000");
+
+    console.log("[DEBUG] Email API URL detection:", {
+      supabaseUrl,
+      originUrl,
+      isLocalEnv,
+    });
+
+    // Use origin for URL construction, but override for local development
+    let emailApiBaseUrl: string;
+    if (isLocalEnv) {
+      // In local development, use host.docker.internal to reach Next.js from Docker
+      const localOrigin = originUrl.includes("localhost") || originUrl.includes("127.0.0.1")
+        ? originUrl
+        : "http://localhost:3000"; // Default local Next.js port
+      emailApiBaseUrl = localOrigin
+        .replace("localhost", "host.docker.internal")
+        .replace("127.0.0.1", "host.docker.internal");
+
+      console.log("[DEBUG] Local env detected:", {
+        localOrigin,
+        emailApiBaseUrl,
+      });
+    } else {
+      emailApiBaseUrl = originUrl;
+      console.log("[DEBUG] Production env detected:", {
+        emailApiBaseUrl,
+      });
+    }
+
+    const emailApiUrl = `${emailApiBaseUrl}/api/email/send-email-change`;
+    console.log("[DEBUG] Final email API URL:", emailApiUrl);
+
+    // Only pass the token - API will fetch pending change from database
     const emailResponse = await fetch(emailApiUrl, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         Authorization: authHeader, // Forward auth
+        Origin: originUrl, // Pass origin for URL generation
       },
       body: JSON.stringify({
-        newEmail,
-        verificationUrl,
-        cancelUrl,
+        token: jwtToken,
       }),
     });
 
     if (!emailResponse.ok) {
-      console.error("Failed to send emails:", await emailResponse.text());
-      // Don't fail the request - emails are non-critical
+      const errorText = await emailResponse.text();
+      console.error("Failed to send emails:", {
+        status: emailResponse.status,
+        statusText: emailResponse.statusText,
+        error: errorText,
+        emailApiUrl,
+      });
+
+      // Delete the pending change since we couldn't send emails
+      await supabaseAdmin
+        .from("pending_email_changes")
+        .delete()
+        .eq("user_id", user.id);
+
+      return new Response(
+        JSON.stringify({
+          error: "Failed to send verification emails. Please try again.",
+        }),
+        { status: 500, headers: corsHeaders }
+      );
     }
 
     return new Response(

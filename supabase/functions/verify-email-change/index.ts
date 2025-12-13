@@ -74,7 +74,7 @@ Deno.serve(async (req) => {
 
     const { user_id, old_email, new_email } = parsed.data;
 
-    // Hash token to compare with database
+    // Hash token to look up the specific pending request
     const tokenHashBuffer = await crypto.subtle.digest(
       "SHA-256",
       new TextEncoder().encode(token)
@@ -83,26 +83,31 @@ Deno.serve(async (req) => {
       .map((b) => b.toString(16).padStart(2, "0"))
       .join("");
 
-    // Lookup pending change
+    // Lookup pending change by token_hash (not user_id)
+    // This ensures we only verify the SPECIFIC request tied to this token
     const { data: pendingChange, error: lookupError } = await supabaseAdmin
       .from("pending_email_changes")
       .select("*")
-      .eq("user_id", user_id)
+      .eq("token_hash", tokenHash)
       .single();
 
     if (lookupError || !pendingChange) {
       return new Response(
-        JSON.stringify({ error: "No pending email change found" }),
+        JSON.stringify({ error: "No pending email change found for this token" }),
         { status: 404, headers: corsHeaders }
       );
     }
 
-    // Verify token hash matches
-    if (tokenHash !== pendingChange.token_hash) {
-      return new Response(JSON.stringify({ error: "Invalid token" }), {
-        status: 401,
-        headers: corsHeaders,
+    // Verify user_id matches (security check)
+    if (pendingChange.user_id !== user_id) {
+      console.error("User ID mismatch in verification request", {
+        tokenUserId: user_id,
+        pendingUserId: pendingChange.user_id,
       });
+      return new Response(
+        JSON.stringify({ error: "Invalid token" }),
+        { status: 401, headers: corsHeaders }
+      );
     }
 
     // Check expiration
@@ -110,11 +115,11 @@ Deno.serve(async (req) => {
     const expiresAt = new Date(pendingChange.expires_at);
 
     if (now > expiresAt) {
-      // Clean up expired record
+      // Clean up expired record using token_hash
       await supabaseAdmin
         .from("pending_email_changes")
         .delete()
-        .eq("id", pendingChange.id);
+        .eq("token_hash", tokenHash);
 
       return new Response(
         JSON.stringify({
@@ -150,7 +155,7 @@ Deno.serve(async (req) => {
       .update({
         verification_attempts: pendingChange.verification_attempts + 1,
       })
-      .eq("id", pendingChange.id);
+      .eq("token_hash", tokenHash);
 
     // Update auth.users.email - this is the single source of truth
     const { error: authUpdateError } = await supabaseAdmin.auth.admin.updateUserById(
@@ -206,16 +211,17 @@ Deno.serve(async (req) => {
       // Don't fail the entire operation - email was updated in auth.users
     }
 
-    // Delete pending change record (success!)
+    // Delete pending change record (success!) using token_hash
     await supabaseAdmin
       .from("pending_email_changes")
       .delete()
-      .eq("id", pendingChange.id);
+      .eq("token_hash", tokenHash);
 
     return new Response(
       JSON.stringify({
         success: true,
         message: "Email address updated successfully!",
+        user_id,
       }),
       { status: 200, headers: corsHeaders }
     );
