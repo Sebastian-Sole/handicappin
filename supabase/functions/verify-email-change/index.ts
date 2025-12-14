@@ -196,24 +196,43 @@ Deno.serve(async (req) => {
         const stripeSecretKey = Deno.env.get("STRIPE_SECRET_KEY");
 
         if (stripeSecretKey) {
-          const stripeResponse = await fetch(
-            `https://api.stripe.com/v1/customers/${stripeCustomer.stripe_customer_id}`,
-            {
-              method: "POST",
-              headers: {
-                "Authorization": `Bearer ${stripeSecretKey}`,
-                "Content-Type": "application/x-www-form-urlencoded",
-              },
-              body: `email=${encodeURIComponent(new_email)}`,
-            }
-          );
+          // Add timeout to prevent hanging on slow Stripe responses
+          const abortController = new AbortController();
+          const timeoutId = setTimeout(() => abortController.abort(), 5000); // 5 second timeout
 
-          if (!stripeResponse.ok) {
-            const errorText = await stripeResponse.text();
-            console.error("Failed to update Stripe customer email:", errorText);
-            // Don't fail the entire operation - email was updated in auth.users
-          } else {
-            console.log("Successfully updated Stripe customer email");
+          try {
+            const stripeResponse = await fetch(
+              `https://api.stripe.com/v1/customers/${stripeCustomer.stripe_customer_id}`,
+              {
+                method: "POST",
+                headers: {
+                  "Authorization": `Bearer ${stripeSecretKey}`,
+                  "Content-Type": "application/x-www-form-urlencoded",
+                },
+                body: `email=${encodeURIComponent(new_email)}`,
+                signal: abortController.signal,
+              }
+            );
+
+            clearTimeout(timeoutId);
+
+            if (!stripeResponse.ok) {
+              const requestId = stripeResponse.headers.get("request-id");
+              console.error("Failed to update Stripe customer email", {
+                status: stripeResponse.status,
+                requestId,
+              });
+              // Don't fail the entire operation - email was updated in auth.users
+            } else {
+              console.log("Successfully updated Stripe customer email");
+            }
+          } catch (fetchError) {
+            clearTimeout(timeoutId);
+            if (fetchError instanceof Error && fetchError.name === "AbortError") {
+              console.error("Stripe customer email update timed out after 5s");
+            } else {
+              throw fetchError; // Re-throw to outer catch
+            }
           }
         }
       }

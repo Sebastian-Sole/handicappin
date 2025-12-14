@@ -5,7 +5,7 @@ import {
   sendEmailChangeNotification,
 } from "@/lib/email-service";
 import { z } from "zod";
-import { redactEmail } from "@/lib/logging";
+import { logger } from "@/lib/logging";
 
 // URL allowlist for validation
 const ALLOWED_ORIGINS = [
@@ -28,7 +28,7 @@ if (process.env.NODE_ENV === "production") {
     origin.includes("localhost") || origin.includes("127.0.0.1")
   );
   if (hasLocalhost) {
-    console.warn("Warning: localhost origins present in production ALLOWED_ORIGINS");
+    logger.warn("localhost origins present in production ALLOWED_ORIGINS");
   }
 }
 
@@ -50,7 +50,7 @@ export async function POST(request: Request) {
     const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
     if (!supabaseUrl || !supabaseAnonKey) {
-      console.error("Missing Supabase configuration:", {
+      logger.error("Missing Supabase configuration", {
         hasUrl: !!supabaseUrl,
         hasAnonKey: !!supabaseAnonKey,
       });
@@ -81,7 +81,7 @@ export async function POST(request: Request) {
     } = await supabase.auth.getUser();
 
     if (authError || !user) {
-      console.error("Auth error in send-email-change:", {
+      logger.error("Auth error in send-email-change", {
         error: authError?.message,
         status: authError?.status,
       });
@@ -106,7 +106,7 @@ export async function POST(request: Request) {
       .single();
 
     if (fetchError || !pendingChange) {
-      console.error("No pending email change found for user:", {
+      logger.error("No pending email change found for user", {
         userId: user.id,
         error: fetchError?.message,
       });
@@ -136,7 +136,7 @@ export async function POST(request: Request) {
     try {
       originUrl = new URL(origin);
     } catch (error) {
-      console.error("Invalid origin URL:", {
+      logger.error("Invalid origin URL", {
         origin,
         error: error instanceof Error ? error.message : String(error),
       });
@@ -157,7 +157,7 @@ export async function POST(request: Request) {
     });
 
     if (!isAllowedOrigin) {
-      console.error("Unauthorized origin for email change:", {
+      logger.error("Unauthorized origin for email change", {
         origin,
         originHost: originUrl.host,
         allowedOrigins: ALLOWED_ORIGINS,
@@ -189,10 +189,10 @@ export async function POST(request: Request) {
 
     // Check results
     if (!verificationResult.success || !notificationResult.success) {
-      console.error("Email sending failed:", {
+      logger.error("Email sending failed", {
         userId: user.id,
-        oldEmail: redactEmail(oldEmail),
-        newEmail: redactEmail(newEmail),
+        oldEmail,
+        newEmail,
         verificationSuccess: verificationResult.success,
         notificationSuccess: notificationResult.success,
         // Only log that an error occurred, not the error details
@@ -207,17 +207,17 @@ export async function POST(request: Request) {
     }
 
     // Log success with redacted emails for audit trail
-    console.log("Email change emails sent successfully:", {
+    logger.info("Email change emails sent successfully", {
       userId: user.id,
-      oldEmail: redactEmail(oldEmail),
-      newEmail: redactEmail(newEmail),
+      oldEmail,
+      newEmail,
     });
 
     return NextResponse.json({
       success: true,
     });
   } catch (error) {
-    console.error("Error in send-email-change API:", {
+    logger.error("Error in send-email-change API", {
       error: error instanceof Error ? error.message : "Unknown error",
       stack: error instanceof Error ? error.stack : undefined,
     });

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { reconcileStripeSubscriptions } from "@/lib/reconciliation/stripe-reconciliation";
+import { logger } from "@/lib/logging";
 
 /**
  * Daily reconciliation job
@@ -12,22 +13,24 @@ export async function GET(request: NextRequest) {
     // Verify cron secret
     const authHeader = request.headers.get("authorization");
     if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
-      console.error("[Reconciliation] Unauthorized cron request");
+      logger.error("[Reconciliation] Unauthorized cron request");
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    console.log("🔄 [Reconciliation] Starting scheduled job...");
+    logger.info("🔄 [Reconciliation] Starting scheduled job");
 
     const result = await reconcileStripeSubscriptions();
 
-    console.log("✅ [Reconciliation] Job complete:", result);
+    logger.info("✅ [Reconciliation] Job complete", result);
 
     return NextResponse.json({
       success: true,
       ...result,
     });
   } catch (error) {
-    console.error("❌ [Reconciliation] Job failed:", error);
+    logger.error("❌ [Reconciliation] Job failed", {
+      error: error instanceof Error ? error.message : "Unknown error",
+    });
 
     return NextResponse.json(
       {

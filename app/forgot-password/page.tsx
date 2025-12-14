@@ -22,7 +22,6 @@ const forgotPasswordSchema = z.object({
 });
 
 export default function ForgotPasswordPage() {
-  const [email, setEmail] = useState<string>("");
   const [loading, setLoading] = useState(false);
   const [submitButtonText, setSubmitButtonText] = useState("Request link");
 
@@ -118,15 +117,14 @@ export default function ForgotPasswordPage() {
         variant: "destructive",
       });
       setLoading(false);
+      setSubmitButtonText("Request link");
     }
-    setLoading(false);
-    setSubmitButtonText("Request link");
   };
 
   const form = useForm<z.infer<typeof forgotPasswordSchema>>({
     resolver: zodResolver(forgotPasswordSchema),
     defaultValues: {
-      email: email,
+      email: "",
     },
   });
 
@@ -157,11 +155,6 @@ export default function ForgotPasswordPage() {
                         type="email"
                         required
                         {...field}
-                        value={email}
-                        onChange={(e) => {
-                          setEmail(e.target.value);
-                          form.setValue("email", e.target.value);
-                        }}
                       />
                     </FormControl>
                     <FormMessage />

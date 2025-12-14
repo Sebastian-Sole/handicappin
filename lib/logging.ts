@@ -213,6 +213,78 @@ export function redactObject<T>(obj: T): T {
 }
 
 /**
+ * Centralized Application Logger
+ *
+ * Benefits:
+ * - Automatic PII redaction for all logged data
+ * - Consistent severity levels and structure
+ * - Easy migration to external monitoring (Sentry, DataDog, etc.)
+ * - Single source of truth for logging configuration
+ */
+type LogLevel = "debug" | "info" | "warn" | "error";
+
+interface LogContext {
+  [key: string]: unknown;
+}
+
+class AppLogger {
+  private shouldLog(level: LogLevel): boolean {
+    // In production, skip debug logs
+    if (level === "debug" && process.env.NODE_ENV === "production") {
+      return false;
+    }
+    return true;
+  }
+
+  private formatLog(level: LogLevel, message: string, context?: LogContext) {
+    const timestamp = new Date().toISOString();
+    const redactedContext = context ? redactObject(context) : undefined;
+
+    return {
+      level,
+      message,
+      timestamp,
+      ...redactedContext,
+    };
+  }
+
+  /**
+   * Log debug information (development only)
+   */
+  debug(message: string, context?: LogContext) {
+    if (!this.shouldLog("debug")) return;
+    console.debug(this.formatLog("debug", message, context));
+  }
+
+  /**
+   * Log informational messages
+   */
+  info(message: string, context?: LogContext) {
+    if (!this.shouldLog("info")) return;
+    console.log(this.formatLog("info", message, context));
+  }
+
+  /**
+   * Log warning messages
+   */
+  warn(message: string, context?: LogContext) {
+    if (!this.shouldLog("warn")) return;
+    console.warn(this.formatLog("warn", message, context));
+  }
+
+  /**
+   * Log error messages
+   */
+  error(message: string, context?: LogContext) {
+    if (!this.shouldLog("error")) return;
+    console.error(this.formatLog("error", message, context));
+  }
+}
+
+// Export singleton instance
+export const logger = new AppLogger();
+
+/**
  * Log email change security events
  */
 export function logEmailChangeEvent(
@@ -225,14 +297,13 @@ export function logEmailChangeEvent(
     ip?: string;
   }
 ) {
-  console.log("EMAIL_CHANGE_EVENT", {
+  logger.info("EMAIL_CHANGE_EVENT", {
     event,
     userId,
-    oldEmail: redactEmail(details.oldEmail),
-    newEmail: redactEmail(details.newEmail),
+    oldEmail: details.oldEmail,
+    newEmail: details.newEmail,
     reason: details.reason,
     ip: details.ip,
-    timestamp: new Date().toISOString(),
   });
 
   // TODO: Send to Sentry or other monitoring service

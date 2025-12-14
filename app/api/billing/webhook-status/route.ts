@@ -3,6 +3,7 @@ import { db } from '@/db';
 import { webhookEvents, profile } from '@/db/schema';
 import { eq, and, gte, desc } from 'drizzle-orm';
 import { createServerComponentClient } from '@/utils/supabase/server';
+import { logger } from '@/lib/logging';
 
 export async function GET(request: NextRequest) {
   try {
@@ -97,7 +98,9 @@ export async function GET(request: NextRequest) {
       },
     });
   } catch (error) {
-    console.error('Error checking webhook status:', error);
+    logger.error('Error checking webhook status', {
+      error: error instanceof Error ? error.message : 'Unknown error',
+    });
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

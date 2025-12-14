@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { logger } from "@/lib/logging";
 
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
@@ -40,7 +41,9 @@ export async function GET(request: NextRequest) {
       );
     }
   } catch (error) {
-    console.error("Cancel email change error:", error);
+    logger.error("Cancel email change error", {
+      error: error instanceof Error ? error.message : "Unknown error",
+    });
     return NextResponse.redirect(
       new URL("/login?error=cancel-failed", request.url)
     );
