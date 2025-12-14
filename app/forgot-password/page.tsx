@@ -17,6 +17,10 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { CardDescription } from "@/components/ui/card";
 
+const forgotPasswordSchema = z.object({
+  email: z.string().email("Please enter a valid email"),
+});
+
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState<string>("");
   const [loading, setLoading] = useState(false);
@@ -67,7 +71,7 @@ export default function ForgotPasswordPage() {
           variant: "destructive",
         });
         setLoading(false);
-        setSubmitButtonText("Requeset link");
+        setSubmitButtonText("Request link");
         return;
       }
     } catch (error) {
@@ -78,7 +82,7 @@ export default function ForgotPasswordPage() {
         variant: "destructive",
       });
       setLoading(false);
-      setSubmitButtonText("Requeset link");
+      setSubmitButtonText("Request link");
     }
 
     try {
@@ -118,10 +122,6 @@ export default function ForgotPasswordPage() {
     setLoading(false);
     setSubmitButtonText("Request link");
   };
-
-  const forgotPasswordSchema = z.object({
-    email: z.string(),
-  });
 
   const form = useForm<z.infer<typeof forgotPasswordSchema>>({
     resolver: zodResolver(forgotPasswordSchema),

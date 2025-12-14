@@ -35,6 +35,34 @@ const updateProfileSchema = z.object({
   // Email is managed separately through email change workflow
 });
 
+// Helper hook for handling success query params
+function useSuccessParam(
+  paramName: string,
+  setShowSuccess: (show: boolean) => void,
+  authUserId: string,
+  onSuccess?: () => void
+) {
+  const searchParams = useSearchParams();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (searchParams.get(paramName) === "true") {
+      setShowSuccess(true);
+      onSuccess?.();
+
+      // Remove the query param from URL
+      const newParams = new URLSearchParams(searchParams.toString());
+      newParams.delete(paramName);
+      const newUrl = `/profile/${authUserId}?${newParams.toString()}`;
+      router.replace(newUrl, { scroll: false });
+
+      // Hide after 5 seconds
+      const timer = setTimeout(() => setShowSuccess(false), 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [paramName, searchParams, authUserId, router, setShowSuccess, onSuccess]);
+}
+
 export function PersonalInformationTab({
   profile,
   authUser,
@@ -48,8 +76,6 @@ export function PersonalInformationTab({
   const [showVerifySuccess, setShowVerifySuccess] = useState(false);
   const supabase = createClientComponentClient();
   const utils = api.useUtils();
-  const searchParams = useSearchParams();
-  const router = useRouter();
 
   const { mutate } = api.auth.updateProfile.useMutation({
     onSuccess: () => {
@@ -89,52 +115,15 @@ export function PersonalInformationTab({
     },
   });
 
-  // Separate form for email (not part of profile update)
-  const [currentEmail] = useState(authUser.email || "");
+  // Reference to current email (not part of profile update)
+  const currentEmail = authUser.email || "";
   const [newEmail, setNewEmail] = useState(authUser.email || "");
 
-  // Check for cancelled query param and show success message
-  useEffect(() => {
-    if (searchParams.get("cancelled") === "true") {
-      setShowCancelSuccess(true);
-
-      // Remove the query param from URL
-      const newParams = new URLSearchParams(searchParams.toString());
-      newParams.delete("cancelled");
-      const newUrl = `/profile/${authUser.id}?${newParams.toString()}`;
-      router.replace(newUrl, { scroll: false });
-
-      // Hide after 5 seconds
-      const timer = setTimeout(() => {
-        setShowCancelSuccess(false);
-      }, 5000);
-
-      return () => clearTimeout(timer);
-    }
-  }, [searchParams, authUser.id, router]);
-
-  // Check for verified query param and show success message
-  useEffect(() => {
-    if (searchParams.get("verified") === "true") {
-      setShowVerifySuccess(true);
-
-      // Remove the query param from URL
-      const newParams = new URLSearchParams(searchParams.toString());
-      newParams.delete("verified");
-      const newUrl = `/profile/${authUser.id}?${newParams.toString()}`;
-      router.replace(newUrl, { scroll: false });
-
-      // Invalidate query to refetch with updated email
-      utils.auth.getPendingEmailChange.invalidate();
-
-      // Hide after 5 seconds
-      const timer = setTimeout(() => {
-        setShowVerifySuccess(false);
-      }, 5000);
-
-      return () => clearTimeout(timer);
-    }
-  }, [searchParams, authUser.id, router, utils.auth.getPendingEmailChange]);
+  // Handle success query params
+  useSuccessParam("cancelled", setShowCancelSuccess, authUser.id);
+  useSuccessParam("verified", setShowVerifySuccess, authUser.id, () => {
+    utils.auth.getPendingEmailChange.invalidate();
+  });
 
   const handleSubmit = async (values: z.infer<typeof updateProfileSchema>) => {
     setSaveState("saving");

@@ -52,23 +52,19 @@ Deno.serve(async (req) => {
 
   const supabase = createClient(supabaseUrl, supabaseServiceRoleKey);
 
-  const { data, error } = await supabase
-    .from("profile")
-    .select("email")
-    .eq("email", email)
-    .single();
-
-  console.log(data);
+  const { data: { users }, error } = await supabase.auth.admin.listUsers();
 
   if (error) {
-    console.error(error);
+    console.error("Error checking email:", error.message);
     return new Response(JSON.stringify({ exists: false }), {
       status: 200,
       headers: { "Content-Type": "application/json", ...corsHeaders },
     });
   }
 
-  return new Response(JSON.stringify({ exists: !!data }), {
+  const exists = users?.some(u => u.email === email) ?? false;
+
+  return new Response(JSON.stringify({ exists }), {
     status: 200,
     headers: { "Content-Type": "application/json", ...corsHeaders },
   });

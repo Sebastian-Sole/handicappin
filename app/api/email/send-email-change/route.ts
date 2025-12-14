@@ -11,10 +11,26 @@ import { redactEmail } from "@/lib/logging";
 const ALLOWED_ORIGINS = [
   process.env.NEXT_PUBLIC_APP_URL || "https://handicappin.com",
   process.env.NEXT_PUBLIC_SUPABASE_URL,
-  // Allow localhost variations for local development
-  "http://localhost:3000",
-  "http://127.0.0.1:3000",
+  // Allow localhost variations for local development only
+  ...(process.env.NODE_ENV === "development"
+    ? ["http://localhost:3000", "http://127.0.0.1:3000"]
+    : []),
 ].filter(Boolean);
+
+// Validate configuration
+if (ALLOWED_ORIGINS.length === 0) {
+  throw new Error("ALLOWED_ORIGINS must contain at least one valid origin");
+}
+
+// In production, warn if localhost is still present
+if (process.env.NODE_ENV === "production") {
+  const hasLocalhost = ALLOWED_ORIGINS.some(origin =>
+    origin.includes("localhost") || origin.includes("127.0.0.1")
+  );
+  if (hasLocalhost) {
+    console.warn("Warning: localhost origins present in production ALLOWED_ORIGINS");
+  }
+}
 
 const bodySchema = z.object({
   token: z.string(), // JWT token for URL generation

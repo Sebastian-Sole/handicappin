@@ -23,7 +23,7 @@ Deno.serve(async (req) => {
       console.error("Missing EMAIL_CHANGE_TOKEN_SECRET");
       return new Response(
         JSON.stringify({ error: "Server configuration error" }),
-        { status: 500, headers: corsHeaders }
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
@@ -37,7 +37,7 @@ Deno.serve(async (req) => {
       console.error("Missing Supabase environment variables");
       return new Response(
         JSON.stringify({ error: "Server configuration error" }),
-        { status: 500, headers: corsHeaders }
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
@@ -49,7 +49,7 @@ Deno.serve(async (req) => {
     if (!token) {
       return new Response(JSON.stringify({ error: "Token is required" }), {
         status: 400,
-        headers: corsHeaders,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
@@ -68,7 +68,7 @@ Deno.serve(async (req) => {
     if (!parsed.success) {
       return new Response(JSON.stringify({ error: "Invalid token" }), {
         status: 401,
-        headers: corsHeaders,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
@@ -94,7 +94,7 @@ Deno.serve(async (req) => {
     if (lookupError || !pendingChange) {
       return new Response(
         JSON.stringify({ error: "No pending email change found for this token" }),
-        { status: 404, headers: corsHeaders }
+        { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
@@ -106,7 +106,7 @@ Deno.serve(async (req) => {
       });
       return new Response(
         JSON.stringify({ error: "Invalid token" }),
-        { status: 401, headers: corsHeaders }
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
@@ -125,7 +125,7 @@ Deno.serve(async (req) => {
         JSON.stringify({
           error: "Verification link has expired. Please request a new email change.",
         }),
-        { status: 410, headers: corsHeaders }
+        { status: 410, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
@@ -136,26 +136,37 @@ Deno.serve(async (req) => {
     ) {
       return new Response(JSON.stringify({ error: "Token mismatch" }), {
         status: 401,
-        headers: corsHeaders,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    // Increment verification attempts (rate limiting)
-    if (pendingChange.verification_attempts >= 5) {
-      return new Response(
-        JSON.stringify({
-          error: "Too many verification attempts. Please request a new email change.",
-        }),
-        { status: 429, headers: corsHeaders }
-      );
-    }
-
-    await supabaseAdmin
+    // Atomically increment verification attempts and get updated value (rate limiting)
+    const { data: updatedChange, error: updateError } = await supabaseAdmin
       .from("pending_email_changes")
       .update({
         verification_attempts: pendingChange.verification_attempts + 1,
       })
-      .eq("token_hash", tokenHash);
+      .eq("token_hash", tokenHash)
+      .select()
+      .single();
+
+    if (updateError || !updatedChange) {
+      console.error("Failed to update verification attempts:", updateError);
+      return new Response(
+        JSON.stringify({ error: "Failed to process verification" }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Check rate limit AFTER incrementing to prevent race conditions and off-by-one errors
+    if (updatedChange.verification_attempts > 5) {
+      return new Response(
+        JSON.stringify({
+          error: "Too many verification attempts. Please request a new email change.",
+        }),
+        { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
 
     // Update auth.users.email - this is the single source of truth
     const { error: authUpdateError } = await supabaseAdmin.auth.admin.updateUserById(
@@ -169,7 +180,7 @@ Deno.serve(async (req) => {
         JSON.stringify({
           error: "Failed to update email. Please try again or contact support.",
         }),
-        { status: 500, headers: corsHeaders }
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
@@ -223,13 +234,13 @@ Deno.serve(async (req) => {
         message: "Email address updated successfully!",
         user_id,
       }),
-      { status: 200, headers: corsHeaders }
+      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error) {
     console.error("Error in verify-email-change:", error);
     return new Response(
       JSON.stringify({ error: "Internal server error" }),
-      { status: 500, headers: corsHeaders }
+      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
 });
