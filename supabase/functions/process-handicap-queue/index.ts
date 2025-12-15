@@ -29,6 +29,21 @@ const ESR_WINDOW_SIZE = 20;
 const BATCH_SIZE = parseInt(Deno.env.get("HANDICAP_QUEUE_BATCH_SIZE") || "25");
 const MAX_RETRIES = parseInt(Deno.env.get("HANDICAP_MAX_RETRIES") || "3");
 
+/**
+ * Constant-time comparison to prevent timing attacks
+ * Returns true only if both byte arrays are identical
+ */
+function timingSafeEqual(a: Uint8Array, b: Uint8Array): boolean {
+  if (a.length !== b.length) {
+    return false;
+  }
+  let result = 0;
+  for (let i = 0; i < a.length; i++) {
+    result |= a[i] ^ b[i];
+  }
+  return result === 0;
+}
+
 interface QueueJob {
   id: number;
   user_id: string;
@@ -40,18 +55,36 @@ Deno.serve(async (req) => {
   console.log("Queue processor invoked");
 
   try {
-    // Security: Verify request comes from cron job
-    const body = await req.json();
-    if (body.scheduled !== true) {
+    // Security: Verify request comes from authorized source (cron job)
+    const authHeader = req.headers.get("Authorization");
+    const supabaseServiceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+
+    if (!supabaseServiceRoleKey) {
+      console.error("SUPABASE_SERVICE_ROLE_KEY not configured");
+      return new Response(
+        JSON.stringify({ error: "Server configuration error" }),
+        { status: 500, headers: { "Content-Type": "application/json" } }
+      );
+    }
+
+    // Extract token from "Bearer <token>" format
+    const expectedAuth = `Bearer ${supabaseServiceRoleKey}`;
+
+    // Use constant-time comparison to prevent timing attacks
+    const authorized = authHeader && timingSafeEqual(
+      new TextEncoder().encode(authHeader),
+      new TextEncoder().encode(expectedAuth)
+    );
+
+    if (!authorized) {
       console.warn("Unauthorized access attempt to process-handicap-queue");
       return new Response(
-        JSON.stringify({ error: "Unauthorized - this endpoint is for scheduled jobs only" }),
+        JSON.stringify({ error: "Unauthorized" }),
         { status: 403, headers: { "Content-Type": "application/json" } }
       );
     }
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL");
-    const supabaseServiceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
 
     if (!supabaseUrl || !supabaseServiceRoleKey) {
       throw new Error("Missing Supabase environment variables");
