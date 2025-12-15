@@ -309,6 +309,7 @@ export async function sendEmailChangeVerification({
         messageId: result.data?.id,
         oldEmail: redactEmail(oldEmail),
         newEmail: redactEmail(newEmail),
+        note: "If delivery is delayed, check Resend dashboard for greylisting (451 codes)",
       }
     );
 

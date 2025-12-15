@@ -72,8 +72,10 @@ export function PersonalInformationTab({
     "idle"
   );
   const [isRequestingChange, setIsRequestingChange] = useState(false);
+  const [isResending, setIsResending] = useState(false);
   const [showCancelSuccess, setShowCancelSuccess] = useState(false);
   const [showVerifySuccess, setShowVerifySuccess] = useState(false);
+  const [lastResendTime, setLastResendTime] = useState<number | null>(null);
   const supabase = createClientComponentClient();
   const utils = api.useUtils();
 
@@ -181,12 +183,13 @@ export function PersonalInformationTab({
         toast({
           title: "Verification email sent",
           description:
-            "Please check your new email address to verify the change.",
+            "Please check your new email address to verify the change. Email may take up to 10 minutes to arrive.",
         });
         // Invalidate query to refetch actual backend state
         await utils.auth.getPendingEmailChange.invalidate();
         // Reset email field to current email
         setNewEmail(currentEmail);
+        setLastResendTime(Date.now());
       } else {
         toast({
           title: "Error",
@@ -203,6 +206,76 @@ export function PersonalInformationTab({
       });
     } finally {
       setIsRequestingChange(false);
+    }
+  };
+
+  const handleResendEmail = async () => {
+    if (!pendingEmail) return;
+
+    // Rate limit: only allow resend every 2 minutes
+    const now = Date.now();
+    if (lastResendTime && now - lastResendTime < 120000) {
+      const remainingSeconds = Math.ceil((120000 - (now - lastResendTime)) / 1000);
+      toast({
+        title: "Please wait",
+        description: `You can resend the email in ${remainingSeconds} seconds`,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsResending(true);
+    try {
+      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+      const session = await supabase.auth.getSession();
+
+      if (!session.data.session) {
+        toast({
+          title: "Error",
+          description: "Session expired. Please log in again.",
+          variant: "destructive",
+        });
+        setIsResending(false);
+        return;
+      }
+
+      const response = await fetch(
+        `${supabaseUrl}/functions/v1/request-email-change`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${session.data.session.access_token}`,
+          },
+          body: JSON.stringify({ newEmail: pendingEmail }),
+        }
+      );
+
+      const data = await response.json();
+
+      if (response.ok && data.success) {
+        toast({
+          title: "Verification email resent",
+          description:
+            "Please check your email. It may take up to 10 minutes to arrive.",
+        });
+        setLastResendTime(Date.now());
+      } else {
+        toast({
+          title: "Error",
+          description: data.error || "Failed to resend email",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error("Email resend error:", error);
+      toast({
+        title: "Error",
+        description: "An unexpected error occurred",
+        variant: "destructive",
+      });
+    } finally {
+      setIsResending(false);
     }
   };
 
@@ -273,17 +346,29 @@ export function PersonalInformationTab({
               <Alert className="mt-2">
                 <AlertCircle className="h-4 w-4" />
                 <AlertDescription>
-                  <strong>Pending verification:</strong> {pendingEmail}
-                  <br />
-                  <span className="text-sm text-muted-foreground">
-                    Check your email to verify this change.
-                  </span>
+                  <div className="space-y-2">
+                    <div>
+                      <strong>Pending verification:</strong> {pendingEmail}
+                    </div>
+                    <div className="text-sm text-muted-foreground">
+                      Check your email to verify this change. The email may take up to 10 minutes to arrive, especially for Zoho, Gmail, or Outlook accounts.
+                    </div>
+                    <Button
+                      variant="link"
+                      size="sm"
+                      className="px-0 h-auto text-sm"
+                      onClick={handleResendEmail}
+                      disabled={isResending}
+                    >
+                      {isResending ? "Resending..." : "Didn't receive email? Click to resend"}
+                    </Button>
+                  </div>
                 </AlertDescription>
               </Alert>
             )}
             {!pendingEmail && (
               <p className="text-sm text-muted-foreground">
-                A verification email will be sent to your new address.
+                A verification email will be sent to your new address. Note: Delivery may take up to 10 minutes.
               </p>
             )}
           </div>
