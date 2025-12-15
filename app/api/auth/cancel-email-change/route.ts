@@ -28,7 +28,18 @@ export async function GET(request: NextRequest) {
       }
     );
 
-    const data = await response.json();
+    let data;
+    try {
+      data = await response.json();
+    } catch {
+      logger.error("Invalid JSON response from cancel-email-change function", {
+        status: response.status,
+        statusText: response.statusText,
+      });
+      return NextResponse.redirect(
+        new URL("/login?error=cancel-failed", request.url)
+      );
+    }
 
     if (response.ok && data.success && data.user_id) {
       // Use the user_id from the token to redirect to their profile

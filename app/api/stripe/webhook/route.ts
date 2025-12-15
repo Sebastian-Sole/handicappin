@@ -879,8 +879,22 @@ async function handlePaymentIntentSucceeded(
       .limit(1);
 
     const oldPlan = userProfile[0]?.planSelected || "free";
-    // Get email from payment intent receipt_email or fetch from auth
-    const userEmail = paymentIntent.receipt_email || undefined;
+    // Get email from payment intent receipt_email or fetch from checkout session
+    let userEmail = paymentIntent.receipt_email || undefined;
+
+    // Fallback: If no receipt_email, try to get email from the original checkout session
+    if (!userEmail && purchase.checkoutSessionId) {
+      try {
+        const checkoutSession = await stripe.checkout.sessions.retrieve(purchase.checkoutSessionId);
+        userEmail = checkoutSession.customer_details?.email || checkoutSession.customer_email || undefined;
+      } catch (sessionError) {
+        logWebhookWarning(`Could not retrieve checkout session for email fallback`, {
+          checkoutSessionId: purchase.checkoutSessionId,
+          error: sessionError instanceof Error ? sessionError.message : "Unknown error",
+        });
+      }
+    }
+
     const isFirstTimePurchase = oldPlan === "free";
 
     try {
@@ -1465,7 +1479,7 @@ async function handleSubscriptionChange(subscription: Stripe.Subscription) {
         cancelAtPeriodEnd: subscription.cancel_at_period_end,
       });
 
-      logger.debug("RECIEVED SUB", { subscription });
+      logger.debug("RECEIVED SUB", { subscription });
 
       // Check if subscription is set to cancel
       // Stripe can represent this in two ways:

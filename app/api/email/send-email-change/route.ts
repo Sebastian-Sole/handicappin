@@ -169,8 +169,13 @@ export async function POST(request: Request) {
     }
 
     // Generate verification and cancel URLs with the token
-    const verificationUrl = `${origin}/verify-email-change?token=${token}`;
-    const cancelUrl = `${origin}/api/auth/cancel-email-change?token=${token}`;
+    const verificationUrlObj = new URL("/verify-email-change", origin);
+    verificationUrlObj.searchParams.set("token", token);
+    const verificationUrl = verificationUrlObj.toString();
+
+    const cancelUrlObj = new URL("/api/auth/cancel-email-change", origin);
+    cancelUrlObj.searchParams.set("token", token);
+    const cancelUrl = cancelUrlObj.toString();
 
     // Send both emails in parallel
     const [verificationResult, notificationResult] = await Promise.all([
