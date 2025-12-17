@@ -7,6 +7,7 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { Navbar } from "@/components/layout/navbar";
 import Footer from "@/components/layout/footer";
 import { Analytics } from "@vercel/analytics/next";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import { BillingSync } from "@/components/billing-sync";
 
 const inter = Inter({ subsets: ["latin"] });
@@ -43,6 +44,7 @@ export default function RootLayout({
           </TRPCReactProvider>
         </div>
         <Analytics />
+        <SpeedInsights />
       </body>
     </html>
   );
