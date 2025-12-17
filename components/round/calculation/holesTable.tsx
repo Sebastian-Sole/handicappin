@@ -1,4 +1,4 @@
-import { calculateHoleAdjustedScore } from "@/utils/calculations/handicap";
+import { calculateHoleAdjustedScore } from "@/lib/handicap";
 import { InfoIcon } from "lucide-react";
 import {
   Table,

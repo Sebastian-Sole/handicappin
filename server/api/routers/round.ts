@@ -10,7 +10,8 @@ import {
   calculateCourseHandicap,
   calculateScoreDifferential,
   calculateAdjustedGrossScore,
-} from "@/utils/calculations/handicap";
+  addHcpStrokesToScores,
+} from "@/lib/handicap";
 import { getComprehensiveUserAccess } from "@/utils/billing/access-control";
 import { TRPCError } from "@trpc/server";
 import { FREE_TIER_ROUND_LIMIT } from "@/utils/billing/constants";
@@ -56,7 +57,8 @@ const getRoundCalculations = (
     adjustedPlayedScore,
     courseHandicap,
     numberOfHolesPlayed,
-    teePlayed
+    teePlayed.holes,
+    scores
   );
 
   console.log("Adjusted gross score calculated");

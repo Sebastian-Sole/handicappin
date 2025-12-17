@@ -10,7 +10,7 @@ import {
   calculateCourseHandicap,
   calculateAdjustedGrossScore,
   calculateScoreDifferential,
-} from "@/utils/calculations/handicap";
+} from "@/lib/handicap";
 import { ScorecardWithRound } from "@/types/scorecard";
 
 interface RoundCalculationContextProps {
@@ -77,13 +77,15 @@ export const RoundCalculationProvider = ({
       adjustedPlayedScore,
       courseHandicapCalculation,
       holesPlayed,
-      scorecard.teePlayed
+      scorecard.teePlayed.holes || [],
+      scorecard.scores
     );
   }, [
     adjustedPlayedScore,
     courseHandicapCalculation,
     holesPlayed,
-    scorecard.teePlayed
+    scorecard.teePlayed.holes,
+    scorecard.scores
   ]);
 
   const scoreDifferentialCalculation = useMemo(() => {
