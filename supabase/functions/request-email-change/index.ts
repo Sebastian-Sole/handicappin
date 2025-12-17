@@ -14,7 +14,9 @@ const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY")!;
 const RATE_LIMIT_WINDOW = 120; // 2 minutes in seconds (allows resending if email delayed)
 
 if (!JWT_SECRET || !RESEND_API_KEY) {
-  throw new Error("Missing required environment variables: EMAIL_CHANGE_TOKEN_SECRET or RESEND_API_KEY");
+  throw new Error(
+    "Missing required environment variables: EMAIL_CHANGE_TOKEN_SECRET or RESEND_API_KEY"
+  );
 }
 
 const resend = new Resend(RESEND_API_KEY);
@@ -82,7 +84,8 @@ Deno.serve(async (req) => {
     }
 
     // Validate email format
-    const emailRegex = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)+$/;
+    const emailRegex =
+      /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)+$/;
     if (!emailRegex.test(newEmail)) {
       return new Response(JSON.stringify({ error: "Invalid email format" }), {
         status: 400,
@@ -128,12 +131,13 @@ Deno.serve(async (req) => {
     }
 
     // Check if new email is already in use by another user in auth.users
-    const { data: existingAuthUser, error: authCheckError } = await supabaseAdmin.auth.admin
-      .listUsers();
+    const { data: existingAuthUser, error: authCheckError } =
+      await supabaseAdmin.auth.admin.listUsers();
 
     if (!authCheckError && existingAuthUser?.users) {
       const emailInUse = existingAuthUser.users.some(
-        (u) => u.email?.toLowerCase() === newEmail.toLowerCase() && u.id !== user.id
+        (u) =>
+          u.email?.toLowerCase() === newEmail.toLowerCase() && u.id !== user.id
       );
 
       if (emailInUse) {
@@ -224,8 +228,8 @@ Deno.serve(async (req) => {
     const cancelUrl = cancelUrlObj.toString();
 
     console.log("[DEBUG] Sending emails:", {
-      newEmail: newEmail,
-      oldEmail: user.email,
+      newEmail: maskEmail(newEmail),
+      oldEmail: maskEmail(user.email),
       verificationUrl,
       cancelUrl,
     });
@@ -249,12 +253,14 @@ Deno.serve(async (req) => {
       });
 
       if (verificationResult.error) {
-        throw new Error(`Verification email failed: ${verificationResult.error.message}`);
+        throw new Error(
+          `Verification email failed: ${verificationResult.error.message}`
+        );
       }
 
       console.log("[INFO] Verification email sent:", {
         messageId: verificationResult.data?.id,
-        to: newEmail,
+        to: maskEmail(newEmail),
       });
     } catch (error) {
       console.error("Failed to send verification email:", error);
@@ -291,33 +297,38 @@ Deno.serve(async (req) => {
       });
 
       if (notificationResult.error) {
-        throw new Error(`Notification email failed: ${notificationResult.error.message}`);
+        throw new Error(
+          `Notification email failed: ${notificationResult.error.message}`
+        );
       }
 
       console.log("[INFO] Notification email sent:", {
         messageId: notificationResult.data?.id,
-        to: user.email,
+        to: maskEmail(user.email),
       });
     } catch (error) {
       console.error("Failed to send notification email:", error);
 
       // Don't delete pending change - verification email was sent successfully
       // User can still verify, but won't have cancel link
-      console.warn("[WARN] Notification email failed but verification email sent");
+      console.warn(
+        "[WARN] Notification email failed but verification email sent"
+      );
     }
 
     return new Response(
       JSON.stringify({
         success: true,
-        message: "Verification email sent. Please check your new email address.",
+        message:
+          "Verification email sent. Please check your new email address.",
       }),
       { status: 200, headers: corsHeaders }
     );
   } catch (error) {
     console.error("Error in request-email-change:", error);
-    return new Response(
-      JSON.stringify({ error: "Internal server error" }),
-      { status: 500, headers: corsHeaders }
-    );
+    return new Response(JSON.stringify({ error: "Internal server error" }), {
+      status: 500,
+      headers: corsHeaders,
+    });
   }
 });
