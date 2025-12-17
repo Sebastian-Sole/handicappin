@@ -132,15 +132,10 @@ Deno.serve(async (req) => {
 
     // Check if new email is already in use by another user in auth.users
     const { data: existingAuthUser, error: authCheckError } =
-      await supabaseAdmin.auth.admin.listUsers();
+      await supabaseAdmin.auth.admin.getUserByEmail(newEmail);
 
-    if (!authCheckError && existingAuthUser?.users) {
-      const emailInUse = existingAuthUser.users.some(
-        (u) =>
-          u.email?.toLowerCase() === newEmail.toLowerCase() && u.id !== user.id
-      );
-
-      if (emailInUse) {
+    if (!authCheckError && existingAuthUser?.user) {
+      if (existingAuthUser.user.id !== user.id) {
         // Generic error to prevent email enumeration
         return new Response(
           JSON.stringify({ error: "This email address cannot be used" }),
