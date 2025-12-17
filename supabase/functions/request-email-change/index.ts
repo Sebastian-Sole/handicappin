@@ -224,10 +224,9 @@ Deno.serve(async (req) => {
     const cancelUrl = cancelUrlObj.toString();
 
     console.log("[DEBUG] Sending emails:", {
-      newEmail: newEmail,
-      oldEmail: user.email,
-      verificationUrl,
-      cancelUrl,
+      newEmail: maskEmail(newEmail),
+      oldEmail: maskEmail(user.email!),
+      // Deliberately omit token-bearing URLs from logs
     });
 
     // Send verification email to NEW email address
