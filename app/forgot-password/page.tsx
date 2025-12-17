@@ -17,8 +17,11 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { CardDescription } from "@/components/ui/card";
 
+const forgotPasswordSchema = z.object({
+  email: z.string().email("Please enter a valid email"),
+});
+
 export default function ForgotPasswordPage() {
-  const [email, setEmail] = useState<string>("");
   const [loading, setLoading] = useState(false);
   const [submitButtonText, setSubmitButtonText] = useState("Request link");
 
@@ -26,14 +29,33 @@ export default function ForgotPasswordPage() {
     setLoading(true);
     setSubmitButtonText("Checking email exists...");
 
+    // Validate environment variables
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+    if (!supabaseUrl || !supabaseAnonKey) {
+      console.error("Missing Supabase configuration:", {
+        hasUrl: !!supabaseUrl,
+        hasAnonKey: !!supabaseAnonKey,
+      });
+      toast({
+        title: "Configuration error",
+        description: "Unable to process your request. Please contact support.",
+        variant: "destructive",
+      });
+      setLoading(false);
+      setSubmitButtonText("Request link");
+      return;
+    }
+
     try {
       const checkEmailResponse = await fetch(
-        `${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/check-email`,
+        `${supabaseUrl}/functions/v1/check-email`,
         {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY}`,
+            Authorization: `Bearer ${supabaseAnonKey}`,
           },
           body: JSON.stringify({ email: values.email }),
         }
@@ -48,7 +70,7 @@ export default function ForgotPasswordPage() {
           variant: "destructive",
         });
         setLoading(false);
-        setSubmitButtonText("Requeset link");
+        setSubmitButtonText("Request link");
         return;
       }
     } catch (error) {
@@ -59,13 +81,12 @@ export default function ForgotPasswordPage() {
         variant: "destructive",
       });
       setLoading(false);
-      setSubmitButtonText("Requeset link");
+      setSubmitButtonText("Request link");
     }
 
     try {
       setSubmitButtonText("Sending email...");
-      const PROJECT_ID = process.env.NEXT_PUBLIC_SUPABASE_URL;
-      const URL = `${PROJECT_ID}/functions/v1/reset-password`;
+      const URL = `${supabaseUrl}/functions/v1/reset-password`;
 
       const resetLink = `${window.location.origin}/update-password`;
 
@@ -73,7 +94,7 @@ export default function ForgotPasswordPage() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY}`,
+          Authorization: `Bearer ${supabaseAnonKey}`,
         },
         body: JSON.stringify({
           email: values.email,
@@ -96,19 +117,14 @@ export default function ForgotPasswordPage() {
         variant: "destructive",
       });
       setLoading(false);
+      setSubmitButtonText("Request link");
     }
-    setLoading(false);
-    setSubmitButtonText("Request link");
   };
-
-  const forgotPasswordSchema = z.object({
-    email: z.string(),
-  });
 
   const form = useForm<z.infer<typeof forgotPasswordSchema>>({
     resolver: zodResolver(forgotPasswordSchema),
     defaultValues: {
-      email: email,
+      email: "",
     },
   });
 
@@ -139,11 +155,6 @@ export default function ForgotPasswordPage() {
                         type="email"
                         required
                         {...field}
-                        value={email}
-                        onChange={(e) => {
-                          setEmail(e.target.value);
-                          form.setValue("email", e.target.value);
-                        }}
                       />
                     </FormControl>
                     <FormMessage />

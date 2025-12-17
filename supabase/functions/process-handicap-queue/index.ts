@@ -40,6 +40,16 @@ Deno.serve(async (req) => {
   console.log("Queue processor invoked");
 
   try {
+    // Security: Verify request comes from cron job
+    const body = await req.json();
+    if (body.scheduled !== true) {
+      console.warn("Unauthorized access attempt to process-handicap-queue");
+      return new Response(
+        JSON.stringify({ error: "Unauthorized - this endpoint is for scheduled jobs only" }),
+        { status: 403, headers: { "Content-Type": "application/json" } }
+      );
+    }
+
     const supabaseUrl = Deno.env.get("SUPABASE_URL");
     const supabaseServiceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
 

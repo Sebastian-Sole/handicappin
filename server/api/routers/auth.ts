@@ -1,12 +1,10 @@
 import { z } from "zod";
 import { authedProcedure, createTRPCRouter, publicProcedure } from "../trpc";
-import { redactEmail } from "@/lib/logging";
 
 export const authRouter = createTRPCRouter({
   getProfileFromUserId: publicProcedure
     .input(z.string())
     .query(async ({ ctx, input }) => {
-      console.log("input", input); // UUID logged directly (pseudonymous)
       const { data: profileData, error: profileError } = await ctx.supabase
         .from("profile")
         .select("*")
@@ -14,10 +12,7 @@ export const authRouter = createTRPCRouter({
 
       // console.log(profileError)
       if (profileData) {
-        console.log({
-          ...profileData,
-          email: redactEmail(profileData.email), // Only email needs redaction
-        });
+        console.log(`Profile fetched for user: ${input}`); // Email is no longer in profile - it's in auth.users
       }
 
       if (profileError) {
@@ -31,15 +26,19 @@ export const authRouter = createTRPCRouter({
       z.object({
         id: z.string(),
         name: z.string(),
-        email: z.string(),
+        // Email removed - it's stored in auth.users only
       })
     )
     .mutation(async ({ ctx, input }) => {
+      // Authorization check: users can only update their own profile
+      if (input.id !== ctx.user.id) {
+        throw new Error("Unauthorized: You can only update your own profile");
+      }
+
       const { data: profileData, error: profileError } = await ctx.supabase
         .from("profile")
         .update({
           name: input.name,
-          email: input.email,
         })
         .eq("id", input.id)
         .select();
@@ -50,5 +49,86 @@ export const authRouter = createTRPCRouter({
       }
 
       return profileData;
+    }),
+
+  // Get email preferences for authenticated user
+  getEmailPreferences: authedProcedure.query(async ({ ctx }) => {
+    const { data, error } = await ctx.supabase
+      .from("email_preferences")
+      .select("*")
+      .eq("user_id", ctx.user.id)
+      .single();
+
+    if (error) {
+      // If no preferences exist yet, return defaults
+      if (error.code === "PGRST116") {
+        return {
+          id: null,
+          user_id: ctx.user.id,
+          feature_updates: true,
+          created_at: null,
+          updated_at: null,
+        };
+      }
+
+      console.error("Error fetching email preferences:", error);
+      throw new Error(`Error fetching email preferences: ${error.message}`);
+    }
+
+    return data;
+  }),
+
+  // Update or insert email preferences
+  updateEmailPreferences: authedProcedure
+    .input(
+      z.object({
+        featureUpdates: z.boolean(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      // Use upsert to handle both insert and update cases
+      const { data, error } = await ctx.supabase
+        .from("email_preferences")
+        .upsert(
+          {
+            user_id: ctx.user.id,
+            feature_updates: input.featureUpdates,
+            updated_at: new Date().toISOString(),
+          },
+          {
+            onConflict: "user_id",
+          }
+        )
+        .select()
+        .single();
+
+      if (error) {
+        console.error("Error updating email preferences:", error);
+        throw new Error(`Error updating email preferences: ${error.message}`);
+      }
+
+      return data;
+    }),
+
+  // Get pending email change for authenticated user
+  getPendingEmailChange: authedProcedure
+    .query(async ({ ctx }) => {
+      const { data, error } = await ctx.supabase
+        .from("pending_email_changes")
+        .select("*")
+        .eq("user_id", ctx.user.id)
+        .single();
+
+      if (error) {
+        // No pending change found
+        if (error.code === "PGRST116") {
+          return null;
+        }
+
+        console.error("Error fetching pending email change:", error);
+        throw new Error(`Error fetching pending email change: ${error.message}`);
+      }
+
+      return data;
     }),
 });

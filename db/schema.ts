@@ -29,7 +29,7 @@ export const profile = pgTable(
   "profile",
   {
     id: uuid().primaryKey().notNull(),
-    email: text().notNull(),
+    // Note: email is stored in auth.users table only - join with auth.users for email access
     name: text(),
     handicapIndex: decimal<"number">().notNull().default(54),
     verified: boolean().default(false).notNull(),
@@ -49,10 +49,6 @@ export const profile = pgTable(
     billingVersion: integer("billing_version").default(1).notNull(),
   },
   (table) => [
-    uniqueIndex("profile_email_key").using(
-      "btree",
-      table.email.asc().nullsLast().op("text_ops")
-    ),
     foreignKey({
       columns: [table.id],
       foreignColumns: [usersInAuth.id],
@@ -496,3 +492,92 @@ export const handicapCalculationQueueSchema = createSelectSchema(
 export type HandicapCalculationQueue = InferSelectModel<
   typeof handicapCalculationQueue
 >;
+
+// Email preferences table - tracks user email notification preferences
+export const emailPreferences = pgTable(
+  "email_preferences",
+  {
+    id: uuid().defaultRandom().primaryKey(),
+    userId: uuid("user_id").notNull().unique(),
+    featureUpdates: boolean("feature_updates").default(true).notNull(),
+    createdAt: timestamp("created_at")
+      .default(sql`CURRENT_TIMESTAMP`)
+      .notNull(),
+    updatedAt: timestamp("updated_at")
+      .default(sql`CURRENT_TIMESTAMP`)
+      .notNull(),
+  },
+  (table) => [
+    foreignKey({
+      columns: [table.userId],
+      foreignColumns: [profile.id],
+      name: "email_preferences_user_id_fkey",
+    })
+      .onUpdate("cascade")
+      .onDelete("cascade"),
+    pgPolicy("Users can view their own email preferences", {
+      as: "permissive",
+      for: "select",
+      to: ["authenticated"],
+      using: sql`(auth.uid()::uuid = user_id)`,
+    }),
+    pgPolicy("Users can insert their own email preferences", {
+      as: "permissive",
+      for: "insert",
+      to: ["authenticated"],
+      withCheck: sql`(auth.uid()::uuid = user_id)`,
+    }),
+    pgPolicy("Users can update their own email preferences", {
+      as: "permissive",
+      for: "update",
+      to: ["authenticated"],
+      using: sql`(auth.uid()::uuid = user_id)`,
+    }),
+    pgPolicy("Users can delete their own email preferences", {
+      as: "permissive",
+      for: "delete",
+      to: ["authenticated"],
+      using: sql`(auth.uid()::uuid = user_id)`,
+    }),
+  ]
+);
+
+export const emailPreferencesSchema = createSelectSchema(emailPreferences);
+export type EmailPreferences = InferSelectModel<typeof emailPreferences>;
+
+// Pending email changes table - tracks email change verification workflow
+export const pendingEmailChanges = pgTable(
+  "pending_email_changes",
+  {
+    id: uuid().defaultRandom().primaryKey(),
+    userId: uuid("user_id").notNull().unique(),
+    oldEmail: text("old_email").notNull(),
+    newEmail: text("new_email").notNull(),
+    tokenHash: text("token_hash").notNull(),
+    expiresAt: timestamp("expires_at").notNull(),
+    createdAt: timestamp("created_at")
+      .default(sql`CURRENT_TIMESTAMP`)
+      .notNull(),
+    requestIp: text("request_ip"),
+    verificationAttempts: integer("verification_attempts").default(0).notNull(),
+  },
+  (table) => [
+    foreignKey({
+      columns: [table.userId],
+      foreignColumns: [profile.id],
+      name: "pending_email_changes_user_id_fkey",
+    })
+      .onUpdate("cascade")
+      .onDelete("cascade"),
+    index("pending_email_changes_token_hash_idx").on(table.tokenHash),
+    pgPolicy("Users can view their own pending email changes", {
+      as: "permissive",
+      for: "select",
+      to: ["authenticated"],
+      using: sql`(auth.uid()::uuid = user_id)`,
+    }),
+  ]
+);
+
+export const pendingEmailChangesSchema = createSelectSchema(pendingEmailChanges);
+export type PendingEmailChange = InferSelectModel<typeof pendingEmailChanges>;

@@ -2,6 +2,7 @@ import { Database } from "@/types/supabase";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { NextResponse, type NextRequest } from "next/server";
+import { logger } from "@/lib/logging";
 
 /**
  * Server-side session refresh endpoint
@@ -16,6 +17,21 @@ import { NextResponse, type NextRequest } from "next/server";
  */
 export async function POST(request: NextRequest) {
   try {
+    // Validate required environment variables
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+    if (!supabaseUrl || !supabaseAnonKey) {
+      logger.error("Missing Supabase configuration", {
+        hasUrl: !!supabaseUrl,
+        hasAnonKey: !!supabaseAnonKey,
+      });
+      return NextResponse.json(
+        { error: "Server configuration error" },
+        { status: 500 }
+      );
+    }
+
     const cookieStore = await cookies();
 
     // Collect cookies that need to be set
@@ -23,8 +39,8 @@ export async function POST(request: NextRequest) {
 
     // Create Supabase client with proper cookie handling for route handlers
     const supabase = createServerClient<Database>(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      supabaseUrl,
+      supabaseAnonKey,
       {
         cookies: {
           getAll() {
@@ -42,7 +58,7 @@ export async function POST(request: NextRequest) {
     const { data, error } = await supabase.auth.refreshSession();
 
     if (error) {
-      console.error("❌ Server-side session refresh failed:", error);
+      logger.error("❌ Server-side session refresh failed", { error: error.message });
       return NextResponse.json(
         { error: "Session refresh failed", details: error.message },
         { status: 500 }
@@ -50,7 +66,7 @@ export async function POST(request: NextRequest) {
     }
 
     if (!data.session) {
-      console.error("❌ No session returned from refresh");
+      logger.error("❌ No session returned from refresh");
       return NextResponse.json(
         { error: "No session found" },
         { status: 401 }
@@ -60,7 +76,7 @@ export async function POST(request: NextRequest) {
     // Extract billing claims from new JWT
     const billing = data.session.user.app_metadata?.billing;
 
-    console.log("✅ Server-side session refreshed successfully", {
+    logger.info("✅ Server-side session refreshed successfully", {
       userId: data.session.user.id,
       plan: billing?.plan,
       status: billing?.status,
@@ -79,11 +95,13 @@ export async function POST(request: NextRequest) {
       response.cookies.set(name, value, options);
     });
 
-    console.log(`✅ Set ${cookiesToSet.length} cookies in response`);
+    logger.info(`✅ Set ${cookiesToSet.length} cookies in response`);
 
     return response;
   } catch (error) {
-    console.error("❌ Unexpected error in session sync:", error);
+    logger.error("❌ Unexpected error in session sync", {
+      error: error instanceof Error ? error.message : "Unknown error",
+    });
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

@@ -3,6 +3,7 @@ import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { NextResponse, type NextRequest } from "next/server";
 import { portalRateLimit, getIdentifier } from "@/lib/rate-limit";
+import { logger } from "@/lib/logging";
 
 /**
  * Server-side Stripe portal return handler
@@ -24,7 +25,7 @@ export async function GET(request: NextRequest) {
     const tab = searchParams.get("tab") || "billing";
 
     if (!userId) {
-      console.error("❌ Portal return: No user_id provided");
+      logger.error("❌ Portal return: No user_id provided");
       return NextResponse.redirect(new URL("/", request.url));
     }
 
@@ -33,12 +34,24 @@ export async function GET(request: NextRequest) {
     const { success, limit, remaining, reset } = await portalRateLimit.limit(identifier);
 
     if (!success) {
-      console.warn(`⚠️ Portal return rate limit exceeded for ${identifier}`);
+      logger.warn(`⚠️ Portal return rate limit exceeded for ${identifier}`);
       // Still redirect but without refresh - prevents abuse
       return NextResponse.redirect(new URL(`/profile/${userId}?tab=${tab}`, request.url));
     }
 
-    console.log(`🔄 Processing Stripe portal return for user ${userId} (${remaining}/${limit} remaining)`);
+    logger.info(`🔄 Processing Stripe portal return for user ${userId}`, { remaining, limit });
+
+    // Validate required environment variables
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+    if (!supabaseUrl || !supabaseAnonKey) {
+      logger.error("Missing Supabase configuration", {
+        hasUrl: !!supabaseUrl,
+        hasAnonKey: !!supabaseAnonKey,
+      });
+      return NextResponse.redirect(new URL("/", request.url));
+    }
 
     const cookieStore = await cookies();
 
@@ -47,8 +60,8 @@ export async function GET(request: NextRequest) {
 
     // Create Supabase client with proper cookie handling
     const supabase = createServerClient<Database>(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      supabaseUrl,
+      supabaseAnonKey,
       {
         cookies: {
           getAll() {
@@ -66,20 +79,20 @@ export async function GET(request: NextRequest) {
     const { data: { user }, error: authError } = await supabase.auth.getUser();
 
     if (authError || !user || user.id !== userId) {
-      console.error("❌ Portal return: Authentication failed", authError);
+      logger.error("❌ Portal return: Authentication failed", { error: authError?.message });
       return NextResponse.redirect(new URL("/login", request.url));
     }
 
     // Refresh session server-side to get latest JWT with updated billing
-    console.log("🔄 Refreshing JWT with latest billing data...");
+    logger.info("🔄 Refreshing JWT with latest billing data");
     const { data, error: refreshError } = await supabase.auth.refreshSession();
 
     if (refreshError) {
-      console.error("❌ Portal return: Session refresh failed:", refreshError);
+      logger.error("❌ Portal return: Session refresh failed", { error: refreshError.message });
       // Continue anyway - user can still access their profile
     } else if (data.session) {
       const billing = data.session.user.app_metadata?.billing;
-      console.log("✅ JWT refreshed successfully", {
+      logger.info("✅ JWT refreshed successfully", {
         plan: billing?.plan,
         status: billing?.status,
         billingVersion: billing?.billing_version,
@@ -97,11 +110,13 @@ export async function GET(request: NextRequest) {
       response.cookies.set(name, value, options);
     });
 
-    console.log(`✅ Redirecting to profile with ${cookiesToSet.length} updated cookies`);
+    logger.info(`✅ Redirecting to profile with ${cookiesToSet.length} updated cookies`);
 
     return response;
   } catch (error) {
-    console.error("❌ Unexpected error in portal return handler:", error);
+    logger.error("❌ Unexpected error in portal return handler", {
+      error: error instanceof Error ? error.message : "Unknown error",
+    });
     // Fallback redirect to home
     return NextResponse.redirect(new URL("/", request.url));
   }

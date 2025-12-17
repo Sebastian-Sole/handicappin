@@ -19,12 +19,12 @@ These are stored in component state only and have a TODO comment about implement
 
 ## ✅ **Acceptance Criteria**
 
-- [ ] Add email preference columns to profile table schema
-- [ ] Create and run database migration
-- [ ] Preferences load from database on settings tab mount
-- [ ] Save button persists preferences to database
-- [ ] Preferences persist across sessions
-- [ ] Default values match current component defaults
+- [x] Add email preference columns to profile table schema
+- [x] Create and run database migration
+- [x] Preferences load from database on settings tab mount
+- [x] Save button persists preferences to database
+- [x] Preferences persist across sessions
+- [x] Default values match current component defaults
 
 ## 🚨 **Technical Requirements**
 
@@ -69,19 +69,19 @@ weeklyDigest: boolean().default(true).notNull(),
 
 ## 📊 **Definition of Done**
 
-- [ ] Migration applied successfully to database
-- [ ] Preferences save and load correctly
-- [ ] No console errors or type errors
-- [ ] Settings persist after logout/login
-- [ ] Default values work for new users
+- [x] Migration applied successfully to database
+- [x] Preferences save and load correctly
+- [x] No console errors or type errors
+- [x] Settings persist after logout/login
+- [x] Default values work for new users
 
 ## 🧪 **Testing Requirements**
 
-- [ ] Test new user gets correct defaults
-- [ ] Test preferences save and persist across sessions
-- [ ] Test each toggle saves independently
-- [ ] Test save button disabled states work correctly
-- [ ] Verify RLS policies allow users to update only their preferences
+- [x] Test new user gets correct defaults
+- [x] Test preferences save and persist across sessions
+- [x] Test each toggle saves independently
+- [x] Test save button disabled states work correctly
+- [x] Verify RLS policies allow users to update only their preferences
 
 ## 🚫 **Out of Scope**
 

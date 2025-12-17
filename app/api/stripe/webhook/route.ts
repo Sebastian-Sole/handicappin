@@ -24,6 +24,7 @@ import { verifyPaymentAmount, formatAmount } from "@/utils/billing/pricing";
 import { webhookRateLimit, getIdentifier } from "@/lib/rate-limit";
 import { shouldAlertAdmin, sendAdminWebhookAlert } from "@/lib/admin-alerts";
 import { sendWelcomeEmail } from "@/lib/email-service";
+import { logger } from "@/lib/logging";
 
 export async function POST(request: NextRequest) {
   let event: Stripe.Event | null = null; // Declare in outer scope for failure recording
@@ -35,7 +36,7 @@ export async function POST(request: NextRequest) {
       identifier
     );
 
-    console.log(`[Webhook] Rate limit check for ${identifier}:`, {
+    logger.debug(`[Webhook] Rate limit check for ${identifier}`, {
       success,
       limit,
       remaining,
@@ -45,9 +46,7 @@ export async function POST(request: NextRequest) {
     if (!success) {
       const retryAfterSeconds = Math.ceil((reset - Date.now()) / 1000);
 
-      console.warn(
-        `[Rate Limit] Webhook rate limit exceeded for ${identifier}`
-      );
+      logger.warn(`[Rate Limit] Webhook rate limit exceeded for ${identifier}`);
 
       return NextResponse.json(
         {
@@ -465,7 +464,8 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
         .limit(1);
 
       const oldPlan = userProfile[0]?.planSelected || "free";
-      const userEmail = userProfile[0]?.email;
+      // Get email from session.customer_details (email is in auth.users, not profile)
+      const userEmail = session.customer_details?.email || session.customer_email;
       const isFirstTimeSubscription = oldPlan === "free";
 
       // Update plan immediately (status fields updated by subscription.created event)
@@ -679,7 +679,8 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
           .limit(1);
 
         const oldPlan = userProfile[0]?.planSelected || "free";
-        const userEmail = userProfile[0]?.email;
+        // Get email from Stripe session (email is in auth.users, not profile)
+      const userEmail = session.customer_details?.email || session.customer_email;
         const isFirstTimePurchase = oldPlan === "free";
 
         try {
@@ -772,7 +773,8 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
           .limit(1);
 
         const oldPlan = userProfile[0]?.planSelected || "free";
-        const userEmail = userProfile[0]?.email;
+        // Get email from Stripe session (email is in auth.users, not profile)
+      const userEmail = session.customer_details?.email || session.customer_email;
         const isFirstTimePurchase = oldPlan === "free";
 
         try {
@@ -877,7 +879,22 @@ async function handlePaymentIntentSucceeded(
       .limit(1);
 
     const oldPlan = userProfile[0]?.planSelected || "free";
-    const userEmail = userProfile[0]?.email;
+    // Get email from payment intent receipt_email or fetch from checkout session
+    let userEmail = paymentIntent.receipt_email || undefined;
+
+    // Fallback: If no receipt_email, try to get email from the original checkout session
+    if (!userEmail && purchase.checkoutSessionId) {
+      try {
+        const checkoutSession = await stripe.checkout.sessions.retrieve(purchase.checkoutSessionId);
+        userEmail = checkoutSession.customer_details?.email || checkoutSession.customer_email || undefined;
+      } catch (sessionError) {
+        logWebhookWarning(`Could not retrieve checkout session for email fallback`, {
+          checkoutSessionId: purchase.checkoutSessionId,
+          error: sessionError instanceof Error ? sessionError.message : "Unknown error",
+        });
+      }
+    }
+
     const isFirstTimePurchase = oldPlan === "free";
 
     try {
@@ -1287,7 +1304,7 @@ async function handleDisputeCreated(dispute: Stripe.Dispute) {
     const currentPlan = userProfile[0]?.planSelected || "unknown";
 
     // Log security alert for manual review
-    console.error("🚨 SECURITY ALERT: Charge dispute filed", {
+    logger.error("🚨 SECURITY ALERT: Charge dispute filed", {
       disputeId,
       chargeId,
       userId,
@@ -1440,7 +1457,7 @@ async function handleSubscriptionChange(subscription: Stripe.Subscription) {
   });
 
   // Log subscription details BEFORE condition check
-  console.log("🔍 [Webhook] Subscription change details:", {
+  logger.debug("🔍 [Webhook] Subscription change details", {
     subscriptionId: subscription.id,
     userId,
     status: subscription.status,
@@ -1462,8 +1479,7 @@ async function handleSubscriptionChange(subscription: Stripe.Subscription) {
         cancelAtPeriodEnd: subscription.cancel_at_period_end,
       });
 
-      console.log("RECIEVED SUB: ");
-      console.log(subscription);
+      logger.debug("RECEIVED SUB", { subscription });
 
       // Check if subscription is set to cancel
       // Stripe can represent this in two ways:
@@ -1480,7 +1496,7 @@ async function handleSubscriptionChange(subscription: Stripe.Subscription) {
         billingVersion: sql`billing_version + 1`, // NEW: Increment version
       };
 
-      console.log("🔍 [Webhook] About to update profile with:", {
+      logger.debug("🔍 [Webhook] About to update profile with", {
         userId,
         cancelAtPeriodEnd_DB_Value: isCancelling,
         stripe_cancel_at_period_end: subscription.cancel_at_period_end,
@@ -1496,7 +1512,7 @@ async function handleSubscriptionChange(subscription: Stripe.Subscription) {
         .set(updateData)
         .where(eq(profile.id, userId));
 
-      console.log("🔍 [Webhook] Database update result:", result);
+      logger.debug("🔍 [Webhook] Database update result", { result });
 
       // Verify the update actually happened
       const verifyProfile = await db
@@ -1509,7 +1525,7 @@ async function handleSubscriptionChange(subscription: Stripe.Subscription) {
         .where(eq(profile.id, userId))
         .limit(1);
 
-      console.log("🔍 [Webhook] Verified database state after update:", {
+      logger.debug("🔍 [Webhook] Verified database state after update", {
         userId,
         dbState: verifyProfile[0],
       });
@@ -1523,15 +1539,12 @@ async function handleSubscriptionChange(subscription: Stripe.Subscription) {
       throw error;
     }
   } else {
-    console.log(
-      "⚠️ [Webhook] Skipping database update - subscription status not active/trialing:",
-      {
-        subscriptionId: subscription.id,
-        userId,
-        status: subscription.status,
-        cancelAtPeriodEnd: subscription.cancel_at_period_end,
-      }
-    );
+    logger.warn("⚠️ [Webhook] Skipping database update - subscription status not active/trialing", {
+      subscriptionId: subscription.id,
+      userId,
+      status: subscription.status,
+      cancelAtPeriodEnd: subscription.cancel_at_period_end,
+    });
   }
 }
 
@@ -1592,9 +1605,7 @@ async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
       .where(eq(profile.id, userId));
 
     logWebhookSuccess(`Reverted to free tier for user: ${userId}`);
-    console.log(
-      `📊 [Webhook] Billing version incremented for user ${userId} - BillingSync should detect within seconds`
-    );
+    logger.info(`📊 [Webhook] Billing version incremented for user ${userId} - BillingSync should detect within seconds`);
   } catch (error) {
     logWebhookError("Error reverting user to free tier", error);
     // Throw error to trigger webhook retry by Stripe

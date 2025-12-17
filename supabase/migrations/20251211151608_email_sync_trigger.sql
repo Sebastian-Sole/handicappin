@@ -1,0 +1,11 @@
+-- ============================================
+-- EMAIL SYNC TRIGGER - DEPRECATED
+-- Purpose: This migration is kept for historical purposes but does nothing.
+-- Email was removed from profile table - auth.users is the single source of truth.
+--
+-- The profile.email column and this trigger are removed by migration:
+-- 20251211161000_remove_profile_email.sql
+-- ============================================
+
+-- No-op migration - email sync is handled in edge functions
+-- Profile table no longer has an email column

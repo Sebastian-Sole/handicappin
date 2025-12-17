@@ -1,14 +1,5 @@
-import { Signup } from "@/components/auth/signup";
 import NotifyButton from "@/components/calculators/notify-button";
-import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogClose,
-  DialogContent,
-  DialogFooter,
-} from "@/components/ui/dialog";
 import { createServerComponentClient } from "@/utils/supabase/server";
-import { DialogTrigger } from "@radix-ui/react-dialog";
 
 const CalculatorsPage = async () => {
   const supabase = await createServerComponentClient();
@@ -31,33 +22,7 @@ const CalculatorsPage = async () => {
           get started, but we&apos;re making sure that we get it right. Stay
           tuned!
         </p>
-        {!user && (
-          <div className="mt-6">
-            <Dialog>
-              <DialogTrigger asChild>
-                <Button variant="secondary">
-                  Notify me when they are ready!
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="sm:max-w-md">
-                <div className="flex items-center space-x-2">
-                  <Signup
-                    description="Sign up for our newsletter, and an account to get started!"
-                    notify={true}
-                  />
-                </div>
-                <DialogFooter className="sm:justify-center">
-                  <DialogClose asChild>
-                    <Button type="button" variant="secondary">
-                      Close
-                    </Button>
-                  </DialogClose>
-                </DialogFooter>
-              </DialogContent>
-            </Dialog>
-          </div>
-        )}
-        {user && <NotifyButton user={user} />}
+        <NotifyButton user={user} />
       </div>
     </div>
   );

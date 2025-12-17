@@ -1,13 +1,15 @@
+import { logger } from "./logging";
+
 /**
  * Centralized logging utility for Stripe webhook events
- * Provides consistent emoji-based logging patterns
+ * Provides consistent emoji-based logging patterns with automatic PII redaction
  */
 
 /**
  * Log webhook receipt
  */
 export function logWebhookReceived(eventType: string) {
-  console.log(`📥 Received webhook event: ${eventType}`);
+  logger.info(`📥 Received webhook event: ${eventType}`);
 }
 
 /**
@@ -17,22 +19,19 @@ export function logWebhookSuccess(
   message: string,
   context?: Record<string, any>
 ) {
-  if (context) {
-    console.log(`✅ ${message}`, context);
-  } else {
-    console.log(`✅ ${message}`);
-  }
+  logger.info(`✅ ${message}`, context);
 }
 
 /**
  * Log webhook error
  */
 export function logWebhookError(message: string, error?: any) {
-  if (error) {
-    console.error(`❌ ${message}`, error);
-  } else {
-    console.error(`❌ ${message}`);
-  }
+  const errorContext = error
+    ? error instanceof Error
+      ? { error: error.message, stack: error.stack }
+      : error
+    : undefined;
+  logger.error(`❌ ${message}`, errorContext);
 }
 
 /**
@@ -42,37 +41,33 @@ export function logWebhookWarning(
   message: string,
   context?: Record<string, any>
 ) {
-  if (context) {
-    console.warn(`⚠️ ${message}`, context);
-  } else {
-    console.warn(`⚠️ ${message}`);
-  }
+  logger.warn(`⚠️ ${message}`, context);
 }
 
 /**
  * Log webhook debug info
  */
 export function logWebhookDebug(message: string, data: Record<string, any>) {
-  console.log(`🔍 ${message}`, data);
+  logger.debug(`🔍 ${message}`, data);
 }
 
 /**
  * Log webhook info
  */
 export function logWebhookInfo(message: string) {
-  console.log(`ℹ️ ${message}`);
+  logger.info(`ℹ️ ${message}`);
 }
 
 /**
  * Log payment-specific events
  */
 export function logPaymentEvent(message: string) {
-  console.log(`💳 ${message}`);
+  logger.info(`💳 ${message}`);
 }
 
 /**
  * Log subscription-specific events
  */
 export function logSubscriptionEvent(message: string) {
-  console.log(`📝 ${message}`);
+  logger.info(`📝 ${message}`);
 }

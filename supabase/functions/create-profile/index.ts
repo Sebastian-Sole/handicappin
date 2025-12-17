@@ -5,13 +5,7 @@
 // Setup type definitions for built-in Supabase Runtime APIs
 import { createClient } from "jsr:@supabase/supabase-js@2";
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
-
-export const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-};
+import { corsHeaders } from "../_shared/cors.ts";
 
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
@@ -25,13 +19,13 @@ Deno.serve(async (req: Request) => {
 
   try {
     // Parse the request body
-    const { email, name, handicapIndex, userId } = await req.json();
+    const { name, handicapIndex, userId } = await req.json();
 
     // Validate the input
-    if (!email || !name || !userId) {
+    if (!name || !userId) {
       return new Response(
         JSON.stringify({
-          error: "Missing required fields: email, name, or userId",
+          error: "Missing required fields: name or userId",
         }),
         {
           status: 400,
@@ -64,9 +58,9 @@ Deno.serve(async (req: Request) => {
     const supabase = createClient(supabaseUrl, supabaseServiceRoleKey);
 
     // Insert the profile into the database
+    // Note: email is stored in auth.users table only
     const { error } = await supabase.from("profile").insert([
       {
-        email,
         name,
         handicapIndex: handicapIndex || 54, // Default handicapIndex to 54 if not provided
         id: userId,

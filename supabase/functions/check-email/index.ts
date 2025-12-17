@@ -5,13 +5,7 @@
 // Setup type definitions for built-in Supabase Runtime APIs
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.47.16";
-
-export const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-};
+import { corsHeaders } from "../_shared/cors.ts";
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -58,23 +52,19 @@ Deno.serve(async (req) => {
 
   const supabase = createClient(supabaseUrl, supabaseServiceRoleKey);
 
-  const { data, error } = await supabase
-    .from("profile")
-    .select("email")
-    .eq("email", email)
-    .single();
-
-  console.log(data);
+  const { data: { users }, error } = await supabase.auth.admin.listUsers();
 
   if (error) {
-    console.error(error);
+    console.error("Error checking email:", error.message);
     return new Response(JSON.stringify({ exists: false }), {
       status: 200,
       headers: { "Content-Type": "application/json", ...corsHeaders },
     });
   }
 
-  return new Response(JSON.stringify({ exists: !!data }), {
+  const exists = users?.some(u => u.email === email) ?? false;
+
+  return new Response(JSON.stringify({ exists }), {
     status: 200,
     headers: { "Content-Type": "application/json", ...corsHeaders },
   });

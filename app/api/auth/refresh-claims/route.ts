@@ -1,5 +1,6 @@
 import { createServerComponentClient } from "@/utils/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
+import { logger } from "@/lib/logging";
 
 /**
  * POST /api/auth/refresh-claims
@@ -30,14 +31,14 @@ export async function POST(request: NextRequest) {
     } = await supabase.auth.getUser();
 
     if (userError || !user) {
-      console.error("JWT refresh failed: No authenticated user", userError);
+      logger.error("JWT refresh failed: No authenticated user", { error: userError?.message });
       return NextResponse.json(
         { error: "Unauthorized", message: "No authenticated user" },
         { status: 401 }
       );
     }
 
-    console.log(`🔄 JWT Refresh requested for user: ${user.id}`);
+    logger.info(`🔄 JWT Refresh requested for user: ${user.id}`);
 
     // Force token refresh by updating user metadata
     // This triggers Supabase to issue a new JWT with updated claims
@@ -49,7 +50,7 @@ export async function POST(request: NextRequest) {
     });
 
     if (error) {
-      console.error("JWT refresh failed:", error);
+      logger.error("JWT refresh failed", { error: error.message });
       return NextResponse.json(
         { error: "Refresh failed", message: error.message },
         { status: 500 }
@@ -58,7 +59,7 @@ export async function POST(request: NextRequest) {
 
     const billing = data.user?.app_metadata?.billing;
 
-    console.log("✅ JWT refresh successful:", {
+    logger.info("✅ JWT refresh successful", {
       user: user.id,
       billing,
     });
@@ -72,7 +73,9 @@ export async function POST(request: NextRequest) {
       { status: 200 }
     );
   } catch (error) {
-    console.error("JWT refresh error:", error);
+    logger.error("JWT refresh error", {
+      error: error instanceof Error ? error.message : "Unknown error",
+    });
     return NextResponse.json(
       {
         error: "Internal server error",
