@@ -101,7 +101,7 @@ export function getRelevantDifferentials(
  * Calculates the handicap index based on the given score differentials.
  */
 export function calculateHandicapIndex(scoreDifferentials: number[]): number {
-  const sortedDifferentials = scoreDifferentials.sort((a, b) => a - b);
+  const sortedDifferentials = [...scoreDifferentials].sort((a, b) => a - b);
   const relevantDiffs = getRelevantDifferentials(sortedDifferentials);
   const handicapCalculation =
     Math.round(

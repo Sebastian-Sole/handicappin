@@ -1,8 +1,8 @@
 import { z } from "zod";
 
 export const holeSchema = z.object({
-  id: z.number().or(z.undefined()),
-  teeId: z.number().or(z.undefined()),
+  id: z.number().optional(),
+  teeId: z.number().optional(),
   holeNumber: z.number().min(1).max(18),
   par: z.number().min(1).max(5),
   hcp: z.number().min(1).max(18),
@@ -10,7 +10,7 @@ export const holeSchema = z.object({
 });
 
 export const teeSchema = z.object({
-  id: z.number().or(z.undefined()),
+  id: z.number().optional(),
   name: z.string(),
   gender: z.enum(["mens", "ladies"]),
   courseRating18: z.number(),
@@ -28,11 +28,11 @@ export const teeSchema = z.object({
   distanceMeasurement: z.literal("meters").or(z.literal("yards")),
   approvalStatus: z.literal("approved").or(z.literal("pending")),
   holes: z.array(holeSchema).or(z.undefined()),
-  courseId: z.number().or(z.undefined()),
+  courseId: z.number().optional(),
 });
 
 export const courseSchema = z.object({
-  id: z.number().or(z.undefined()),
+  id: z.number().optional(),
   name: z.string(),
   approvalStatus: z.literal("pending").or(z.literal("approved")),
   tees: z
@@ -42,9 +42,9 @@ export const courseSchema = z.object({
 });
 
 export const scoreSchema = z.object({
-  id: z.number().or(z.undefined()),
-  roundId: z.number().or(z.undefined()),
-  holeId: z.number().or(z.undefined()),
+  id: z.number().optional(),
+  roundId: z.number().optional(),
+  holeId: z.number().optional(),
   strokes: z.number().min(0).max(99),
   hcpStrokes: z.number().min(0).max(99),
 });
