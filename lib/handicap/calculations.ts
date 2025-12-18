@@ -172,13 +172,11 @@ export function applyHandicapCaps(
     return newIndex;
   }
 
-  let cappedIndex = lowHandicapIndex;
+  let cappedIndex = newIndex;
   if (difference > SOFT_CAP_THRESHOLD) {
     const softCapIncrease =
       SOFT_CAP_THRESHOLD + (difference - SOFT_CAP_THRESHOLD) * 0.5;
     cappedIndex = lowHandicapIndex + softCapIncrease;
-  } else {
-    cappedIndex = newIndex;
   }
 
   return Math.min(cappedIndex, lowHandicapIndex + HARD_CAP_THRESHOLD);
