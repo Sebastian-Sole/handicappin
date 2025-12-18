@@ -52,17 +52,6 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
     }
 
-    // Environment check: only run in production
-    const vercelEnv = process.env.VERCEL_ENV || "development";
-    if (vercelEnv !== "production") {
-      logger.info("Cron skipped - not production environment", {
-        environment: vercelEnv,
-      });
-      return NextResponse.json({
-        message: `Cron only runs in production (current: ${vercelEnv})`,
-      });
-    }
-
     logger.info("Queue processor invoked");
 
     const supabase = createAdminClient();
