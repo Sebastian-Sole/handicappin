@@ -22,8 +22,8 @@ import {
   ESR_WINDOW_SIZE,
 } from "@/lib/handicap";
 
-const BATCH_SIZE = parseInt(env.HANDICAP_QUEUE_BATCH_SIZE);
-const MAX_RETRIES = parseInt(env.HANDICAP_MAX_RETRIES);
+const BATCH_SIZE = env.HANDICAP_QUEUE_BATCH_SIZE;
+const MAX_RETRIES = env.HANDICAP_MAX_RETRIES;
 
 interface QueueJob {
   id: number;
@@ -44,7 +44,10 @@ export async function GET(request: NextRequest) {
     const authHeader = request.headers.get("authorization");
     if (authHeader !== `Bearer ${env.HANDICAP_CRON_SECRET}`) {
       logger.warn("Unauthorized access attempt to process-handicap-queue", {
-        ip: request.headers.get("x-forwarded-for") || request.headers.get("x-real-ip") || "unknown",
+        ip:
+          request.headers.get("x-forwarded-for") ||
+          request.headers.get("x-real-ip") ||
+          "unknown",
       });
       return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
     }
@@ -52,7 +55,9 @@ export async function GET(request: NextRequest) {
     // Environment check: only run in production
     const vercelEnv = process.env.VERCEL_ENV || "development";
     if (vercelEnv !== "production") {
-      logger.info("Cron skipped - not production environment", { environment: vercelEnv });
+      logger.info("Cron skipped - not production environment", {
+        environment: vercelEnv,
+      });
       return NextResponse.json({
         message: `Cron only runs in production (current: ${vercelEnv})`,
       });
@@ -106,7 +111,8 @@ export async function GET(request: NextRequest) {
       failed,
     });
   } catch (error: unknown) {
-    const errorInstance = error instanceof Error ? error : new Error("Unknown error");
+    const errorInstance =
+      error instanceof Error ? error : new Error("Unknown error");
 
     logger.error("Queue processor error", {
       error: errorInstance.message,
@@ -119,10 +125,7 @@ export async function GET(request: NextRequest) {
       tags: { endpoint: "process-handicap-queue" },
     });
 
-    return NextResponse.json(
-      { error: errorInstance.message },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: errorInstance.message }, { status: 500 });
   }
 }
 
@@ -399,16 +402,13 @@ async function processUserHandicap(
       adjustedPlayedScore: pr.adjustedPlayedScore,
     }));
 
-    const { error: rpcError } = await supabase.rpc(
-      "process_handicap_updates",
-      {
-        round_updates: roundUpdates,
-        user_id: userId,
-        new_handicap_index:
-          processedRounds[processedRounds.length - 1].updatedHandicapIndex,
-        queue_job_id: job.id,
-      }
-    );
+    const { error: rpcError } = await supabase.rpc("process_handicap_updates", {
+      round_updates: roundUpdates,
+      user_id: userId,
+      new_handicap_index:
+        processedRounds[processedRounds.length - 1].updatedHandicapIndex,
+      queue_job_id: job.id,
+    });
 
     if (rpcError) {
       throw rpcError;
@@ -417,10 +417,12 @@ async function processUserHandicap(
     logger.info("Successfully processed handicap for user", {
       userId,
       roundsProcessed: processedRounds.length,
-      finalHandicapIndex: processedRounds[processedRounds.length - 1].updatedHandicapIndex,
+      finalHandicapIndex:
+        processedRounds[processedRounds.length - 1].updatedHandicapIndex,
     });
   } catch (error: unknown) {
-    const errorInstance = error instanceof Error ? error : new Error("Unknown error");
+    const errorInstance =
+      error instanceof Error ? error : new Error("Unknown error");
 
     // Handle failure: update queue entry with error
     logger.error("Failed to process user handicap", {
@@ -458,9 +460,10 @@ async function processUserHandicap(
         })
         .eq("id", job.id);
     } catch (updateError) {
-      const updateErrorInstance = updateError instanceof Error
-        ? updateError
-        : new Error("Unknown update error");
+      const updateErrorInstance =
+        updateError instanceof Error
+          ? updateError
+          : new Error("Unknown update error");
 
       logger.error("Failed to update error status in queue", {
         jobId: job.id,
