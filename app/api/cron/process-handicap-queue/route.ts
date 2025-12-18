@@ -43,6 +43,8 @@ export async function GET(request: NextRequest) {
     // Verify cron secret
     const authHeader = request.headers.get("authorization");
     if (authHeader !== `Bearer ${env.HANDICAP_CRON_SECRET}`) {
+      console.log("authHeader", authHeader);
+      console.log("env.HANDICAP_CRON_SECRET", env.HANDICAP_CRON_SECRET);
       logger.warn("Unauthorized access attempt to process-handicap-queue", {
         ip:
           request.headers.get("x-forwarded-for") ||
@@ -50,17 +52,6 @@ export async function GET(request: NextRequest) {
           "unknown",
       });
       return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
-    }
-
-    // Environment check: only run in production
-    const vercelEnv = process.env.VERCEL_ENV || "development";
-    if (vercelEnv !== "production") {
-      logger.info("Cron skipped - not production environment", {
-        environment: vercelEnv,
-      });
-      return NextResponse.json({
-        message: `Cron only runs in production (current: ${vercelEnv})`,
-      });
     }
 
     logger.info("Queue processor invoked");
