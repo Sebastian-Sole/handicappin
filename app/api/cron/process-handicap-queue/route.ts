@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/utils/supabase/admin";
 import { env } from "@/env";
+import { logger } from "@/lib/logging";
+import { captureSentryError } from "@/lib/sentry-utils";
 import {
   calculateHandicapIndex,
   calculateScoreDifferential,
@@ -32,7 +34,7 @@ interface QueueJob {
 
 /**
  * Handicap Queue Processor
- * Run via Vercel Cron: * * * * * (every minute)
+ * Run via external cron service (every minute)
  *
  * Authenticated via HANDICAP_CRON_SECRET environment variable.
  */
@@ -41,11 +43,22 @@ export async function GET(request: NextRequest) {
     // Verify cron secret
     const authHeader = request.headers.get("authorization");
     if (authHeader !== `Bearer ${env.HANDICAP_CRON_SECRET}`) {
-      console.warn("Unauthorized access attempt to process-handicap-queue");
+      logger.warn("Unauthorized access attempt to process-handicap-queue", {
+        ip: request.headers.get("x-forwarded-for") || request.headers.get("x-real-ip") || "unknown",
+      });
       return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
     }
 
-    console.log("Queue processor invoked");
+    // Environment check: only run in production
+    const vercelEnv = process.env.VERCEL_ENV || "development";
+    if (vercelEnv !== "production") {
+      logger.info("Cron skipped - not production environment", { environment: vercelEnv });
+      return NextResponse.json({
+        message: `Cron only runs in production (current: ${vercelEnv})`,
+      });
+    }
+
+    logger.info("Queue processor invoked");
 
     const supabase = createAdminClient();
 
@@ -62,14 +75,14 @@ export async function GET(request: NextRequest) {
     }
 
     if (!pendingJobs || pendingJobs.length === 0) {
-      console.log("No pending jobs in queue");
+      logger.info("No pending jobs in queue");
       return NextResponse.json({
         message: "No pending jobs",
         processed: 0,
       });
     }
 
-    console.log(`Processing ${pendingJobs.length} users from queue`);
+    logger.info("Processing users from queue", { count: pendingJobs.length });
 
     // Process all jobs in parallel using Promise.allSettled
     const results = await Promise.allSettled(
@@ -80,9 +93,11 @@ export async function GET(request: NextRequest) {
     const succeeded = results.filter((r) => r.status === "fulfilled").length;
     const failed = results.filter((r) => r.status === "rejected").length;
 
-    console.log(
-      `Queue processing complete: ${succeeded} succeeded, ${failed} failed`
-    );
+    logger.info("Queue processing complete", {
+      total: pendingJobs.length,
+      succeeded,
+      failed,
+    });
 
     return NextResponse.json({
       message: "Queue processing complete",
@@ -91,11 +106,21 @@ export async function GET(request: NextRequest) {
       failed,
     });
   } catch (error: unknown) {
-    console.error("Queue processor error:", error);
-    const errorMessage =
-      error instanceof Error ? error.message : "Unknown error";
+    const errorInstance = error instanceof Error ? error : new Error("Unknown error");
+
+    logger.error("Queue processor error", {
+      error: errorInstance.message,
+      stack: errorInstance.stack,
+    });
+
+    captureSentryError(errorInstance, {
+      level: "error",
+      eventType: "handicap_queue_processor",
+      tags: { endpoint: "process-handicap-queue" },
+    });
+
     return NextResponse.json(
-      { error: errorMessage },
+      { error: errorInstance.message },
       { status: 500 }
     );
   }
@@ -106,11 +131,15 @@ export async function GET(request: NextRequest) {
  * Uses shared utilities from lib/handicap
  */
 async function processUserHandicap(
-  supabase: any,
+  supabase: ReturnType<typeof createAdminClient>,
   job: QueueJob
 ): Promise<void> {
   try {
-    console.log(`Processing user ${job.user_id}, attempt ${job.attempts + 1}`);
+    logger.info("Processing user handicap", {
+      userId: job.user_id,
+      attempt: job.attempts + 1,
+      eventType: job.event_type,
+    });
 
     const userId = job.user_id;
 
@@ -165,7 +194,10 @@ async function processUserHandicap(
         throw rpcError;
       }
 
-      console.log(`No approved rounds for user ${userId}, handicap set to max`);
+      logger.info("No approved rounds for user, handicap set to max", {
+        userId,
+        maxHandicap: MAX_SCORE_DIFFERENTIAL,
+      });
       return;
     }
 
@@ -367,7 +399,7 @@ async function processUserHandicap(
       adjustedPlayedScore: pr.adjustedPlayedScore,
     }));
 
-    const { data: rpcResult, error: rpcError } = await supabase.rpc(
+    const { error: rpcError } = await supabase.rpc(
       "process_handicap_updates",
       {
         round_updates: roundUpdates,
@@ -382,13 +414,36 @@ async function processUserHandicap(
       throw rpcError;
     }
 
-    console.log(`Successfully processed handicap for user ${userId}`);
+    logger.info("Successfully processed handicap for user", {
+      userId,
+      roundsProcessed: processedRounds.length,
+      finalHandicapIndex: processedRounds[processedRounds.length - 1].updatedHandicapIndex,
+    });
   } catch (error: unknown) {
-    // Handle failure: update queue entry with error
-    console.error(`Failed to process user ${job.user_id}:`, error);
+    const errorInstance = error instanceof Error ? error : new Error("Unknown error");
 
-    const errorMessage =
-      error instanceof Error ? error.message : "Unknown error";
+    // Handle failure: update queue entry with error
+    logger.error("Failed to process user handicap", {
+      userId: job.user_id,
+      attempt: job.attempts + 1,
+      error: errorInstance.message,
+    });
+
+    // Capture to Sentry for monitoring
+    captureSentryError(errorInstance, {
+      level: "error",
+      userId: job.user_id,
+      eventType: "handicap_calculation_failed",
+      tags: {
+        job_id: job.id.toString(),
+        attempt: (job.attempts + 1).toString(),
+      },
+      extra: {
+        event_type: job.event_type,
+      },
+    });
+
+    const errorMessage = errorInstance.message;
     const newAttempts = job.attempts + 1;
     const newStatus = newAttempts >= MAX_RETRIES ? "failed" : "pending";
 
@@ -403,10 +458,20 @@ async function processUserHandicap(
         })
         .eq("id", job.id);
     } catch (updateError) {
-      console.error(
-        `Failed to update error status for job ${job.id} in handicap_calculation_queue:`,
-        updateError
-      );
+      const updateErrorInstance = updateError instanceof Error
+        ? updateError
+        : new Error("Unknown update error");
+
+      logger.error("Failed to update error status in queue", {
+        jobId: job.id,
+        error: updateErrorInstance.message,
+      });
+
+      captureSentryError(updateErrorInstance, {
+        level: "error",
+        eventType: "queue_update_failed",
+        tags: { job_id: job.id.toString() },
+      });
     }
 
     // Re-throw so Promise.allSettled marks as rejected
