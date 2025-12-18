@@ -43,8 +43,6 @@ export async function GET(request: NextRequest) {
     // Verify cron secret
     const authHeader = request.headers.get("authorization");
     if (authHeader !== `Bearer ${env.HANDICAP_CRON_SECRET}`) {
-      console.log("authHeader", authHeader);
-      console.log("env.HANDICAP_CRON_SECRET", env.HANDICAP_CRON_SECRET);
       logger.warn("Unauthorized access attempt to process-handicap-queue", {
         ip:
           request.headers.get("x-forwarded-for") ||
