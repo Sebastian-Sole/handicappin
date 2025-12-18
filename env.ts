@@ -31,8 +31,8 @@ export const env = createEnv({
     STRIPE_CRON_SECRET: z.string().min(1),
 
     // Optional handicap queue configuration
-    HANDICAP_QUEUE_BATCH_SIZE: z.string().default("25"),
-    HANDICAP_MAX_RETRIES: z.string().default("3"),
+    HANDICAP_QUEUE_BATCH_SIZE: z.coerce.number().int().positive().default(25),
+    HANDICAP_MAX_RETRIES: z.coerce.number().int().positive().default(3),
 
     NODE_ENV: z
       .enum(["development", "test", "production"])
