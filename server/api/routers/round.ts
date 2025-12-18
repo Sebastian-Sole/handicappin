@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { createTRPCRouter, authedProcedure } from "@/server/api/trpc";
 import { round, score, profile, teeInfo, course, hole } from "@/db/schema";
-import { eq, and, sql } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 
 import { db } from "@/db";
 import { Scorecard, scorecardSchema } from "@/types/scorecard";
@@ -10,7 +10,7 @@ import {
   calculateCourseHandicap,
   calculateScoreDifferential,
   calculateAdjustedGrossScore,
-} from "@/utils/calculations/handicap";
+} from "@/lib/handicap";
 import { getComprehensiveUserAccess } from "@/utils/billing/access-control";
 import { TRPCError } from "@trpc/server";
 import { FREE_TIER_ROUND_LIMIT } from "@/utils/billing/constants";
@@ -56,7 +56,8 @@ const getRoundCalculations = (
     adjustedPlayedScore,
     courseHandicap,
     numberOfHolesPlayed,
-    teePlayed
+    teePlayed.holes,
+    scores
   );
 
   console.log("Adjusted gross score calculated");
@@ -175,7 +176,8 @@ export const roundRouter = createTRPCRouter({
       if (!access.hasAccess) {
         throw new TRPCError({
           code: "FORBIDDEN",
-          message: "Please select a plan to continue. Visit the onboarding page to get started.",
+          message:
+            "Please select a plan to continue. Visit the onboarding page to get started.",
         });
       }
 

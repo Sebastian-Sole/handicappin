@@ -9,7 +9,7 @@ import {
 } from "../ui/card";
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
-import { calculateScoreDifferential } from "@/utils/calculations/handicap";
+import { calculateScoreDifferential } from "@/lib/handicap";
 import {
   Tooltip,
   TooltipContent,

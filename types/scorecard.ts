@@ -3,8 +3,8 @@ import { Tables } from "./supabase";
 
 // Base schemas that handle both fetched data (positive IDs) and user-created data (ID: -1)
 export const holeSchema = z.object({
-  id: z.number().or(z.undefined()),
-  teeId: z.number().or(z.undefined()),
+  id: z.number().optional(),
+  teeId: z.number().optional(),
   holeNumber: z.number().min(1).max(18),
   par: z
     .number()
@@ -22,7 +22,7 @@ export const holeSchema = z.object({
 
 export const teeSchema = z
   .object({
-    id: z.number().or(z.undefined()),
+    id: z.number().optional(),
     name: z.string().min(1, "Tee name is required"),
     gender: z.enum(["mens", "ladies"]),
     courseRating18: z
@@ -79,7 +79,7 @@ export const teeSchema = z
       .array(holeSchema)
       .min(18, "All 18 holes must be defined")
       .or(z.undefined()),
-    courseId: z.number().or(z.undefined()),
+    courseId: z.number().optional(),
   })
   .superRefine((v, ctx) => {
     if (v.outPar + v.inPar !== v.totalPar) {
@@ -99,7 +99,7 @@ export const teeSchema = z
   });
 
 export const courseSchema = z.object({
-  id: z.number().or(z.undefined()),
+  id: z.number().optional(),
   name: z
     .string()
     .min(3, "Course name must be at least 3 characters")
@@ -115,9 +115,9 @@ export const courseSchema = z.object({
 });
 
 export const scoreSchema = z.object({
-  id: z.number().or(z.undefined()),
-  roundId: z.number().or(z.undefined()),
-  holeId: z.number().or(z.undefined()),
+  id: z.number().optional(),
+  roundId: z.number().optional(),
+  holeId: z.number().optional(),
   strokes: z.number().min(0).max(99),
   hcpStrokes: z.number().min(0).max(99),
 });

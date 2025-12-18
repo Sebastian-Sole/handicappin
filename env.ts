@@ -26,6 +26,14 @@ export const env = createEnv({
     ADMIN_ALERT_EMAILS: z.string(),
     RESET_TOKEN_SECRET: z.string(),
 
+    SUPABASE_SERVICE_ROLE_KEY: z.string().min(1),
+    HANDICAP_CRON_SECRET: z.string().min(1),
+    STRIPE_CRON_SECRET: z.string().min(1),
+
+    // Optional handicap queue configuration
+    HANDICAP_QUEUE_BATCH_SIZE: z.coerce.number().int().positive().default(25),
+    HANDICAP_MAX_RETRIES: z.coerce.number().int().positive().default(3),
+
     NODE_ENV: z
       .enum(["development", "test", "production"])
       .default("development"),
@@ -63,6 +71,11 @@ export const env = createEnv({
     REDIS_URL: process.env.REDIS_URL,
     ADMIN_ALERT_EMAILS: process.env.ADMIN_ALERT_EMAILS,
     RESET_TOKEN_SECRET: process.env.RESET_TOKEN_SECRET,
+    SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY,
+    HANDICAP_CRON_SECRET: process.env.HANDICAP_CRON_SECRET,
+    STRIPE_CRON_SECRET: process.env.STRIPE_CRON_SECRET,
+    HANDICAP_QUEUE_BATCH_SIZE: process.env.HANDICAP_QUEUE_BATCH_SIZE,
+    HANDICAP_MAX_RETRIES: process.env.HANDICAP_MAX_RETRIES,
     NODE_ENV: process.env.NODE_ENV,
     NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
     NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,

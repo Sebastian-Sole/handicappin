@@ -1,18 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
 import { reconcileStripeSubscriptions } from "@/lib/reconciliation/stripe-reconciliation";
 import { logger } from "@/lib/logging";
+import { env } from "@/env";
 
 /**
  * Daily reconciliation job
  * Run via Vercel Cron: 0 2 * * * (2 AM daily)
  *
- * Authenticated via CRON_SECRET environment variable.
+ * Authenticated via STRIPE_CRON_SECRET environment variable.
  */
 export async function GET(request: NextRequest) {
   try {
     // Verify cron secret
     const authHeader = request.headers.get("authorization");
-    if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+    if (authHeader !== `Bearer ${env.STRIPE_CRON_SECRET}`) {
       logger.error("[Reconciliation] Unauthorized cron request");
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }

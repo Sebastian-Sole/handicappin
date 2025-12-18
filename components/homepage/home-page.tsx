@@ -2,7 +2,7 @@ import { Tables } from "@/types/supabase";
 import { api } from "@/trpc/server";
 import Hero from "./hero";
 import React from "react";
-import { getRelevantRounds } from "@/utils/calculations/handicap";
+import { getRelevantRounds } from "@/lib/handicap";
 import HandicapTrendChartDisplay from "../charts/handicap-trend-chart-display";
 import ScoreBarChartDisplay from "../charts/score-bar-chart-display";
 import Link from "next/link";
