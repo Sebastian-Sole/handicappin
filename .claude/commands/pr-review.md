@@ -8,10 +8,9 @@ When this command is invoked:
 
 1. **Detect PR context automatically**:
 
-   - Check for PR number in environment: `PR_NUMBER` or `GITHUB_PR_NUMBER`
+   - Check for PR number in environment: `GITHUB_PR_NUMBER`
    - If not found, try: `gh pr view --json number -q .number` (if on PR branch)
-   - If still not found, check GitHub Actions context: `echo ${{ github.event.pull_request.number }}`
-   - Fallback: Get current branch and find associated PR: `gh pr list --head $(git branch --show-current) --json number -q '.[0].number'`
+   - Fallback: Get head ref and find associated PR: `gh pr list --head "${GITHUB_HEAD_REF:-${GITHUB_REF_NAME}}" --json number -q '.[0].number'`
 
 2. **Get PR information**:
 
@@ -60,7 +59,7 @@ When this command is invoked:
    ```bash
    # Read each file from the changed_files.txt list
    while IFS= read -r file; do
-     read_file "$file"  # Read complete file, no limit/offset
+     cat "$file"  # Read complete file
    done < changed_files.txt
    ```
 
@@ -70,7 +69,7 @@ When this command is invoked:
 2. **Understand file relationships**:
 
    - For each changed file, identify:
-     - What imports it (use grep: `grep -r "import.*filename" --include="*.ts" --include="*.tsx"`)
+     - What imports it (use Grep tool to search for: `import.*filename` with type filter for TypeScript files)
      - What it imports (read imports in the file)
      - What components/functions it uses
      - What components/functions use it
@@ -386,7 +385,6 @@ For each issue found, create a separate comment file:
 // Show the problematic code from the diff
 const problematicCode = "example";
 ```
-````
 
 **Suggested Fix**:
 
@@ -415,7 +413,6 @@ Context: This is part of PR #$PR_NUMBER
 </details>
 
 **Severity**: [Critical/Major/Minor/Optional]
-
 ````
 
 **Severity Guidelines**:
@@ -466,21 +463,25 @@ After completing the review, automatically post all comments:
    ```bash
    # Post critical issues first
    for file in comment_critical_*.md; do
+     [ -e "$file" ] || continue
      gh pr comment $PR_NUMBER --body-file "$file"
    done
 
    # Then major issues
    for file in comment_major_*.md; do
+     [ -e "$file" ] || continue
      gh pr comment $PR_NUMBER --body-file "$file"
    done
 
    # Then minor issues
    for file in comment_minor_*.md; do
+     [ -e "$file" ] || continue
      gh pr comment $PR_NUMBER --body-file "$file"
    done
 
    # Then optional issues
    for file in comment_optional_*.md; do
+     [ -e "$file" ] || continue
      gh pr comment $PR_NUMBER --body-file "$file"
    done
 
@@ -493,6 +494,20 @@ After completing the review, automatically post all comments:
 3. **Alternative: Post as review with approval/request changes**:
 
    ```bash
+   # Extract confidence score from review_summary.md
+   # Looks for patterns like "**3/5**" or "Confidence Score: 3/5"
+   CONFIDENCE_SCORE=$(grep -oP '(\*\*|Confidence Score: ?)\K[1-5](?=/5)' review_summary.md | head -1)
+
+   # Validate score is an integer between 1 and 5
+   if [[ ! "$CONFIDENCE_SCORE" =~ ^[1-5]$ ]]; then
+     echo "Error: Could not extract valid confidence score from review_summary.md"
+     echo "Expected format: **X/5** or 'Confidence Score: X/5' where X is 1-5"
+     echo "Defaulting to score of 3 (comment only, no approval/rejection)"
+     CONFIDENCE_SCORE=3
+   fi
+
+   echo "Confidence Score: $CONFIDENCE_SCORE/5"
+
    # If confidence score is 1 or 2, request changes
    if [ "$CONFIDENCE_SCORE" -le 2 ]; then
      gh pr review $PR_NUMBER --comment --body-file review_summary.md --request-changes

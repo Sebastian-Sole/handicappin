@@ -36,12 +36,15 @@ jobs:
         uses: anthropics/claude-code-action@v1
         env:
           # Make PR number available to the command
-          PR_NUMBER: ${{ github.event.pull_request.number }}
           GITHUB_PR_NUMBER: ${{ github.event.pull_request.number }}
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           # Use slash command to invoke the pr-review command file
           prompt: "/pr-review"
-          # Allow necessary GitHub CLI tools for PR operations
-          claude_args: '--allowed-tools "Bash(gh issue view:*),Bash(gh search:*),Bash(gh issue list:*),Bash(gh pr comment:*),Bash(gh pr diff:*),Bash(gh pr view:*),Bash(gh pr list:*),Bash(gh pr review:*)"'
+          # Allow necessary tools for PR operations
+          # - Bash commands for GitHub CLI
+          # - Task for spawning specialized agents (codebase-locator, codebase-analyzer, etc.)
+          # - File operations for reading/analyzing code
+          # - Package manager commands for security audits
+          claude_args: '--allowed-tools "Bash(gh issue view:*),Bash(gh search:*),Bash(gh issue list:*),Bash(gh pr comment:*),Bash(gh pr diff:*),Bash(gh pr view:*),Bash(gh pr list:*),Bash(gh pr review:*),Bash(git *),Bash(pnpm audit),Bash(npm audit),Task,Read,Grep,Glob,Write"'
 
