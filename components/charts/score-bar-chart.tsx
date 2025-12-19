@@ -31,20 +31,34 @@ const ScoreBarChart = ({ scores, className }: ScoreBarChartProps) => {
 
   // Find a nice range that covers the data with some padding
   const range = maxScore - minScore;
-  const padding = 9;
+  const padding = Math.max(2, range * 0.15); // At least 2 units padding, or 15% of range
+
+  // Calculate nice tick spacing (prefer 5, 10, or multiples of 5)
   const totalRange = range + padding * 2;
+  const roughSpacing = totalRange / 5; // Aim for ~5 intervals
+  let tickSpacing;
+  if (roughSpacing <= 2) {
+    tickSpacing = 1;
+  } else if (roughSpacing <= 5) {
+    tickSpacing = 2;
+  } else if (roughSpacing <= 10) {
+    tickSpacing = 5;
+  } else {
+    tickSpacing = Math.ceil(roughSpacing / 5) * 5; // Round to nearest 5
+  }
 
-  // Round to nearest 5 for cleaner tick spacing
-  const tickSpacing = Math.ceil(totalRange / 6 / 5) * 5;
+  // Calculate clean start value (round down to nearest tickSpacing)
+  const rawStartValue = Math.max(0, minScore - padding);
+  const startValue = Math.floor(rawStartValue / tickSpacing) * tickSpacing;
 
-  // Calculate start value to center the range nicely
-  const centerValue = (minScore + maxScore) / 2;
-  const startValue = centerValue - tickSpacing * 3; // 3 intervals below center
+  // Calculate clean end value (round up to nearest tickSpacing)
+  const rawEndValue = maxScore + padding;
+  const endValue = Math.ceil(rawEndValue / tickSpacing) * tickSpacing;
 
-  // Generate 7 evenly spaced ticks
+  // Generate evenly spaced ticks
   const tickValues = [];
-  for (let i = 0; i <= 6; i++) {
-    tickValues.push(startValue + i * tickSpacing);
+  for (let i = startValue; i <= endValue; i += tickSpacing) {
+    tickValues.push(Math.round(i * 10) / 10); // Round to 1 decimal to avoid floating point errors
   }
 
   return (
@@ -53,8 +67,8 @@ const ScoreBarChart = ({ scores, className }: ScoreBarChartProps) => {
         <div className={`aspect-video ${className}`}>
           <ChartContainer
             config={{
-              round: {
-                label: "Desktop",
+              score: {
+                label: "Score Differential",
                 color: "hsl(var(--chart-1))",
               },
             }}
@@ -62,25 +76,58 @@ const ScoreBarChart = ({ scores, className }: ScoreBarChartProps) => {
           >
             <BarChart accessibilityLayer data={scores}>
               <XAxis
-                dataKey="roundDate"
+                dataKey="key"
                 tickLine={false}
                 tickMargin={8}
                 axisLine={false}
-                tickFormatter={(value) => {
-                  const dateParts = value.split(/[-\/.\s]/);
-                  return `${dateParts[1]}/${dateParts[0]}`;
+                tickFormatter={(value, index) => {
+                  const dataPoint = scores[index];
+                  if (dataPoint?.roundDate) {
+                    const dateParts = dataPoint.roundDate.split(/[-\/.\s]/);
+                    return `${dateParts[1]}/${dateParts[0]}`;
+                  }
+                  return value;
                 }}
               />
               <ChartTooltip
                 cursor={false}
-                content={<ChartTooltipContent hideLabel />}
+                content={
+                  <ChartTooltipContent
+                    labelFormatter={(value, payload) => {
+                      if (payload && payload[0]?.payload) {
+                        const data = payload[0].payload;
+                        return `${data.roundDate} at ${data.roundTime}`;
+                      }
+                      return value;
+                    }}
+                    formatter={(value, _name, props) => {
+                      const color = props.payload.fill || colors.barActive;
+                      return (
+                        <div className="flex w-full items-center justify-between gap-2">
+                          <div className="flex items-center gap-2">
+                            <div
+                              className="h-2.5 w-2.5 shrink-0 rounded-[2px]"
+                              style={{ backgroundColor: color }}
+                            />
+                            <span className="text-muted-foreground">
+                              Score Differential
+                            </span>
+                          </div>
+                          <span className="font-mono font-medium tabular-nums text-foreground">
+                            {value}
+                          </span>
+                        </div>
+                      );
+                    }}
+                  />
+                }
               />
               <YAxis
                 dataKey="score"
                 tickLine={false}
                 tickMargin={8}
                 axisLine={false}
-                domain={[minScore - padding, maxScore + padding]}
+                domain={[startValue, endValue]}
                 ticks={tickValues}
               />
               <CartesianGrid strokeDasharray="5 5" />
