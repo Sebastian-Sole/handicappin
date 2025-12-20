@@ -14,7 +14,9 @@ import Link from "next/link";
 
 interface HandicapTrendChartDisplayProps {
   previousHandicaps: {
+    key: string;
     roundDate: string;
+    roundTime: string;
     handicap: number;
   }[];
   handicapIndex: number;

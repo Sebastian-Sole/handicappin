@@ -25,12 +25,17 @@ export const HomePage = async ({ profile }: HomepageProps) => {
   });
 
   let previousHandicaps: {
+    key: string;
     roundDate: string;
+    roundTime: string;
     handicap: number;
   }[] = [];
   let previousScores: {
+    key: string;
     roundDate: string;
+    roundTime: string;
     score: number;
+    influencesHcp?: boolean;
   }[] = [];
   let percentageChange = 0;
 

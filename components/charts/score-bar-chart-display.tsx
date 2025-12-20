@@ -13,7 +13,9 @@ import { Button } from "../ui/button";
 
 interface ScoreBarChartDisplayProps {
   previousScores: {
+    key: string;
     roundDate: string;
+    roundTime: string;
     score: number;
     influencesHcp?: boolean;
   }[];
