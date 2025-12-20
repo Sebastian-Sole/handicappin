@@ -18,24 +18,43 @@ interface DashboardProps {
 export function Dashboard({ profile, scorecards, header }: DashboardProps) {
   const isMounted = useMounted();
 
+  // Sort scorecards by teeTime before mapping (matches homepage behavior)
+  // Use round.id as secondary sort for stable ordering when teeTimes are identical
+  const sortedScorecards = [...scorecards].sort((a, b) => {
+    const timeComparison = new Date(a.teeTime).getTime() - new Date(b.teeTime).getTime();
+    if (timeComparison !== 0) return timeComparison;
+    // If teeTimes are equal, sort by round ID
+    return a.round.id - b.round.id;
+  });
+
+  // Take last 20 rounds for handicap calculation (matches homepage)
+  const last20Scorecards =
+    sortedScorecards.length > 20
+      ? sortedScorecards.slice(-20)
+      : sortedScorecards;
+
+  // Calculate relevant rounds from last 20 (matches homepage behavior)
   const relevantRoundsList = getRelevantRounds(
-    scorecards.map((scorecard) => scorecard.round)
+    last20Scorecards.map((scorecard) => scorecard.round)
   );
 
-  const sortedGraphData = scorecards
-    .map((scorecard) => ({
-      roundDate: new Date(scorecard.teeTime).toLocaleDateString(),
-      score: scorecard.round.adjustedGrossScore,
-      influencesHcp: relevantRoundsList.includes(scorecard.round),
-    }))
-    .sort((a, b) => {
-      return new Date(a.roundDate).getTime() - new Date(b.roundDate).getTime();
-    });
+  // Take last 10 rounds for display
+  const recentScorecards =
+    sortedScorecards.length > 10
+      ? sortedScorecards.slice(-10)
+      : sortedScorecards;
 
-  const graphData =
-    sortedGraphData.length >= 21
-      ? sortedGraphData.slice(-21, -1)
-      : sortedGraphData;
+  // Map to graph data
+  const graphData = recentScorecards.map((scorecard) => ({
+    key: `${scorecard.round.id}`, // Unique key for recharts
+    roundDate: new Date(scorecard.teeTime).toLocaleDateString(),
+    roundTime: new Date(scorecard.teeTime).toLocaleTimeString([], {
+      hour: "2-digit",
+      minute: "2-digit",
+    }),
+    score: scorecard.round.scoreDifferential,
+    influencesHcp: relevantRoundsList.includes(scorecard.round),
+  }));
 
   if (!isMounted) return <DashboardSkeleton />;
 

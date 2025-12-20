@@ -98,6 +98,7 @@ export const roundRouter = createTRPCRouter({
         .select(`*`)
         .eq("userId", input.userId)
         .order("teeTime", { ascending: false }) // Order by teeTime in descending order
+        .order("id", { ascending: false }) // Secondary sort by id for stable ordering
         .range(input.startIndex, input.startIndex + input.amount - 1);
 
       if (error) {

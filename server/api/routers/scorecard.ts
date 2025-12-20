@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { createTRPCRouter, publicProcedure } from "../trpc";
-import { eq, inArray } from "drizzle-orm";
+import { eq, inArray, asc } from "drizzle-orm";
 import { db } from "@/db";
 import { course, round, teeInfo, hole, score } from "@/db/schema";
 import { scorecardSchema, ScorecardWithRound } from "@/types/scorecard";
@@ -101,7 +101,8 @@ export const scorecardRouter = createTRPCRouter({
       const rounds = await db
         .select()
         .from(round)
-        .where(eq(round.userId, userId));
+        .where(eq(round.userId, userId))
+        .orderBy(asc(round.teeTime), asc(round.id)); // Order by teeTime, then id for stable ordering
       if (!rounds.length) return [];
 
       // 2. Fetch all courseIds, teeIds, roundIds

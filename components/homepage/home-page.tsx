@@ -38,26 +38,40 @@ export const HomePage = async ({ profile }: HomepageProps) => {
   let bestRoundTee: Tables<"teeInfo"> | null = null;
   let relevantRoundsList: Tables<"round">[] = [];
   if (bestRound !== null) {
-    previousHandicaps = rounds
-      .sort((a, b) => {
-        return new Date(a.teeTime).getTime() - new Date(b.teeTime).getTime();
-      })
+    // Sort rounds chronologically before any processing
+    // Use round.id as secondary sort for stable ordering when teeTimes are identical
+    const sortedRounds = [...rounds].sort((a, b) => {
+      const timeComparison = new Date(a.teeTime).getTime() - new Date(b.teeTime).getTime();
+      if (timeComparison !== 0) return timeComparison;
+      // If teeTimes are equal, sort by round ID
+      return a.id - b.id;
+    });
+
+    // Calculate relevant rounds from chronologically sorted rounds
+    relevantRoundsList = getRelevantRounds(sortedRounds);
+
+    previousHandicaps = sortedRounds
       .slice(-10)
       .map((round) => ({
+        key: `${round.id}`, // Unique key for recharts
         roundDate: new Date(round.teeTime).toLocaleDateString(),
+        roundTime: new Date(round.teeTime).toLocaleTimeString([], {
+          hour: "2-digit",
+          minute: "2-digit",
+        }),
         handicap: round.updatedHandicapIndex,
       }));
 
-    relevantRoundsList = getRelevantRounds(rounds);
-
-    previousScores = rounds
-      .sort((a, b) => {
-        return new Date(a.teeTime).getTime() - new Date(b.teeTime).getTime();
-      })
+    previousScores = sortedRounds
       .slice(-10)
       .map((round) => ({
+        key: `${round.id}`, // Unique key for recharts
         roundDate: new Date(round.teeTime).toLocaleDateString(),
-        score: round.adjustedGrossScore,
+        roundTime: new Date(round.teeTime).toLocaleTimeString([], {
+          hour: "2-digit",
+          minute: "2-digit",
+        }),
+        score: round.scoreDifferential,
         influencesHcp: relevantRoundsList.includes(round),
       }));
 

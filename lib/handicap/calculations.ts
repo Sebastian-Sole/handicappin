@@ -257,37 +257,33 @@ export function addHcpStrokesToScores(
 
 /**
  * Retrieves the rounds which contribute to the handicap index calculation based on the number of rounds provided.
+ * Note: This function creates a sorted copy and does not mutate the input array.
  */
 export function getRelevantRounds(rounds: Tables<"round">[]) {
+  // Create a copy to avoid mutating the input array
+  // Use round.id as secondary sort for stable ordering when scoreDifferentials are identical
+  const sortedRounds = [...rounds].sort((a, b) => {
+    const diffComparison = a.scoreDifferential - b.scoreDifferential;
+    if (diffComparison !== 0) return diffComparison;
+    // If scoreDifferentials are equal, sort by round ID (chronological)
+    return a.id - b.id;
+  });
+
   if (rounds.length <= 5) {
-    return rounds.sort((a, b) => a.scoreDifferential - b.scoreDifferential);
+    return sortedRounds.slice(0, 1);
   } else if (rounds.length >= 6 && rounds.length <= 8) {
-    return rounds
-      .sort((a, b) => a.scoreDifferential - b.scoreDifferential)
-      .slice(0, 2);
+    return sortedRounds.slice(0, 2);
   } else if (rounds.length >= 9 && rounds.length <= 11) {
-    return rounds
-      .sort((a, b) => a.scoreDifferential - b.scoreDifferential)
-      .slice(0, 3);
+    return sortedRounds.slice(0, 3);
   } else if (rounds.length >= 12 && rounds.length <= 14) {
-    return rounds
-      .sort((a, b) => a.scoreDifferential - b.scoreDifferential)
-      .slice(0, 4);
+    return sortedRounds.slice(0, 4);
   } else if (rounds.length >= 15 && rounds.length <= 16) {
-    return rounds
-      .sort((a, b) => a.scoreDifferential - b.scoreDifferential)
-      .slice(0, 5);
+    return sortedRounds.slice(0, 5);
   } else if (rounds.length >= 17 && rounds.length <= 18) {
-    return rounds
-      .sort((a, b) => a.scoreDifferential - b.scoreDifferential)
-      .slice(0, 6);
+    return sortedRounds.slice(0, 6);
   } else if (rounds.length === 19) {
-    return rounds
-      .sort((a, b) => a.scoreDifferential - b.scoreDifferential)
-      .slice(0, 7);
+    return sortedRounds.slice(0, 7);
   } else {
-    return rounds
-      .sort((a, b) => a.scoreDifferential - b.scoreDifferential)
-      .slice(0, 8);
+    return sortedRounds.slice(0, 8);
   }
 }

@@ -28,7 +28,9 @@ const ScoreBarChartDisplay = ({
     <Card>
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
         <div className="flex items-center gap-4 justify-between w-full">
-          <CardTitle className="sm:text-2xl text-xl">Previous Scores</CardTitle>
+          <CardTitle className="sm:text-2xl text-xl">
+            Score Differential
+          </CardTitle>
           <ScoreLegend showLegend={previousScores.length >= 5} />
         </div>
       </CardHeader>
