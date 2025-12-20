@@ -35,7 +35,7 @@ function BarchartChart(props: any) {
             axisLine={false}
             tickFormatter={(value) => {
               const dateParts = value.split(/[-\/.\s]/);
-              return `${dateParts[0]}/${dateParts[1]}`;
+              return `${dateParts[1]}/${dateParts[0]}`;
             }}
           />
           <ChartTooltip
@@ -87,7 +87,7 @@ function LinechartChart({ data, className, isPositive }: LinechartChartProps) {
             tickMargin={8}
             tickFormatter={(value) => {
               const dateParts = value.split(/[-\/.\s]/);
-              return `${dateParts[0]}/${dateParts[1]}`;
+              return `${dateParts[1]}/${dateParts[0]}`;
             }}
           />
           <YAxis

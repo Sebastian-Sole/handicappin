@@ -13,7 +13,9 @@ import { useThemeColors } from "@/utils/theme-colors";
 
 interface HandicapTrendChartProps {
   previousHandicaps: {
+    key: string;
     roundDate: string;
+    roundTime: string;
     handicap: number;
   }[];
   isPositive: boolean;
@@ -82,7 +84,7 @@ const HandicapTrendChart = ({
                   const dataPoint = previousHandicaps[index];
                   if (dataPoint?.roundDate) {
                     const dateParts = dataPoint.roundDate.split(/[-\/.\s]/);
-                    return `${dateParts[0]}/${dateParts[1]}`;
+                    return `${dateParts[1]}/${dateParts[0]}`;
                   }
                   return value;
                 }}

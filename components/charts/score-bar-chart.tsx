@@ -15,7 +15,9 @@ import { useThemeColors } from "@/utils/theme-colors";
 
 interface ScoreBarChartProps {
   scores: {
+    key: string;
     roundDate: string;
+    roundTime: string;
     score: number;
     influencesHcp?: boolean;
   }[];
