@@ -49,11 +49,22 @@ export function Signup({
       toast({
         title: "Verification email sent",
         description:
-          "Please check your email to verify your account before logging in.",
+          "Please check your email and enter the verification code.",
       });
-      router.push("/login");
+      router.push(`/verify-signup?email=${encodeURIComponent(values.email)}`);
     } catch (error: any) {
       console.error("Error during sign up:", error);
+
+      // Handle specific error cases
+      if (error.message.includes("Email already in use. Please login.")) {
+        toast({
+          title: "Email already in use",
+          description: "This email is already verified. Please login instead.",
+          variant: "destructive",
+        });
+        return;
+      }
+
       if (
         error.message.includes(
           `duplicate key value violates unique constraint "profile_email_key"`
@@ -62,12 +73,15 @@ export function Signup({
         toast({
           title: "Error signing up",
           description: "Email already in use. Please login.",
+          variant: "destructive",
         });
         return;
       }
+
       toast({
         title: "Error signing up",
         description: error.message || "An error occurred during sign up.",
+        variant: "destructive",
       });
     }
     if (notify) {

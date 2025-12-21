@@ -20,7 +20,9 @@ if (!JWT_SECRET || !RESEND_API_KEY) {
 }
 
 const resend = new Resend(RESEND_API_KEY);
-const FROM_EMAIL = "Handicappin' <sebastiansole@handicappin.com>";
+const FROM_EMAIL =
+  Deno.env.get("RESEND_FROM_EMAIL") ||
+  "Handicappin' <sebastiansole@handicappin.com>";
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {

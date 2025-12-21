@@ -18,6 +18,38 @@ export const signUpUser = async (values: signupSchema) => {
   });
 
   if (signupError) {
+    // Check if email already exists but is unconfirmed
+    if (signupError.message.includes("User already registered")) {
+      // Attempt to resend verification email for unconfirmed user
+      const PROJECT_ID = process.env.NEXT_PUBLIC_SUPABASE_URL;
+      const resendUrl = `${PROJECT_ID}/functions/v1/resend-verification-otp`;
+
+      const resendResponse = await fetch(resendUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email: values.email }),
+      });
+
+      if (resendResponse.ok) {
+        const { success, error: resendError } = await resendResponse.json();
+
+        if (success) {
+          // Successfully resent verification to unconfirmed account
+          return;
+        }
+
+        // If resend failed due to already verified, throw original error
+        if (resendError?.includes("already verified")) {
+          throw new Error("Email already in use. Please login.");
+        }
+      }
+
+      // For any other case, throw a user-friendly error
+      throw new Error("Email already in use. If you haven't verified your email, please check your inbox.");
+    }
+
     throw signupError;
   }
 

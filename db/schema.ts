@@ -581,3 +581,34 @@ export const pendingEmailChanges = pgTable(
 
 export const pendingEmailChangesSchema = createSelectSchema(pendingEmailChanges);
 export type PendingEmailChange = InferSelectModel<typeof pendingEmailChanges>;
+
+// OTP verifications table - unified table for all OTP types
+export const otpVerifications = pgTable(
+  "otp_verifications",
+  {
+    id: uuid().defaultRandom().primaryKey(),
+    userId: uuid("user_id"), // Nullable for signup (user doesn't exist yet)
+    email: text("email").notNull(),
+    otpHash: text("otp_hash").notNull(), // SHA-256 hash of the OTP
+    otpType: text("otp_type").$type<"signup" | "email_change" | "password_reset">().notNull(),
+    expiresAt: timestamp("expires_at").notNull(),
+    verified: boolean("verified").default(false).notNull(),
+    verificationAttempts: integer("verification_attempts").default(0).notNull(),
+    createdAt: timestamp("created_at")
+      .default(sql`CURRENT_TIMESTAMP`)
+      .notNull(),
+    verifiedAt: timestamp("verified_at"),
+    requestIp: text("request_ip"),
+
+    // Metadata for different OTP types (JSONB)
+    metadata: text("metadata"), // JSON string for type-specific data
+  },
+  (table) => [
+    index("otp_verifications_email_type_idx").on(table.email, table.otpType),
+    index("otp_verifications_expires_at_idx").on(table.expiresAt),
+    // Note: No RLS - accessed only by service role in edge functions
+  ]
+);
+
+export const otpVerificationsSchema = createSelectSchema(otpVerifications);
+export type OtpVerification = InferSelectModel<typeof otpVerifications>;

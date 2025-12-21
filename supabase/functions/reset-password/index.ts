@@ -24,7 +24,7 @@ serve(async (req) => {
   console.log("Reset password request");
 
   const supabaseUrl =
-      Deno.env.get("SUPABASE_URL") ?? Deno.env.get("LOCAL_SUPABASE_URL");
+    Deno.env.get("SUPABASE_URL") ?? Deno.env.get("LOCAL_SUPABASE_URL");
   const supabaseServiceRoleKey =
     Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ??
     Deno.env.get("LOCAL_SUPABASE_SERVICE_ROLE_KEY");
@@ -36,7 +36,7 @@ serve(async (req) => {
       {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
-      },
+      }
     );
   }
 
@@ -66,7 +66,7 @@ serve(async (req) => {
       new TextEncoder().encode(JWT_SECRET), // Convert JWT_SECRET to Uint8Array
       { name: "HMAC", hash: "SHA-256" }, // Algorithm settings
       false, // Whether the key is extractable
-      ["sign", "verify"], // Key usage
+      ["sign", "verify"] // Key usage
     );
 
     try {
@@ -86,11 +86,15 @@ serve(async (req) => {
     const resetLink = `${resetLinkBase}?token=${token}&email=${email}`;
 
     const emailHtml = render(
-      ResetPasswordEmail({ resetLink, username: email }),
+      ResetPasswordEmail({ resetLink, username: email })
     );
 
+    const FROM_EMAIL =
+      Deno.env.get("RESEND_FROM_EMAIL") ||
+      "Handicappin' <sebastiansole@handicappin.com>";
+
     await resend.emails.send({
-      from: "Handicappin' <sebastiansole@handicappin.com>",
+      from: FROM_EMAIL,
       to: email,
       subject: "Reset Password Request",
       html: emailHtml,

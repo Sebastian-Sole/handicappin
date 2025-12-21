@@ -37,7 +37,7 @@ export default function RootLayout({
               <BillingSync />
 
               <Navbar />
-              <section className="pt-16 grow bg-background">{children}</section>
+              <section className="pt-16 grow bg-background flex flex-col">{children}</section>
               <Footer />
               <Toaster />
             </ThemeProvider>
