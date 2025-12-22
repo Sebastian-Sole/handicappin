@@ -554,6 +554,7 @@ export const pendingEmailChanges = pgTable(
     oldEmail: text("old_email").notNull(),
     newEmail: text("new_email").notNull(),
     tokenHash: text("token_hash").notNull(),
+    cancelToken: text("cancel_token"),
     expiresAt: timestamp("expires_at").notNull(),
     createdAt: timestamp("created_at")
       .default(sql`CURRENT_TIMESTAMP`)
@@ -570,6 +571,7 @@ export const pendingEmailChanges = pgTable(
       .onUpdate("cascade")
       .onDelete("cascade"),
     index("pending_email_changes_token_hash_idx").on(table.tokenHash),
+    index("pending_email_changes_cancel_token_idx").on(table.cancelToken),
     pgPolicy("Users can view their own pending email changes", {
       as: "permissive",
       for: "select",
