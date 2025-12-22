@@ -23,6 +23,12 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Check, AlertCircle } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useSearchParams, useRouter } from "next/navigation";
+import {
+  InputOTP,
+  InputOTPGroup,
+  InputOTPSlot,
+} from "@/components/ui/input-otp";
+import { verifyEmailChangeOtp } from "@/app/actions/email-change";
 
 interface PersonalInformationTabProps {
   authUser: User;
@@ -76,6 +82,11 @@ export function PersonalInformationTab({
   const [showCancelSuccess, setShowCancelSuccess] = useState(false);
   const [showVerifySuccess, setShowVerifySuccess] = useState(false);
   const [lastResendTime, setLastResendTime] = useState<number | null>(null);
+  const [showOtpInput, setShowOtpInput] = useState(false);
+  const [otp, setOtp] = useState("");
+  const [isVerifying, setIsVerifying] = useState(false);
+  const [otpError, setOtpError] = useState("");
+  const [isVerified, setIsVerified] = useState(false);
   const supabase = createClientComponentClient();
   const utils = api.useUtils();
 
@@ -181,14 +192,17 @@ export function PersonalInformationTab({
 
       if (response.ok && data.success) {
         toast({
-          title: "Verification email sent",
+          title: "Verification code sent",
           description:
-            "Please check your new email address to verify the change. Email may take up to 10 minutes to arrive.",
+            "Please check your new email address for the verification code. The code is valid for 48 hours.",
         });
         // Invalidate query to refetch actual backend state
         await utils.auth.getPendingEmailChange.invalidate();
-        // Reset email field to current email
-        setNewEmail(currentEmail);
+        // Show OTP input and reset verified state
+        setShowOtpInput(true);
+        setOtpError("");
+        setOtp("");
+        setIsVerified(false); // Reset verified state for new verification
         setLastResendTime(Date.now());
       } else {
         toast({
@@ -206,6 +220,67 @@ export function PersonalInformationTab({
       });
     } finally {
       setIsRequestingChange(false);
+    }
+  };
+
+  const handleVerifyOtp = async () => {
+    if (!otp || otp.length !== 6) {
+      setOtpError("Please enter a 6-digit code");
+      return;
+    }
+
+    setIsVerifying(true);
+    setOtpError("");
+
+    try {
+      // Call server action - much simpler!
+      const result = await verifyEmailChangeOtp(currentEmail, otp);
+
+      if (result.success) {
+        // Mark as verified FIRST to hide all pending UI immediately
+        setIsVerified(true);
+        setShowOtpInput(false);
+        setOtp("");
+        setOtpError("");
+
+        toast({
+          title: "✅ Email changed successfully",
+          description: "Your email address has been updated.",
+        });
+
+        // Refresh user session to get updated email
+        const { data: sessionData } = await supabase.auth.refreshSession();
+
+        // Force refetch the pending email change query to ensure it shows null
+        await utils.auth.getPendingEmailChange.refetch();
+
+        // Update email field to show the NEW email from refreshed session
+        const updatedEmail = sessionData.session?.user.email || currentEmail;
+        setNewEmail(updatedEmail);
+
+        // Show success message
+        setShowVerifySuccess(true);
+
+        // Reset success message after 5 seconds
+        setTimeout(() => {
+          setShowVerifySuccess(false);
+        }, 5000);
+
+        // Reset isVerified after success message disappears
+        // This ensures pendingEmail has been cleared from the query
+        setTimeout(() => {
+          setIsVerified(false);
+        }, 6000);
+      } else {
+        setOtpError(result.error || "Invalid verification code. Please try again.");
+        setOtp(""); // Clear OTP on error
+      }
+    } catch (error) {
+      console.error("OTP verification error:", error);
+      setOtpError("An unexpected error occurred. Please try again.");
+      setOtp("");
+    } finally {
+      setIsVerifying(false);
     }
   };
 
@@ -255,11 +330,16 @@ export function PersonalInformationTab({
 
       if (response.ok && data.success) {
         toast({
-          title: "Verification email resent",
+          title: "Verification code resent",
           description:
-            "Please check your email. It may take up to 10 minutes to arrive.",
+            "Please check your email. The code is valid for 48 hours.",
         });
         setLastResendTime(Date.now());
+        // Ensure OTP input is shown and reset verified state
+        setShowOtpInput(true);
+        setOtp("");
+        setOtpError("");
+        setIsVerified(false);
       } else {
         toast({
           title: "Error",
@@ -333,16 +413,99 @@ export function PersonalInformationTab({
                 value={newEmail}
                 onChange={(e) => setNewEmail(e.target.value)}
                 placeholder="Enter new email"
+                disabled={showOtpInput}
               />
               <Button
                 type="button"
                 onClick={handleEmailChange}
-                disabled={isRequestingChange || newEmail === currentEmail}
+                disabled={isRequestingChange || newEmail === currentEmail || showOtpInput}
               >
                 {isRequestingChange ? "Sending..." : "Change Email"}
               </Button>
             </div>
-            {pendingEmail && (
+
+            {/* OTP Input Section */}
+            {showOtpInput && !isVerified && (
+              <Alert className="mt-2">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>
+                  <div className="space-y-4">
+                    <div>
+                      <strong>Verification code sent to:</strong> {pendingEmail}
+                    </div>
+                    <div className="text-sm text-muted-foreground">
+                      Check your email for the 6-digit verification code. The code is valid for 48 hours.
+                    </div>
+
+                    <div className="space-y-2">
+                      <FormLabel className="text-sm">Enter Verification Code</FormLabel>
+                      <div className="flex justify-start">
+                        <InputOTP
+                          maxLength={6}
+                          value={otp}
+                          onChange={(value) => {
+                            setOtp(value);
+                            setOtpError("");
+                          }}
+                          disabled={isVerifying}
+                        >
+                          <InputOTPGroup>
+                            <InputOTPSlot index={0} />
+                            <InputOTPSlot index={1} />
+                            <InputOTPSlot index={2} />
+                            <InputOTPSlot index={3} />
+                            <InputOTPSlot index={4} />
+                            <InputOTPSlot index={5} />
+                          </InputOTPGroup>
+                        </InputOTP>
+                      </div>
+
+                      {otpError && (
+                        <p className="text-sm text-red-600">{otpError}</p>
+                      )}
+
+                      <div className="flex gap-2">
+                        <Button
+                          type="button"
+                          onClick={handleVerifyOtp}
+                          disabled={isVerifying || otp.length !== 6}
+                          size="sm"
+                        >
+                          {isVerifying ? "Verifying..." : "Verify Code"}
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={handleResendEmail}
+                          disabled={isResending}
+                        >
+                          {isResending ? "Resending..." : "Resend Code"}
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            setShowOtpInput(false);
+                            setOtp("");
+                            setOtpError("");
+                            setIsVerified(false);
+                            setNewEmail(currentEmail);
+                          }}
+                          disabled={isVerifying}
+                        >
+                          Cancel
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                </AlertDescription>
+              </Alert>
+            )}
+
+            {/* Pending email info when OTP input is not shown */}
+            {pendingEmail && !showOtpInput && !isVerified && (
               <Alert className="mt-2">
                 <AlertCircle className="h-4 w-4" />
                 <AlertDescription>
@@ -351,24 +514,29 @@ export function PersonalInformationTab({
                       <strong>Pending verification:</strong> {pendingEmail}
                     </div>
                     <div className="text-sm text-muted-foreground">
-                      Check your email to verify this change. The email may take up to 10 minutes to arrive, especially for Zoho, Gmail, or Outlook accounts.
+                      Check your email to verify this change. The code is valid for 48 hours.
                     </div>
                     <Button
                       variant="link"
                       size="sm"
                       className="px-0 h-auto text-sm"
-                      onClick={handleResendEmail}
-                      disabled={isResending}
+                      onClick={() => {
+                        setShowOtpInput(true);
+                        setOtp("");
+                        setOtpError("");
+                        setIsVerified(false);
+                      }}
                     >
-                      {isResending ? "Resending..." : "Didn't receive email? Click to resend"}
+                      Enter verification code
                     </Button>
                   </div>
                 </AlertDescription>
               </Alert>
             )}
-            {!pendingEmail && (
+
+            {!pendingEmail && !showOtpInput && !isVerified && (
               <p className="text-sm text-muted-foreground">
-                A verification email will be sent to your new address. Note: Delivery may take up to 10 minutes.
+                A verification code will be sent to your new address. The code will be valid for 48 hours.
               </p>
             )}
           </div>

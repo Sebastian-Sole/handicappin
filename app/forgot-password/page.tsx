@@ -23,7 +23,7 @@ const forgotPasswordSchema = z.object({
 
 export default function ForgotPasswordPage() {
   const [loading, setLoading] = useState(false);
-  const [submitButtonText, setSubmitButtonText] = useState("Request link");
+  const [submitButtonText, setSubmitButtonText] = useState("Send verification code");
 
   const handleSubmit = async (values: z.infer<typeof forgotPasswordSchema>) => {
     setLoading(true);
@@ -44,7 +44,7 @@ export default function ForgotPasswordPage() {
         variant: "destructive",
       });
       setLoading(false);
-      setSubmitButtonText("Request link");
+      setSubmitButtonText("Send verification code");
       return;
     }
 
@@ -70,7 +70,7 @@ export default function ForgotPasswordPage() {
           variant: "destructive",
         });
         setLoading(false);
-        setSubmitButtonText("Request link");
+        setSubmitButtonText("Send verification code");
         return;
       }
     } catch (error) {
@@ -81,14 +81,12 @@ export default function ForgotPasswordPage() {
         variant: "destructive",
       });
       setLoading(false);
-      setSubmitButtonText("Request link");
+      setSubmitButtonText("Send verification code");
     }
 
     try {
       setSubmitButtonText("Sending email...");
       const URL = `${supabaseUrl}/functions/v1/reset-password`;
-
-      const resetLink = `${window.location.origin}/update-password`;
 
       await fetch(URL, {
         method: "POST",
@@ -98,17 +96,17 @@ export default function ForgotPasswordPage() {
         },
         body: JSON.stringify({
           email: values.email,
-          resetLinkBase: resetLink,
         }),
       });
 
       toast({
         title: "✅ Password reset requested",
-        description: "An email has been sent to reset your password.",
+        description:
+          "A verification code has been sent to your email. Check your inbox and enter the code on the next page.",
       });
 
       setLoading(false);
-      setSubmitButtonText("Request link");
+      setSubmitButtonText("Send verification code");
     } catch (error) {
       toast({
         title: "Error",
@@ -117,7 +115,7 @@ export default function ForgotPasswordPage() {
         variant: "destructive",
       });
       setLoading(false);
-      setSubmitButtonText("Request link");
+      setSubmitButtonText("Send verification code");
     }
   };
 
@@ -133,7 +131,8 @@ export default function ForgotPasswordPage() {
       <div className="space-y-2 text-left">
         <h1 className="text-3xl font-bold">Reset Password</h1>
         <CardDescription>
-          Enter your email to receive a password reset link.
+          Enter your email to receive a verification code to reset your
+          password.
         </CardDescription>
       </div>
       <div className="space-y-4">
