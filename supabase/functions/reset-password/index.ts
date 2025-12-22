@@ -3,11 +3,11 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { Resend } from "https://esm.sh/resend@4.0.0";
 import ResetPasswordEmail from "./email.tsx";
 import { render } from "https://esm.sh/@react-email/components@0.0.22?deps=react@18.2.0";
-import { create, getNumericDate } from "https://deno.land/x/djwt@v2.4/mod.ts";
 import { corsHeaders } from "../_shared/cors.ts";
+import { generateOTP, hashOTP, getOTPExpiry } from "../_shared/otp-utils.ts";
+import * as React from "https://esm.sh/react@18.2.0";
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY")!);
-const JWT_SECRET = Deno.env.get("RESET_TOKEN_SECRET")!;
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -43,9 +43,8 @@ serve(async (req) => {
   const supabase = createClient(supabaseUrl, supabaseServiceRoleKey);
 
   try {
-    const { email, resetLinkBase } = await req.json();
+    const { email } = await req.json();
     console.log("Email:", email);
-    console.log("Reset link base:", resetLinkBase);
     if (!email) throw new Error("Email is required");
 
     const { data: user, error } = await supabase
@@ -59,34 +58,41 @@ serve(async (req) => {
       throw new Error("User not found");
     }
 
-    let token = "";
+    // Generate OTP
+    const otp = generateOTP();
+    const otpHash = await hashOTP(otp);
+    const expiresAt = getOTPExpiry(); // 15 minutes
 
-    const key = await crypto.subtle.importKey(
-      "raw", // Key format
-      new TextEncoder().encode(JWT_SECRET), // Convert JWT_SECRET to Uint8Array
-      { name: "HMAC", hash: "SHA-256" }, // Algorithm settings
-      false, // Whether the key is extractable
-      ["sign", "verify"] // Key usage
-    );
+    // Get request IP for audit
+    const requestIp =
+      req.headers.get("x-forwarded-for")?.split(",")[0] ||
+      req.headers.get("x-real-ip") ||
+      "unknown";
 
-    try {
-      const payload = {
+    // Store OTP in database
+    const { error: insertError } = await supabase
+      .from("otp_verifications")
+      .insert({
         user_id: user.id,
-        exp: getNumericDate(60 * 60), // 1 hour expiration
-        metadata: { type: "password-reset" }, // Nest type within metadata
         email: email,
-      };
+        otp_hash: otpHash,
+        otp_type: "password_reset",
+        expires_at: expiresAt.toISOString(),
+        request_ip: requestIp,
+      });
 
-      token = await create({ alg: "HS256", typ: "JWT" }, payload, key);
-    } catch (error) {
-      console.error("Error creating token:", error);
-      throw new Error("Error creating token");
+    if (insertError) {
+      console.error("Failed to store OTP:", insertError);
+      throw new Error("Failed to store verification code");
     }
 
-    const resetLink = `${resetLinkBase}?token=${token}&email=${email}`;
-
+    // Send OTP email
     const emailHtml = render(
-      ResetPasswordEmail({ resetLink, username: email })
+      React.createElement(ResetPasswordEmail, {
+        otp,
+        username: email,
+        expiresInMinutes: 15,
+      })
     );
 
     const FROM_EMAIL =
