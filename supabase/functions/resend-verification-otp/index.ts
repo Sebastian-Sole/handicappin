@@ -1,4 +1,3 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { Resend } from "https://esm.sh/resend@4.0.0";
 import * as React from "https://esm.sh/react@18.2.0";
 import { render } from "https://esm.sh/@react-email/components@0.0.22?deps=react@18.2.0";
@@ -10,7 +9,7 @@ console.log("resend-verification-otp function");
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY") as string);
 
-serve(async (req) => {
+Deno.serve(async (req) => {
   if (req.method !== "POST") {
     return new Response("Method not allowed", { status: 405 });
   }
@@ -37,11 +36,14 @@ serve(async (req) => {
 
     const supabase = createClient(supabaseUrl, supabaseServiceRoleKey);
 
-    // Check if user exists and is unconfirmed
-    const { data: userData, error: userError } = await supabase.auth.admin.listUsers();
+    // Check if user exists by querying profile table (O(1) with index)
+    const { data: profile, error: profileError } = await supabase
+      .from("profile")
+      .select("id, email")
+      .eq("email", email)
+      .single();
 
-    if (userError) {
-      console.error("Error fetching users:", userError);
+    if (profileError || !profile) {
       // Don't reveal if email exists or not
       return new Response(
         JSON.stringify({
@@ -52,9 +54,11 @@ serve(async (req) => {
       );
     }
 
-    const user = userData.users.find(u => u.email === email);
+    // Get auth user details to check confirmation status
+    const { data: { user }, error: userError } = await supabase.auth.admin.getUserById(profile.id);
 
-    if (!user) {
+    if (userError || !user) {
+      console.error("Error fetching user:", userError);
       // Don't reveal if email exists or not
       return new Response(
         JSON.stringify({
@@ -67,12 +71,14 @@ serve(async (req) => {
 
     // Check if user is already confirmed
     if (user.email_confirmed_at) {
+      // Log internally for ops/debug, but return generic response to prevent account enumeration
+      console.log(`Resend OTP request for already verified email: ${email}`);
       return new Response(
         JSON.stringify({
-          success: false,
-          error: "Email is already verified. Please login."
+          success: true,
+          message: "If an account exists with this email, a new code has been sent."
         }),
-        { status: 400, headers: { "Content-Type": "application/json" } }
+        { status: 200, headers: { "Content-Type": "application/json" } }
       );
     }
 

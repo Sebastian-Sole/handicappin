@@ -118,7 +118,7 @@
       "idx": 16,
       "version": "7",
       "when": 1766304675975,
-      "tag": "20251221081115_gigantic_crystal",
+      "tag": "20251221081200_add_otp_verifications",
       "breakpoints": true
     },
     {
@@ -126,6 +126,20 @@
       "version": "7",
       "when": 1766400909553,
       "tag": "20251222105509_redundant_ego",
+      "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1766485351758,
+      "tag": "20251223102231_fluffy_black_tarantula",
+      "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1766486106081,
+      "tag": "20251223103506_curved_thunderbird",
       "breakpoints": true
     }
   ]

@@ -1,5 +1,4 @@
 import { createClient } from "jsr:@supabase/supabase-js@2";
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { Resend } from "https://esm.sh/resend@4.0.0";
 import ResetPasswordEmail from "./email.tsx";
 import { render } from "https://esm.sh/@react-email/components@0.0.22?deps=react@18.2.0";
@@ -9,7 +8,7 @@ import * as React from "https://esm.sh/react@18.2.0";
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY")!);
 
-serve(async (req) => {
+Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders, status: 204 });
   }
@@ -47,14 +46,23 @@ serve(async (req) => {
     console.log("Email:", email);
     if (!email) throw new Error("Email is required");
 
-    const { data: user, error } = await supabase
+    // Find user by email using profile table (O(1) with index)
+    const { data: profile, error: profileError } = await supabase
       .from("profile")
-      .select("id")
-      .eq("email", email)
+      .select("id, email")
+      .eq("email", email.toLowerCase())
       .single();
 
+    if (profileError || !profile) {
+      console.error("User not found for email:", email);
+      throw new Error("User not found");
+    }
+
+    // Get auth user (optional - could skip if we only need the ID)
+    const { data: { user }, error } = await supabase.auth.admin.getUserById(profile.id);
+
     if (error || !user) {
-      console.error(error);
+      console.error("Failed to get user:", error);
       throw new Error("User not found");
     }
 
