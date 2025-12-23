@@ -3,7 +3,6 @@
 // This enables autocomplete, go to definition, etc.
 
 import EmailOTP from "./email-otp.tsx";
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { Resend } from "https://esm.sh/resend@4.0.0";
 import { Webhook } from "https://esm.sh/standardwebhooks@1.0.0";
 import * as React from "https://esm.sh/react@18.2.0";
@@ -20,7 +19,7 @@ const hookSecret = (Deno.env.get("SEND_EMAIL_HOOK_SECRET") as string).replace(
   ""
 );
 
-serve(async (req) => {
+Deno.serve(async (req) => {
   if (req.method !== "POST") {
     return new Response("not allowed", { status: 400 });
   }
@@ -118,8 +117,6 @@ serve(async (req) => {
     if (emailError) {
       throw emailError;
     }
-
-    console.log(`OTP sent successfully to ${user.email}`);
   } catch (error: unknown) {
     let errorMessage = "Unknown error occurred";
 

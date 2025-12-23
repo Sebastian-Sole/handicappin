@@ -4,6 +4,7 @@ import { toast } from "../ui/use-toast";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { resetPasswordSchema } from "@/types/auth";
 import { CardDescription } from "../ui/card";
 import {
   Form,
@@ -20,6 +21,7 @@ import {
   InputOTPGroup,
   InputOTPSlot,
 } from "../ui/input-otp";
+import { Alert, AlertDescription } from "../ui/alert";
 import { useRouter } from "next/navigation";
 
 interface UpdatePasswordProps {
@@ -122,16 +124,6 @@ const UpdatePassword = ({ email: initialEmail }: UpdatePasswordProps) => {
       setOtp("");
     }
   };
-
-  const resetPasswordSchema = z.object({
-    email: z.string().email("Please enter a valid email"),
-    otp: z.string().length(6, "Code must be 6 digits"),
-    password: z.string().min(8, "Password must be at least 8 characters"),
-    confirmPassword: z.string(),
-  }).refine((data) => data.password === data.confirmPassword, {
-    message: "Passwords don't match",
-    path: ["confirmPassword"],
-  });
 
   const form = useForm<z.infer<typeof resetPasswordSchema>>({
     resolver: zodResolver(resetPasswordSchema),
@@ -286,12 +278,12 @@ const UpdatePassword = ({ email: initialEmail }: UpdatePasswordProps) => {
           </form>
         </Form>
 
-        <div className="mt-4 p-4 bg-gray-50 rounded-lg">
-          <p className="text-xs text-gray-600">
+        <Alert className="mt-4">
+          <AlertDescription className="text-xs">
             <strong>Tip:</strong> Check your email for the 6-digit verification
             code. The code expires in 15 minutes.
-          </p>
-        </div>
+          </AlertDescription>
+        </Alert>
       </div>
     </div>
   );

@@ -95,7 +95,7 @@ export default function EmailVerificationChange({
                 <Text className="text-sm text-gray-600 mb-0">
                   If you didn't request this email change, you can safely ignore
                   this message. Your email address will not be changed unless
-                  you click the verification link above.
+                  you enter the verification code.
                 </Text>
               </Section>
 

@@ -5,13 +5,16 @@ import { corsHeaders } from "../_shared/cors.ts";
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders, status: 204 });
+    return new Response(null, {
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      status: 204,
+    });
   }
 
   if (req.method !== "POST") {
     return new Response("Method not allowed", {
       status: 405,
-      headers: corsHeaders,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
 
@@ -25,7 +28,10 @@ Deno.serve(async (req) => {
     if (!supabaseUrl || !supabaseServiceRoleKey) {
       return new Response(
         JSON.stringify({ error: "Server configuration error" }),
-        { status: 500, headers: corsHeaders }
+        {
+          status: 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
       );
     }
 
@@ -36,7 +42,10 @@ Deno.serve(async (req) => {
     if (!email || !otp) {
       return new Response(
         JSON.stringify({ error: "Email and OTP are required" }),
-        { status: 400, headers: corsHeaders }
+        {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
       );
     }
 
@@ -53,8 +62,13 @@ Deno.serve(async (req) => {
 
     if (fetchError || !otpRecord) {
       return new Response(
-        JSON.stringify({ error: "No pending verification found for this email" }),
-        { status: 404, headers: corsHeaders }
+        JSON.stringify({
+          error: "No pending verification found for this email",
+        }),
+        {
+          status: 404,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
       );
     }
 
@@ -70,8 +84,13 @@ Deno.serve(async (req) => {
         .eq("id", otpRecord.id);
 
       return new Response(
-        JSON.stringify({ error: "Verification code has expired. Please request a new one." }),
-        { status: 410, headers: corsHeaders }
+        JSON.stringify({
+          error: "Verification code has expired. Please request a new one.",
+        }),
+        {
+          status: 410,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
       );
     }
 
@@ -86,9 +105,12 @@ Deno.serve(async (req) => {
       return new Response(
         JSON.stringify({
           error: "Too many verification attempts. Please request a new code.",
-          maxAttemptsReached: true
+          maxAttemptsReached: true,
         }),
-        { status: 429, headers: corsHeaders }
+        {
+          status: 429,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
       );
     }
 
@@ -104,15 +126,21 @@ Deno.serve(async (req) => {
         })
         .eq("id", otpRecord.id);
 
-      const remainingAttempts = OTP_MAX_ATTEMPTS - (otpRecord.verification_attempts + 1);
+      const remainingAttempts =
+        OTP_MAX_ATTEMPTS - (otpRecord.verification_attempts + 1);
 
       return new Response(
         JSON.stringify({
-          error: `Invalid verification code. ${remainingAttempts} attempt${remainingAttempts !== 1 ? "s" : ""} remaining.`,
+          error: `Invalid verification code. ${remainingAttempts} attempt${
+            remainingAttempts !== 1 ? "s" : ""
+          } remaining.`,
           remainingAttempts,
-          maxAttemptsReached: remainingAttempts === 0
+          maxAttemptsReached: remainingAttempts === 0,
         }),
-        { status: 401, headers: corsHeaders }
+        {
+          status: 401,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
       );
     }
 
@@ -129,47 +157,63 @@ Deno.serve(async (req) => {
       console.error("Failed to mark OTP as verified:", updateError);
       return new Response(
         JSON.stringify({ error: "Failed to complete verification" }),
-        { status: 500, headers: corsHeaders }
+        {
+          status: 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
       );
     }
 
     // CRITICAL: Verify email in Supabase Auth
     // This marks the email as confirmed in auth.users table
     if (otpRecord.user_id) {
-      const { error: authUpdateError } = await supabaseAdmin.auth.admin.updateUserById(
-        otpRecord.user_id,
-        { email_confirm: true }
-      );
+      const { error: authUpdateError } =
+        await supabaseAdmin.auth.admin.updateUserById(otpRecord.user_id, {
+          email_confirm: true,
+        });
 
       if (authUpdateError) {
-        console.error("Failed to confirm email in Supabase Auth:", authUpdateError);
+        console.error(
+          "Failed to confirm email in Supabase Auth:",
+          authUpdateError
+        );
         return new Response(
-          JSON.stringify({ error: "Failed to confirm email in authentication system" }),
+          JSON.stringify({
+            error: "Failed to confirm email in authentication system",
+          }),
           { status: 500, headers: corsHeaders }
         );
       }
 
       // Mark user as verified in profile table
-      await supabaseAdmin
+      const { error: profileError } = await supabaseAdmin
         .from("profile")
         .update({ verified: true })
         .eq("id", otpRecord.user_id);
-    }
 
-    console.log(`Email ${email} verified successfully in both Auth and Profile`);
+      if (profileError) {
+        console.error(
+          "Failed to mark user as verified in profile table:",
+          profileError
+        );
+      }
+    }
 
     return new Response(
       JSON.stringify({
         success: true,
         message: "Email verified successfully!",
       }),
-      { status: 200, headers: corsHeaders }
+      {
+        status: 200,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      }
     );
   } catch (error) {
     console.error("Error in verify-signup-otp:", error);
-    return new Response(
-      JSON.stringify({ error: "Internal server error" }),
-      { status: 500, headers: corsHeaders }
-    );
+    return new Response(JSON.stringify({ error: "Internal server error" }), {
+      status: 500,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
   }
 });

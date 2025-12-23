@@ -10,6 +10,7 @@ import {
   InputOTPSlot,
 } from "@/components/ui/input-otp";
 import { Check, Loader2 } from "lucide-react";
+import { logger } from "@/lib/logging";
 
 function VerifyEmailChangeContent() {
   const router = useRouter();
@@ -40,7 +41,6 @@ function VerifyEmailChangeContent() {
     }
 
     setStatus("loading");
-    setAttempts((prev) => prev + 1);
 
     try {
       const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -70,6 +70,8 @@ function VerifyEmailChangeContent() {
         }, 2000);
       } else {
         setStatus("error");
+        const newAttempts = attempts + 1;
+        setAttempts(newAttempts);
         setMessage(
           data.error ||
             "Verification failed. Please check your code and try again."
@@ -78,14 +80,17 @@ function VerifyEmailChangeContent() {
         // Clear OTP input on error
         setOtp("");
 
-        if (attempts >= 4) {
+        if (newAttempts >= 4) {
           setMessage(
             data.error || "Too many failed attempts. Please request a new code."
           );
         }
       }
     } catch (error) {
-      console.error("Verification error:", error);
+      logger.error("Error in verifyEmailChange", {
+        error: error instanceof Error ? error.message : "Unknown error",
+        stack: error instanceof Error ? error.stack : undefined,
+      });
       setStatus("error");
       setMessage("An unexpected error occurred. Please try again.");
       setOtp("");
@@ -190,7 +195,7 @@ function VerifyEmailChangeContent() {
             <div className="mt-6 p-4 bg-gray-50 rounded-lg">
               <p className="text-xs text-gray-600">
                 <strong>Tip:</strong> Check your new email address for the
-                verification code. The code expires in 15 minutes.
+                verification code. The code expires in 48 hours.
               </p>
             </div>
           </>

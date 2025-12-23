@@ -1,4 +1,5 @@
 import crypto from "crypto";
+import { webcrypto } from "node:crypto";
 
 export const OTP_LENGTH = 6;
 export const OTP_EXPIRY_MINUTES = 15;
@@ -16,16 +17,36 @@ export function generateOTP(): string {
 
 /**
  * Hash OTP using SHA-256 for secure storage
+ * Uses Web Crypto API for consistency with Deno version
  */
-export function hashOTP(otp: string): string {
-  return crypto.createHash("sha256").update(otp).digest("hex");
+export async function hashOTP(otp: string): Promise<string> {
+  const encoder = new TextEncoder();
+  const data = encoder.encode(otp);
+  const hashBuffer = await webcrypto.subtle.digest("SHA-256", data);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  const hashHex = hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
+  return hashHex;
 }
 
 /**
- * Verify OTP matches hash
+ * Verify OTP matches hash using timing-safe comparison
  */
-export function verifyOTPHash(otp: string, hash: string): boolean {
-  return hashOTP(otp) === hash;
+export async function verifyOTPHash(otp: string, hash: string): Promise<boolean> {
+  const computedHash = await hashOTP(otp);
+
+  // Convert to buffers for timing-safe comparison
+  const computedBuffer = Buffer.from(computedHash, "utf8");
+  const providedBuffer = Buffer.from(hash, "utf8");
+
+  // Handle length mismatch (though SHA-256 hex should always be same length)
+  if (computedBuffer.length !== providedBuffer.length) {
+    // Compare against zeroed buffer to prevent early return timing leak
+    const zeroBuffer = Buffer.alloc(computedBuffer.length);
+    crypto.timingSafeEqual(computedBuffer, zeroBuffer);
+    return false;
+  }
+
+  return crypto.timingSafeEqual(computedBuffer, providedBuffer);
 }
 
 /**

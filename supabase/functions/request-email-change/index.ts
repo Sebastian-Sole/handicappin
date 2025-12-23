@@ -149,15 +149,6 @@ Deno.serve(async (req) => {
       .map((b) => b.toString(16).padStart(2, "0"))
       .join("");
 
-    console.log("[DEBUG] Generated OTP:", {
-      otp, // In production, remove this!
-      otpHash: otpHash.substring(0, 10) + "...",
-      expiresAt: expiresAt.toISOString(),
-      expiresAtTime: expiresAt.getTime(),
-      now: new Date().toISOString(),
-      nowTime: Date.now(),
-    });
-
     // Get request IP for audit
     const requestIp =
       req.headers.get("x-forwarded-for")?.split(",")[0] ||
@@ -272,19 +263,8 @@ Deno.serve(async (req) => {
           `Notification email failed: ${notificationResult.error.message}`
         );
       }
-
-      console.log("[INFO] Notification email sent:", {
-        messageId: notificationResult.data?.id,
-        to: maskEmail(user.email),
-      });
     } catch (error) {
       console.error("Failed to send notification email:", error);
-
-      // Don't delete pending change - verification email was sent successfully
-      // User can still verify, but won't have cancel link
-      console.warn(
-        "[WARN] Notification email failed but verification email sent"
-      );
     }
 
     return new Response(

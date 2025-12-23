@@ -1,0 +1,2 @@
+ALTER TABLE "otp_verifications" ENABLE ROW LEVEL SECURITY;--> statement-breakpoint
+CREATE POLICY "No direct access to OTP verifications" ON "otp_verifications" AS PERMISSIVE FOR ALL TO "anon", "authenticated", public USING (false);

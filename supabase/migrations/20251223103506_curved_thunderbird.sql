@@ -1,0 +1,1 @@
+CREATE INDEX "otp_verifications_user_id_idx" ON "otp_verifications" USING btree ("user_id");

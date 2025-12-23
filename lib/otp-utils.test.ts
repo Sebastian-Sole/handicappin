@@ -31,43 +31,43 @@ describe("OTP Utilities", () => {
   });
 
   describe("hashOTP", () => {
-    it("hashes OTP consistently", () => {
+    it("hashes OTP consistently", async () => {
       const otp = "123456";
-      const hash1 = hashOTP(otp);
-      const hash2 = hashOTP(otp);
+      const hash1 = await hashOTP(otp);
+      const hash2 = await hashOTP(otp);
       expect(hash1).toBe(hash2);
     });
 
-    it("produces different hashes for different OTPs", () => {
-      const hash1 = hashOTP("123456");
-      const hash2 = hashOTP("654321");
+    it("produces different hashes for different OTPs", async () => {
+      const hash1 = await hashOTP("123456");
+      const hash2 = await hashOTP("654321");
       expect(hash1).not.toBe(hash2);
     });
 
-    it("produces SHA-256 hash (64 hex characters)", () => {
-      const hash = hashOTP("123456");
+    it("produces SHA-256 hash (64 hex characters)", async () => {
+      const hash = await hashOTP("123456");
       expect(hash).toHaveLength(64); // SHA-256 produces 64 hex characters
       expect(hash).toMatch(/^[0-9a-f]{64}$/);
     });
   });
 
   describe("verifyOTPHash", () => {
-    it("verifies OTP correctly", () => {
+    it("verifies OTP correctly", async () => {
       const otp = "123456";
-      const hash = hashOTP(otp);
-      expect(verifyOTPHash(otp, hash)).toBe(true);
+      const hash = await hashOTP(otp);
+      expect(await verifyOTPHash(otp, hash)).toBe(true);
     });
 
-    it("rejects incorrect OTP", () => {
+    it("rejects incorrect OTP", async () => {
       const otp = "123456";
-      const hash = hashOTP(otp);
-      expect(verifyOTPHash("654321", hash)).toBe(false);
+      const hash = await hashOTP(otp);
+      expect(await verifyOTPHash("654321", hash)).toBe(false);
     });
 
-    it("rejects OTP with different case (case sensitive)", () => {
+    it("rejects OTP with different case (case sensitive)", async () => {
       const otp = "123456";
-      const hash = hashOTP(otp);
-      expect(verifyOTPHash("123457", hash)).toBe(false);
+      const hash = await hashOTP(otp);
+      expect(await verifyOTPHash("123457", hash)).toBe(false);
     });
   });
 

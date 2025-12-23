@@ -25,7 +25,10 @@ Deno.serve(async (req) => {
     if (!supabaseUrl || !supabaseServiceRoleKey) {
       return new Response(
         JSON.stringify({ error: "Server configuration error" }),
-        { status: 500, headers: corsHeaders }
+        {
+          status: 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
       );
     }
 
@@ -38,7 +41,10 @@ Deno.serve(async (req) => {
         JSON.stringify({
           error: "Email, OTP, and new password are required",
         }),
-        { status: 400, headers: corsHeaders }
+        {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
       );
     }
 
@@ -48,7 +54,10 @@ Deno.serve(async (req) => {
         JSON.stringify({
           error: "Password must be at least 8 characters long",
         }),
-        { status: 400, headers: corsHeaders }
+        {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
       );
     }
 
@@ -68,7 +77,10 @@ Deno.serve(async (req) => {
         JSON.stringify({
           error: "No pending password reset found for this email",
         }),
-        { status: 404, headers: corsHeaders }
+        {
+          status: 404,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
       );
     }
 
@@ -87,7 +99,10 @@ Deno.serve(async (req) => {
         JSON.stringify({
           error: "Verification code has expired. Please request a new one.",
         }),
-        { status: 410, headers: corsHeaders }
+        {
+          status: 410,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
       );
     }
 
@@ -97,7 +112,10 @@ Deno.serve(async (req) => {
         JSON.stringify({
           error: "Too many verification attempts. Please request a new code.",
         }),
-        { status: 429, headers: corsHeaders }
+        {
+          status: 429,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
       );
     }
 
@@ -122,21 +140,27 @@ Deno.serve(async (req) => {
             remainingAttempts !== 1 ? "s" : ""
           } remaining.`,
         }),
-        { status: 401, headers: corsHeaders }
+        {
+          status: 401,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
       );
     }
 
     // OTP is valid! Reset the password
-    const { error: updateError } = await supabaseAdmin.auth.admin.updateUserById(
-      otpRecord.user_id,
-      { password: newPassword }
-    );
+    const { error: updateError } =
+      await supabaseAdmin.auth.admin.updateUserById(otpRecord.user_id, {
+        password: newPassword,
+      });
 
     if (updateError) {
       console.error("Failed to reset password:", updateError);
       return new Response(
         JSON.stringify({ error: "Failed to reset password" }),
-        { status: 500, headers: corsHeaders }
+        {
+          status: 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
       );
     }
 
@@ -153,13 +177,16 @@ Deno.serve(async (req) => {
         success: true,
         message: "Password reset successfully!",
       }),
-      { status: 200, headers: corsHeaders }
+      {
+        status: 200,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      }
     );
   } catch (error) {
     console.error("Error in verify-password-reset-otp:", error);
     return new Response(JSON.stringify({ error: "Internal server error" }), {
       status: 500,
-      headers: corsHeaders,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
 });

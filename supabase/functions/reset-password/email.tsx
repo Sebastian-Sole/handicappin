@@ -18,18 +18,12 @@ interface EmailProps {
   expiresInMinutes?: number;
 }
 
-export const Email = ({
-  otp,
-  username,
-  expiresInMinutes = 15,
-}: EmailProps) => {
-  const formattedOTP = `${otp.slice(0, 3)}-${otp.slice(3)}`;
-
+export const Email = ({ otp, username, expiresInMinutes = 15 }: EmailProps) => {
   return (
     <React.Fragment>
       <Html>
         <Head />
-        <Preview>Reset your password - Your code is {formattedOTP}</Preview>
+        <Preview>Reset your password - Your code is {otp}</Preview>
         <Tailwind>
           <Body className="bg-gray-50 font-sans">
             <Container className="mx-auto py-8 px-4 max-w-xl">
@@ -48,7 +42,7 @@ export const Email = ({
                     Your Verification Code
                   </Text>
                   <Text className="text-4xl font-bold text-gray-900 tracking-widest mb-0 font-mono">
-                    {formattedOTP}
+                    {otp}
                   </Text>
                 </Section>
 

@@ -19,13 +19,21 @@ CREATE INDEX IF NOT EXISTS "otp_verifications_email_type_idx" ON "otp_verificati
 CREATE INDEX IF NOT EXISTS "otp_verifications_expires_at_idx" ON "otp_verifications" USING btree ("expires_at");
 
 -- Cleanup function: Delete expired OTPs older than 24 hours (run via cron or pg_cron)
-CREATE OR REPLACE FUNCTION cleanup_expired_otps()
-RETURNS void AS $$
+-- Security: SECURITY DEFINER required to bypass RLS when called by cron
+CREATE OR REPLACE FUNCTION public.cleanup_expired_otps()
+RETURNS void
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = ''
+AS $$
 BEGIN
-  DELETE FROM otp_verifications
+  DELETE FROM public.otp_verifications
   WHERE expires_at < NOW() - INTERVAL '24 hours';
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$;
 
 -- Comment explaining the table
 COMMENT ON TABLE "otp_verifications" IS 'Stores one-time passwords for email verification, password reset, and email change flows';
+
+-- Comment explaining the function's security model
+COMMENT ON FUNCTION public.cleanup_expired_otps() IS 'Deletes expired OTP records older than 24 hours. Uses SECURITY DEFINER to bypass RLS when called by cron. Safe search_path prevents schema injection attacks.';

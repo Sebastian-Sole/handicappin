@@ -1,11 +1,9 @@
 "use server";
 
-import {
-  createServerComponentClient,
-  createAdminClient,
-} from "@/utils/supabase/server";
-import { revalidatePath } from "next/cache";
+import { createServerComponentClient } from "@/utils/supabase/server";
+import { createAdminClient } from "@/utils/supabase/admin";
 import { verifyOTPHash } from "@/lib/otp-utils";
+import { logger } from "@/lib/logging";
 
 const OTP_MAX_ATTEMPTS = 5;
 
@@ -51,19 +49,11 @@ export async function verifyEmailChangeOtp(
       .single();
 
     if (lookupError || !pendingChange) {
-      console.log("[DEBUG] No pending change found:", { lookupError, email });
       return {
         success: false,
         error: "No pending email change found for this email",
       };
     }
-
-    console.log("[DEBUG] Found pending change:", {
-      user_id: pendingChange.user_id,
-      created_at: pendingChange.created_at,
-      expires_at: pendingChange.expires_at,
-      attempts: pendingChange.verification_attempts,
-    });
 
     const { user_id, new_email } = pendingChange;
 
@@ -76,16 +66,6 @@ export async function verifyEmailChangeOtp(
       expiresAtString.endsWith("Z") ? expiresAtString : `${expiresAtString}Z`
     );
 
-    console.log("[DEBUG] Expiry check:", {
-      now: now.toISOString(),
-      expiresAtRaw: expiresAtString,
-      expiresAt: expiresAt.toISOString(),
-      nowTime: now.getTime(),
-      expiresAtTime: expiresAt.getTime(),
-      isExpired: now > expiresAt,
-      hoursRemaining: ((expiresAt.getTime() - now.getTime()) / 1000 / 60 / 60).toFixed(2),
-    });
-
     if (now > expiresAt) {
       // Clean up expired record
       await supabase
@@ -95,7 +75,8 @@ export async function verifyEmailChangeOtp(
 
       return {
         success: false,
-        error: "Verification code has expired. Please request a new email change.",
+        error:
+          "Verification code has expired. Please request a new email change.",
       };
     }
 
@@ -103,7 +84,8 @@ export async function verifyEmailChangeOtp(
     if (pendingChange.verification_attempts >= OTP_MAX_ATTEMPTS) {
       return {
         success: false,
-        error: "Too many verification attempts. Please request a new email change.",
+        error:
+          "Too many verification attempts. Please request a new email change.",
       };
     }
 
@@ -139,7 +121,10 @@ export async function verifyEmailChangeOtp(
       });
 
     if (authUpdateError) {
-      console.error("Failed to update auth.users email:", authUpdateError);
+      logger.error("Failed to update auth.users email", {
+        error: authUpdateError.message,
+        userId: user_id,
+      });
       return {
         success: false,
         error: "Failed to update email. Please try again or contact support.",
@@ -147,62 +132,27 @@ export async function verifyEmailChangeOtp(
     }
 
     // First, verify the row still exists before attempting delete
-    const { data: beforeDelete, error: beforeError } = await supabaseAdmin
-      .from("pending_email_changes")
-      .select("*")
-      .eq("user_id", user_id);
-
-    console.log("[DEBUG] Row before delete:", {
-      beforeDelete,
-      beforeError,
-      user_id,
-    });
-
     // Delete pending change record (success!) - use admin client to bypass RLS
-    console.log("[DEBUG] Attempting to delete pending change for user:", user_id);
-
-    const { data: deleteData, error: deleteError, count } = await supabaseAdmin
+    const { error: deleteError } = await supabaseAdmin
       .from("pending_email_changes")
       .delete()
       .eq("user_id", user_id)
       .select();
 
-    console.log("[DEBUG] Delete result:", {
-      deleteData,
-      deleteError,
-      count,
-      user_id,
-    });
-
     // Verify it was actually deleted
-    const { data: afterDelete, error: afterError } = await supabaseAdmin
-      .from("pending_email_changes")
-      .select("*")
-      .eq("user_id", user_id);
-
-    console.log("[DEBUG] Row after delete:", {
-      afterDelete,
-      afterError,
-    });
-
     if (deleteError) {
-      console.error("[ERROR] Failed to delete pending email change:", deleteError);
-      // Don't fail the whole operation - email was updated successfully
-    } else if (!deleteData || deleteData.length === 0) {
-      console.warn("[WARNING] Delete executed but no rows were deleted for user:", user_id);
-      console.warn("[WARNING] This might be an RLS issue or the row doesn't exist");
-    } else {
-      console.log("[SUCCESS] Deleted pending email change:", deleteData);
+      logger.error("Failed to delete pending email change", {
+        error: deleteError.message,
+        userId: user_id,
+      });
     }
 
-    // Revalidate profile page
-    revalidatePath(`/profile/${user_id}`);
-
-    return {
-      success: true,
-    };
+    return { success: true };
   } catch (error) {
-    console.error("Error in verifyEmailChangeOtp:", error);
+    logger.error("Error in verifyEmailChangeOtp", {
+      error: error instanceof Error ? error.message : "Unknown error",
+      stack: error instanceof Error ? error.stack : undefined,
+    });
     return {
       success: false,
       error: "An unexpected error occurred. Please try again.",
