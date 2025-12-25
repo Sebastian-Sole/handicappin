@@ -141,6 +141,27 @@
       "when": 1766486106081,
       "tag": "20251223103506_curved_thunderbird",
       "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1766500914929,
+      "tag": "20251223144154_secret_skin",
+      "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1766583802844,
+      "tag": "20251224134322_cute_warstar",
+      "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "7",
+      "when": 1766650331760,
+      "tag": "20251225081211_create_otp_verifications_with_rls",
+      "breakpoints": true
     }
   ]
 }

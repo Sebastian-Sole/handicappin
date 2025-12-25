@@ -1,5 +1,5 @@
 {
-  "id": "56993c0b-42e4-49fa-bf3c-4f1979973cd1",
+  "id": "2f9598de-eca2-43cf-a7e0-8937b6c2ddc7",
   "prevId": "6970cc31-9cbd-4f95-a32a-73641dbc259d",
   "version": "7",
   "dialect": "postgresql",
@@ -541,6 +541,21 @@
           "concurrently": false,
           "method": "btree",
           "with": {}
+        },
+        "otp_verifications_user_id_idx": {
+          "name": "otp_verifications_user_id_idx",
+          "columns": [
+            {
+              "expression": "user_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
         }
       },
       "foreignKeys": {},
@@ -858,6 +873,12 @@
           "primaryKey": true,
           "notNull": true
         },
+        "email": {
+          "name": "email",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
         "name": {
           "name": "name",
           "type": "text",
@@ -931,7 +952,24 @@
           "default": 1
         }
       },
-      "indexes": {},
+      "indexes": {
+        "profile_email_key": {
+          "name": "profile_email_key",
+          "columns": [
+            {
+              "expression": "email",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last",
+              "opclass": "text_ops"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
       "foreignKeys": {
         "profile_id_fkey": {
           "name": "profile_id_fkey",
@@ -968,7 +1006,7 @@
             "authenticated"
           ],
           "using": "(auth.uid()::uuid = id)",
-          "withCheck": "(\n        auth.uid()::uuid = id\n        AND plan_selected IS NOT DISTINCT FROM (SELECT plan_selected FROM profile WHERE id = auth.uid())\n        AND subscription_status IS NOT DISTINCT FROM (SELECT subscription_status FROM profile WHERE id = auth.uid())\n        AND current_period_end IS NOT DISTINCT FROM (SELECT current_period_end FROM profile WHERE id = auth.uid())\n        AND cancel_at_period_end IS NOT DISTINCT FROM (SELECT cancel_at_period_end FROM profile WHERE id = auth.uid())\n        AND billing_version IS NOT DISTINCT FROM (SELECT billing_version FROM profile WHERE id = auth.uid())\n      )"
+          "withCheck": "(\n        auth.uid()::uuid = id\n        AND email IS NOT DISTINCT FROM (SELECT email FROM profile WHERE id = auth.uid())\n        AND plan_selected IS NOT DISTINCT FROM (SELECT plan_selected FROM profile WHERE id = auth.uid())\n        AND subscription_status IS NOT DISTINCT FROM (SELECT subscription_status FROM profile WHERE id = auth.uid())\n        AND current_period_end IS NOT DISTINCT FROM (SELECT current_period_end FROM profile WHERE id = auth.uid())\n        AND cancel_at_period_end IS NOT DISTINCT FROM (SELECT cancel_at_period_end FROM profile WHERE id = auth.uid())\n        AND billing_version IS NOT DISTINCT FROM (SELECT billing_version FROM profile WHERE id = auth.uid())\n      )"
         },
         "Users can insert their own profile": {
           "name": "Users can insert their own profile",
