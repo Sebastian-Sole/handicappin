@@ -16,7 +16,6 @@ Deno.serve(async (req) => {
   }
 
   try {
-
     const supabaseUrl =
       Deno.env.get("SUPABASE_URL") ?? Deno.env.get("LOCAL_SUPABASE_URL");
     const supabaseServiceRoleKey =
@@ -27,7 +26,10 @@ Deno.serve(async (req) => {
       console.error("Missing Supabase environment variables");
       return new Response(
         JSON.stringify({ error: "Server configuration error" }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        {
+          status: 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
       );
     }
 
@@ -68,7 +70,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    const { user_id, old_email, new_email } = pendingChange;
+    const { user_id, new_email } = pendingChange;
 
     // Check expiration
     const now = new Date();
@@ -136,10 +138,10 @@ Deno.serve(async (req) => {
     }
 
     // Update auth.users.email - this is the single source of truth
-    const { error: authUpdateError } = await supabaseAdmin.auth.admin.updateUserById(
-      user_id,
-      { email: new_email }
-    );
+    const { error: authUpdateError } =
+      await supabaseAdmin.auth.admin.updateUserById(user_id, {
+        email: new_email,
+      });
 
     if (authUpdateError) {
       console.error("Failed to update auth.users email:", authUpdateError);
@@ -147,7 +149,10 @@ Deno.serve(async (req) => {
         JSON.stringify({
           error: "Failed to update email. Please try again or contact support.",
         }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        {
+          status: 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
       );
     }
 
@@ -173,7 +178,7 @@ Deno.serve(async (req) => {
               {
                 method: "POST",
                 headers: {
-                  "Authorization": `Bearer ${stripeSecretKey}`,
+                  Authorization: `Bearer ${stripeSecretKey}`,
                   "Content-Type": "application/x-www-form-urlencoded",
                 },
                 body: `email=${encodeURIComponent(new_email)}`,
@@ -195,7 +200,10 @@ Deno.serve(async (req) => {
             }
           } catch (fetchError) {
             clearTimeout(timeoutId);
-            if (fetchError instanceof Error && fetchError.name === "AbortError") {
+            if (
+              fetchError instanceof Error &&
+              fetchError.name === "AbortError"
+            ) {
               console.error("Stripe customer email update timed out after 5s");
             } else {
               throw fetchError; // Re-throw to outer catch
@@ -220,13 +228,16 @@ Deno.serve(async (req) => {
         message: "Email address updated successfully!",
         user_id,
       }),
-      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      {
+        status: 200,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      }
     );
   } catch (error) {
     console.error("Error in verify-email-change:", error);
-    return new Response(
-      JSON.stringify({ error: "Internal server error" }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
+    return new Response(JSON.stringify({ error: "Internal server error" }), {
+      status: 500,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
   }
 });

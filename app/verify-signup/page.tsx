@@ -35,7 +35,6 @@ function VerifySignupContent() {
     null
   );
   const [resendCooldown, setResendCooldown] = useState(0);
-  const [attempts, setAttempts] = useState(0);
 
   // Countdown timer for resend cooldown
   useEffect(() => {
@@ -63,7 +62,6 @@ function VerifySignupContent() {
     }
 
     setStatus("loading");
-    setAttempts((prev) => prev + 1);
 
     try {
       const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -109,8 +107,7 @@ function VerifySignupContent() {
         // If max attempts reached, focus on resend button
         if (data.maxAttemptsReached) {
           setMessage(
-            data.error ||
-              "Too many failed attempts. Please request a new code."
+            data.error || "Too many failed attempts. Please request a new code."
           );
           setRemainingAttempts(0);
         }
@@ -166,9 +163,7 @@ function VerifySignupContent() {
         setResendCooldown(data.waitSeconds);
       } else {
         setStatus("error");
-        setMessage(
-          data.error || "Failed to resend code. Please try again."
-        );
+        setMessage(data.error || "Failed to resend code. Please try again.");
       }
     } catch (error) {
       console.error("Resend error:", error);

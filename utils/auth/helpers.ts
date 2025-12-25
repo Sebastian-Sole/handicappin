@@ -2,7 +2,7 @@
 import { signupSchema } from "@/types/auth";
 import { createClientComponentClient } from "../supabase/client";
 
-export const signUpUser = async (values: signupSchema) => {
+export const signUpUser = async (values: signupSchema): Promise<{ isResend: boolean }> => {
   const supabase = createClientComponentClient();
 
   // Use the current origin for the redirect URL
@@ -38,7 +38,7 @@ export const signUpUser = async (values: signupSchema) => {
 
           if (success) {
             // Successfully resent verification to unconfirmed account
-            return;
+            return { isResend: true };
           }
 
           // If resend failed due to already verified, throw original error
@@ -128,4 +128,6 @@ export const signUpUser = async (values: signupSchema) => {
   // if (profileError) {
   //   throw profileError;
   // }
+
+  return { isResend: false };
 };

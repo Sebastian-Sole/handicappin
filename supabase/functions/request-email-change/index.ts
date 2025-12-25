@@ -11,6 +11,7 @@ import { generateOTP, hashOTP } from "../_shared/otp-utils.ts";
 
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY")!;
 const RATE_LIMIT_WINDOW = 120; // 2 minutes in seconds (allows resending if email delayed)
+const EMAIL_CHANGE_EXPIRY_HOURS = 48;
 
 if (!RESEND_API_KEY) {
   throw new Error("Missing required environment variable: RESEND_API_KEY");
@@ -140,7 +141,9 @@ Deno.serve(async (req) => {
     const otp = generateOTP();
     const otpHash = await hashOTP(otp);
     // Email change needs longer expiry (48 hours) because user must check NEW email
-    const expiresAt = new Date(Date.now() + 48 * 60 * 60 * 1000); // 48 hours
+    const expiresAt = new Date(
+      Date.now() + EMAIL_CHANGE_EXPIRY_HOURS * 60 * 60 * 1000
+    );
 
     // Generate secure random cancel token (32 bytes = 64 hex characters)
     const cancelTokenBytes = new Uint8Array(32);

@@ -45,12 +45,22 @@ export function Signup({
   const onSubmit = async (values: z.infer<typeof signupSchema>) => {
     setLoading(true);
     try {
-      await signUpUser(values);
-      toast({
-        title: "Verification email sent",
-        description:
-          "Please check your email and enter the verification code.",
-      });
+      const result = await signUpUser(values);
+
+      if (result.isResend) {
+        toast({
+          title: "Verification code resent",
+          description:
+            "A new verification code has been sent to your email. Please check your inbox.",
+        });
+      } else {
+        toast({
+          title: "Verification email sent",
+          description:
+            "Please check your email and enter the verification code.",
+        });
+      }
+
       router.push(`/verify-signup?email=${encodeURIComponent(values.email)}`);
     } catch (error: any) {
       console.error("Error during sign up:", error);
