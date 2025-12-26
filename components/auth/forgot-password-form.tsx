@@ -26,10 +26,14 @@ interface ForgotPasswordFormProps {
   initialEmail?: string;
 }
 
-export default function ForgotPasswordForm({ initialEmail }: ForgotPasswordFormProps) {
+export default function ForgotPasswordForm({
+  initialEmail,
+}: ForgotPasswordFormProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
-  const [submitButtonText, setSubmitButtonText] = useState("Send verification code");
+  const [submitButtonText, setSubmitButtonText] = useState(
+    "Send verification code"
+  );
 
   const handleSubmit = async (values: z.infer<typeof forgotPasswordSchema>) => {
     setLoading(true);
@@ -88,13 +92,14 @@ export default function ForgotPasswordForm({ initialEmail }: ForgotPasswordFormP
       });
       setLoading(false);
       setSubmitButtonText("Send verification code");
+      return;
     }
 
     try {
       setSubmitButtonText("Sending email...");
       const URL = `${supabaseUrl}/functions/v1/reset-password`;
 
-      await fetch(URL, {
+      const response = await fetch(URL, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -105,6 +110,37 @@ export default function ForgotPasswordForm({ initialEmail }: ForgotPasswordFormP
         }),
       });
 
+      if (!response.ok) {
+        // Try to parse error message from response
+        let errorMessage =
+          "An error occurred with the reset password email. Contact support";
+        try {
+          const errorData = await response.json();
+          if (errorData.error) {
+            errorMessage = errorData.error;
+          }
+        } catch {
+          // If JSON parsing fails, try to get text
+          try {
+            const errorText = await response.text();
+            if (errorText) {
+              errorMessage = errorText;
+            }
+          } catch {
+            // Use default error message
+          }
+        }
+
+        toast({
+          title: "Error",
+          description: errorMessage,
+          variant: "destructive",
+        });
+        setLoading(false);
+        setSubmitButtonText("Send verification code");
+        return;
+      }
+
       toast({
         title: "✅ Password reset requested",
         description:
@@ -113,7 +149,9 @@ export default function ForgotPasswordForm({ initialEmail }: ForgotPasswordFormP
 
       // Redirect to update-password page with email pre-filled
       setTimeout(() => {
-        router.push(`/update-password?email=${encodeURIComponent(values.email)}`);
+        router.push(
+          `/update-password?email=${encodeURIComponent(values.email)}`
+        );
       }, 1500);
     } catch (error) {
       toast({
@@ -157,12 +195,7 @@ export default function ForgotPasswordForm({ initialEmail }: ForgotPasswordFormP
                   <FormItem>
                     <FormLabel>Email</FormLabel>
                     <FormControl>
-                      <Input
-                        id="email"
-                        type="email"
-                        required
-                        {...field}
-                      />
+                      <Input id="email" type="email" required {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

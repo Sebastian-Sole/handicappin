@@ -31,53 +31,19 @@ interface UpdatePasswordProps {
 const UpdatePassword = ({ email: initialEmail }: UpdatePasswordProps) => {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
-  const [otp, setOtp] = useState("");
-  const [email, setEmail] = useState<string>(initialEmail || "");
-  const [password, setPassword] = useState<string>("");
-  const [confirmPassword, setConfirmPassword] = useState<string>("");
+
+  const form = useForm<z.infer<typeof resetPasswordSchema>>({
+    resolver: zodResolver(resetPasswordSchema),
+    defaultValues: {
+      email: initialEmail || "",
+      otp: "",
+      password: "",
+      confirmPassword: "",
+    },
+  });
 
   const handleSubmit = async (values: z.infer<typeof resetPasswordSchema>) => {
     setLoading(true);
-
-    if (!otp || !password || !email) {
-      toast({
-        title: "Error",
-        description: "Email, verification code, and password are required",
-        variant: "destructive",
-      });
-      setLoading(false);
-      return;
-    }
-
-    if (otp.length !== 6 || !/^\d{6}$/.test(otp)) {
-      toast({
-        title: "Error",
-        description: "Verification code must be 6 digits",
-        variant: "destructive",
-      });
-      setLoading(false);
-      return;
-    }
-
-    if (password !== confirmPassword) {
-      toast({
-        title: "Error",
-        description: "Passwords do not match",
-        variant: "destructive",
-      });
-      setLoading(false);
-      return;
-    }
-
-    if (password.length < 8) {
-      toast({
-        title: "Error",
-        description: "Password must be at least 8 characters long",
-        variant: "destructive",
-      });
-      setLoading(false);
-      return;
-    }
 
     const URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
     try {
@@ -86,7 +52,11 @@ const UpdatePassword = ({ email: initialEmail }: UpdatePasswordProps) => {
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email, otp, newPassword: password }),
+          body: JSON.stringify({
+            email: values.email,
+            otp: values.otp,
+            newPassword: values.password
+          }),
         }
       );
 
@@ -101,7 +71,7 @@ const UpdatePassword = ({ email: initialEmail }: UpdatePasswordProps) => {
         setLoading(false);
 
         // Clear OTP on error
-        setOtp("");
+        form.setValue("otp", "");
         return;
       }
 
@@ -121,19 +91,9 @@ const UpdatePassword = ({ email: initialEmail }: UpdatePasswordProps) => {
         variant: "destructive",
       });
       setLoading(false);
-      setOtp("");
+      form.setValue("otp", "");
     }
   };
-
-  const form = useForm<z.infer<typeof resetPasswordSchema>>({
-    resolver: zodResolver(resetPasswordSchema),
-    defaultValues: {
-      email: initialEmail || "",
-      otp: "",
-      password: "",
-      confirmPassword: "",
-    },
-  });
 
   return (
     <div className="mx-auto max-w-sm space-y-6 py-8 sm:min-w-[40%] min-h-full w-[90%]">
@@ -165,11 +125,6 @@ const UpdatePassword = ({ email: initialEmail }: UpdatePasswordProps) => {
                         type="email"
                         required
                         {...field}
-                        value={email}
-                        onChange={(e) => {
-                          setEmail(e.target.value);
-                          form.setValue("email", e.target.value);
-                        }}
                         disabled={!!initialEmail}
                       />
                     </FormControl>
@@ -192,11 +147,7 @@ const UpdatePassword = ({ email: initialEmail }: UpdatePasswordProps) => {
                       <div className="flex justify-center">
                         <InputOTP
                           maxLength={6}
-                          value={otp}
-                          onChange={(value) => {
-                            setOtp(value);
-                            form.setValue("otp", value);
-                          }}
+                          {...field}
                           disabled={loading}
                         >
                           <InputOTPGroup>
@@ -229,11 +180,6 @@ const UpdatePassword = ({ email: initialEmail }: UpdatePasswordProps) => {
                         type="password"
                         required
                         {...field}
-                        value={password}
-                        onChange={(e) => {
-                          setPassword(e.target.value);
-                          form.setValue("password", e.target.value);
-                        }}
                       />
                     </FormControl>
                     <FormMessage />
@@ -255,11 +201,6 @@ const UpdatePassword = ({ email: initialEmail }: UpdatePasswordProps) => {
                         type="password"
                         required
                         {...field}
-                        value={confirmPassword}
-                        onChange={(e) => {
-                          setConfirmPassword(e.target.value);
-                          form.setValue("confirmPassword", e.target.value);
-                        }}
                       />
                     </FormControl>
                     <FormMessage />
@@ -271,7 +212,7 @@ const UpdatePassword = ({ email: initialEmail }: UpdatePasswordProps) => {
             <Button
               type="submit"
               className="w-full"
-              disabled={loading || otp.length !== 6}
+              disabled={loading || form.watch("otp").length !== 6}
             >
               {loading ? "Resetting..." : "Reset Password"}
             </Button>

@@ -137,7 +137,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Update auth.users.email - this is the single source of truth
+    // Update auth.users.email
     const { error: authUpdateError } =
       await supabaseAdmin.auth.admin.updateUserById(user_id, {
         email: new_email,
@@ -145,6 +145,27 @@ Deno.serve(async (req) => {
 
     if (authUpdateError) {
       console.error("Failed to update auth.users email:", authUpdateError);
+      return new Response(
+        JSON.stringify({
+          error: "Failed to update email. Please try again or contact support.",
+        }),
+        {
+          status: 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
+      );
+    }
+
+    // Update profile.email to keep it in sync with auth.users.email
+    const { error: profileError } = await supabaseAdmin
+      .from("profile")
+      .update({
+        email: new_email,
+      })
+      .eq("id", user_id);
+
+    if (profileError) {
+      console.error("Failed to update profile email:", profileError);
       return new Response(
         JSON.stringify({
           error: "Failed to update email. Please try again or contact support.",
