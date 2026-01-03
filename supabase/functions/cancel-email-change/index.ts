@@ -1,10 +1,6 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "jsr:@supabase/supabase-js@2";
-import { verify } from "https://deno.land/x/djwt@v3.0.2/mod.ts";
-import { emailChangeJwtPayloadSchema } from "../types.ts";
 import { corsHeaders } from "../_shared/cors.ts";
-
-const JWT_SECRET = Deno.env.get("EMAIL_CHANGE_TOKEN_SECRET");
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -19,14 +15,6 @@ Deno.serve(async (req) => {
   }
 
   try {
-    if (!JWT_SECRET) {
-      console.error("Missing EMAIL_CHANGE_TOKEN_SECRET");
-      return new Response(
-        JSON.stringify({ error: "Server configuration error" }),
-        { status: 500, headers: corsHeaders }
-      );
-    }
-
     const supabaseUrl =
       Deno.env.get("SUPABASE_URL") ?? Deno.env.get("LOCAL_SUPABASE_URL");
     const supabaseServiceRoleKey =
@@ -53,68 +41,28 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Verify JWT signature
-    const key = await crypto.subtle.importKey(
-      "raw",
-      new TextEncoder().encode(JWT_SECRET),
-      { name: "HMAC", hash: "SHA-256" },
-      false,
-      ["verify"]
-    );
-
-    const payload = await verify(token, key);
-    const parsed = emailChangeJwtPayloadSchema.safeParse(payload);
-
-    if (!parsed.success) {
-      return new Response(JSON.stringify({ error: "Invalid token" }), {
-        status: 401,
-        headers: corsHeaders,
-      });
-    }
-
-    const { user_id } = parsed.data;
-
-    // Hash token to look up the specific pending request
-    const tokenHashBuffer = await crypto.subtle.digest(
-      "SHA-256",
-      new TextEncoder().encode(token)
-    );
-    const tokenHash = Array.from(new Uint8Array(tokenHashBuffer))
-      .map((b) => b.toString(16).padStart(2, "0"))
-      .join("");
-
-    // Look up pending change by token_hash (not user_id)
-    // This ensures we only cancel the SPECIFIC request tied to this token
+    // Look up pending change by cancel_token
     const { data: pendingChange, error: lookupError } = await supabaseAdmin
       .from("pending_email_changes")
       .select("*")
-      .eq("token_hash", tokenHash)
+      .eq("cancel_token", token)
       .single();
 
     if (lookupError || !pendingChange) {
+      console.error("No pending change found for token:", lookupError);
       return new Response(
         JSON.stringify({ error: "No pending email change found for this token" }),
         { status: 404, headers: corsHeaders }
       );
     }
 
-    // Verify user_id matches (security check)
-    if (pendingChange.user_id !== user_id) {
-      console.error("User ID mismatch in cancel request", {
-        tokenUserId: user_id,
-        pendingUserId: pendingChange.user_id,
-      });
-      return new Response(
-        JSON.stringify({ error: "Invalid token" }),
-        { status: 401, headers: corsHeaders }
-      );
-    }
+    const { user_id } = pendingChange;
 
-    // Delete the specific pending change by token_hash
+    // Delete the pending change by cancel_token
     const { error: deleteError } = await supabaseAdmin
       .from("pending_email_changes")
       .delete()
-      .eq("token_hash", tokenHash);
+      .eq("cancel_token", token);
 
     if (deleteError) {
       console.error("Failed to cancel email change:", deleteError);

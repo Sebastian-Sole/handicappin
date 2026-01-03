@@ -4,6 +4,7 @@ import { toast } from "../ui/use-toast";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { resetPasswordSchema } from "@/types/auth";
 import { CardDescription } from "../ui/card";
 import {
   Form,
@@ -15,92 +16,92 @@ import {
 } from "../ui/form";
 import { Input } from "../ui/input";
 import { Button } from "../ui/button";
+import {
+  InputOTP,
+  InputOTPGroup,
+  InputOTPSlot,
+} from "../ui/input-otp";
+import { Alert, AlertDescription } from "../ui/alert";
+import { useRouter } from "next/navigation";
 
 interface UpdatePasswordProps {
-  token: string;
-  email: string;
+  email?: string;
 }
 
-const UpdatePassword = ({ token, email }: UpdatePasswordProps) => {
+const UpdatePassword = ({ email: initialEmail }: UpdatePasswordProps) => {
+  const router = useRouter();
   const [loading, setLoading] = useState(false);
-  const [password, setPassword] = useState<string>("");
-  const [confirmPassword, setConfirmPassword] = useState<string>("");
 
-  const handleSubmit = async (values: z.infer<typeof forgotPasswordSchema>) => {
+  const form = useForm<z.infer<typeof resetPasswordSchema>>({
+    resolver: zodResolver(resetPasswordSchema),
+    defaultValues: {
+      email: initialEmail || "",
+      otp: "",
+      password: "",
+      confirmPassword: "",
+    },
+  });
+
+  const handleSubmit = async (values: z.infer<typeof resetPasswordSchema>) => {
     setLoading(true);
-
-    if (!token || !password) {
-      toast({
-        title: "Error",
-        description: "Token or password is missing",
-        variant: "destructive",
-      });
-      setLoading(false);
-      return;
-    }
-
-    if (password !== confirmPassword) {
-      toast({
-        title: "Error",
-        description: "Passwords do not match",
-        variant: "destructive",
-      });
-      setLoading(false);
-      return;
-    }
 
     const URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
     try {
-      const response = await fetch(`${URL}/functions/v1/update-password`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ token, password }),
-      });
+      const response = await fetch(
+        `${URL}/functions/v1/verify-password-reset-otp`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            email: values.email,
+            otp: values.otp,
+            newPassword: values.password
+          }),
+        }
+      );
 
       const data = await response.json();
 
       if (!response.ok) {
         toast({
           title: "Error",
-          description: response.statusText,
+          description: data.error || response.statusText,
           variant: "destructive",
         });
         setLoading(false);
-        throw new Error(data.error || "Failed to update password");
+
+        // Clear OTP on error
+        form.setValue("otp", "");
+        return;
       }
+
+      toast({
+        title: "✅ Success",
+        description: "Password reset successfully! Redirecting to login...",
+      });
+
+      // Redirect to login after 2 seconds
+      setTimeout(() => {
+        router.push("/login");
+      }, 2000);
     } catch (err: any) {
       toast({
         title: "Error",
-        description: err.message,
+        description: err.message || "An unexpected error occurred",
         variant: "destructive",
       });
-      throw new Error(err);
+      setLoading(false);
+      form.setValue("otp", "");
     }
-    toast({
-      title: "✅ Success",
-      description: "Password updated successfully!",
-    });
-    setLoading(false);
   };
-
-  const forgotPasswordSchema = z.object({
-    email: z.string(),
-    password: z.string(),
-    confirmPassword: z.string(),
-  });
-
-  const form = useForm<z.infer<typeof forgotPasswordSchema>>({
-    resolver: zodResolver(forgotPasswordSchema),
-    defaultValues: {
-      email: email,
-    },
-  });
 
   return (
     <div className="mx-auto max-w-sm space-y-6 py-8 sm:min-w-[40%] min-h-full w-[90%]">
       <div className="space-y-2 text-left">
-        <h1 className="text-3xl font-bold">Update Password</h1>
-        <CardDescription>Enter your new password to update it</CardDescription>
+        <h1 className="text-3xl font-bold">Reset Password</h1>
+        <CardDescription>
+          Enter the verification code from your email and your new password
+        </CardDescription>
       </div>
       <div className="space-y-4">
         <Form {...form}>
@@ -109,7 +110,7 @@ const UpdatePassword = ({ token, email }: UpdatePasswordProps) => {
               event.preventDefault();
               form.handleSubmit(handleSubmit)();
             }}
-            className="space-y-8"
+            className="space-y-6"
           >
             <div className="space-y-2">
               <FormField
@@ -124,8 +125,7 @@ const UpdatePassword = ({ token, email }: UpdatePasswordProps) => {
                         type="email"
                         required
                         {...field}
-                        value={email}
-                        disabled
+                        disabled={!!initialEmail}
                       />
                     </FormControl>
                     <FormMessage />
@@ -133,6 +133,40 @@ const UpdatePassword = ({ token, email }: UpdatePasswordProps) => {
                 )}
               />
             </div>
+
+            <div className="space-y-2">
+              <FormField
+                control={form.control}
+                name="otp"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="block text-center">
+                      Verification Code
+                    </FormLabel>
+                    <FormControl>
+                      <div className="flex justify-center">
+                        <InputOTP
+                          maxLength={6}
+                          {...field}
+                          disabled={loading}
+                        >
+                          <InputOTPGroup>
+                            <InputOTPSlot index={0} />
+                            <InputOTPSlot index={1} />
+                            <InputOTPSlot index={2} />
+                            <InputOTPSlot index={3} />
+                            <InputOTPSlot index={4} />
+                            <InputOTPSlot index={5} />
+                          </InputOTPGroup>
+                        </InputOTP>
+                      </div>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
             <div className="space-y-2">
               <FormField
                 control={form.control}
@@ -146,11 +180,6 @@ const UpdatePassword = ({ token, email }: UpdatePasswordProps) => {
                         type="password"
                         required
                         {...field}
-                        value={password}
-                        onChange={(e) => {
-                          setPassword(e.target.value);
-                          form.setValue("password", e.target.value);
-                        }}
                       />
                     </FormControl>
                     <FormMessage />
@@ -158,6 +187,7 @@ const UpdatePassword = ({ token, email }: UpdatePasswordProps) => {
                 )}
               />
             </div>
+
             <div className="space-y-2">
               <FormField
                 control={form.control}
@@ -171,11 +201,6 @@ const UpdatePassword = ({ token, email }: UpdatePasswordProps) => {
                         type="password"
                         required
                         {...field}
-                        value={confirmPassword}
-                        onChange={(e) => {
-                          setConfirmPassword(e.target.value);
-                          form.setValue("confirmPassword", e.target.value);
-                        }}
                       />
                     </FormControl>
                     <FormMessage />
@@ -184,11 +209,22 @@ const UpdatePassword = ({ token, email }: UpdatePasswordProps) => {
               />
             </div>
 
-            <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? "Updating..." : "Update password"}
+            <Button
+              type="submit"
+              className="w-full"
+              disabled={loading || form.watch("otp").length !== 6}
+            >
+              {loading ? "Resetting..." : "Reset Password"}
             </Button>
           </form>
         </Form>
+
+        <Alert className="mt-4">
+          <AlertDescription className="text-xs">
+            <strong>Tip:</strong> Check your email for the 6-digit verification
+            code. The code expires in 15 minutes.
+          </AlertDescription>
+        </Alert>
       </div>
     </div>
   );

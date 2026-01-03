@@ -81,7 +81,9 @@ export async function sendSubscriptionUpgradedEmail({
     };
   } catch (error) {
     logWebhookError(
-      `Failed to send subscription upgraded email to ${redactEmail(to)} (${oldPlan} → ${newPlan})`,
+      `Failed to send subscription upgraded email to ${redactEmail(
+        to
+      )} (${oldPlan} → ${newPlan})`,
       error
     );
 
@@ -109,7 +111,9 @@ export async function sendSubscriptionDowngradedEmail({
   billingUrl: string;
 }): Promise<SendEmailResult> {
   try {
-    logWebhookInfo(`Sending subscription downgraded email to ${redactEmail(to)}`);
+    logWebhookInfo(
+      `Sending subscription downgraded email to ${redactEmail(to)}`
+    );
 
     const emailHtml = await render(
       SubscriptionDowngradedEmail({
@@ -145,7 +149,9 @@ export async function sendSubscriptionDowngradedEmail({
     };
   } catch (error) {
     logWebhookError(
-      `Failed to send subscription downgraded email to ${redactEmail(to)} (${oldPlan} → ${newPlan})`,
+      `Failed to send subscription downgraded email to ${redactEmail(
+        to
+      )} (${oldPlan} → ${newPlan})`,
       error
     );
 
@@ -171,7 +177,9 @@ export async function sendSubscriptionCancelledEmail({
   billingUrl: string;
 }): Promise<SendEmailResult> {
   try {
-    logWebhookInfo(`Sending subscription cancelled email to ${redactEmail(to)}`);
+    logWebhookInfo(
+      `Sending subscription cancelled email to ${redactEmail(to)}`
+    );
 
     const emailHtml = await render(
       SubscriptionCancelledEmail({
@@ -203,7 +211,9 @@ export async function sendSubscriptionCancelledEmail({
     };
   } catch (error) {
     logWebhookError(
-      `Failed to send subscription cancelled email to ${redactEmail(to)} (plan: ${plan})`,
+      `Failed to send subscription cancelled email to ${redactEmail(
+        to
+      )} (plan: ${plan})`,
       error
     );
 

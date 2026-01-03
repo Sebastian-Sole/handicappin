@@ -19,13 +19,13 @@ Deno.serve(async (req: Request) => {
 
   try {
     // Parse the request body
-    const { name, handicapIndex, userId } = await req.json();
+    const { email, name, handicapIndex, userId } = await req.json();
 
     // Validate the input
-    if (!name || !userId) {
+    if (!email || !name || !userId) {
       return new Response(
         JSON.stringify({
-          error: "Missing required fields: name or userId",
+          error: "Missing required fields: email, name, or userId",
         }),
         {
           status: 400,
@@ -58,9 +58,11 @@ Deno.serve(async (req: Request) => {
     const supabase = createClient(supabaseUrl, supabaseServiceRoleKey);
 
     // Insert the profile into the database
-    // Note: email is stored in auth.users table only
+    // Note: email syncs from auth.users via trigger, but we pass it here too for robustness
+    // The trigger's ON CONFLICT will handle race conditions
     const { error } = await supabase.from("profile").insert([
       {
+        email,
         name,
         handicapIndex: handicapIndex || 54, // Default handicapIndex to 54 if not provided
         id: userId,

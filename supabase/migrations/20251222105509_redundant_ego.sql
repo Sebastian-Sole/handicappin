@@ -1,0 +1,2 @@
+ALTER TABLE "pending_email_changes" ADD COLUMN "cancel_token" text;--> statement-breakpoint
+CREATE INDEX "pending_email_changes_cancel_token_idx" ON "pending_email_changes" USING btree ("cancel_token");

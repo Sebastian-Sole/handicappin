@@ -7,30 +7,10 @@ export type Json =
   | Json[]
 
 export type Database = {
-  graphql_public: {
-    Tables: {
-      [_ in never]: never
-    }
-    Views: {
-      [_ in never]: never
-    }
-    Functions: {
-      graphql: {
-        Args: {
-          extensions?: Json
-          operationName?: string
-          query?: string
-          variables?: Json
-        }
-        Returns: Json
-      }
-    }
-    Enums: {
-      [_ in never]: never
-    }
-    CompositeTypes: {
-      [_ in never]: never
-    }
+  // Allows to automatically instantiate createClient with right options
+  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
+  __InternalSupabase: {
+    PostgrestVersion: "12.2.3 (519615d)"
   }
   public: {
     Tables: {
@@ -169,8 +149,54 @@ export type Database = {
           },
         ]
       }
+      otp_verifications: {
+        Row: {
+          created_at: string
+          email: string
+          expires_at: string
+          id: string
+          metadata: string | null
+          otp_hash: string
+          otp_type: string
+          request_ip: string | null
+          user_id: string | null
+          verification_attempts: number
+          verified: boolean
+          verified_at: string | null
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          expires_at: string
+          id?: string
+          metadata?: string | null
+          otp_hash: string
+          otp_type: string
+          request_ip?: string | null
+          user_id?: string | null
+          verification_attempts?: number
+          verified?: boolean
+          verified_at?: string | null
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          expires_at?: string
+          id?: string
+          metadata?: string | null
+          otp_hash?: string
+          otp_type?: string
+          request_ip?: string | null
+          user_id?: string | null
+          verification_attempts?: number
+          verified?: boolean
+          verified_at?: string | null
+        }
+        Relationships: []
+      }
       pending_email_changes: {
         Row: {
+          cancel_token: string | null
           created_at: string
           expires_at: string
           id: string
@@ -182,6 +208,7 @@ export type Database = {
           verification_attempts: number
         }
         Insert: {
+          cancel_token?: string | null
           created_at?: string
           expires_at: string
           id?: string
@@ -193,6 +220,7 @@ export type Database = {
           verification_attempts?: number
         }
         Update: {
+          cancel_token?: string | null
           created_at?: string
           expires_at?: string
           id?: string
@@ -571,6 +599,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      cleanup_expired_otps: { Args: never; Returns: undefined }
       custom_access_token_hook: { Args: { event: Json }; Returns: Json }
       get_public_course_count: { Args: never; Returns: number }
       get_public_round_count: { Args: never; Returns: number }
@@ -717,11 +746,7 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
-  graphql_public: {
-    Enums: {},
-  },
   public: {
     Enums: {},
   },
 } as const
-

@@ -1,6 +1,5 @@
 import {
   Body,
-  Button,
   Container,
   Head,
   Heading,
@@ -10,18 +9,19 @@ import {
   Section,
   Text,
   Tailwind,
+  Hr,
 } from "https://esm.sh/@react-email/components@0.0.22?deps=react@18.2.0";
 import * as React from "https://esm.sh/react@18.2.0";
 
 interface EmailVerificationChangeProps {
-  verificationUrl: string;
+  otp: string;
   oldEmail: string;
   newEmail: string;
   expiresInHours?: number;
 }
 
 export default function EmailVerificationChange({
-  verificationUrl,
+  otp,
   oldEmail,
   newEmail,
   expiresInHours = 48,
@@ -29,7 +29,7 @@ export default function EmailVerificationChange({
   return (
     <Html>
       <Head />
-      <Preview>Verify your new email address for Handicappin'</Preview>
+      <Preview>Verify your email change - Your code is {otp}</Preview>
       <Tailwind>
         <Body className="bg-gray-50 font-sans">
           <Container className="mx-auto py-8 px-4 max-w-xl">
@@ -43,61 +43,49 @@ export default function EmailVerificationChange({
                 <strong>{oldEmail}</strong> to <strong>{newEmail}</strong>.
               </Text>
 
-              {/* Info Box */}
-              <Section className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-                <Text className="text-sm text-gray-600 mb-1">
-                  New Email Address
+              {/* OTP Display */}
+              <Section className="bg-blue-50 border-2 border-blue-200 rounded-lg p-6 mb-6 text-center">
+                <Text className="text-sm text-gray-600 mb-2 uppercase tracking-wide">
+                  Your Verification Code
                 </Text>
-                <Text className="text-xl font-bold text-gray-900 mb-0">
-                  {newEmail}
+                <Text className="text-4xl font-bold text-gray-900 tracking-widest mb-0 font-mono">
+                  {otp}
                 </Text>
               </Section>
 
               {/* Instructions */}
               <Text className="text-gray-700 mb-4">
-                To complete this change, please verify your new email address by
-                clicking the button below:
+                Enter this code on the verification page to complete your email
+                change. This code will expire in{" "}
+                <strong>{expiresInHours} hours</strong>.
               </Text>
 
-              {/* CTA Button */}
-              <Section className="text-center my-8">
-                <Button
-                  href={verificationUrl}
-                  className="bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold no-underline"
-                >
-                  Verify New Email Address
-                </Button>
-              </Section>
-
-              {/* Alternative Link */}
-              <Text className="text-sm text-gray-600 mb-6">
-                Or copy and paste this link into your browser:
-                <br />
-                <Link href={verificationUrl} className="text-blue-600 break-all">
-                  {verificationUrl}
-                </Link>
-              </Text>
-
-              {/* Important Info */}
-              <Section className="border-t border-gray-200 pt-6 mt-6">
-                <Text className="text-sm text-gray-600 mb-2">
-                  <strong>Important:</strong>
+              {/* Security Info */}
+              <Section className="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-6">
+                <Text className="text-sm text-gray-700 mb-2">
+                  <strong>Security Tips:</strong>
                 </Text>
-                <ul className="text-sm text-gray-600 pl-4 mb-4">
-                  <li>This link will expire in {expiresInHours} hours</li>
+                <ul className="text-sm text-gray-600 pl-4 mb-0">
+                  <li>Never share this code with anyone</li>
                   <li>
-                    Your email address will only change after verification
+                    Handicappin' will never ask for this code via phone or email
                   </li>
-                  <li>
-                    A notification was sent to your old email address (
-                    {oldEmail})
-                  </li>
-                  <li>
-                    You can cancel this change by clicking the link in that
-                    notification
-                  </li>
+                  <li>This code can only be used once</li>
                 </ul>
               </Section>
+
+              {/* Important Info */}
+              <Hr className="border border-solid border-gray-200 my-6" />
+              <Text className="text-sm text-gray-600 mb-2">
+                <strong>Important:</strong>
+              </Text>
+              <ul className="text-sm text-gray-600 pl-4 mb-4">
+                <li>Your email address will only change after verification</li>
+                <li>
+                  A notification was sent to your old email address ({oldEmail})
+                </li>
+                <li>You can cancel this change from your account settings</li>
+              </ul>
 
               {/* Didn't Request */}
               <Section className="bg-gray-50 border border-gray-200 rounded-lg p-4 mt-6">
@@ -106,8 +94,8 @@ export default function EmailVerificationChange({
                 </Text>
                 <Text className="text-sm text-gray-600 mb-0">
                   If you didn't request this email change, you can safely ignore
-                  this message. Your email address will not be changed unless you
-                  click the verification link above.
+                  this message. Your email address will not be changed unless
+                  you enter the verification code.
                 </Text>
               </Section>
 
