@@ -18,8 +18,8 @@ export const signUpUser = async (values: signupSchema): Promise<{ isResend: bool
   });
 
   if (signupError) {
-    // Check if email already exists but is unconfirmed
-    if (signupError.message.includes("User already registered")) {
+    // Check if email already exists but is unconfirmed using error code
+    if (signupError.code === "user_already_exists") {
       // Attempt to resend verification email for unconfirmed user
       const PROJECT_ID = process.env.NEXT_PUBLIC_SUPABASE_URL;
       const resendUrl = `${PROJECT_ID}/functions/v1/resend-verification-otp`;
