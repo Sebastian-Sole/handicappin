@@ -1,9 +1,9 @@
 import crypto from "crypto";
 import { webcrypto } from "node:crypto";
+import { OTP_LENGTH, OTP_EXPIRY_MINUTES, OTP_MAX_ATTEMPTS } from "./otp-constants";
 
-export const OTP_LENGTH = 6;
-export const OTP_EXPIRY_MINUTES = 15;
-export const OTP_MAX_ATTEMPTS = 5;
+// Re-export constants for backwards compatibility
+export { OTP_LENGTH, OTP_EXPIRY_MINUTES, OTP_MAX_ATTEMPTS };
 
 /**
  * Generate a cryptographically secure 6-digit OTP

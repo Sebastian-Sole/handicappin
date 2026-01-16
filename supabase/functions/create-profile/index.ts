@@ -6,6 +6,8 @@
 import { createClient } from "jsr:@supabase/supabase-js@2";
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { corsHeaders } from "../_shared/cors.ts";
+import { z } from "https://esm.sh/zod@3.24.1";
+import { validateEmail } from "../_shared/validation.ts";
 
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
@@ -19,13 +21,40 @@ Deno.serve(async (req: Request) => {
 
   try {
     // Parse the request body
-    const { email, name, handicapIndex, userId } = await req.json();
+    const body = await req.json();
 
-    // Validate the input
-    if (!email || !name || !userId) {
+    // Validate email format early (before any other processing)
+    const emailError = validateEmail(body.email);
+    if (emailError) {
+      return new Response(
+        JSON.stringify({ error: emailError }),
+        {
+          status: 400,
+          headers: {
+            ...corsHeaders,
+            "Content-Type": "application/json",
+          },
+        },
+      );
+    }
+
+    // Define validation schema
+    const createProfileSchema = z.object({
+      email: z.string().email("Invalid email format"),
+      name: z.string().min(1, "Name is required"),
+      userId: z.string().uuid("Invalid user ID format"),
+      handicapIndex: z.number().optional(),
+    });
+
+    // Validate input with Zod
+    const validation = createProfileSchema.safeParse(body);
+
+    if (!validation.success) {
+      const errors = validation.error.errors.map(err => `${err.path.join('.')}: ${err.message}`).join(', ');
       return new Response(
         JSON.stringify({
-          error: "Missing required fields: email, name, or userId",
+          error: "Validation failed",
+          details: errors,
         }),
         {
           status: 400,
@@ -36,6 +65,8 @@ Deno.serve(async (req: Request) => {
         },
       );
     }
+
+    const { email, name, handicapIndex, userId } = validation.data;
 
     // Initialize the Supabase client
     const supabaseUrl =

@@ -2,10 +2,8 @@
 
 import { createServerComponentClient } from "@/utils/supabase/server";
 import { createAdminClient } from "@/utils/supabase/admin";
-import { verifyOTPHash } from "@/lib/otp-utils";
+import { verifyOTPHash, OTP_MAX_ATTEMPTS } from "@/lib/otp-utils";
 import { logger } from "@/lib/logging";
-
-const OTP_MAX_ATTEMPTS = 5;
 
 interface VerifyEmailChangeResult {
   success: boolean;

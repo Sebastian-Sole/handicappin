@@ -194,7 +194,7 @@ export function PersonalInformationTab({
         toast({
           title: "Verification code sent",
           description:
-            "Please check your new email address for the verification code. The code is valid for 48 hours.",
+            "Please check your new email address for the verification code. The code is valid for 15 minutes.",
         });
         // Invalidate query to refetch actual backend state
         await utils.auth.getPendingEmailChange.invalidate();
@@ -272,7 +272,9 @@ export function PersonalInformationTab({
           setIsVerified(false);
         }, 6000);
       } else {
-        setOtpError(result.error || "Invalid verification code. Please try again.");
+        setOtpError(
+          result.error || "Invalid verification code. Please try again."
+        );
         setOtp(""); // Clear OTP on error
       }
     } catch (error) {
@@ -290,7 +292,9 @@ export function PersonalInformationTab({
     // Rate limit: only allow resend every 2 minutes
     const now = Date.now();
     if (lastResendTime && now - lastResendTime < 120000) {
-      const remainingSeconds = Math.ceil((120000 - (now - lastResendTime)) / 1000);
+      const remainingSeconds = Math.ceil(
+        (120000 - (now - lastResendTime)) / 1000
+      );
       toast({
         title: "Please wait",
         description: `You can resend the email in ${remainingSeconds} seconds`,
@@ -332,7 +336,7 @@ export function PersonalInformationTab({
         toast({
           title: "Verification code resent",
           description:
-            "Please check your email. The code is valid for 48 hours.",
+            "Please check your email. The code is valid for 15 minutes.",
         });
         setLastResendTime(Date.now());
         // Ensure OTP input is shown and reset verified state
@@ -373,7 +377,8 @@ export function PersonalInformationTab({
         <Alert className="bg-green-50 border-green-200 dark:bg-green-950 dark:border-green-800">
           <Check className="h-4 w-4 text-green-600 dark:text-green-400" />
           <AlertDescription className="text-green-800 dark:text-green-200">
-            Email change cancelled successfully. Your email address remains unchanged.
+            Email change cancelled successfully. Your email address remains
+            unchanged.
           </AlertDescription>
         </Alert>
       )}
@@ -418,7 +423,17 @@ export function PersonalInformationTab({
               <Button
                 type="button"
                 onClick={handleEmailChange}
-                disabled={isRequestingChange || newEmail === currentEmail || showOtpInput}
+                disabled={
+                  isRequestingChange ||
+                  newEmail === currentEmail ||
+                  showOtpInput
+                }
+                aria-label={
+                  isRequestingChange
+                    ? "Sending verification code, please wait"
+                    : "Send email change verification code"
+                }
+                aria-busy={isRequestingChange}
               >
                 {isRequestingChange ? "Sending..." : "Change Email"}
               </Button>
@@ -434,13 +449,25 @@ export function PersonalInformationTab({
                       <strong>Verification code sent to:</strong> {pendingEmail}
                     </div>
                     <div className="text-sm text-muted-foreground">
-                      Check your email for the 6-digit verification code. The code is valid for 48 hours.
+                      Check your email for the 6-digit verification code. The
+                      code is valid for 15 minutes.
                     </div>
 
                     <div className="space-y-2">
-                      <FormLabel className="text-sm">Enter Verification Code</FormLabel>
-                      <div className="flex justify-start">
+                      <FormLabel
+                        htmlFor="inline-email-otp-input"
+                        className="text-sm"
+                      >
+                        Enter Verification Code
+                      </FormLabel>
+                      <div
+                        className="flex justify-start"
+                        role="group"
+                        aria-labelledby="inline-email-otp-label"
+                        aria-describedby="inline-email-otp-description"
+                      >
                         <InputOTP
+                          id="inline-email-otp-input"
                           maxLength={6}
                           value={otp}
                           onChange={(value) => {
@@ -448,20 +475,45 @@ export function PersonalInformationTab({
                             setOtpError("");
                           }}
                           disabled={isVerifying}
+                          aria-label="Enter 6-digit email verification code"
+                          aria-required="true"
+                          aria-invalid={otpError ? "true" : "false"}
+                          aria-describedby="inline-email-otp-description"
                         >
                           <InputOTPGroup>
-                            <InputOTPSlot index={0} />
-                            <InputOTPSlot index={1} />
-                            <InputOTPSlot index={2} />
-                            <InputOTPSlot index={3} />
-                            <InputOTPSlot index={4} />
-                            <InputOTPSlot index={5} />
+                            <InputOTPSlot index={0} aria-label="Digit 1 of 6" />
+                            <InputOTPSlot index={1} aria-label="Digit 2 of 6" />
+                            <InputOTPSlot index={2} aria-label="Digit 3 of 6" />
+                            <InputOTPSlot index={3} aria-label="Digit 4 of 6" />
+                            <InputOTPSlot index={4} aria-label="Digit 5 of 6" />
+                            <InputOTPSlot index={5} aria-label="Digit 6 of 6" />
                           </InputOTPGroup>
                         </InputOTP>
                       </div>
 
+                      {/* Screen reader description */}
+                      <p id="inline-email-otp-description" className="sr-only">
+                        Enter the 6-digit verification code sent to your new
+                        email address. Each box represents one digit.
+                      </p>
+
+                      {/* Status updates for screen readers */}
+                      <div
+                        role="status"
+                        aria-live="polite"
+                        aria-atomic="true"
+                        className="sr-only"
+                      >
+                        {isVerifying && "Verifying your code, please wait"}
+                        {isResending && "Resending verification code"}
+                        {otpError && `Error: ${otpError}`}
+                      </div>
+
+                      {/* Visual error message */}
                       {otpError && (
-                        <p className="text-sm text-red-600">{otpError}</p>
+                        <p className="text-sm text-red-600" role="alert">
+                          {otpError}
+                        </p>
                       )}
 
                       <div className="flex gap-2">
@@ -470,6 +522,12 @@ export function PersonalInformationTab({
                           onClick={handleVerifyOtp}
                           disabled={isVerifying || otp.length !== 6}
                           size="sm"
+                          aria-label={
+                            isVerifying
+                              ? "Verifying code, please wait"
+                              : "Verify code"
+                          }
+                          aria-busy={isVerifying}
                         >
                           {isVerifying ? "Verifying..." : "Verify Code"}
                         </Button>
@@ -479,6 +537,12 @@ export function PersonalInformationTab({
                           size="sm"
                           onClick={handleResendEmail}
                           disabled={isResending}
+                          aria-label={
+                            isResending
+                              ? "Resending code, please wait"
+                              : "Resend verification code"
+                          }
+                          aria-busy={isResending}
                         >
                           {isResending ? "Resending..." : "Resend Code"}
                         </Button>
@@ -494,6 +558,7 @@ export function PersonalInformationTab({
                             setNewEmail(currentEmail);
                           }}
                           disabled={isVerifying}
+                          aria-label="Cancel email change"
                         >
                           Cancel
                         </Button>
@@ -514,7 +579,8 @@ export function PersonalInformationTab({
                       <strong>Pending verification:</strong> {pendingEmail}
                     </div>
                     <div className="text-sm text-muted-foreground">
-                      Check your email to verify this change. The code is valid for 48 hours.
+                      Check your email to verify this change. The code is valid
+                      for 15 minutes.
                     </div>
                     <Button
                       variant="link"
@@ -536,7 +602,8 @@ export function PersonalInformationTab({
 
             {!pendingEmail && !showOtpInput && !isVerified && (
               <p className="text-sm text-muted-foreground">
-                A verification code will be sent to your new address. The code will be valid for 48 hours.
+                A verification code will be sent to your new address. The code
+                will be valid for 15 minutes.
               </p>
             )}
           </div>

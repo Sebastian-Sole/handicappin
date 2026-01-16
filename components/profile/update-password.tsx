@@ -80,6 +80,9 @@ const UpdatePassword = ({ email: initialEmail }: UpdatePasswordProps) => {
         description: "Password reset successfully! Redirecting to login...",
       });
 
+      // Reset loading state immediately after success
+      setLoading(false);
+
       // Redirect to login after 2 seconds
       setTimeout(() => {
         router.push("/login");
@@ -140,27 +143,53 @@ const UpdatePassword = ({ email: initialEmail }: UpdatePasswordProps) => {
                 name="otp"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="block text-center">
+                    <FormLabel
+                      htmlFor="password-reset-otp-input"
+                      className="block text-center"
+                    >
                       Verification Code
                     </FormLabel>
                     <FormControl>
-                      <div className="flex justify-center">
+                      <div
+                        className="flex justify-center"
+                        role="group"
+                        aria-labelledby="password-reset-otp-label"
+                        aria-describedby="password-reset-otp-description"
+                      >
                         <InputOTP
+                          id="password-reset-otp-input"
                           maxLength={6}
                           {...field}
                           disabled={loading}
+                          aria-label="Enter 6-digit password reset verification code"
+                          aria-required="true"
+                          aria-invalid={
+                            form.formState.errors.otp ? "true" : "false"
+                          }
+                          aria-describedby="password-reset-otp-description"
                         >
                           <InputOTPGroup>
-                            <InputOTPSlot index={0} />
-                            <InputOTPSlot index={1} />
-                            <InputOTPSlot index={2} />
-                            <InputOTPSlot index={3} />
-                            <InputOTPSlot index={4} />
-                            <InputOTPSlot index={5} />
+                            <InputOTPSlot index={0} aria-label="Digit 1 of 6" />
+                            <InputOTPSlot index={1} aria-label="Digit 2 of 6" />
+                            <InputOTPSlot index={2} aria-label="Digit 3 of 6" />
+                            <InputOTPSlot index={3} aria-label="Digit 4 of 6" />
+                            <InputOTPSlot index={4} aria-label="Digit 5 of 6" />
+                            <InputOTPSlot index={5} aria-label="Digit 6 of 6" />
                           </InputOTPGroup>
                         </InputOTP>
                       </div>
                     </FormControl>
+
+                    {/* Screen reader description */}
+                    <p
+                      id="password-reset-otp-description"
+                      className="sr-only"
+                    >
+                      Enter the 6-digit verification code sent to your email
+                      address to reset your password. Each box represents one
+                      digit.
+                    </p>
+
                     <FormMessage />
                   </FormItem>
                 )}
@@ -209,10 +238,26 @@ const UpdatePassword = ({ email: initialEmail }: UpdatePasswordProps) => {
               />
             </div>
 
+            {/* Status updates for screen readers */}
+            <div
+              role="status"
+              aria-live="polite"
+              aria-atomic="true"
+              className="sr-only"
+            >
+              {loading && "Resetting your password, please wait"}
+            </div>
+
             <Button
               type="submit"
               className="w-full"
               disabled={loading || form.watch("otp").length !== 6}
+              aria-label={
+                loading
+                  ? "Resetting password, please wait"
+                  : "Reset password"
+              }
+              aria-busy={loading}
             >
               {loading ? "Resetting..." : "Reset Password"}
             </Button>

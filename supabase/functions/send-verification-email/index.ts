@@ -70,6 +70,9 @@ Deno.serve(async (req) => {
 
     const supabase = createClient(supabaseUrl, supabaseServiceRoleKey);
 
+    // Normalize email for consistent storage (defense-in-depth)
+    const normalizedEmail = user.email.toLowerCase().trim();
+
     // Generate OTP
     const otp = generateOTP();
     const otpHash = await hashOTP(otp);
@@ -80,7 +83,7 @@ Deno.serve(async (req) => {
       .from("otp_verifications")
       .insert({
         user_id: user.id,
-        email: user.email,
+        email: normalizedEmail,
         otp_hash: otpHash,
         otp_type: "signup",
         expires_at: expiresAt.toISOString(),
@@ -93,11 +96,11 @@ Deno.serve(async (req) => {
       throw new Error("Failed to store verification code");
     }
 
-    // Send OTP email
+    // Send OTP email using normalized email
     const html = render(
       React.createElement(EmailOTP, {
         otp,
-        email: user.email,
+        email: normalizedEmail,
         otpType: "signup",
         expiresInMinutes: 15,
       })
@@ -109,7 +112,7 @@ Deno.serve(async (req) => {
 
     const { error: emailError } = await resend.emails.send({
       from: FROM_EMAIL,
-      to: [user.email],
+      to: [normalizedEmail],
       subject: "Verify Your Email - Handicappin'",
       html,
     });

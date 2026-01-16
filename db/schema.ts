@@ -583,6 +583,25 @@ export const pendingEmailChanges = pgTable(
       to: ["authenticated"],
       using: sql`(auth.uid()::uuid = user_id)`,
     }),
+    pgPolicy("Users can insert their own pending email changes", {
+      as: "permissive",
+      for: "insert",
+      to: ["authenticated"],
+      withCheck: sql`(auth.uid()::uuid = user_id)`,
+    }),
+    pgPolicy("Users can update their own pending email changes", {
+      as: "permissive",
+      for: "update",
+      to: ["authenticated"],
+      using: sql`(auth.uid()::uuid = user_id)`,
+      withCheck: sql`(auth.uid()::uuid = user_id)`,
+    }),
+    pgPolicy("Users can delete their own pending email changes", {
+      as: "permissive",
+      for: "delete",
+      to: ["authenticated"],
+      using: sql`(auth.uid()::uuid = user_id)`,
+    }),
   ]
 );
 

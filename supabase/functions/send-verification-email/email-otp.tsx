@@ -19,27 +19,41 @@ interface EmailProps {
   expiresInMinutes?: number;
 }
 
+const OTP_TYPE_TITLES = {
+  signup: "Verify Your Email",
+  email_change: "Verify Your New Email",
+  password_reset: "Reset Your Password",
+};
+
+const OTP_TYPE_DESCRIPTIONS = {
+  signup: "Thank you for signing up! To complete your registration, please use the verification code below:",
+  email_change: "You requested to change your email address. Please use the verification code below to confirm:",
+  password_reset: "You requested to reset your password. Please use the verification code below to continue:",
+};
+
 export const Email = ({
   otp,
   email,
   otpType,
   expiresInMinutes = 15,
 }: EmailProps) => {
+  const title = OTP_TYPE_TITLES[otpType] || OTP_TYPE_TITLES.signup;
+  const description = OTP_TYPE_DESCRIPTIONS[otpType] || OTP_TYPE_DESCRIPTIONS.signup;
+
   return (
     <React.Fragment>
       <Html>
         <Head />
-        <Preview>Verify your email - Your code is {otp}</Preview>
+        <Preview>{title} - Your code is {otp}</Preview>
         <Tailwind>
           <Body className="bg-gray-50 font-sans">
             <Container className="mx-auto py-8 px-4 max-w-xl">
               <Section className="bg-white rounded-lg shadow-sm p-8">
                 <Heading className="text-2xl font-bold text-gray-900 mb-2">
-                  Verify Your Email
+                  {title}
                 </Heading>
                 <Text className="text-gray-600 mb-6">
-                  Thank you for signing up! To complete your registration,
-                  please use the verification code below:
+                  {description}
                 </Text>
 
                 {/* OTP Display */}

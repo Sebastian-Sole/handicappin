@@ -2,6 +2,7 @@ import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "jsr:@supabase/supabase-js@2";
 import { corsHeaders } from "../_shared/cors.ts";
 import { verifyOTPHash, OTP_MAX_ATTEMPTS } from "../_shared/otp-utils.ts";
+import { validateEmail, validateOTP } from "../_shared/validation.ts";
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -9,9 +10,9 @@ Deno.serve(async (req) => {
   }
 
   if (req.method !== "POST") {
-    return new Response("Method not allowed", {
+    return new Response(JSON.stringify({ error: "Method not allowed" }), {
       status: 405,
-      headers: corsHeaders,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
 
@@ -48,12 +49,39 @@ Deno.serve(async (req) => {
       );
     }
 
+    // Validate email format
+    const emailError = validateEmail(email);
+    if (emailError) {
+      return new Response(
+        JSON.stringify({ error: emailError }),
+        {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
+      );
+    }
+
+    // Validate OTP format
+    const otpError = validateOTP(otp);
+    if (otpError) {
+      return new Response(
+        JSON.stringify({ error: otpError }),
+        {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
+      );
+    }
+
+    // Normalize email (lowercase + trim) to ensure case-insensitive matching
+    const normalizedEmail = email.toLowerCase().trim();
+
     // Lookup pending change by user's current email (old_email)
     // We use old_email because that's the email of the authenticated user
     const { data: pendingChange, error: lookupError } = await supabaseAdmin
       .from("pending_email_changes")
       .select("*")
-      .eq("old_email", email)
+      .eq("old_email", normalizedEmail)
       .order("created_at", { ascending: false })
       .limit(1)
       .single();
