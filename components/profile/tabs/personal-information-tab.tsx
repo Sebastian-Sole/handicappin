@@ -455,6 +455,7 @@ export function PersonalInformationTab({
 
                     <div className="space-y-2">
                       <FormLabel
+                        id="inline-email-otp-label"
                         htmlFor="inline-email-otp-input"
                         className="text-sm"
                       >

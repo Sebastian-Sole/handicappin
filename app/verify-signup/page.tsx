@@ -203,6 +203,7 @@ function VerifySignupContent() {
 
             <div className="space-y-2">
               <label
+                id="otp-label"
                 htmlFor="otp-input"
                 className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 block text-center"
               >

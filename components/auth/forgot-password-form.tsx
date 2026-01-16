@@ -80,20 +80,21 @@ export default function ForgotPasswordForm({
         let errorMessage =
           "An error occurred with the reset password email. Contact support";
         try {
-          const errorData = await response.json();
-          if (errorData.error) {
-            errorMessage = errorData.error;
-          }
-        } catch {
-          // If JSON parsing fails, try to get text
+          // Read body once as text, then try to parse as JSON
+          const bodyText = await response.text();
           try {
-            const errorText = await response.text();
-            if (errorText) {
-              errorMessage = errorText;
+            const errorData = JSON.parse(bodyText);
+            if (errorData.error) {
+              errorMessage = errorData.error;
             }
           } catch {
-            // Use default error message
+            // JSON parsing failed, use the text directly if available
+            if (bodyText) {
+              errorMessage = bodyText;
+            }
           }
+        } catch {
+          // Use default error message
         }
 
         toast({

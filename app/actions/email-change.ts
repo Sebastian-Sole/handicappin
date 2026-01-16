@@ -129,7 +129,9 @@ export async function verifyEmailChangeOtp(
       };
     }
 
-    // First, verify the row still exists before attempting delete
+    // Note: profile.email is synced from auth.users automatically
+    // No need to manually update it here
+
     // Delete pending change record (success!) - use admin client to bypass RLS
     const { error: deleteError } = await supabaseAdmin
       .from("pending_email_changes")
@@ -137,7 +139,6 @@ export async function verifyEmailChangeOtp(
       .eq("user_id", user_id)
       .select();
 
-    // Verify it was actually deleted
     if (deleteError) {
       logger.error("Failed to delete pending email change", {
         error: deleteError.message,
