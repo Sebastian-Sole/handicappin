@@ -1,3 +1,11 @@
+// ⚠️ SECURITY WARNING: This endpoint is DEPRECATED
+//
+// This endpoint leaks account existence information and enables account enumeration attacks.
+// It should NOT be used in production. The reset-password endpoint has been updated to
+// handle non-existent emails safely without revealing whether an account exists.
+//
+// RECOMMENDED: Remove this endpoint entirely or add rate limiting + logging for security monitoring.
+//
 // Follow this setup guide to integrate the Deno language server with your editor:
 // https://deno.land/manual/getting_started/setup_your_environment
 // This enables autocomplete, go to definition, etc.
@@ -52,7 +60,12 @@ Deno.serve(async (req) => {
 
   const supabase = createClient(supabaseUrl, supabaseServiceRoleKey);
 
-  const { data: { users }, error } = await supabase.auth.admin.listUsers();
+  // Check if email exists in profile table (O(1) with index)
+  const { data: profile, error } = await supabase
+    .from("profile")
+    .select("id")
+    .eq("email", email)
+    .maybeSingle();
 
   if (error) {
     console.error("Error checking email:", error.message);
@@ -62,7 +75,7 @@ Deno.serve(async (req) => {
     });
   }
 
-  const exists = users?.some(u => u.email === email) ?? false;
+  const exists = profile !== null;
 
   return new Response(JSON.stringify({ exists }), {
     status: 200,

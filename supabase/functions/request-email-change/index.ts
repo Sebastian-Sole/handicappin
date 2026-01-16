@@ -1,6 +1,5 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "jsr:@supabase/supabase-js@2";
-import { create, getNumericDate } from "https://deno.land/x/djwt@v3.0.2/mod.ts";
 import { corsHeaders } from "../_shared/cors.ts";
 import { Resend } from "https://esm.sh/resend@4.0.0";
 import { render } from "https://esm.sh/@react-email/components@0.0.22?deps=react@18.2.0";
@@ -8,19 +7,21 @@ import * as React from "https://esm.sh/react@18.2.0";
 import EmailVerificationChange from "./email-verification-change.tsx";
 import EmailChangeNotification from "./email-change-notification.tsx";
 import { maskEmail } from "./utils.ts";
+import { generateOTP, hashOTP } from "../_shared/otp-utils.ts";
+import { validateEmail } from "../_shared/validation.ts";
 
-const JWT_SECRET = Deno.env.get("EMAIL_CHANGE_TOKEN_SECRET")!;
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY")!;
 const RATE_LIMIT_WINDOW = 120; // 2 minutes in seconds (allows resending if email delayed)
+const EMAIL_CHANGE_EXPIRY_HOURS = 48;
 
-if (!JWT_SECRET || !RESEND_API_KEY) {
-  throw new Error(
-    "Missing required environment variables: EMAIL_CHANGE_TOKEN_SECRET or RESEND_API_KEY"
-  );
+if (!RESEND_API_KEY) {
+  throw new Error("Missing required environment variable: RESEND_API_KEY");
 }
 
 const resend = new Resend(RESEND_API_KEY);
-const FROM_EMAIL = "Handicappin' <sebastiansole@handicappin.com>";
+const FROM_EMAIL =
+  Deno.env.get("RESEND_FROM_EMAIL") ||
+  "Handicappin' <sebastiansole@handicappin.com>";
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -28,9 +29,9 @@ Deno.serve(async (req) => {
   }
 
   if (req.method !== "POST") {
-    return new Response("Method not allowed", {
+    return new Response(JSON.stringify({ error: "Method not allowed" }), {
       status: 405,
-      headers: corsHeaders,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
 
@@ -45,7 +46,7 @@ Deno.serve(async (req) => {
       console.error("Missing Supabase environment variables");
       return new Response(
         JSON.stringify({ error: "Server configuration error" }),
-        { status: 500, headers: corsHeaders }
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
@@ -56,7 +57,7 @@ Deno.serve(async (req) => {
     if (!authHeader) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401,
-        headers: corsHeaders,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
@@ -69,7 +70,7 @@ Deno.serve(async (req) => {
     if (authError || !user) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401,
-        headers: corsHeaders,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
@@ -79,25 +80,28 @@ Deno.serve(async (req) => {
     if (!newEmail || typeof newEmail !== "string") {
       return new Response(JSON.stringify({ error: "New email is required" }), {
         status: 400,
-        headers: corsHeaders,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
     // Validate email format
-    const emailRegex =
-      /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)+$/;
-    if (!emailRegex.test(newEmail)) {
-      return new Response(JSON.stringify({ error: "Invalid email format" }), {
+    const emailError = validateEmail(newEmail);
+    if (emailError) {
+      return new Response(JSON.stringify({ error: emailError }), {
         status: 400,
-        headers: corsHeaders,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
+    // Normalize emails (lowercase + trim) for consistent storage and comparison
+    const normalizedNewEmail = newEmail.toLowerCase().trim();
+    const normalizedOldEmail = user.email?.toLowerCase().trim();
+
     // Check if new email is same as current
-    if (newEmail.toLowerCase() === user.email?.toLowerCase()) {
+    if (normalizedNewEmail === normalizedOldEmail) {
       return new Response(
         JSON.stringify({ error: "New email must be different from current" }),
-        { status: 400, headers: corsHeaders }
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
@@ -125,57 +129,30 @@ Deno.serve(async (req) => {
               remainingSeconds !== 1 ? "s" : ""
             }.`,
           }),
-          { status: 429, headers: corsHeaders }
+          { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
     }
-
-    // Check if new email is already in use by another user in auth.users
-    const { data: existingAuthUser, error: authCheckError } =
-      await supabaseAdmin.auth.admin.getUserByEmail(newEmail);
-
-    if (!authCheckError && existingAuthUser?.user) {
-      if (existingAuthUser.user.id !== user.id) {
-        // Generic error to prevent email enumeration
-        return new Response(
-          JSON.stringify({ error: "This email address cannot be used" }),
-          { status: 400, headers: corsHeaders }
-        );
-      }
-    }
-
-    // Generate signed JWT token
-    const key = await crypto.subtle.importKey(
-      "raw",
-      new TextEncoder().encode(JWT_SECRET),
-      { name: "HMAC", hash: "SHA-256" },
-      false,
-      ["sign", "verify"]
-    );
 
     if (!user.email) {
       return new Response(
         JSON.stringify({ error: "User does not have an email address" }),
-        { status: 400, headers: corsHeaders }
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    const payload = {
-      user_id: user.id,
-      old_email: user.email,
-      new_email: newEmail,
-      exp: getNumericDate(48 * 60 * 60), // 48 hours
-      metadata: { type: "email-change-verification" },
-    };
-
-    const jwtToken = await create({ alg: "HS256", typ: "JWT" }, payload, key);
-
-    // Hash token for storage
-    const tokenHashBuffer = await crypto.subtle.digest(
-      "SHA-256",
-      new TextEncoder().encode(jwtToken)
+    // Generate OTP
+    const otp = generateOTP();
+    const otpHash = await hashOTP(otp);
+    // Email change needs longer expiry (48 hours) because user must check NEW email
+    const expiresAt = new Date(
+      Date.now() + EMAIL_CHANGE_EXPIRY_HOURS * 60 * 60 * 1000
     );
-    const tokenHash = Array.from(new Uint8Array(tokenHashBuffer))
+
+    // Generate secure random cancel token (32 bytes = 64 hex characters)
+    const cancelTokenBytes = new Uint8Array(32);
+    crypto.getRandomValues(cancelTokenBytes);
+    const cancelToken = Array.from(cancelTokenBytes)
       .map((b) => b.toString(16).padStart(2, "0"))
       .join("");
 
@@ -186,16 +163,15 @@ Deno.serve(async (req) => {
       "unknown";
 
     // Upsert pending email change (replaces any existing pending change)
-    const expiresAt = new Date(Date.now() + 48 * 60 * 60 * 1000);
-
     const { error: upsertError } = await supabaseAdmin
       .from("pending_email_changes")
       .upsert(
         {
           user_id: user.id,
-          old_email: user.email!,
-          new_email: newEmail,
-          token_hash: tokenHash,
+          old_email: normalizedOldEmail!,
+          new_email: normalizedNewEmail,
+          token_hash: otpHash, // Store OTP hash
+          cancel_token: cancelToken, // Store cancel token
           expires_at: expiresAt.toISOString(),
           request_ip: requestIp,
           verification_attempts: 0,
@@ -207,41 +183,40 @@ Deno.serve(async (req) => {
       console.error("Error creating pending email change:", upsertError);
       return new Response(
         JSON.stringify({ error: "Failed to process request" }),
-        { status: 500, headers: corsHeaders }
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
+
+    console.log("[DEBUG] OTP stored successfully for user:", user.id);
 
     // Generate URLs for emails
     const originUrl = req.headers.get("origin") || "https://handicappin.com";
 
-    const verificationUrlObj = new URL("/verify-email-change", originUrl);
-    verificationUrlObj.searchParams.set("token", jwtToken);
-    const verificationUrl = verificationUrlObj.toString();
-
     const cancelUrlObj = new URL("/api/auth/cancel-email-change", originUrl);
-    cancelUrlObj.searchParams.set("token", jwtToken);
+    // Use cancel_token for secure cancellation from old email
+    cancelUrlObj.searchParams.set("token", cancelToken);
     const cancelUrl = cancelUrlObj.toString();
 
     console.log("[DEBUG] Sending emails:", {
-      newEmail: maskEmail(newEmail),
-      oldEmail: maskEmail(user.email!),
-      // Deliberately omit token-bearing URLs from logs
+      newEmail: maskEmail(normalizedNewEmail),
+      oldEmail: maskEmail(normalizedOldEmail!),
+      otpGenerated: "yes", // Don't log the actual OTP
     });
 
-    // Send verification email to NEW email address
+    // Send verification email to NEW email address with OTP
     try {
       const verificationHtml = render(
         React.createElement(EmailVerificationChange, {
-          verificationUrl,
-          oldEmail: user.email!,
-          newEmail,
+          otp,
+          oldEmail: normalizedOldEmail!,
+          newEmail: normalizedNewEmail,
           expiresInHours: 48,
         })
       );
 
       const verificationResult = await resend.emails.send({
         from: FROM_EMAIL,
-        to: newEmail,
+        to: normalizedNewEmail,
         subject: "Verify your new email address",
         html: verificationHtml,
       });
@@ -254,7 +229,7 @@ Deno.serve(async (req) => {
 
       console.log("[INFO] Verification email sent:", {
         messageId: verificationResult.data?.id,
-        to: maskEmail(newEmail),
+        to: maskEmail(normalizedNewEmail),
       });
     } catch (error) {
       console.error("Failed to send verification email:", error);
@@ -269,7 +244,7 @@ Deno.serve(async (req) => {
         JSON.stringify({
           error: "Failed to send verification email. Please try again.",
         }),
-        { status: 500, headers: corsHeaders }
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
@@ -278,14 +253,14 @@ Deno.serve(async (req) => {
       const notificationHtml = render(
         React.createElement(EmailChangeNotification, {
           cancelUrl,
-          newEmail: maskEmail(newEmail),
-          oldEmail: user.email!,
+          newEmail: maskEmail(normalizedNewEmail),
+          oldEmail: normalizedOldEmail!,
         })
       );
 
       const notificationResult = await resend.emails.send({
         from: FROM_EMAIL,
-        to: user.email!,
+        to: normalizedOldEmail!,
         subject: "Email change requested for your account",
         html: notificationHtml,
       });
@@ -295,19 +270,8 @@ Deno.serve(async (req) => {
           `Notification email failed: ${notificationResult.error.message}`
         );
       }
-
-      console.log("[INFO] Notification email sent:", {
-        messageId: notificationResult.data?.id,
-        to: maskEmail(user.email),
-      });
     } catch (error) {
       console.error("Failed to send notification email:", error);
-
-      // Don't delete pending change - verification email was sent successfully
-      // User can still verify, but won't have cancel link
-      console.warn(
-        "[WARN] Notification email failed but verification email sent"
-      );
     }
 
     return new Response(
@@ -316,13 +280,13 @@ Deno.serve(async (req) => {
         message:
           "Verification email sent. Please check your new email address.",
       }),
-      { status: 200, headers: corsHeaders }
+      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error) {
     console.error("Error in request-email-change:", error);
     return new Response(JSON.stringify({ error: "Internal server error" }), {
       status: 500,
-      headers: corsHeaders,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
 });

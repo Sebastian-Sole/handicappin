@@ -1,8 +1,6 @@
 import { Database } from "@/types/supabase";
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
-import { jwtVerify } from "jose"; // Import the `jose` library
-import { PasswordResetPayload } from "@/types/auth";
 import { PREMIUM_PATHS } from "@/utils/billing/constants";
 import { BillingClaims, getAppMetadataFromJWT } from "@/utils/supabase/jwt";
 import { hasPremiumAccess } from "@/utils/billing/access";
@@ -56,10 +54,12 @@ export async function updateSession(request: NextRequest) {
 
   // Merge JWT claims into getUser() user object
   // Use the decoded JWT payload, NOT session.user.app_metadata (which doesn't include custom claims)
-  const enrichedUser = user ? {
-    ...user,
-    app_metadata: jwtAppMetadata || user.app_metadata
-  } : null;
+  const enrichedUser = user
+    ? {
+        ...user,
+        app_metadata: jwtAppMetadata || user.app_metadata,
+      }
+    : null;
 
   const { pathname } = request.nextUrl;
 
@@ -70,42 +70,17 @@ export async function updateSession(request: NextRequest) {
     "/api",
     "/verify-email",
     "/forgot-password",
+    "/update-password", // Allow unauthenticated access for password reset with OTP
     "/billing/success", // Allow access after Stripe redirect (session may be temporarily lost)
+    "/verify-signup",
   ];
 
   // Special case: "/" is public, but not paths that start with "/"
   const isPublic =
     pathname === "/" || publicPaths.some((path) => pathname.startsWith(path));
 
-  if (!enrichedUser && pathname === "/update-password") {
-    const resetToken = request.nextUrl.searchParams.get("token");
-    if (!resetToken) {
-      const url = request.nextUrl.clone();
-      url.pathname = "/login";
-      return NextResponse.redirect(url);
-    }
-
-    try {
-      // Verify JWT token
-      const secret = new TextEncoder().encode(process.env.RESET_TOKEN_SECRET);
-      const { payload } = await jwtVerify<PasswordResetPayload>(
-        resetToken,
-        secret
-      );
-
-      if (payload.metadata.type === "password-reset") {
-        // Attach decoded user info to request for further usage
-        const url = request.nextUrl.clone();
-        url.searchParams.set("email", payload.email);
-        return NextResponse.rewrite(url); // Rewrite the request with the email in the query
-      }
-    } catch (err) {
-      console.error("Invalid reset token:", err);
-      const url = request.nextUrl.clone();
-      url.pathname = "/login";
-      return NextResponse.redirect(url);
-    }
-  }
+  // Password reset now uses OTP codes instead of JWT tokens
+  // /update-password is in publicPaths and accessible to unauthenticated users
 
   if (!enrichedUser && !isPublic) {
     const url = request.nextUrl.clone();
@@ -137,18 +112,23 @@ export async function updateSession(request: NextRequest) {
 
     try {
       // Read billing info from JWT claims (manually decoded from cookie)
-      const billing = enrichedUser.app_metadata?.billing as BillingClaims | undefined;
+      const billing = enrichedUser.app_metadata?.billing as
+        | BillingClaims
+        | undefined;
 
       // Check if billing claims are present
       if (!billing) {
         // No billing claims in JWT - redirect to verification to refresh token
         // This is an edge case that should rarely happen
-        console.error(`🚨 CRITICAL: Missing JWT billing claims for user ${enrichedUser.id}`, {
-          pathname,
-          timestamp: new Date().toISOString(),
-          hasSession: !!session,
-          hasAccessToken: !!session?.access_token,
-        });
+        console.error(
+          `🚨 CRITICAL: Missing JWT billing claims for user ${enrichedUser.id}`,
+          {
+            pathname,
+            timestamp: new Date().toISOString(),
+            hasSession: !!session,
+            hasAccessToken: !!session?.access_token,
+          }
+        );
 
         // Redirect to verification page to refresh the JWT
         // This will trigger a token refresh which should add billing claims
@@ -160,7 +140,9 @@ export async function updateSession(request: NextRequest) {
       }
 
       // ✅ SUCCESS: Using JWT claims from custom access token hook
-      console.log(`✅ JWT Auth: plan=${billing.plan}, status=${billing.status}, user=${enrichedUser.id}, version=${billing.billing_version}`);
+      console.log(
+        `✅ JWT Auth: plan=${billing.plan}, status=${billing.status}, user=${enrichedUser.id}, version=${billing.billing_version}`
+      );
 
       // Use shared access control logic
       const userHasPremiumAccess = hasPremiumAccess(billing);
@@ -171,12 +153,18 @@ export async function updateSession(request: NextRequest) {
       const duration = endTime - startTime;
 
       // Log successful JWT-only authorization (no database queries!)
-      console.log(`⚡ Middleware completed in ${duration.toFixed(2)}ms (JWT-only, no database)`);
+      console.log(
+        `⚡ Middleware completed in ${duration.toFixed(
+          2
+        )}ms (JWT-only, no database)`
+      );
 
       // Alert if middleware is slow (should be < 10ms with JWT-only)
       if (duration > 10) {
         console.warn(
-          `🐌 Slow middleware detected: ${duration.toFixed(2)}ms (threshold: 10ms)`,
+          `🐌 Slow middleware detected: ${duration.toFixed(
+            2
+          )}ms (threshold: 10ms)`,
           {
             user: enrichedUser.id,
             pathname,
@@ -202,10 +190,12 @@ export async function updateSession(request: NextRequest) {
         url.pathname = "/upgrade";
         return NextResponse.redirect(url);
       }
-
     } catch (error) {
       // ✅ NEW: On error, redirect to verification page (not onboarding)
-      console.error("❌ Middleware error - redirecting to session verification:", error);
+      console.error(
+        "❌ Middleware error - redirecting to session verification:",
+        error
+      );
 
       const url = request.nextUrl.clone();
       url.pathname = "/auth/verify-session";

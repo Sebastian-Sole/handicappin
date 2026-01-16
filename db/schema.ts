@@ -29,7 +29,7 @@ export const profile = pgTable(
   "profile",
   {
     id: uuid().primaryKey().notNull(),
-    // Note: email is stored in auth.users table only - join with auth.users for email access
+    email: text().notNull(),
     name: text(),
     handicapIndex: decimal<"number">().notNull().default(54),
     verified: boolean().default(false).notNull(),
@@ -56,6 +56,10 @@ export const profile = pgTable(
     })
       .onUpdate("cascade")
       .onDelete("cascade"),
+    uniqueIndex("profile_email_key").using(
+      "btree",
+      table.email.asc().nullsLast().op("text_ops")
+    ),
     pgPolicy("Users can view their own profile", {
       as: "permissive",
       for: "select",
@@ -69,6 +73,7 @@ export const profile = pgTable(
       using: sql`(auth.uid()::uuid = id)`,
       withCheck: sql`(
         auth.uid()::uuid = id
+        AND email IS NOT DISTINCT FROM (SELECT email FROM profile WHERE id = auth.uid())
         AND plan_selected IS NOT DISTINCT FROM (SELECT plan_selected FROM profile WHERE id = auth.uid())
         AND subscription_status IS NOT DISTINCT FROM (SELECT subscription_status FROM profile WHERE id = auth.uid())
         AND current_period_end IS NOT DISTINCT FROM (SELECT current_period_end FROM profile WHERE id = auth.uid())
@@ -554,6 +559,7 @@ export const pendingEmailChanges = pgTable(
     oldEmail: text("old_email").notNull(),
     newEmail: text("new_email").notNull(),
     tokenHash: text("token_hash").notNull(),
+    cancelToken: text("cancel_token"),
     expiresAt: timestamp("expires_at").notNull(),
     createdAt: timestamp("created_at")
       .default(sql`CURRENT_TIMESTAMP`)
@@ -570,9 +576,29 @@ export const pendingEmailChanges = pgTable(
       .onUpdate("cascade")
       .onDelete("cascade"),
     index("pending_email_changes_token_hash_idx").on(table.tokenHash),
+    index("pending_email_changes_cancel_token_idx").on(table.cancelToken),
     pgPolicy("Users can view their own pending email changes", {
       as: "permissive",
       for: "select",
+      to: ["authenticated"],
+      using: sql`(auth.uid()::uuid = user_id)`,
+    }),
+    pgPolicy("Users can insert their own pending email changes", {
+      as: "permissive",
+      for: "insert",
+      to: ["authenticated"],
+      withCheck: sql`(auth.uid()::uuid = user_id)`,
+    }),
+    pgPolicy("Users can update their own pending email changes", {
+      as: "permissive",
+      for: "update",
+      to: ["authenticated"],
+      using: sql`(auth.uid()::uuid = user_id)`,
+      withCheck: sql`(auth.uid()::uuid = user_id)`,
+    }),
+    pgPolicy("Users can delete their own pending email changes", {
+      as: "permissive",
+      for: "delete",
       to: ["authenticated"],
       using: sql`(auth.uid()::uuid = user_id)`,
     }),
@@ -581,3 +607,41 @@ export const pendingEmailChanges = pgTable(
 
 export const pendingEmailChangesSchema = createSelectSchema(pendingEmailChanges);
 export type PendingEmailChange = InferSelectModel<typeof pendingEmailChanges>;
+
+// OTP verifications table - unified table for all OTP types
+export const otpVerifications = pgTable(
+  "otp_verifications",
+  {
+    id: uuid().defaultRandom().primaryKey(),
+    userId: uuid("user_id"), // Nullable for signup (user doesn't exist yet)
+    email: text("email").notNull(),
+    otpHash: text("otp_hash").notNull(), // SHA-256 hash of the OTP
+    otpType: text("otp_type").$type<"signup" | "email_change" | "password_reset">().notNull(),
+    expiresAt: timestamp("expires_at").notNull(),
+    verified: boolean("verified").default(false).notNull(),
+    verificationAttempts: integer("verification_attempts").default(0).notNull(),
+    createdAt: timestamp("created_at")
+      .default(sql`CURRENT_TIMESTAMP`)
+      .notNull(),
+    verifiedAt: timestamp("verified_at"),
+    requestIp: text("request_ip"),
+
+    // Metadata for different OTP types (JSONB)
+    metadata: text("metadata"), // JSON string for type-specific data
+  },
+  (table) => [
+    index("otp_verifications_email_type_idx").on(table.email, table.otpType),
+    index("otp_verifications_expires_at_idx").on(table.expiresAt),
+    index("otp_verifications_user_id_idx").on(table.userId),
+    // Defense in depth: Deny all direct access (service role bypasses RLS)
+    pgPolicy("No direct access to OTP verifications", {
+      as: "permissive",
+      for: "all",
+      to: ["public", "authenticated", "anon"],
+      using: sql`false`,
+    }),
+  ]
+);
+
+export const otpVerificationsSchema = createSelectSchema(otpVerifications);
+export type OtpVerification = InferSelectModel<typeof otpVerifications>;
