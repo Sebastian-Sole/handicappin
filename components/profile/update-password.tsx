@@ -144,6 +144,7 @@ const UpdatePassword = ({ email: initialEmail }: UpdatePasswordProps) => {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel
+                      id="password-reset-otp-label"
                       htmlFor="password-reset-otp-input"
                       className="block text-center"
                     >

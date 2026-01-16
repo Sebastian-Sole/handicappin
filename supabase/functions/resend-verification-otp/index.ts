@@ -5,6 +5,7 @@ import { createClient } from "jsr:@supabase/supabase-js@2";
 import { generateOTP, hashOTP, getOTPExpiry } from "../_shared/otp-utils.ts";
 import EmailOTP from "../send-verification-email/email-otp.tsx";
 import { validateEmail } from "../_shared/validation.ts";
+import { corsHeaders } from "../_shared/cors.ts";
 
 console.log("resend-verification-otp function");
 

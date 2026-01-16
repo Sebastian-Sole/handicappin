@@ -30,21 +30,12 @@ export async function hashOTP(otp: string): Promise<string> {
 
 /**
  * Verify OTP matches hash using timing-safe comparison
+ * SHA-256 hashes are always 64 hex characters, so timingSafeEqual will throw if lengths differ
  */
 export async function verifyOTPHash(otp: string, hash: string): Promise<boolean> {
   const computedHash = await hashOTP(otp);
-
-  // Convert to buffers for timing-safe comparison
   const computedBuffer = Buffer.from(computedHash, "utf8");
   const providedBuffer = Buffer.from(hash, "utf8");
-
-  // Handle length mismatch (though SHA-256 hex should always be same length)
-  if (computedBuffer.length !== providedBuffer.length) {
-    // Compare against zeroed buffer to prevent early return timing leak
-    const zeroBuffer = Buffer.alloc(computedBuffer.length);
-    crypto.timingSafeEqual(computedBuffer, zeroBuffer);
-    return false;
-  }
 
   return crypto.timingSafeEqual(computedBuffer, providedBuffer);
 }
