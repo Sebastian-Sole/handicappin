@@ -44,11 +44,17 @@ Deno.serve(async (req) => {
 
   try {
     const { email } = await req.json();
-    console.log("Reset password request for email:", email);
+    console.log("Reset password request received");
 
-    // Validate email format early
+    // Validate email is present
     if (!email) {
-      throw new Error("Email is required");
+      return new Response(
+        JSON.stringify({ error: "Email is required" }),
+        {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
+      );
     }
 
     const emailError = validateEmail(email);
@@ -75,7 +81,7 @@ Deno.serve(async (req) => {
     // Security: Don't leak whether email exists or not
     // Always return success to prevent account enumeration
     if (profileError || !profile) {
-      console.log("User not found for email (silently skipping):", email);
+      console.log("User not found (silently skipping)");
       // Return success without sending email
       return new Response(
         JSON.stringify({

@@ -168,15 +168,15 @@ Deno.serve(async (req) => {
       Deno.env.get("RESEND_FROM_EMAIL") ||
       "Handicappin' <sebastiansole@handicappin.com>";
 
-    const { error: emailError } = await resend.emails.send({
+    const { error: sendError } = await resend.emails.send({
       from: FROM_EMAIL,
       to: [userNormalizedEmail],
       subject: "Verify Your Email - Handicappin'",
       html,
     });
 
-    if (emailError) {
-      console.error("Failed to send email:", emailError);
+    if (sendError) {
+      console.error("Failed to send email:", sendError);
       throw new Error("Failed to send verification email");
     }
 

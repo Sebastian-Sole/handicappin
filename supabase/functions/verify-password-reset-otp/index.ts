@@ -210,11 +210,12 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Mark OTP as verified and delete it
+    // Delete ALL password_reset OTPs for this user to prevent reuse of any previous tokens
     await supabaseAdmin
       .from("otp_verifications")
       .delete()
-      .eq("id", otpRecord.id);
+      .eq("user_id", otpRecord.user_id)
+      .eq("otp_type", "password_reset");
 
     console.log(`Password reset successfully for ${email}`);
 

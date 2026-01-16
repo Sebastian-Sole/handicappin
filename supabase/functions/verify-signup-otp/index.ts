@@ -172,28 +172,8 @@ Deno.serve(async (req) => {
       );
     }
 
-    // OTP is valid! Mark as verified
-    const { error: updateError } = await supabaseAdmin
-      .from("otp_verifications")
-      .update({
-        verified: true,
-        verified_at: new Date().toISOString(),
-      })
-      .eq("id", otpRecord.id);
-
-    if (updateError) {
-      console.error("Failed to mark OTP as verified:", updateError);
-      return new Response(
-        JSON.stringify({ error: "Failed to complete verification" }),
-        {
-          status: 500,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        }
-      );
-    }
-
-    // CRITICAL: Verify email in Supabase Auth
-    // This marks the email as confirmed in auth.users table
+    // OTP is valid! First confirm email in Supabase Auth before consuming OTP
+    // This ensures user can retry if auth update fails
     if (otpRecord.user_id) {
       const { error: authUpdateError } =
         await supabaseAdmin.auth.admin.updateUserById(otpRecord.user_id, {
@@ -228,6 +208,22 @@ Deno.serve(async (req) => {
           profileError
         );
       }
+    }
+
+    // Only mark OTP as consumed after auth update succeeds
+    // This preserves retry ability if earlier steps fail
+    const { error: updateError } = await supabaseAdmin
+      .from("otp_verifications")
+      .update({
+        verified: true,
+        verified_at: new Date().toISOString(),
+      })
+      .eq("id", otpRecord.id);
+
+    if (updateError) {
+      console.error("Failed to mark OTP as verified:", updateError);
+      // Non-critical: auth is already confirmed, just log the error
+      // User is verified, OTP record is just not marked as consumed
     }
 
     return new Response(

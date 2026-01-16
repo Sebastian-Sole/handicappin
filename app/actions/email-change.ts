@@ -4,6 +4,10 @@ import { createServerComponentClient } from "@/utils/supabase/server";
 import { createAdminClient } from "@/utils/supabase/admin";
 import { verifyOTPHash, OTP_MAX_ATTEMPTS } from "@/lib/otp-utils";
 import { logger } from "@/lib/logging";
+import { stripe } from "@/lib/stripe";
+import { db } from "@/db";
+import { stripeCustomers } from "@/db/schema";
+import { eq } from "drizzle-orm";
 
 interface VerifyEmailChangeResult {
   success: boolean;
@@ -129,8 +133,49 @@ export async function verifyEmailChangeOtp(
       };
     }
 
-    // Note: profile.email is synced from auth.users automatically
-    // No need to manually update it here
+    // Update profile.email to match auth.users.email
+    // RLS prevents email updates from clients, so we use admin client
+    // Type assertion needed because generated types may not include email column yet
+    const { error: profileUpdateError } = await supabaseAdmin
+      .from("profile")
+      .update({ email: new_email } as Record<string, string>)
+      .eq("id", user_id);
+
+    if (profileUpdateError) {
+      logger.error("Failed to update profile email", {
+        error: profileUpdateError.message,
+        userId: user_id,
+      });
+      // Note: auth.users email was already updated, so we log but don't fail
+      // The profile email will be out of sync until manually corrected
+    }
+
+    // Update Stripe customer email if they have a Stripe account
+    try {
+      const stripeCustomerRecord = await db
+        .select()
+        .from(stripeCustomers)
+        .where(eq(stripeCustomers.userId, user_id))
+        .limit(1);
+
+      if (stripeCustomerRecord.length > 0) {
+        const stripeCustomerId = stripeCustomerRecord[0].stripeCustomerId;
+        await stripe.customers.update(stripeCustomerId, {
+          email: new_email,
+        });
+        logger.info("Updated Stripe customer email", {
+          userId: user_id,
+          stripeCustomerId,
+        });
+      }
+    } catch (stripeError) {
+      logger.error("Failed to update Stripe customer email", {
+        error:
+          stripeError instanceof Error ? stripeError.message : "Unknown error",
+        userId: user_id,
+      });
+      // Non-blocking: Stripe email update failure shouldn't fail the overall operation
+    }
 
     // Delete pending change record (success!) - use admin client to bypass RLS
     const { error: deleteError } = await supabaseAdmin
