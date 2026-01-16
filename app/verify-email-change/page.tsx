@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/input-otp";
 import { Check, Loader2 } from "lucide-react";
 import { logger } from "@/lib/logging";
+import { OTP_MAX_ATTEMPTS, OTP_EXPIRY_MINUTES } from "@/lib/otp-constants";
 
 function VerifyEmailChangeContent() {
   const router = useRouter();
@@ -80,7 +81,7 @@ function VerifyEmailChangeContent() {
         // Clear OTP input on error
         setOtp("");
 
-        if (newAttempts >= 4) {
+        if (newAttempts >= OTP_MAX_ATTEMPTS) {
           setMessage(
             data.error || "Too many failed attempts. Please request a new code."
           );
@@ -102,9 +103,20 @@ function VerifyEmailChangeContent() {
       <div className="max-w-md w-full bg-white rounded-lg shadow-sm p-8">
         {status === "success" ? (
           <>
+            {/* Screen reader announcement for success */}
+            <div
+              role="status"
+              aria-live="polite"
+              aria-atomic="true"
+              className="sr-only"
+            >
+              Email change verified successfully! Redirecting you to your
+              profile now.
+            </div>
+
             <div className="flex justify-center mb-4">
               <div className="h-12 w-12 rounded-full bg-green-100 flex items-center justify-center">
-                <Check className="h-6 w-6 text-green-600" />
+                <Check className="h-6 w-6 text-green-600" aria-hidden="true" />
               </div>
             </div>
             <h1 className="text-2xl font-bold text-gray-900 text-center mb-2">
@@ -146,28 +158,67 @@ function VerifyEmailChangeContent() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2 text-center">
+                <label
+                  htmlFor="email-change-otp-input"
+                  className="block text-sm font-medium text-gray-700 mb-2 text-center"
+                >
                   Verification Code
                 </label>
-                <div className="flex justify-center">
+                <div
+                  className="flex justify-center"
+                  role="group"
+                  aria-labelledby="email-change-otp-label"
+                  aria-describedby="email-change-otp-description email-change-otp-hint"
+                >
                   <InputOTP
+                    id="email-change-otp-input"
                     maxLength={6}
                     value={otp}
                     onChange={(value) => setOtp(value)}
                     disabled={status === "loading"}
+                    aria-label="Enter 6-digit verification code for email change"
+                    aria-required="true"
+                    aria-invalid={status === "error" ? "true" : "false"}
+                    aria-describedby="email-change-otp-description"
                   >
                     <InputOTPGroup>
-                      <InputOTPSlot index={0} />
-                      <InputOTPSlot index={1} />
-                      <InputOTPSlot index={2} />
-                      <InputOTPSlot index={3} />
-                      <InputOTPSlot index={4} />
-                      <InputOTPSlot index={5} />
+                      <InputOTPSlot index={0} aria-label="Digit 1 of 6" />
+                      <InputOTPSlot index={1} aria-label="Digit 2 of 6" />
+                      <InputOTPSlot index={2} aria-label="Digit 3 of 6" />
+                      <InputOTPSlot index={3} aria-label="Digit 4 of 6" />
+                      <InputOTPSlot index={4} aria-label="Digit 5 of 6" />
+                      <InputOTPSlot index={5} aria-label="Digit 6 of 6" />
                     </InputOTPGroup>
                   </InputOTP>
                 </div>
+
+                {/* Screen reader description */}
+                <p id="email-change-otp-description" className="sr-only">
+                  Enter the 6-digit verification code sent to your new email
+                  address. Each box represents one digit.
+                </p>
+
+                {/* Hint text (visible to all) */}
+                <p
+                  id="email-change-otp-hint"
+                  className="text-xs text-gray-500 text-center mt-2"
+                >
+                  Check your new email&apos;s spam folder if needed
+                </p>
               </div>
 
+              {/* Status updates for screen readers */}
+              <div
+                role="status"
+                aria-live="polite"
+                aria-atomic="true"
+                className="sr-only"
+              >
+                {status === "loading" && "Verifying your code, please wait"}
+                {status === "error" && message}
+              </div>
+
+              {/* Visual error/success message */}
               {message && (
                 <div
                   className={`p-3 rounded-lg text-sm ${
@@ -184,9 +235,23 @@ function VerifyEmailChangeContent() {
                 type="submit"
                 className="w-full"
                 disabled={status === "loading" || otp.length !== 6}
+                aria-label={
+                  status === "loading"
+                    ? "Verifying email change, please wait"
+                    : "Verify email change"
+                }
+                aria-busy={status === "loading"}
               >
                 {status === "loading" && (
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  <>
+                    <Loader2
+                      className="mr-2 h-4 w-4 animate-spin"
+                      aria-hidden="true"
+                    />
+                    <span className="sr-only">
+                      Verifying your email change, please wait
+                    </span>
+                  </>
                 )}
                 Verify Email Change
               </Button>
@@ -195,7 +260,7 @@ function VerifyEmailChangeContent() {
             <div className="mt-6 p-4 bg-gray-50 rounded-lg">
               <p className="text-xs text-gray-600">
                 <strong>Tip:</strong> Check your new email address for the
-                verification code. The code expires in 48 hours.
+                verification code. The code expires in {OTP_EXPIRY_MINUTES} minutes.
               </p>
             </div>
           </>

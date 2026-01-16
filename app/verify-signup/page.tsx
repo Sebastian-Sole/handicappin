@@ -202,31 +202,69 @@ function VerifySignupContent() {
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 block text-center">
+              <label
+                htmlFor="otp-input"
+                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 block text-center"
+              >
                 Verification Code
               </label>
-              <div className="flex justify-center">
+              <div
+                className="flex justify-center"
+                role="group"
+                aria-labelledby="otp-label"
+                aria-describedby="otp-description otp-hint"
+              >
                 <InputOTP
+                  id="otp-input"
                   maxLength={6}
                   value={otp}
                   onChange={(value) => setOtp(value)}
                   disabled={status === "loading" || status === "success"}
+                  aria-label="Enter 6-digit verification code"
+                  aria-required="true"
+                  aria-invalid={status === "error" ? "true" : "false"}
+                  aria-describedby="otp-description"
                 >
                   <InputOTPGroup>
-                    <InputOTPSlot index={0} />
-                    <InputOTPSlot index={1} />
-                    <InputOTPSlot index={2} />
+                    <InputOTPSlot index={0} aria-label="Digit 1 of 6" />
+                    <InputOTPSlot index={1} aria-label="Digit 2 of 6" />
+                    <InputOTPSlot index={2} aria-label="Digit 3 of 6" />
                   </InputOTPGroup>
-                  <InputOTPSeparator />
+                  <InputOTPSeparator aria-hidden="true" />
                   <InputOTPGroup>
-                    <InputOTPSlot index={3} />
-                    <InputOTPSlot index={4} />
-                    <InputOTPSlot index={5} />
+                    <InputOTPSlot index={3} aria-label="Digit 4 of 6" />
+                    <InputOTPSlot index={4} aria-label="Digit 5 of 6" />
+                    <InputOTPSlot index={5} aria-label="Digit 6 of 6" />
                   </InputOTPGroup>
                 </InputOTP>
               </div>
+
+              {/* Screen reader description */}
+              <p id="otp-description" className="sr-only">
+                Enter the 6-digit verification code sent to your email address.
+                Each box represents one digit.
+              </p>
+
+              {/* Hint text (visible to all) */}
+              <p id="otp-hint" className="text-xs text-gray-500 text-center mt-1">
+                Check your spam folder if you don&apos;t see the email
+              </p>
             </div>
 
+            {/* Status updates for screen readers */}
+            <div
+              role="status"
+              aria-live="polite"
+              aria-atomic="true"
+              className="sr-only"
+            >
+              {status === "loading" && "Verifying your code, please wait"}
+              {status === "success" &&
+                "Verification successful! Redirecting you now"}
+              {status === "error" && message}
+            </div>
+
+            {/* Visual error/success message */}
             {message && (
               <Alert variant={status === "error" ? "destructive" : "default"}>
                 <AlertDescription>
@@ -250,11 +288,27 @@ function VerifySignupContent() {
               disabled={
                 status === "loading" || status === "success" || otp.length !== 6
               }
+              aria-label={
+                status === "loading"
+                  ? "Verifying email, please wait"
+                  : status === "success"
+                  ? "Email verified successfully"
+                  : "Verify email"
+              }
+              aria-busy={status === "loading"}
             >
               {status === "loading" && (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />
+                  <span className="sr-only">Verifying your email, please wait</span>
+                </>
               )}
-              {status === "success" && <Check className="mr-2 h-4 w-4" />}
+              {status === "success" && (
+                <>
+                  <Check className="mr-2 h-4 w-4" aria-hidden="true" />
+                  <span className="sr-only">Email verified successfully</span>
+                </>
+              )}
               Verify Email
             </Button>
 
@@ -267,6 +321,11 @@ function VerifySignupContent() {
                   status === "loading" ||
                   status === "success" ||
                   resendCooldown > 0
+                }
+                aria-label={
+                  resendCooldown > 0
+                    ? `Wait ${resendCooldown} seconds before requesting another code`
+                    : "Resend verification code"
                 }
               >
                 {resendCooldown > 0

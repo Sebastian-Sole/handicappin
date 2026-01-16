@@ -1,3 +1,11 @@
+// ⚠️ SECURITY WARNING: This endpoint is DEPRECATED
+//
+// This endpoint leaks account existence information and enables account enumeration attacks.
+// It should NOT be used in production. The reset-password endpoint has been updated to
+// handle non-existent emails safely without revealing whether an account exists.
+//
+// RECOMMENDED: Remove this endpoint entirely or add rate limiting + logging for security monitoring.
+//
 // Follow this setup guide to integrate the Deno language server with your editor:
 // https://deno.land/manual/getting_started/setup_your_environment
 // This enables autocomplete, go to definition, etc.

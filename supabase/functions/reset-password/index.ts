@@ -4,6 +4,7 @@ import ResetPasswordEmail from "./email.tsx";
 import { render } from "https://esm.sh/@react-email/components@0.0.22?deps=react@18.2.0";
 import { corsHeaders } from "../_shared/cors.ts";
 import { generateOTP, hashOTP, getOTPExpiry } from "../_shared/otp-utils.ts";
+import { validateEmail } from "../_shared/validation.ts";
 import * as React from "https://esm.sh/react@18.2.0";
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY")!);
@@ -14,9 +15,9 @@ Deno.serve(async (req) => {
   }
 
   if (req.method !== "POST") {
-    return new Response("Method not allowed", {
+    return new Response(JSON.stringify({ error: "Method not allowed" }), {
       status: 405,
-      headers: corsHeaders,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
 
@@ -43,27 +44,67 @@ Deno.serve(async (req) => {
 
   try {
     const { email } = await req.json();
-    console.log("Email:", email);
-    if (!email) throw new Error("Email is required");
+    console.log("Reset password request for email:", email);
+
+    // Validate email format early
+    if (!email) {
+      throw new Error("Email is required");
+    }
+
+    const emailError = validateEmail(email);
+    if (emailError) {
+      return new Response(
+        JSON.stringify({ error: emailError }),
+        {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
+      );
+    }
+
+    // Normalize email (lowercase + trim) for consistent lookups and storage
+    const normalizedEmail = email.toLowerCase().trim();
 
     // Find user by email using profile table (O(1) with index)
     const { data: profile, error: profileError } = await supabase
       .from("profile")
       .select("id, email")
-      .eq("email", email.toLowerCase())
+      .eq("email", normalizedEmail)
       .single();
 
+    // Security: Don't leak whether email exists or not
+    // Always return success to prevent account enumeration
     if (profileError || !profile) {
-      console.error("User not found for email:", email);
-      throw new Error("User not found");
+      console.log("User not found for email (silently skipping):", email);
+      // Return success without sending email
+      return new Response(
+        JSON.stringify({
+          success: true,
+          message: "If an account exists, a reset code has been sent"
+        }),
+        {
+          status: 200,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
+      );
     }
 
     // Get auth user (optional - could skip if we only need the ID)
     const { data: { user }, error } = await supabase.auth.admin.getUserById(profile.id);
 
     if (error || !user) {
-      console.error("Failed to get user:", error);
-      throw new Error("User not found");
+      console.error("Failed to get user from auth:", error);
+      // Return success to prevent account enumeration
+      return new Response(
+        JSON.stringify({
+          success: true,
+          message: "If an account exists, a reset code has been sent"
+        }),
+        {
+          status: 200,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
+      );
     }
 
     // Generate OTP
@@ -77,12 +118,12 @@ Deno.serve(async (req) => {
       req.headers.get("x-real-ip") ||
       "unknown";
 
-    // Store OTP in database
+    // Store OTP in database with normalized email for consistent lookups
     const { error: insertError } = await supabase
       .from("otp_verifications")
       .insert({
         user_id: user.id,
-        email: email,
+        email: normalizedEmail,
         otp_hash: otpHash,
         otp_type: "password_reset",
         expires_at: expiresAt.toISOString(),
@@ -94,11 +135,11 @@ Deno.serve(async (req) => {
       throw new Error("Failed to store verification code");
     }
 
-    // Send OTP email
+    // Send OTP email using normalized email
     const emailHtml = render(
       React.createElement(ResetPasswordEmail, {
         otp,
-        username: email,
+        username: normalizedEmail,
         expiresInMinutes: 15,
       })
     );
@@ -109,19 +150,32 @@ Deno.serve(async (req) => {
 
     await resend.emails.send({
       from: FROM_EMAIL,
-      to: email,
+      to: normalizedEmail,
       subject: "Reset Password Request",
       html: emailHtml,
     });
 
-    return new Response("Password reset email sent", {
-      status: 200,
-      headers: corsHeaders,
-    });
+    return new Response(
+      JSON.stringify({
+        success: true,
+        message: "Password reset code sent"
+      }),
+      {
+        status: 200,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      }
+    );
   } catch (error) {
-    return new Response(JSON.stringify({ error: error }), {
-      status: 400,
-      headers: corsHeaders,
-    });
+    console.error("Reset password error:", error);
+    // Return generic error without details to prevent information leakage
+    return new Response(
+      JSON.stringify({
+        error: "Unable to process password reset request. Please try again."
+      }),
+      {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      }
+    );
   }
 });

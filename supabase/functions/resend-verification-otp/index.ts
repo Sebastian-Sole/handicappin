@@ -4,6 +4,7 @@ import { render } from "https://esm.sh/@react-email/components@0.0.22?deps=react
 import { createClient } from "jsr:@supabase/supabase-js@2";
 import { generateOTP, hashOTP, getOTPExpiry } from "../_shared/otp-utils.ts";
 import EmailOTP from "../send-verification-email/email-otp.tsx";
+import { validateEmail } from "../_shared/validation.ts";
 
 console.log("resend-verification-otp function");
 
@@ -11,7 +12,10 @@ const resend = new Resend(Deno.env.get("RESEND_API_KEY") as string);
 
 Deno.serve(async (req) => {
   if (req.method !== "POST") {
-    return new Response("Method not allowed", { status: 405 });
+    return new Response(JSON.stringify({ error: "Method not allowed" }), {
+      status: 405,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
   }
 
   try {
@@ -20,6 +24,15 @@ Deno.serve(async (req) => {
     if (!email || typeof email !== "string") {
       return new Response(
         JSON.stringify({ error: "Email is required" }),
+        { status: 400, headers: { "Content-Type": "application/json" } }
+      );
+    }
+
+    // Validate email format
+    const emailError = validateEmail(email);
+    if (emailError) {
+      return new Response(
+        JSON.stringify({ error: emailError }),
         { status: 400, headers: { "Content-Type": "application/json" } }
       );
     }
@@ -36,11 +49,14 @@ Deno.serve(async (req) => {
 
     const supabase = createClient(supabaseUrl, supabaseServiceRoleKey);
 
+    // Normalize email for consistent lookups
+    const normalizedEmail = email.toLowerCase().trim();
+
     // Check if user exists by querying profile table (O(1) with index)
     const { data: profile, error: profileError } = await supabase
       .from("profile")
       .select("id, email")
-      .eq("email", email)
+      .eq("email", normalizedEmail)
       .single();
 
     if (profileError || !profile) {
@@ -117,12 +133,15 @@ Deno.serve(async (req) => {
     const otpHash = await hashOTP(otp);
     const expiresAt = getOTPExpiry();
 
+    // Normalize user email for consistent storage (defense-in-depth)
+    const userNormalizedEmail = user.email.toLowerCase().trim();
+
     // Store OTP in database
     const { error: insertError } = await supabase
       .from("otp_verifications")
       .insert({
         user_id: user.id,
-        email: user.email,
+        email: userNormalizedEmail,
         otp_hash: otpHash,
         otp_type: "signup",
         expires_at: expiresAt.toISOString(),
@@ -134,11 +153,11 @@ Deno.serve(async (req) => {
       throw new Error("Failed to store verification code");
     }
 
-    // Send OTP email
+    // Send OTP email using normalized email
     const html = render(
       React.createElement(EmailOTP, {
         otp,
-        email: user.email,
+        email: userNormalizedEmail,
         otpType: "signup",
         expiresInMinutes: 15,
       })
@@ -150,7 +169,7 @@ Deno.serve(async (req) => {
 
     const { error: emailError } = await resend.emails.send({
       from: FROM_EMAIL,
-      to: [user.email],
+      to: [userNormalizedEmail],
       subject: "Verify Your Email - Handicappin'",
       html,
     });

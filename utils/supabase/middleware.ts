@@ -1,8 +1,6 @@
 import { Database } from "@/types/supabase";
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
-import { jwtVerify } from "jose"; // Import the `jose` library
-import { PasswordResetPayload } from "@/types/auth";
 import { PREMIUM_PATHS } from "@/utils/billing/constants";
 import { BillingClaims, getAppMetadataFromJWT } from "@/utils/supabase/jwt";
 import { hasPremiumAccess } from "@/utils/billing/access";
@@ -72,6 +70,7 @@ export async function updateSession(request: NextRequest) {
     "/api",
     "/verify-email",
     "/forgot-password",
+    "/update-password", // Allow unauthenticated access for password reset with OTP
     "/billing/success", // Allow access after Stripe redirect (session may be temporarily lost)
     "/verify-signup",
   ];
@@ -80,35 +79,8 @@ export async function updateSession(request: NextRequest) {
   const isPublic =
     pathname === "/" || publicPaths.some((path) => pathname.startsWith(path));
 
-  if (!enrichedUser && pathname === "/update-password") {
-    const resetToken = request.nextUrl.searchParams.get("token");
-    if (!resetToken) {
-      const url = request.nextUrl.clone();
-      url.pathname = "/login";
-      return NextResponse.redirect(url);
-    }
-
-    try {
-      // Verify JWT token
-      const secret = new TextEncoder().encode(process.env.RESET_TOKEN_SECRET);
-      const { payload } = await jwtVerify<PasswordResetPayload>(
-        resetToken,
-        secret
-      );
-
-      if (payload.metadata.type === "password-reset") {
-        // Attach decoded user info to request for further usage
-        const url = request.nextUrl.clone();
-        url.searchParams.set("email", payload.email);
-        return NextResponse.rewrite(url); // Rewrite the request with the email in the query
-      }
-    } catch (err) {
-      console.error("Invalid reset token:", err);
-      const url = request.nextUrl.clone();
-      url.pathname = "/login";
-      return NextResponse.redirect(url);
-    }
-  }
+  // Password reset now uses OTP codes instead of JWT tokens
+  // /update-password is in publicPaths and accessible to unauthenticated users
 
   if (!enrichedUser && !isPublic) {
     const url = request.nextUrl.clone();

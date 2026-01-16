@@ -58,45 +58,10 @@ export default function ForgotPasswordForm({
       return;
     }
 
+    // Security: Don't check if email exists to prevent account enumeration
+    // Always proceed to reset-password endpoint which handles non-existent emails safely
     try {
-      const checkEmailResponse = await fetch(
-        `${supabaseUrl}/functions/v1/check-email`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${supabaseAnonKey}`,
-          },
-          body: JSON.stringify({ email: values.email }),
-        }
-      );
-
-      const { exists } = await checkEmailResponse.json();
-
-      if (!exists) {
-        toast({
-          title: "No user found",
-          description: "We could not find a user with that email.",
-          variant: "destructive",
-        });
-        setLoading(false);
-        setSubmitButtonText("Send verification code");
-        return;
-      }
-    } catch (error) {
-      toast({
-        title: "Error",
-        description:
-          "An error occurred when checking the email exists. Contact support.",
-        variant: "destructive",
-      });
-      setLoading(false);
-      setSubmitButtonText("Send verification code");
-      return;
-    }
-
-    try {
-      setSubmitButtonText("Sending email...");
+      setSubmitButtonText("Sending verification code...");
       const URL = `${supabaseUrl}/functions/v1/reset-password`;
 
       const response = await fetch(URL, {
@@ -141,10 +106,12 @@ export default function ForgotPasswordForm({
         return;
       }
 
+      // Security: Always show success message even if user doesn't exist
+      // This prevents account enumeration attacks
       toast({
-        title: "✅ Password reset requested",
+        title: "✅ Check your email",
         description:
-          "A verification code has been sent to your email. Redirecting to password reset page...",
+          "If an account exists with that email, you'll receive a verification code. Redirecting...",
       });
 
       // Redirect to update-password page with email pre-filled

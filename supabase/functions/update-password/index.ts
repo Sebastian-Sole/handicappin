@@ -17,9 +17,9 @@ Deno.serve(async (req) => {
   }
 
   if (req.method !== "POST") {
-    return new Response("Method not allowed", {
+    return new Response(JSON.stringify({ error: "Method not allowed" }), {
       status: 405,
-      headers: corsHeaders,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
 
@@ -49,7 +49,7 @@ Deno.serve(async (req) => {
         JSON.stringify({ error: "Missing token or password" }),
         {
           status: 400,
-          headers: corsHeaders,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
         },
       );
     }
@@ -72,7 +72,7 @@ Deno.serve(async (req) => {
         JSON.stringify({ error: "Invalid token" }),
         {
           status: 401,
-          headers: corsHeaders,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
         },
       );
     }
@@ -80,7 +80,7 @@ Deno.serve(async (req) => {
     if (parsed.data.metadata.type !== "password-reset" || !payload.user_id) {
       return new Response(JSON.stringify({ error: "Invalid token" }), {
         status: 401,
-        headers: corsHeaders,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
@@ -95,7 +95,7 @@ Deno.serve(async (req) => {
     if (error) {
       return new Response(JSON.stringify({ error: error.message }), {
         status: 500,
-        headers: corsHeaders,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
@@ -103,14 +103,14 @@ Deno.serve(async (req) => {
       JSON.stringify({ message: "Password updated successfully" }),
       {
         status: 200,
-        headers: corsHeaders,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
       },
     );
   } catch (err) {
     console.error(err);
     return new Response(JSON.stringify({ error: "Internal server error" }), {
       status: 500,
-      headers: corsHeaders,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
 });

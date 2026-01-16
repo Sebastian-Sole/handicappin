@@ -1,7 +1,23 @@
+// Security: Password Reset OTP Verification
+//
+// This endpoint verifies OTP codes for password reset requests.
+//
+// Security measures in place:
+// - OTP must exist in database (user must have requested reset)
+// - OTP expires after 15 minutes
+// - Maximum 5 verification attempts per OTP
+// - Generic error messages to prevent account enumeration
+// - Cryptographically secure hash verification (SHA-256)
+// - One-time use (OTP deleted after successful verification)
+//
+// TODO: Add IP-based rate limiting (e.g., max 10 attempts per IP per hour)
+// Currently relies on per-OTP attempt limiting only
+
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "jsr:@supabase/supabase-js@2";
 import { verifyOTPHash, OTP_MAX_ATTEMPTS } from "../_shared/otp-utils.ts";
 import { corsHeaders } from "../_shared/cors.ts";
+import { validateEmail, validateOTP } from "../_shared/validation.ts";
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -9,9 +25,9 @@ Deno.serve(async (req) => {
   }
 
   if (req.method !== "POST") {
-    return new Response("Method not allowed", {
+    return new Response(JSON.stringify({ error: "Method not allowed" }), {
       status: 405,
-      headers: corsHeaders,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
 
@@ -36,11 +52,36 @@ Deno.serve(async (req) => {
 
     const { email, otp, newPassword } = await req.json();
 
+    // Validate required fields
     if (!email || !otp || !newPassword) {
       return new Response(
         JSON.stringify({
           error: "Email, OTP, and new password are required",
         }),
+        {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
+      );
+    }
+
+    // Validate email format
+    const emailError = validateEmail(email);
+    if (emailError) {
+      return new Response(
+        JSON.stringify({ error: emailError }),
+        {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
+      );
+    }
+
+    // Validate OTP format
+    const otpError = validateOTP(otp);
+    if (otpError) {
+      return new Response(
+        JSON.stringify({ error: otpError }),
         {
           status: 400,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -61,11 +102,14 @@ Deno.serve(async (req) => {
       );
     }
 
+    // Normalize email (lowercase + trim) to match storage format in reset-password
+    const normalizedEmail = email.toLowerCase().trim();
+
     // Find the most recent unverified OTP for this email
     const { data: otpRecord, error: fetchError } = await supabaseAdmin
       .from("otp_verifications")
       .select("*")
-      .eq("email", email)
+      .eq("email", normalizedEmail)
       .eq("otp_type", "password_reset")
       .eq("verified", false)
       .order("created_at", { ascending: false })
@@ -73,12 +117,13 @@ Deno.serve(async (req) => {
       .single();
 
     if (fetchError || !otpRecord) {
+      // Security: Use generic message to prevent account enumeration
       return new Response(
         JSON.stringify({
-          error: "No pending password reset found for this email",
+          error: "Invalid or expired verification code",
         }),
         {
-          status: 404,
+          status: 401,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         }
       );
@@ -95,12 +140,13 @@ Deno.serve(async (req) => {
         .delete()
         .eq("id", otpRecord.id);
 
+      // Security: Use generic message to prevent timing attacks
       return new Response(
         JSON.stringify({
-          error: "Verification code has expired. Please request a new one.",
+          error: "Invalid or expired verification code",
         }),
         {
-          status: 410,
+          status: 401,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         }
       );

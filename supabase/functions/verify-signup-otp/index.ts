@@ -2,17 +2,18 @@ import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "jsr:@supabase/supabase-js@2";
 import { verifyOTPHash, OTP_MAX_ATTEMPTS } from "../_shared/otp-utils.ts";
 import { corsHeaders } from "../_shared/cors.ts";
+import { validateEmail, validateOTP } from "../_shared/validation.ts";
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      headers: corsHeaders,
       status: 204,
     });
   }
 
   if (req.method !== "POST") {
-    return new Response("Method not allowed", {
+    return new Response(JSON.stringify({ error: "Method not allowed" }), {
       status: 405,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
@@ -49,11 +50,38 @@ Deno.serve(async (req) => {
       );
     }
 
+    // Validate email format
+    const emailError = validateEmail(email);
+    if (emailError) {
+      return new Response(
+        JSON.stringify({ error: emailError }),
+        {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
+      );
+    }
+
+    // Validate OTP format
+    const otpError = validateOTP(otp);
+    if (otpError) {
+      return new Response(
+        JSON.stringify({ error: otpError }),
+        {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
+      );
+    }
+
+    // Normalize email (lowercase + trim) for consistent lookups
+    const normalizedEmail = email.toLowerCase().trim();
+
     // Find the most recent unverified OTP for this email
     const { data: otpRecord, error: fetchError } = await supabaseAdmin
       .from("otp_verifications")
       .select("*")
-      .eq("email", email)
+      .eq("email", normalizedEmail)
       .eq("otp_type", "signup")
       .eq("verified", false)
       .order("created_at", { ascending: false })
@@ -181,7 +209,10 @@ Deno.serve(async (req) => {
           JSON.stringify({
             error: "Failed to confirm email in authentication system",
           }),
-          { status: 500, headers: corsHeaders }
+          {
+            status: 500,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          }
         );
       }
 
