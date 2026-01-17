@@ -36,7 +36,7 @@ export default async function Image() {
             color: "transparent",
           }}
         >
-          Handicappin&apos;
+          Handicappin'
         </div>
         <div
           style={{

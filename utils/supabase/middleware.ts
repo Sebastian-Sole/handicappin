@@ -73,6 +73,7 @@ export async function updateSession(request: NextRequest) {
     "/update-password", // Allow unauthenticated access for password reset with OTP
     "/billing/success", // Allow access after Stripe redirect (session may be temporarily lost)
     "/verify-signup",
+    "/contact",
   ];
 
   // Special case: "/" is public, but not paths that start with "/"

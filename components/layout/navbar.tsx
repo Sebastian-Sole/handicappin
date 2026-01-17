@@ -40,7 +40,7 @@ export async function Navbar() {
         >
           <Image
             src="/images/logo.png"
-            alt="Handicappin' logo"
+            alt="Handicappin Golf Handicap Tracker Logo"
             width={470}
             height={470}
             className="h-8 w-8"
