@@ -232,6 +232,9 @@ export const round = pgTable(
     exceptionalScoreAdjustment: decimal<"number">().default(0).notNull(),
     notes: text(),
     approvalStatus: text().default("pending").notNull(),
+    // Tee ratings locked at time of play - preserved even if tee data changes
+    courseRatingUsed: decimal("course_rating_used", { mode: "number" }).notNull(),
+    slopeRatingUsed: integer("slope_rating_used").notNull(),
     createdAt: timestamp()
       .default(sql`CURRENT_TIMESTAMP`)
       .notNull(),

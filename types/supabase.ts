@@ -291,6 +291,7 @@ export type Database = {
           cancel_at_period_end: boolean
           createdAt: string
           current_period_end: number | null
+          email: string
           handicapIndex: number
           id: string
           initialHandicapIndex: number
@@ -305,6 +306,7 @@ export type Database = {
           cancel_at_period_end?: boolean
           createdAt?: string
           current_period_end?: number | null
+          email: string
           handicapIndex?: number
           id: string
           initialHandicapIndex?: number
@@ -319,6 +321,7 @@ export type Database = {
           cancel_at_period_end?: boolean
           createdAt?: string
           current_period_end?: number | null
+          email?: string
           handicapIndex?: number
           id?: string
           initialHandicapIndex?: number

@@ -370,6 +370,9 @@ export const roundRouter = createTRPCRouter({
         exceptionalScoreAdjustment: 0,
         courseHandicap: tempCourseHandicap,
         approvalStatus,
+        // Lock tee ratings at time of play - preserved even if tee data changes later
+        courseRatingUsed: teePlayed.courseRating18,
+        slopeRatingUsed: teePlayed.slopeRating18,
       };
 
       console.log("Round insert", roundInsert);
