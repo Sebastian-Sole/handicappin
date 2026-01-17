@@ -12,7 +12,7 @@ export default function ContactPage() {
     <div className="container mx-auto px-4 py-16">
       <h1 className="text-4xl font-bold mb-4">Contact Us</h1>
       <p className="text-lg mb-8">
-        Have questions about Handicappin'? We're here to help.
+        Have questions about Handicappin&apos;? We&apos;re here to help.
       </p>
       <div className="max-w-2xl">
         <p className="mb-4">
