@@ -4,6 +4,8 @@ import SubscriptionUpgradedEmail from "@/emails/subscription-upgraded";
 import SubscriptionDowngradedEmail from "@/emails/subscription-downgraded";
 import SubscriptionCancelledEmail from "@/emails/subscription-cancelled";
 import WelcomeEmail from "@/emails/welcome";
+import ContactFormEmail from "@/emails/contact-form";
+import ContactConfirmationEmail from "@/emails/contact-confirmation";
 import {
   logWebhookInfo,
   logWebhookError,
@@ -267,6 +269,117 @@ export async function sendWelcomeEmail({
   } catch (error) {
     logWebhookError(
       `Failed to send welcome email to ${redactEmail(to)} (plan: ${plan})`,
+      error
+    );
+
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Unknown error",
+    };
+  }
+}
+
+/**
+ * Send contact form notification to admin
+ * Contains the user's message and contact details
+ */
+export async function sendContactFormEmail({
+  name,
+  email,
+  subject,
+  message,
+}: {
+  name: string;
+  email: string;
+  subject: string;
+  message: string;
+}): Promise<SendEmailResult> {
+  try {
+    logWebhookInfo(`Sending contact form notification for ${redactEmail(email)}`);
+
+    const emailHtml = await render(
+      ContactFormEmail({
+        name,
+        email,
+        subject,
+        message,
+      })
+    );
+
+    const result = await resend.emails.send({
+      from: FROM_EMAIL,
+      to: "sebastiansole@handicappin.com",
+      replyTo: email,
+      subject: `[Contact Form] ${subject}`,
+      html: emailHtml,
+    });
+
+    logWebhookSuccess(
+      `Contact form notification sent successfully for ${redactEmail(email)}`,
+      {
+        messageId: result.data?.id,
+        subject,
+      }
+    );
+
+    return {
+      success: true,
+      messageId: result.data?.id,
+    };
+  } catch (error) {
+    logWebhookError(
+      `Failed to send contact form notification for ${redactEmail(email)}`,
+      error
+    );
+
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Unknown error",
+    };
+  }
+}
+
+/**
+ * Send confirmation email to user after contact form submission
+ */
+export async function sendContactConfirmationEmail({
+  to,
+  name,
+}: {
+  to: string;
+  name: string;
+}): Promise<SendEmailResult> {
+  try {
+    logWebhookInfo(`Sending contact confirmation to ${redactEmail(to)}`);
+
+    const emailHtml = await render(
+      ContactConfirmationEmail({
+        name,
+        supportEmail: "sebastiansole@handicappin.com",
+      })
+    );
+
+    const result = await resend.emails.send({
+      from: FROM_EMAIL,
+      to,
+      subject: "We received your message - Handicappin'",
+      html: emailHtml,
+    });
+
+    logWebhookSuccess(
+      `Contact confirmation sent successfully to ${redactEmail(to)}`,
+      {
+        messageId: result.data?.id,
+      }
+    );
+
+    return {
+      success: true,
+      messageId: result.data?.id,
+    };
+  } catch (error) {
+    logWebhookError(
+      `Failed to send contact confirmation to ${redactEmail(to)}`,
       error
     );
 

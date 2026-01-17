@@ -13,6 +13,7 @@ const isEnabled = process.env.RATE_LIMIT_ENABLED === 'true';
 const CHECKOUT_LIMIT = parseInt(process.env.RATE_LIMIT_CHECKOUT_PER_MIN || '10', 10);
 const PORTAL_LIMIT = parseInt(process.env.RATE_LIMIT_PORTAL_PER_MIN || '5', 10);
 const WEBHOOK_LIMIT = parseInt(process.env.RATE_LIMIT_WEBHOOK_PER_MIN || '100', 10);
+const CONTACT_LIMIT = parseInt(process.env.RATE_LIMIT_CONTACT_PER_MIN || '3', 10);
 
 // Initialize Redis client (only if rate limiting is enabled)
 let redis: Redis | null = null;
@@ -99,6 +100,7 @@ function createRateLimiter(limit: number, prefix: string) {
 export const checkoutRateLimit = createRateLimiter(CHECKOUT_LIMIT, 'checkout');
 export const portalRateLimit = createRateLimiter(PORTAL_LIMIT, 'portal');
 export const webhookRateLimit = createRateLimiter(WEBHOOK_LIMIT, 'webhook');
+export const contactRateLimit = createRateLimiter(CONTACT_LIMIT, 'contact');
 
 /**
  * Extract identifier for rate limiting

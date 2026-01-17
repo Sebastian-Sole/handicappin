@@ -76,3 +76,27 @@ export function FAQJsonLd({ faqs }: { faqs: FAQ[] }) {
     />
   );
 }
+
+export function ContactPageJsonLd() {
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "ContactPage",
+    name: "Contact Handicappin'",
+    description:
+      "Get in touch with the Handicappin' team for questions about golf handicap tracking, feature requests, or support.",
+    url: "https://handicappin.com/contact",
+    mainEntity: {
+      "@type": "Organization",
+      name: "Handicappin'",
+      email: "sebastiansole@handicappin.com",
+      url: "https://handicappin.com",
+    },
+  };
+
+  return (
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+    />
+  );
+}
