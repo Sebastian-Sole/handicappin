@@ -3,6 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { P } from "@/components/ui/typography";
 import { createServerComponentClient } from "@/utils/supabase/server";
 import { Suspense } from "react";
+import type { Metadata } from "next";
 
 import {
   Logs,
@@ -14,6 +15,18 @@ import {
   Gauge,
   Trophy,
 } from "lucide-react";
+
+export const metadata: Metadata = {
+  title: "About Us - Why Handicappin' Exists",
+  description:
+    "Learn why we built Handicappin' - a golf handicap tracker that puts user experience first. USGA compliant calculations, detailed round tracking, and transparent statistics.",
+  openGraph: {
+    title: "About Handicappin' - Our Mission",
+    description:
+      "We built Handicappin' because other golf services overcomplicated everything. Simple handicap tracking with transparent calculations.",
+    url: "https://handicappin.com/about",
+  },
+};
 
 export default async function AboutPage() {
   const supabase = await createServerComponentClient();

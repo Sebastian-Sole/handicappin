@@ -23,6 +23,25 @@ import {
   PLAN_DETAILS,
 } from "@/components/billing/plan-features";
 import { getPromotionCodeDetails } from "@/lib/stripe";
+import { FAQJsonLd } from "@/components/seo/json-ld";
+
+const faqs = [
+  {
+    question: "What is a golf handicap index?",
+    answer:
+      "A handicap index is a number that represents your potential playing ability. It's calculated using your best score differentials from recent rounds, following USGA guidelines. Handicappin' calculates this automatically every time you log a round.",
+  },
+  {
+    question: "How is my handicap calculated?",
+    answer:
+      "Your handicap index is calculated by taking the average of your best 8 score differentials from your last 20 rounds. A score differential essentially tells how well you played compared to the difficulty of the course. Handicappin' handles all these calculations automatically and shows you exactly how each round affects your handicap.",
+  },
+  {
+    question: "Is Handicappin' USGA compliant?",
+    answer:
+      "Yes! Handicappin' follows all USGA handicap calculation rules, including score differentials, soft caps, hard caps, and exceptional score reductions. We are up to date with the latest USGA rules, and your handicap index is calculated the same way official handicap services do it.",
+  },
+];
 
 export default async function Landing() {
   const supabase = await createServerComponentClient();
@@ -63,12 +82,13 @@ export default async function Landing() {
               Trusted by golfers worldwide
             </Badge>
             <h1 className="text-4xl md:text-6xl font-bold text-balance mb-6">
-              Elevate Your Game with{" "}
-              <span className="text-primary">Data-Driven</span> Insights
+              Track Your <span className="text-primary">Golf Handicap</span>{" "}
+              with Data-Driven Insights
             </h1>
             <p className="text-xl text-muted-foreground text-pretty mb-8 max-w-2xl mx-auto">
-              Track every round, calculate your handicap automatically, and
-              understand the calculations behind the scenes.
+              Log every golf round, calculate your USGA handicap index
+              automatically, and understand the score differential calculations
+              behind the scenes.
             </p>
             <div className="flex flex-col md:flex-row gap-4 justify-center">
               <Link href="/signup">
@@ -335,6 +355,26 @@ export default async function Landing() {
           </div>
         </div>
       </section>
+
+      {/* FAQ Section */}
+      <section className="py-20">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          <h2 className="text-3xl md:text-4xl font-bold mb-8 text-center">
+            Frequently Asked Questions
+          </h2>
+          <div className="max-w-3xl mx-auto space-y-6">
+            {faqs.map((faq, faqIndex) => (
+              <div key={faqIndex} className="border-b pb-6">
+                <h3 className="text-xl font-semibold mb-2">{faq.question}</h3>
+                <p className="text-muted-foreground">{faq.answer}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+        <FAQJsonLd faqs={faqs} />
+      </section>
+
+      {/* Final CTA Section */}
       <section className="py-20 bg-gradient-to-r from-primary/5 to-primary/20">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h2 className="text-3xl md:text-4xl font-bold mb-4">

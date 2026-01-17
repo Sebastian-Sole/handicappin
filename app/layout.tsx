@@ -9,12 +9,73 @@ import Footer from "@/components/layout/footer";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { BillingSync } from "@/components/billing-sync";
+import {
+  OrganizationJsonLd,
+  SoftwareApplicationJsonLd,
+} from "@/components/seo/json-ld";
 
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Handicappin'",
-  description: "Golf made easy",
+  metadataBase: new URL("https://handicappin.com"),
+  title: {
+    default:
+      "Handicappin' - Golf Handicap Tracker & Calculator | USGA Compliant",
+    template: "%s | Handicappin'",
+  },
+  description:
+    "Track your golf handicap with USGA-compliant calculations. Log rounds, calculate your handicap index automatically, and understand every calculation. Free golf handicap tracking app.",
+  keywords: [
+    "golf handicap",
+    "handicap calculator",
+    "golf handicap tracker",
+    "USGA handicap",
+    "golf app",
+    "handicap index",
+    "golf round tracker",
+    "score differential",
+    "course handicap",
+    "golf statistics",
+    "handicappin",
+  ],
+  authors: [{ name: "Handicappin'" }],
+  creator: "Handicappin'",
+  publisher: "Handicappin'",
+  formatDetection: {
+    email: false,
+    address: false,
+    telephone: false,
+  },
+  openGraph: {
+    type: "website",
+    locale: "en_US",
+    url: "https://handicappin.com",
+    siteName: "Handicappin'",
+    title: "Handicappin' - Golf Handicap Tracker & Calculator",
+    description:
+      "Track your golf handicap with USGA-compliant calculations. Log rounds, calculate your handicap index automatically, and understand every calculation.",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Handicappin' - Golf Handicap Tracker & Calculator",
+    description:
+      "Track your golf handicap with USGA-compliant calculations. Free golf handicap tracking app.",
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-video-preview": -1,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
+  },
+  verification: {
+    // Add Google Search Console verification code here after setup
+    // google: "your-google-verification-code",
+  },
 };
 
 export default function RootLayout({
@@ -24,6 +85,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
+      <head>
+        <OrganizationJsonLd />
+        <SoftwareApplicationJsonLd />
+      </head>
       <body className={inter.className}>
         <div className="flex flex-col min-h-screen">
           <TRPCReactProvider>
