@@ -1,3 +1,4 @@
+import { useRef } from "react";
 import {
   Table,
   TableBody,
@@ -29,8 +30,51 @@ export function ScorecardTable({
   onScoreChange,
   disabled,
 }: ScorecardTableProps) {
+  const desktopInputRefs = useRef<(HTMLInputElement | null)[]>([]);
+  const mobileInputRefs = useRef<(HTMLInputElement | null)[]>([]);
+
   const calculateTotal = (scores: Score[], start: number, end: number) =>
     scores.slice(start, end).reduce((sum, score) => sum + score.strokes, 0);
+
+  const handleScoreInput = (
+    e: React.ChangeEvent<HTMLInputElement>,
+    holeIndex: number,
+    inputRefs: React.MutableRefObject<(HTMLInputElement | null)[]>,
+    totalHoles: number
+  ) => {
+    const value = e.target.value;
+
+    if (value.length > CONSTANTS.MAX_SCORE_LENGTH) {
+      return;
+    }
+
+    let parsed = parseInt(value) || 0;
+    if (parsed < CONSTANTS.MIN_SCORE) {
+      parsed = CONSTANTS.MIN_SCORE;
+      toast({
+        title: "Invalid score",
+        description: "Score cannot be negative",
+        variant: "destructive",
+      });
+    }
+
+    onScoreChange(holeIndex, parsed);
+
+    // Auto-advance logic:
+    // - If single digit 2-9, advance immediately (scores 20+ are rare in golf)
+    // - If 1, wait for second digit (10-19 is more common than hole-in-one)
+    // - If two digits entered, advance (max score length reached)
+    const shouldAutoAdvance =
+      (value.length === 1 && parsed >= 2 && parsed <= 9) || value.length === 2;
+
+    if (shouldAutoAdvance && holeIndex < totalHoles - 1) {
+      const nextInput = inputRefs.current[holeIndex + 1];
+      if (nextInput) {
+        nextInput.focus();
+        nextInput.select();
+      }
+    }
+  };
 
   return (
     <>
@@ -152,27 +196,16 @@ export function ScorecardTable({
                 {scores.slice(0, holeCount).map((score, i) => (
                   <TableCell key={i} className="p-2 bg-background-alternate">
                     <Input
+                      ref={(el) => {
+                        desktopInputRefs.current[i] = el;
+                      }}
                       className="border border-border h-full text-center w-full"
                       type="number"
                       value={score.strokes || ""}
                       disabled={disabled}
-                      onChange={(e) => {
-                        if (
-                          e.target.value.length > CONSTANTS.MAX_SCORE_LENGTH
-                        ) {
-                          return;
-                        }
-                        let parsed = parseInt(e.target.value) || 0;
-                        if (parsed < CONSTANTS.MIN_SCORE) {
-                          parsed = CONSTANTS.MIN_SCORE;
-                          toast({
-                            title: "Invalid score",
-                            description: "Score cannot be negative",
-                            variant: "destructive",
-                          });
-                        }
-                        onScoreChange(i, parsed);
-                      }}
+                      onChange={(e) =>
+                        handleScoreInput(e, i, desktopInputRefs, holeCount)
+                      }
                       onWheel={(e) => {
                         e.currentTarget.blur();
                       }}
@@ -267,27 +300,16 @@ export function ScorecardTable({
                     </TableCell>
                     <TableCell className="p-2 bg-background-alternate w-24">
                       <Input
+                        ref={(el) => {
+                          mobileInputRefs.current[i] = el;
+                        }}
                         className="border border-border h-12 text-center w-full text-lg"
                         type="number"
                         value={scores[i]?.strokes || ""}
                         disabled={disabled}
-                        onChange={(e) => {
-                          if (
-                            e.target.value.length > CONSTANTS.MAX_SCORE_LENGTH
-                          ) {
-                            return;
-                          }
-                          let parsed = parseInt(e.target.value) || 0;
-                          if (parsed < CONSTANTS.MIN_SCORE) {
-                            parsed = CONSTANTS.MIN_SCORE;
-                            toast({
-                              title: "Invalid score",
-                              description: "Score cannot be negative",
-                              variant: "destructive",
-                            });
-                          }
-                          onScoreChange(i, parsed);
-                        }}
+                        onChange={(e) =>
+                          handleScoreInput(e, i, mobileInputRefs, holeCount)
+                        }
                         onWheel={(e) => {
                           e.currentTarget.blur();
                         }}

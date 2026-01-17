@@ -1,4 +1,4 @@
-CREATE TABLE "otp_verifications" (
+CREATE TABLE IF NOT EXISTS "otp_verifications" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"user_id" uuid,
 	"email" text NOT NULL,
@@ -13,8 +13,9 @@ CREATE TABLE "otp_verifications" (
 	"metadata" text
 );
 --> statement-breakpoint
-CREATE INDEX "otp_verifications_email_type_idx" ON "otp_verifications" USING btree ("email","otp_type");--> statement-breakpoint
-CREATE INDEX "otp_verifications_expires_at_idx" ON "otp_verifications" USING btree ("expires_at");--> statement-breakpoint
-CREATE INDEX "otp_verifications_user_id_idx" ON "otp_verifications" USING btree ("user_id");--> statement-breakpoint
+CREATE INDEX IF NOT EXISTS "otp_verifications_email_type_idx" ON "otp_verifications" USING btree ("email","otp_type");--> statement-breakpoint
+CREATE INDEX IF NOT EXISTS "otp_verifications_expires_at_idx" ON "otp_verifications" USING btree ("expires_at");--> statement-breakpoint
+CREATE INDEX IF NOT EXISTS "otp_verifications_user_id_idx" ON "otp_verifications" USING btree ("user_id");--> statement-breakpoint
 ALTER TABLE "otp_verifications" ENABLE ROW LEVEL SECURITY;--> statement-breakpoint
+DROP POLICY IF EXISTS "No direct access to OTP verifications" ON "otp_verifications";--> statement-breakpoint
 CREATE POLICY "No direct access to OTP verifications" ON "otp_verifications" AS PERMISSIVE FOR ALL TO "anon", "authenticated", public USING (false);

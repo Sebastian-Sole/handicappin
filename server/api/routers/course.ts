@@ -2,7 +2,7 @@ import { z } from "zod";
 import { createTRPCRouter, publicProcedure } from "../trpc";
 import { db } from "@/db";
 import { course } from "@/db/schema";
-import { like, and, eq } from "drizzle-orm";
+import { ilike, and, eq } from "drizzle-orm";
 
 const courseQuery = z.object({
   userId: z.string(),
@@ -54,7 +54,7 @@ export const courseRouter = createTRPCRouter({
         .from(course)
         .where(
           and(
-            like(course.name, searchQuery),
+            ilike(course.name, searchQuery),
             eq(course.approvalStatus, "approved")
           )
         )
