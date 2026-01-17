@@ -24,7 +24,6 @@ export default function ContactPage() {
             sebastiansole@handicappin.com
           </a>
         </p>
-        {/* Add contact form or additional contact methods as needed */}
       </div>
     </div>
   );
