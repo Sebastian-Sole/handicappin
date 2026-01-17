@@ -8,7 +8,8 @@ const Footer = () => {
         <div className="flex flex-col items-center justify-between gap-4 lg:flex-row ">
           <div className="text-center lg:text-left flex flex-row">
             <p className="text-sm text-muted-foreground">
-              © 2024 Handicappin&apos;. All rights reserved. Developed By:{" "}
+              © {new Date().getFullYear()} Handicappin&apos;. All rights
+              reserved. Developed By:{" "}
               <Link href="https://www.soleinnovations.com">
                 <Button variant={"link"} className="p-0 m-0">
                   SoleInnovations
