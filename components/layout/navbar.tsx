@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Avatar } from "@/components/ui/avatar";
 import { Sheet, SheetTrigger, SheetContent } from "@/components/ui/sheet";
@@ -37,6 +38,13 @@ export async function Navbar() {
           className="flex items-center gap-2 w-1/3"
           prefetch={true}
         >
+          <Image
+            src="/images/logo.png"
+            alt="Handicappin' logo"
+            width={470}
+            height={470}
+            className="h-8 w-8"
+          />
           <Large>Handicappin&apos;</Large>
         </Link>
         {isAuthed && (
