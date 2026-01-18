@@ -22,6 +22,14 @@ export type ProcessedRound = {
 };
 
 /**
+ * Rounds a value to 1 decimal place per USGA handicap precision requirements.
+ * Handicap indices and score differentials are always displayed to one decimal place.
+ */
+export function roundToHandicapPrecision(value: number): number {
+  return Math.round(value * 10) / 10;
+}
+
+/**
  * Calculates the course handicap based on the handicap index, slope rating, course rating, and par.
  */
 export function calculateCourseHandicap(
@@ -30,9 +38,10 @@ export function calculateCourseHandicap(
   numberOfHolesPlayed: number
 ): number {
   if (numberOfHolesPlayed === 9) {
-    const adjustedHandicapIndex = Math.round((handicapIndex / 2) * 10) / 10;
+    // Use half the handicap index for 9-hole rounds (no pre-rounding per USGA)
+    // Only the final course handicap result is rounded to nearest integer
     return Math.round(
-      adjustedHandicapIndex * (teePlayed.slopeRatingFront9 / 113) +
+      (handicapIndex / 2) * (teePlayed.slopeRatingFront9 / 113) +
         (teePlayed.courseRatingFront9 - teePlayed.outPar)
     );
   } else {
@@ -166,11 +175,9 @@ export function getRelevantDifferentials(
 export function calculateHandicapIndex(scoreDifferentials: number[]): number {
   const sortedDifferentials = [...scoreDifferentials].sort((a, b) => a - b);
   const relevantDiffs = getRelevantDifferentials(sortedDifferentials);
-  const handicapCalculation =
-    Math.round(
-      (relevantDiffs.reduce((acc, cur) => acc + cur) / relevantDiffs.length) *
-        10
-    ) / 10;
+  const averageDifferential =
+    relevantDiffs.reduce((acc, cur) => acc + cur) / relevantDiffs.length;
+  const handicapCalculation = roundToHandicapPrecision(averageDifferential);
 
   if (scoreDifferentials.length < 3) {
     return 54;
@@ -242,7 +249,9 @@ export function applyHandicapCaps(
     cappedIndex = lowHandicapIndex + softCapIncrease;
   }
 
-  return Math.min(cappedIndex, lowHandicapIndex + HARD_CAP_THRESHOLD);
+  return roundToHandicapPrecision(
+    Math.min(cappedIndex, lowHandicapIndex + HARD_CAP_THRESHOLD)
+  );
 }
 
 export const calculateAdjustedPlayedScore = (

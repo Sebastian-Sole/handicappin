@@ -39,23 +39,16 @@ const getRoundCalculations = (
 
   const numberOfHolesPlayed = scores.length;
 
-  console.log("Calculating course handicap");
   const courseHandicap = calculateCourseHandicap(
     handicapIndex,
     teePlayed,
     numberOfHolesPlayed
   );
 
-  console.log("Course handicap calculated");
-  console.log("Calculating adjusted played score");
-
   const adjustedPlayedScore = calculateAdjustedPlayedScore(
     teePlayed.holes,
     scores
   );
-
-  console.log("Adjusted played score calculated");
-  console.log("Calculating adjusted gross score");
 
   const adjustedGrossScore = calculateAdjustedGrossScore(
     adjustedPlayedScore,
@@ -64,9 +57,6 @@ const getRoundCalculations = (
     teePlayed.holes,
     scores
   );
-
-  console.log("Adjusted gross score calculated");
-  console.log("Calculating score differential");
 
   // Calculate score differential and determine ratings based on holes played
   // Per USGA Rule 5.1b, 9-hole rounds use 9-hole ratings and combine with expected differential
@@ -95,8 +85,6 @@ const getRoundCalculations = (
       expectedDifferential
     );
 
-    console.log("9-hole score differential calculated: ", scoreDifferential);
-    console.log("Expected differential for unplayed 9: ", expectedDifferential);
   } else {
     // 18-hole calculation uses 18-hole ratings
     courseRatingUsed = teePlayed.courseRating18;
@@ -108,7 +96,6 @@ const getRoundCalculations = (
       slopeRatingUsed
     );
 
-    console.log("18-hole score differential calculated: ", scoreDifferential);
   }
 
   return {
@@ -233,11 +220,7 @@ export const roundRouter = createTRPCRouter({
         });
       }
 
-      console.log("✅ Access checks passed", {
-        plan: access.plan,
-        hasAccess: access.hasAccess,
-        remainingRounds: access.remainingRounds,
-      });
+
 
       // 1. Get user profile for handicap calculations
       const userProfile = await db
@@ -250,7 +233,6 @@ export const roundRouter = createTRPCRouter({
         throw new Error("User profile not found");
       }
 
-      console.log("User profile found");
 
       // 2. Handle course
       let courseId = coursePlayed.id;
@@ -265,7 +247,6 @@ export const roundRouter = createTRPCRouter({
       if (existingCourse[0]) {
         // Course already exists, use its ID
         courseId = existingCourse[0].id;
-        console.log("Using existing course", courseId);
       } else if (coursePlayed.approvalStatus === "pending") {
         // Course doesn't exist and is pending, insert new one
         const [newCourse] = await db
@@ -279,20 +260,16 @@ export const roundRouter = createTRPCRouter({
           })
           .returning();
         courseId = newCourse.id;
-        console.log("Inserted new course", courseId);
       }
 
-      console.log("Course ID found", courseId);
 
       if (!courseId) {
         throw new Error("Course ID not found");
       }
 
-      console.log("Course ID found", courseId);
 
       // 3. Handle tee
       let teeId = teePlayed.id;
-      console.log("Tee ID", teeId);
 
       // First, try to find existing tee by name and course
       const existingTee = await db
@@ -310,11 +287,7 @@ export const roundRouter = createTRPCRouter({
       if (existingTee[0]) {
         // Tee already exists, use its ID
         teeId = existingTee[0].id;
-        console.log("Using existing tee", teeId);
       } else if (teePlayed.approvalStatus === "pending") {
-        console.log("Inserting tee");
-        // Tee doesn't exist and is pending, insert new one
-        console.log(teePlayed);
 
         const teeInsert: TeeInfoInsert = {
           courseId: courseId!,
@@ -340,7 +313,6 @@ export const roundRouter = createTRPCRouter({
         const [newTee] = await db.insert(teeInfo).values(teeInsert).returning();
         teeId = newTee.id;
 
-        console.log("Tee inserted", teeId);
 
         if (teeId === null) {
           throw new Error("Failed to insert tee");
@@ -348,7 +320,6 @@ export const roundRouter = createTRPCRouter({
 
         // Insert holes if tee is pending
         if (teePlayed.holes) {
-          console.log("Inserting holes");
           const holeInserts = teePlayed.holes.map((h) => ({
             teeId: teeId!,
             holeNumber: h.holeNumber,
@@ -358,11 +329,8 @@ export const roundRouter = createTRPCRouter({
           }));
 
           await db.insert(hole).values(holeInserts);
-          console.log("Holes inserted");
         }
       }
-
-      console.log("Calculating round calculations");
 
       // Match scores with holes to calculate the par played
       let parPlayed = 0;
@@ -392,13 +360,10 @@ export const roundRouter = createTRPCRouter({
         holesPlayed: tempHolesPlayed,
       } = getRoundCalculations(input, Number(userProfile[0].handicapIndex));
 
-      console.log("Round calculations calculated");
 
       if (!teeId) {
         throw new Error("Course or tee ID not found");
       }
-
-      console.log("Inserting round");
 
       const roundInsert: RoundInsert = {
         userId: userId,
@@ -422,20 +387,12 @@ export const roundRouter = createTRPCRouter({
         slopeRatingUsed: tempSlopeRatingUsed,
         holesPlayed: tempHolesPlayed,
       };
-
-      console.log("Round insert", roundInsert);
-
       // 5. Insert round
       const [newRound] = await db.insert(round).values(roundInsert).returning();
-
-      console.log("Round inserted", newRound);
 
       if (!newRound) {
         throw new Error("Failed to insert round");
       }
-
-      console.log("Inserting scores");
-
       // Get the actual hole IDs from the database
       const dbHoles = await db
         .select()
@@ -465,8 +422,6 @@ export const roundRouter = createTRPCRouter({
 
       await db.insert(score).values(scoreInserts);
 
-      console.log("Scores inserted");
-
       // Race condition protection: re-check count for free tier users
       // This prevents parallel submissions from exceeding the limit
       if (access.plan === "free") {
@@ -493,9 +448,6 @@ export const roundRouter = createTRPCRouter({
           });
         }
 
-        console.log(
-          `✅ Post-insert check passed. User has ${count} rounds (limit: ${FREE_TIER_ROUND_LIMIT})`
-        );
       }
 
       return newRound;

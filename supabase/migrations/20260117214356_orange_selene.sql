@@ -3,6 +3,7 @@
 --   1. Store course rating and slope rating at time of play (preserves historical calculations)
 --   2. Add holes_played column to track 9 vs 18 hole rounds
 --   3. Fix 9-hole rounds to use front9 ratings per USGA Rule 5.1b
+--   4. Recalculate scoreDifferential for legacy 9-hole rounds (were using incorrect 18-hole ratings)
 
 -- ============================================================
 -- PHASE 1: Add new columns as nullable (to allow backfill)
@@ -43,10 +44,23 @@ WHERE r."teeId" = t.id
   AND r."holes_played" = 18;--> statement-breakpoint
 
 -- Backfill 9-hole rounds with front9 ratings (USGA Rule 5.1b)
+-- NOTE: This is a one-time backfill for legacy data.
+-- We use current tee ratings since historical ratings weren't stored.
+-- Going forward, rounds store ratings at submission time.
 UPDATE "round" r
 SET
   "course_rating_used" = t."courseRatingFront9",
   "slope_rating_used" = t."slopeRatingFront9"
+FROM "teeInfo" t
+WHERE r."teeId" = t.id
+  AND r."holes_played" = 9;--> statement-breakpoint
+
+-- Recalculate scoreDifferential for 9-hole rounds using front9 ratings
+-- The original scoreDifferential was calculated with 18-hole ratings (incorrect)
+-- Formula: (adjustedGrossScore - courseRating) * 113 / slopeRating
+UPDATE "round" r
+SET
+  "scoreDifferential" = ("adjustedGrossScore" - t."courseRatingFront9") * 113.0 / t."slopeRatingFront9"
 FROM "teeInfo" t
 WHERE r."teeId" = t.id
   AND r."holes_played" = 9;--> statement-breakpoint
@@ -65,6 +79,7 @@ ALTER TABLE "round" ALTER COLUMN "holes_played" SET NOT NULL;--> statement-break
 -- ============================================================
 
 -- Insert into handicap calculation queue for affected users
+-- On conflict: reset attempts and error_message since this is a new event type
 INSERT INTO "handicap_calculation_queue" ("user_id", "event_type", "status")
 SELECT DISTINCT r."userId", 'nine_hole_rating_fix', 'pending'
 FROM "round" r
@@ -73,7 +88,9 @@ ON CONFLICT ("user_id") DO UPDATE
 SET
   "event_type" = 'nine_hole_rating_fix',
   "last_updated" = CURRENT_TIMESTAMP,
-  "status" = 'pending';--> statement-breakpoint
+  "status" = 'pending',
+  "attempts" = 0,
+  "error_message" = NULL;--> statement-breakpoint
 
 -- ============================================================
 -- PHASE 6: Add comments for documentation
