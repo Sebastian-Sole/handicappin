@@ -10,6 +10,8 @@ import {
   calculateCourseHandicap,
   calculateScoreDifferential,
   calculateAdjustedGrossScore,
+  calculateExpected9HoleDifferential,
+  calculate9HoleScoreDifferential,
 } from "@/lib/handicap";
 import { getComprehensiveUserAccess } from "@/utils/billing/access-control";
 import { TRPCError } from "@trpc/server";
@@ -20,6 +22,9 @@ type RoundCalculations = {
   adjustedPlayedScore: number;
   scoreDifferential: number;
   courseHandicap: number;
+  courseRatingUsed: number;
+  slopeRatingUsed: number;
+  holesPlayed: number;
 };
 
 const getRoundCalculations = (
@@ -63,19 +68,57 @@ const getRoundCalculations = (
   console.log("Adjusted gross score calculated");
   console.log("Calculating score differential");
 
-  const scoreDifferential = calculateScoreDifferential(
-    adjustedGrossScore,
-    teePlayed.courseRating18,
-    teePlayed.slopeRating18
-  );
+  // Calculate score differential and determine ratings based on holes played
+  // Per USGA Rule 5.1b, 9-hole rounds use 9-hole ratings and combine with expected differential
+  let scoreDifferential: number;
+  let courseRatingUsed: number;
+  let slopeRatingUsed: number;
 
-  console.log("Score differential calculated: ", scoreDifferential);
+  if (numberOfHolesPlayed === 9) {
+    // Use 9-hole (front9) ratings per USGA Rule 5.1b
+    courseRatingUsed = teePlayed.courseRatingFront9;
+    slopeRatingUsed = teePlayed.slopeRatingFront9;
+
+    // Calculate expected differential for unplayed 9 holes
+    const expectedDifferential = calculateExpected9HoleDifferential(
+      handicapIndex,
+      teePlayed.courseRatingFront9,
+      teePlayed.slopeRatingFront9,
+      teePlayed.outPar
+    );
+
+    // Calculate 18-hole equivalent differential
+    scoreDifferential = calculate9HoleScoreDifferential(
+      adjustedPlayedScore,
+      teePlayed.courseRatingFront9,
+      teePlayed.slopeRatingFront9,
+      expectedDifferential
+    );
+
+    console.log("9-hole score differential calculated: ", scoreDifferential);
+    console.log("Expected differential for unplayed 9: ", expectedDifferential);
+  } else {
+    // 18-hole calculation uses 18-hole ratings
+    courseRatingUsed = teePlayed.courseRating18;
+    slopeRatingUsed = teePlayed.slopeRating18;
+
+    scoreDifferential = calculateScoreDifferential(
+      adjustedGrossScore,
+      courseRatingUsed,
+      slopeRatingUsed
+    );
+
+    console.log("18-hole score differential calculated: ", scoreDifferential);
+  }
 
   return {
     adjustedGrossScore,
     adjustedPlayedScore,
     scoreDifferential,
     courseHandicap,
+    courseRatingUsed,
+    slopeRatingUsed,
+    holesPlayed: numberOfHolesPlayed,
   };
 };
 
@@ -344,6 +387,9 @@ export const roundRouter = createTRPCRouter({
         adjustedPlayedScore: tempAdjustedPlayedScore,
         scoreDifferential: tempScoreDifferential,
         courseHandicap: tempCourseHandicap,
+        courseRatingUsed: tempCourseRatingUsed,
+        slopeRatingUsed: tempSlopeRatingUsed,
+        holesPlayed: tempHolesPlayed,
       } = getRoundCalculations(input, Number(userProfile[0].handicapIndex));
 
       console.log("Round calculations calculated");
@@ -371,8 +417,10 @@ export const roundRouter = createTRPCRouter({
         courseHandicap: tempCourseHandicap,
         approvalStatus,
         // Lock tee ratings at time of play - preserved even if tee data changes later
-        courseRatingUsed: teePlayed.courseRating18,
-        slopeRatingUsed: teePlayed.slopeRating18,
+        // For 9-hole rounds, uses front9 ratings per USGA Rule 5.1b
+        courseRatingUsed: tempCourseRatingUsed,
+        slopeRatingUsed: tempSlopeRatingUsed,
+        holesPlayed: tempHolesPlayed,
       };
 
       console.log("Round insert", roundInsert);

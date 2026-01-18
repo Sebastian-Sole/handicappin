@@ -233,8 +233,11 @@ export const round = pgTable(
     notes: text(),
     approvalStatus: text().default("pending").notNull(),
     // Tee ratings locked at time of play - preserved even if tee data changes
+    // For 9-hole rounds, stores front9 ratings per USGA Rule 5.1b
     courseRatingUsed: decimal("course_rating_used", { mode: "number" }).notNull(),
     slopeRatingUsed: integer("slope_rating_used").notNull(),
+    // Number of holes played (9 or 18) - determines which ratings and calculation formula to use
+    holesPlayed: integer("holes_played").notNull(),
     createdAt: timestamp()
       .default(sql`CURRENT_TIMESTAMP`)
       .notNull(),
