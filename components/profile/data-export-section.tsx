@@ -20,18 +20,30 @@ export function DataExportSection() {
     try {
       const result = await exportQuery.refetch();
 
+      if (result.error || !result.data) {
+        toast({
+          title: "Export failed",
+          description: "Failed to export your data. Please try again.",
+          variant: "destructive",
+        });
+        return;
+      }
+
       if (result.data) {
         const blob = new Blob([JSON.stringify(result.data, null, 2)], {
           type: "application/json"
         });
         const url = URL.createObjectURL(blob);
-        const anchor = document.createElement("a");
-        anchor.href = url;
-        anchor.download = `handicappin-data-export-${new Date().toISOString().split("T")[0]}.json`;
-        document.body.appendChild(anchor);
-        anchor.click();
-        document.body.removeChild(anchor);
-        URL.revokeObjectURL(url);
+        try {
+          const anchor = document.createElement("a");
+          anchor.href = url;
+          anchor.download = `handicappin-data-export-${new Date().toISOString().split("T")[0]}.json`;
+          document.body.appendChild(anchor);
+          anchor.click();
+          document.body.removeChild(anchor);
+        } finally {
+          URL.revokeObjectURL(url);
+        }
 
         toast({
           title: "Export complete",

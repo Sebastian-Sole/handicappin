@@ -18,15 +18,15 @@ interface AccountDeletionOtpEmailProps {
 }
 
 AccountDeletionOtpEmail.PreviewProps = {
-  otp: "A1B2C3",
+  otp: "123456",
   email: "user@example.com",
-  expiresInMinutes: 10,
+  expiresInMinutes: 15,
 } as AccountDeletionOtpEmailProps;
 
 export default function AccountDeletionOtpEmail({
   otp,
   email,
-  expiresInMinutes = 10,
+  expiresInMinutes = 15,
 }: AccountDeletionOtpEmailProps) {
 
   return (

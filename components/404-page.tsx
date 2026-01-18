@@ -15,15 +15,12 @@ export function Page404() {
           par.
         </p>
         <div className="mt-6">
-          {/* TODO: Add button not just link */}
           <Link
             href="/"
             prefetch={false}
           >
             <Button variant={"default"}>
-              
             Take a drop and go home
-
             </Button>
           </Link>
         </div>

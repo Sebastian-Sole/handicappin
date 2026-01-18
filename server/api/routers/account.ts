@@ -1,30 +1,19 @@
 import { z } from "zod";
 import { authedProcedure, createTRPCRouter } from "../trpc";
 import { cancelAllUserSubscriptions } from "@/lib/stripe-account";
-import { createHash, randomBytes } from "crypto";
+import { createHash } from "crypto";
 import { Resend } from "resend";
 import { AccountDeletionOtpEmail } from "@/emails/account-deletion-otp";
 import { AccountDeletedEmail } from "@/emails/account-deleted";
 import { createAdminClient } from "@/utils/supabase/admin";
 import { deletionRateLimit } from "@/lib/rate-limit";
 import { TRPCError } from "@trpc/server";
+import { OTP_EXPIRY_MINUTES, OTP_MAX_ATTEMPTS } from "@/lib/otp-constants";
+import { storeOtp, getOtp, incrementAttempts, deleteOtp } from "@/lib/otp-store";
+import { generateOTP } from "@/lib/otp-utils";
+import * as Sentry from "@sentry/nextjs";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
-
-// In-memory OTP store (for production scale, consider Redis)
-// Key: userId, Value: { hash, expiresAt, attempts }
-const deletionOtpStore = new Map<string, {
-  hash: string;
-  expiresAt: Date;
-  attempts: number;
-}>();
-
-const MAX_OTP_ATTEMPTS = 5;
-const OTP_EXPIRY_MINUTES = 10;
-
-function generateOtp(): string {
-  return randomBytes(3).toString("hex").toUpperCase().slice(0, 6);
-}
 
 function hashOtp(otp: string): string {
   return createHash("sha256").update(otp).digest("hex");
@@ -53,12 +42,12 @@ export const accountRouter = createTRPCRouter({
     }
 
     // Generate OTP
-    const otp = generateOtp();
+    const otp = generateOTP();
     const otpHash = hashOtp(otp);
     const expiresAt = new Date(Date.now() + OTP_EXPIRY_MINUTES * 60 * 1000);
 
-    // Store OTP (overwrite any existing)
-    deletionOtpStore.set(userId, {
+    // Store OTP in Redis (overwrite any existing)
+    await storeOtp(userId, {
       hash: otpHash,
       expiresAt,
       attempts: 0,
@@ -70,11 +59,23 @@ export const accountRouter = createTRPCRouter({
         from: "Handicappin' <noreply@handicappin.com>",
         to: userEmail,
         subject: "Confirm your account deletion",
-        react: AccountDeletionOtpEmail({ otp, email: userEmail }),
+        react: AccountDeletionOtpEmail({ otp, email: userEmail, expiresInMinutes: OTP_EXPIRY_MINUTES }),
       });
     } catch (error) {
-      console.error("Failed to send deletion OTP email:", error);
-      deletionOtpStore.delete(userId);
+      Sentry.captureException(error, {
+        tags: {
+          operation: "account_deletion",
+          step: "send_otp_email",
+        },
+        contexts: {
+          account: {
+            userId,
+            email: userEmail,
+          },
+        },
+        level: "error",
+      });
+      await deleteOtp(userId);
       throw new TRPCError({
         code: "INTERNAL_SERVER_ERROR",
         message: "Failed to send verification email. Please try again.",
@@ -102,8 +103,8 @@ export const accountRouter = createTRPCRouter({
         });
       }
 
-      // Get stored OTP
-      const stored = deletionOtpStore.get(userId);
+      // Get stored OTP from Redis
+      const stored = await getOtp(userId);
 
       if (!stored) {
         throw new TRPCError({
@@ -114,7 +115,7 @@ export const accountRouter = createTRPCRouter({
 
       // Check expiry
       if (new Date() > stored.expiresAt) {
-        deletionOtpStore.delete(userId);
+        await deleteOtp(userId);
         throw new TRPCError({
           code: "BAD_REQUEST",
           message: "Verification code has expired. Please request a new one.",
@@ -122,8 +123,8 @@ export const accountRouter = createTRPCRouter({
       }
 
       // Check attempts
-      if (stored.attempts >= MAX_OTP_ATTEMPTS) {
-        deletionOtpStore.delete(userId);
+      if (stored.attempts >= OTP_MAX_ATTEMPTS) {
+        await deleteOtp(userId);
         throw new TRPCError({
           code: "TOO_MANY_REQUESTS",
           message: "Too many incorrect attempts. Please request a new verification code.",
@@ -131,94 +132,265 @@ export const accountRouter = createTRPCRouter({
       }
 
       // Verify OTP
-      const inputHash = hashOtp(input.otp.toUpperCase());
+      const inputHash = hashOtp(input.otp);
       if (inputHash !== stored.hash) {
-        stored.attempts++;
+        const remainingAttempts = OTP_MAX_ATTEMPTS - stored.attempts - 1;
+        await incrementAttempts(userId);
+
+        // Warn when approaching max attempts (potential brute force or confused user)
+        if (remainingAttempts <= 1) {
+          Sentry.captureMessage("Account deletion OTP approaching max attempts", {
+            level: "warning",
+            tags: {
+              operation: "account_deletion",
+              step: "otp_verification",
+            },
+            contexts: {
+              account: {
+                userId,
+                email: userEmail,
+                remainingAttempts,
+                totalAttempts: stored.attempts + 1,
+              },
+            },
+          });
+        }
+
         throw new TRPCError({
           code: "BAD_REQUEST",
-          message: `Incorrect verification code. ${MAX_OTP_ATTEMPTS - stored.attempts} attempts remaining.`,
+          message: `Incorrect verification code. ${remainingAttempts} attempts remaining.`,
         });
       }
 
       // OTP verified - proceed with deletion
-      deletionOtpStore.delete(userId);
+      await deleteOtp(userId);
 
-      // Step 1: Cancel all Stripe subscriptions
-      const stripeResult = await cancelAllUserSubscriptions(userId);
-      if (!stripeResult.success) {
-        console.error("Failed to cancel subscriptions during account deletion:", stripeResult.error);
-        // Continue with deletion anyway - subscriptions will fail to renew
-      }
+      // Wrap entire deletion flow in a Sentry span for performance tracking
+      return await Sentry.startSpan(
+        {
+          op: "account.deletion",
+          name: "Delete User Account",
+        },
+        async (span) => {
+          span.setAttribute("userId", userId);
+          span.setAttribute("email", userEmail);
 
-      const supabaseAdmin = createAdminClient();
+          // Step 1: Cancel all Stripe subscriptions
+          const stripeResult = await Sentry.startSpan(
+            {
+              op: "stripe.cancel_subscriptions",
+              name: "Cancel Stripe Subscriptions",
+            },
+            async (stripeSpan) => {
+              const result = await cancelAllUserSubscriptions(userId);
+              stripeSpan.setAttribute("success", result.success);
+              stripeSpan.setAttribute("cancelledCount", result.cancelledCount);
+              return result;
+            }
+          );
 
-      // Step 2: Delete rounds first (BEFORE profile)
-      // This is necessary because the round table has an AFTER DELETE trigger that
-      // tries to INSERT into handicap_calculation_queue. If we delete profile first,
-      // the cascade-delete of rounds would fire the trigger, but the FK constraint
-      // would fail because profile is already gone.
-      // By deleting rounds while profile exists, the trigger can create queue entries,
-      // which will then cascade-delete when we delete the profile.
-      const { error: roundsDeleteError } = await supabaseAdmin
-        .from("round")
-        .delete()
-        .eq("userId", userId);
+          if (!stripeResult.success) {
+            // CRITICAL: Do NOT continue deletion if Stripe cancellation fails
+            // Stripe will continue charging the payment method on file indefinitely
+            console.error("Failed to cancel subscriptions:", stripeResult.error);
 
-      if (roundsDeleteError) {
-        console.error("Failed to delete rounds:", roundsDeleteError);
-        throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: "Failed to delete account. Please try again.",
-        });
-      }
+            Sentry.captureException(new Error(stripeResult.error ?? "Unknown Stripe cancellation error"), {
+              tags: {
+                operation: "account_deletion",
+                step: "stripe_cancellation",
+                financial_risk: "true",
+                deletion_blocked: "true",
+              },
+              contexts: {
+                account: {
+                  userId,
+                  email: userEmail,
+                },
+                stripe: {
+                  error: stripeResult.error,
+                  cancelledCount: stripeResult.cancelledCount,
+                },
+              },
+              level: "error",
+            });
 
-      // Step 3: Delete profile using Supabase admin client (bypasses RLS)
-      // This cascades to remaining related data (handicap_calculation_queue, etc.)
-      const { error: profileDeleteError } = await supabaseAdmin
-        .from("profile")
-        .delete()
-        .eq("id", userId);
+            throw new TRPCError({
+              code: "INTERNAL_SERVER_ERROR",
+              message: "Failed to cancel your subscription. Please contact support at support@handicappin.com before deleting your account.",
+            });
+          }
 
-      if (profileDeleteError) {
-        console.error("Failed to delete profile:", profileDeleteError);
-        throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: "Failed to delete account. Please try again.",
-        });
-      }
+          const supabaseAdmin = createAdminClient();
 
-      // Step 4: Delete auth user from Supabase
-      const { error: authDeleteError } = await supabaseAdmin.auth.admin.deleteUser(userId);
+          // Step 2: Delete rounds first (BEFORE profile)
+          // This is necessary because the round table has an AFTER DELETE trigger that
+          // tries to INSERT into handicap_calculation_queue. If we delete profile first,
+          // the cascade-delete of rounds would fire the trigger, but the FK constraint
+          // would fail because profile is already gone.
+          // By deleting rounds while profile exists, the trigger can create queue entries,
+          // which will then cascade-delete when we delete the profile.
+          const { error: roundsDeleteError } = await Sentry.startSpan(
+            {
+              op: "db.delete",
+              name: "Delete User Rounds",
+            },
+            async () => {
+              const result = await supabaseAdmin
+                .from("round")
+                .delete()
+                .eq("userId", userId);
+              return result;
+            }
+          );
 
-      if (authDeleteError) {
-        console.error("Failed to delete auth user:", authDeleteError);
-        // Profile already deleted, so we can't really recover here
-        // The auth user will be orphaned but that's acceptable
-      }
+          if (roundsDeleteError) {
+            Sentry.captureException(roundsDeleteError, {
+              tags: {
+                operation: "account_deletion",
+                step: "delete_rounds",
+              },
+              contexts: {
+                account: {
+                  userId,
+                  email: userEmail,
+                },
+                database: {
+                  table: "round",
+                  error: roundsDeleteError.message,
+                  code: roundsDeleteError.code,
+                },
+              },
+              level: "error",
+            });
+            throw new TRPCError({
+              code: "INTERNAL_SERVER_ERROR",
+              message: "Failed to delete account. Please try again.",
+            });
+          }
 
-      // Step 5: Send confirmation email
-      try {
-        await resend.emails.send({
-          from: "Handicappin' <noreply@handicappin.com>",
-          to: userEmail,
-          subject: "Your account has been deleted",
-          react: AccountDeletedEmail({ email: userEmail }),
-        });
-      } catch (error) {
-        console.error("Failed to send deletion confirmation email:", error);
-        // Don't fail the deletion for this
-      }
+          // Step 3: Delete profile using Supabase admin client (bypasses RLS)
+          // This cascades to remaining related data (handicap_calculation_queue, etc.)
+          const { error: profileDeleteError } = await Sentry.startSpan(
+            {
+              op: "db.delete",
+              name: "Delete User Profile",
+            },
+            async () => {
+              const result = await supabaseAdmin
+                .from("profile")
+                .delete()
+                .eq("id", userId);
+              return result;
+            }
+          );
 
-      return {
-        success: true,
-        message: "Your account has been permanently deleted.",
-        subscriptionsCancelled: stripeResult.cancelledCount,
-      };
+          if (profileDeleteError) {
+            Sentry.captureException(profileDeleteError, {
+              tags: {
+                operation: "account_deletion",
+                step: "delete_profile",
+              },
+              contexts: {
+                account: {
+                  userId,
+                  email: userEmail,
+                },
+                database: {
+                  table: "profile",
+                  error: profileDeleteError.message,
+                  code: profileDeleteError.code,
+                },
+              },
+              level: "error",
+            });
+            throw new TRPCError({
+              code: "INTERNAL_SERVER_ERROR",
+              message: "Failed to delete account. Please try again.",
+            });
+          }
+
+          // Step 4: Delete auth user from Supabase
+          const { error: authDeleteError } = await Sentry.startSpan(
+            {
+              op: "auth.delete",
+              name: "Delete Auth User",
+            },
+            async () => {
+              const result = await supabaseAdmin.auth.admin.deleteUser(userId);
+              return result;
+            }
+          );
+
+          if (authDeleteError) {
+            // Profile already deleted, so we can't really recover here
+            // The auth user will be orphaned but that's acceptable
+            Sentry.captureException(authDeleteError, {
+              tags: {
+                operation: "account_deletion",
+                step: "delete_auth_user",
+                orphaned_auth: "true",
+              },
+              contexts: {
+                account: {
+                  userId,
+                  email: userEmail,
+                },
+                auth: {
+                  error: authDeleteError.message,
+                  code: authDeleteError.code,
+                },
+              },
+              level: "warning",
+            });
+          }
+
+          // Step 5: Send confirmation email
+          try {
+            await Sentry.startSpan(
+              {
+                op: "email.send",
+                name: "Send Deletion Confirmation Email",
+              },
+              async () => {
+                await resend.emails.send({
+                  from: "Handicappin' <noreply@handicappin.com>",
+                  to: userEmail,
+                  subject: "Your account has been deleted",
+                  react: AccountDeletedEmail({ email: userEmail }),
+                });
+              }
+            );
+          } catch (error) {
+            Sentry.captureException(error, {
+              tags: {
+                operation: "account_deletion",
+                step: "send_confirmation_email",
+              },
+              contexts: {
+                account: {
+                  userId,
+                  email: userEmail,
+                },
+              },
+              level: "warning",
+            });
+            // Don't fail the deletion for this
+          }
+
+          span.setAttribute("subscriptionsCancelled", stripeResult.cancelledCount);
+
+          return {
+            success: true,
+            message: "Your account has been permanently deleted.",
+            subscriptionsCancelled: stripeResult.cancelledCount,
+          };
+        }
+      );
     }),
 
   // Cancel deletion request (clear OTP)
   cancelDeletion: authedProcedure.mutation(async ({ ctx }) => {
-    deletionOtpStore.delete(ctx.user.id);
+    await deleteOtp(ctx.user.id);
     return { success: true };
   }),
 });

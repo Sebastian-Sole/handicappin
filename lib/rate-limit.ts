@@ -190,3 +190,11 @@ export function getIdentifier(request: Request, userId?: string): string {
 export function isRateLimitEnabled(): boolean {
   return isEnabled;
 }
+
+/**
+ * Get the Redis client for direct operations (e.g., OTP storage)
+ * Returns null if Redis is not configured
+ */
+export function getRedisClient(): Redis | null {
+  return redis;
+}

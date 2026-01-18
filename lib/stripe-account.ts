@@ -56,19 +56,3 @@ export async function cancelAllUserSubscriptions(userId: string): Promise<{
     };
   }
 }
-
-/**
- * Delete Stripe customer record (optional - can keep for audit)
- * Note: We don't actually delete from Stripe, just remove our mapping
- */
-export async function cleanupStripeCustomer(userId: string): Promise<boolean> {
-  try {
-    await db
-      .delete(stripeCustomers)
-      .where(eq(stripeCustomers.userId, userId));
-    return true;
-  } catch (error) {
-    console.error("Failed to cleanup Stripe customer:", error);
-    return false;
-  }
-}
