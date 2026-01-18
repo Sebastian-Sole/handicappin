@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Button } from "./ui/button";
 
 export function Page404() {
   return (
@@ -17,10 +18,13 @@ export function Page404() {
           {/* TODO: Add button not just link */}
           <Link
             href="/"
-            className="inline-flex items-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow-xs transition-colors hover:bg-primary/90 focus:outline-hidden focus:ring-2 focus:ring-primary focus:ring-offset-2"
             prefetch={false}
           >
+            <Button variant={"default"}>
+              
             Take a drop and go home
+
+            </Button>
           </Link>
         </div>
       </div>

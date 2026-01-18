@@ -14,6 +14,7 @@ const CHECKOUT_LIMIT = parseInt(process.env.RATE_LIMIT_CHECKOUT_PER_MIN || '10',
 const PORTAL_LIMIT = parseInt(process.env.RATE_LIMIT_PORTAL_PER_MIN || '5', 10);
 const WEBHOOK_LIMIT = parseInt(process.env.RATE_LIMIT_WEBHOOK_PER_MIN || '100', 10);
 const CONTACT_LIMIT = parseInt(process.env.RATE_LIMIT_CONTACT_PER_MIN || '3', 10);
+const DELETION_LIMIT = parseInt(process.env.RATE_LIMIT_DELETION_PER_HOUR || '3', 10);
 
 // Initialize Redis client (only if rate limiting is enabled)
 let redis: Redis | null = null;
@@ -96,11 +97,66 @@ function createRateLimiter(limit: number, prefix: string) {
   }
 }
 
+/**
+ * Create rate limiter with sliding window algorithm (hourly)
+ * @param limit - Max requests per hour
+ * @param prefix - Redis key prefix for this limiter
+ */
+function createHourlyRateLimiter(limit: number, prefix: string) {
+  // If rate limiting disabled, return bypass limiter
+  if (!isEnabled) {
+    console.log(`[Rate Limit] Disabled for ${prefix} (RATE_LIMIT_ENABLED not set to 'true')`);
+    return {
+      limit: async () => ({
+        success: true,
+        limit,
+        remaining: limit,
+        reset: Date.now() + 3600000,
+      }),
+    };
+  }
+
+  // If Redis client not available, fail open
+  if (!redis) {
+    console.warn(`[Rate Limit] Redis not available for ${prefix} - failing open`);
+    return {
+      limit: async () => ({
+        success: true,
+        limit,
+        remaining: limit,
+        reset: Date.now() + 3600000,
+      }),
+    };
+  }
+
+  try {
+    const limiter = new Ratelimit({
+      redis: redis,
+      limiter: Ratelimit.slidingWindow(limit, '1 h'),
+      analytics: false,
+      prefix: `ratelimit:${prefix}`,
+    });
+    console.log(`[Rate Limit] Created active limiter for ${prefix} (${limit}/hour)`);
+    return limiter;
+  } catch (error) {
+    console.error(`[Rate Limit] Failed to create limiter for ${prefix}:`, error);
+    return {
+      limit: async () => ({
+        success: true,
+        limit,
+        remaining: limit,
+        reset: Date.now() + 3600000,
+      }),
+    };
+  }
+}
+
 // Create rate limiters for each endpoint
 export const checkoutRateLimit = createRateLimiter(CHECKOUT_LIMIT, 'checkout');
 export const portalRateLimit = createRateLimiter(PORTAL_LIMIT, 'portal');
 export const webhookRateLimit = createRateLimiter(WEBHOOK_LIMIT, 'webhook');
 export const contactRateLimit = createRateLimiter(CONTACT_LIMIT, 'contact');
+export const deletionRateLimit = createHourlyRateLimiter(DELETION_LIMIT, 'deletion');
 
 /**
  * Extract identifier for rate limiting

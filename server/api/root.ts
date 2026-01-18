@@ -7,6 +7,7 @@ import { teeRouter } from "./routers/tee";
 import { scorecardRouter } from "./routers/scorecard";
 import { stripeRouter } from "./routers/stripe";
 import { contactRouter } from "./routers/contact";
+import { accountRouter } from "./routers/account";
 
 
 /**
@@ -23,6 +24,7 @@ export const appRouter = createTRPCRouter({
   scorecard: scorecardRouter,
   stripe: stripeRouter,
   contact: contactRouter,
+  account: accountRouter,
 });
 
 // export type definition of API
