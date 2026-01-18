@@ -162,6 +162,13 @@
       "when": 1766650331760,
       "tag": "20251225081211_create_otp_verifications_with_rls",
       "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1768686236545,
+      "tag": "20260117214356_orange_selene",
+      "breakpoints": true
     }
   ]
 }

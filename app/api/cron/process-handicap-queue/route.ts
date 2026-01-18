@@ -5,18 +5,10 @@ import { logger } from "@/lib/logging";
 import { captureSentryError } from "@/lib/sentry-utils";
 import {
   calculateHandicapIndex,
-  calculateScoreDifferential,
-  calculateCourseHandicap,
-  calculateAdjustedGrossScore,
-  calculateAdjustedPlayedScore,
   calculateLowHandicapIndex,
   applyHandicapCaps,
-  addHcpStrokesToScores,
   type ProcessedRound,
-  holeResponseSchema,
   roundResponseSchema,
-  scoreResponseSchema,
-  teeResponseSchema,
   EXCEPTIONAL_ROUND_THRESHOLD,
   MAX_SCORE_DIFFERENTIAL,
   ESR_WINDOW_SIZE,
@@ -193,149 +185,34 @@ async function processUserHandicap(
       return;
     }
 
-    // 3. Fetch tee info
-    const teeIds = new Set(userRounds.map((r) => r.teeId));
-    const { data: teesRaw, error: teesError } = await supabase
-      .from("teeInfo")
-      .select("*")
-      .in("id", Array.from(teeIds));
-
-    if (teesError) throw teesError;
-
-    const parsedTees = teeResponseSchema.safeParse(teesRaw);
-    if (!parsedTees.success) {
-      throw new Error("Invalid tees data: " + parsedTees.error.message);
-    }
-    const tees = parsedTees.data;
-
-    // 4. Fetch holes
-    const { data: holesRaw, error: holesError } = await supabase
-      .from("hole")
-      .select("*")
-      .in("teeId", Array.from(teeIds));
-
-    if (holesError) throw holesError;
-
-    const parsedHoles = holeResponseSchema.safeParse(holesRaw);
-    if (!parsedHoles.success) {
-      throw new Error("Invalid holes data: " + parsedHoles.error.message);
-    }
-    const holes = parsedHoles.data;
-
-    // 5. Fetch scores
-    const roundIds = userRounds.map((r) => r.id);
-    const { data: scoresRaw, error: scoresError } = await supabase
-      .from("score")
-      .select("*")
-      .in("roundId", roundIds);
-
-    if (scoresError) throw scoresError;
-
-    const parsedScores = scoreResponseSchema.safeParse(scoresRaw);
-    if (!parsedScores.success) {
-      throw new Error("Invalid scores data: " + parsedScores.error.message);
-    }
-    const scores = parsedScores.data;
-
-    // Build in-memory maps
-    const teeMap = new Map(tees.map((tee) => [tee.id, tee]));
-    const roundScoresMap = new Map(
-      roundIds.map((roundId) => [
-        roundId,
-        scores.filter((s) => s.roundId === roundId),
-      ])
-    );
-    const holesMap = new Map(
-      Array.from(teeIds).map((teeId) => [
-        teeId,
-        holes.filter((h) => h.teeId === teeId),
-      ])
-    );
-
-    // Initialize processed rounds array
+    // Initialize processed rounds with STORED values (locked at submission time)
+    // Per USGA practical rules: AGS, scoreDifferential, existingHandicapIndex are locked
     const processedRounds: ProcessedRound[] = userRounds.map((r) => ({
       id: r.id,
       teeTime: new Date(r.teeTime),
-      existingHandicapIndex: MAX_SCORE_DIFFERENTIAL,
-      rawDifferential: 0,
-      esrOffset: 0,
-      finalDifferential: 0,
-      updatedHandicapIndex: 0,
-      adjustedGrossScore: 0,
-      adjustedPlayedScore: 0,
+      // Use stored values - these are locked at submission time
+      existingHandicapIndex: r.existingHandicapIndex,
+      rawDifferential: r.scoreDifferential, // Raw differential from submission
+      esrOffset: 0, // Will be calculated
+      finalDifferential: 0, // Will be calculated
+      updatedHandicapIndex: 0, // Will be calculated
+      adjustedGrossScore: r.adjustedGrossScore, // Locked at submission
+      adjustedPlayedScore: r.adjustedPlayedScore, // Locked at submission
       teeId: r.teeId,
-      courseHandicap: 0,
+      courseHandicap: r.courseHandicap, // Locked at submission
       approvalStatus: r.approvalStatus,
     }));
 
-    // Pass 1: Calculate adjusted gross scores
-    for (const pr of processedRounds) {
-      const teePlayed = teeMap.get(pr.teeId);
-      if (!teePlayed) throw new Error(`Tee not found for round ${pr.id}`);
-
-      const roundScores = roundScoresMap.get(pr.id);
-      if (!roundScores) throw new Error(`Scores not found for round ${pr.id}`);
-
-      const holes = holesMap.get(pr.teeId);
-      if (!holes) throw new Error(`Holes not found for tee ${pr.teeId}`);
-
-      const numberOfHolesPlayed = roundScores.length;
-
-      const courseHandicap = calculateCourseHandicap(
-        pr.existingHandicapIndex,
-        teePlayed,
-        numberOfHolesPlayed
-      );
-
-      const scoresWithHcpStrokes = addHcpStrokesToScores(
-        holes,
-        roundScores,
-        courseHandicap,
-        numberOfHolesPlayed
-      );
-
-      const adjustedPlayedScore = calculateAdjustedPlayedScore(
-        holes,
-        scoresWithHcpStrokes
-      );
-
-      const adjustedGrossScore = calculateAdjustedGrossScore(
-        adjustedPlayedScore,
-        courseHandicap,
-        numberOfHolesPlayed,
-        holes,
-        roundScores
-      );
-
-      pr.adjustedGrossScore = adjustedGrossScore;
-      pr.adjustedPlayedScore = adjustedPlayedScore;
-      pr.courseHandicap = courseHandicap;
-    }
-
-    // Pass 2: Calculate raw differentials and detect ESR
-    let rollingIndex = initialHandicapIndex;
+    // Pass 1: Detect ESR using STORED values
+    // ESR is detected by comparing stored existingHandicapIndex to stored scoreDifferential
     for (let i = 0; i < processedRounds.length; i++) {
       const pr = processedRounds[i];
-      pr.existingHandicapIndex = rollingIndex;
 
-      const teePlayed = teeMap.get(pr.teeId);
-      if (!teePlayed) throw new Error(`Tee not found for round ${pr.id}`);
-
-      pr.rawDifferential = calculateScoreDifferential(
-        pr.adjustedGrossScore,
-        teePlayed.courseRating18,
-        teePlayed.slopeRating18
-      );
-
-      const startIdx = Math.max(0, i - (ESR_WINDOW_SIZE - 1));
-      const relevantDifferentials = processedRounds
-        .slice(startIdx, i + 1)
-        .map((round) => round.rawDifferential);
-      pr.updatedHandicapIndex = calculateHandicapIndex(relevantDifferentials);
-
-      const difference = rollingIndex - pr.rawDifferential;
+      // ESR detection: compare handicap at time of play to the differential
+      const difference = pr.existingHandicapIndex - pr.rawDifferential;
       if (difference >= EXCEPTIONAL_ROUND_THRESHOLD) {
         const offset = difference >= 10 ? 2 : 1;
+        // Apply ESR offset to rounds in the window (most recent 20 at the time)
         const startIdx = Math.max(
           0,
           i - (Math.min(ESR_WINDOW_SIZE, i + 1) - 1)
@@ -344,25 +221,23 @@ async function processUserHandicap(
           processedRounds[j].esrOffset += offset;
         }
       }
-
-      rollingIndex = pr.updatedHandicapIndex;
     }
 
-    // Pass 3: Apply ESR offsets and calculate final differentials
+    // Pass 2: Apply ESR offsets and calculate final handicap indices
     for (let i = 0; i < processedRounds.length; i++) {
       const pr = processedRounds[i];
-      pr.existingHandicapIndex =
-        i === 0
-          ? initialHandicapIndex
-          : processedRounds[i - 1].updatedHandicapIndex;
 
+      // Final differential = raw differential - ESR offset
       pr.finalDifferential = pr.rawDifferential - pr.esrOffset;
+
+      // Calculate handicap index from final differentials
       const startIdx = Math.max(0, i - (ESR_WINDOW_SIZE - 1));
       const relevantDifferentials = processedRounds
         .slice(startIdx, i + 1)
         .map((r) => r.finalDifferential);
       const calculatedIndex = calculateHandicapIndex(relevantDifferentials);
 
+      // Apply soft/hard caps if 20+ rounds
       if (processedRounds.length >= 20) {
         const lowHandicapIndex = calculateLowHandicapIndex(processedRounds, i);
         pr.updatedHandicapIndex = applyHandicapCaps(
@@ -373,22 +248,25 @@ async function processUserHandicap(
         pr.updatedHandicapIndex = calculatedIndex;
       }
 
+      // Cap at maximum
       pr.updatedHandicapIndex = Math.min(
         pr.updatedHandicapIndex,
         MAX_SCORE_DIFFERENTIAL
       );
     }
 
-    // Perform all DB updates atomically in a single transaction via stored procedure
+    // Perform DB updates via stored procedure
+    // Only update: updatedHandicapIndex, exceptionalScoreAdjustment
+    // Do NOT update: adjustedGrossScore, courseHandicap, adjustedPlayedScore, scoreDifferential, existingHandicapIndex (locked)
     const roundUpdates = processedRounds.map((pr) => ({
       id: pr.id,
-      existingHandicapIndex: pr.existingHandicapIndex,
-      scoreDifferential: pr.finalDifferential,
-      updatedHandicapIndex: pr.updatedHandicapIndex,
-      exceptionalScoreAdjustment: pr.esrOffset,
-      adjustedGrossScore: pr.adjustedGrossScore,
-      courseHandicap: pr.courseHandicap,
-      adjustedPlayedScore: pr.adjustedPlayedScore,
+      existingHandicapIndex: pr.existingHandicapIndex, // Keep original (locked)
+      scoreDifferential: pr.rawDifferential, // Keep original raw differential (locked)
+      updatedHandicapIndex: pr.updatedHandicapIndex, // Recalculated with ESR
+      exceptionalScoreAdjustment: pr.esrOffset, // ESR offset
+      adjustedGrossScore: pr.adjustedGrossScore, // Keep original (locked)
+      courseHandicap: pr.courseHandicap, // Keep original (locked)
+      adjustedPlayedScore: pr.adjustedPlayedScore, // Keep original (locked)
     }));
 
     const { error: rpcError } = await supabase.rpc("process_handicap_updates", {

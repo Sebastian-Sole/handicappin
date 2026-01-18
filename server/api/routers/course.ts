@@ -59,7 +59,6 @@ export const courseRouter = createTRPCRouter({
           )
         )
         .limit(10);
-      console.log(results);
       return results.map((course) => ({
         ...course,
         website: course.website ?? undefined,
