@@ -8,6 +8,8 @@ import { useTheme } from "next-themes";
 import { Moon, Sun, Monitor, Check } from "lucide-react";
 import { api } from "@/trpc/react";
 import { useToast } from "@/components/ui/use-toast";
+import { DataExportSection } from "../data-export-section";
+import { AccountDeletionSection } from "../account-deletion-section";
 
 export function SettingsTab() {
   const [saveState, setSaveState] = useState<"idle" | "saving" | "saved">(
@@ -176,6 +178,12 @@ export function SettingsTab() {
           </div>
         </div>
       </div>
+
+      {/* Data Export Section */}
+      <DataExportSection />
+
+      {/* Account Deletion Section */}
+      <AccountDeletionSection />
 
       {/* Save Button */}
       <div className="flex justify-end pt-4">
