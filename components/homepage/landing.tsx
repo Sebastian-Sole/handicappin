@@ -48,23 +48,33 @@ const getCachedLandingStats = unstable_cache(
       { data: numberOfUsers, error: usersError },
       { data: numberOfRounds, error: roundsError },
       { data: numberOfCourses, error: coursesError },
-      promoDetails,
     ] = await Promise.all([
       supabase.rpc("get_public_user_count"),
       supabase.rpc("get_public_round_count"),
       supabase.rpc("get_public_course_count"),
-      getPromotionCodeDetails("EARLY100"),
     ]);
 
     return {
-      usersCount: usersError || numberOfUsers === null ? 10 : numberOfUsers || 10,
-      roundsCount: roundsError || numberOfRounds === null ? 0 : numberOfRounds || 0,
-      coursesCount: coursesError || numberOfCourses === null ? 0 : numberOfCourses || 0,
-      promoDetails,
+      usersCount:
+        usersError || numberOfUsers === null ? 10 : numberOfUsers || 10,
+      roundsCount:
+        roundsError || numberOfRounds === null ? 0 : numberOfRounds || 0,
+      coursesCount:
+        coursesError || numberOfCourses === null ? 0 : numberOfCourses || 0,
     };
   },
   ["landing-page-stats"],
   { revalidate: 86400 } // 24 hours
+);
+
+// Cache promo details with a short TTL (60 seconds)
+// This keeps the "slots remaining" count fresh while avoiding excessive Stripe API calls
+const getCachedPromoDetails = unstable_cache(
+  async () => {
+    return getPromotionCodeDetails("EARLY100");
+  },
+  ["promo-details-early100"],
+  { revalidate: 60 } // 60 seconds
 );
 
 const faqs = [
@@ -81,14 +91,16 @@ const faqs = [
   {
     question: "Is Handicappin' USGA compliant?",
     answer:
-      "Yes! Handicappin' follows all USGA handicap calculation rules, including score differentials, soft caps, hard caps, and exceptional score reductions. We are up to date with the latest USGA rules, and your handicap index is calculated the same way official handicap services do it.",
+      "Yes! Handicappin' follows all USGA handicap calculation rules, including score differentials, soft caps, hard caps, and exceptional score reductions. We are up to date with the latest USGA rules, and your handicap index is calculated the same way other handicap services do it. We promise to always be up to date with the latest USGA rules.",
   },
 ];
 
 export default async function Landing() {
-  // Use cached stats for better performance (24-hour cache)
-  const { usersCount, roundsCount, coursesCount, promoDetails } =
-    await getCachedLandingStats();
+  // Fetch cached data in parallel:
+  // - Stats: 24-hour cache (user counts, round counts, course counts)
+  // - Promo details: 60-second cache (slots remaining needs to be fresh)
+  const [{ usersCount, roundsCount, coursesCount }, promoDetails] =
+    await Promise.all([getCachedLandingStats(), getCachedPromoDetails()]);
 
   const isActiveLifetimePromo = !!promoDetails?.remaining;
   return (

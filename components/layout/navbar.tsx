@@ -192,10 +192,10 @@ export async function Navbar() {
           <ThemeButton size="icon" className="md:flex hidden" />
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Link
-                href="#"
+              <button
+                type="button"
                 className="rounded-full bg-primary p-1 hover:bg-primary/80"
-                prefetch={true}
+                aria-label="User menu"
               >
                 <Avatar className="h-8 w-8 flex items-center justify-center">
                   <UserRound
@@ -203,7 +203,7 @@ export async function Navbar() {
                     className="h-6 w-6 text-primary-foreground"
                   />
                 </Avatar>
-              </Link>
+              </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <Link href={`/profile/${userId}`}>
