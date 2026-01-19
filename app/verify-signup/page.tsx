@@ -10,6 +10,7 @@ import {
   InputOTPSeparator,
   InputOTPSlot,
 } from "@/components/ui/input-otp";
+import { REGEXP_ONLY_DIGITS } from "input-otp";
 import {
   Card,
   CardContent,
@@ -218,6 +219,7 @@ function VerifySignupContent() {
                 <InputOTP
                   id="otp-input"
                   maxLength={6}
+                  pattern={REGEXP_ONLY_DIGITS}
                   value={otp}
                   onChange={(value) => setOtp(value)}
                   disabled={status === "loading" || status === "success"}

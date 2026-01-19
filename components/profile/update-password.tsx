@@ -21,6 +21,7 @@ import {
   InputOTPGroup,
   InputOTPSlot,
 } from "../ui/input-otp";
+import { REGEXP_ONLY_DIGITS } from "input-otp";
 import { Alert, AlertDescription } from "../ui/alert";
 import { useRouter } from "next/navigation";
 
@@ -160,6 +161,7 @@ const UpdatePassword = ({ email: initialEmail }: UpdatePasswordProps) => {
                         <InputOTP
                           id="password-reset-otp-input"
                           maxLength={6}
+                          pattern={REGEXP_ONLY_DIGITS}
                           {...field}
                           disabled={loading}
                           aria-label="Enter 6-digit password reset verification code"
