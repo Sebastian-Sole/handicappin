@@ -3,8 +3,8 @@ import { api } from "@/trpc/server";
 import Hero from "./hero";
 import React from "react";
 import { getRelevantRounds } from "@/lib/handicap";
-import HandicapTrendChartDisplay from "../charts/handicap-trend-chart-display";
-import ScoreBarChartDisplay from "../charts/score-bar-chart-display";
+import HandicapTrendChartDisplay from "../charts/lazy-handicap-trend-chart-display";
+import ScoreBarChartDisplay from "../charts/lazy-score-bar-chart-display";
 import Link from "next/link";
 import { Button } from "../ui/button";
 
@@ -15,14 +15,16 @@ interface HomepageProps {
 export const HomePage = async ({ profile }: HomepageProps) => {
   const { id, handicapIndex } = profile;
 
-  const rounds = await api.round.getAllByUserId({
-    userId: id,
-    amount: 20,
-  });
-
-  const bestRound: Tables<"round"> | null = await api.round.getBestRound({
-    userId: id,
-  });
+  // Fetch rounds and bestRound in parallel (no dependency between them)
+  const [rounds, bestRound] = await Promise.all([
+    api.round.getAllByUserId({
+      userId: id,
+      amount: 20,
+    }),
+    api.round.getBestRound({
+      userId: id,
+    }),
+  ]);
 
   let previousHandicaps: {
     key: string;
@@ -87,15 +89,15 @@ export const HomePage = async ({ profile }: HomepageProps) => {
       ).toFixed(2)
     );
 
-    const course = await api.course.getCourseById({
-      courseId: bestRound.courseId,
-    });
-    bestRoundCourse = course;
-
-    const tee = await api.tee.getTeeById({
-      teeId: bestRound.teeId,
-    });
-    bestRoundTee = tee;
+    // Fetch course and tee in parallel (both depend on bestRound, but not each other)
+    [bestRoundCourse, bestRoundTee] = await Promise.all([
+      api.course.getCourseById({
+        courseId: bestRound.courseId,
+      }),
+      api.tee.getTeeById({
+        teeId: bestRound.teeId,
+      }),
+    ]);
   }
 
   return (

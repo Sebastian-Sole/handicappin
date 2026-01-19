@@ -14,7 +14,7 @@ import {
   ArrowRight,
   CheckCircle,
 } from "lucide-react";
-import { createServerComponentClient } from "@/utils/supabase/server";
+import { createClient } from "@supabase/supabase-js";
 import ThemeImage from "@/components/homepage/theme-image";
 import Link from "next/link";
 import { PricingCard } from "@/components/billing/pricing-card";
@@ -24,6 +24,58 @@ import {
 } from "@/components/billing/plan-features";
 import { getPromotionCodeDetails } from "@/lib/stripe";
 import { FAQJsonLd } from "@/components/seo/json-ld";
+import { unstable_cache } from "next/cache";
+import { env } from "@/env";
+import type { Database } from "@/types/supabase";
+
+// Create a simple Supabase client for public data that doesn't use cookies
+// This is safe for unstable_cache since it doesn't depend on dynamic request data
+function createPublicSupabaseClient() {
+  return createClient<Database>(
+    env.NEXT_PUBLIC_SUPABASE_URL,
+    env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  );
+}
+
+// Cache landing page stats for 24 hours (86400 seconds)
+// These public counts don't need to be real-time
+const getCachedLandingStats = unstable_cache(
+  async () => {
+    const supabase = createPublicSupabaseClient();
+
+    // Fetch all data in parallel for better performance
+    const [
+      { data: numberOfUsers, error: usersError },
+      { data: numberOfRounds, error: roundsError },
+      { data: numberOfCourses, error: coursesError },
+    ] = await Promise.all([
+      supabase.rpc("get_public_user_count"),
+      supabase.rpc("get_public_round_count"),
+      supabase.rpc("get_public_course_count"),
+    ]);
+
+    return {
+      usersCount:
+        usersError || numberOfUsers === null ? 10 : numberOfUsers || 10,
+      roundsCount:
+        roundsError || numberOfRounds === null ? 0 : numberOfRounds || 0,
+      coursesCount:
+        coursesError || numberOfCourses === null ? 0 : numberOfCourses || 0,
+    };
+  },
+  ["landing-page-stats"],
+  { revalidate: 86400 } // 24 hours
+);
+
+// Cache promo details with a short TTL (60 seconds)
+// This keeps the "slots remaining" count fresh while avoiding excessive Stripe API calls
+const getCachedPromoDetails = unstable_cache(
+  async () => {
+    return getPromotionCodeDetails("EARLY100");
+  },
+  ["promo-details-early100"],
+  { revalidate: 60 } // 60 seconds
+);
 
 const faqs = [
   {
@@ -39,34 +91,16 @@ const faqs = [
   {
     question: "Is Handicappin' USGA compliant?",
     answer:
-      "Yes! Handicappin' follows all USGA handicap calculation rules, including score differentials, soft caps, hard caps, and exceptional score reductions. We are up to date with the latest USGA rules, and your handicap index is calculated the same way official handicap services do it.",
+      "Yes! Handicappin' follows all USGA handicap calculation rules, including score differentials, soft caps, hard caps, and exceptional score reductions. We are up to date with the latest USGA rules, and your handicap index is calculated the same way other handicap services do it. We promise to always be up to date with the latest USGA rules.",
   },
 ];
 
 export default async function Landing() {
-  const supabase = await createServerComponentClient();
-
-  const { data: numberOfUsers, error: usersError } = await supabase.rpc(
-    "get_public_user_count"
-  );
-
-  const { data: numberOfRounds, error: roundsError } = await supabase.rpc(
-    "get_public_round_count"
-  );
-
-  const { data: numberOfCourses, error: coursesError } = await supabase.rpc(
-    "get_public_course_count"
-  );
-
-  // Fetch promo code details for launch offer
-  let promoDetails = await getPromotionCodeDetails("EARLY100");
-
-  const usersCount =
-    usersError || numberOfUsers === null ? 10 : numberOfUsers || 10;
-  const roundsCount =
-    roundsError || numberOfRounds === null ? 0 : numberOfRounds || 0;
-  const coursesCount =
-    coursesError || numberOfCourses === null ? 0 : numberOfCourses || 0;
+  // Fetch cached data in parallel:
+  // - Stats: 24-hour cache (user counts, round counts, course counts)
+  // - Promo details: 60-second cache (slots remaining needs to be fresh)
+  const [{ usersCount, roundsCount, coursesCount }, promoDetails] =
+    await Promise.all([getCachedLandingStats(), getCachedPromoDetails()]);
 
   const isActiveLifetimePromo = !!promoDetails?.remaining;
   return (
