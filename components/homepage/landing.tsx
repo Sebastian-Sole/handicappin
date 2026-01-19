@@ -14,7 +14,7 @@ import {
   ArrowRight,
   CheckCircle,
 } from "lucide-react";
-import { createServerComponentClient } from "@/utils/supabase/server";
+import { createClient } from "@supabase/supabase-js";
 import ThemeImage from "@/components/homepage/theme-image";
 import Link from "next/link";
 import { PricingCard } from "@/components/billing/pricing-card";
@@ -25,12 +25,23 @@ import {
 import { getPromotionCodeDetails } from "@/lib/stripe";
 import { FAQJsonLd } from "@/components/seo/json-ld";
 import { unstable_cache } from "next/cache";
+import { env } from "@/env";
+import type { Database } from "@/types/supabase";
+
+// Create a simple Supabase client for public data that doesn't use cookies
+// This is safe for unstable_cache since it doesn't depend on dynamic request data
+function createPublicSupabaseClient() {
+  return createClient<Database>(
+    env.NEXT_PUBLIC_SUPABASE_URL,
+    env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  );
+}
 
 // Cache landing page stats for 24 hours (86400 seconds)
 // These public counts don't need to be real-time
 const getCachedLandingStats = unstable_cache(
   async () => {
-    const supabase = await createServerComponentClient();
+    const supabase = createPublicSupabaseClient();
 
     // Fetch all data in parallel for better performance
     const [

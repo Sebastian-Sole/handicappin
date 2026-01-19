@@ -53,6 +53,27 @@ export function Login() {
 
     if (error) {
       console.log(error);
+
+      // Check if the error is due to unverified email
+      const isEmailNotConfirmed =
+        error.message.toLowerCase().includes("email not confirmed") ||
+        error.code === "email_not_confirmed";
+
+      if (isEmailNotConfirmed) {
+        toast({
+          title: "Email not verified",
+          description:
+            "Please verify your email before signing in. Redirecting to verification...",
+          variant: "default",
+        });
+        // Redirect to verification page with email pre-filled
+        router.push(
+          `/verify-signup?email=${encodeURIComponent(values.email)}`
+        );
+        setIsSubmitting(false);
+        return;
+      }
+
       toast({
         title: "Error logging in",
         description: error.message,

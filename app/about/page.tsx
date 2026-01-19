@@ -1,10 +1,12 @@
 import AboutSkeleton from "@/components/loading/about-skeleton";
 import { Badge } from "@/components/ui/badge";
 import { P } from "@/components/ui/typography";
-import { createServerComponentClient } from "@/utils/supabase/server";
+import { createClient } from "@supabase/supabase-js";
 import { Suspense } from "react";
 import type { Metadata } from "next";
 import { unstable_cache } from "next/cache";
+import { env } from "@/env";
+import type { Database } from "@/types/supabase";
 
 import {
   Logs,
@@ -17,11 +19,20 @@ import {
   Trophy,
 } from "lucide-react";
 
+// Create a simple Supabase client for public data that doesn't use cookies
+// This is safe for unstable_cache since it doesn't depend on dynamic request data
+function createPublicSupabaseClient() {
+  return createClient<Database>(
+    env.NEXT_PUBLIC_SUPABASE_URL,
+    env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  );
+}
+
 // Cache the about page stats for 24 hours (86400 seconds)
 // These numbers don't need to be real-time
 const getCachedAboutStats = unstable_cache(
   async () => {
-    const supabase = await createServerComponentClient();
+    const supabase = createPublicSupabaseClient();
 
     // Fetch both counts in parallel
     const [roundResult, courseResult] = await Promise.all([
