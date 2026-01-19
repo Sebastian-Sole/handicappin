@@ -24,6 +24,37 @@ import {
 } from "@/components/billing/plan-features";
 import { getPromotionCodeDetails } from "@/lib/stripe";
 import { FAQJsonLd } from "@/components/seo/json-ld";
+import { unstable_cache } from "next/cache";
+
+// Cache landing page stats for 24 hours (86400 seconds)
+// These public counts don't need to be real-time
+const getCachedLandingStats = unstable_cache(
+  async () => {
+    const supabase = await createServerComponentClient();
+
+    // Fetch all data in parallel for better performance
+    const [
+      { data: numberOfUsers, error: usersError },
+      { data: numberOfRounds, error: roundsError },
+      { data: numberOfCourses, error: coursesError },
+      promoDetails,
+    ] = await Promise.all([
+      supabase.rpc("get_public_user_count"),
+      supabase.rpc("get_public_round_count"),
+      supabase.rpc("get_public_course_count"),
+      getPromotionCodeDetails("EARLY100"),
+    ]);
+
+    return {
+      usersCount: usersError || numberOfUsers === null ? 10 : numberOfUsers || 10,
+      roundsCount: roundsError || numberOfRounds === null ? 0 : numberOfRounds || 0,
+      coursesCount: coursesError || numberOfCourses === null ? 0 : numberOfCourses || 0,
+      promoDetails,
+    };
+  },
+  ["landing-page-stats"],
+  { revalidate: 86400 } // 24 hours
+);
 
 const faqs = [
   {
@@ -44,29 +75,9 @@ const faqs = [
 ];
 
 export default async function Landing() {
-  const supabase = await createServerComponentClient();
-
-  const { data: numberOfUsers, error: usersError } = await supabase.rpc(
-    "get_public_user_count"
-  );
-
-  const { data: numberOfRounds, error: roundsError } = await supabase.rpc(
-    "get_public_round_count"
-  );
-
-  const { data: numberOfCourses, error: coursesError } = await supabase.rpc(
-    "get_public_course_count"
-  );
-
-  // Fetch promo code details for launch offer
-  let promoDetails = await getPromotionCodeDetails("EARLY100");
-
-  const usersCount =
-    usersError || numberOfUsers === null ? 10 : numberOfUsers || 10;
-  const roundsCount =
-    roundsError || numberOfRounds === null ? 0 : numberOfRounds || 0;
-  const coursesCount =
-    coursesError || numberOfCourses === null ? 0 : numberOfCourses || 0;
+  // Use cached stats for better performance (24-hour cache)
+  const { usersCount, roundsCount, coursesCount, promoDetails } =
+    await getCachedLandingStats();
 
   const isActiveLifetimePromo = !!promoDetails?.remaining;
   return (

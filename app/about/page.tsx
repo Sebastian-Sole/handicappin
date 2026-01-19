@@ -4,6 +4,7 @@ import { P } from "@/components/ui/typography";
 import { createServerComponentClient } from "@/utils/supabase/server";
 import { Suspense } from "react";
 import type { Metadata } from "next";
+import { unstable_cache } from "next/cache";
 
 import {
   Logs,
@@ -15,6 +16,27 @@ import {
   Gauge,
   Trophy,
 } from "lucide-react";
+
+// Cache the about page stats for 24 hours (86400 seconds)
+// These numbers don't need to be real-time
+const getCachedAboutStats = unstable_cache(
+  async () => {
+    const supabase = await createServerComponentClient();
+
+    // Fetch both counts in parallel
+    const [roundResult, courseResult] = await Promise.all([
+      supabase.from("round").select("id", { count: "exact", head: true }),
+      supabase.from("course").select("id", { count: "exact", head: true }),
+    ]);
+
+    return {
+      totalRounds: roundResult.count ?? 0,
+      totalCourses: courseResult.count ?? 0,
+    };
+  },
+  ["about-page-stats"],
+  { revalidate: 86400 } // 24 hours
+);
 
 export const metadata: Metadata = {
   title: "About Us - Why Handicappin' Exists",
@@ -29,16 +51,8 @@ export const metadata: Metadata = {
 };
 
 export default async function AboutPage() {
-  const supabase = await createServerComponentClient();
-  const { count } = await supabase
-    .from("round")
-    .select("id", { count: "exact", head: true });
-  const totalRounds = count ?? 0;
-
-  const { count: courseCount } = await supabase
-    .from("course")
-    .select("id", { count: "exact", head: true });
-  const totalCourses = courseCount ?? 0;
+  // Use cached stats for better performance
+  const { totalRounds, totalCourses } = await getCachedAboutStats();
 
   return (
     <Suspense fallback={<AboutSkeleton />}>
@@ -232,7 +246,7 @@ export default async function AboutPage() {
                 </div>
                 <div className="flex flex-col items-center space-y-2 rounded-lg border bg-card p-6 text-center w-full">
                   <div className="text-2xl font-bold text-primary">
-                    {courseCount}
+                    {totalCourses}
                   </div>
                   <div className="text-sm text-muted-foreground">
                     Courses Supported

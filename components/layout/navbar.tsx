@@ -3,7 +3,6 @@ import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Avatar } from "@/components/ui/avatar";
 import { Sheet, SheetTrigger, SheetContent } from "@/components/ui/sheet";
-import { createServerComponentClient } from "@/utils/supabase/server";
 import LogoutButton from "../auth/logoutButton";
 import { Large } from "../ui/typography";
 import {
@@ -23,12 +22,14 @@ import {
 } from "lucide-react";
 import { Separator } from "../ui/separator";
 import ThemeButton from "./themeButton";
+import type { User } from "@supabase/supabase-js";
 
-export async function Navbar() {
-  const supabase = await createServerComponentClient();
-  const { data } = await supabase.auth.getUser();
+interface NavbarProps {
+  user: User | null;
+}
 
-  const isAuthed = data?.user;
+export function Navbar({ user }: NavbarProps) {
+  const isAuthed = !!user;
 
   return (
     <header className="fixed top-0 z-50 w-full bg-background shadow-xs">
@@ -72,7 +73,7 @@ export async function Navbar() {
                 Calculators
               </Link>
               <Link
-                href={`/dashboard/${data.user.id}`}
+                href={`/dashboard/${user!.id}`}
                 className="hover:underline hover:underline-offset-4"
                 prefetch={true}
               >
@@ -100,19 +101,19 @@ export async function Navbar() {
                   </Link>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
-                  <Link href={`/profile/${data.user.id}`}>
+                  <Link href={`/profile/${user!.id}`}>
                     <DropdownMenuItem>
                       <UserIcon className="h-4 w-4 mr-2" />
                       Profile
                     </DropdownMenuItem>
                   </Link>
-                  <Link href={`/profile/${data.user.id}?tab=settings`}>
+                  <Link href={`/profile/${user!.id}?tab=settings`}>
                     <DropdownMenuItem>
                       <SettingsIcon className="h-4 w-4 mr-2" />
                       Settings
                     </DropdownMenuItem>
                   </Link>
-                  <Link href={`/dashboard/${data.user.id}`}>
+                  <Link href={`/dashboard/${user!.id}`}>
                     <DropdownMenuItem>
                       <LayoutDashboardIcon className="h-4 w-4 mr-2" />
                       Dashboard
@@ -166,7 +167,7 @@ export async function Navbar() {
                         Calculators
                       </Link>
                       <Link
-                        href={`/dashboard/${data.user.id}`}
+                        href={`/dashboard/${user!.id}`}
                         className="hover:underline hover:underline-offset-4"
                         prefetch={true}
                       >
