@@ -186,7 +186,12 @@ export async function updateSession(request: NextRequest) {
         pathname.startsWith(path)
       );
 
-      if (isPremiumRoute && !userHasPremiumAccess) {
+      // Add specific check for round calculation page
+      const isRoundCalculationRoute = /^\/rounds\/[^/]+\/calculation$/.test(pathname);
+
+      const requiresPremium = isPremiumRoute || isRoundCalculationRoute;
+
+      if (requiresPremium && !userHasPremiumAccess) {
         const url = request.nextUrl.clone();
         url.pathname = "/upgrade";
         return NextResponse.redirect(url);

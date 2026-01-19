@@ -258,7 +258,8 @@ async function processUserHandicap(
     }));
 
     // Pass 1: Calculate adjusted gross scores
-    for (const pr of processedRounds) {
+    for (let roundIndex = 0; roundIndex < processedRounds.length; roundIndex++) {
+      const pr = processedRounds[roundIndex];
       const teePlayed = teeMap.get(pr.teeId);
       if (!teePlayed) throw new Error(`Tee not found for round ${pr.id}`);
 
@@ -283,9 +284,15 @@ async function processUserHandicap(
         numberOfHolesPlayed
       );
 
+      // Determine if player has an established handicap (USGA requires 3+ rounds)
+      // For rounds 0, 1, 2 (first 3 rounds): player does not have established handicap
+      // For rounds 3+ : player has established handicap
+      const hasEstablishedHandicap = roundIndex >= 3;
+
       const adjustedPlayedScore = calculateAdjustedPlayedScore(
         holes,
-        scoresWithHcpStrokes
+        scoresWithHcpStrokes,
+        hasEstablishedHandicap
       );
 
       const adjustedGrossScore = calculateAdjustedGrossScore(

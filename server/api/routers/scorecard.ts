@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { createTRPCRouter, publicProcedure } from "../trpc";
-import { eq, inArray, asc } from "drizzle-orm";
+import { eq, inArray, asc, lt, count, and } from "drizzle-orm";
 import { db } from "@/db";
 import { course, round, teeInfo, hole, score } from "@/db/schema";
 import { scorecardSchema, ScorecardWithRound } from "@/types/scorecard";
@@ -53,7 +53,19 @@ export const scorecardRouter = createTRPCRouter({
         .from(score)
         .where(eq(score.roundId, roundData.id));
 
-      // 7. Assemble the Scorecard object
+      // 7. Count rounds played before this round's tee time (for determining established handicap)
+      const roundsBeforeResult = await db
+        .select({ count: count() })
+        .from(round)
+        .where(
+          and(
+            eq(round.userId, roundData.userId),
+            lt(round.teeTime, roundData.teeTime)
+          )
+        );
+      const roundsBeforeTeeTime = roundsBeforeResult[0]?.count ?? 0;
+
+      // 8. Assemble the Scorecard object
       const scorecard: ScorecardWithRound = {
         userId: roundData.userId,
         course: {
@@ -87,6 +99,7 @@ export const scorecardRouter = createTRPCRouter({
           teeTime: roundData.teeTime.toISOString(),
           createdAt: roundData.createdAt.toISOString(),
         },
+        roundsBeforeTeeTime,
       };
 
       // Validate with zod

@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { createTRPCRouter, authedProcedure } from "@/server/api/trpc";
 import { round, score, profile, teeInfo, course, hole } from "@/db/schema";
-import { eq, and } from "drizzle-orm";
+import { eq, and, lt, count } from "drizzle-orm";
 
 import { db } from "@/db";
 import { Scorecard, scorecardSchema } from "@/types/scorecard";
@@ -29,7 +29,8 @@ type RoundCalculations = {
 
 const getRoundCalculations = (
   scorecard: Scorecard,
-  handicapIndex: number
+  handicapIndex: number,
+  hasEstablishedHandicap: boolean = true
 ): RoundCalculations => {
   const { teePlayed, scores } = scorecard;
 
@@ -47,7 +48,8 @@ const getRoundCalculations = (
 
   const adjustedPlayedScore = calculateAdjustedPlayedScore(
     teePlayed.holes,
-    scores
+    scores,
+    hasEstablishedHandicap
   );
 
   const adjustedGrossScore = calculateAdjustedGrossScore(
@@ -350,6 +352,20 @@ export const roundRouter = createTRPCRouter({
         }, 0);
       }
 
+      // Determine if player has an established handicap (USGA requires 3+ rounds)
+      // Count rounds played BEFORE this round's tee time
+      const roundTeeTime = new Date(teeTime);
+      const roundsBeforeThis = await db
+        .select({ count: count() })
+        .from(round)
+        .where(
+          and(
+            eq(round.userId, userId),
+            lt(round.teeTime, roundTeeTime)
+          )
+        );
+      const hasEstablishedHandicap = (roundsBeforeThis[0]?.count ?? 0) >= 3;
+
       const {
         adjustedGrossScore: tempAdjustedGrossScore,
         adjustedPlayedScore: tempAdjustedPlayedScore,
@@ -358,7 +374,7 @@ export const roundRouter = createTRPCRouter({
         courseRatingUsed: tempCourseRatingUsed,
         slopeRatingUsed: tempSlopeRatingUsed,
         holesPlayed: tempHolesPlayed,
-      } = getRoundCalculations(input, Number(userProfile[0].handicapIndex));
+      } = getRoundCalculations(input, Number(userProfile[0].handicapIndex), hasEstablishedHandicap);
 
 
       if (!teeId) {

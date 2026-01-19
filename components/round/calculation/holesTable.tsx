@@ -17,7 +17,7 @@ import {
 import { useRoundCalculationContext } from "@/contexts/roundCalculationContext";
 
 const HolesTable = () => {
-  const { scorecard } = useRoundCalculationContext();
+  const { scorecard, hasEstablishedHandicap } = useRoundCalculationContext();
 
   return (
     <div className="bg-background rounded-lg border">
@@ -55,7 +55,7 @@ const HolesTable = () => {
                 <TableCell>{hole.par}</TableCell>
                 <TableCell>{scorecard.scores[hole.holeNumber - 1]?.strokes}</TableCell>
                 <TableCell>{scorecard.scores[hole.holeNumber - 1]?.hcpStrokes}</TableCell>
-                <TableCell>{calculateHoleAdjustedScore(hole, scorecard.scores[hole.holeNumber - 1])}</TableCell>
+                <TableCell>{calculateHoleAdjustedScore(hole, scorecard.scores[hole.holeNumber - 1], hasEstablishedHandicap)}</TableCell>
               </TableRow>
             );
           })}
@@ -80,7 +80,7 @@ const HolesTable = () => {
             </TableCell>
             <TableCell className="first:rounded-l-lg last:rounded-r-lg rounded-tr-none! ">
               {scorecard.teePlayed.holes?.slice(0, scorecard.scores.length).reduce((acc, hole) => {
-                return acc + calculateHoleAdjustedScore(hole, scorecard.scores[hole.holeNumber - 1]);
+                return acc + calculateHoleAdjustedScore(hole, scorecard.scores[hole.holeNumber - 1], hasEstablishedHandicap);
               }, 0)}
             </TableCell>
           </TableRow>

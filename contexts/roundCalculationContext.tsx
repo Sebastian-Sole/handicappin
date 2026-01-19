@@ -34,6 +34,7 @@ interface RoundCalculationContextProps {
   scoreDifferentialCalculation: number;
   courseHcpStat: number;
   apsStat: number;
+  hasEstablishedHandicap: boolean;
 }
 
 const RoundCalculationContext = createContext<
@@ -60,8 +61,12 @@ export const RoundCalculationProvider = ({
   const [isNineHoles, setIsNineHoles] = useState(holesPlayed === 9);
   const [slope, setSlope] = useState(isNineHoles ? scorecard.teePlayed.slopeRatingFront9 : scorecard.teePlayed.slopeRating18);
   const [rating, setRating] = useState(isNineHoles ? scorecard.teePlayed.courseRatingFront9 : scorecard.teePlayed.courseRating18);
+  // Determine if player has an established handicap (USGA requires 3+ rounds)
+  // Use the count of rounds played before this round's tee time
+  const hasEstablishedHandicap = (scorecard.roundsBeforeTeeTime ?? 0) >= 3;
+
   const [adjustedPlayedScore, setAdjustedPlayedScore] = useState(
-    calculateAdjustedPlayedScore(holes, scorecard.scores)
+    calculateAdjustedPlayedScore(holes, scorecard.scores, hasEstablishedHandicap)
   );
 
   const courseHandicapCalculation = useMemo(() => {
@@ -102,7 +107,7 @@ export const RoundCalculationProvider = ({
     holesPlayed
   );
 
-  const apsStat = calculateAdjustedPlayedScore(holes, scorecard.scores);
+  const apsStat = calculateAdjustedPlayedScore(holes, scorecard.scores, hasEstablishedHandicap);
 
   return (
     <RoundCalculationContext.Provider
@@ -127,6 +132,7 @@ export const RoundCalculationProvider = ({
         scoreDifferentialCalculation,
         courseHcpStat,
         apsStat,
+        hasEstablishedHandicap,
       }}
     >
       {children}
