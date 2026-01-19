@@ -86,6 +86,7 @@ export default function GolfScorecard({ profile, access }: GolfScorecardProps) {
   const [openCourseSelect, setOpenCourseSelect] = useState(false);
   const [holeCount, setHoleCount] = useState<number>(18);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [addCourseDialogOpen, setAddCourseDialogOpen] = useState(false);
 
   // Form setup
   const form = useForm<Scorecard>({
@@ -423,7 +424,12 @@ export default function GolfScorecard({ profile, access }: GolfScorecardProps) {
                                 <div className="flex-1 overflow-hidden">
                                   <Popover
                                     open={openCourseSelect}
-                                    onOpenChange={setOpenCourseSelect}
+                                    onOpenChange={(open) => {
+                                      setOpenCourseSelect(open);
+                                      if (!open) {
+                                        setSearchTerm("");
+                                      }
+                                    }}
                                   >
                                     <PopoverTrigger asChild>
                                       <Button
@@ -473,7 +479,8 @@ export default function GolfScorecard({ profile, access }: GolfScorecardProps) {
                                                 </CommandItem>
                                               ))}
                                             {effectiveCourses.length === 0 &&
-                                              !isLoading && (
+                                              !isLoading &&
+                                              !debouncedSearchTerm && (
                                                 <CommandEmpty>
                                                   <P>Search for a course...</P>
                                                 </CommandEmpty>
@@ -507,7 +514,20 @@ export default function GolfScorecard({ profile, access }: GolfScorecardProps) {
                                             searchTerm ===
                                               debouncedSearchTerm && (
                                               <CommandEmpty>
-                                                <P>No courses found</P>
+                                                <div className="flex flex-col items-center gap-2 py-2">
+                                                  <P>No courses found</P>
+                                                  <Button
+                                                    variant="outline"
+                                                    size="sm"
+                                                    onClick={() => {
+                                                      setOpenCourseSelect(false);
+                                                      setAddCourseDialogOpen(true);
+                                                    }}
+                                                    type="button"
+                                                  >
+                                                    Add course
+                                                  </Button>
+                                                </div>
                                               </CommandEmpty>
                                             )}
                                         </CommandList>
@@ -519,6 +539,9 @@ export default function GolfScorecard({ profile, access }: GolfScorecardProps) {
                                   <AddCourseDialog
                                     onAdd={handleAddCourse}
                                     aria-label="Add new course"
+                                    open={addCourseDialogOpen}
+                                    onOpenChange={setAddCourseDialogOpen}
+                                    initialCourseName={searchTerm}
                                   />
                                 </div>
                               </div>
