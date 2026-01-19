@@ -220,6 +220,7 @@ function VerifySignupContent() {
                   id="otp-input"
                   maxLength={6}
                   pattern={REGEXP_ONLY_DIGITS}
+                  inputMode="numeric"
                   value={otp}
                   onChange={(value) => setOtp(value)}
                   disabled={status === "loading" || status === "success"}

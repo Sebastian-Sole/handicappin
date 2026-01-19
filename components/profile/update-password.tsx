@@ -162,6 +162,7 @@ const UpdatePassword = ({ email: initialEmail }: UpdatePasswordProps) => {
                           id="password-reset-otp-input"
                           maxLength={6}
                           pattern={REGEXP_ONLY_DIGITS}
+                          inputMode="numeric"
                           {...field}
                           disabled={loading}
                           aria-label="Enter 6-digit password reset verification code"

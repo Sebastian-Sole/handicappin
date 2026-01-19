@@ -472,6 +472,7 @@ export function PersonalInformationTab({
                           id="inline-email-otp-input"
                           maxLength={6}
                           pattern={REGEXP_ONLY_DIGITS}
+                          inputMode="numeric"
                           value={otp}
                           onChange={(value) => {
                             setOtp(value);
