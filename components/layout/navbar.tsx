@@ -22,11 +22,7 @@ import {
 } from "lucide-react";
 import { Separator } from "../ui/separator";
 import ThemeButton from "./themeButton";
-import type { User } from "@supabase/supabase-js";
-
-interface NavbarProps {
-  user: User | null;
-}
+import { getUserIdFromCookies } from "@/utils/supabase/auth-cookies";
 
 function LogoBrand() {
   return (
@@ -144,13 +140,16 @@ function UnauthenticatedNavbar() {
   );
 }
 
-export function Navbar({ user }: NavbarProps) {
-  if (!user) {
+export async function Navbar() {
+  const userId = await getUserIdFromCookies();
+  console.log("[Navbar] userId from cookies:", userId);
+
+  if (!userId) {
+    console.log("[Navbar] Rendering UnauthenticatedNavbar");
     return <UnauthenticatedNavbar />;
   }
 
-  // TypeScript now knows user is non-null (User type) from this point forward
-  const userId = user.id;
+  console.log("[Navbar] Rendering AuthenticatedNavbar for user:", userId);
 
   return (
     <header className="fixed top-0 z-50 w-full bg-background shadow-xs">

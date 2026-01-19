@@ -13,7 +13,6 @@ import {
   OrganizationJsonLd,
   SoftwareApplicationJsonLd,
 } from "@/components/seo/json-ld";
-import { createServerComponentClient } from "@/utils/supabase/server";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -79,17 +78,11 @@ export const metadata: Metadata = {
   },
 };
 
-export default async function RootLayout({
+export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  // Fetch user once at layout level to avoid duplicate auth calls
-  const supabase = await createServerComponentClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
@@ -108,7 +101,7 @@ export default async function RootLayout({
               {/* BillingSync handles its own auth detection */}
               <BillingSync />
 
-              <Navbar user={user} />
+              <Navbar />
               <section className="pt-16 grow bg-background flex flex-col">{children}</section>
               <Footer />
               <Toaster />
