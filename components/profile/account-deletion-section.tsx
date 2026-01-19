@@ -2,7 +2,12 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import {
+  InputOTP,
+  InputOTPGroup,
+  InputOTPSlot,
+} from "@/components/ui/input-otp";
+import { REGEXP_ONLY_DIGITS } from "input-otp";
 import { Label } from "@/components/ui/label";
 import {
   Dialog,
@@ -182,21 +187,41 @@ export function AccountDeletionSection() {
               </DialogHeader>
               <div className="space-y-4 py-4">
                 <div className="space-y-2">
-                  <Label htmlFor="otp" className="text-destructive font-medium">
+                  <Label
+                    id="deletion-otp-label"
+                    htmlFor="deletion-otp-input"
+                    className="text-destructive font-medium"
+                  >
                     Verification Code
                   </Label>
-                  <Input
-                    id="otp"
-                    type="text"
-                    placeholder="Enter 6-digit code"
-                    value={otp}
-                    onChange={(e) => setOtp(e.target.value.toUpperCase().slice(0, 6))}
-                    className="font-mono text-lg tracking-widest text-center"
-                    maxLength={6}
-                    autoComplete="one-time-code"
-                  />
+                  <div
+                    className="flex justify-center"
+                    role="group"
+                    aria-labelledby="deletion-otp-label"
+                  >
+                    <InputOTP
+                      id="deletion-otp-input"
+                      maxLength={6}
+                      pattern={REGEXP_ONLY_DIGITS}
+                      inputMode="numeric"
+                      value={otp}
+                      onChange={(value) => setOtp(value)}
+                      disabled={isLoading}
+                      aria-label="Enter 6-digit account deletion verification code"
+                      aria-required="true"
+                    >
+                      <InputOTPGroup>
+                        <InputOTPSlot index={0} aria-label="Digit 1 of 6" />
+                        <InputOTPSlot index={1} aria-label="Digit 2 of 6" />
+                        <InputOTPSlot index={2} aria-label="Digit 3 of 6" />
+                        <InputOTPSlot index={3} aria-label="Digit 4 of 6" />
+                        <InputOTPSlot index={4} aria-label="Digit 5 of 6" />
+                        <InputOTPSlot index={5} aria-label="Digit 6 of 6" />
+                      </InputOTPGroup>
+                    </InputOTP>
+                  </div>
                   {expiresAt && (
-                    <p className="text-xs text-muted-foreground">
+                    <p className="text-xs text-muted-foreground text-center">
                       Code expires at {new Date(expiresAt).toLocaleTimeString()}
                     </p>
                   )}
