@@ -106,7 +106,15 @@ export const courseSchema = z.object({
     .max(100, "Course name must be less than 100 characters"),
   approvalStatus: z.literal("pending").or(z.literal("approved")),
   country: z.string(),
-  website: z.string().optional(),
+  website: z
+    .string()
+    .transform((val) => {
+      if (!val || val === "") return "";
+      if (!/^https?:\/\//i.test(val)) return `https://${val}`;
+      return val;
+    })
+    .pipe(z.string().url("Please enter a valid URL").or(z.literal("")))
+    .optional(),
   city: z.string(),
   tees: z
     .array(teeSchema)

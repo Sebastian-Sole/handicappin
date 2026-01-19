@@ -17,22 +17,39 @@ import {
   FormMessage,
 } from "../ui/form";
 import { toast } from "../ui/use-toast";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { TeeFormContent } from "./tee-form-content";
+
 interface AddCourseDialogProps {
   onAdd: (newCourse: Course) => void;
+  initialCourseName?: string;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }
 
-export function AddCourseDialog({ onAdd }: AddCourseDialogProps) {
-  const [open, setOpen] = useState(false);
+export function AddCourseDialog({
+  onAdd,
+  initialCourseName,
+  open: controlledOpen,
+  onOpenChange,
+}: AddCourseDialogProps) {
+  const [internalOpen, setInternalOpen] = useState(false);
+
+  const isControlled = controlledOpen !== undefined;
+  const open = isControlled ? controlledOpen : internalOpen;
+  const setOpen = isControlled
+    ? (newOpen: boolean) => onOpenChange?.(newOpen)
+    : setInternalOpen;
   const form = useForm<Course>({
     resolver: zodResolver(courseSchema),
+    mode: "onChange",
     defaultValues: {
       id: -1,
       name: "",
       country: "",
       approvalStatus: "pending",
       city: "",
+      website: "",
       tees: [
         {
           id: -1,
@@ -68,11 +85,19 @@ export function AddCourseDialog({ onAdd }: AddCourseDialogProps) {
     },
   });
 
+  // Set the initial course name when the dialog opens with a pre-filled name
+  useEffect(() => {
+    if (open && initialCourseName) {
+      form.setValue("name", initialCourseName);
+    }
+  }, [open, initialCourseName, form]);
+
   const { control, handleSubmit, watch } = form;
 
   const watchName = watch("name");
   const watchCountry = watch("country");
   const watchCity = watch("city");
+  const watchWebsite = watch("website");
   const watchTee = watch("tees.0");
 
   // Use schema validation instead of custom logic
@@ -81,11 +106,12 @@ export function AddCourseDialog({ onAdd }: AddCourseDialogProps) {
       name: watchName,
       country: watchCountry,
       city: watchCity,
+      website: watchWebsite,
       approvalStatus: "pending",
       tees: watchTee ? [watchTee] : [],
     });
     return result.success;
-  }, [watchName, watchCountry, watchCity, watchTee]);
+  }, [watchName, watchCountry, watchCity, watchWebsite, watchTee]);
 
   const onSubmit = (values: Course) => {
     // Schema validation is already handled by the form resolver
@@ -186,6 +212,25 @@ export function AddCourseDialog({ onAdd }: AddCourseDialogProps) {
                   <FormItem>
                     <FormControl>
                       <Input {...field} placeholder="Enter city" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                </div>
+              )}
+            />
+            <FormField
+              control={control}
+              name="website"
+              render={({ field }) => (
+                <div className="space-y-2 py-4">
+                  <FormLabel htmlFor="website">Website (optional)</FormLabel>
+                  <FormItem>
+                    <FormControl>
+                      <Input
+                        {...field}
+                        type="url"
+                        placeholder="https://example.com"
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
