@@ -228,7 +228,6 @@ export function AddCourseDialog({
                     <FormControl>
                       <Input
                         {...field}
-                        type="url"
                         placeholder="https://example.com"
                       />
                     </FormControl>
