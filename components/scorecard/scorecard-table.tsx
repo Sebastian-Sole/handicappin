@@ -18,7 +18,6 @@ interface ScorecardTableProps {
   holeCount: number;
   scores: Score[];
   onScoreChange: (holeIndex: number, score: number) => void;
-  onScoreError?: (message: string) => void;
   disabled: boolean;
 }
 
@@ -28,7 +27,6 @@ export function ScorecardTable({
   holeCount,
   scores,
   onScoreChange,
-  onScoreError,
   disabled,
 }: ScorecardTableProps) {
   const desktopInputRefs = useRef<(HTMLInputElement | null)[]>([]);
@@ -52,7 +50,6 @@ export function ScorecardTable({
     let parsed = parseInt(value) || 0;
     if (parsed < CONSTANTS.MIN_SCORE) {
       parsed = CONSTANTS.MIN_SCORE;
-      onScoreError?.("Score cannot be negative");
     }
 
     onScoreChange(holeIndex, parsed);

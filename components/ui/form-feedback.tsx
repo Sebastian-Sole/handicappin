@@ -1,12 +1,6 @@
 "use client";
 
-import {
-  CheckCircle,
-  AlertCircle,
-  XCircle,
-  X,
-  CircleAlert,
-} from "lucide-react";
+import { CheckCircle, AlertCircle, X, CircleAlert } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface FormFeedbackProps {

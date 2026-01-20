@@ -88,8 +88,14 @@ export function Signup({
           return;
         }
 
-        // Handle duplicate key constraint (shouldn't happen often with above check)
-        if (result.message.includes(`duplicate key value violates unique constraint "profile_email_key"`)) {
+        // Handle duplicate key constraint - check for PostgreSQL unique violation patterns
+        // Uses multiple patterns for resilience against message format changes
+        const isDuplicateKeyError =
+          result.message.includes("23505") || // PostgreSQL unique_violation error code
+          result.message.toLowerCase().includes("duplicate key") ||
+          result.message.toLowerCase().includes("unique constraint");
+
+        if (isDuplicateKeyError) {
           setFeedback({
             type: "error",
             message: "This email is already in use. Please login or reset your password.",
@@ -118,6 +124,22 @@ export function Signup({
     } catch (error: unknown) {
       console.error("Error during sign up:", error);
       const errorMessage = error instanceof Error ? error.message : "An error occurred during sign up.";
+
+      // Check for duplicate key constraint from profile creation edge function
+      const isDuplicateKeyError =
+        errorMessage.includes("23505") || // PostgreSQL unique_violation error code
+        errorMessage.toLowerCase().includes("duplicate key") ||
+        errorMessage.toLowerCase().includes("unique constraint");
+
+      if (isDuplicateKeyError) {
+        setFeedback({
+          type: "error",
+          message: "This email is already in use. Please login or reset your password.",
+        });
+        showButtonError();
+        setLoading(false);
+        return;
+      }
 
       setFeedback({
         type: "error",
