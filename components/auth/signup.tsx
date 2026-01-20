@@ -20,11 +20,7 @@ import { signUpUser } from "@/utils/auth/helpers";
 import { Input } from "../ui/input";
 import { useRouter } from "next/navigation";
 import { FormFeedback } from "../ui/form-feedback";
-
-interface FeedbackState {
-  type: "success" | "error" | "info";
-  message: string;
-}
+import type { FeedbackState } from "@/types/feedback";
 
 interface SignupProps {
   description?: string;

@@ -24,11 +24,7 @@ import { REGEXP_ONLY_DIGITS } from "input-otp";
 import { Alert, AlertDescription } from "../ui/alert";
 import { useRouter } from "next/navigation";
 import { FormFeedback } from "../ui/form-feedback";
-
-interface FeedbackState {
-  type: "success" | "error" | "info";
-  message: string;
-}
+import type { FeedbackState } from "@/types/feedback";
 
 interface UpdatePasswordProps {
   email?: string;

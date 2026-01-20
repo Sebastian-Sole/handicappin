@@ -19,11 +19,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { api } from "@/trpc/react";
 import { FormFeedback } from "@/components/ui/form-feedback";
-
-interface FeedbackState {
-  type: "success" | "error" | "info";
-  message: string;
-}
+import type { FeedbackState } from "@/types/feedback";
 
 const contactFormSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),

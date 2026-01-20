@@ -10,11 +10,7 @@ import { api } from "@/trpc/react";
 import { DataExportSection } from "../data-export-section";
 import { AccountDeletionSection } from "../account-deletion-section";
 import { FormFeedback } from "@/components/ui/form-feedback";
-
-interface FeedbackState {
-  type: "success" | "error" | "info";
-  message: string;
-}
+import type { FeedbackState } from "@/types/feedback";
 
 export function SettingsTab() {
   const [saveState, setSaveState] = useState<"idle" | "saving" | "saved">(

@@ -6,14 +6,10 @@ import { User } from "@supabase/supabase-js";
 import { api } from "@/trpc/react";
 import { FormFeedback } from "../ui/form-feedback";
 import { Check } from "lucide-react";
+import type { FeedbackState } from "@/types/feedback";
 
 interface NotifyButtonProps {
   user: User | null;
-}
-
-interface FeedbackState {
-  type: "success" | "error" | "info";
-  message: string;
 }
 
 type ButtonState = "idle" | "loading" | "subscribed" | "error";

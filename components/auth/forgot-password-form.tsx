@@ -17,11 +17,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { CardDescription } from "@/components/ui/card";
 import { FormFeedback } from "@/components/ui/form-feedback";
-
-interface FeedbackState {
-  type: "success" | "error" | "info";
-  message: string;
-}
+import type { FeedbackState } from "@/types/feedback";
 
 const forgotPasswordSchema = z.object({
   email: z.string().email("Please enter a valid email"),

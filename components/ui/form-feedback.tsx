@@ -51,6 +51,8 @@ export function FormFeedback({
   return (
     <div
       role="alert"
+      aria-live={type === "error" ? "assertive" : "polite"}
+      aria-atomic="true"
       className={cn(
         "relative w-full rounded-lg border p-4",
         containerStyles[type],

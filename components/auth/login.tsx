@@ -21,11 +21,7 @@ import { VerificationBox } from "./verification-box";
 import { useState, useEffect, useRef } from "react";
 import { getBillingFromJWT } from "@/utils/supabase/jwt";
 import { FormFeedback } from "../ui/form-feedback";
-
-interface FeedbackState {
-  type: "success" | "error" | "info";
-  message: string;
-}
+import type { FeedbackState } from "@/types/feedback";
 
 export function Login() {
   const isMounted = useMounted();

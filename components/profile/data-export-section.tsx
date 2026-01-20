@@ -5,11 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Download, Loader2, Check } from "lucide-react";
 import { api } from "@/trpc/react";
 import { FormFeedback } from "@/components/ui/form-feedback";
-
-interface FeedbackState {
-  type: "success" | "error" | "info";
-  message: string;
-}
+import type { FeedbackState } from "@/types/feedback";
 
 type ExportState = "idle" | "exporting" | "success" | "error";
 

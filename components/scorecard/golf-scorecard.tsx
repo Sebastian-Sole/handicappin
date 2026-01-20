@@ -54,15 +54,11 @@ import useMounted from "@/hooks/useMounted";
 import { Skeleton } from "../ui/skeleton";
 import { getFlagEmoji } from "@/utils/frivolities/headerGenerator";
 import { FeatureAccess } from "@/types/billing";
+import type { FeedbackState } from "@/types/feedback";
 
 interface GolfScorecardProps {
   profile: Tables<"profile">;
   access: FeatureAccess;
-}
-
-interface FeedbackState {
-  type: "success" | "error" | "info";
-  message: string;
 }
 
 type SubmitState = "idle" | "loading" | "success" | "error";

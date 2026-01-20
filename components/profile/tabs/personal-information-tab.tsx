@@ -30,6 +30,7 @@ import {
 import { REGEXP_ONLY_DIGITS } from "input-otp";
 import { verifyEmailChangeOtp } from "@/app/actions/email-change";
 import { FormFeedback } from "@/components/ui/form-feedback";
+import type { FeedbackState } from "@/types/feedback";
 
 interface PersonalInformationTabProps {
   authUser: User;
@@ -68,11 +69,6 @@ function useSuccessParam(
       return () => clearTimeout(timer);
     }
   }, [paramName, searchParams, authUserId, router, setShowSuccess, onSuccess]);
-}
-
-interface FeedbackState {
-  type: "success" | "error" | "info";
-  message: string;
 }
 
 export function PersonalInformationTab({

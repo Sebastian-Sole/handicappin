@@ -23,13 +23,9 @@ import { Trash2, Loader2, AlertTriangle } from "lucide-react";
 import { api } from "@/trpc/react";
 import { useRouter } from "next/navigation";
 import { FormFeedback } from "@/components/ui/form-feedback";
+import type { FeedbackState } from "@/types/feedback";
 
 type DeletionStep = "initial" | "verify-otp";
-
-interface FeedbackState {
-  type: "success" | "error" | "info";
-  message: string;
-}
 
 export function AccountDeletionSection() {
   const [step, setStep] = useState<DeletionStep>("initial");
