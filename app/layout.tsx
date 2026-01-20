@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { TRPCReactProvider } from "@/trpc/react";
-import { Toaster } from "@/components/ui/toaster";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Navbar } from "@/components/layout/navbar";
 import Footer from "@/components/layout/footer";
@@ -104,7 +103,6 @@ export default function RootLayout({
               <Navbar />
               <section className="pt-16 grow bg-background flex flex-col">{children}</section>
               <Footer />
-              <Toaster />
             </ThemeProvider>
           </TRPCReactProvider>
         </div>

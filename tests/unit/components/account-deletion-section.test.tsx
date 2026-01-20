@@ -52,50 +52,49 @@ describe("AccountDeletionSection - Behavior Tests", () => {
     });
   });
 
-  describe("Toast Notification Patterns", () => {
-    test("success toast has correct structure", () => {
-      const toast = vi.fn();
+  describe("Inline Feedback Patterns", () => {
+    test("success feedback has correct structure", () => {
+      const setFeedback = vi.fn();
 
-      // Pattern for success toast (OTP sent)
-      toast({
-        title: "Verification code sent",
-        description: "Check your email for the 6-digit code.",
+      // Pattern for success feedback (OTP sent)
+      setFeedback({
+        type: "info",
+        message: "Verification code sent. Check your email for the 6-digit code.",
       });
 
-      expect(toast).toHaveBeenCalledWith({
-        title: "Verification code sent",
-        description: "Check your email for the 6-digit code.",
+      expect(setFeedback).toHaveBeenCalledWith({
+        type: "info",
+        message: "Verification code sent. Check your email for the 6-digit code.",
       });
     });
 
-    test("error toast has destructive variant", () => {
-      const toast = vi.fn();
+    test("error feedback has correct type", () => {
+      const setFeedback = vi.fn();
 
-      // Pattern for error toast
-      toast({
-        title: "Error",
-        description: "Rate limit exceeded",
-        variant: "destructive",
+      // Pattern for error feedback
+      setFeedback({
+        type: "error",
+        message: "Please enter the 6-digit verification code.",
       });
 
-      expect(toast).toHaveBeenCalledWith(
+      expect(setFeedback).toHaveBeenCalledWith(
         expect.objectContaining({
-          variant: "destructive",
+          type: "error",
         })
       );
     });
 
-    test("deletion success toast has correct message", () => {
-      const toast = vi.fn();
+    test("deletion success feedback has correct message", () => {
+      const setFeedback = vi.fn();
 
-      toast({
-        title: "Account deleted",
-        description: "Your account has been permanently deleted.",
+      setFeedback({
+        type: "success",
+        message: "Account deleted. Redirecting...",
       });
 
-      expect(toast).toHaveBeenCalledWith({
-        title: "Account deleted",
-        description: "Your account has been permanently deleted.",
+      expect(setFeedback).toHaveBeenCalledWith({
+        type: "success",
+        message: "Account deleted. Redirecting...",
       });
     });
   });
@@ -164,6 +163,7 @@ describe("UI State Management", () => {
         expiresAt: null as string | null,
         isLoading: false,
         dialogOpen: false,
+        feedback: null as { type: string; message: string } | null,
       };
 
       const closedState = { ...initialState, dialogOpen: false };
@@ -172,6 +172,7 @@ describe("UI State Management", () => {
       expect(closedState.otp).toBe("");
       expect(closedState.expiresAt).toBeNull();
       expect(closedState.isLoading).toBe(false);
+      expect(closedState.feedback).toBeNull();
     });
   });
 

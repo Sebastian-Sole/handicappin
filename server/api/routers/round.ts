@@ -271,7 +271,7 @@ export const roundRouter = createTRPCRouter({
       // 3. Handle tee
       let teeId = teePlayed.id;
 
-      // First, try to find existing tee by name and course
+      // First, try to find existing tee by name, course, and gender
       const existingTee = await db
         .select()
         .from(teeInfo)
@@ -287,6 +287,20 @@ export const roundRouter = createTRPCRouter({
       if (existingTee[0]) {
         // Tee already exists, use its ID
         teeId = existingTee[0].id;
+      } else if (teePlayed.id && teePlayed.approvalStatus === "approved") {
+        // Approved tee with ID from frontend - try to find by ID directly
+        // This handles cases where the tee exists but name/gender matching failed
+        const teeById = await db
+          .select()
+          .from(teeInfo)
+          .where(eq(teeInfo.id, teePlayed.id))
+          .limit(1);
+
+        if (teeById[0]) {
+          teeId = teeById[0].id;
+        } else {
+          throw new Error(`Approved tee with ID ${teePlayed.id} not found in database`);
+        }
       } else if (teePlayed.approvalStatus === "pending") {
 
         const teeInsert: TeeInfoInsert = {

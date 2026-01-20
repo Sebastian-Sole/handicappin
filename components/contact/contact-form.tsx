@@ -17,8 +17,13 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { toast } from "@/components/ui/use-toast";
 import { api } from "@/trpc/react";
+import { FormFeedback } from "@/components/ui/form-feedback";
+
+interface FeedbackState {
+  type: "success" | "error" | "info";
+  message: string;
+}
 
 const contactFormSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
@@ -31,6 +36,7 @@ type ContactFormValues = z.infer<typeof contactFormSchema>;
 
 export function ContactForm() {
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [feedback, setFeedback] = useState<FeedbackState | null>(null);
 
   const form = useForm<ContactFormValues>({
     resolver: zodResolver(contactFormSchema),
@@ -45,33 +51,26 @@ export function ContactForm() {
   const submitMutation = api.contact.submit.useMutation({
     onSuccess: () => {
       setIsSubmitted(true);
-      toast({
-        title: "Message sent!",
-        description:
-          "We've received your message and will get back to you within 24 hours.",
-      });
+      setFeedback(null);
       form.reset();
     },
     onError: (error) => {
       if (error.data?.code === "TOO_MANY_REQUESTS") {
-        toast({
-          title: "Too many requests",
-          description:
-            "Please wait a minute before submitting another message.",
-          variant: "destructive",
+        setFeedback({
+          type: "error",
+          message: "Please wait a minute before submitting another message.",
         });
       } else {
-        toast({
-          title: "Something went wrong",
-          description:
-            error.message || "Failed to send your message. Please try again.",
-          variant: "destructive",
+        setFeedback({
+          type: "error",
+          message: error.message || "Failed to send your message. Please try again.",
         });
       }
     },
   });
 
   function onSubmit(values: ContactFormValues) {
+    setFeedback(null);
     submitMutation.mutate(values);
   }
 
@@ -95,6 +94,12 @@ export function ContactForm() {
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+        {feedback && (
+          <FormFeedback
+            type={feedback.type}
+            message={feedback.message}
+          />
+        )}
         <div className="grid gap-4 sm:grid-cols-2">
           <FormField
             control={form.control}

@@ -14,12 +14,17 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { signupSchema } from "@/types/auth";
 import { signUpUser } from "@/utils/auth/helpers";
-import { toast } from "../ui/use-toast";
 import { Input } from "../ui/input";
 import { useRouter } from "next/navigation";
+import { FormFeedback } from "../ui/form-feedback";
+
+interface FeedbackState {
+  type: "success" | "error" | "info";
+  message: string;
+}
 
 interface SignupProps {
   description?: string;
@@ -31,6 +36,9 @@ export function Signup({
   notify = false,
 }: SignupProps) {
   const [loading, setLoading] = useState(false);
+  const [feedback, setFeedback] = useState<FeedbackState | null>(null);
+  const [buttonError, setButtonError] = useState(false);
+  const buttonErrorTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const router = useRouter();
 
   const form = useForm<z.infer<typeof signupSchema>>({
@@ -42,66 +50,101 @@ export function Signup({
     },
   });
 
+  // Clean up timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (buttonErrorTimeoutRef.current) {
+        clearTimeout(buttonErrorTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  const showButtonError = () => {
+    setButtonError(true);
+    if (buttonErrorTimeoutRef.current) {
+      clearTimeout(buttonErrorTimeoutRef.current);
+    }
+    buttonErrorTimeoutRef.current = setTimeout(() => {
+      setButtonError(false);
+    }, 2000);
+  };
+
   const onSubmit = async (values: z.infer<typeof signupSchema>) => {
     setLoading(true);
+    setFeedback(null);
+    setButtonError(false);
+
     try {
       const result = await signUpUser(values);
 
-      if (result.isResend) {
-        toast({
-          title: "Verification code resent",
-          description:
-            "A new verification code has been sent to your email. Please check your inbox.",
+      if (!result.success) {
+        if (result.error === "email_in_use") {
+          setFeedback({
+            type: "error",
+            message: "This email is already in use. Please login or reset your password.",
+          });
+          showButtonError();
+          setLoading(false);
+          return;
+        }
+
+        // Handle duplicate key constraint (shouldn't happen often with above check)
+        if (result.message.includes(`duplicate key value violates unique constraint "profile_email_key"`)) {
+          setFeedback({
+            type: "error",
+            message: "This email is already in use. Please login or reset your password.",
+          });
+          showButtonError();
+          setLoading(false);
+          return;
+        }
+
+        setFeedback({
+          type: "error",
+          message: result.message,
         });
-      } else {
-        toast({
-          title: "Verification email sent",
-          description:
-            "Please check your email and enter the verification code.",
-        });
+        setLoading(false);
+        return;
       }
 
-      router.push(`/verify-signup?email=${encodeURIComponent(values.email)}`);
-    } catch (error: any) {
+      setFeedback({
+        type: "success",
+        message: "Please check your email and enter the verification code.",
+      });
+
+      setTimeout(() => {
+        router.push(`/verify-signup?email=${encodeURIComponent(values.email)}`);
+      }, 1500);
+    } catch (error: unknown) {
       console.error("Error during sign up:", error);
+      const errorMessage = error instanceof Error ? error.message : "An error occurred during sign up.";
 
-      // Handle specific error cases
-      if (error.message.includes("Email already in use. Please login.")) {
-        toast({
-          title: "Email already in use",
-          description: "This email is already verified. Please login instead.",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      if (
-        error.message.includes(
-          `duplicate key value violates unique constraint "profile_email_key"`
-        )
-      ) {
-        toast({
-          title: "Error signing up",
-          description: "Email already in use. Please login.",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      toast({
-        title: "Error signing up",
-        description: error.message || "An error occurred during sign up.",
-        variant: "destructive",
+      setFeedback({
+        type: "error",
+        message: errorMessage,
       });
     }
+
     if (notify) {
       // TODO: Implement notification logic
     }
     setLoading(false);
   };
 
+  const clearFeedback = () => {
+    setFeedback(null);
+  };
+
   return (
     <div className="mx-auto max-w-sm space-y-6 py-4 md:py-4 lg:py-4 xl:py-4 sm:min-w-[40%] min-h-full w-[90%]">
+      {feedback && (
+        <FormFeedback
+          type={feedback.type}
+          message={feedback.message}
+          className="mb-4"
+          onClose={clearFeedback}
+        />
+      )}
       <div className="space-y-2 text-center">
         <h1 className="text-3xl font-bold">Sign Up</h1>
         <p className="text-muted-foreground">{description}</p>
@@ -174,8 +217,12 @@ export function Signup({
                 )}
               ></FormField>
             </div>
-            <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? "Signing up..." : "Sign Up"}
+            <Button
+              type="submit"
+              className={buttonError ? "w-full bg-destructive hover:bg-destructive/90" : "w-full"}
+              disabled={loading}
+            >
+              {loading ? "Signing up..." : buttonError ? "Email already in use" : "Sign Up"}
             </Button>
 
             <div className="flex items-center justify-center flex-wrap">

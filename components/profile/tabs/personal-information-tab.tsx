@@ -17,7 +17,6 @@ import { useForm } from "react-hook-form";
 import { createClientComponentClient } from "@/utils/supabase/client";
 import { User } from "@supabase/supabase-js";
 import { api } from "@/trpc/react";
-import { toast } from "@/components/ui/use-toast";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Check, AlertCircle } from "lucide-react";
@@ -30,6 +29,7 @@ import {
 } from "@/components/ui/input-otp";
 import { REGEXP_ONLY_DIGITS } from "input-otp";
 import { verifyEmailChangeOtp } from "@/app/actions/email-change";
+import { FormFeedback } from "@/components/ui/form-feedback";
 
 interface PersonalInformationTabProps {
   authUser: User;
@@ -70,6 +70,11 @@ function useSuccessParam(
   }, [paramName, searchParams, authUserId, router, setShowSuccess, onSuccess]);
 }
 
+interface FeedbackState {
+  type: "success" | "error" | "info";
+  message: string;
+}
+
 export function PersonalInformationTab({
   profile,
   authUser,
@@ -78,6 +83,7 @@ export function PersonalInformationTab({
   const [saveState, setSaveState] = useState<"idle" | "saving" | "saved">(
     "idle"
   );
+  const [feedback, setFeedback] = useState<FeedbackState | null>(null);
   const [isRequestingChange, setIsRequestingChange] = useState(false);
   const [isResending, setIsResending] = useState(false);
   const [showCancelSuccess, setShowCancelSuccess] = useState(false);
@@ -94,6 +100,7 @@ export function PersonalInformationTab({
   const { mutate } = api.auth.updateProfile.useMutation({
     onSuccess: () => {
       setSaveState("saved");
+      setFeedback(null);
 
       // Reset button state after 2 seconds
       setTimeout(() => {
@@ -101,10 +108,9 @@ export function PersonalInformationTab({
       }, 2000);
     },
     onError: (error) => {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
+      setFeedback({
+        type: "error",
+        message: error.message,
       });
       setSaveState("idle");
     },
@@ -154,24 +160,24 @@ export function PersonalInformationTab({
     const emailChanged = newEmail !== currentEmail;
 
     if (!emailChanged) {
-      toast({
-        title: "No change",
-        description: "Please enter a different email address",
+      setFeedback({
+        type: "info",
+        message: "Please enter a different email address",
       });
       return;
     }
 
     // Request email change
     setIsRequestingChange(true);
+    setFeedback(null);
     try {
       const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
       const session = await supabase.auth.getSession();
 
       if (!session.data.session) {
-        toast({
-          title: "Error",
-          description: "Session expired. Please log in again.",
-          variant: "destructive",
+        setFeedback({
+          type: "error",
+          message: "Session expired. Please log in again.",
         });
         setIsRequestingChange(false);
         return;
@@ -192,11 +198,6 @@ export function PersonalInformationTab({
       const data = await response.json();
 
       if (response.ok && data.success) {
-        toast({
-          title: "Verification code sent",
-          description:
-            "Please check your new email address for the verification code. The code is valid for 15 minutes.",
-        });
         // Invalidate query to refetch actual backend state
         await utils.auth.getPendingEmailChange.invalidate();
         // Show OTP input and reset verified state
@@ -205,19 +206,18 @@ export function PersonalInformationTab({
         setOtp("");
         setIsVerified(false); // Reset verified state for new verification
         setLastResendTime(Date.now());
+        setFeedback(null);
       } else {
-        toast({
-          title: "Error",
-          description: data.error || "Failed to request email change",
-          variant: "destructive",
+        setFeedback({
+          type: "error",
+          message: data.error || "Failed to request email change",
         });
       }
     } catch (error) {
       console.error("Email change request error:", error);
-      toast({
-        title: "Error",
-        description: "An unexpected error occurred",
-        variant: "destructive",
+      setFeedback({
+        type: "error",
+        message: "An unexpected error occurred",
       });
     } finally {
       setIsRequestingChange(false);
@@ -243,11 +243,6 @@ export function PersonalInformationTab({
         setShowOtpInput(false);
         setOtp("");
         setOtpError("");
-
-        toast({
-          title: "✅ Email changed successfully",
-          description: "Your email address has been updated.",
-        });
 
         // Refresh user session to get updated email
         const { data: sessionData } = await supabase.auth.refreshSession();
@@ -296,24 +291,20 @@ export function PersonalInformationTab({
       const remainingSeconds = Math.ceil(
         (120000 - (now - lastResendTime)) / 1000
       );
-      toast({
-        title: "Please wait",
-        description: `You can resend the email in ${remainingSeconds} seconds`,
-        variant: "destructive",
-      });
+      setOtpError(`Please wait ${remainingSeconds} seconds before resending`);
       return;
     }
 
     setIsResending(true);
+    setOtpError("");
     try {
       const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
       const session = await supabase.auth.getSession();
 
       if (!session.data.session) {
-        toast({
-          title: "Error",
-          description: "Session expired. Please log in again.",
-          variant: "destructive",
+        setFeedback({
+          type: "error",
+          message: "Session expired. Please log in again.",
         });
         setIsResending(false);
         return;
@@ -334,11 +325,6 @@ export function PersonalInformationTab({
       const data = await response.json();
 
       if (response.ok && data.success) {
-        toast({
-          title: "Verification code resent",
-          description:
-            "Please check your email. The code is valid for 15 minutes.",
-        });
         setLastResendTime(Date.now());
         // Ensure OTP input is shown and reset verified state
         setShowOtpInput(true);
@@ -346,19 +332,11 @@ export function PersonalInformationTab({
         setOtpError("");
         setIsVerified(false);
       } else {
-        toast({
-          title: "Error",
-          description: data.error || "Failed to resend email",
-          variant: "destructive",
-        });
+        setOtpError(data.error || "Failed to resend email");
       }
     } catch (error) {
       console.error("Email resend error:", error);
-      toast({
-        title: "Error",
-        description: "An unexpected error occurred",
-        variant: "destructive",
-      });
+      setOtpError("An unexpected error occurred");
     } finally {
       setIsResending(false);
     }
@@ -372,6 +350,14 @@ export function PersonalInformationTab({
           Manage your account details and preferences
         </p>
       </div>
+
+      {/* Inline feedback display */}
+      {feedback && (
+        <FormFeedback
+          type={feedback.type}
+          message={feedback.message}
+        />
+      )}
 
       {/* Success alert for cancelled email change */}
       {showCancelSuccess && (
