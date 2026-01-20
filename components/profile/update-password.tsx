@@ -1,6 +1,5 @@
 "use client";
 import { useState } from "react";
-import { toast } from "../ui/use-toast";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -24,6 +23,8 @@ import {
 import { REGEXP_ONLY_DIGITS } from "input-otp";
 import { Alert, AlertDescription } from "../ui/alert";
 import { useRouter } from "next/navigation";
+import { FormFeedback } from "../ui/form-feedback";
+import type { FeedbackState } from "@/types/feedback";
 
 interface UpdatePasswordProps {
   email?: string;
@@ -32,6 +33,7 @@ interface UpdatePasswordProps {
 const UpdatePassword = ({ email: initialEmail }: UpdatePasswordProps) => {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const [feedback, setFeedback] = useState<FeedbackState | null>(null);
 
   const form = useForm<z.infer<typeof resetPasswordSchema>>({
     resolver: zodResolver(resetPasswordSchema),
@@ -45,6 +47,7 @@ const UpdatePassword = ({ email: initialEmail }: UpdatePasswordProps) => {
 
   const handleSubmit = async (values: z.infer<typeof resetPasswordSchema>) => {
     setLoading(true);
+    setFeedback(null);
 
     const URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
     try {
@@ -64,10 +67,9 @@ const UpdatePassword = ({ email: initialEmail }: UpdatePasswordProps) => {
       const data = await response.json();
 
       if (!response.ok) {
-        toast({
-          title: "Error",
-          description: data.error || response.statusText,
-          variant: "destructive",
+        setFeedback({
+          type: "error",
+          message: data.error || response.statusText,
         });
         setLoading(false);
 
@@ -76,9 +78,9 @@ const UpdatePassword = ({ email: initialEmail }: UpdatePasswordProps) => {
         return;
       }
 
-      toast({
-        title: "✅ Success",
-        description: "Password reset successfully! Redirecting to login...",
+      setFeedback({
+        type: "success",
+        message: "Password reset successfully! Redirecting to login...",
       });
 
       // Reset loading state immediately after success
@@ -88,11 +90,11 @@ const UpdatePassword = ({ email: initialEmail }: UpdatePasswordProps) => {
       setTimeout(() => {
         router.push("/login");
       }, 2000);
-    } catch (err: any) {
-      toast({
-        title: "Error",
-        description: err.message || "An unexpected error occurred",
-        variant: "destructive",
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : "An unexpected error occurred";
+      setFeedback({
+        type: "error",
+        message: errorMessage,
       });
       setLoading(false);
       form.setValue("otp", "");
@@ -107,6 +109,12 @@ const UpdatePassword = ({ email: initialEmail }: UpdatePasswordProps) => {
           Enter the verification code from your email and your new password
         </CardDescription>
       </div>
+      {feedback && (
+        <FormFeedback
+          type={feedback.type}
+          message={feedback.message}
+        />
+      )}
       <div className="space-y-4">
         <Form {...form}>
           <form

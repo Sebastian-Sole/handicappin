@@ -16,9 +16,9 @@ import {
   FormLabel,
   FormMessage,
 } from "../ui/form";
-import { toast } from "../ui/use-toast";
 import { useState, useMemo, useEffect } from "react";
 import { TeeFormContent } from "./tee-form-content";
+import { FormFeedback } from "../ui/form-feedback";
 
 interface AddCourseDialogProps {
   onAdd: (newCourse: Course) => void;
@@ -34,12 +34,14 @@ export function AddCourseDialog({
   onOpenChange,
 }: AddCourseDialogProps) {
   const [internalOpen, setInternalOpen] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const isControlled = controlledOpen !== undefined;
   const open = isControlled ? controlledOpen : internalOpen;
   const setOpen = isControlled
     ? (newOpen: boolean) => onOpenChange?.(newOpen)
     : setInternalOpen;
+
   const form = useForm<Course>({
     resolver: zodResolver(courseSchema),
     mode: "onChange",
@@ -115,18 +117,14 @@ export function AddCourseDialog({
 
   const onSubmit = (values: Course) => {
     // Schema validation is already handled by the form resolver
+    setErrorMessage(null);
     onAdd(values);
     setOpen(false);
   };
 
-  const onError = (errors: any) => {
+  const onError = (errors: unknown) => {
     console.log(errors);
-    toast({
-      title: "Failed to add course",
-      description:
-        "Please check the form for errors/missing data, or contact support",
-      variant: "destructive",
-    });
+    setErrorMessage("Please check the form for errors/missing data, or contact support");
   };
 
   return (
@@ -242,6 +240,13 @@ export function AddCourseDialog({
             title="Add New Tee"
             className="max-w-[250px] sm:max-w-[350px] md:max-w-[550px]"
           >
+            {errorMessage && (
+              <FormFeedback
+                type="error"
+                message={errorMessage}
+                className="mb-4"
+              />
+            )}
             <FormField
               control={form.control}
               name="tees.0" // <--- references first tee

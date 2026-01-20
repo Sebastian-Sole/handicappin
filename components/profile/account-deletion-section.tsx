@@ -21,8 +21,9 @@ import {
 } from "@/components/ui/dialog";
 import { Trash2, Loader2, AlertTriangle } from "lucide-react";
 import { api } from "@/trpc/react";
-import { useToast } from "@/components/ui/use-toast";
 import { useRouter } from "next/navigation";
+import { FormFeedback } from "@/components/ui/form-feedback";
+import type { FeedbackState } from "@/types/feedback";
 
 type DeletionStep = "initial" | "verify-otp";
 
@@ -32,7 +33,7 @@ export function AccountDeletionSection() {
   const [isLoading, setIsLoading] = useState(false);
   const [expiresAt, setExpiresAt] = useState<string | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
-  const { toast } = useToast();
+  const [feedback, setFeedback] = useState<FeedbackState | null>(null);
   const router = useRouter();
 
   const requestDeletionMutation = api.account.requestDeletion.useMutation({
@@ -40,35 +41,35 @@ export function AccountDeletionSection() {
       setExpiresAt(data.expiresAt);
       setStep("verify-otp");
       setIsLoading(false);
-      toast({
-        title: "Verification code sent",
-        description: "Check your email for the 6-digit code.",
+      setFeedback({
+        type: "info",
+        message: "Verification code sent. Check your email for the 6-digit code.",
       });
     },
     onError: (error) => {
       setIsLoading(false);
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
+      setFeedback({
+        type: "error",
+        message: error.message,
       });
     },
   });
 
   const confirmDeletionMutation = api.account.confirmDeletion.useMutation({
     onSuccess: () => {
-      toast({
-        title: "Account deleted",
-        description: "Your account has been permanently deleted.",
+      setFeedback({
+        type: "success",
+        message: "Account deleted. Redirecting...",
       });
-      router.push("/");
+      setTimeout(() => {
+        router.push("/");
+      }, 1500);
     },
     onError: (error) => {
       setIsLoading(false);
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
+      setFeedback({
+        type: "error",
+        message: error.message,
       });
     },
   });
@@ -77,19 +78,20 @@ export function AccountDeletionSection() {
 
   const handleRequestDeletion = () => {
     setIsLoading(true);
+    setFeedback(null);
     requestDeletionMutation.mutate();
   };
 
   const handleVerifyOtp = () => {
     if (otp.length !== 6) {
-      toast({
-        title: "Invalid code",
-        description: "Please enter the 6-digit verification code.",
-        variant: "destructive",
+      setFeedback({
+        type: "error",
+        message: "Please enter the 6-digit verification code.",
       });
       return;
     }
     setIsLoading(true);
+    setFeedback(null);
     confirmDeletionMutation.mutate({ otp });
   };
 
@@ -98,6 +100,7 @@ export function AccountDeletionSection() {
     setStep("initial");
     setOtp("");
     setExpiresAt(null);
+    setFeedback(null);
     setDialogOpen(false);
   };
 
@@ -111,6 +114,7 @@ export function AccountDeletionSection() {
       setOtp("");
       setExpiresAt(null);
       setIsLoading(false);
+      setFeedback(null);
     }
     setDialogOpen(open);
   };
@@ -135,6 +139,14 @@ export function AccountDeletionSection() {
           </Button>
         </DialogTrigger>
         <DialogContent className="sm:max-w-md">
+          {/* Inline feedback display */}
+          {feedback && (
+            <FormFeedback
+              type={feedback.type}
+              message={feedback.message}
+              className="mb-2"
+            />
+          )}
           {step === "initial" && (
             <>
               <DialogHeader>

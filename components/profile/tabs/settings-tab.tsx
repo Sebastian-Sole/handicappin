@@ -7,9 +7,10 @@ import { Switch } from "@/components/ui/switch";
 import { useTheme } from "next-themes";
 import { Moon, Sun, Monitor, Check } from "lucide-react";
 import { api } from "@/trpc/react";
-import { useToast } from "@/components/ui/use-toast";
 import { DataExportSection } from "../data-export-section";
 import { AccountDeletionSection } from "../account-deletion-section";
+import { FormFeedback } from "@/components/ui/form-feedback";
+import type { FeedbackState } from "@/types/feedback";
 
 export function SettingsTab() {
   const [saveState, setSaveState] = useState<"idle" | "saving" | "saved">(
@@ -17,7 +18,7 @@ export function SettingsTab() {
   );
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
-  const { toast } = useToast();
+  const [feedback, setFeedback] = useState<FeedbackState | null>(null);
 
   // Notification preferences - will be loaded from database
   const [featureUpdates, setFeatureUpdates] = useState(true);
@@ -32,13 +33,13 @@ export function SettingsTab() {
   const { mutate: updatePreferences } = api.auth.updateEmailPreferences.useMutation({
     onSuccess: () => {
       setSaveState("saved");
+      setFeedback(null);
       setTimeout(() => setSaveState("idle"), 2000);
     },
     onError: (error) => {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
+      setFeedback({
+        type: "error",
+        message: error.message,
       });
       setSaveState("idle");
     },
@@ -59,6 +60,7 @@ export function SettingsTab() {
   const handleSaveSettings = async () => {
     if (isLoading) return;
     setSaveState("saving");
+    setFeedback(null);
 
     updatePreferences({
       featureUpdates,
@@ -74,6 +76,14 @@ export function SettingsTab() {
           Manage your notifications and appearance preferences
         </p>
       </div>
+
+      {/* Inline feedback display */}
+      {feedback && (
+        <FormFeedback
+          type={feedback.type}
+          message={feedback.message}
+        />
+      )}
 
       {/* Notifications Section */}
       <div className="bg-card rounded-lg border p-6">

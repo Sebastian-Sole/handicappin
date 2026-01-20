@@ -3,53 +3,71 @@
 import { useState } from "react";
 import { Button } from "../ui/button";
 import { User } from "@supabase/supabase-js";
-import { useToast } from "../ui/use-toast";
 import { api } from "@/trpc/react";
+import { FormFeedback } from "../ui/form-feedback";
+import { Check } from "lucide-react";
+import type { FeedbackState } from "@/types/feedback";
 
 interface NotifyButtonProps {
   user: User | null;
 }
 
+type ButtonState = "idle" | "loading" | "subscribed" | "error";
+
 const NotifyButton = ({ user }: NotifyButtonProps) => {
-  const [isLoading, setIsLoading] = useState(false);
-  const { toast } = useToast();
+  const [buttonState, setButtonState] = useState<ButtonState>("idle");
+  const [feedback, setFeedback] = useState<FeedbackState | null>(null);
 
   // Update preferences mutation
   const { mutate: updatePreferences } = api.auth.updateEmailPreferences.useMutation({
     onSuccess: () => {
-      setIsLoading(false);
-      toast({
-        title: "Welcome to the club!",
-        description: "We will notify you when the calculators are ready!",
-      });
+      setButtonState("subscribed");
+      setFeedback(null);
     },
     onError: (error) => {
-      setIsLoading(false);
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
+      setButtonState("error");
+      setFeedback({
+        type: "error",
+        message: error.message,
       });
+      setTimeout(() => setButtonState("idle"), 2000);
     },
   });
 
   const onClick = () => {
     if (!user) return;
 
-    setIsLoading(true);
+    setButtonState("loading");
+    setFeedback(null);
     updatePreferences({
       featureUpdates: true,
     });
   };
 
   return (
-    <div className="mt-6">
+    <div className="mt-6 space-y-4">
+      {feedback && (
+        <FormFeedback
+          type={feedback.type}
+          message={feedback.message}
+        />
+      )}
       <Button
         variant={"secondary"}
         onClick={onClick}
-        disabled={isLoading}
+        disabled={buttonState === "loading" || buttonState === "subscribed"}
+        className={`transition-all duration-300 ${
+          buttonState === "subscribed" ? "bg-green-600 hover:bg-green-600 text-white" : ""
+        }`}
       >
-        {isLoading ? "Saving..." : "Notify me when they are ready"}
+        {buttonState === "loading" && "Saving..."}
+        {buttonState === "subscribed" && (
+          <>
+            <Check className="mr-2 h-4 w-4" />
+            Subscribed!
+          </>
+        )}
+        {(buttonState === "idle" || buttonState === "error") && "Notify me when they are ready"}
       </Button>
     </div>
   );

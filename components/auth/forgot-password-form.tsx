@@ -12,11 +12,12 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { toast } from "@/components/ui/use-toast";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { CardDescription } from "@/components/ui/card";
+import { FormFeedback } from "@/components/ui/form-feedback";
+import type { FeedbackState } from "@/types/feedback";
 
 const forgotPasswordSchema = z.object({
   email: z.string().email("Please enter a valid email"),
@@ -34,9 +35,11 @@ export default function ForgotPasswordForm({
   const [submitButtonText, setSubmitButtonText] = useState(
     "Send verification code"
   );
+  const [feedback, setFeedback] = useState<FeedbackState | null>(null);
 
   const handleSubmit = async (values: z.infer<typeof forgotPasswordSchema>) => {
     setLoading(true);
+    setFeedback(null);
     setSubmitButtonText("Checking email exists...");
 
     // Validate environment variables
@@ -48,10 +51,9 @@ export default function ForgotPasswordForm({
         hasUrl: !!supabaseUrl,
         hasAnonKey: !!supabaseAnonKey,
       });
-      toast({
-        title: "Configuration error",
-        description: "Unable to process your request. Please contact support.",
-        variant: "destructive",
+      setFeedback({
+        type: "error",
+        message: "Unable to process your request. Please contact support.",
       });
       setLoading(false);
       setSubmitButtonText("Send verification code");
@@ -97,10 +99,9 @@ export default function ForgotPasswordForm({
           // Use default error message
         }
 
-        toast({
-          title: "Error",
-          description: errorMessage,
-          variant: "destructive",
+        setFeedback({
+          type: "error",
+          message: errorMessage,
         });
         setLoading(false);
         setSubmitButtonText("Send verification code");
@@ -109,10 +110,9 @@ export default function ForgotPasswordForm({
 
       // Security: Always show success message even if user doesn't exist
       // This prevents account enumeration attacks
-      toast({
-        title: "✅ Check your email",
-        description:
-          "If an account exists with that email, you'll receive a verification code. Redirecting...",
+      setFeedback({
+        type: "success",
+        message: "If an account exists with that email, you'll receive a verification code. Redirecting...",
       });
 
       // Redirect to update-password page with email pre-filled
@@ -121,12 +121,10 @@ export default function ForgotPasswordForm({
           `/update-password?email=${encodeURIComponent(values.email)}`
         );
       }, 1500);
-    } catch (error) {
-      toast({
-        title: "Error",
-        description:
-          "An error occurred with the reset password email. Contact support",
-        variant: "destructive",
+    } catch {
+      setFeedback({
+        type: "error",
+        message: "An error occurred with the reset password email. Contact support",
       });
       setLoading(false);
       setSubmitButtonText("Send verification code");
@@ -149,6 +147,12 @@ export default function ForgotPasswordForm({
           password.
         </CardDescription>
       </div>
+      {feedback && (
+        <FormFeedback
+          type={feedback.type}
+          message={feedback.message}
+        />
+      )}
       <div className="space-y-4">
         <Form {...form}>
           <form

@@ -17,19 +17,45 @@ import { useRouter, useSearchParams } from "next/navigation";
 import useMounted from "@/hooks/useMounted";
 import { Skeleton } from "../ui/skeleton";
 import { Input } from "../ui/input";
-import { useToast } from "../ui/use-toast";
 import { VerificationBox } from "./verification-box";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { getBillingFromJWT } from "@/utils/supabase/jwt";
+import { FormFeedback } from "../ui/form-feedback";
+import type { FeedbackState } from "@/types/feedback";
 
 export function Login() {
   const isMounted = useMounted();
   const supabase = createClientComponentClient();
   const router = useRouter();
-  const { toast } = useToast();
   const searchParams = useSearchParams();
   const isVerified = searchParams.get("verified");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [feedback, setFeedback] = useState<FeedbackState | null>(null);
+  const [buttonError, setButtonError] = useState(false);
+  const buttonErrorTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Clean up timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (buttonErrorTimeoutRef.current) {
+        clearTimeout(buttonErrorTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  const showButtonError = () => {
+    setButtonError(true);
+    if (buttonErrorTimeoutRef.current) {
+      clearTimeout(buttonErrorTimeoutRef.current);
+    }
+    buttonErrorTimeoutRef.current = setTimeout(() => {
+      setButtonError(false);
+    }, 2000);
+  };
+
+  const clearFeedback = () => {
+    setFeedback(null);
+  };
 
   const loginSchema = z.object({
     email: z.string().min(2).max(50),
@@ -46,40 +72,54 @@ export function Login() {
 
   const onSubmit = async (values: z.infer<typeof loginSchema>) => {
     setIsSubmitting(true);
+    setFeedback(null);
+    setButtonError(false);
+
     const { error } = await supabase.auth.signInWithPassword({
       email: values.email,
       password: values.password,
     });
 
     if (error) {
-      console.log(error);
-
       // Check if the error is due to unverified email
       const isEmailNotConfirmed =
         error.message.toLowerCase().includes("email not confirmed") ||
         error.code === "email_not_confirmed";
 
       if (isEmailNotConfirmed) {
-        toast({
-          title: "Email not verified",
-          description:
-            "Please verify your email before signing in. Redirecting to verification...",
-          variant: "default",
+        setFeedback({
+          type: "info",
+          message: "Please verify your email before signing in. Redirecting to verification...",
         });
         // Redirect to verification page with email pre-filled
-        router.push(
-          `/verify-signup?email=${encodeURIComponent(values.email)}`
-        );
+        setTimeout(() => {
+          router.push(
+            `/verify-signup?email=${encodeURIComponent(values.email)}`
+          );
+        }, 1500);
         setIsSubmitting(false);
         return;
       }
 
-      toast({
-        title: "Error logging in",
-        description: error.message,
-        variant: "destructive",
+      // Check for invalid credentials
+      const isInvalidCredentials =
+        error.message.toLowerCase().includes("invalid login credentials") ||
+        error.code === "invalid_credentials";
+
+      if (isInvalidCredentials) {
+        setFeedback({
+          type: "error",
+          message: "Invalid email or password. Please try again.",
+        });
+        showButtonError();
+        setIsSubmitting(false);
+        return;
+      }
+
+      setFeedback({
+        type: "error",
+        message: error.message,
       });
-      router.push("/error");
       setIsSubmitting(false);
       return;
     }
@@ -109,6 +149,14 @@ export function Login() {
   return (
     <div className="mx-auto max-w-sm space-y-6 py-4 md:py-4 lg:py-4 xl:py-4 sm:min-w-[40%] min-h-full w-[90%]">
       {isVerified && <VerificationBox />}
+      {feedback && (
+        <FormFeedback
+          type={feedback.type}
+          message={feedback.message}
+          className="mb-4"
+          onClose={clearFeedback}
+        />
+      )}
       <div className="space-y-2 text-center">
         <h1 className="text-3xl font-bold">Welcome Back</h1>
         <p className="text-muted-foreground">
@@ -154,8 +202,12 @@ export function Login() {
                 )}
               />
             </div>
-            <Button type="submit" className="w-full" disabled={isSubmitting}>
-              {isSubmitting ? "Signing In..." : "Sign In"}
+            <Button
+              type="submit"
+              className={buttonError ? "w-full bg-destructive hover:bg-destructive/90" : "w-full"}
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? "Signing In..." : buttonError ? "Invalid credentials" : "Sign In"}
             </Button>
 
             <div className="flex items-center justify-center flex-wrap">

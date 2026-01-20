@@ -3,8 +3,16 @@ import { createServerComponentClient } from "@/utils/supabase/server";
 import { PlanSelector } from "@/components/billing/plan-selector";
 import Link from "next/link";
 import { getBillingFromJWT } from "@/utils/supabase/jwt";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { AlertCircle } from "lucide-react";
 
-export default async function UpgradePage() {
+interface UpgradePageProps {
+  searchParams: Promise<{ expired?: string }>;
+}
+
+export default async function UpgradePage({ searchParams }: UpgradePageProps) {
+  const params = await searchParams;
+  const isExpired = params.expired === "true";
   const supabase = await createServerComponentClient();
   const {
     data: { user },
@@ -38,6 +46,16 @@ export default async function UpgradePage() {
   return (
     <div className="container mx-auto px-4 py-16">
       <div className="max-w-6xl mx-auto">
+        {/* Expired subscription alert */}
+        {isExpired && (
+          <Alert className="mb-8 bg-amber-50 border-amber-200 dark:bg-amber-950 dark:border-amber-800">
+            <AlertCircle className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+            <AlertDescription className="text-amber-800 dark:text-amber-200">
+              Your premium subscription has ended. Upgrade to continue accessing premium features.
+            </AlertDescription>
+          </Alert>
+        )}
+
         <div className="text-center mb-12">
           <h1 className="text-4xl font-bold mb-4">Change Your Plan</h1>
           <p className="text-lg text-gray-600">

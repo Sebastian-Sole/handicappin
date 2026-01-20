@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import { createClientComponentClient } from "@/utils/supabase/client";
 import { useRouter, usePathname } from "next/navigation";
 import { getBillingFromJWT } from "@/utils/supabase/jwt";
-import { useToast } from "@/components/ui/use-toast";
 import { PREMIUM_PATHS } from "@/utils/billing/constants";
 import { hasPremiumAccess } from "@/utils/billing/access";
 
@@ -20,7 +19,6 @@ export function BillingSync() {
   const supabase = createClientComponentClient();
   const router = useRouter();
   const pathname = usePathname();
-  const { toast } = useToast();
   const [userId, setUserId] = useState<string | null>(null);
 
   // Detect authenticated user
@@ -138,14 +136,8 @@ export function BillingSync() {
                 if (isOnPremiumPage && !userHasPremiumAccess) {
                   console.warn("⚠️ Access revoked while on premium page - redirecting to /upgrade");
 
-                  toast({
-                    title: "Subscription Expired",
-                    description: "Your premium access has ended. Please upgrade to continue.",
-                    variant: "destructive",
-                  });
-
-                  // Redirect to upgrade page
-                  router.push("/upgrade");
+                  // Redirect to upgrade page with expired param for inline messaging
+                  router.push("/upgrade?expired=true");
                   return; // Don't call router.refresh() - we're navigating
                 }
               }
@@ -173,7 +165,7 @@ export function BillingSync() {
       console.log(`🔄 BillingSync unmounting for user ${userId}`);
       supabase.removeChannel(channel);
     };
-  }, [userId, supabase, router, pathname, toast]);
+  }, [userId, supabase, router, pathname]);
 
   // No UI - this component is invisible
   return null;

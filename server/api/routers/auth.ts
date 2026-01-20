@@ -139,72 +139,92 @@ export const authRouter = createTRPCRouter({
   exportUserData: authedProcedure.query(async ({ ctx }) => {
     const userId = ctx.user.id;
 
-    // Fetch profile data
-    const profileData = await db.select().from(profile).where(eq(profile.id, userId)).limit(1);
+    try {
+      // Fetch profile data
+      const profileData = await db.select().from(profile).where(eq(profile.id, userId)).limit(1);
 
-    // Fetch all rounds with course and tee info
-    const roundsData = await db
-      .select({
-        round: round,
-        course: course,
-        tee: teeInfo,
-      })
-      .from(round)
-      .leftJoin(course, eq(round.courseId, course.id))
-      .leftJoin(teeInfo, eq(round.teeId, teeInfo.id))
-      .where(eq(round.userId, userId));
+      // Fetch all rounds with course and tee info
+      const roundsData = await db
+        .select({
+          round: round,
+          course: course,
+          tee: teeInfo,
+        })
+        .from(round)
+        .leftJoin(course, eq(round.courseId, course.id))
+        .leftJoin(teeInfo, eq(round.teeId, teeInfo.id))
+        .where(eq(round.userId, userId));
 
-    // Fetch all scores
-    const scoresData = await db.select().from(score).where(eq(score.userId, userId));
+      // Fetch all scores
+      const scoresData = await db.select().from(score).where(eq(score.userId, userId));
 
-    // Fetch email preferences
-    const preferencesData = await db.select().from(emailPreferences).where(eq(emailPreferences.userId, userId)).limit(1);
+      // Fetch email preferences
+      const preferencesData = await db.select().from(emailPreferences).where(eq(emailPreferences.userId, userId)).limit(1);
 
-    // Construct export object
-    const exportData = {
-      exportedAt: new Date().toISOString(),
-      profile: profileData[0] ? {
-        id: profileData[0].id,
-        email: profileData[0].email,
-        name: profileData[0].name,
-        handicapIndex: profileData[0].handicapIndex,
-        initialHandicapIndex: profileData[0].initialHandicapIndex,
-        verified: profileData[0].verified,
-        createdAt: profileData[0].createdAt,
-        planSelected: profileData[0].planSelected,
-        planSelectedAt: profileData[0].planSelectedAt,
-      } : null,
-      rounds: roundsData.map(r => ({
-        id: r.round.id,
-        playedAt: r.round.teeTime,
-        courseName: r.course?.name,
-        courseCity: r.course?.city,
-        courseCountry: r.course?.country,
-        teeName: r.tee?.name,
-        teeGender: r.tee?.gender,
-        holesPlayed: r.round.holesPlayed,
-        totalStrokes: r.round.totalStrokes,
-        adjustedGrossScore: r.round.adjustedGrossScore,
-        scoreDifferential: r.round.scoreDifferential,
-        courseHandicap: r.round.courseHandicap,
-        courseRatingUsed: r.round.courseRatingUsed,
-        slopeRatingUsed: r.round.slopeRatingUsed,
-        notes: r.round.notes,
-        createdAt: r.round.createdAt,
-      })),
-      scores: scoresData.map(s => ({
-        id: s.id,
-        roundId: s.roundId,
-        holeId: s.holeId,
-        strokes: s.strokes,
-        hcpStrokes: s.hcpStrokes,
-      })),
-      emailPreferences: preferencesData[0] ? {
-        featureUpdates: preferencesData[0].featureUpdates,
-      } : null,
-      totalRounds: roundsData.length,
-    };
+      // Check if user has any meaningful data to export
+      const hasData = profileData.length > 0 || roundsData.length > 0 || scoresData.length > 0;
 
-    return exportData;
+      if (!hasData) {
+        return {
+          hasData: false as const,
+          exportedAt: new Date().toISOString(),
+        };
+      }
+
+      // Construct export object
+      const exportData = {
+        hasData: true as const,
+        exportedAt: new Date().toISOString(),
+        profile: profileData[0] ? {
+          id: profileData[0].id,
+          email: profileData[0].email,
+          name: profileData[0].name,
+          handicapIndex: profileData[0].handicapIndex,
+          initialHandicapIndex: profileData[0].initialHandicapIndex,
+          verified: profileData[0].verified,
+          createdAt: profileData[0].createdAt,
+          planSelected: profileData[0].planSelected,
+          planSelectedAt: profileData[0].planSelectedAt,
+        } : null,
+        rounds: roundsData.map(r => ({
+          id: r.round.id,
+          playedAt: r.round.teeTime,
+          courseName: r.course?.name,
+          courseCity: r.course?.city,
+          courseCountry: r.course?.country,
+          teeName: r.tee?.name,
+          teeGender: r.tee?.gender,
+          holesPlayed: r.round.holesPlayed,
+          totalStrokes: r.round.totalStrokes,
+          adjustedGrossScore: r.round.adjustedGrossScore,
+          scoreDifferential: r.round.scoreDifferential,
+          courseHandicap: r.round.courseHandicap,
+          courseRatingUsed: r.round.courseRatingUsed,
+          slopeRatingUsed: r.round.slopeRatingUsed,
+          notes: r.round.notes,
+          createdAt: r.round.createdAt,
+        })),
+        scores: scoresData.map(s => ({
+          id: s.id,
+          roundId: s.roundId,
+          holeId: s.holeId,
+          strokes: s.strokes,
+          hcpStrokes: s.hcpStrokes,
+        })),
+        emailPreferences: preferencesData[0] ? {
+          featureUpdates: preferencesData[0].featureUpdates,
+        } : null,
+        totalRounds: roundsData.length,
+      };
+
+      return exportData;
+    } catch (error) {
+      console.error("Error exporting user data:", error);
+      // Return no data response on error - user can retry
+      return {
+        hasData: false as const,
+        exportedAt: new Date().toISOString(),
+      };
+    }
   }),
 });

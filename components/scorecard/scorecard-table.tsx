@@ -8,7 +8,6 @@ import {
   TableRow,
 } from "../ui/table";
 import { Input } from "../ui/input";
-import { toast } from "../ui/use-toast";
 import { Hole, Score, Tee } from "@/types/scorecard";
 import { CONSTANTS } from "@/constants/golf";
 import { Skeleton } from "../ui/skeleton";
@@ -51,11 +50,6 @@ export function ScorecardTable({
     let parsed = parseInt(value) || 0;
     if (parsed < CONSTANTS.MIN_SCORE) {
       parsed = CONSTANTS.MIN_SCORE;
-      toast({
-        title: "Invalid score",
-        description: "Score cannot be negative",
-        variant: "destructive",
-      });
     }
 
     onScoreChange(holeIndex, parsed);

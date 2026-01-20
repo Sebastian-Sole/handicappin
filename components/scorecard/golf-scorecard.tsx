@@ -39,8 +39,8 @@ import { api } from "@/trpc/react";
 import { useDebounce } from "use-debounce";
 import { Course, Scorecard, scorecardSchema, Tee } from "@/types/scorecard";
 import { Textarea } from "../ui/textarea";
-import { toast } from "../ui/use-toast";
 import { TeeDialog } from "./tee-dialog";
+import { FormFeedback } from "../ui/form-feedback";
 import { getTeeKey, useTeeManagement } from "@/hooks/useTeeManagement";
 import { ScorecardTable } from "./scorecard-table";
 import {
@@ -54,15 +54,20 @@ import useMounted from "@/hooks/useMounted";
 import { Skeleton } from "../ui/skeleton";
 import { getFlagEmoji } from "@/utils/frivolities/headerGenerator";
 import { FeatureAccess } from "@/types/billing";
+import type { FeedbackState } from "@/types/feedback";
 
 interface GolfScorecardProps {
   profile: Tables<"profile">;
   access: FeatureAccess;
 }
 
+type SubmitState = "idle" | "loading" | "success" | "error";
+
 export default function GolfScorecard({ profile, access }: GolfScorecardProps) {
   const isMounted = useMounted();
   const router = useRouter();
+  const [feedback, setFeedback] = useState<FeedbackState | null>(null);
+  const [submitState, setSubmitState] = useState<SubmitState>("idle");
   // Use the tee management hook
   const {
     modifications,
@@ -194,6 +199,7 @@ export default function GolfScorecard({ profile, access }: GolfScorecardProps) {
 
   const handleAddCourse = (course: Course) => {
     setOpenCourseSelect(false);
+    setFeedback(null);
 
     try {
       const { course: newCourse, tee: firstTee, teeKey } = addCourse(course);
@@ -208,11 +214,9 @@ export default function GolfScorecard({ profile, access }: GolfScorecardProps) {
         courseId: undefined,
       });
     } catch (error) {
-      toast({
-        title: "Error",
-        description:
-          error instanceof Error ? error.message : "Failed to add course",
-        variant: "destructive",
+      setFeedback({
+        type: "error",
+        message: error instanceof Error ? error.message : "Failed to add course",
       });
     }
   };
@@ -275,7 +279,8 @@ export default function GolfScorecard({ profile, access }: GolfScorecardProps) {
   const submitScorecardMutation = api.round.submitScorecard.useMutation();
 
   const onSubmit = async (data: Scorecard) => {
-    setIsSubmitting(true);
+    setSubmitState("loading");
+    setFeedback(null);
     await new Promise((resolve) => setTimeout(resolve, 1000));
     try {
       // Create a new data object with only the played holes' scores
@@ -309,33 +314,28 @@ export default function GolfScorecard({ profile, access }: GolfScorecardProps) {
       const anyZeros = first9Scores.some((score) => score.strokes === 0);
 
       if (anyZeros) {
-        toast({
-          title: "Invalid Scores",
-          description:
-            "Please enter scores for the first 9 holes, or select 18 holes",
-          variant: "destructive",
+        setFeedback({
+          type: "error",
+          message: "Please enter scores for the first 9 holes, or select 18 holes",
         });
-        setIsSubmitting(false);
+        setSubmitState("idle");
         return;
       }
 
       console.log("submissionData: ", submissionData);
       await submitScorecardMutation.mutateAsync(submissionData);
 
-      // Show success message
-      toast({
-        title: "Success",
-        description: "Your scorecard has been submitted successfully",
-      });
+      // Show success state on button
+      setSubmitState("success");
 
-      // Small delay to ensure tRPC response is fully processed
-      await new Promise((resolve) => setTimeout(resolve, 100));
+      // Small delay to show success state, then redirect
+      await new Promise((resolve) => setTimeout(resolve, 1500));
 
       // Redirect to home page
       router.push(`/`);
     } catch (error) {
       console.error("Error submitting scorecard:", error);
-      setIsSubmitting(false);
+      setSubmitState("error");
 
       // Better error handling - check for specific error types
       let errorMessage = "Failed to submit scorecard";
@@ -354,23 +354,24 @@ export default function GolfScorecard({ profile, access }: GolfScorecardProps) {
         errorMessage = error.message;
       }
 
-      toast({
-        title: "Error",
-        description: errorMessage,
-        variant: "destructive",
+      setFeedback({
+        type: "error",
+        message: errorMessage,
       });
+
+      // Reset to idle after showing error
+      setTimeout(() => setSubmitState("idle"), 2000);
 
       // DO NOT redirect on error - let user see the error and try again
     }
   };
 
-  const onError = (errors: any) => {
+  const onError = (errors: unknown) => {
     console.log(errors);
     console.error("Form validation errors:", errors);
-    toast({
-      title: "Validation Error",
-      description: "Please check all required fields are filled correctly",
-      variant: "destructive",
+    setFeedback({
+      type: "error",
+      message: "Please check all required fields are filled correctly",
     });
   };
 
@@ -414,7 +415,7 @@ export default function GolfScorecard({ profile, access }: GolfScorecardProps) {
                     <FormField
                       control={form.control}
                       name="course.name"
-                      disabled={isSubmitting}
+                      disabled={submitState === "loading" || submitState === "success"}
                       render={() => (
                         <FormItem>
                           <FormControl>
@@ -554,7 +555,7 @@ export default function GolfScorecard({ profile, access }: GolfScorecardProps) {
                     <FormField
                       control={form.control}
                       name="course.tees"
-                      disabled={isSubmitting}
+                      disabled={submitState === "loading" || submitState === "success"}
                       render={() => (
                         <FormItem>
                           <FormControl>
@@ -685,7 +686,7 @@ export default function GolfScorecard({ profile, access }: GolfScorecardProps) {
                       <FormField
                         control={form.control}
                         name="teeTime"
-                        disabled={isSubmitting}
+                        disabled={submitState === "loading" || submitState === "success"}
                         render={({ field }) => (
                           <FormItem className="flex flex-col">
                             <FormControl>
@@ -736,7 +737,7 @@ export default function GolfScorecard({ profile, access }: GolfScorecardProps) {
                         <FormField
                           control={form.control}
                           name="notes"
-                          disabled={isSubmitting}
+                          disabled={submitState === "loading" || submitState === "success"}
                           render={({ field }) => (
                             <FormItem>
                               <FormControl>
@@ -767,7 +768,7 @@ export default function GolfScorecard({ profile, access }: GolfScorecardProps) {
                     holeCount={holeCount}
                     scores={form.watch("scores")}
                     onScoreChange={handleScoreChange}
-                    disabled={isSubmitting}
+                    disabled={submitState === "loading" || submitState === "success"}
                   />
                 </div>
               )}
@@ -778,11 +779,29 @@ export default function GolfScorecard({ profile, access }: GolfScorecardProps) {
                 </div>
               </div>
             )}
+            {/* Feedback display */}
+            {feedback && (
+              <div className="mt-4">
+                <FormFeedback
+                  type={feedback.type}
+                  message={feedback.message}
+                />
+              </div>
+            )}
             {/* Submit button */}
             {selectedTeeKey && (
               <div className="mt-4 justify-end flex">
-                <Button type="submit" disabled={isSubmitting}>
-                  {isSubmitting ? "Submitting..." : "Submit Scorecard"}
+                <Button
+                  type="submit"
+                  disabled={submitState === "loading" || submitState === "success"}
+                  className={`transition-all duration-300 ${
+                    submitState === "success" ? "bg-green-600 hover:bg-green-600" : ""
+                  }`}
+                >
+                  {submitState === "loading" && "Submitting..."}
+                  {submitState === "success" && "✓ Submitted!"}
+                  {submitState === "error" && "Submit Scorecard"}
+                  {submitState === "idle" && "Submit Scorecard"}
                 </Button>
               </div>
             )}
