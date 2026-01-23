@@ -109,7 +109,7 @@ const AdjustedScoresStep = () => {
             Adjusted Played Score = Sum of all adjusted hole scores
           </Muted>
           <div className="flex items-center gap-2 mt-2">
-            <P className="font-medium">Adjusted Played Score =</P>
+            <span className="font-medium">Adjusted Played Score =</span>
             <span className="text-xl font-bold text-primary">{apsStat}</span>
           </div>
         </div>

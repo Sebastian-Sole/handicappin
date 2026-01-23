@@ -136,11 +136,11 @@ const ScoreDifferentialStep = () => {
             Slope Rating
           </Muted>
           <div className="flex flex-wrap items-center gap-2">
-            <P className="font-medium">Score Differential =</P>
+            <span className="font-medium">Score Differential =</span>
             <Muted>
               ({adjustedGrossScoreCalculation} − {rating}) × 113 ÷ {slope}
             </Muted>
-            <P className="font-medium">=</P>
+            <span className="font-medium">=</span>
             <span className="text-xl font-bold text-primary">
               {Math.round(scoreDifferentialCalculation * 10) / 10}
             </span>

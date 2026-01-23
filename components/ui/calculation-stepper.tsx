@@ -22,14 +22,15 @@ export function CalculationStepper({
 }: CalculationStepperProps) {
   return (
     <nav aria-label="Calculation steps" className={cn("w-full", className)}>
-      <ol className="flex items-center justify-between">
+      <ol className="flex items-center">
         {steps.map((step, index) => {
           const isCompleted = currentStep !== undefined && step.id < currentStep;
           const isCurrent = currentStep === step.id;
+          const isLast = index === steps.length - 1;
 
           return (
-            <li key={step.id} className="flex-1 flex items-center">
-              <div className="flex flex-col items-center flex-1">
+            <li key={step.id} className={cn("flex items-center", isLast ? "flex-none" : "flex-1")}>
+              <div className="flex flex-col items-center">
                 <div
                   className={cn(
                     "w-10 h-10 rounded-full flex items-center justify-center text-sm font-semibold transition-colors duration-200",
@@ -49,7 +50,7 @@ export function CalculationStepper({
                   {step.title}
                 </span>
               </div>
-              {index < steps.length - 1 && (
+              {!isLast && (
                 <div
                   className={cn(
                     "flex-1 h-0.5 mx-2 transition-colors duration-200",

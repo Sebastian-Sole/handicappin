@@ -10,6 +10,7 @@ import CourseHandicapStep from "./round/calculation/steps/course-handicap-step";
 import AdjustedScoresStep from "./round/calculation/steps/adjusted-scores-step";
 import ScoreDifferentialStep from "./round/calculation/steps/score-differential-step";
 import HandicapImpactStep from "./round/calculation/steps/handicap-impact-step";
+import ScoreDistributionSidebar from "./round/calculation/score-distribution-sidebar";
 import {
   RoundCalculationProvider,
   useRoundCalculationContext,
@@ -92,7 +93,14 @@ const RoundCalculationContent = () => {
         <Muted>
           Your scores for each hole, with handicap strokes and adjusted scores.
         </Muted>
-        <HolesTable />
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+          <div className="lg:col-span-2">
+            <HolesTable />
+          </div>
+          <div className="lg:col-span-1">
+            <ScoreDistributionSidebar />
+          </div>
+        </div>
       </section>
 
       <Separator />

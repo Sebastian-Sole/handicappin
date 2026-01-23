@@ -175,12 +175,12 @@ const CourseHandicapStep = () => {
               : "Course Handicap (18 holes) = Handicap Index × (Slope ÷ 113) + (Course Rating − Par)"}
           </Muted>
           <div className="flex flex-wrap items-center gap-2">
-            <P className="font-medium">Course Handicap =</P>
+            <span className="font-medium">Course Handicap =</span>
             <Muted>
               {isNineHoles ? `(${handicapIndex} ÷ 2)` : handicapIndex} × ({slope}{" "}
               ÷ 113) + ({rating} − {par})
             </Muted>
-            <P className="font-medium">=</P>
+            <span className="font-medium">=</span>
             <span className="text-xl font-bold text-primary">
               {Math.round(courseHandicapCalculation)}
             </span>
