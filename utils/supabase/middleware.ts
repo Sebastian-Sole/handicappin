@@ -63,6 +63,10 @@ export async function updateSession(request: NextRequest) {
 
   const { pathname } = request.nextUrl;
 
+  // Normalize pathname by stripping trailing slashes (but preserve root "/")
+  // This prevents route check bypasses via trailing slash (e.g., /rounds/id/calculation/)
+  const normalizedPathname = pathname.replace(/\/+$/, "") || "/";
+
   const publicPaths = [
     "/login",
     "/signup",
@@ -181,13 +185,14 @@ export async function updateSession(request: NextRequest) {
         return NextResponse.redirect(url);
       }
 
-      // Check premium routes
+      // Check premium routes (use normalizedPathname to prevent trailing slash bypass)
       const isPremiumRoute = premiumPaths.some((path) =>
-        pathname.startsWith(path)
+        normalizedPathname.startsWith(path)
       );
 
       // Add specific check for round calculation page
-      const isRoundCalculationRoute = /^\/rounds\/[^/]+\/calculation$/.test(pathname);
+      const isRoundCalculationRoute =
+        /^\/rounds\/[^/]+\/calculation$/.test(normalizedPathname);
 
       const requiresPremium = isPremiumRoute || isRoundCalculationRoute;
 

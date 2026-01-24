@@ -73,6 +73,7 @@ const ScoreDifferentialStep = () => {
             href="https://www.usga.org/handicapping/roh/Content/rules/5%201%20Calculation%20of%20a%20Score%20Differential.htm"
             target="_blank"
             className="text-primary hover:underline text-sm"
+            rel="noopener noreferrer"
           >
             Read more about Score Differential calculation (USGA)
           </Link>
@@ -153,7 +154,7 @@ const ScoreDifferentialStep = () => {
 
             {/* Expected Differential */}
             <div className="space-y-1">
-              <div className="text-sm font-medium">Expected Differential (Back 9):</div>
+              <div className="text-sm font-medium">Expected Differential (Unplayed 9):</div>
               <div className="flex flex-wrap items-center gap-2 text-sm">
                 <Muted>Based on handicap index {scorecard.round.existingHandicapIndex}</Muted>
                 <span className="font-medium">=</span>

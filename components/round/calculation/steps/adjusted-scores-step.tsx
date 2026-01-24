@@ -51,6 +51,7 @@ const AdjustedScoresStep = () => {
           <Link
             href="https://www.usga.org/handicapping/roh/Content/rules/3%202%20Acceptable%20Scores.htm"
             target="_blank"
+            rel="noopener noreferrer"
             className="text-primary hover:underline text-sm"
           >
             Read more about Acceptable Scores (USGA)

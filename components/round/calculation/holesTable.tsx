@@ -103,7 +103,10 @@ const HolesTable = () => {
               {playedHoles.reduce((acc, hole) => acc + (scorecard.scores[hole.holeNumber - 1]?.hcpStrokes ?? 0), 0)}
             </TableCell>
             <TableCell className="py-2 px-4 first:rounded-l-lg last:rounded-r-lg rounded-tr-none!">
-              {playedHoles.reduce((acc, hole) => acc + calculateHoleAdjustedScore(hole, scorecard.scores[hole.holeNumber - 1], hasEstablishedHandicap), 0)}
+              {playedHoles.reduce((acc, hole) => {
+                const score = scorecard.scores[hole.holeNumber - 1];
+                return acc + (score ? calculateHoleAdjustedScore(hole, score, hasEstablishedHandicap) : 0);
+              }, 0)}
             </TableCell>
           </TableRow>
         </TableBody>

@@ -53,14 +53,16 @@ export const scorecardRouter = createTRPCRouter({
         .from(score)
         .where(eq(score.roundId, roundData.id));
 
-      // 7. Count rounds played before this round's tee time (for determining established handicap)
+      // 7. Count approved rounds played before this round's tee time (for determining established handicap)
+      // Must match Edge Function logic which uses position in array of approved rounds only
       const roundsBeforeResult = await db
         .select({ count: count() })
         .from(round)
         .where(
           and(
             eq(round.userId, roundData.userId),
-            lt(round.teeTime, roundData.teeTime)
+            lt(round.teeTime, roundData.teeTime),
+            eq(round.approvalStatus, "approved")
           )
         );
       const roundsBeforeTeeTime = roundsBeforeResult[0]?.count ?? 0;

@@ -68,6 +68,11 @@ const ScoreDistributionSidebar = ({ layout = "vertical", compact = false }: Scor
   const maxCount = Math.max(...Object.values(distribution).map(d => d.count), 1);
   const totalPlayedHoles = playedHoles.length;
 
+  // Guard: don't render stats if no holes have been played
+  if (totalPlayedHoles === 0) {
+    return null;
+  }
+
   // Calculate hole-by-hole mini visualization (show all 18 holes)
   const holeScores = allHoles.map((hole, index) => {
     const score = scores[index];

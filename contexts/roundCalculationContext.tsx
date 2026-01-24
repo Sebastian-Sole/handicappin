@@ -81,7 +81,9 @@ export const RoundCalculationProvider = ({
 
   const courseHandicapCalculation = useMemo(() => {
     if (isNineHoles) {
-      return (handicapIndex / 2) * (slope / 113) + (rating - par) / 2;
+      // For 9-hole rounds: divide handicap index by 2, but keep (rating - par) at full value
+      // per USGA rules - we're already using 9-hole rating/par values
+      return (handicapIndex / 2) * (slope / 113) + (rating - par);
     } else {
       return handicapIndex * (slope / 113) + (rating - par);
     }

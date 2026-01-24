@@ -59,6 +59,7 @@ const HandicapImpactStep = () => {
             href="https://www.usga.org/handicapping/roh/Content/rules/5%202%20Calculation%20of%20a%20Handicap%20Index.htm"
             target="_blank"
             className="text-primary hover:underline text-sm"
+            rel="noopener noreferrer"
           >
             Read more about Handicap Index calculation (USGA)
           </Link>

@@ -32,6 +32,7 @@ export function CalculationStepper({
             <li key={step.id} className={cn("flex items-center", isLast ? "flex-none" : "flex-1")}>
               <div className="flex flex-col items-center">
                 <div
+                  aria-label={`Step ${step.id}: ${step.title}${isCompleted ? ", completed" : isCurrent ? ", current step" : ""}`}
                   className={cn(
                     "w-10 h-10 rounded-full flex items-center justify-center text-sm font-semibold transition-colors duration-200",
                     isCompleted && "bg-primary text-primary-foreground",
@@ -39,11 +40,11 @@ export function CalculationStepper({
                     !isCompleted && !isCurrent && "bg-muted text-muted-foreground"
                   )}
                 >
-                  {isCompleted ? <Check className="w-5 h-5" /> : step.id}
+                  {isCompleted ? <Check className="w-5 h-5" aria-hidden="true" /> : step.id}
                 </div>
                 <span
                   className={cn(
-                    "mt-2 text-xs text-center hidden sm:block transition-colors duration-200",
+                    "mt-2 text-xs text-center sr-only sm:not-sr-only transition-colors duration-200",
                     (isCompleted || isCurrent) ? "text-foreground font-medium" : "text-muted-foreground"
                   )}
                 >

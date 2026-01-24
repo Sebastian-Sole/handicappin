@@ -352,8 +352,8 @@ export const roundRouter = createTRPCRouter({
         }, 0);
       }
 
-      // Determine if player has an established handicap (USGA requires 3+ rounds)
-      // Count rounds played BEFORE this round's tee time
+      // Determine if player has an established handicap (USGA requires 3+ approved rounds)
+      // Count approved rounds played BEFORE this round's tee time
       const roundTeeTime = new Date(teeTime);
       const roundsBeforeThis = await db
         .select({ count: count() })
@@ -361,7 +361,8 @@ export const roundRouter = createTRPCRouter({
         .where(
           and(
             eq(round.userId, userId),
-            lt(round.teeTime, roundTeeTime)
+            lt(round.teeTime, roundTeeTime),
+            eq(round.approvalStatus, "approved")
           )
         );
       const hasEstablishedHandicap = (roundsBeforeThis[0]?.count ?? 0) >= 3;

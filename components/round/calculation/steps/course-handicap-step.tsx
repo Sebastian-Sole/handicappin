@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
@@ -40,6 +41,23 @@ const CourseHandicapStep = () => {
     ? scorecard.teePlayed.outPar
     : scorecard.teePlayed.totalPar;
 
+  // Sync slope, rating, and par when isNineHoles changes
+  useEffect(() => {
+    const newSlope = isNineHoles
+      ? scorecard.teePlayed.slopeRatingFront9
+      : scorecard.teePlayed.slopeRating18;
+    const newRating = isNineHoles
+      ? scorecard.teePlayed.courseRatingFront9
+      : scorecard.teePlayed.courseRating18;
+    const newPar = isNineHoles
+      ? scorecard.teePlayed.outPar
+      : scorecard.teePlayed.totalPar;
+
+    setSlope(newSlope);
+    setRating(newRating);
+    setPar(newPar);
+  }, [isNineHoles, scorecard.teePlayed, setSlope, setRating, setPar]);
+
   const hasChanges =
     handicapIndex !== originalHandicapIndex ||
     slope !== originalSlope ||
@@ -76,6 +94,7 @@ const CourseHandicapStep = () => {
             href="https://www.usga.org/handicapping/roh/Content/rules/5%201%20Course%20Handicap%20Calculation.htm"
             target="_blank"
             className="text-primary hover:underline text-sm"
+            rel="noopener noreferrer"
           >
             Read more about Course Handicap calculation (USGA)
           </Link>
