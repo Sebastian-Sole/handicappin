@@ -13,11 +13,14 @@ import Link from "next/link";
 const ScoreDifferentialStep = () => {
   const {
     adjustedGrossScoreCalculation,
+    adjustedPlayedScore,
     rating,
     setRating,
     slope,
     setSlope,
     scoreDifferentialCalculation,
+    playedDifferential,
+    expectedDifferential,
     isNineHoles,
     scorecard,
   } = useRoundCalculationContext();
@@ -93,15 +96,15 @@ const ScoreDifferentialStep = () => {
         {/* Inputs */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div>
-            <Label>Adjusted Gross Score</Label>
+            <Label>{isNineHoles ? "Adjusted Played Score (9 holes)" : "Adjusted Gross Score"}</Label>
             <Input
-              value={adjustedGrossScoreCalculation}
+              value={isNineHoles ? adjustedPlayedScore : adjustedGrossScoreCalculation}
               disabled
               className="bg-muted"
             />
           </div>
           <div>
-            <Label>Course Rating</Label>
+            <Label>Course Rating {isNineHoles && "(Front 9)"}</Label>
             <Input
               type="number"
               step="0.1"
@@ -116,7 +119,7 @@ const ScoreDifferentialStep = () => {
             />
           </div>
           <div>
-            <Label>Slope Rating</Label>
+            <Label>Slope Rating {isNineHoles && "(Front 9)"}</Label>
             <Input
               type="number"
               value={slope !== 0 ? slope : ""}
@@ -129,46 +132,72 @@ const ScoreDifferentialStep = () => {
           </div>
         </div>
 
-        {/* Formula */}
-        <div className="bg-muted/50 rounded-lg p-4 space-y-2">
-          <Muted>
-            Score Differential = (Adjusted Gross Score − Course Rating) × 113 ÷
-            Slope Rating
-          </Muted>
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="font-medium">Score Differential =</span>
+        {/* Formula - different for 9-hole vs 18-hole */}
+        {isNineHoles ? (
+          <div className="bg-muted/50 rounded-lg p-4 space-y-4">
             <Muted>
-              ({adjustedGrossScoreCalculation} − {rating}) × 113 ÷ {slope}
+              9-Hole Score Differential = Played Differential + Expected Differential
             </Muted>
-            <span className="font-medium">=</span>
-            <span className="text-xl font-bold text-primary">
-              {Math.round(scoreDifferentialCalculation * 10) / 10}
-            </span>
-          </div>
-        </div>
 
-        {/* 9-hole visual explanation */}
-        {isNineHoles && (
-          <div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 space-y-3">
-            <P className="font-medium text-blue-800 dark:text-blue-200">
-              9-Hole Calculation Breakdown
-            </P>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-center">
-              <div className="bg-white dark:bg-blue-900/30 rounded-lg p-3">
-                <div className="text-lg font-semibold">Played 9</div>
-                <Muted>Your actual score</Muted>
-              </div>
-              <div className="flex items-center justify-center text-2xl font-bold text-blue-600">
-                +
-              </div>
-              <div className="bg-white dark:bg-blue-900/30 rounded-lg p-3">
-                <div className="text-lg font-semibold">Expected 9</div>
-                <Muted>Based on your handicap</Muted>
+            {/* Played Differential */}
+            <div className="space-y-1">
+              <div className="text-sm font-medium">Played Differential (Front 9):</div>
+              <div className="flex flex-wrap items-center gap-2 text-sm">
+                <Muted>
+                  ({adjustedPlayedScore} − {rating}) × 113 ÷ {slope}
+                </Muted>
+                <span className="font-medium">=</span>
+                <span className="font-semibold">{playedDifferential.toFixed(2)}</span>
               </div>
             </div>
-            <Muted className="text-center">
-              = 18-hole equivalent Score Differential
+
+            {/* Expected Differential */}
+            <div className="space-y-1">
+              <div className="text-sm font-medium">Expected Differential (Back 9):</div>
+              <div className="flex flex-wrap items-center gap-2 text-sm">
+                <Muted>Based on handicap index {scorecard.round.existingHandicapIndex}</Muted>
+                <span className="font-medium">=</span>
+                <span className="font-semibold">{expectedDifferential.toFixed(2)}</span>
+              </div>
+            </div>
+
+            {/* Combined */}
+            <div className="border-t pt-3 mt-3">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="font-medium">18-Hole Equivalent =</span>
+                <Muted>{playedDifferential.toFixed(2)} + {expectedDifferential.toFixed(2)}</Muted>
+                <span className="font-medium">=</span>
+                <span className="text-xl font-bold text-primary">
+                  {scoreDifferentialCalculation.toFixed(1)}
+                </span>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className="bg-muted/50 rounded-lg p-4 space-y-2">
+            <Muted>
+              Score Differential = (Adjusted Gross Score − Course Rating) × 113 ÷ Slope Rating
             </Muted>
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="font-medium">Score Differential =</span>
+              <Muted>
+                ({adjustedGrossScoreCalculation} − {rating}) × 113 ÷ {slope}
+              </Muted>
+              <span className="font-medium">=</span>
+              <span className="text-xl font-bold text-primary">
+                {scoreDifferentialCalculation.toFixed(1)}
+              </span>
+            </div>
+          </div>
+        )}
+
+        {/* 9-hole info note */}
+        {isNineHoles && (
+          <div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+            <P className="text-blue-800 dark:text-blue-200 text-sm">
+              <strong>Note:</strong> Per USGA Rule 5.1b, 9-hole rounds are converted to 18-hole equivalents
+              by combining your actual played differential with an expected differential for the unplayed holes.
+            </P>
           </div>
         )}
       </div>

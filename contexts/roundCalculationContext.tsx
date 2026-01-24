@@ -10,6 +10,8 @@ import {
   calculateCourseHandicap,
   calculateAdjustedGrossScore,
   calculateScoreDifferential,
+  calculate9HoleScoreDifferential,
+  calculateExpected9HoleDifferential,
 } from "@/lib/handicap";
 import { ScorecardWithRound } from "@/types/scorecard";
 
@@ -32,6 +34,9 @@ interface RoundCalculationContextProps {
   courseHandicapCalculation: number;
   adjustedGrossScoreCalculation: number;
   scoreDifferentialCalculation: number;
+  // 9-hole specific values for displaying calculation breakdown
+  playedDifferential: number;
+  expectedDifferential: number;
   courseHcpStat: number;
   apsStat: number;
   hasEstablishedHandicap: boolean;
@@ -52,15 +57,20 @@ export const RoundCalculationProvider = ({
   if (!holes) {
     throw new Error("Holes are undefined");
   }
-  const [par, setPar] = useState(scorecard.teePlayed.totalPar);
-  const [holesPlayed, setHolesPlayed] = useState(holes.length);
+
+  // Determine if 9-hole round based on actual scores submitted
+  const actualHolesPlayed = scorecard.scores.length;
+  const isNineHoleRound = actualHolesPlayed === 9;
+
+  const [par, setPar] = useState(isNineHoleRound ? scorecard.teePlayed.outPar : scorecard.teePlayed.totalPar);
+  const [holesPlayed, setHolesPlayed] = useState(actualHolesPlayed);
   const [handicapIndex, setHandicapIndex] = useState(
     scorecard.round.existingHandicapIndex
   );
 
-  const [isNineHoles, setIsNineHoles] = useState(holesPlayed === 9);
-  const [slope, setSlope] = useState(isNineHoles ? scorecard.teePlayed.slopeRatingFront9 : scorecard.teePlayed.slopeRating18);
-  const [rating, setRating] = useState(isNineHoles ? scorecard.teePlayed.courseRatingFront9 : scorecard.teePlayed.courseRating18);
+  const [isNineHoles, setIsNineHoles] = useState(isNineHoleRound);
+  const [slope, setSlope] = useState(isNineHoleRound ? scorecard.teePlayed.slopeRatingFront9 : scorecard.teePlayed.slopeRating18);
+  const [rating, setRating] = useState(isNineHoleRound ? scorecard.teePlayed.courseRatingFront9 : scorecard.teePlayed.courseRating18);
   // Determine if player has an established handicap (USGA requires 3+ rounds)
   // Use the count of rounds played before this round's tee time
   const hasEstablishedHandicap = (scorecard.roundsBeforeTeeTime ?? 0) >= 3;
@@ -93,13 +103,43 @@ export const RoundCalculationProvider = ({
     scorecard.scores
   ]);
 
+  // Calculate expected differential for 9-hole rounds (for display breakdown)
+  // Uses editable rating/slope values so users can override if needed
+  const expectedDifferentialCalc = useMemo(() => {
+    if (!isNineHoles) return 0;
+    return calculateExpected9HoleDifferential(
+      handicapIndex,
+      rating,
+      slope,
+      par
+    );
+  }, [isNineHoles, handicapIndex, rating, slope, par]);
+
+  // Calculate played differential for 9-hole rounds (for display breakdown)
+  // Uses editable rating/slope values for consistency
+  const playedDifferentialCalc = useMemo(() => {
+    if (!isNineHoles) return 0;
+    return (adjustedPlayedScore - rating) * (113 / slope);
+  }, [isNineHoles, adjustedPlayedScore, rating, slope]);
+
   const scoreDifferentialCalculation = useMemo(() => {
+    if (isNineHoles) {
+      // For 9-hole rounds, calculate 18-hole equivalent using USGA Rule 5.1b
+      // Uses editable rating/slope values for consistency with 18-hole behavior
+      return calculate9HoleScoreDifferential(
+        adjustedPlayedScore,
+        rating,
+        slope,
+        expectedDifferentialCalc
+      );
+    }
+
     return calculateScoreDifferential(
       adjustedGrossScoreCalculation,
       rating,
       slope
     );
-  }, [adjustedGrossScoreCalculation, rating, slope]);
+  }, [adjustedGrossScoreCalculation, adjustedPlayedScore, rating, slope, isNineHoles, expectedDifferentialCalc]);
 
   const courseHcpStat = calculateCourseHandicap(
     handicapIndex,
@@ -130,6 +170,8 @@ export const RoundCalculationProvider = ({
         courseHandicapCalculation,
         adjustedGrossScoreCalculation,
         scoreDifferentialCalculation,
+        playedDifferential: playedDifferentialCalc,
+        expectedDifferential: expectedDifferentialCalc,
         courseHcpStat,
         apsStat,
         hasEstablishedHandicap,

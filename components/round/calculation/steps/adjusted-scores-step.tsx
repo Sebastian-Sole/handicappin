@@ -77,7 +77,7 @@ const AdjustedScoresStep = () => {
           </div>
           <div className="bg-muted/50 rounded-lg p-4 text-center">
             <div className="text-2xl font-bold text-green-600">
-              -{adjustmentAmount}
+              {adjustmentAmount > 0 ? `-${adjustmentAmount}` : adjustmentAmount}
             </div>
             <Muted>Strokes Saved</Muted>
           </div>
