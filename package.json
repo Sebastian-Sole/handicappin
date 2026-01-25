@@ -15,7 +15,8 @@
     "test:coverage": "vitest --coverage",
     "email": "email dev",
     "gen:local": "pnpx supabase gen types typescript --local > types/supabase.ts",
-    "backfill:subscription-periods": "tsx scripts/backfill-subscription-periods.ts"
+    "backfill:subscription-periods": "tsx scripts/backfill-subscription-periods.ts",
+    "check:schema-sync": "node scripts/check-schema-sync.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.1",
