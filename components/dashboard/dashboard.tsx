@@ -6,7 +6,7 @@ import useMounted from "@/hooks/useMounted";
 import { Tables } from "@/types/supabase";
 import DashboardSkeleton from "./dashboardSkeleton";
 import { getRelevantRounds } from "@/lib/handicap";
-import { ScorecardWithRound } from "@/types/scorecard";
+import { ScorecardWithRound } from "@/types/scorecard-input";
 import { RoundsTable } from "./roundsTable";
 
 interface DashboardProps {

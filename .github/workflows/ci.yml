@@ -6,6 +6,26 @@ on:
   pull_request:
     branches: [main]
 
+# Dummy environment variables for CI builds (type checking only)
+env:
+  DATABASE_URL: "postgresql://user:pass@localhost:5432/db"
+  RESEND_API_KEY: "re_dummy_key"
+  SEND_EMAIL_HOOK_SECRET: "dummy_hook_secret"
+  STRIPE_SECRET_KEY: "sk_test_dummy"
+  STRIPE_WEBHOOK_SECRET: "whsec_dummy"
+  STRIPE_PREMIUM_PRICE_ID: "price_dummy_premium"
+  STRIPE_UNLIMITED_PRICE_ID: "price_dummy_unlimited"
+  STRIPE_UNLIMITED_LIFETIME_PRICE_ID: "price_dummy_lifetime"
+  REDIS_URL: "redis://localhost:6379"
+  ADMIN_ALERT_EMAILS: "admin@example.com"
+  RESET_TOKEN_SECRET: "dummy_reset_secret_32chars_long!"
+  SUPABASE_SERVICE_ROLE_KEY: "dummy_service_role_key"
+  HANDICAP_CRON_SECRET: "dummy_handicap_cron_secret"
+  STRIPE_CRON_SECRET: "dummy_stripe_cron_secret"
+  NEXT_PUBLIC_SUPABASE_URL: "https://dummy.supabase.co"
+  NEXT_PUBLIC_SUPABASE_ANON_KEY: "dummy_anon_key"
+  NEXT_PUBLIC_APP_URL: "http://localhost:3000"
+
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
@@ -38,9 +58,17 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
       - uses: actions/setup-node@v4
         with:
           node-version: 20
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
 
       - name: Check schema sync
         run: node scripts/check-schema-sync.mjs

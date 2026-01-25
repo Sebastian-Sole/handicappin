@@ -1,3 +1,11 @@
+/**
+ * Shared validation schemas for golf data structures.
+ *
+ * IMPORTANT: These schemas are synced with types/scorecard-input.ts in the main app.
+ * Run `node scripts/check-schema-sync.mjs` to verify they remain in sync.
+ *
+ * Contains: holeSchema, teeSchema, courseSchema, scoreSchema, scorecardSchema
+ */
 import { z } from "https://esm.sh/zod@3.24.1";
 
 // Base schemas that handle both fetched data (positive IDs) and user-created data (ID: -1)
@@ -104,7 +112,7 @@ export const courseSchema = z.object({
     .min(3, "Course name must be at least 3 characters")
     .max(100, "Course name must be less than 100 characters"),
   approvalStatus: z.literal("pending").or(z.literal("approved")),
-  country: z.string(),
+  country: z.string().min(1, "Country is required"),
   website: z
     .string()
     .transform((val) => {
@@ -114,7 +122,7 @@ export const courseSchema = z.object({
     })
     .pipe(z.string().url("Please enter a valid URL").or(z.literal("")))
     .optional(),
-  city: z.string(),
+  city: z.string().min(1, "City is required"),
   tees: z
     .array(teeSchema)
     .min(1, "At least one tee required")
@@ -145,37 +153,11 @@ export type Tee = z.infer<typeof teeSchema>;
 export type Course = z.infer<typeof courseSchema>;
 export type Score = z.infer<typeof scoreSchema>;
 
-// Round schemas - only needed in edge functions for handicap calculation
-export const roundSchema = z.object({
-  id: z.number(),
-  userId: z.string().uuid(),
-  courseId: z.number(),
-  teeId: z.number(),
-  teeTime: z.string(),
-  totalStrokes: z.number(),
-  parPlayed: z.number(),
-  adjustedGrossScore: z.number(),
-  adjustedPlayedScore: z.number(),
-  courseHandicap: z.number(),
-  scoreDifferential: z.number(),
-  existingHandicapIndex: z.number().min(0).max(54),
-  updatedHandicapIndex: z.number().min(0).max(54),
-  exceptionalScoreAdjustment: z.number().min(0).max(10),
-  approvalStatus: z
-    .literal("pending")
-    .or(z.literal("approved"))
-    .or(z.literal("rejected")),
-  notes: z.string().nullable().optional(),
-  createdAt: z.string(),
-});
-
-export const roundResponseSchema = z.array(roundSchema);
+// Response schemas for arrays from database queries
 export const teeResponseSchema = z.array(teeSchema);
 export const scoreResponseSchema = z.array(scoreSchema);
 export const holeResponseSchema = z.array(holeSchema);
 
-export type Round = z.infer<typeof roundSchema>;
-export type RoundResponse = z.infer<typeof roundResponseSchema>;
 export type TeeResponse = z.infer<typeof teeResponseSchema>;
 export type ScoreResponse = z.infer<typeof scoreResponseSchema>;
 export type HoleResponse = z.infer<typeof holeResponseSchema>;

@@ -13,7 +13,7 @@ import { useState } from "react";
 import { TeeFormContent } from "./tee-form-content";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Tee, teeSchema } from "@/types/scorecard";
+import { Tee, teeSchema } from "@/types/scorecard-input";
 import { Form } from "../ui/form";
 import { blankTee } from "@/utils/scorecard/tee";
 

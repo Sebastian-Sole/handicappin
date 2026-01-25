@@ -16,7 +16,7 @@ import {
   TableRow,
 } from "../ui/table";
 import { Input } from "@/components/ui/input";
-import { Tee, teeSchema } from "@/types/scorecard";
+import { Tee, teeSchema } from "@/types/scorecard-input";
 import { Badge } from "../ui/badge";
 
 interface TeeFormContentProps {

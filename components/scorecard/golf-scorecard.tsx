@@ -37,7 +37,7 @@ import {
 } from "../ui/form";
 import { api } from "@/trpc/react";
 import { useDebounce } from "use-debounce";
-import { Course, Scorecard, scorecardSchema, Tee } from "@/types/scorecard";
+import { Course, Scorecard, scorecardSchema, Tee } from "@/types/scorecard-input";
 import { Textarea } from "../ui/textarea";
 import { TeeDialog } from "./tee-dialog";
 import { FormFeedback } from "../ui/form-feedback";

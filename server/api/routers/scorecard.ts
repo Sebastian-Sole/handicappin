@@ -3,7 +3,7 @@ import { createTRPCRouter, publicProcedure } from "../trpc";
 import { eq, inArray, asc, lt, count, and } from "drizzle-orm";
 import { db } from "@/db";
 import { course, round, teeInfo, hole, score } from "@/db/schema";
-import { scorecardSchema, ScorecardWithRound } from "@/types/scorecard";
+import { scorecardSchema, ScorecardWithRound } from "@/types/scorecard-input";
 
 export const scorecardRouter = createTRPCRouter({
   getScorecardByRoundId: publicProcedure

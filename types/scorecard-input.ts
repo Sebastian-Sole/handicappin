@@ -105,7 +105,7 @@ export const courseSchema = z.object({
     .min(3, "Course name must be at least 3 characters")
     .max(100, "Course name must be less than 100 characters"),
   approvalStatus: z.literal("pending").or(z.literal("approved")),
-  country: z.string(),
+  country: z.string().min(1, "Country is required"),
   website: z
     .string()
     .transform((val) => {
@@ -115,7 +115,7 @@ export const courseSchema = z.object({
     })
     .pipe(z.string().url("Please enter a valid URL").or(z.literal("")))
     .optional(),
-  city: z.string(),
+  city: z.string().min(1, "City is required"),
   tees: z
     .array(teeSchema)
     .min(1, "At least one tee required")

@@ -18,10 +18,10 @@ import {
 
 import {
   holeResponseSchema,
-  roundResponseSchema,
   scoreResponseSchema,
   teeResponseSchema,
-} from "../handicap-shared/scorecard.ts";
+} from "../handicap-shared/shared-schemas.ts";
+import { roundResponseSchema } from "../handicap-shared/round-schemas.ts";
 
 const EXCEPTIONAL_ROUND_THRESHOLD = 7;
 const MAX_SCORE_DIFFERENTIAL = 54;

@@ -13,7 +13,7 @@ import {
   calculate9HoleScoreDifferential,
   calculateExpected9HoleDifferential,
 } from "@/lib/handicap";
-import { ScorecardWithRound } from "@/types/scorecard";
+import { ScorecardWithRound } from "@/types/scorecard-input";
 
 interface RoundCalculationContextProps {
   scorecard: ScorecardWithRound;

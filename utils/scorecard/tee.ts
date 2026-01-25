@@ -1,4 +1,4 @@
-import { Course, Tee } from "@/types/scorecard";
+import { Course, Tee } from "@/types/scorecard-input";
 
 export const defaultTee: Tee = {
   id: -1,

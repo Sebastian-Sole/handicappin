@@ -6,9 +6,13 @@
  * Validates that the shared Zod schemas between the main app and Supabase Edge Functions
  * remain in sync. Only checks the core schemas (hole, tee, course, score, scorecard).
  *
- * The two files have expected differences:
+ * File structure:
+ * - types/scorecard-input.ts: Main app input validation schemas
+ * - supabase/functions/handicap-shared/shared-schemas.ts: Edge function copy (synced)
+ * - supabase/functions/handicap-shared/round-schemas.ts: Edge-function specific (NOT synced)
+ *
+ * The synced files have expected differences:
  * - Different Zod imports (npm vs esm.sh for Deno)
- * - Edge functions have additional roundSchema (not needed in main app)
  * - Main app has additional types (ScorecardWithRound, CourseSearchResult)
  */
 
@@ -20,10 +24,10 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 const rootDir = join(__dirname, "..");
 
-const MAIN_APP_SCHEMA = join(rootDir, "types/scorecard.ts");
+const MAIN_APP_SCHEMA = join(rootDir, "types/scorecard-input.ts");
 const EDGE_FUNCTION_SCHEMA = join(
   rootDir,
-  "supabase/functions/handicap-shared/scorecard.ts"
+  "supabase/functions/handicap-shared/shared-schemas.ts"
 );
 
 // Schemas that must stay in sync
@@ -144,14 +148,14 @@ function main() {
     const edgeSchema = extractSchema(edgeContent, schemaName);
 
     if (!mainSchema) {
-      console.error(`Missing ${schemaName} in main app (types/scorecard.ts)`);
+      console.error(`Missing ${schemaName} in main app (types/scorecard-input.ts)`);
       hasErrors = true;
       continue;
     }
 
     if (!edgeSchema) {
       console.error(
-        `Missing ${schemaName} in edge functions (supabase/functions/handicap-shared/scorecard.ts)`
+        `Missing ${schemaName} in edge functions (supabase/functions/handicap-shared/shared-schemas.ts)`
       );
       hasErrors = true;
       continue;
@@ -175,8 +179,8 @@ function main() {
   if (hasErrors) {
     console.error("Schema sync check failed!");
     console.error("\nFiles to sync:");
-    console.error("  - types/scorecard.ts (source of truth)");
-    console.error("  - supabase/functions/handicap-shared/scorecard.ts");
+    console.error("  - types/scorecard-input.ts (source of truth)");
+    console.error("  - supabase/functions/handicap-shared/shared-schemas.ts");
     process.exit(1);
   }
 

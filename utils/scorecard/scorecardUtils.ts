@@ -1,4 +1,4 @@
-import { Hole } from "@/types/scorecard";
+import { Hole } from "@/types/scorecard-input";
 
 /**
  * Calculates the total score for a range of holes
