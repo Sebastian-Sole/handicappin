@@ -6,16 +6,18 @@ on:
   pull_request:
     branches: [main]
 
-# Dummy environment variables for CI builds (type checking only)
+# Environment variables for CI builds
+# Stripe keys use real test-mode secrets for integration tests
+# Other vars use dummy values (only needed for type checking)
 env:
   DATABASE_URL: "postgresql://user:pass@localhost:5432/db"
   RESEND_API_KEY: "re_dummy_key"
   SEND_EMAIL_HOOK_SECRET: "dummy_hook_secret"
-  STRIPE_SECRET_KEY: "sk_test_dummy"
+  STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
   STRIPE_WEBHOOK_SECRET: "whsec_dummy"
-  STRIPE_PREMIUM_PRICE_ID: "price_dummy_premium"
-  STRIPE_UNLIMITED_PRICE_ID: "price_dummy_unlimited"
-  STRIPE_UNLIMITED_LIFETIME_PRICE_ID: "price_dummy_lifetime"
+  STRIPE_PREMIUM_PRICE_ID: ${{ secrets.STRIPE_PREMIUM_PRICE_ID }}
+  STRIPE_UNLIMITED_PRICE_ID: ${{ secrets.STRIPE_UNLIMITED_PRICE_ID }}
+  STRIPE_UNLIMITED_LIFETIME_PRICE_ID: ${{ secrets.STRIPE_UNLIMITED_LIFETIME_PRICE_ID }}
   REDIS_URL: "redis://localhost:6379"
   KV_URL: "redis://localhost:6379"
   KV_REST_API_URL: "https://dummy-kv.upstash.io"

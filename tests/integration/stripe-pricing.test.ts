@@ -18,7 +18,18 @@ import { PLAN_PRICING } from "@/utils/billing/pricing";
 import { describe, test, expect } from "vitest";
 
 // Skip tests if Stripe not configured (e.g., in CI without secrets)
-const describeIfStripeConfigured = process.env.STRIPE_SECRET_KEY
+// Check that the key exists AND is not a dummy/placeholder value
+const isValidStripeKey = (key: string | undefined): boolean => {
+  if (!key) return false;
+  // Skip if it's a dummy/placeholder key (common patterns)
+  if (key.includes("dummy") || key.includes("placeholder") || key.includes("xxxx")) {
+    return false;
+  }
+  // Valid Stripe test keys start with sk_test_ and are longer than just the prefix
+  return key.startsWith("sk_test_") && key.length > 20;
+};
+
+const describeIfStripeConfigured = isValidStripeKey(process.env.STRIPE_SECRET_KEY)
   ? describe
   : describe.skip;
 

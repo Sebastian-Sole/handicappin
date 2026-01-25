@@ -6,10 +6,11 @@
  * Validates that the shared Zod schemas between the main app and Supabase Edge Functions
  * remain in sync. Only checks the core schemas (hole, tee, course, score, scorecard).
  *
- * File structure:
- * - types/scorecard-input.ts: Main app input validation schemas
+  * File structure:
+ * - types/scorecard-input.ts: Main app input validation schemas (source of truth)
  * - supabase/functions/handicap-shared/shared-schemas.ts: Edge function copy (synced)
- * - supabase/functions/handicap-shared/round-schemas.ts: Edge-function specific (NOT synced)
+ * - lib/handicap/round-schemas.ts: Main app round schemas (parallel to edge function)
+ * - supabase/functions/handicap-shared/round-schemas.ts: Edge function round schemas (NOT synced with main app)
  *
  * The synced files have expected differences:
  * - Different Zod imports (npm vs esm.sh for Deno)

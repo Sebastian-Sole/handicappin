@@ -135,7 +135,6 @@ export default function GolfScorecard({ profile, access }: GolfScorecardProps) {
   // Update fetched data when queries return results
   useEffect(() => {
     if (searchedCourses) {
-      console.log("searchedCourses: ", searchedCourses);
       setFetchedCourses((prev) => {
         const newCourses = searchedCourses.filter(
           (course) => !prev.some((p) => p.id === course.id)
@@ -288,8 +287,6 @@ export default function GolfScorecard({ profile, access }: GolfScorecardProps) {
         data.course.approvalStatus === "approved" &&
         data.teePlayed.approvalStatus === "approved";
 
-      console.log("is auto approved: ", isAutoApproved);
-
       // Determine parPlayed based on holeCount
       let parPlayed = 0;
       if (holeCount === 18) {
@@ -321,8 +318,6 @@ export default function GolfScorecard({ profile, access }: GolfScorecardProps) {
         setSubmitState("idle");
         return;
       }
-
-      console.log("submissionData: ", submissionData);
       await submitScorecardMutation.mutateAsync(submissionData);
 
       // Show success state on button
@@ -367,7 +362,6 @@ export default function GolfScorecard({ profile, access }: GolfScorecardProps) {
   };
 
   const onError = (errors: unknown) => {
-    console.log(errors);
     console.error("Form validation errors:", errors);
     setFeedback({
       type: "error",
