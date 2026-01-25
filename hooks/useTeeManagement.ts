@@ -1,5 +1,5 @@
 import { useState, useCallback, useMemo } from "react";
-import { Course, Tee } from "@/types/scorecard";
+import { Course, Tee } from "@/types/scorecard-input";
 
 // Helper function to create a unique key for tees
 export const getTeeKey = (courseId: number, teeName: string, gender: string) =>

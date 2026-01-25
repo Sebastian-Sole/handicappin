@@ -8,7 +8,7 @@ import {
   TableRow,
 } from "../ui/table";
 import { Input } from "../ui/input";
-import { Hole, Score, Tee } from "@/types/scorecard";
+import { Hole, Score, Tee } from "@/types/scorecard-input";
 import { CONSTANTS } from "@/constants/golf";
 import { Skeleton } from "../ui/skeleton";
 

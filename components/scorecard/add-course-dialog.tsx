@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { CountryCombobox } from "@/components/scorecard/country-combobox";
 import { Plus } from "lucide-react";
 import { DialogPage, MultiPageDialog } from "../ui/multi-page-dialog";
-import { Course, courseSchema } from "@/types/scorecard";
+import { Course, courseSchema } from "@/types/scorecard-input";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {

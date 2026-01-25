@@ -13,7 +13,7 @@ import {
 } from "../ui/table";
 import { Button } from "../ui/button";
 import RoundTablePagination from "./roundTablePagination";
-import { ScorecardWithRound } from "@/types/scorecard";
+import { ScorecardWithRound } from "@/types/scorecard-input";
 
 interface RoundsTableProps {
   scorecards: ScorecardWithRound[];

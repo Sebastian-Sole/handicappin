@@ -5,7 +5,7 @@ import { eq, and, lt, count } from "drizzle-orm";
 import * as Sentry from "@sentry/nextjs";
 
 import { db } from "@/db";
-import { Scorecard, scorecardSchema } from "@/types/scorecard";
+import { Scorecard, scorecardSchema } from "@/types/scorecard-input";
 import {
   calculateAdjustedPlayedScore,
   calculateCourseHandicap,

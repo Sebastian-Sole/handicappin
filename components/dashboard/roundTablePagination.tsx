@@ -7,7 +7,7 @@ import {
   PaginationEllipsis,
   PaginationNext,
 } from "../ui/pagination";
-import { Scorecard } from "@/types/scorecard";
+import { Scorecard } from "@/types/scorecard-input";
 
 interface RoundTablePaginationProps {
   page: number;

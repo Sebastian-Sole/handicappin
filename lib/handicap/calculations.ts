@@ -1,4 +1,4 @@
-import { Hole, Score, Tee } from "./schemas";
+import { Hole, Score, Tee } from "@/types/scorecard-input";
 import {
   SOFT_CAP_THRESHOLD,
   HARD_CAP_THRESHOLD,

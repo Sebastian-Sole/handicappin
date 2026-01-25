@@ -15,7 +15,7 @@ import {
   RoundCalculationProvider,
   useRoundCalculationContext,
 } from "@/contexts/roundCalculationContext";
-import { ScorecardWithRound } from "@/types/scorecard";
+import { ScorecardWithRound } from "@/types/scorecard-input";
 import { CalendarDays, MapPin, Flag } from "lucide-react";
 
 interface RoundCalculationProps {
