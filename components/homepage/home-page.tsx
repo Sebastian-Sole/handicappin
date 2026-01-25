@@ -1,132 +1,149 @@
 import { Tables } from "@/types/supabase";
 import { api } from "@/trpc/server";
 import Hero from "./hero";
-import React from "react";
-import { getRelevantRounds } from "@/lib/handicap";
+import { ActivityFeed } from "./activity-feed";
+import { QuickActions } from "./quick-actions";
+import { QuickStats } from "./quick-stats";
+import { HandicapGoal } from "./handicap-goal";
 import HandicapTrendChartDisplay from "../charts/lazy-handicap-trend-chart-display";
 import ScoreBarChartDisplay from "../charts/lazy-score-bar-chart-display";
-import Link from "next/link";
-import { Button } from "../ui/button";
+import { getRelevantRounds } from "@/lib/handicap";
+import { transformRoundsToActivities } from "@/utils/activity-transform";
 
 interface HomepageProps {
   profile: Tables<"profile">;
 }
 
 export const HomePage = async ({ profile }: HomepageProps) => {
-  const { id, handicapIndex } = profile;
+  const { id, handicapIndex, initialHandicapIndex } = profile;
 
-  // Fetch rounds and bestRound in parallel (no dependency between them)
+  // Fetch all data in parallel
   const [rounds, bestRound] = await Promise.all([
-    api.round.getAllByUserId({
-      userId: id,
-      amount: 20,
-    }),
-    api.round.getBestRound({
-      userId: id,
-    }),
+    api.round.getAllByUserId({ userId: id, amount: 20 }),
+    api.round.getBestRound({ userId: id }),
   ]);
 
-  let previousHandicaps: {
-    key: string;
-    roundDate: string;
-    roundTime: string;
-    handicap: number;
-  }[] = [];
-  let previousScores: {
-    key: string;
-    roundDate: string;
-    roundTime: string;
-    score: number;
-    influencesHcp?: boolean;
-  }[] = [];
-  let percentageChange = 0;
+  // Process data for charts and activity feed
+  const sortedRounds = [...rounds].sort((a, b) => {
+    const timeComparison =
+      new Date(a.teeTime).getTime() - new Date(b.teeTime).getTime();
+    if (timeComparison !== 0) return timeComparison;
+    return a.id - b.id;
+  });
 
+  const relevantRoundsList = getRelevantRounds(sortedRounds);
+
+  const previousHandicaps = sortedRounds.slice(-10).map((round) => ({
+    key: `${round.id}`,
+    roundDate: new Date(round.teeTime).toLocaleDateString(),
+    roundTime: new Date(round.teeTime).toLocaleTimeString([], {
+      hour: "2-digit",
+      minute: "2-digit",
+    }),
+    handicap: round.updatedHandicapIndex,
+  }));
+
+  const previousScores = sortedRounds.slice(-10).map((round) => ({
+    key: `${round.id}`,
+    roundDate: new Date(round.teeTime).toLocaleDateString(),
+    roundTime: new Date(round.teeTime).toLocaleTimeString([], {
+      hour: "2-digit",
+      minute: "2-digit",
+    }),
+    score: round.scoreDifferential,
+    influencesHcp: relevantRoundsList.includes(round),
+  }));
+
+  const percentageChange =
+    previousHandicaps.length > 0
+      ? Number(
+          (
+            (handicapIndex - previousHandicaps[0].handicap) /
+            previousHandicaps[0].handicap
+          ).toFixed(2)
+        )
+      : 0;
+
+  // Calculate lowest differential for QuickStats
+  const lowestDifferential =
+    rounds.length > 0
+      ? Math.min(...rounds.map((r) => r.scoreDifferential))
+      : null;
+
+  // Fetch course info for best round and activity feed
   let bestRoundCourse: Tables<"course"> | null = null;
   let bestRoundTee: Tables<"teeInfo"> | null = null;
-  let relevantRoundsList: Tables<"round">[] = [];
-  if (bestRound !== null) {
-    // Sort rounds chronologically before any processing
-    // Use round.id as secondary sort for stable ordering when teeTimes are identical
-    const sortedRounds = [...rounds].sort((a, b) => {
-      const timeComparison = new Date(a.teeTime).getTime() - new Date(b.teeTime).getTime();
-      if (timeComparison !== 0) return timeComparison;
-      // If teeTimes are equal, sort by round ID
-      return a.id - b.id;
-    });
+  const courseMap = new Map<number, string>();
 
-    // Calculate relevant rounds from chronologically sorted rounds
-    relevantRoundsList = getRelevantRounds(sortedRounds);
-
-    previousHandicaps = sortedRounds
-      .slice(-10)
-      .map((round) => ({
-        key: `${round.id}`, // Unique key for recharts
-        roundDate: new Date(round.teeTime).toLocaleDateString(),
-        roundTime: new Date(round.teeTime).toLocaleTimeString([], {
-          hour: "2-digit",
-          minute: "2-digit",
-        }),
-        handicap: round.updatedHandicapIndex,
-      }));
-
-    previousScores = sortedRounds
-      .slice(-10)
-      .map((round) => ({
-        key: `${round.id}`, // Unique key for recharts
-        roundDate: new Date(round.teeTime).toLocaleDateString(),
-        roundTime: new Date(round.teeTime).toLocaleTimeString([], {
-          hour: "2-digit",
-          minute: "2-digit",
-        }),
-        score: round.scoreDifferential,
-        influencesHcp: relevantRoundsList.includes(round),
-      }));
-
-    percentageChange = Number.parseFloat(
-      (
-        (handicapIndex - previousHandicaps[0].handicap) /
-        previousHandicaps[0].handicap
-      ).toFixed(2)
+  if (rounds.length > 0) {
+    // Fetch course data for activity feed
+    const courseIds = [...new Set(rounds.map((r) => r.courseId))];
+    const courses = await Promise.all(
+      courseIds.map((courseId) => api.course.getCourseById({ courseId }))
     );
+    courses.forEach((course, i) => {
+      if (course) courseMap.set(courseIds[i], course.name);
+    });
+  }
 
-    // Fetch course and tee in parallel (both depend on bestRound, but not each other)
+  if (bestRound) {
     [bestRoundCourse, bestRoundTee] = await Promise.all([
-      api.course.getCourseById({
-        courseId: bestRound.courseId,
-      }),
-      api.tee.getTeeById({
-        teeId: bestRound.teeId,
-      }),
+      api.course.getCourseById({ courseId: bestRound.courseId }),
+      api.tee.getTeeById({ teeId: bestRound.teeId }),
     ]);
   }
+
+  // Transform data for activity feed
+  const activities = transformRoundsToActivities(rounds, courseMap);
 
   return (
     <div className="flex flex-col min-h-screen">
       <main className="flex-1">
-        <section className="w-full py-4 lg:py-4 xl:py-4 2xl:py-4 bg-gradient-to-r from-primary/5 to-primary/20">
-          <Hero
+        {/* Hero Section */}
+        <section className="w-full relative overflow-hidden">
+          {/* Premium gradient background with brand colors */}
+          <div className="absolute inset-0 bg-gradient-to-br from-primary/8 via-accent/20 to-background" />
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_50%_at_50%_-20%,oklch(0.46_0.16_148_/_0.12),transparent)]" />
+          <div className="absolute top-0 right-0 w-1/3 h-full bg-gradient-to-l from-accent/10 to-transparent" />
+          {/* Content */}
+          <div className="relative">
+            <Hero
             profile={profile}
-            previousScores={previousScores.map((entry) => {
-              return entry.score;
-            })}
+            previousScores={previousScores.map((s) => s.score)}
+            previousHandicaps={previousHandicaps.map((h) => h.handicap)}
             bestRound={bestRound}
             bestRoundTee={bestRoundTee}
             bestRoundCourseName={bestRoundCourse?.name}
             handicapPercentageChange={percentageChange}
           />
+          </div>
         </section>
 
-        <section className="w-full py-8 lg:py-18 xl:py-24">
-          <div className="sm:container px-4 lg:px-6">
-            <div className="text-center md:mb-12 mb-6">
-              <h2 className="text-2xl lg:text-3xl font-bold text-gray-900 dark:text-white mb-4 transition-colors duration-300">
-                Performance Analytics
-              </h2>
-              <p className="text-lg text-gray-600 dark:text-gray-300 transition-colors duration-300">
-                Track your progress with detailed charts and insights
-              </p>
+        {/* Activity Feed Section */}
+        <section className="w-full py-8 lg:py-12">
+          <div className="container px-4 lg:px-6">
+            <div className="grid gap-6 lg:grid-cols-[2fr_1fr]">
+              <ActivityFeed activities={activities} profileId={profile.id} />
+              <div className="space-y-4">
+                <QuickActions userId={profile.id} className="lg:grid-cols-2" />
+                <HandicapGoal
+                  currentHandicap={handicapIndex}
+                  startingHandicap={initialHandicapIndex}
+                />
+                <QuickStats
+                  activities={activities}
+                  lowestDifferential={lowestDifferential}
+                />
+              </div>
             </div>
-            <div className="hidden md:grid gap-6 2xl:grid-cols-2 2xl:gap-12">
+          </div>
+        </section>
+
+        {/* Charts Section - Desktop only */}
+        <section className="hidden md:block w-full py-8 lg:py-12 bg-muted/30">
+          <div className="container px-4 lg:px-6">
+            <h2 className="text-xl font-semibold mb-6">Performance Analytics</h2>
+            <div className="grid gap-6 xl:grid-cols-2">
               <HandicapTrendChartDisplay
                 handicapIndex={handicapIndex}
                 percentageChange={percentageChange}
@@ -138,45 +155,8 @@ export const HomePage = async ({ profile }: HomepageProps) => {
                 profile={profile}
               />
             </div>
-            <div className="grid gap-6 md:hidden">
-              <div className="flex justify-center">
-                <Link href={`/dashboard/${profile.id}`}>
-                  <Button variant={"default"} size="lg">
-                    Go to Dashboard
-                  </Button>
-                </Link>
-              </div>
-            </div>
           </div>
         </section>
-
-        {/* <section className="w-full py-6 lg:py-12 xl:py-16 pt-0! flex flex-col items-center">
-          <span className="max-w-[800px] flex flex-col items-center space-y-8">
-            <h2 className="text-2xl lg:text-3xl font-bold text-gray-900 dark:text-white mb-4 transition-colors duration-300">
-              Calculators
-            </h2>
-            <p className="text-lg text-gray-600 dark:text-gray-300 transition-colors duration-300 max-w-[80%] text-center">
-              We know that golf statistics and round calculations are
-              confusing... that&apos;s why we made Handicappin&apos;. Other golf
-              services hide the inner workings of the calculations that go into
-              your handicap index and scores, but we believe in transparency.
-              View all calculators below, and find detailed calculations of your
-              rounds in your dashboard.
-            </p>
-            <Link href={"/calculators"}>
-              <Button variant={"link"}>View all calculators</Button>
-            </Link>
-          </span>
-
-          <span className="flex flex-row justify-between pt-16 w-full">
-            <div className="container px-4 lg:px-6">
-              <div className="grid gap-6 xl:grid-cols-2 xl:gap-12">
-                <CourseHandicapCalculator handicapIndex={handicapIndex} />
-                <ScoreDifferentialCalculator />
-              </div>
-            </div>
-          </span>
-        </section> */}
       </main>
     </div>
   );
