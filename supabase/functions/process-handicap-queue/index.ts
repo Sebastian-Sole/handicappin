@@ -11,6 +11,8 @@ import {
   calculateLowHandicapIndex,
   applyHandicapCaps,
   addHcpStrokesToScores,
+  calculateExpected9HoleDifferential,
+  calculate9HoleScoreDifferential,
   ProcessedRound,
 } from "../handicap-shared/utils.ts";
 
@@ -258,7 +260,8 @@ async function processUserHandicap(
     }));
 
     // Pass 1: Calculate adjusted gross scores
-    for (const pr of processedRounds) {
+    for (let roundIndex = 0; roundIndex < processedRounds.length; roundIndex++) {
+      const pr = processedRounds[roundIndex];
       const teePlayed = teeMap.get(pr.teeId);
       if (!teePlayed) throw new Error(`Tee not found for round ${pr.id}`);
 
@@ -283,9 +286,15 @@ async function processUserHandicap(
         numberOfHolesPlayed
       );
 
+      // Determine if player has an established handicap (USGA requires 3+ rounds)
+      // For rounds 0, 1, 2 (first 3 rounds): player does not have established handicap
+      // For rounds 3+ : player has established handicap
+      const hasEstablishedHandicap = roundIndex >= 3;
+
       const adjustedPlayedScore = calculateAdjustedPlayedScore(
         holes,
-        scoresWithHcpStrokes
+        scoresWithHcpStrokes,
+        hasEstablishedHandicap
       );
 
       const adjustedGrossScore = calculateAdjustedGrossScore(
@@ -310,11 +319,36 @@ async function processUserHandicap(
       const teePlayed = teeMap.get(pr.teeId);
       if (!teePlayed) throw new Error(`Tee not found for round ${pr.id}`);
 
-      pr.rawDifferential = calculateScoreDifferential(
-        pr.adjustedGrossScore,
-        teePlayed.courseRating18,
-        teePlayed.slopeRating18
-      );
+      const roundScores = roundScoresMap.get(pr.id);
+      if (!roundScores) throw new Error(`Scores not found for round ${pr.id}`);
+
+      const numberOfHolesPlayed = roundScores.length;
+
+      // Calculate differential based on holes played (USGA Rule 5.1b for 9-hole)
+      if (numberOfHolesPlayed === 9) {
+        // Use 9-hole (front9) ratings per USGA Rule 5.1b
+        const expectedDifferential = calculateExpected9HoleDifferential(
+          pr.existingHandicapIndex,
+          teePlayed.courseRatingFront9,
+          teePlayed.slopeRatingFront9,
+          teePlayed.outPar
+        );
+
+        // Calculate 18-hole equivalent differential
+        pr.rawDifferential = calculate9HoleScoreDifferential(
+          pr.adjustedPlayedScore, // Use adjustedPlayedScore for 9-hole, not adjustedGrossScore
+          teePlayed.courseRatingFront9,
+          teePlayed.slopeRatingFront9,
+          expectedDifferential
+        );
+      } else {
+        // 18-hole calculation uses 18-hole ratings
+        pr.rawDifferential = calculateScoreDifferential(
+          pr.adjustedGrossScore,
+          teePlayed.courseRating18,
+          teePlayed.slopeRating18
+        );
+      }
 
       const startIdx = Math.max(0, i - (ESR_WINDOW_SIZE - 1));
       const relevantDifferentials = processedRounds
@@ -325,11 +359,11 @@ async function processUserHandicap(
       const difference = rollingIndex - pr.rawDifferential;
       if (difference >= EXCEPTIONAL_ROUND_THRESHOLD) {
         const offset = difference >= 10 ? 2 : 1;
-        const startIdx = Math.max(
+        const esrStartIdx = Math.max(
           0,
           i - (Math.min(ESR_WINDOW_SIZE, i + 1) - 1)
         );
-        for (let j = startIdx; j <= i; j++) {
+        for (let j = esrStartIdx; j <= i; j++) {
           processedRounds[j].esrOffset += offset;
         }
       }

@@ -256,7 +256,8 @@ export function applyHandicapCaps(
 
 export const calculateAdjustedPlayedScore = (
   holes: Hole[],
-  scores: Score[]
+  scores: Score[],
+  hasEstablishedHandicap: boolean = true
 ): number => {
   const adjustedScores = holes.map((hole, index) => {
     const score = scores[index];
@@ -264,20 +265,47 @@ export const calculateAdjustedPlayedScore = (
     if (!score) {
       return 0;
     }
-    return calculateHoleAdjustedScore(hole, score);
+    return calculateHoleAdjustedScore(hole, score, hasEstablishedHandicap);
   });
   return adjustedScores.reduce((acc, cur) => acc + cur);
 };
 
+/**
+ * Calculates the adjusted score for a single hole per USGA Rule 3.1.
+ *
+ * Rule 3.1a (No established handicap): Max = Par + 5
+ * Rule 3.1b (With established handicap): Max = Par + 2 + handicap strokes on hole
+ *   - Exception: If player receives 4+ strokes on a hole, max is Par + 5
+ *
+ * @param hole - The hole being played
+ * @param score - The player's score on the hole
+ * @param hasEstablishedHandicap - Whether the player has an established handicap index
+ */
 export const calculateHoleAdjustedScore = (
   hole: Hole,
-  score: Score
+  score: Score,
+  hasEstablishedHandicap: boolean = true
 ): number => {
-  const maxScore = Math.min(hole.par + 5, hole.par + 2 + score.hcpStrokes);
+  // Rule 3.1a: For players without established handicap, max is Par + 5
+  if (!hasEstablishedHandicap) {
+    return Math.min(score.strokes, hole.par + 5);
+  }
+
+  // Rule 3.1b: For players with established handicap, max is Net Double Bogey
+  // Net Double Bogey = Par + 2 + handicap strokes received on that hole
+  // Exception: If receiving 4+ strokes, max is Par + 5 (handled by Math.min)
+  const netDoubleBogey = hole.par + 2 + score.hcpStrokes;
+  const maxScore = Math.min(hole.par + 5, netDoubleBogey);
   return Math.min(score.strokes, maxScore);
 };
 
-// Todo: Update so that we filter out specific holes that have been played already, like if they played 1-9, and then 11 and 13.
+/**
+ * Calculates the adjusted gross score for a round.
+ * For partial rounds (less than 18 holes), estimates the score for unplayed holes
+ * using par plus predicted handicap strokes.
+ *
+ * Note: Supports non-sequential hole play (e.g., holes 1-9, 11, and 13) via holeId matching.
+ */
 export function calculateAdjustedGrossScore(
   adjustedPlayedScore: number,
   courseHandicap: number,

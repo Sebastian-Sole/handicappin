@@ -156,4 +156,8 @@ export type CourseSearchResult = {
   website?: string | undefined;
 };
 
-export type ScorecardWithRound = Scorecard & { round: Tables<"round"> };
+export type ScorecardWithRound = Scorecard & {
+  round: Tables<"round">;
+  /** Number of rounds played before this round's tee time (used for determining established handicap) */
+  roundsBeforeTeeTime?: number;
+};

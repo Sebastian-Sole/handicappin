@@ -1,7 +1,8 @@
 import { z } from "zod";
 import { createTRPCRouter, authedProcedure } from "@/server/api/trpc";
 import { round, score, profile, teeInfo, course, hole } from "@/db/schema";
-import { eq, and } from "drizzle-orm";
+import { eq, and, lt, count } from "drizzle-orm";
+import * as Sentry from "@sentry/nextjs";
 
 import { db } from "@/db";
 import { Scorecard, scorecardSchema } from "@/types/scorecard";
@@ -29,7 +30,8 @@ type RoundCalculations = {
 
 const getRoundCalculations = (
   scorecard: Scorecard,
-  handicapIndex: number
+  handicapIndex: number,
+  hasEstablishedHandicap: boolean = true
 ): RoundCalculations => {
   const { teePlayed, scores } = scorecard;
 
@@ -47,7 +49,8 @@ const getRoundCalculations = (
 
   const adjustedPlayedScore = calculateAdjustedPlayedScore(
     teePlayed.holes,
-    scores
+    scores,
+    hasEstablishedHandicap
   );
 
   const adjustedGrossScore = calculateAdjustedGrossScore(
@@ -132,19 +135,14 @@ export const roundRouter = createTRPCRouter({
         .range(input.startIndex, input.startIndex + input.amount - 1);
 
       if (error) {
-        console.log(error);
+        Sentry.captureException(error, {
+          tags: { procedure: "getRounds" },
+          extra: { userId: input.userId },
+        });
         throw new Error(`Error getting rounds: ${error.message}`);
       }
 
       return rounds;
-
-      // const roundsWithCourse = rounds
-      //   .map((round) => {
-      //     return flattenRoundWithCourse(round, round.course);
-      //   })
-      //   .filter((round): round is RoundWithCourseAndTee => round !== null);
-
-      // return roundsWithCourse;
     }),
   getRoundById: authedProcedure
     .input(z.object({ roundId: z.number() }))
@@ -156,7 +154,10 @@ export const roundRouter = createTRPCRouter({
         .single();
 
       if (error) {
-        console.log(error);
+        Sentry.captureException(error, {
+          tags: { procedure: "getRoundById" },
+          extra: { roundId: input.roundId },
+        });
         throw new Error(`Error getting round: ${error.message}`);
       }
 
@@ -178,7 +179,10 @@ export const roundRouter = createTRPCRouter({
         .single();
 
       if (error) {
-        console.log(error);
+        Sentry.captureException(error, {
+          tags: { procedure: "getBestRound" },
+          extra: { userId: input.userId },
+        });
         return null;
       }
       return round;
@@ -364,6 +368,21 @@ export const roundRouter = createTRPCRouter({
         }, 0);
       }
 
+      // Determine if player has an established handicap (USGA requires 3+ approved rounds)
+      // Count approved rounds played BEFORE this round's tee time
+      const roundTeeTime = new Date(teeTime);
+      const roundsBeforeThis = await db
+        .select({ count: count() })
+        .from(round)
+        .where(
+          and(
+            eq(round.userId, userId),
+            lt(round.teeTime, roundTeeTime),
+            eq(round.approvalStatus, "approved")
+          )
+        );
+      const hasEstablishedHandicap = (roundsBeforeThis[0]?.count ?? 0) >= 3;
+
       const {
         adjustedGrossScore: tempAdjustedGrossScore,
         adjustedPlayedScore: tempAdjustedPlayedScore,
@@ -372,7 +391,7 @@ export const roundRouter = createTRPCRouter({
         courseRatingUsed: tempCourseRatingUsed,
         slopeRatingUsed: tempSlopeRatingUsed,
         holesPlayed: tempHolesPlayed,
-      } = getRoundCalculations(input, Number(userProfile[0].handicapIndex));
+      } = getRoundCalculations(input, Number(userProfile[0].handicapIndex), hasEstablishedHandicap);
 
 
       if (!teeId) {

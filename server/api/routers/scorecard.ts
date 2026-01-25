@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { createTRPCRouter, publicProcedure } from "../trpc";
-import { eq, inArray, asc } from "drizzle-orm";
+import { eq, inArray, asc, lt, count, and } from "drizzle-orm";
 import { db } from "@/db";
 import { course, round, teeInfo, hole, score } from "@/db/schema";
 import { scorecardSchema, ScorecardWithRound } from "@/types/scorecard";
@@ -14,7 +14,7 @@ export const scorecardRouter = createTRPCRouter({
       // Convert id to number since round.id is a number in the schema
       const numericId = Number(id);
       if (isNaN(numericId)) {
-        throw new Error("Invalid round id");
+        return null;
       }
 
       // 1. Fetch the round
@@ -23,7 +23,7 @@ export const scorecardRouter = createTRPCRouter({
         .from(round)
         .where(eq(round.id, numericId));
       const roundData = roundResult[0];
-      if (!roundData) throw new Error("Round not found");
+      if (!roundData) return null;
 
       // 2. Fetch the course
       const courseResult = await db
@@ -31,7 +31,7 @@ export const scorecardRouter = createTRPCRouter({
         .from(course)
         .where(eq(course.id, roundData.courseId));
       const courseData = courseResult[0];
-      if (!courseData) throw new Error("Course not found");
+      if (!courseData) return null;
 
       // 4. Fetch the tee played
       const teePlayedResult = await db
@@ -39,7 +39,7 @@ export const scorecardRouter = createTRPCRouter({
         .from(teeInfo)
         .where(eq(teeInfo.id, roundData.teeId));
       const teePlayed = teePlayedResult[0];
-      if (!teePlayed) throw new Error("Tee played not found");
+      if (!teePlayed) return null;
 
       // 5. Fetch holes for the tee played
       const holes = await db
@@ -53,7 +53,21 @@ export const scorecardRouter = createTRPCRouter({
         .from(score)
         .where(eq(score.roundId, roundData.id));
 
-      // 7. Assemble the Scorecard object
+      // 7. Count approved rounds played before this round's tee time (for determining established handicap)
+      // Must match Edge Function logic which uses position in array of approved rounds only
+      const roundsBeforeResult = await db
+        .select({ count: count() })
+        .from(round)
+        .where(
+          and(
+            eq(round.userId, roundData.userId),
+            lt(round.teeTime, roundData.teeTime),
+            eq(round.approvalStatus, "approved")
+          )
+        );
+      const roundsBeforeTeeTime = roundsBeforeResult[0]?.count ?? 0;
+
+      // 8. Assemble the Scorecard object
       const scorecard: ScorecardWithRound = {
         userId: roundData.userId,
         course: {
@@ -87,6 +101,7 @@ export const scorecardRouter = createTRPCRouter({
           teeTime: roundData.teeTime.toISOString(),
           createdAt: roundData.createdAt.toISOString(),
         },
+        roundsBeforeTeeTime,
       };
 
       // Validate with zod
