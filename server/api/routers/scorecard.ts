@@ -14,7 +14,7 @@ export const scorecardRouter = createTRPCRouter({
       // Convert id to number since round.id is a number in the schema
       const numericId = Number(id);
       if (isNaN(numericId)) {
-        throw new Error("Invalid round id");
+        return null;
       }
 
       // 1. Fetch the round
@@ -23,7 +23,7 @@ export const scorecardRouter = createTRPCRouter({
         .from(round)
         .where(eq(round.id, numericId));
       const roundData = roundResult[0];
-      if (!roundData) throw new Error("Round not found");
+      if (!roundData) return null;
 
       // 2. Fetch the course
       const courseResult = await db
@@ -31,7 +31,7 @@ export const scorecardRouter = createTRPCRouter({
         .from(course)
         .where(eq(course.id, roundData.courseId));
       const courseData = courseResult[0];
-      if (!courseData) throw new Error("Course not found");
+      if (!courseData) return null;
 
       // 4. Fetch the tee played
       const teePlayedResult = await db
@@ -39,7 +39,7 @@ export const scorecardRouter = createTRPCRouter({
         .from(teeInfo)
         .where(eq(teeInfo.id, roundData.teeId));
       const teePlayed = teePlayedResult[0];
-      if (!teePlayed) throw new Error("Tee played not found");
+      if (!teePlayed) return null;
 
       // 5. Fetch holes for the tee played
       const holes = await db

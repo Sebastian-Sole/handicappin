@@ -122,7 +122,8 @@ const CourseHandicapStep = () => {
             <Input
               type="number"
               step="0.1"
-              value={handicapIndex !== 0 ? handicapIndex : ""}
+              value={handicapIndex}
+              placeholder="0.0"
               onChange={(e) =>
                 setHandicapIndex(Number.parseFloat(e.target.value) || 0)
               }

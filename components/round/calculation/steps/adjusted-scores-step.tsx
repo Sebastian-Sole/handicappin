@@ -48,6 +48,10 @@ const AdjustedScoresStep = () => {
             For example, on a Par 4 where you receive 1 handicap stroke, your
             maximum adjusted score is the lower of 9 (4+5) or 7 (4+2+1) = 7.
           </P>
+          <P className="text-xs italic">
+            Note: Players with fewer than 3 approved rounds use a simpler Par + 5
+            maximum on all holes.
+          </P>
           <Link
             href="https://www.usga.org/handicapping/roh/Content/rules/3%202%20Acceptable%20Scores.htm"
             target="_blank"

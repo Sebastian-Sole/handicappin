@@ -123,8 +123,18 @@ const ScoreDifferentialStep = () => {
             <Label>Slope Rating {isNineHoles && "(Front 9)"}</Label>
             <Input
               type="number"
+              min="1"
               value={slope !== 0 ? slope : ""}
-              onChange={(e) => setSlope(Number(e.target.value) || 0)}
+              onChange={(e) => {
+                const parsed = Number(e.target.value);
+                // Prevent divide-by-zero: only update if value is positive
+                if (parsed > 0) {
+                  setSlope(parsed);
+                } else if (e.target.value === "") {
+                  // Allow clearing but keep the last valid value
+                  // (the input will show empty but state remains valid)
+                }
+              }}
               className={cn(
                 isModified(slope, originalSlope) &&
                   "border-amber-500 bg-amber-50 dark:bg-amber-950/20"

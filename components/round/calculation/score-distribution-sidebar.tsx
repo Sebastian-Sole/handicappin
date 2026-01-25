@@ -16,11 +16,12 @@ const ScoreDistributionSidebar = ({ layout = "vertical", compact = false }: Scor
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    let timeoutId: NodeJS.Timeout;
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
           // Add slight delay for staggered effect with table
-          setTimeout(() => setIsVisible(true), 150);
+          timeoutId = setTimeout(() => setIsVisible(true), 150);
           observer.disconnect();
         }
       },
@@ -31,12 +32,16 @@ const ScoreDistributionSidebar = ({ layout = "vertical", compact = false }: Scor
       observer.observe(ref.current);
     }
 
-    return () => observer.disconnect();
+    return () => {
+      observer.disconnect();
+      clearTimeout(timeoutId);
+    };
   }, []);
 
   const scores = scorecard.scores;
-  const playedHoles = scorecard.teePlayed.holes?.slice(0, scores.length) ?? [];
-  const allHoles = scorecard.teePlayed.holes ?? [];
+  const holes = scorecard.teePlayed?.holes;
+  const playedHoles = holes?.slice(0, scores.length) ?? [];
+  const allHoles = holes ?? [];
 
   // Round summary calculations
   const totalStrokes = scores.reduce((acc, s) => acc + s.strokes, 0);

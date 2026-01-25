@@ -299,7 +299,13 @@ export const calculateHoleAdjustedScore = (
   return Math.min(score.strokes, maxScore);
 };
 
-// Todo: Update so that we filter out specific holes that have been played already, like if they played 1-9, and then 11 and 13.
+/**
+ * Calculates the adjusted gross score for a round.
+ * For partial rounds (less than 18 holes), estimates the score for unplayed holes
+ * using par plus predicted handicap strokes.
+ *
+ * Note: Supports non-sequential hole play (e.g., holes 1-9, 11, and 13) via holeId matching.
+ */
 export function calculateAdjustedGrossScore(
   adjustedPlayedScore: number,
   courseHandicap: number,

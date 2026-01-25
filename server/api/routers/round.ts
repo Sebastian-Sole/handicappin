@@ -2,6 +2,7 @@ import { z } from "zod";
 import { createTRPCRouter, authedProcedure } from "@/server/api/trpc";
 import { round, score, profile, teeInfo, course, hole } from "@/db/schema";
 import { eq, and, lt, count } from "drizzle-orm";
+import * as Sentry from "@sentry/nextjs";
 
 import { db } from "@/db";
 import { Scorecard, scorecardSchema } from "@/types/scorecard";
@@ -134,19 +135,14 @@ export const roundRouter = createTRPCRouter({
         .range(input.startIndex, input.startIndex + input.amount - 1);
 
       if (error) {
-        console.log(error);
+        Sentry.captureException(error, {
+          tags: { procedure: "getRounds" },
+          extra: { userId: input.userId },
+        });
         throw new Error(`Error getting rounds: ${error.message}`);
       }
 
       return rounds;
-
-      // const roundsWithCourse = rounds
-      //   .map((round) => {
-      //     return flattenRoundWithCourse(round, round.course);
-      //   })
-      //   .filter((round): round is RoundWithCourseAndTee => round !== null);
-
-      // return roundsWithCourse;
     }),
   getRoundById: authedProcedure
     .input(z.object({ roundId: z.number() }))
@@ -158,7 +154,10 @@ export const roundRouter = createTRPCRouter({
         .single();
 
       if (error) {
-        console.log(error);
+        Sentry.captureException(error, {
+          tags: { procedure: "getRoundById" },
+          extra: { roundId: input.roundId },
+        });
         throw new Error(`Error getting round: ${error.message}`);
       }
 
@@ -180,7 +179,10 @@ export const roundRouter = createTRPCRouter({
         .single();
 
       if (error) {
-        console.log(error);
+        Sentry.captureException(error, {
+          tags: { procedure: "getBestRound" },
+          extra: { userId: input.userId },
+        });
         return null;
       }
       return round;

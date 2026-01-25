@@ -92,12 +92,11 @@ const HandicapImpactStep = () => {
           {getTrendIcon()}
           <div>
             <P className={cn("font-semibold", getChangeColor())}>
-              {change === 0
+              {Math.abs(change) <= 0.05
                 ? "No change"
                 : change > 0
-                ? `+${change.toFixed(1)}`
-                : change.toFixed(1)}{" "}
-              {change !== 0 && "strokes"}
+                ? `+${change.toFixed(1)} strokes`
+                : `${change.toFixed(1)} strokes`}
             </P>
             <Muted>
               {change < -0.05 && "Your handicap decreased (improved)"}
