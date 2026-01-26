@@ -235,9 +235,21 @@ export function RoundsTable({
             ))}
           </TableBody>
         </Table>
+      ) : scorecards.length === 0 ? (
+        <div className="mt-8 text-center py-12">
+          <p className="text-muted-foreground mb-4">
+            You haven&apos;t logged any rounds yet. Start tracking your handicap
+            by adding your first round.
+          </p>
+          <Link href="/rounds/add">
+            <Button>Add Your First Round</Button>
+          </Link>
+        </div>
       ) : (
         <div className="mt-4 text-center">
-          <p>No rounds found for search: &quot;{searchTerm}&quot;</p>
+          <p className="text-muted-foreground">
+            No rounds found for search: &quot;{searchTerm}&quot;
+          </p>
         </div>
       )}
 

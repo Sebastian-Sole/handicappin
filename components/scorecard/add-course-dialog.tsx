@@ -163,6 +163,7 @@ export function AddCourseDialog({
       setOpen={(newOpen) => {
         setOpen(newOpen);
       }}
+      hideProgressDots
     >
       <Form {...form}>
         <form onSubmit={(e) => e.preventDefault()}>

@@ -19,7 +19,7 @@ export const FREE_TIER_ROUND_LIMIT_WARNING = 10;
 /**
  * Premium paths that require paid plan access
  */
-export const PREMIUM_PATHS = ["/dashboard", "/calculators"];
+export const PREMIUM_PATHS = ["/dashboard", "/calculators", "/statistics"];
 
 /**
  * Plan type definitions
