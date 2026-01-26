@@ -31,8 +31,21 @@ export function QuickStats({
       }).format(activities[0].date)
     : null;
 
-  // Count personal bests
-  const personalBests = activities.filter(a => a.isPersonalBest).length;
+  // Find the best round (lowest differential)
+  const bestRound = activities.reduce<ActivityItem | null>((best, activity) => {
+    if (!best || activity.scoreDifferential < best.scoreDifferential) {
+      return activity;
+    }
+    return best;
+  }, null);
+
+  const bestRoundDate = bestRound
+    ? new Intl.DateTimeFormat("en-US", {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+      }).format(bestRound.date)
+    : null;
 
   return (
     <Card className={cn("", className)}>
@@ -98,15 +111,15 @@ export function QuickStats({
           </div>
         )}
 
-        {/* Personal Bests Count */}
-        {personalBests > 0 && (
+        {/* Personal Best Date */}
+        {bestRoundDate && (
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <Trophy className="h-4 w-4 text-primary" />
-              <span>Personal Bests</span>
+              <span>Personal Best</span>
             </div>
             <span className="text-sm font-medium text-foreground">
-              {personalBests} {personalBests === 1 ? "round" : "rounds"}
+              {bestRoundDate}
             </span>
           </div>
         )}
