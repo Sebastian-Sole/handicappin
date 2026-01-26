@@ -13,6 +13,13 @@ const AVERAGE_SCORE_SLIGHT_THRESHOLD = 5;
 const HANDICAP_SLIGHT_THRESHOLD = 0.07;
 
 /**
+ * Maximum number of rounds loaded for homepage activity feed.
+ * Used in truncation detection to suppress incorrect milestone labels
+ * when we can't determine if we have the user's complete round history.
+ */
+export const HOMEPAGE_ROUNDS_LIMIT = 20;
+
+/**
  * Calculates plus/minus score relative to par
  * @param adjustedGrossScore - The player's adjusted gross score
  * @param totalPar - The total par for the course/tees played

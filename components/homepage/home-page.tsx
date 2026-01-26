@@ -9,6 +9,7 @@ import HandicapTrendChartDisplay from "../charts/lazy-handicap-trend-chart-displ
 import ScoreBarChartDisplay from "../charts/lazy-score-bar-chart-display";
 import { getRelevantRounds } from "@/lib/handicap";
 import { transformRoundsToActivities } from "@/utils/activity-transform";
+import { HOMEPAGE_ROUNDS_LIMIT } from "@/utils/golf-stats";
 
 interface HomepageProps {
   profile: Tables<"profile">;
@@ -19,7 +20,7 @@ export const HomePage = async ({ profile }: HomepageProps) => {
 
   // Fetch all data in parallel
   const [rounds, bestRound, totalRounds] = await Promise.all([
-    api.round.getAllByUserId({ userId: id, amount: 20 }),
+    api.round.getAllByUserId({ userId: id, amount: HOMEPAGE_ROUNDS_LIMIT }),
     api.round.getBestRound({ userId: id }),
     api.round.getCountByUserId({ userId: id }),
   ]);

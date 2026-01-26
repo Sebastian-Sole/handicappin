@@ -1,4 +1,5 @@
 import { Tables } from "@/types/supabase";
+import { HOMEPAGE_ROUNDS_LIMIT } from "@/utils/golf-stats";
 
 export interface ActivityItem {
   id: number;
@@ -49,11 +50,12 @@ export function transformRoundsToActivities(
 
     // Determine milestones
     // Use totalRounds if provided for accurate milestone calculation
-    // If not provided and data appears truncated (exactly 20 rounds), suppress milestones
-    // to avoid incorrect labels like "First round!" on the oldest of 20 loaded rounds
+    // If not provided and data appears truncated, suppress milestones
+    // to avoid incorrect labels like "First round!" on the oldest loaded round
     let milestone: string | undefined;
     const actualTotal = totalRounds ?? rounds.length;
-    const isTruncated = totalRounds === undefined && rounds.length === 20;
+    const isTruncated =
+      totalRounds === undefined && rounds.length === HOMEPAGE_ROUNDS_LIMIT;
 
     if (!isTruncated) {
       const roundNumber = actualTotal - index;

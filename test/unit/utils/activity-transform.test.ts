@@ -286,7 +286,8 @@ describe("transformRoundsToActivities", () => {
       );
       const courseMap = createCourseMap([[100, "Test Course"]]);
 
-      const result = transformRoundsToActivities(rounds, courseMap);
+      // Pass explicit totalRounds to prevent isTruncated from suppressing milestones
+      const result = transformRoundsToActivities(rounds, courseMap, 20);
 
       const round20 = result.find((r) => r.id === 20);
       expect(round20?.isMilestone).toBe("Full handicap index");
