@@ -142,14 +142,10 @@ function UnauthenticatedNavbar() {
 
 export async function Navbar() {
   const userId = await getUserIdFromCookies();
-  console.log("[Navbar] userId from cookies:", userId);
 
   if (!userId) {
-    console.log("[Navbar] Rendering UnauthenticatedNavbar");
     return <UnauthenticatedNavbar />;
   }
-
-  console.log("[Navbar] Rendering AuthenticatedNavbar for user:", userId);
 
   return (
     <header className="fixed top-0 z-50 w-full bg-background shadow-xs">
