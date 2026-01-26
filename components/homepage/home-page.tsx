@@ -18,9 +18,10 @@ export const HomePage = async ({ profile }: HomepageProps) => {
   const { id, handicapIndex, initialHandicapIndex } = profile;
 
   // Fetch all data in parallel
-  const [rounds, bestRound] = await Promise.all([
+  const [rounds, bestRound, totalRounds] = await Promise.all([
     api.round.getAllByUserId({ userId: id, amount: 20 }),
     api.round.getBestRound({ userId: id }),
+    api.round.getCountByUserId({ userId: id }),
   ]);
 
   // Process data for charts and activity feed
@@ -54,12 +55,14 @@ export const HomePage = async ({ profile }: HomepageProps) => {
     influencesHcp: relevantRoundsList.includes(round),
   }));
 
+  // Use initialHandicapIndex as baseline for "since first round" calculations
+  // This matches what HandicapGoal displays and provides a consistent baseline
   const percentageChange =
-    previousHandicaps.length > 0
+    initialHandicapIndex !== null && initialHandicapIndex !== 0
       ? Number(
           (
-            (handicapIndex - previousHandicaps[0].handicap) /
-            previousHandicaps[0].handicap
+            (handicapIndex - initialHandicapIndex) /
+            Math.abs(initialHandicapIndex)
           ).toFixed(2)
         )
       : 0;
@@ -76,25 +79,30 @@ export const HomePage = async ({ profile }: HomepageProps) => {
   const courseMap = new Map<number, string>();
 
   if (rounds.length > 0) {
-    // Fetch course data for activity feed
+    // Fetch course data for activity feed - use allSettled for graceful degradation
     const courseIds = [...new Set(rounds.map((r) => r.courseId))];
-    const courses = await Promise.all(
+    const coursesResults = await Promise.allSettled(
       courseIds.map((courseId) => api.course.getCourseById({ courseId }))
     );
-    courses.forEach((course, i) => {
-      if (course) courseMap.set(courseIds[i], course.name);
+    coursesResults.forEach((result, i) => {
+      if (result.status === "fulfilled" && result.value) {
+        courseMap.set(courseIds[i], result.value.name);
+      }
     });
   }
 
   if (bestRound) {
-    [bestRoundCourse, bestRoundTee] = await Promise.all([
+    const [courseResult, teeResult] = await Promise.allSettled([
       api.course.getCourseById({ courseId: bestRound.courseId }),
       api.tee.getTeeById({ teeId: bestRound.teeId }),
     ]);
+    bestRoundCourse =
+      courseResult.status === "fulfilled" ? courseResult.value : null;
+    bestRoundTee = teeResult.status === "fulfilled" ? teeResult.value : null;
   }
 
-  // Transform data for activity feed
-  const activities = transformRoundsToActivities(rounds, courseMap);
+  // Transform data for activity feed (pass totalRounds for accurate milestone calculation)
+  const activities = transformRoundsToActivities(rounds, courseMap, totalRounds);
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -108,14 +116,14 @@ export const HomePage = async ({ profile }: HomepageProps) => {
           {/* Content */}
           <div className="relative">
             <Hero
-            profile={profile}
-            previousScores={previousScores.map((s) => s.score)}
-            previousHandicaps={previousHandicaps.map((h) => h.handicap)}
-            bestRound={bestRound}
-            bestRoundTee={bestRoundTee}
-            bestRoundCourseName={bestRoundCourse?.name}
-            handicapPercentageChange={percentageChange}
-          />
+              profile={profile}
+              previousScores={previousScores.map((s) => s.score)}
+              initialHandicapIndex={initialHandicapIndex}
+              bestRound={bestRound}
+              bestRoundTee={bestRoundTee}
+              bestRoundCourseName={bestRoundCourse?.name}
+              handicapPercentageChange={percentageChange}
+            />
           </div>
         </section>
 

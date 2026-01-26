@@ -50,23 +50,13 @@ export default function HomepageSkeleton() {
           </div>
         </section>
 
-        {/* Charts Section Skeleton */}
-        <section className="w-full py-8 lg:py-12">
+        {/* Charts Section Skeleton - Desktop only */}
+        <section className="hidden md:block w-full py-8 lg:py-12 bg-muted/30">
           <div className="container px-4 lg:px-6">
             <Skeleton className="h-6 w-48 mb-6" />
 
-            {/* Mobile: Mini charts */}
-            <div className="grid grid-cols-2 gap-4 md:hidden">
-              {[...Array(2)].map((_, i) => (
-                <Card key={i} className="p-4">
-                  <Skeleton className="h-5 w-24 mb-2" />
-                  <Skeleton className="h-16 w-full" />
-                </Card>
-              ))}
-            </div>
-
             {/* Desktop: Full charts */}
-            <div className="hidden md:grid gap-6 xl:grid-cols-2">
+            <div className="grid gap-6 xl:grid-cols-2">
               <Skeleton className="h-80 w-full rounded-lg" />
               <Skeleton className="h-80 w-full rounded-lg" />
             </div>

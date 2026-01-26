@@ -144,6 +144,24 @@ export const roundRouter = createTRPCRouter({
 
       return rounds;
     }),
+  getCountByUserId: authedProcedure
+    .input(z.object({ userId: z.string().uuid() }))
+    .query(async ({ ctx, input }) => {
+      const { count, error } = await ctx.supabase
+        .from("round")
+        .select("*", { count: "exact", head: true })
+        .eq("userId", input.userId);
+
+      if (error) {
+        Sentry.captureException(error, {
+          tags: { procedure: "getCountByUserId" },
+          extra: { userId: input.userId },
+        });
+        throw new Error(`Error getting round count: ${error.message}`);
+      }
+
+      return count ?? 0;
+    }),
   getRoundById: authedProcedure
     .input(z.object({ roundId: z.number() }))
     .query(async ({ ctx, input }) => {

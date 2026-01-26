@@ -4,11 +4,19 @@ import { ChevronRight, BarChart2, TrendingDown, Award, Target } from "lucide-rea
 import Link from "next/link";
 import { HandicapDisplay } from "./handicap-display";
 import StatBox from "./statBox";
+import {
+  calculatePlusMinusScore,
+  calculateAverageScore,
+  calculateAverageScoreChange,
+  getChangeType,
+  getAverageScoreChangeDescription,
+  getHandicapChangeDescription,
+} from "@/utils/golf-stats";
 
 interface HeroProps {
   profile: Tables<"profile">;
   previousScores: number[];
-  previousHandicaps: number[];
+  initialHandicapIndex: number | null;
   bestRound: Tables<"round"> | null;
   bestRoundTee: Tables<"teeInfo"> | null;
   bestRoundCourseName: string | undefined;
@@ -18,43 +26,13 @@ interface HeroProps {
 const Hero = ({
   profile,
   previousScores,
-  previousHandicaps,
+  initialHandicapIndex,
   bestRound,
   bestRoundTee,
   bestRoundCourseName,
   handicapPercentageChange,
 }: HeroProps) => {
   const hasPlayedAnyRounds = previousScores.length > 0;
-  const firstHandicap =
-    previousHandicaps.length > 0 ? previousHandicaps[0] : undefined;
-
-  const calculatePlusMinusScore = (): string => {
-    if (!bestRound || !bestRoundTee) return "—";
-    const calculatedScore = bestRound.adjustedGrossScore - bestRoundTee.totalPar;
-    return calculatedScore > 0 ? `+${calculatedScore}` : calculatedScore.toString();
-  };
-
-  const calculateAverageScore = (): string => {
-    if (previousScores.length === 0) return "—";
-    return (
-      previousScores.reduce((a, b) => a + b, 0) / previousScores.length
-    ).toFixed(1);
-  };
-
-  const calculateAverageScoreChange = (): number => {
-    if (previousScores.length < 2) return 0;
-
-    const halfLength = Math.floor(previousScores.length / 2);
-    const firstHalfRounds = previousScores.slice(0, halfLength);
-    const secondHalfRounds = previousScores.slice(halfLength);
-
-    const firstHalfAverage =
-      firstHalfRounds.reduce((a, b) => a + b, 0) / firstHalfRounds.length;
-    const secondHalfAverage =
-      secondHalfRounds.reduce((a, b) => a + b, 0) / secondHalfRounds.length;
-
-    return secondHalfAverage - firstHalfAverage;
-  };
 
   // Determine change types and descriptions
   let averageScoreChangeType: string;
@@ -76,27 +54,12 @@ const Hero = ({
     roundsPlayedType = "neutral";
     roundsPlayedDescription = "Log a round to start your progression";
   } else {
-    const avgChange = calculateAverageScoreChange();
-    averageScoreChangeType = avgChange < 0 ? "improvement" : "increase";
-    averageScoreChangeDescription =
-      avgChange < 0
-        ? Math.abs(avgChange) < 5
-          ? "Your average score is slightly improving!"
-          : "Your average score is improving!"
-        : Math.abs(avgChange) < 5
-          ? "Your average score is slightly increasing"
-          : "Your average score is increasing";
+    const avgChange = calculateAverageScoreChange(previousScores);
+    averageScoreChangeType = getChangeType(avgChange);
+    averageScoreChangeDescription = getAverageScoreChangeDescription(avgChange);
 
-    handicapChangeType =
-      handicapPercentageChange < 0 ? "improvement" : "increase";
-    handicapChangeDescription =
-      handicapPercentageChange < 0
-        ? Math.abs(handicapPercentageChange) < 0.07
-          ? "Your handicap is slightly improving!"
-          : "Your handicap is improving!"
-        : Math.abs(handicapPercentageChange) < 0.07
-          ? "Your handicap is slightly increasing"
-          : "Your handicap is increasing";
+    handicapChangeType = getChangeType(handicapPercentageChange);
+    handicapChangeDescription = getHandicapChangeDescription(handicapPercentageChange);
 
     bestRoundDescription = bestRoundCourseName
       ? `Best round at ${bestRoundCourseName}`
@@ -128,7 +91,7 @@ const Hero = ({
           <div className="flex flex-col items-center lg:items-start space-y-6">
             <HandicapDisplay
               handicapIndex={profile.handicapIndex}
-              previousHandicapIndex={firstHandicap}
+              previousHandicapIndex={initialHandicapIndex ?? undefined}
               className="py-6"
             />
 
@@ -158,14 +121,14 @@ const Hero = ({
             />
             <StatBox
               title="Avg. Score (Last 10)"
-              value={calculateAverageScore()}
+              value={calculateAverageScore(previousScores)}
               change={averageScoreChangeType}
               description={averageScoreChangeDescription}
               icon={<TrendingDown className="h-8 w-8 text-primary" />}
             />
             <StatBox
               title="Best Round"
-              value={calculatePlusMinusScore()}
+              value={calculatePlusMinusScore(bestRound?.adjustedGrossScore, bestRoundTee?.totalPar)}
               change={bestRoundType}
               description={bestRoundDescription}
               icon={<Award className="h-8 w-8 text-primary" />}

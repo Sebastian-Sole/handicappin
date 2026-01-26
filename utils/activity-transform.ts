@@ -14,7 +14,8 @@ export interface ActivityItem {
 
 export function transformRoundsToActivities(
   rounds: Tables<"round">[],
-  courses: Map<number, string> // courseId -> courseName
+  courses: Map<number, string>, // courseId -> courseName
+  totalRounds?: number // Total rounds the user has (for accurate milestone calculation)
 ): ActivityItem[] {
   if (rounds.length === 0) {
     return [];
@@ -47,18 +48,26 @@ export function transformRoundsToActivities(
       : 0;
 
     // Determine milestones
+    // Use totalRounds if provided for accurate milestone calculation
+    // If not provided and data appears truncated (exactly 20 rounds), suppress milestones
+    // to avoid incorrect labels like "First round!" on the oldest of 20 loaded rounds
     let milestone: string | undefined;
-    const roundNumber = rounds.length - index;
-    if (roundNumber === 1) {
-      milestone = "First round!";
-    } else if (roundNumber === 10) {
-      milestone = "10th round";
-    } else if (roundNumber === 20) {
-      milestone = "Full handicap index";
-    } else if (roundNumber === 50) {
-      milestone = "50th round";
-    } else if (roundNumber === 100) {
-      milestone = "100th round";
+    const actualTotal = totalRounds ?? rounds.length;
+    const isTruncated = totalRounds === undefined && rounds.length === 20;
+
+    if (!isTruncated) {
+      const roundNumber = actualTotal - index;
+      if (roundNumber === 1) {
+        milestone = "First round!";
+      } else if (roundNumber === 10) {
+        milestone = "10th round";
+      } else if (roundNumber === 20) {
+        milestone = "Full handicap index";
+      } else if (roundNumber === 50) {
+        milestone = "50th round";
+      } else if (roundNumber === 100) {
+        milestone = "100th round";
+      }
     }
 
     return {

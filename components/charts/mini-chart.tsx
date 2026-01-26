@@ -134,7 +134,7 @@ export function MiniLineChart({
   const change = previousValue && currentValue ? currentValue - previousValue : 0;
 
   // Generate unique gradient ID to prevent conflicts when multiple charts render
-  const gradientId = `chartGradient-${title.replace(/\s+/g, "-").toLowerCase()}`;
+  const gradientId = `chartGradient-${title.replace(/[^a-zA-Z0-9]/g, "-").toLowerCase()}`;
 
   const content = (
     <Card className={cn("group", linkTo && "cursor-pointer hover:bg-accent/50 transition-colors", className)}>
@@ -170,7 +170,10 @@ export function MiniLineChart({
               viewBox={`0 0 ${width} ${height}`}
               className="w-full h-16"
               preserveAspectRatio="none"
+              role="img"
+              aria-label={`${title} trend line showing values from ${min.toFixed(1)} to ${max.toFixed(1)}. ${isImproving ? "Improving trend." : "Current value trend."}`}
             >
+              <title>{title}: Line chart showing handicap progression</title>
               {/* Gradient fill under line */}
               <defs>
                 <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
