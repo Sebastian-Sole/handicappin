@@ -142,20 +142,16 @@ function UnauthenticatedNavbar() {
 
 export async function Navbar() {
   const userId = await getUserIdFromCookies();
-  console.log("[Navbar] userId from cookies:", userId);
 
   if (!userId) {
-    console.log("[Navbar] Rendering UnauthenticatedNavbar");
     return <UnauthenticatedNavbar />;
   }
-
-  console.log("[Navbar] Rendering AuthenticatedNavbar for user:", userId);
 
   return (
     <header className="fixed top-0 z-50 w-full bg-background shadow-xs">
       <div className="container flex h-16 items-center justify-between px-4 sm:px-6 m-0 max-w-full">
         <LogoBrand />
-        <nav className="hidden w-1/3 items-center justify-center gap-6 text-sm font-medium md:flex ">
+        <nav className="hidden w-1/3 items-center justify-center gap-6 text-sm font-medium lg:flex ">
           <Link
             href="/"
             className="hover:underline hover:underline-offset-4 "
@@ -237,7 +233,7 @@ export async function Navbar() {
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
-          <div className="flex items-center gap-4 md:hidden">
+          <div className="flex items-center gap-4 lg:hidden">
             <Sheet>
               <SheetTrigger asChild>
                 <Button
