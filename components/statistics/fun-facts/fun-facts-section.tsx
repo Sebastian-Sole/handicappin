@@ -22,14 +22,21 @@ export function ScoringBreakdownSection({ stats }: ScoringBreakdownSectionProps)
     return `${years} years`;
   };
 
-  // Calculate total holes for context
+  // Calculate total holes and weighted average par from actual data
   const totalHoles = stats.strokesByParType.reduce(
     (sum, parType) => sum + parType.holeCount,
     0
   );
 
-  // Calculate avg over par
-  const avgOverPar = stats.avgStrokesPerHole - 4; // Assuming avg par is 4
+  const weightedParSum = stats.strokesByParType.reduce(
+    (sum, parType) => sum + parType.parType * parType.holeCount,
+    0
+  );
+
+  const averagePar = totalHoles > 0 ? weightedParSum / totalHoles : 4;
+
+  // Calculate avg over par using weighted average
+  const avgOverPar = stats.avgStrokesPerHole - averagePar;
 
   return (
     <div className="space-y-6">

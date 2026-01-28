@@ -44,7 +44,9 @@ export function CoursesSection({
   const worstCourse = [...courses].sort(
     (a, b) => b.avgDifferential - a.avgDifferential
   )[0];
-  const mostPlayed = courses[0]; // Already sorted by round count
+  const mostPlayed = courses.reduce((max, course) =>
+    course.roundCount > max.roundCount ? course : max
+  );
 
   // Calculate variety score (unique courses / total rounds * 100)
   const varietyScore =
@@ -121,7 +123,9 @@ export function CoursesSection({
             <CardContent className="p-4 text-center">
               <p className="text-sm text-muted-foreground">Avg Rounds/Course</p>
               <p className="text-3xl font-bold">
-                {formatDecimal(totalRounds / uniqueCourses, 1)}
+                {uniqueCourses > 0
+                  ? formatDecimal(totalRounds / uniqueCourses, 1)
+                  : "—"}
               </p>
               <p className="text-xs text-muted-foreground">rounds per course</p>
             </CardContent>

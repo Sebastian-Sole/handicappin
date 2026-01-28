@@ -17,6 +17,9 @@ const MIN_MONTHS_DISPLAYED = 3;
 
 function getPreviousMonth(month: string, year: number): { month: string; year: number } {
   const monthIndex = MONTH_NAMES.indexOf(month);
+  if (monthIndex === -1) {
+    throw new Error(`Invalid month name: ${month}`);
+  }
   if (monthIndex === 0) {
     return { month: "Dec", year: year - 1 };
   }

@@ -44,6 +44,8 @@ import type { ScorecardWithRound } from "@/types/scorecard-input";
 import type { TimeRange } from "@/types/statistics";
 import useMounted from "@/hooks/useMounted";
 import StatisticsSkeleton from "./statistics-skeleton";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
 
 interface StatisticsProps {
   profile: Tables<"profile">;
@@ -54,24 +56,11 @@ export function Statistics({ profile, scorecards }: StatisticsProps) {
   const isMounted = useMounted();
   const [timeRange, setTimeRange] = useState<TimeRange>("all");
 
-  // Normalize and sort scorecards by teeTime
-  // Postgres numeric/decimal fields come as strings - convert them to numbers once at the boundary
+  // Sort scorecards by teeTime (numeric fields are already converted by the backend)
   const sortedScorecards = useMemo(() => {
-    return [...scorecards]
-      .map((scorecard) => ({
-        ...scorecard,
-        round: {
-          ...scorecard.round,
-          scoreDifferential: Number(scorecard.round.scoreDifferential),
-          existingHandicapIndex: Number(scorecard.round.existingHandicapIndex),
-          updatedHandicapIndex: Number(scorecard.round.updatedHandicapIndex),
-          exceptionalScoreAdjustment: Number(scorecard.round.exceptionalScoreAdjustment),
-          courseRatingUsed: Number(scorecard.round.courseRatingUsed),
-        },
-      }))
-      .sort(
-        (a, b) => new Date(a.teeTime).getTime() - new Date(b.teeTime).getTime()
-      );
+    return [...scorecards].sort(
+      (a, b) => new Date(a.teeTime).getTime() - new Date(b.teeTime).getTime()
+    );
   }, [scorecards]);
 
   // Filter by time range
@@ -160,6 +149,32 @@ export function Statistics({ profile, scorecards }: StatisticsProps) {
   }, [coursePerformance]);
 
   if (!isMounted) return <StatisticsSkeleton />;
+
+  // Empty state for users with no rounds
+  if (scorecards.length === 0) {
+    return (
+      <div className="bg-background text-foreground p-4 md:p-8 rounded-lg min-h-screen flex flex-col items-center justify-center">
+        <div className="text-center max-w-md">
+          <h1 className="text-3xl font-bold mb-4">No Statistics Yet</h1>
+          <p className="text-muted-foreground text-lg mb-6">
+            Record your first round to start tracking your performance.
+          </p>
+          <p className="text-sm text-muted-foreground mb-6">
+            Once you have a few rounds recorded, you&apos;ll see:
+          </p>
+          <ul className="text-left text-sm text-muted-foreground space-y-2 mb-8">
+            <li>- Handicap trends and performance analysis</li>
+            <li>- Course-by-course breakdowns</li>
+            <li>- Activity patterns and streaks</li>
+            <li>- Scoring insights and player type analysis</li>
+          </ul>
+          <Button asChild>
+            <Link href="/rounds/add">Record Your First Round</Link>
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-background text-foreground p-4 md:p-8 rounded-lg min-h-screen">

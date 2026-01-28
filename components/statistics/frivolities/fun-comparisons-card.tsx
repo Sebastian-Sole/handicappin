@@ -57,7 +57,6 @@ function generateComparisons(
   }
 
   // Stride-based comparisons (average stride ~0.75m or 2.5ft)
-  const stepsAsMeters = totalStrokes * 0.75;
   const stepsAsMiles = (totalStrokes * 2.5) / 5280;
 
   if (stepsAsMiles >= 1) {
@@ -244,8 +243,34 @@ function generateComparisons(
     });
   }
 
-  // Randomize and return max 6 comparisons for variety
-  const shuffled = comparisons.sort(() => Math.random() - 0.5);
+  // Deterministic seeded shuffle for stable ordering across re-renders
+  // Generate seed from input data to ensure same comparisons = same order
+  const seed =
+    totalStrokes * 31 +
+    totalHoles * 37 +
+    golfAgeDays * 41 +
+    totalDistancePlayed * 43 +
+    uniqueCourses * 47;
+
+  // Mulberry32 PRNG - fast, deterministic, good distribution
+  const mulberry32 = (seedValue: number) => {
+    return () => {
+      let t = (seedValue += 0x6d2b79f5);
+      t = Math.imul(t ^ (t >>> 15), t | 1);
+      t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  };
+
+  const random = mulberry32(seed);
+
+  // Fisher-Yates shuffle with seeded RNG
+  const shuffled = [...comparisons];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+
   return shuffled.slice(0, 6);
 }
 

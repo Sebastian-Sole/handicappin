@@ -2,6 +2,7 @@
 
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
+import { formatGolfAge } from "@/lib/statistics/format-utils";
 import type { PlayerTypeResult } from "@/types/statistics";
 
 interface PlayerIdentityCardProps {
@@ -24,16 +25,6 @@ export function PlayerIdentityCard({
   const formatHandicap = (handicap: number) => {
     if (handicap === 0) return "N/A";
     return handicap.toFixed(1);
-  };
-
-  const formatGolfAge = (days: number): string => {
-    if (days < 30) return `${days} days`;
-    if (days < 365) {
-      const months = Math.floor(days / 30);
-      return `${months} month${months > 1 ? "s" : ""}`;
-    }
-    const years = (days / 365).toFixed(1);
-    return `${years} years`;
   };
 
   const getHandicapChangeText = (): string => {

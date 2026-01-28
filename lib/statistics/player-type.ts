@@ -1,6 +1,35 @@
 import type { ScorecardWithRound } from "@/types/scorecard-input";
 import type { PlayerTypeResult, PlayerTypeId } from "@/types/statistics";
 
+/**
+ * Thresholds for player type classification algorithm.
+ * These values are based on typical golf statistics and can be tuned based on real user data.
+ */
+export const PLAYER_TYPE_THRESHOLDS = {
+  // Minimum rounds needed for meaningful classification (below this = NEWCOMER)
+  MIN_ROUNDS_FOR_CLASSIFICATION: 5,
+
+  // Score variance thresholds (standard deviation of score differentials)
+  CONSISTENT_VARIANCE_MAX: 2.5, // <2.5 stdev = very consistent player
+  HIGH_VARIANCE_MIN: 5.0, // >5.0 stdev = highly variable/volatile player
+
+  // Handicap trend slope thresholds (negative = improving)
+  IMPROVING_SLOPE_MAX: -0.1, // Slope below -0.1 = steadily improving
+  VOLATILE_SLOPE_MIN: 0.3, // Absolute slope >0.3 = yo-yo handicap
+
+  // Time pattern thresholds (percentage of rounds)
+  WEEKEND_HEAVY_MIN: 0.7, // 70%+ weekend rounds = weekend warrior
+  MORNING_HEAVY_MIN: 0.7, // 70%+ morning tee times = early bird
+  AFTERNOON_PREFERENCE_MAX: 0.3, // <30% morning rounds = prefers afternoon/twilight
+
+  // Course diversity thresholds (unique courses / total rounds)
+  EXPLORER_VARIETY_MIN: 0.5, // 50%+ different courses = course explorer
+  HOME_COURSE_VARIETY_MAX: 0.2, // <20% variety = loyal to home course
+
+  // Playing volume thresholds
+  GRINDER_ROUNDS_PER_MONTH: 6, // 6+ rounds/month = high volume grinder
+} as const;
+
 export const PLAYER_TYPES: Record<PlayerTypeId, Omit<PlayerTypeResult, "confidence">> = {
   MR_CONSISTENT: {
     type: "MR_CONSISTENT",
@@ -164,7 +193,7 @@ function calculateMetrics(scorecards: ScorecardWithRound[]): PlayerMetrics {
 export function calculatePlayerType(
   scorecards: ScorecardWithRound[]
 ): PlayerTypeResult {
-  if (scorecards.length < 5) {
+  if (scorecards.length < PLAYER_TYPE_THRESHOLDS.MIN_ROUNDS_FOR_CLASSIFICATION) {
     return { ...PLAYER_TYPES.NEWCOMER, confidence: 1 };
   }
 
@@ -185,39 +214,39 @@ export function calculatePlayerType(
   };
 
   // Score based on variance
-  if (metrics.scoreVariance < 2.5) {
+  if (metrics.scoreVariance < PLAYER_TYPE_THRESHOLDS.CONSISTENT_VARIANCE_MAX) {
     scores.MR_CONSISTENT += 3;
-  } else if (metrics.scoreVariance > 5) {
+  } else if (metrics.scoreVariance > PLAYER_TYPE_THRESHOLDS.HIGH_VARIANCE_MIN) {
     scores.RAGER += 2;
     scores.YO_YO += 1;
   }
 
   // Score based on handicap trend
-  if (metrics.handicapTrendSlope < -0.1) {
+  if (metrics.handicapTrendSlope < PLAYER_TYPE_THRESHOLDS.IMPROVING_SLOPE_MAX) {
     scores.STEADILY_IMPROVING += 3;
-  } else if (Math.abs(metrics.handicapTrendSlope) > 0.3) {
+  } else if (Math.abs(metrics.handicapTrendSlope) > PLAYER_TYPE_THRESHOLDS.VOLATILE_SLOPE_MIN) {
     scores.YO_YO += 2;
   }
 
   // Score based on time patterns
-  if (metrics.weekendPercentage > 0.7) {
+  if (metrics.weekendPercentage > PLAYER_TYPE_THRESHOLDS.WEEKEND_HEAVY_MIN) {
     scores.WEEKEND_WARRIOR += 3;
   }
-  if (metrics.morningPercentage > 0.7) {
+  if (metrics.morningPercentage > PLAYER_TYPE_THRESHOLDS.MORNING_HEAVY_MIN) {
     scores.EARLY_BIRD += 3;
-  } else if (metrics.morningPercentage < 0.3) {
+  } else if (metrics.morningPercentage < PLAYER_TYPE_THRESHOLDS.AFTERNOON_PREFERENCE_MAX) {
     scores.TWILIGHT_GOLFER += 2;
   }
 
   // Score based on course patterns
-  if (metrics.courseVariety > 0.5) {
+  if (metrics.courseVariety > PLAYER_TYPE_THRESHOLDS.EXPLORER_VARIETY_MIN) {
     scores.COURSE_EXPLORER += 2;
-  } else if (metrics.courseVariety < 0.2) {
+  } else if (metrics.courseVariety < PLAYER_TYPE_THRESHOLDS.HOME_COURSE_VARIETY_MAX) {
     scores.HOME_COURSE_HERO += 2;
   }
 
   // Score based on volume
-  if (metrics.roundsPerMonth > 6) {
+  if (metrics.roundsPerMonth > PLAYER_TYPE_THRESHOLDS.GRINDER_ROUNDS_PER_MONTH) {
     scores.GRINDER += 2;
   }
 

@@ -70,8 +70,8 @@ export function formatGolfAge(days: number | null | undefined): string {
     const months = Math.floor(days / 30);
     return `${months} month${months !== 1 ? "s" : ""}`;
   }
-  const years = (days / 365).toFixed(1);
-  return `${years} years`;
+  const yearsNum = Number((days / 365).toFixed(1));
+  return `${yearsNum} year${yearsNum !== 1 ? "s" : ""}`;
 }
 
 /**

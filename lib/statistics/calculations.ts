@@ -534,6 +534,17 @@ export function calculateLongestGap(scorecards: ScorecardWithRound[]): number {
 }
 
 /**
+ * Generate a local date key in YYYY-MM-DD format without UTC conversion
+ * This avoids timezone shifts that occur with toISOString()
+ */
+function toLocalDateKey(date: Date): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+/**
  * Calculate current playing streak (consecutive weeks with at least 1 round)
  */
 export function calculateCurrentStreak(
@@ -547,7 +558,7 @@ export function calculateCurrentStreak(
     const date = new Date(scorecard.teeTime);
     const weekStart = new Date(date);
     weekStart.setDate(date.getDate() - date.getDay()); // Start of week (Sunday)
-    weeksWithRounds.add(weekStart.toISOString().split("T")[0]);
+    weeksWithRounds.add(toLocalDateKey(weekStart));
   });
 
   // Check from current week backwards
@@ -556,7 +567,7 @@ export function calculateCurrentStreak(
   currentWeek.setDate(now.getDate() - now.getDay());
 
   let streak = 0;
-  while (weeksWithRounds.has(currentWeek.toISOString().split("T")[0])) {
+  while (weeksWithRounds.has(toLocalDateKey(currentWeek))) {
     streak++;
     currentWeek.setDate(currentWeek.getDate() - 7);
   }
@@ -664,7 +675,9 @@ export function calculateBestMonth(scorecards: ScorecardWithRound[]): {
 export function calculateUniqueCourses(
   scorecards: ScorecardWithRound[],
 ): number {
-  const courseIds = new Set(scorecards.map((sc) => sc.course.id));
+  const courseIds = new Set(
+    scorecards.filter((sc) => sc.course?.id != null).map((sc) => sc.course.id),
+  );
   return courseIds.size;
 }
 
@@ -744,7 +757,7 @@ export function calculateBogeyFreeRounds(
 
     return scorecard.scores.every((score) => {
       const hole = holes.find((h) => h.id === score.holeId);
-      if (!hole) return true; // Skip if hole not found
+      if (!hole) return false; // Disqualify round if hole not found
       return score.strokes <= hole.par; // Par or better
     });
   }).length;
@@ -932,9 +945,15 @@ export function calculateStreakStats(
   let longestParStreak = 0;
   let longestBogeyStreak = 0;
   const parStreaks: number[] = [];
+  let lastRoundParStreak = 0;
+
+  // Sort by date (oldest first) so most recent round is processed last
+  const sortedScorecards = [...scorecards].sort(
+    (a, b) => new Date(a.teeTime).getTime() - new Date(b.teeTime).getTime(),
+  );
 
   // Process each round
-  scorecards.forEach((scorecard) => {
+  sortedScorecards.forEach((scorecard) => {
     const holes = scorecard.teePlayed.holes;
     if (!holes) return;
 
@@ -977,6 +996,9 @@ export function calculateStreakStats(
     if (currentParStreak > 0) {
       parStreaks.push(currentParStreak);
     }
+
+    // Capture ending streak from this round (last iteration = most recent round)
+    lastRoundParStreak = currentParStreak;
   });
 
   const averageParStreak =
@@ -987,7 +1009,7 @@ export function calculateStreakStats(
   return {
     longestParStreak,
     longestBogeyStreak,
-    currentParStreak: 0, // Would need to track across rounds
+    currentParStreak: lastRoundParStreak,
     averageParStreak,
   };
 }

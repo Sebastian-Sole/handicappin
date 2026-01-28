@@ -36,7 +36,9 @@ export function CourseAnalyticsSection({ courses }: CourseAnalyticsSectionProps)
   const worstCourse = [...courses].sort(
     (a, b) => b.avgDifferential - a.avgDifferential
   )[0];
-  const mostPlayed = courses[0]; // Already sorted by round count
+  const mostPlayed = courses.reduce((max, course) =>
+    course.roundCount > max.roundCount ? course : max
+  );
 
   return (
     <section className="mb-8">

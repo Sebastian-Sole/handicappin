@@ -142,6 +142,7 @@ export const HomePage = async ({ profile }: HomepageProps) => {
                 <QuickStats
                   activities={activities}
                   lowestDifferential={lowestDifferential}
+                  bestRoundDate={bestRound ? new Date(bestRound.teeTime) : null}
                 />
               </div>
             </div>

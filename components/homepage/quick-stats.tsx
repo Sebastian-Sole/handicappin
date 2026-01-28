@@ -6,12 +6,14 @@ import { ActivityItem } from "@/utils/activity-transform";
 interface QuickStatsProps {
   activities: ActivityItem[];
   lowestDifferential: number | null;
+  bestRoundDate?: Date | null;
   className?: string;
 }
 
 export function QuickStats({
   activities,
   lowestDifferential,
+  bestRoundDate: bestRoundDateProp,
   className,
 }: QuickStatsProps) {
   // Calculate stats from activities
@@ -31,20 +33,22 @@ export function QuickStats({
       }).format(activities[0].date)
     : null;
 
-  // Find the best round (lowest differential)
-  const bestRound = activities.reduce<ActivityItem | null>((best, activity) => {
-    if (!best || activity.scoreDifferential < best.scoreDifferential) {
-      return activity;
-    }
-    return best;
-  }, null);
+  // Use the best round date from props (fetched from DB across all rounds)
+  // Fall back to computing from activities if prop not provided
+  const fallbackBestRoundDate = activities.length > 0
+    ? activities.reduce((best, activity) =>
+        activity.scoreDifferential < best.scoreDifferential ? activity : best
+      ).date
+    : null;
 
-  const bestRoundDate = bestRound
+  const bestRoundDateToUse = bestRoundDateProp ?? fallbackBestRoundDate;
+
+  const bestRoundDate = bestRoundDateToUse
     ? new Intl.DateTimeFormat("en-US", {
         month: "short",
         day: "numeric",
         year: "numeric",
-      }).format(bestRound.date)
+      }).format(bestRoundDateToUse)
     : null;
 
   return (

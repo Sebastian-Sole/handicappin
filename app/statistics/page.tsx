@@ -22,8 +22,6 @@ const StatisticsPage = async () => {
     });
     const profile = await api.auth.getProfileFromUserId(data.user.id);
 
-    console.log(scorecards);
-
     return (
       <Suspense fallback={<StatisticsSkeleton />}>
         <Statistics profile={profile} scorecards={scorecards} />

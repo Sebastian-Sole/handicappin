@@ -199,7 +199,7 @@ describe("PII Redaction - Industry Standard Approach", () => {
 
       const redacted = redactObject(obj);
 
-      expect(redacted.data[0].email).toBe("***@example.com");
+      expect((redacted.data[0] as { email: string }).email).toBe("***@example.com");
       expect(redacted.data[1]).toBe("string value");
       expect(redacted.data[2]).toBe(123);
       expect(redacted.data[3]).toBe(null);

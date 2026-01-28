@@ -40,6 +40,7 @@ export function PerformanceSection({
   };
 
   const getAvgScoreContext = (): string => {
+    if (stats.totalRounds === 0) return "No data yet";
     if (!isValidNumber(stats.avgScore)) return "No data yet";
     const overPar = Math.round(stats.avgScore) - 72;
     if (overPar === 0) return "Right at par!";
@@ -58,6 +59,7 @@ export function PerformanceSection({
   };
 
   const getHandicapChangeMessage = (): string => {
+    if (stats.totalRounds === 0) return "No data yet";
     if (!isValidNumber(stats.handicapChange)) return "No data yet";
     if (stats.handicapChange < 0) return "Getting better!";
     if (stats.handicapChange > 0) return "Room to improve";
