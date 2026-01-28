@@ -4,20 +4,10 @@ import { useMemo, useState } from "react";
 import { TimeRangeFilter } from "./time-range-filter";
 import { PlayerIdentityCard } from "./hero/player-identity-card";
 import { PerformanceSection } from "./overview/overview-section";
-import { PatternsSection } from "./patterns/patterns-section";
-import { RoundsPerMonthChart } from "./round-insights/rounds-per-month-chart";
-import { ScoringBreakdownSection } from "./fun-facts/fun-facts-section";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ActivitySection } from "./activity/activity-section";
+import { CoursesSection } from "./courses/courses-section";
+import { FrivolitiesSection } from "./frivolities/frivolities-section";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { getFlagEmoji } from "@/utils/frivolities/headerGenerator";
 import {
   filterByTimeRange,
   calculateOverviewStats,
@@ -32,11 +22,26 @@ import {
   calculateScoreDistribution,
   calculateDaysSinceLastRound,
   calculateGolfAge,
+  calculateAverageRoundsPerMonth,
+  calculateMostActiveMonth,
+  calculateLongestGap,
+  calculateCurrentStreak,
+  calculateSeasonalStats,
+  calculateScoringConsistency,
+  calculateConsistencyRating,
+  calculateBestMonth,
+  calculateUniqueCourses,
+  calculatePerfectHoles,
+  calculateBogeyFreeRounds,
+  calculateExceptionalRounds,
+  calculateHoleByHoleStats,
+  calculateLunarPerformance,
+  calculateUniqueHolesPlayed,
 } from "@/lib/statistics/calculations";
 import { calculatePlayerType } from "@/lib/statistics/player-type";
 import type { Tables } from "@/types/supabase";
 import type { ScorecardWithRound } from "@/types/scorecard-input";
-import type { TimeRange, CoursePerformance, HolesPlayedStats } from "@/types/statistics";
+import type { TimeRange } from "@/types/statistics";
 import useMounted from "@/hooks/useMounted";
 import StatisticsSkeleton from "./statistics-skeleton";
 
@@ -49,11 +54,24 @@ export function Statistics({ profile, scorecards }: StatisticsProps) {
   const isMounted = useMounted();
   const [timeRange, setTimeRange] = useState<TimeRange>("all");
 
-  // Sort scorecards by teeTime
+  // Normalize and sort scorecards by teeTime
+  // Postgres numeric/decimal fields come as strings - convert them to numbers once at the boundary
   const sortedScorecards = useMemo(() => {
-    return [...scorecards].sort(
-      (a, b) => new Date(a.teeTime).getTime() - new Date(b.teeTime).getTime()
-    );
+    return [...scorecards]
+      .map((scorecard) => ({
+        ...scorecard,
+        round: {
+          ...scorecard.round,
+          scoreDifferential: Number(scorecard.round.scoreDifferential),
+          existingHandicapIndex: Number(scorecard.round.existingHandicapIndex),
+          updatedHandicapIndex: Number(scorecard.round.updatedHandicapIndex),
+          exceptionalScoreAdjustment: Number(scorecard.round.exceptionalScoreAdjustment),
+          courseRatingUsed: Number(scorecard.round.courseRatingUsed),
+        },
+      }))
+      .sort(
+        (a, b) => new Date(a.teeTime).getTime() - new Date(b.teeTime).getTime()
+      );
   }, [scorecards]);
 
   // Filter by time range
@@ -86,8 +104,33 @@ export function Statistics({ profile, scorecards }: StatisticsProps) {
     return calculateRoundsPerMonth(filteredScorecards);
   }, [filteredScorecards]);
 
+  // Activity stats (use filtered data)
+  const activityStats = useMemo(() => {
+    return {
+      avgRoundsPerMonth: calculateAverageRoundsPerMonth(filteredScorecards),
+      mostActiveMonth: calculateMostActiveMonth(filteredScorecards),
+      longestGap: calculateLongestGap(filteredScorecards),
+      currentStreak: calculateCurrentStreak(sortedScorecards), // Use all-time for streak
+      seasonalStats: calculateSeasonalStats(filteredScorecards),
+    };
+  }, [filteredScorecards, sortedScorecards]);
+
+  // Performance extended stats
+  const performanceExtendedStats = useMemo(() => {
+    return {
+      consistencyRating: calculateConsistencyRating(filteredScorecards),
+      scoringConsistency: calculateScoringConsistency(filteredScorecards),
+      bestMonth: calculateBestMonth(filteredScorecards),
+      uniqueCourses: calculateUniqueCourses(filteredScorecards),
+      exceptionalRounds: calculateExceptionalRounds(filteredScorecards),
+    };
+  }, [filteredScorecards]);
+
   // Fun stats (always use all-time data for most meaningful results)
   const funStats = useMemo(() => {
+    const courses = calculateCoursePerformance(sortedScorecards);
+    const uniqueCountries = new Set(courses.map((c) => c.country)).size;
+
     return {
       totalStrokes: calculateTotalStrokes(sortedScorecards),
       avgStrokesPerHole: calculateAvgStrokesPerHole(sortedScorecards),
@@ -97,6 +140,14 @@ export function Statistics({ profile, scorecards }: StatisticsProps) {
       daysSinceLastRound: calculateDaysSinceLastRound(sortedScorecards),
       golfAgeDays: calculateGolfAge(sortedScorecards),
       playerType: calculatePlayerType(sortedScorecards),
+      perfectHoles: calculatePerfectHoles(sortedScorecards),
+      bogeyFreeRounds: calculateBogeyFreeRounds(sortedScorecards),
+      // New fun stats
+      holeByHoleStats: calculateHoleByHoleStats(sortedScorecards),
+      lunarPerformance: calculateLunarPerformance(sortedScorecards),
+      uniqueHolesPlayed: calculateUniqueHolesPlayed(sortedScorecards),
+      uniqueCoursesPlayed: courses.length,
+      countriesPlayed: uniqueCountries,
     };
   }, [sortedScorecards]);
 
@@ -133,226 +184,49 @@ export function Statistics({ profile, scorecards }: StatisticsProps) {
         daysSinceLastRound={funStats.daysSinceLastRound}
       />
 
-      {/* Tabbed Content */}
+      {/* Tabbed Content - 4 tabs: Performance, Activity, Courses, Frivolities */}
       <Tabs defaultValue="performance" className="w-full">
-        <TabsList className="grid w-full grid-cols-5 mb-6">
+        <TabsList className="grid w-full grid-cols-4 mb-6">
           <TabsTrigger value="performance">Performance</TabsTrigger>
-          <TabsTrigger value="patterns">Patterns</TabsTrigger>
-          <TabsTrigger value="courses">Courses</TabsTrigger>
           <TabsTrigger value="activity">Activity</TabsTrigger>
-          <TabsTrigger value="scoring">Scoring</TabsTrigger>
+          <TabsTrigger value="courses">Courses</TabsTrigger>
+          <TabsTrigger value="frivolities">Frivolities</TabsTrigger>
         </TabsList>
 
         {/* Performance Tab */}
         <TabsContent value="performance">
-          <PerformanceSection stats={overviewStats} bestCourse={bestCourse} />
+          <PerformanceSection
+            stats={overviewStats}
+            extendedStats={performanceExtendedStats}
+            bestCourse={bestCourse}
+          />
         </TabsContent>
 
-        {/* Patterns Tab */}
-        <TabsContent value="patterns">
-          <PatternsSection
+        {/* Activity Tab (merged with Patterns) */}
+        <TabsContent value="activity">
+          <ActivitySection
+            roundsPerMonth={roundsPerMonth}
+            holesPlayedStats={holesPlayedStats}
             dayOfWeekStats={dayOfWeekStats}
             timeOfDayStats={timeOfDayStats}
+            activityStats={activityStats}
           />
         </TabsContent>
 
         {/* Courses Tab */}
         <TabsContent value="courses">
-          <CourseAnalyticsTab courses={coursePerformance} />
-        </TabsContent>
-
-        {/* Activity Tab */}
-        <TabsContent value="activity">
-          <ActivityTab
-            roundsPerMonth={roundsPerMonth}
-            holesPlayedStats={holesPlayedStats}
+          <CoursesSection
+            courses={coursePerformance}
+            uniqueCourses={performanceExtendedStats.uniqueCourses}
+            totalRounds={overviewStats.totalRounds}
           />
         </TabsContent>
 
-        {/* Scoring Tab */}
-        <TabsContent value="scoring">
-          <ScoringBreakdownSection stats={funStats} />
+        {/* Frivolities Tab (renamed from Scoring) */}
+        <TabsContent value="frivolities">
+          <FrivolitiesSection stats={funStats} />
         </TabsContent>
       </Tabs>
-    </div>
-  );
-}
-
-// Course Analytics Tab Content
-function CourseAnalyticsTab({ courses }: { courses: CoursePerformance[] }) {
-  if (courses.length === 0) {
-    return (
-      <Card>
-        <CardContent className="p-12 text-center text-muted-foreground">
-          <div className="text-4xl mb-4">🏌️</div>
-          <p className="text-lg font-medium">No course data yet</p>
-          <p className="text-sm">Play more rounds to see course analytics</p>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  const bestCourse = [...courses].sort(
-    (a, b) => a.avgDifferential - b.avgDifferential
-  )[0];
-  const worstCourse = [...courses].sort(
-    (a, b) => b.avgDifferential - a.avgDifferential
-  )[0];
-  const mostPlayed = courses[0]; // Already sorted by round count
-
-  return (
-    <div className="space-y-6">
-      {/* Highlight Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm text-muted-foreground">
-              Most Played
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="font-semibold">
-              {getFlagEmoji(mostPlayed.country)} {mostPlayed.courseName}
-            </p>
-            <p className="text-sm text-muted-foreground">
-              {mostPlayed.roundCount} rounds
-            </p>
-          </CardContent>
-        </Card>
-        <Card className="bg-gradient-to-br from-green-500/10 to-emerald-500/10 border-green-500/20">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm text-muted-foreground">
-              Best Performance
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="font-semibold">
-              {getFlagEmoji(bestCourse.country)} {bestCourse.courseName}
-            </p>
-            <p className="text-sm text-muted-foreground">
-              Avg diff: {bestCourse.avgDifferential.toFixed(1)}
-            </p>
-          </CardContent>
-        </Card>
-        <Card className="bg-gradient-to-br from-orange-500/10 to-amber-500/10 border-orange-500/20">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm text-muted-foreground">
-              Challenging Course
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="font-semibold">
-              {getFlagEmoji(worstCourse.country)} {worstCourse.courseName}
-            </p>
-            <p className="text-sm text-muted-foreground">
-              Avg diff: {worstCourse.avgDifferential.toFixed(1)}
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Full Table */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">All Courses</CardTitle>
-        </CardHeader>
-        <CardContent className="p-0">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Course</TableHead>
-                <TableHead className="text-right">Rounds</TableHead>
-                <TableHead className="text-right">Avg Diff</TableHead>
-                <TableHead className="text-right hidden md:table-cell">Best</TableHead>
-                <TableHead className="text-right hidden md:table-cell">Worst</TableHead>
-                <TableHead className="text-right hidden lg:table-cell">Avg Score</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {courses.map((course) => (
-                <TableRow key={course.courseId}>
-                  <TableCell>
-                    <span className="mr-2">{getFlagEmoji(course.country)}</span>
-                    {course.courseName}
-                    <span className="text-muted-foreground text-xs ml-2 hidden sm:inline">
-                      {course.city}
-                    </span>
-                  </TableCell>
-                  <TableCell className="text-right">{course.roundCount}</TableCell>
-                  <TableCell className="text-right">
-                    {course.avgDifferential.toFixed(1)}
-                  </TableCell>
-                  <TableCell className="text-right hidden md:table-cell">
-                    {course.bestDifferential.toFixed(1)}
-                  </TableCell>
-                  <TableCell className="text-right hidden md:table-cell">
-                    {course.worstDifferential.toFixed(1)}
-                  </TableCell>
-                  <TableCell className="text-right hidden lg:table-cell">
-                    {Math.round(course.avgScore)}
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
-    </div>
-  );
-}
-
-// Activity Tab Content
-function ActivityTab({
-  roundsPerMonth,
-  holesPlayedStats,
-}: {
-  roundsPerMonth: ReturnType<typeof calculateRoundsPerMonth>;
-  holesPlayedStats: HolesPlayedStats[];
-}) {
-  const nineHole = holesPlayedStats.find((stats) => stats.type === "9-hole");
-  const eighteenHole = holesPlayedStats.find((stats) => stats.type === "18-hole");
-
-  return (
-    <div className="space-y-6">
-      {/* Rounds Per Month Chart */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Rounds Per Month</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <RoundsPerMonthChart data={roundsPerMonth} />
-        </CardContent>
-      </Card>
-
-      {/* 9 vs 18 Hole Comparison */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Round Types</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center justify-center gap-8 md:gap-16 py-8">
-            <div className="text-center">
-              <div className="text-5xl md:text-6xl font-bold">{nineHole?.count || 0}</div>
-              <p className="text-sm text-muted-foreground mt-2">9-Hole Rounds</p>
-              {nineHole && nineHole.count > 0 && (
-                <p className="text-xs text-muted-foreground">
-                  Avg diff: {nineHole.avgDifferential.toFixed(1)}
-                </p>
-              )}
-            </div>
-            <div className="text-4xl text-muted-foreground font-light">vs</div>
-            <div className="text-center">
-              <div className="text-5xl md:text-6xl font-bold">{eighteenHole?.count || 0}</div>
-              <p className="text-sm text-muted-foreground mt-2">18-Hole Rounds</p>
-              {eighteenHole && eighteenHole.count > 0 && (
-                <p className="text-xs text-muted-foreground">
-                  Avg diff: {eighteenHole.avgDifferential.toFixed(1)}
-                </p>
-              )}
-            </div>
-          </div>
-        </CardContent>
-      </Card>
     </div>
   );
 }

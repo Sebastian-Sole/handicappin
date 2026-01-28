@@ -13,14 +13,16 @@ const StatisticsPage = async () => {
     redirect("/sign-in");
   }
 
-  // Note: Premium access check is handled by middleware
-  // This page path (/statistics) is listed in PREMIUM_PATHS
+  // Note: Unlimited access check is handled by middleware
+  // This page path (/statistics) is listed in UNLIMITED_PATHS, requiring unlimited/lifetime plan
 
   try {
     const scorecards = await api.scorecard.getAllScorecardsByUserId({
       userId: data.user.id,
     });
     const profile = await api.auth.getProfileFromUserId(data.user.id);
+
+    console.log(scorecards);
 
     return (
       <Suspense fallback={<StatisticsSkeleton />}>

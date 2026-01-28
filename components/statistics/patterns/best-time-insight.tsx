@@ -1,6 +1,7 @@
 "use client";
 
 import { Card, CardContent } from "@/components/ui/card";
+import { formatDifferential, isValidNumber } from "@/lib/statistics/format-utils";
 import type { DayOfWeekStats, TimeOfDayStats } from "@/types/statistics";
 
 interface BestTimeInsightProps {
@@ -19,7 +20,9 @@ export function BestTimeInsight({
   timeOfDayStats,
 }: BestTimeInsightProps) {
   // Find best day of week (lowest avg differential among days with rounds)
-  const daysWithRounds = dayOfWeekStats.filter((day) => day.roundCount > 0);
+  const daysWithRounds = dayOfWeekStats.filter(
+    (day) => day.roundCount > 0 && isValidNumber(day.avgDifferential)
+  );
   if (daysWithRounds.length === 0) {
     return null;
   }
@@ -29,21 +32,27 @@ export function BestTimeInsight({
   )[0];
 
   // Find best time of day (lowest avg score among periods with rounds)
-  const timesWithRounds = timeOfDayStats.filter((time) => time.roundCount > 0);
+  const timesWithRounds = timeOfDayStats.filter(
+    (time) => time.roundCount > 0 && isValidNumber(time.avgScore)
+  );
   const bestTime =
     timesWithRounds.length > 0
       ? [...timesWithRounds].sort((a, b) => a.avgScore - b.avgScore)[0]
       : null;
 
   // Calculate overall average differential for comparison
+  const totalRounds = daysWithRounds.reduce((sum, day) => sum + day.roundCount, 0);
   const overallAvgDifferential =
-    daysWithRounds.reduce(
-      (sum, day) => sum + day.avgDifferential * day.roundCount,
-      0
-    ) / daysWithRounds.reduce((sum, day) => sum + day.roundCount, 0);
+    totalRounds > 0
+      ? daysWithRounds.reduce(
+          (sum, day) => sum + day.avgDifferential * day.roundCount,
+          0
+        ) / totalRounds
+      : 0;
 
   const strokesDifference = overallAvgDifferential - bestDay.avgDifferential;
-  const hasSignificantDifference = strokesDifference >= 0.5;
+  const hasSignificantDifference =
+    isValidNumber(strokesDifference) && strokesDifference >= 0.5;
 
   // Build the insight message
   let insightMessage = "";
@@ -68,7 +77,8 @@ export function BestTimeInsight({
             <h3 className="font-semibold text-lg">When You Play Best</h3>
             <p className="text-muted-foreground">{insightMessage}</p>
             <p className="text-xs text-muted-foreground mt-1">
-              {bestDay.day}: {bestDay.avgDifferential.toFixed(1)} avg differential ({bestDay.roundCount} rounds)
+              {bestDay.day}: {formatDifferential(bestDay.avgDifferential)} avg
+              differential ({bestDay.roundCount} rounds)
             </p>
           </div>
         </div>

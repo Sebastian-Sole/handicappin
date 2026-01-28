@@ -28,15 +28,15 @@ export function DayOfWeekChart({ data }: DayOfWeekChartProps) {
   }
 
   return (
-    <div className="aspect-video">
-      <ChartContainer
-        config={{
-          rounds: {
-            label: "Rounds",
-            color: "hsl(var(--chart-1))",
-          },
-        }}
-      >
+    <ChartContainer
+      className="h-48 w-full"
+      config={{
+        rounds: {
+          label: "Rounds",
+          color: "var(--primary)",
+        },
+      }}
+    >
         <BarChart data={chartData} accessibilityLayer>
           <CartesianGrid vertical={false} />
           <XAxis dataKey="day" tickLine={false} axisLine={false} tickMargin={8} />
@@ -44,7 +44,6 @@ export function DayOfWeekChart({ data }: DayOfWeekChartProps) {
           <ChartTooltip cursor={false} content={<ChartTooltipContent />} />
           <Bar dataKey="rounds" fill="var(--color-rounds)" radius={[4, 4, 0, 0]} />
         </BarChart>
-      </ChartContainer>
-    </div>
+    </ChartContainer>
   );
 }

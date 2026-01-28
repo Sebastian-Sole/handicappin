@@ -1,4 +1,4 @@
-import { Hole, Score, Tee } from "./scorecard.ts";
+import { Hole, Score, Tee } from "./shared-schemas.ts";
 
 export type ProcessedRound = {
   id: number;

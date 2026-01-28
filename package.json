@@ -16,7 +16,8 @@
     "email": "email dev",
     "gen:local": "pnpx supabase gen types typescript --local > types/supabase.ts",
     "backfill:subscription-periods": "tsx scripts/backfill-subscription-periods.ts",
-    "check:schema-sync": "node scripts/check-schema-sync.mjs"
+    "check:schema-sync": "node scripts/check-schema-sync.mjs",
+    "dev:all": "concurrently -n next,stripe,supabase -c blue,magenta,green \"pnpm dev\" \"stripe listen --forward-to localhost:3000/api/stripe/webhook\" \"supabase functions serve --no-verify-jwt --env-file supabase/.env.local\""
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.1",
@@ -66,6 +67,7 @@
     "next-themes": "^0.4.6",
     "pg": "^8.13.1",
     "postgres": "^3.4.5",
+    "prettier": "^3.8.1",
     "react": "19.2.1",
     "react-day-picker": "^9.9.0",
     "react-dom": "19.2.1",
@@ -88,6 +90,7 @@
     "@types/pg": "^8.11.10",
     "@types/react": "19.2.7",
     "@types/react-dom": "19.2.3",
+    "concurrently": "^9.2.1",
     "drizzle-kit": "^0.31.4",
     "drizzle-orm": "^0.44.5",
     "eslint": "^9.34.0",

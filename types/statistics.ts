@@ -96,4 +96,127 @@ export interface FunStats {
   daysSinceLastRound: number;
   golfAgeDays: number;
   playerType: PlayerTypeResult;
+  perfectHoles: PerfectHoles;
+  bogeyFreeRounds: number;
+  // New fun stats
+  holeByHoleStats: HoleByHoleStats;
+  lunarPerformance: LunarPerformance;
+  uniqueHolesPlayed: number;
+  uniqueCoursesPlayed: number;
+  countriesPlayed: number;
+}
+
+export interface PerfectHoles {
+  total: number;
+  eagles: number;
+  birdies: number;
+  pars: number;
+}
+
+export interface ActivityStats {
+  avgRoundsPerMonth: number;
+  mostActiveMonth: { month: string; year: number; count: number } | null;
+  longestGap: number;
+  currentStreak: number;
+  seasonalStats: SeasonalStats[];
+}
+
+export interface SeasonalStats {
+  season: string;
+  roundCount: number;
+  avgDifferential: number;
+}
+
+export interface PerformanceExtendedStats {
+  consistencyRating: number;
+  scoringConsistency: number;
+  bestMonth: { month: string; year: number; avgDifferential: number; roundCount: number } | null;
+  uniqueCourses: number;
+  exceptionalRounds: ExceptionalRound[];
+}
+
+export interface ExceptionalRound {
+  roundId: number;
+  courseName: string;
+  country: string;
+  date: string;
+  differential: number;
+  adjustment: number;
+}
+
+// Hole-by-hole analysis types
+export interface HoleNumberStats {
+  holeNumber: number;
+  avgStrokes: number;
+  avgOverPar: number;
+  totalPlayed: number;
+  parCount: number;
+  birdieCount: number;
+  bogeyCount: number;
+}
+
+export interface FrontBackComparison {
+  front9: {
+    avgStrokes: number;
+    avgOverPar: number;
+    totalHoles: number;
+  };
+  back9: {
+    avgStrokes: number;
+    avgOverPar: number;
+    totalHoles: number;
+  };
+  betterHalf: "front" | "back" | "even";
+  difference: number;
+}
+
+export interface StreakStats {
+  longestParStreak: number;
+  longestBogeyStreak: number;
+  currentParStreak: number;
+  averageParStreak: number;
+}
+
+export interface DistancePerformance {
+  category: "short" | "medium" | "long";
+  label: string;
+  avgOverPar: number;
+  holeCount: number;
+  minDistance: number;
+  maxDistance: number;
+}
+
+export interface HoleByHoleStats {
+  holeStats: HoleNumberStats[];
+  frontBackComparison: FrontBackComparison;
+  streakStats: StreakStats;
+  distancePerformance: DistancePerformance[];
+  totalDistancePlayed: number;
+  luckyNumber: number | null;
+  signatureScore: number | null;
+}
+
+// Lunar phase types
+export type LunarPhase =
+  | "new_moon"
+  | "waxing_crescent"
+  | "first_quarter"
+  | "waxing_gibbous"
+  | "full_moon"
+  | "waning_gibbous"
+  | "last_quarter"
+  | "waning_crescent";
+
+export interface LunarPhaseStats {
+  phase: LunarPhase;
+  phaseName: string;
+  emoji: string;
+  roundCount: number;
+  avgDifferential: number;
+}
+
+export interface LunarPerformance {
+  phaseStats: LunarPhaseStats[];
+  bestPhase: LunarPhaseStats | null;
+  worstPhase: LunarPhaseStats | null;
 }

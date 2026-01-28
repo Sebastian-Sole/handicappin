@@ -1,9 +1,9 @@
 import { Database } from "@/types/supabase";
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
-import { PREMIUM_PATHS } from "@/utils/billing/constants";
+import { PREMIUM_PATHS, UNLIMITED_PATHS } from "@/utils/billing/constants";
 import { BillingClaims, getAppMetadataFromJWT } from "@/utils/supabase/jwt";
-import { hasPremiumAccess } from "@/utils/billing/access";
+import { hasPremiumAccess, hasUnlimitedAccess } from "@/utils/billing/access";
 
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({
@@ -105,6 +105,7 @@ export async function updateSession(request: NextRequest) {
 
   // Check access control for authenticated users on protected routes
   const premiumPaths = PREMIUM_PATHS;
+  const unlimitedPaths = UNLIMITED_PATHS;
 
   if (
     enrichedUser &&
@@ -190,11 +191,26 @@ export async function updateSession(request: NextRequest) {
         normalizedPathname.startsWith(path)
       );
 
-      // Add specific check for round calculation page
+      // Check unlimited routes (dashboard, statistics - require unlimited/lifetime plan)
+      const isUnlimitedRoute = unlimitedPaths.some((path) =>
+        normalizedPathname.startsWith(path)
+      );
+
+      // Round calculation page also requires unlimited access
       const isRoundCalculationRoute =
         /^\/rounds\/[^/]+\/calculation$/.test(normalizedPathname);
 
-      const requiresPremium = isPremiumRoute || isRoundCalculationRoute;
+      const requiresPremium = isPremiumRoute;
+      const requiresUnlimited = isUnlimitedRoute || isRoundCalculationRoute;
+
+      // Check unlimited access first (more restrictive)
+      const userHasUnlimitedAccess = hasUnlimitedAccess(billing);
+
+      if (requiresUnlimited && !userHasUnlimitedAccess) {
+        const url = request.nextUrl.clone();
+        url.pathname = "/upgrade";
+        return NextResponse.redirect(url);
+      }
 
       if (requiresPremium && !userHasPremiumAccess) {
         const url = request.nextUrl.clone();

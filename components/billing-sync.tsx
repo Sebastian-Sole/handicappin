@@ -4,8 +4,8 @@ import { useEffect, useState } from "react";
 import { createClientComponentClient } from "@/utils/supabase/client";
 import { useRouter, usePathname } from "next/navigation";
 import { getBillingFromJWT } from "@/utils/supabase/jwt";
-import { PREMIUM_PATHS } from "@/utils/billing/constants";
-import { hasPremiumAccess } from "@/utils/billing/access";
+import { PREMIUM_PATHS, UNLIMITED_PATHS } from "@/utils/billing/constants";
+import { hasPremiumAccess, hasUnlimitedAccess } from "@/utils/billing/access";
 
 /**
  * Background component that listens for billing changes via Supabase Realtime
@@ -117,26 +117,35 @@ export function BillingSync() {
                 // Continue anyway - client-side refresh may be enough
               }
 
-              // Step 3: Check if user lost premium access while on a premium page
+              // Step 3: Check if user lost access while on a protected page
               const newBilling = getBillingFromJWT(clientData.session);
               const isOnPremiumPage = PREMIUM_PATHS.some((path) => pathname.startsWith(path));
+              const isOnUnlimitedPage = UNLIMITED_PATHS.some((path) => pathname.startsWith(path));
 
               if (newBilling) {
                 // Use shared access control logic (same as middleware)
                 const userHasPremiumAccess = hasPremiumAccess(newBilling);
+                const userHasUnlimitedAccess = hasUnlimitedAccess(newBilling);
 
                 console.log("🔐 Access check:", {
                   hasPremiumAccess: userHasPremiumAccess,
+                  hasUnlimitedAccess: userHasUnlimitedAccess,
                   isOnPremiumPage,
+                  isOnUnlimitedPage,
                   plan: newBilling.plan,
                   status: newBilling.status
                 });
 
-                // Step 4: Redirect if access was revoked while on premium page
-                if (isOnPremiumPage && !userHasPremiumAccess) {
-                  console.warn("⚠️ Access revoked while on premium page - redirecting to /upgrade");
+                // Step 4: Redirect if access was revoked while on protected page
+                // Check unlimited pages first (more restrictive)
+                if (isOnUnlimitedPage && !userHasUnlimitedAccess) {
+                  console.warn("⚠️ Unlimited access revoked while on unlimited page - redirecting to /upgrade");
+                  router.push("/upgrade?expired=true");
+                  return; // Don't call router.refresh() - we're navigating
+                }
 
-                  // Redirect to upgrade page with expired param for inline messaging
+                if (isOnPremiumPage && !userHasPremiumAccess) {
+                  console.warn("⚠️ Premium access revoked while on premium page - redirecting to /upgrade");
                   router.push("/upgrade?expired=true");
                   return; // Don't call router.refresh() - we're navigating
                 }
