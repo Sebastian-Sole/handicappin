@@ -7,6 +7,21 @@ vi.mock("@sentry/nextjs", () => ({
   captureException: vi.fn(),
 }));
 
+// Type for the options object passed to captureException
+// This matches the structure we pass in captureSentryError
+type CaptureOptions = {
+  level?: string;
+  user?: { id: string };
+  tags?: Record<string, string>;
+  contexts?: {
+    user_context?: { user_id: string; email: string };
+    stripe?: { customer_id: string; session_id: string; subscription_id: string };
+    event?: { event_id: string; timestamp: string };
+  };
+  fingerprint?: string[];
+  extra?: Record<string, unknown>;
+};
+
 describe("Sentry Error Capture with PII Redaction", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -25,7 +40,8 @@ describe("Sentry Error Capture with PII Redaction", () => {
     });
 
     expect(mockCaptureException).toHaveBeenCalledTimes(1);
-    const [capturedError, options] = mockCaptureException.mock.calls[0];
+    const [capturedError, rawOptions] = mockCaptureException.mock.calls[0];
+    const options = rawOptions as CaptureOptions;
 
     // Error should be sanitized (not the same instance as original)
     expect((capturedError as Error).message).toBe("Test error");
@@ -51,7 +67,8 @@ describe("Sentry Error Capture with PII Redaction", () => {
     captureSentryError(error, {});
 
     expect(mockCaptureException).toHaveBeenCalledTimes(1);
-    const [, options] = mockCaptureException.mock.calls[0];
+    const [, rawOptions] = mockCaptureException.mock.calls[0];
+    const options = rawOptions as CaptureOptions;
 
     expect(options?.level).toBe("error"); // Default level
     expect(options?.user).toBeUndefined(); // No user context
@@ -68,7 +85,8 @@ describe("Sentry Error Capture with PII Redaction", () => {
     });
 
     expect(mockCaptureException).toHaveBeenCalledTimes(1);
-    const [, options] = mockCaptureException.mock.calls[0];
+    const [, rawOptions] = mockCaptureException.mock.calls[0];
+    const options = rawOptions as CaptureOptions;
 
     expect(options?.level).toBe("warning");
   });
@@ -86,7 +104,8 @@ describe("Sentry Error Capture with PII Redaction", () => {
     });
 
     expect(mockCaptureException).toHaveBeenCalledTimes(1);
-    const [, options] = mockCaptureException.mock.calls[0];
+    const [, rawOptions] = mockCaptureException.mock.calls[0];
+    const options = rawOptions as CaptureOptions;
 
     expect(options?.tags?.event_type).toBe("payment_failed");
     expect(options?.tags?.payment_method).toBe("stripe");
@@ -105,7 +124,8 @@ describe("Sentry Error Capture with PII Redaction", () => {
     });
 
     expect(mockCaptureException).toHaveBeenCalledTimes(1);
-    const [, options] = mockCaptureException.mock.calls[0];
+    const [, rawOptions] = mockCaptureException.mock.calls[0];
+    const options = rawOptions as CaptureOptions;
 
     // Extra context now includes original_error_message for debugging
     expect(options?.extra).toEqual({
@@ -128,7 +148,8 @@ describe("Sentry Error Capture with PII Redaction", () => {
     });
 
     expect(mockCaptureException).toHaveBeenCalledTimes(1);
-    const [, options] = mockCaptureException.mock.calls[0];
+    const [, rawOptions] = mockCaptureException.mock.calls[0];
+    const options = rawOptions as CaptureOptions;
 
     expect(options?.fingerprint).toEqual([
       "Error",
@@ -148,7 +169,8 @@ describe("Sentry Error Capture with PII Redaction", () => {
     });
 
     expect(mockCaptureException).toHaveBeenCalledTimes(1);
-    const [, options] = mockCaptureException.mock.calls[0];
+    const [, rawOptions] = mockCaptureException.mock.calls[0];
+    const options = rawOptions as CaptureOptions;
 
     expect(options?.fingerprint).toEqual([
       "Error",
@@ -166,7 +188,8 @@ describe("Sentry Error Capture with PII Redaction", () => {
     });
 
     expect(mockCaptureException).toHaveBeenCalledTimes(1);
-    const [, options] = mockCaptureException.mock.calls[0];
+    const [, rawOptions] = mockCaptureException.mock.calls[0];
+    const options = rawOptions as CaptureOptions;
 
     expect(options?.contexts?.event?.event_id).toBe("evt_123456");
     expect(options?.contexts?.event?.timestamp).toMatch(/^\d{4}-\d{2}-\d{2}T/);

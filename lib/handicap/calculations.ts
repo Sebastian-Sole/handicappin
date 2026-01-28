@@ -195,35 +195,40 @@ export function calculateHandicapIndex(scoreDifferentials: number[]): number {
 
 /**
  * Calculates the Low Handicap Index for a given round based on the 365-day window.
+ * Per USGA Rule 5.7: The Low Handicap Index is the lowest Handicap Index from
+ * the player's scoring record in the 365-day period preceding the day the
+ * most recent score was played.
+ *
+ * @returns The lowest handicap index in the window, or null if no approved rounds
+ *          exist in the 365-day window (meaning caps should not be applied).
  */
 export function calculateLowHandicapIndex(
   rounds: ProcessedRound[],
   currentRoundIndex: number
-): number {
-  // Exclude the current round
-  const previousRounds = rounds.slice(0, currentRoundIndex);
-  // Find the most recent approved round before the current round
-  const mostRecentApprovedRound = [...previousRounds]
-    .reverse()
-    .find((r) => (r as ProcessedRound).approvalStatus === "approved");
-
-  // If no approved round is found, fallback to current round's date
-  const referenceDate = mostRecentApprovedRound
-    ? new Date(mostRecentApprovedRound.teeTime)
-    : new Date(rounds[currentRoundIndex].teeTime);
-
-  const oneYearAgo = new Date(referenceDate);
+): number | null {
+  // Per USGA: "365 days preceding the day the most recent score was played"
+  // The "most recent score" is the current round we're calculating for
+  const currentRoundDate = new Date(rounds[currentRoundIndex].teeTime);
+  const oneYearAgo = new Date(currentRoundDate);
   oneYearAgo.setDate(oneYearAgo.getDate() - LOW_HANDICAP_WINDOW_DAYS);
 
-  // Filter rounds within the 1-year window from the reference date
-  const relevantRounds = rounds
-    .slice(0, currentRoundIndex + 1)
-    .filter(
-      (r) =>
-        r.teeTime >= oneYearAgo &&
-        r.teeTime <= referenceDate &&
-        r.approvalStatus === "approved"
-    );
+  // Get all PREVIOUS rounds (exclude the current round being processed)
+  const previousRounds = rounds.slice(0, currentRoundIndex);
+
+  // Filter to approved rounds within the 365-day window preceding the current round
+  // Convert teeTime to Date to ensure proper comparison (may be string from database)
+  const relevantRounds = previousRounds.filter(
+    (r) =>
+      new Date(r.teeTime) >= oneYearAgo &&
+      new Date(r.teeTime) <= currentRoundDate &&
+      r.approvalStatus === "approved"
+  );
+
+  // Per USGA Rule 5.7: If no rounds exist in the 365-day window,
+  // no Low Handicap Index is established and caps should not apply
+  if (relevantRounds.length === 0) {
+    return null;
+  }
 
   const handicapIndices = relevantRounds.map((r) => r.updatedHandicapIndex);
   return Math.min(...handicapIndices);
@@ -231,11 +236,27 @@ export function calculateLowHandicapIndex(
 
 /**
  * Applies soft and hard caps to a newly calculated handicap index.
+ * Per USGA Rule 5.7:
+ * - Soft Cap: If new index is more than 3.0 strokes above Low Handicap Index,
+ *   the increase above 3.0 is reduced by 50%
+ * - Hard Cap: Handicap Index cannot increase more than 5.0 strokes above
+ *   Low Handicap Index
+ *
+ * @param newIndex - The newly calculated handicap index
+ * @param lowHandicapIndex - The lowest handicap index in the 365-day window,
+ *                           or null if no Low Handicap Index is established
+ * @returns The capped handicap index, or the original index if no caps apply
  */
 export function applyHandicapCaps(
   newIndex: number,
-  lowHandicapIndex: number
+  lowHandicapIndex: number | null
 ): number {
+  // Per USGA Rule 5.7: If no Low Handicap Index is established
+  // (no rounds in the 365-day window), caps do not apply
+  if (lowHandicapIndex === null) {
+    return newIndex;
+  }
+
   const difference = newIndex - lowHandicapIndex;
 
   if (difference <= 0) {

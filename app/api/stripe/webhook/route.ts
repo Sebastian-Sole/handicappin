@@ -260,9 +260,11 @@ async function handleCustomerCreated(customer: Stripe.Customer) {
   const userId = customer.metadata?.supabase_user_id;
 
   if (!userId) {
-    throw new Error(
-      `Missing supabase_user_id in customer ${customer.id} metadata - cannot link customer to user`
+    // Customer created by another application (e.g., Clerk) - skip gracefully
+    logWebhookInfo(
+      `Skipping customer ${customer.id} - no supabase_user_id in metadata (likely from another application)`
     );
+    return;
   }
 
   try {
@@ -332,9 +334,11 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
   });
 
   if (!userId) {
-    throw new Error(
-      `Missing supabase_user_id in checkout session ${session.id} - cannot grant access`
+    // Checkout from another application (e.g., Clerk) - skip gracefully
+    logWebhookInfo(
+      `Skipping checkout session ${session.id} - no supabase_user_id in metadata (likely from another application)`
     );
+    return;
   }
 
   logWebhookSuccess(`Checkout completed for user: ${userId}`);
@@ -1047,9 +1051,11 @@ async function handleInvoicePaymentFailed(invoice: Stripe.Invoice) {
   );
 
   if (!subscriptionId) {
-    throw new Error(
-      `Invoice ${invoice.id} has no subscription ID - cannot update user status`
+    // Invoice without subscription (e.g., one-time payment from another app) - skip gracefully
+    logWebhookInfo(
+      `Skipping invoice ${invoice.id} - no subscription ID (likely from another application)`
     );
+    return;
   }
 
   try {
@@ -1058,9 +1064,11 @@ async function handleInvoicePaymentFailed(invoice: Stripe.Invoice) {
     const userId = subscription.metadata?.supabase_user_id;
 
     if (!userId) {
-      throw new Error(
-        `No user ID in subscription ${subscriptionId} metadata for failed invoice ${invoice.id}`
+      // Subscription from another application (e.g., Clerk) - skip gracefully
+      logWebhookInfo(
+        `Skipping failed invoice ${invoice.id} - no supabase_user_id in subscription metadata (likely from another application)`
       );
+      return;
     }
 
     // Verify customer ownership (security check)
@@ -1361,9 +1369,11 @@ async function handleSubscriptionChange(subscription: Stripe.Subscription) {
       : subscription.customer?.id;
 
   if (!userId) {
-    throw new Error(
-      `Missing supabase_user_id in subscription ${subscription.id} - cannot update plan`
+    // Subscription from another application (e.g., Clerk) - skip gracefully
+    logWebhookInfo(
+      `Skipping subscription ${subscription.id} - no supabase_user_id in metadata (likely from another application)`
     );
+    return;
   }
 
   if (!customerId) {
@@ -1559,9 +1569,11 @@ async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
       : subscription.customer?.id;
 
   if (!userId) {
-    throw new Error(
-      `Missing supabase_user_id in deleted subscription ${subscription.id} - cannot revert plan`
+    // Subscription from another application (e.g., Clerk) - skip gracefully
+    logWebhookInfo(
+      `Skipping deleted subscription ${subscription.id} - no supabase_user_id in metadata (likely from another application)`
     );
+    return;
   }
 
   if (!customerId) {

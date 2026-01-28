@@ -39,6 +39,7 @@ interface MultiPageDialogProps {
   open: boolean;
   setOpen: (open: boolean) => void;
   className?: string;
+  hideProgressDots?: boolean;
 }
 
 const ProgressDots: React.FC<{ total: number; current: number }> = ({
@@ -67,6 +68,7 @@ export const MultiPageDialog: React.FC<MultiPageDialogProps> = ({
   open,
   setOpen,
   className,
+  hideProgressDots = false,
 }) => {
   const [currentPage, setCurrentPage] = useState(0);
   const pages = React.Children.toArray(
@@ -102,7 +104,9 @@ export const MultiPageDialog: React.FC<MultiPageDialogProps> = ({
           >
             Previous
           </Button>
-          <ProgressDots total={pages.length} current={currentPage} />
+          {!hideProgressDots && (
+            <ProgressDots total={pages.length} current={currentPage} />
+          )}
           {currentPage === pages.length - 1 && (
             <Button
               type="submit"

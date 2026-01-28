@@ -13,6 +13,7 @@ import {
   DropdownMenuTrigger,
 } from "../ui/dropdown-menu";
 import {
+  BarChart3,
   CirclePlus,
   LayoutDashboardIcon,
   Menu,
@@ -34,8 +35,9 @@ function LogoBrand() {
       <Image
         src="/images/logo.png"
         alt="Handicappin Golf Handicap Tracker Logo"
-        width={470}
-        height={470}
+        width={32}
+        height={32}
+        sizes="32px"
         className="h-8 w-8"
       />
       <Large>Handicappin&apos;</Large>
@@ -87,6 +89,7 @@ function UnauthenticatedNavbar() {
                   variant="ghost"
                   size="icon"
                   className="rounded-full"
+                  aria-label="Open navigation menu"
                 >
                   <Menu className="h-6 w-6" />
                 </Button>
@@ -180,6 +183,13 @@ export async function Navbar() {
           >
             Dashboard
           </Link>
+          <Link
+            href="/statistics"
+            className="hover:underline hover:underline-offset-4"
+            prefetch={true}
+          >
+            Statistics
+          </Link>
         </nav>
         <div className="flex items-center gap-4 xs:w-1/3 justify-end">
           <Link href={"/rounds/add"} className="xl:block hidden">
@@ -220,6 +230,12 @@ export async function Navbar() {
                   Dashboard
                 </DropdownMenuItem>
               </Link>
+              <Link href="/statistics">
+                <DropdownMenuItem>
+                  <BarChart3 className="h-4 w-4 mr-2" />
+                  Statistics
+                </DropdownMenuItem>
+              </Link>
               <DropdownMenuSeparator />
               <Link href={"/rounds/add"}>
                 <DropdownMenuItem>
@@ -240,6 +256,7 @@ export async function Navbar() {
                   variant="ghost"
                   size="icon"
                   className="rounded-full"
+                  aria-label="Open navigation menu"
                 >
                   <Menu className="h-6 w-6" />
                 </Button>
@@ -273,6 +290,13 @@ export async function Navbar() {
                     prefetch={true}
                   >
                     Dashboard
+                  </Link>
+                  <Link
+                    href="/statistics"
+                    className="hover:underline hover:underline-offset-4"
+                    prefetch={true}
+                  >
+                    Statistics
                   </Link>
                   <Link
                     href="/contact"

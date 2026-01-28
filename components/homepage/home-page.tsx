@@ -111,7 +111,7 @@ export const HomePage = async ({ profile }: HomepageProps) => {
         {/* Hero Section */}
         <section className="w-full relative overflow-hidden">
           {/* Premium gradient background with brand colors */}
-          <div className="absolute inset-0 bg-gradient-to-br from-primary/8 via-accent/20 to-background" />
+          <div className="absolute inset-0 bg-gradient-to-br from-primary/8 via-accent/20 to-primary/20" />
           <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_50%_at_50%_-20%,oklch(0.46_0.16_148_/_0.12),transparent)]" />
           <div className="absolute top-0 right-0 w-1/3 h-full bg-gradient-to-l from-accent/10 to-transparent" />
           {/* Content */}
@@ -142,6 +142,7 @@ export const HomePage = async ({ profile }: HomepageProps) => {
                 <QuickStats
                   activities={activities}
                   lowestDifferential={lowestDifferential}
+                  bestRoundDate={bestRound ? new Date(bestRound.teeTime) : null}
                 />
               </div>
             </div>
