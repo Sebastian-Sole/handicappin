@@ -6,7 +6,7 @@
     "dev": "NODE_OPTIONS='--no-warnings=DEP0169' next dev --turbopack",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint",
+    "lint": "eslint .",
     "gen:types": "pnpx supabase gen types --lang=typescript --project-id \"lssnaapatrurmhbbqadb\" --schema public > types/supabase.ts",
     "test": "vitest",
     "test:unit": "vitest --exclude tests/integration/**",
