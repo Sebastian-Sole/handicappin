@@ -38,6 +38,18 @@ export function formatScore(value: number | null | undefined): string {
 }
 
 /**
+ * Normalize precision to a safe value for toFixed()
+ * Coerces to integer, clamps to 0-20 range, defaults to fallback if invalid
+ */
+function normalizePrecision(precision: number | undefined, fallback: number): number {
+  if (precision === undefined || !Number.isFinite(precision)) {
+    return fallback;
+  }
+  const intPrecision = Math.floor(precision);
+  return Math.max(0, Math.min(20, intPrecision));
+}
+
+/**
  * Format a decimal value safely to specified precision
  * Returns "--" for invalid values
  */
@@ -46,7 +58,8 @@ export function formatDecimal(
   precision: number = 2
 ): string {
   if (!isValidNumber(value)) return "--";
-  return value.toFixed(precision);
+  const safePrecision = normalizePrecision(precision, 2);
+  return value.toFixed(safePrecision);
 }
 
 /**
@@ -70,8 +83,8 @@ export function formatGolfAge(days: number | null | undefined): string {
     const months = Math.floor(days / 30);
     return `${months} month${months !== 1 ? "s" : ""}`;
   }
-  const yearsNum = Number((days / 365).toFixed(1));
-  return `${yearsNum} year${yearsNum !== 1 ? "s" : ""}`;
+  const yearsStr = (days / 365).toFixed(1);
+  return `${yearsStr} years`;
 }
 
 /**
@@ -106,6 +119,7 @@ export function formatStrokesPerHole(
  */
 export function formatWithSign(value: number | null | undefined, precision: number = 1): string {
   if (!isValidNumber(value)) return "--";
+  const safePrecision = normalizePrecision(precision, 1);
   const prefix = value > 0 ? "+" : "";
-  return `${prefix}${value.toFixed(precision)}`;
+  return `${prefix}${value.toFixed(safePrecision)}`;
 }

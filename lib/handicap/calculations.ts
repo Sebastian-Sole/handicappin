@@ -216,10 +216,11 @@ export function calculateLowHandicapIndex(
   const previousRounds = rounds.slice(0, currentRoundIndex);
 
   // Filter to approved rounds within the 365-day window preceding the current round
+  // Convert teeTime to Date to ensure proper comparison (may be string from database)
   const relevantRounds = previousRounds.filter(
     (r) =>
-      r.teeTime >= oneYearAgo &&
-      r.teeTime <= currentRoundDate &&
+      new Date(r.teeTime) >= oneYearAgo &&
+      new Date(r.teeTime) <= currentRoundDate &&
       r.approvalStatus === "approved"
   );
 

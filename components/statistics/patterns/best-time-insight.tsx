@@ -54,19 +54,21 @@ export function BestTimeInsight({
   const hasSignificantDifference =
     isValidNumber(strokesDifference) && strokesDifference >= 0.5;
 
-  // Build the insight message
-  let insightMessage = "";
+  // Build the insight message - keep day and time as separate observations
+  // since they are computed independently (not a cross-analysis of day×time)
+  let dayInsight = "";
   if (hasSignificantDifference) {
-    insightMessage = `You play ${strokesDifference.toFixed(1)} strokes better on ${bestDay.day}s`;
-    if (bestTime) {
-      insightMessage += ` ${TIME_PERIOD_LABELS[bestTime.period]}`;
-    }
+    dayInsight = `You play ${strokesDifference.toFixed(1)} strokes better on ${bestDay.day}s.`;
   } else {
-    insightMessage = `Your best day is ${bestDay.day}`;
-    if (bestTime) {
-      insightMessage += ` ${TIME_PERIOD_LABELS[bestTime.period]}`;
-    }
+    dayInsight = `Your best day is ${bestDay.day}.`;
   }
+
+  let timeInsight = "";
+  if (bestTime) {
+    timeInsight = ` You also tend to play better ${TIME_PERIOD_LABELS[bestTime.period]}.`;
+  }
+
+  const insightMessage = dayInsight + timeInsight;
 
   return (
     <Card className="bg-gradient-to-r from-green-500/10 to-emerald-500/10 border-green-500/20">

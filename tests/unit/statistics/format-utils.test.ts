@@ -111,9 +111,10 @@ describe("Format Utils - Safe Number Formatting", () => {
 
   describe("formatNumber", () => {
     test("should format numbers with locale separators", () => {
-      expect(formatNumber(1000)).toBe("1,000");
-      expect(formatNumber(1000000)).toBe("1,000,000");
-      expect(formatNumber(42)).toBe("42");
+      // Use toLocaleString() for expected values to avoid locale-dependent test failures
+      expect(formatNumber(1000)).toBe((1000).toLocaleString());
+      expect(formatNumber(1000000)).toBe((1000000).toLocaleString());
+      expect(formatNumber(42)).toBe((42).toLocaleString());
     });
 
     test("should return '--' for invalid values", () => {

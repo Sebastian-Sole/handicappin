@@ -43,7 +43,6 @@ import {
   createScorecardForDayOfWeek,
   createScorecardForTimeOfDay,
   createMock9HoleScores,
-  createMockHoles,
   createScoringScenario,
 } from "./test-fixtures";
 
@@ -59,10 +58,14 @@ describe("Statistics Calculations", () => {
     test("should filter scorecards older than 6 months", () => {
       const now = new Date();
       const recent = createMockScorecard({
-        teeTime: new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString(), // 30 days ago
+        teeTime: new Date(
+          now.getTime() - 30 * 24 * 60 * 60 * 1000,
+        ).toISOString(), // 30 days ago
       });
       const old = createMockScorecard({
-        teeTime: new Date(now.getTime() - 200 * 24 * 60 * 60 * 1000).toISOString(), // 200 days ago
+        teeTime: new Date(
+          now.getTime() - 200 * 24 * 60 * 60 * 1000,
+        ).toISOString(), // 200 days ago
       });
 
       const result = filterByTimeRange([recent, old], "6months");
@@ -73,10 +76,14 @@ describe("Statistics Calculations", () => {
     test("should filter scorecards older than 1 year", () => {
       const now = new Date();
       const recent = createMockScorecard({
-        teeTime: new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString(),
+        teeTime: new Date(
+          now.getTime() - 30 * 24 * 60 * 60 * 1000,
+        ).toISOString(),
       });
       const old = createMockScorecard({
-        teeTime: new Date(now.getTime() - 400 * 24 * 60 * 60 * 1000).toISOString(), // 400 days ago
+        teeTime: new Date(
+          now.getTime() - 400 * 24 * 60 * 60 * 1000,
+        ).toISOString(), // 400 days ago
       });
 
       const result = filterByTimeRange([recent, old], "1year");
@@ -100,6 +107,7 @@ describe("Statistics Calculations", () => {
 
       expect(stats.totalRounds).toBe(0);
       expect(stats.avgScore).toBe(0);
+      expect(stats.avgPar).toBeNull();
       expect(stats.bestDifferential).toBe(0);
       expect(stats.worstDifferential).toBe(0);
       expect(stats.improvementRate).toBe(0);
@@ -170,6 +178,22 @@ describe("Statistics Calculations", () => {
       // Improvement rate: (20 - 15) / 20 * 100 = 25%
       expect(stats.improvementRate).toBe(25);
       expect(stats.handicapChange).toBe(-5); // 15 - 20 = -5 (improved)
+    });
+
+    test("should calculate average par from rounds", () => {
+      const scorecards = [
+        createMockScorecard({
+          teeTime: "2024-01-01T10:00:00Z",
+        }),
+        createMockScorecard({
+          teeTime: "2024-01-08T10:00:00Z",
+        }),
+      ];
+
+      const stats = calculateOverviewStats(scorecards, 10.0);
+
+      // Mock scorecards have parPlayed = 72
+      expect(stats.avgPar).toBe(72);
     });
   });
 
@@ -642,10 +666,22 @@ describe("Statistics Calculations", () => {
 
     test("should find month with lowest average differential", () => {
       const scorecards = [
-        createMockScorecard({ teeTime: "2024-01-01T10:00:00Z", scoreDifferential: 10.0 }),
-        createMockScorecard({ teeTime: "2024-01-15T10:00:00Z", scoreDifferential: 12.0 }),
-        createMockScorecard({ teeTime: "2024-02-01T10:00:00Z", scoreDifferential: 5.0 }),
-        createMockScorecard({ teeTime: "2024-02-15T10:00:00Z", scoreDifferential: 6.0 }),
+        createMockScorecard({
+          teeTime: "2024-01-01T10:00:00Z",
+          scoreDifferential: 10.0,
+        }),
+        createMockScorecard({
+          teeTime: "2024-01-15T10:00:00Z",
+          scoreDifferential: 12.0,
+        }),
+        createMockScorecard({
+          teeTime: "2024-02-01T10:00:00Z",
+          scoreDifferential: 5.0,
+        }),
+        createMockScorecard({
+          teeTime: "2024-02-15T10:00:00Z",
+          scoreDifferential: 6.0,
+        }),
       ];
 
       const result = calculateBestMonth(scorecards);
@@ -678,7 +714,12 @@ describe("Statistics Calculations", () => {
     test("should return stats for all 4 seasons", () => {
       const result = calculateSeasonalStats([]);
       expect(result).toHaveLength(4);
-      expect(result.map((s) => s.season)).toEqual(["Spring", "Summer", "Fall", "Winter"]);
+      expect(result.map((s) => s.season)).toEqual([
+        "Spring",
+        "Summer",
+        "Fall",
+        "Winter",
+      ]);
     });
 
     test("should categorize rounds by season correctly", () => {
@@ -817,7 +858,7 @@ describe("Statistics Calculations", () => {
 
       const result = calculateExceptionalRounds(scorecards);
       expect(new Date(result[0].date).getTime()).toBeGreaterThan(
-        new Date(result[1].date).getTime()
+        new Date(result[1].date).getTime(),
       );
     });
   });
@@ -879,7 +920,11 @@ describe("Statistics Calculations", () => {
       const result = calculateDistancePerformance([scorecard]);
 
       expect(result).toHaveLength(3);
-      expect(result.map((d) => d.category)).toEqual(["short", "medium", "long"]);
+      expect(result.map((d) => d.category)).toEqual([
+        "short",
+        "medium",
+        "long",
+      ]);
     });
 
     test("should have correct labels", () => {

@@ -70,9 +70,9 @@ export function CoursesSection({
         )[0]
       : null;
 
-  // Find newest conquest (course with only 1 round, most recent would need date data)
+  // Find a single-play course to highlight (course with only 1 round)
   const singlePlayCourses = courses.filter((c) => c.roundCount === 1);
-  const newestConquest = singlePlayCourses.length > 0 ? singlePlayCourses[0] : null;
+  const singlePlayHighlight = singlePlayCourses.length > 0 ? singlePlayCourses[0] : null;
 
   // Get variety label
   const getVarietyLabel = (score: number): string => {
@@ -223,20 +223,20 @@ export function CoursesSection({
               </CardContent>
             </Card>
           )}
-          {!mostConsistentCourse && newestConquest && (
+          {!mostConsistentCourse && singlePlayHighlight && (
             <Card className="bg-gradient-to-br from-cyan-500/10 to-teal-500/10 border-cyan-500/20">
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm text-muted-foreground">
-                  🆕 Newest Conquest
+                  ⛳ Single-Play Course
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <p className="font-semibold">
-                  {getFlagEmoji(newestConquest.country)} {newestConquest.courseName}
+                  {getFlagEmoji(singlePlayHighlight.country)} {singlePlayHighlight.courseName}
                 </p>
-                <p className="text-sm text-muted-foreground">First time played</p>
+                <p className="text-sm text-muted-foreground">Played once</p>
                 <p className="text-xs text-cyan-600 font-medium mt-1">
-                  {formatDifferential(newestConquest.avgDifferential)} diff
+                  {formatDifferential(singlePlayHighlight.avgDifferential)} diff
                 </p>
               </CardContent>
             </Card>

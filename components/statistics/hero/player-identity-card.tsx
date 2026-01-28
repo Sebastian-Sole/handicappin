@@ -23,7 +23,7 @@ export function PlayerIdentityCard({
   daysSinceLastRound,
 }: PlayerIdentityCardProps) {
   const formatHandicap = (handicap: number) => {
-    if (handicap === 0) return "N/A";
+    if (!Number.isFinite(handicap)) return "N/A";
     return handicap.toFixed(1);
   };
 

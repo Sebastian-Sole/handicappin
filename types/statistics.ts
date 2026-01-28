@@ -3,6 +3,7 @@ export type TimeRange = "6months" | "1year" | "all";
 export interface OverviewStats {
   totalRounds: number;
   avgScore: number;
+  avgPar: number | null;
   bestDifferential: number;
   worstDifferential: number;
   improvementRate: number;

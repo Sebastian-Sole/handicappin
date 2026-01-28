@@ -42,7 +42,8 @@ export function PerformanceSection({
   const getAvgScoreContext = (): string => {
     if (stats.totalRounds === 0) return "No data yet";
     if (!isValidNumber(stats.avgScore)) return "No data yet";
-    const overPar = Math.round(stats.avgScore) - 72;
+    if (!isValidNumber(stats.avgPar)) return `across ${stats.totalRounds} round${stats.totalRounds !== 1 ? "s" : ""}`;
+    const overPar = Math.round(stats.avgScore) - Math.round(stats.avgPar);
     if (overPar === 0) return "Right at par!";
     if (overPar > 0) return `Typically ${overPar} over par`;
     return `Typically ${Math.abs(overPar)} under par`;
@@ -142,9 +143,11 @@ export function PerformanceSection({
             <CardHeader className="pb-2">
               <CardTitle className="text-sm text-muted-foreground flex items-center gap-2">
                 <span>
-                  {isValidNumber(stats.improvementRate) && stats.improvementRate > 0
-                    ? "📈"
-                    : "📉"}
+                  {!isValidNumber(stats.improvementRate) || stats.improvementRate === 0
+                    ? "📊"
+                    : stats.improvementRate > 0
+                      ? "📈"
+                      : "📉"}
                 </span>{" "}
                 Improvement
               </CardTitle>

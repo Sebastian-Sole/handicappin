@@ -14,7 +14,7 @@ begin
 
     -- Insert course
     insert into public.course (name, city, country, website, "approvalStatus")
-    values ('Eiker Golfbane - Portåsen 2018', 'Mjondalen', 'Norway', 'https://egersund-golfklubb.no/?page_id=2964', 'approved')
+    values ('Eiker Golfbane - Portåsen 2018', 'Mjondalen', 'Norway', 'https://www.eikergolf.no/', 'approved')
     returning id into v_course_id;
 
     -- Insert Yellow tee (mens)

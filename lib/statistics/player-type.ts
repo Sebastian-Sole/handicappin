@@ -109,10 +109,12 @@ interface PlayerMetrics {
 }
 
 function calculateStandardDeviation(values: number[]): number {
-  if (values.length === 0) return 0;
-  const mean = values.reduce((a, b) => a + b, 0) / values.length;
-  const squaredDiffs = values.map((value) => Math.pow(value - mean, 2));
-  const avgSquaredDiff = squaredDiffs.reduce((a, b) => a + b, 0) / values.length;
+  const finiteValues = values.filter((value) => Number.isFinite(value));
+  if (finiteValues.length === 0) return 0;
+  const mean = finiteValues.reduce((a, b) => a + b, 0) / finiteValues.length;
+  const squaredDiffs = finiteValues.map((value) => Math.pow(value - mean, 2));
+  const avgSquaredDiff =
+    squaredDiffs.reduce((a, b) => a + b, 0) / finiteValues.length;
   return Math.sqrt(avgSquaredDiff);
 }
 
@@ -123,10 +125,15 @@ function calculateTrendSlope(scorecards: ScorecardWithRound[]): number {
     (a, b) => new Date(a.teeTime).getTime() - new Date(b.teeTime).getTime()
   );
 
-  const points = sorted.map((scorecard, index) => ({
-    x: index,
-    y: scorecard.round.updatedHandicapIndex,
-  }));
+  const points: { x: number; y: number }[] = [];
+  sorted.forEach((scorecard, index) => {
+    const handicapIndex = scorecard.round.updatedHandicapIndex;
+    if (Number.isFinite(handicapIndex)) {
+      points.push({ x: index, y: handicapIndex });
+    }
+  });
+
+  if (points.length < 2) return 0;
 
   const pointCount = points.length;
   const sumX = points.reduce((a, point) => a + point.x, 0);

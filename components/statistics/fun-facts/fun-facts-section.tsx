@@ -3,6 +3,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { FunStatCard } from "./fun-stat-card";
 import { ScoreDistributionChart } from "./score-distribution-chart";
+import { formatNumber, formatGolfAge } from "@/lib/statistics/format-utils";
 import type { FunStats } from "@/types/statistics";
 
 interface ScoringBreakdownSectionProps {
@@ -10,17 +11,6 @@ interface ScoringBreakdownSectionProps {
 }
 
 export function ScoringBreakdownSection({ stats }: ScoringBreakdownSectionProps) {
-  const formatNumber = (num: number) => num.toLocaleString();
-
-  const formatGolfAge = (days: number): string => {
-    if (days < 30) return `${days} days`;
-    if (days < 365) {
-      const months = Math.floor(days / 30);
-      return `${months} month${months > 1 ? "s" : ""}`;
-    }
-    const years = (days / 365).toFixed(1);
-    return `${years} years`;
-  };
 
   // Calculate total holes and weighted average par from actual data
   const totalHoles = stats.strokesByParType.reduce(

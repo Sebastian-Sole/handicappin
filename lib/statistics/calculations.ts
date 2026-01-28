@@ -65,6 +65,7 @@ export function calculateOverviewStats(
     return {
       totalRounds: 0,
       avgScore: 0,
+      avgPar: null,
       bestDifferential: 0,
       worstDifferential: 0,
       improvementRate: 0,
@@ -82,18 +83,33 @@ export function calculateOverviewStats(
   );
   const scores = sorted.map((scorecard) => scorecard.round.adjustedGrossScore);
 
-  const firstHandicap = sorted[0].round.existingHandicapIndex;
-  const lastHandicap = sorted[sorted.length - 1].round.updatedHandicapIndex;
+  // Calculate average par from rounds that have par data
+  const parsPlayed = sorted
+    .map((scorecard) => scorecard.round.parPlayed)
+    .filter((par): par is number => par !== null && par !== undefined && par > 0);
+  const avgPar = parsPlayed.length > 0
+    ? parsPlayed.reduce((a, b) => a + b, 0) / parsPlayed.length
+    : null;
+
+  const rawFirstHandicap = sorted[0].round.existingHandicapIndex;
+  const rawLastHandicap = sorted[sorted.length - 1].round.updatedHandicapIndex;
+
+  // Guard against null/undefined/non-finite values to avoid NaN/Infinity
+  const firstHandicap = Number.isFinite(rawFirstHandicap) ? rawFirstHandicap : 0;
+  const lastHandicap = Number.isFinite(rawLastHandicap) ? rawLastHandicap : 0;
+
   const handicapChange = lastHandicap - firstHandicap;
 
+  // Only calculate improvement rate if firstHandicap is finite and non-zero
   const improvementRate =
-    firstHandicap !== 0
+    Number.isFinite(rawFirstHandicap) && rawFirstHandicap !== 0
       ? ((firstHandicap - lastHandicap) / firstHandicap) * 100
       : 0;
 
   return {
     totalRounds: scorecards.length,
     avgScore: scores.reduce((a, b) => a + b, 0) / scores.length,
+    avgPar,
     bestDifferential: Math.min(...differentials),
     worstDifferential: Math.max(...differentials),
     improvementRate,

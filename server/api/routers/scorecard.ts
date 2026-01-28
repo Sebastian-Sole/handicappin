@@ -202,11 +202,26 @@ export const scorecardRouter = createTRPCRouter({
               ...roundData,
               teeTime: roundData.teeTime.toISOString(),
               createdAt: roundData.createdAt.toISOString(),
-              scoreDifferential: Number(roundData.scoreDifferential),
-              existingHandicapIndex: Number(roundData.existingHandicapIndex),
-              updatedHandicapIndex: Number(roundData.updatedHandicapIndex),
-              exceptionalScoreAdjustment: Number(roundData.exceptionalScoreAdjustment),
-              courseRatingUsed: Number(roundData.courseRatingUsed),
+              scoreDifferential:
+                roundData.scoreDifferential == null
+                  ? null
+                  : Number(roundData.scoreDifferential),
+              existingHandicapIndex:
+                roundData.existingHandicapIndex == null
+                  ? null
+                  : Number(roundData.existingHandicapIndex),
+              updatedHandicapIndex:
+                roundData.updatedHandicapIndex == null
+                  ? null
+                  : Number(roundData.updatedHandicapIndex),
+              exceptionalScoreAdjustment:
+                roundData.exceptionalScoreAdjustment == null
+                  ? null
+                  : Number(roundData.exceptionalScoreAdjustment),
+              courseRatingUsed:
+                roundData.courseRatingUsed == null
+                  ? null
+                  : Number(roundData.courseRatingUsed),
             },
           };
         })
