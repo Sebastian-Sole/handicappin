@@ -17,7 +17,7 @@ Format expected:
     SUM     5022  4744  4305  4013  3322         70
 
 Then for each tee, provide:
-    Tee: 51, Gender: m, Par: 70
+    48 (Gul), m
     CR/Slope:
     69,1/130
 """
@@ -92,7 +92,13 @@ def parse_transposed_scorecard(scorecard_text: str) -> tuple[list[HoleData], lis
 
     # Parse header to get tee names
     header = lines[0]
-    header_parts = header.split()
+
+    # Check if tab-delimited (supports tee names with spaces)
+    use_tabs = '\t' in header
+    if use_tabs:
+        header_parts = [p.strip() for p in header.split('\t') if p.strip()]
+    else:
+        header_parts = header.split()
 
     # First column is "Hull" or "Hole", last two are "Hcp" and "Par"
     # Everything in between are tee names
@@ -108,7 +114,10 @@ def parse_transposed_scorecard(scorecard_text: str) -> tuple[list[HoleData], lis
     is_9_hole = True
 
     for line in lines[1:]:
-        parts = line.split()
+        if use_tabs:
+            parts = [p.strip() for p in line.split('\t') if p.strip()]
+        else:
+            parts = line.split()
         if not parts:
             continue
 
@@ -166,19 +175,23 @@ def parse_transposed_scorecard(scorecard_text: str) -> tuple[list[HoleData], lis
 def parse_tee_metadata(tee_input: str, cr_slope_input: str) -> TeeMetadata:
     """
     Parse tee metadata from user input.
-    Format: "Tee: 51, Gender: m, Par: 70"
+    Format: "<tee_name>, <m/w>" e.g. "48 (Gul), m" or "Red, w"
     CR/Slope: "69,1/130" or "69.1/130"
     """
-    # Parse tee line
-    tee_match = re.search(r'Tee:\s*(\S+)', tee_input, re.IGNORECASE)
-    gender_match = re.search(r'Gender:\s*(\w+)', tee_input, re.IGNORECASE)
+    # Parse tee line - split on last comma to get tee name and gender
+    parts = tee_input.rsplit(',', 1)
 
-    if not tee_match:
-        raise ValueError("Could not find 'Tee:' in input")
+    if len(parts) == 2:
+        tee_name = parts[0].strip()
+        gender_raw = parts[1].strip().lower()
+    else:
+        # No comma - assume it's just the tee name, default to mens
+        tee_name = tee_input.strip()
+        gender_raw = 'm'
 
-    tee_name = tee_match.group(1).rstrip(',')
+    if not tee_name:
+        raise ValueError("Could not parse tee name from input")
 
-    gender_raw = gender_match.group(1).lower() if gender_match else 'm'
     gender = "ladies" if gender_raw in ['w', 'f', 'l', 'ladies', 'women', 'female'] else "mens"
 
     # Parse CR/Slope - handle both comma and dot as decimal separator
@@ -420,7 +433,7 @@ def main():
     tees = []
     print("=" * 60)
     print("Now enter tee information for each tee you want to add.")
-    print("Format: Tee: <name>, Gender: m/w")
+    print("Format: <tee name>, <m/w>  (e.g. '48 (Gul), m' or 'Red, w')")
     print("Then CR/Slope on next line: 69,1/130")
     print("Enter 'done' when finished adding tees.")
     print("=" * 60)
@@ -428,7 +441,7 @@ def main():
 
     while True:
         print(f"Available tee columns: {', '.join(tee_names)}")
-        tee_line = input("Tee info (or 'done'): ").strip()
+        tee_line = input("Tee (or 'done'): ").strip()
 
         if tee_line.lower() == 'done':
             break

@@ -6,12 +6,14 @@ import { ActivityItem } from "@/utils/activity-transform";
 interface QuickStatsProps {
   activities: ActivityItem[];
   lowestDifferential: number | null;
+  bestRoundDate?: Date | null;
   className?: string;
 }
 
 export function QuickStats({
   activities,
   lowestDifferential,
+  bestRoundDate: bestRoundDateProp,
   className,
 }: QuickStatsProps) {
   // Calculate stats from activities
@@ -31,8 +33,23 @@ export function QuickStats({
       }).format(activities[0].date)
     : null;
 
-  // Count personal bests
-  const personalBests = activities.filter(a => a.isPersonalBest).length;
+  // Use the best round date from props (fetched from DB across all rounds)
+  // Fall back to computing from activities if prop not provided
+  const fallbackBestRoundDate = activities.length > 0
+    ? activities.reduce((best, activity) =>
+        activity.scoreDifferential < best.scoreDifferential ? activity : best
+      ).date
+    : null;
+
+  const bestRoundDateToUse = bestRoundDateProp ?? fallbackBestRoundDate;
+
+  const bestRoundDate = bestRoundDateToUse
+    ? new Intl.DateTimeFormat("en-US", {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+      }).format(bestRoundDateToUse)
+    : null;
 
   return (
     <Card className={cn("", className)}>
@@ -98,15 +115,15 @@ export function QuickStats({
           </div>
         )}
 
-        {/* Personal Bests Count */}
-        {personalBests > 0 && (
+        {/* Personal Best Date */}
+        {bestRoundDate && (
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <Trophy className="h-4 w-4 text-primary" />
-              <span>Personal Bests</span>
+              <span>Personal Best</span>
             </div>
             <span className="text-sm font-medium text-foreground">
-              {personalBests} {personalBests === 1 ? "round" : "rounds"}
+              {bestRoundDate}
             </span>
           </div>
         )}

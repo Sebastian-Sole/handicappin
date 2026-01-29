@@ -25,8 +25,8 @@ const DashboardPage = async (props: { params: Promise<{ id: string }> }) => {
     return <div>Invalid user, this is not your profile</div>;
   }
 
-  // Note: Premium access check is handled by middleware
-  // This page path (/dashboard/*) is listed in PREMIUM_PATHS, so middleware redirects non-premium users
+  // Note: Unlimited access check is handled by middleware
+  // This page path (/dashboard/*) is listed in UNLIMITED_PATHS, so middleware redirects users without unlimited/lifetime plan
 
   try {
     const scorecards = await api.scorecard.getAllScorecardsByUserId({

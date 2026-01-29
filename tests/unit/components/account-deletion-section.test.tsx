@@ -263,7 +263,7 @@ describe("User Experience", () => {
     });
 
     test("verify step shows 'Delete My Account' button", () => {
-      const step = "verify-otp";
+      const step = "verify-otp" as "initial" | "verify-otp";
       const buttonText = step === "initial" ? "Continue" : "Delete My Account";
 
       expect(buttonText).toBe("Delete My Account");
@@ -278,7 +278,7 @@ describe("User Experience", () => {
     });
 
     test("verify loading shows 'Deleting...' text", () => {
-      const step = "verify-otp";
+      const step = "verify-otp" as "initial" | "verify-otp";
       const isLoading = true;
       const loadingText = step === "initial" ? "Sending code..." : "Deleting...";
 

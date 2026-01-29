@@ -129,6 +129,9 @@
     -webkit-appearance: none;
     margin: 0;
   }
+  input[type="search"]::-webkit-search-cancel-button {
+    cursor: pointer;
+  }
   .theme {
     --font-sans: "Inter", "Manrope", var(--font-sans);
     --font-mono: ui-monospace, Menlo, Monaco, "Cascadia Mono", "Segoe UI Mono",

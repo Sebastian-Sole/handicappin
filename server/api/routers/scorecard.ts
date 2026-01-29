@@ -1,9 +1,12 @@
 import { z } from "zod";
-import { createTRPCRouter, publicProcedure } from "../trpc";
+import { TRPCError } from "@trpc/server";
+import { createTRPCRouter, publicProcedure, authedProcedure } from "../trpc";
 import { eq, inArray, asc, lt, count, and } from "drizzle-orm";
 import { db } from "@/db";
 import { course, round, teeInfo, hole, score } from "@/db/schema";
 import { scorecardSchema, ScorecardWithRound } from "@/types/scorecard-input";
+import { getBillingFromJWT } from "@/utils/supabase/jwt";
+import { hasUnlimitedAccess } from "@/utils/billing/access";
 
 export const scorecardRouter = createTRPCRouter({
   getScorecardByRoundId: publicProcedure
@@ -108,10 +111,32 @@ export const scorecardRouter = createTRPCRouter({
       scorecardSchema.parse(scorecard);
       return scorecard;
     }),
-  getAllScorecardsByUserId: publicProcedure
+  getAllScorecardsByUserId: authedProcedure
     .input(z.object({ userId: z.string().uuid() }))
     .query(async ({ ctx, input }) => {
       const { userId } = input;
+
+      // Verify the authenticated user can only access their own scorecards
+      if (ctx.user.id !== userId) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "You can only access your own scorecards",
+        });
+      }
+
+      // Defense-in-depth: Verify user has unlimited/lifetime plan
+      // This endpoint powers /statistics and /dashboard which require unlimited access
+      // Middleware handles page-level protection, but API calls could bypass it
+      const { data: sessionData } = await ctx.supabase.auth.getSession();
+      const billing = getBillingFromJWT(sessionData.session);
+      if (!hasUnlimitedAccess(billing)) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message:
+            "This feature requires an Unlimited or Lifetime plan. Please upgrade to access your full scorecard history.",
+        });
+      }
+
       // 1. Fetch all rounds for the user
       const rounds = await db
         .select()
@@ -177,6 +202,26 @@ export const scorecardRouter = createTRPCRouter({
               ...roundData,
               teeTime: roundData.teeTime.toISOString(),
               createdAt: roundData.createdAt.toISOString(),
+              scoreDifferential:
+                roundData.scoreDifferential == null
+                  ? null
+                  : Number(roundData.scoreDifferential),
+              existingHandicapIndex:
+                roundData.existingHandicapIndex == null
+                  ? null
+                  : Number(roundData.existingHandicapIndex),
+              updatedHandicapIndex:
+                roundData.updatedHandicapIndex == null
+                  ? null
+                  : Number(roundData.updatedHandicapIndex),
+              exceptionalScoreAdjustment:
+                roundData.exceptionalScoreAdjustment == null
+                  ? null
+                  : Number(roundData.exceptionalScoreAdjustment),
+              courseRatingUsed:
+                roundData.courseRatingUsed == null
+                  ? null
+                  : Number(roundData.courseRatingUsed),
             },
           };
         })
