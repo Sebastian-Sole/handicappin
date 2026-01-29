@@ -65,7 +65,7 @@ export default function BillingSuccessPage() {
       for (let attempt = 1; attempt <= maxAttempts; attempt++) {
         setAttemptCount(attempt);
         console.log(
-          `⏳ Polling webhook status (attempt ${attempt}/${maxAttempts})...`
+          `⏳ Polling webhook status (attempt ${attempt}/${maxAttempts})...`,
         );
 
         // Call webhook status API
@@ -109,7 +109,7 @@ export default function BillingSuccessPage() {
             if (process.env.NODE_ENV === "development") {
               console.warn(
                 "⚠️ Local dev: Session refresh failed (non-critical):",
-                refreshError.message
+                refreshError.message,
               );
             } else {
               console.error("Failed to refresh session:", refreshError);
@@ -141,11 +141,13 @@ export default function BillingSuccessPage() {
 
           console.log("🚀 Redirecting to dashboard...");
           if (!currentUser) {
-            console.error("❌ No currentUser at redirect - this should not happen!");
+            console.error(
+              "❌ No currentUser at redirect - this should not happen!",
+            );
             window.location.href = "/";
             return;
           }
-          window.location.href = `/dashboard/${currentUser.id}`;
+          window.location.href = `/`;
           return;
         } else if (data.status === "failed") {
           console.error(`❌ Webhook failed ${data.failureCount} times`);
@@ -170,7 +172,7 @@ export default function BillingSuccessPage() {
       // After all attempts, if still processing, show delayed state
       if (status === "processing") {
         console.warn(
-          "⚠️ Webhook not completed after 20 seconds - showing delayed state"
+          "⚠️ Webhook not completed after 20 seconds - showing delayed state",
         );
         setStatus("delayed");
       }

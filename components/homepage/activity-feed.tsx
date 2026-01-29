@@ -24,7 +24,7 @@ export function ActivityFeed({
           <CardTitle className="text-lg">Recent Activity</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="text-center py-8">
+          <div className="text-center justify-center items-center flex flex-col py-8">
             <p className="text-muted-foreground mb-4">
               No rounds logged yet. Start your golf journey!
             </p>
@@ -81,7 +81,7 @@ function ActivityItemRow({
         className={cn(
           "flex items-start gap-3 p-3 -mx-3 rounded-lg",
           "hover:bg-accent/50 transition-colors cursor-pointer",
-          "group"
+          "group",
         )}
       >
         {/* Timeline indicator */}
@@ -89,7 +89,7 @@ function ActivityItemRow({
           <div
             className={cn(
               "w-2 h-2 rounded-full mt-2",
-              activity.isPersonalBest ? "bg-yellow-500" : "bg-primary"
+              activity.isPersonalBest ? "bg-yellow-500" : "bg-primary",
             )}
           />
           {!isLast && <div className="w-px h-full bg-border flex-1 mt-1" />}
@@ -138,7 +138,7 @@ function ActivityItemRow({
                   "flex items-center gap-0.5",
                   activity.handicapChange < 0
                     ? "text-green-600 dark:text-green-400"
-                    : "text-red-600 dark:text-red-400"
+                    : "text-red-600 dark:text-red-400",
                 )}
               >
                 {activity.handicapChange < 0 ? (

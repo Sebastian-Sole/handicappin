@@ -11,6 +11,11 @@ import type { PlanType } from "@/lib/stripe-types";
 import { PricingCard, PricingCardSkeleton } from "./pricing-card";
 import { PLAN_FEATURES, PLAN_DETAILS } from "./plan-features";
 
+// Helper to check if user has an active paid subscription
+const isPaidPlan = (plan: string | null | undefined): boolean => {
+  return plan === "premium" || plan === "unlimited" || plan === "lifetime";
+};
+
 interface PlanSelectorProps {
   userId: string;
   currentPlan?: "free" | "premium" | "unlimited" | "lifetime" | null;
@@ -49,6 +54,7 @@ export function PlanSelector({
   const updateSubscriptionMutation =
     api.stripe.updateSubscription.useMutation();
   const createCheckoutMutation = api.stripe.createCheckout.useMutation();
+  const createPortalMutation = api.stripe.createPortal.useMutation();
 
   // Fetch promo slots for lifetime plan
   const { data: promoSlots, isLoading: isLoadingPromoSlots } =
@@ -74,25 +80,11 @@ export function PlanSelector({
       setLoading("free");
       setFeedbackMessage(null); // Clear any previous feedback
 
-      // If in upgrade mode and user has a paid plan, use subscription update API
-      if (mode === "upgrade" && currentPlan && currentPlan !== "free") {
-        const result = await updateSubscriptionMutation.mutateAsync({
-          newPlan: "free",
-        });
-
-        // Show success message
-        setFeedbackMessage({
-          type: "success",
-          title: "Plan Updated",
-          message: result.message || "Your plan has been updated successfully.",
-        });
-
-        // Delay navigation to allow user to see success message
-        setTimeout(() => {
-          router.push("/billing");
-          router.refresh();
-        }, 2000); // 2 second delay (message stays for 5 total)
-
+      // If in upgrade mode and user has a paid plan, redirect to Stripe Portal
+      // Portal handles cancellations properly with correct billing cycle behavior
+      if (mode === "upgrade" && isPaidPlan(currentPlan)) {
+        const result = await createPortalMutation.mutateAsync();
+        window.location.href = result.url;
         return;
       }
 
@@ -175,31 +167,11 @@ export function PlanSelector({
       setLoading(plan);
       setFeedbackMessage(null); // Clear any previous feedback
 
-      // If in upgrade mode and user has a paid plan, use subscription update API
-      if (mode === "upgrade" && currentPlan && currentPlan !== "free") {
-        const result = await updateSubscriptionMutation.mutateAsync({
-          newPlan: plan,
-        });
-
-        // If lifetime, redirect to checkout
-        if (result.checkoutUrl) {
-          window.location.href = result.checkoutUrl;
-          return;
-        }
-
-        // Show success message
-        setFeedbackMessage({
-          type: "success",
-          title: "Plan Updated",
-          message: result.message || "Your plan has been updated successfully.",
-        });
-
-        // Delay navigation to allow user to see success message
-        setTimeout(() => {
-          router.push("/billing");
-          router.refresh();
-        }, 2000);
-
+      // If in upgrade mode and user has a paid plan, redirect to Stripe Portal
+      // Portal handles plan changes with proper proration and billing
+      if (mode === "upgrade" && isPaidPlan(currentPlan)) {
+        const result = await createPortalMutation.mutateAsync();
+        window.location.href = result.url;
         return;
       }
 
@@ -279,11 +251,12 @@ export function PlanSelector({
             {availablePlans.length === 0 ? (
               <>You&apos;re on the best plan! No changes available.</>
             ) : (
-              <>Change your plan below</>
+              <>Select a plan to change your subscription</>
             )}
           </p>
-          {availablePlans.length > 0 && (
+          {availablePlans.length > 0 && isPaidPlan(currentPlan) && (
             <div className="mt-4 space-y-2 text-sm text-gray-500">
+              <p>You&apos;ll be redirected to Stripe to complete your plan change</p>
               <p>✓ Upgrades take effect immediately (prorated charge)</p>
               <p>✓ Downgrades take effect at the end of your billing cycle</p>
             </div>

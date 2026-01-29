@@ -287,6 +287,8 @@ export async function updateSubscription({
   }
 
   // Handle subscription tier change (premium <-> unlimited)
+  // NOTE: Plan changes between paid tiers should be done via Stripe Customer Portal
+  // This code path is kept for backwards compatibility but is not actively used
   const newPriceId = PLAN_TO_PRICE_MAP[newPlan];
 
   if (!newPriceId) {
