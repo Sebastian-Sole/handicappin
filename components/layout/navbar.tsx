@@ -29,7 +29,7 @@ function LogoBrand() {
   return (
     <Link
       href="/"
-      className="flex items-center gap-2 w-1/3"
+      className="flex items-center gap-2 flex-shrink-0"
       prefetch={true}
     >
       <Image
@@ -154,44 +154,44 @@ export async function Navbar() {
     <header className="fixed top-0 z-50 w-full bg-background shadow-xs">
       <div className="container flex h-16 items-center justify-between px-4 sm:px-6 m-0 max-w-full">
         <LogoBrand />
-        <nav className="hidden w-1/3 items-center justify-center gap-6 text-sm font-medium lg:flex ">
+        <nav className="hidden flex-1 items-center justify-center gap-6 text-sm font-medium lg:flex">
           <Link
             href="/"
-            className="hover:underline hover:underline-offset-4 "
+            className="hover:underline hover:underline-offset-4 whitespace-nowrap"
             prefetch={true}
           >
             Home
           </Link>
           <Link
             href="/about"
-            className="hover:underline hover:underline-offset-4"
+            className="hover:underline hover:underline-offset-4 whitespace-nowrap"
             prefetch={true}
           >
             About
           </Link>
           <Link
             href="/calculators"
-            className="hover:underline hover:underline-offset-4"
+            className="hover:underline hover:underline-offset-4 whitespace-nowrap"
             prefetch={true}
           >
             Calculators
           </Link>
           <Link
             href={`/dashboard/${userId}`}
-            className="hover:underline hover:underline-offset-4"
+            className="hover:underline hover:underline-offset-4 whitespace-nowrap"
             prefetch={true}
           >
             Dashboard
           </Link>
           <Link
             href="/statistics"
-            className="hover:underline hover:underline-offset-4"
+            className="hover:underline hover:underline-offset-4 whitespace-nowrap"
             prefetch={true}
           >
             Statistics
           </Link>
         </nav>
-        <div className="flex items-center gap-4 xs:w-1/3 justify-end">
+        <div className="flex items-center gap-4 justify-end flex-shrink-0">
           <Link href={"/rounds/add"} className="xl:block hidden">
             <Button variant={"default"}>Add Round</Button>
           </Link>
