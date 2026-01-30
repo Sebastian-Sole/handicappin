@@ -10,6 +10,7 @@ import { getCalculatorByIdOrThrow } from "@/lib/calculator-registry";
 import {
   calculate9HoleScoreDifferential,
   calculateExpected9HoleDifferential,
+  calculateScoreDifferential,
 } from "@/lib/handicap";
 import { ArrowRight } from "lucide-react";
 
@@ -46,9 +47,12 @@ export function NineHoleCalculator() {
       nineHolePar
     );
 
-    // Played differential
-    const playedDifferential =
-      (nineHoleScore - nineHoleCourseRating) * (113 / nineHoleSlopeRating);
+    // Played differential (using utility for USGA-compliant rounding)
+    const playedDifferential = calculateScoreDifferential(
+      nineHoleScore,
+      nineHoleCourseRating,
+      nineHoleSlopeRating
+    );
 
     // Combined 18-hole equivalent
     const equivalentDifferential = calculate9HoleScoreDifferential(
@@ -59,7 +63,7 @@ export function NineHoleCalculator() {
     );
 
     return {
-      playedDifferential: Math.round(playedDifferential * 10) / 10,
+      playedDifferential, // Already rounded by calculateScoreDifferential
       expectedDifferential: Math.round(expectedDifferential * 10) / 10,
       equivalentDifferential,
     };

@@ -10,6 +10,33 @@ import { PricingCard, PricingCardSkeleton } from "./pricing-card";
 import { PLAN_FEATURES, PLAN_DETAILS } from "./plan-features";
 import { isPaidPlan } from "@/utils/billing/access-helpers";
 
+/**
+ * Polls an async function with exponential backoff until success condition is met.
+ * Starts at 250ms, doubles each attempt (250 → 500 → 1000 → 2000), caps at 2s.
+ * @returns true if success condition was met, false if timed out
+ */
+async function pollWithBackoff<T>(
+  fetchFn: () => Promise<T>,
+  successCheck: (result: T) => boolean,
+  maxAttempts = 8,
+  initialDelayMs = 250,
+  maxDelayMs = 2000
+): Promise<boolean> {
+  let delay = initialDelayMs;
+
+  for (let attempt = 0; attempt < maxAttempts; attempt++) {
+    const result = await fetchFn();
+    if (successCheck(result)) {
+      return true;
+    }
+
+    await new Promise((resolve) => setTimeout(resolve, delay));
+    delay = Math.min(delay * 2, maxDelayMs);
+  }
+
+  return false;
+}
+
 interface PlanSelectorProps {
   userId: string;
   currentPlan?: "free" | "premium" | "unlimited" | "lifetime" | null;
@@ -99,26 +126,20 @@ export function PlanSelector({
         console.log("✅ Session refreshed with new billing data");
       }
 
-      // Poll session until billing claims reflect the new plan
-      const maxAttempts = 20; // 2 seconds max (20 * 100ms)
-      let attempt = 0;
-      while (attempt < maxAttempts) {
-        const {
-          data: { session },
-        } = await supabase.auth.getSession();
-        const jwtClaims = session?.user?.app_metadata;
+      // Poll session until billing claims reflect the new plan (exponential backoff)
+      const claimsUpdated = await pollWithBackoff(
+        async () => {
+          const {
+            data: { session },
+          } = await supabase.auth.getSession();
+          return session?.user?.app_metadata;
+        },
+        (claims) => claims?.plan === "free"
+      );
 
-        // Check if JWT has updated billing claims (plan === "free")
-        if (jwtClaims?.plan === "free") {
-          console.log("✅ JWT claims updated, proceeding with redirect");
-          break;
-        }
-
-        await new Promise((resolve) => setTimeout(resolve, 100));
-        attempt++;
-      }
-
-      if (attempt === maxAttempts) {
+      if (claimsUpdated) {
+        console.log("✅ JWT claims updated, proceeding with redirect");
+      } else {
         console.warn(
           "⚠️ JWT claims not updated after polling, BillingSync will catch up"
         );

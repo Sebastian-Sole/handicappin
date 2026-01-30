@@ -4,12 +4,15 @@ export type CalculatorFieldType =
   | "courseHandicap"
   | "playingHandicap"
   | "scoreDifferential"
+  | "scoreDifferentials"
   | "adjustedGrossScore"
   | "courseRating"
   | "slopeRating"
   | "par"
   | "holesPlayed"
-  | "lowHandicapIndex";
+  | "lowHandicapIndex"
+  | "holePar"
+  | "holeHcp";
 
 // Calculator metadata for registry
 export interface CalculatorMeta {
@@ -36,4 +39,7 @@ export interface CalculatorValues {
   lowHandicapIndex: number | null;
   // For handicap index calculation
   scoreDifferentials: number[];
+  // For max score calculator
+  holePar: number | null;
+  holeHcp: number | null;
 }

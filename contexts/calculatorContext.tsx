@@ -40,6 +40,8 @@ const createDefaultValues = (): CalculatorValues => ({
   holesPlayed: 18,
   lowHandicapIndex: null,
   scoreDifferentials: [],
+  holePar: null,
+  holeHcp: null,
 });
 
 const CalculatorContext = createContext<CalculatorContextProps | undefined>(

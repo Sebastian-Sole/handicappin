@@ -1,6 +1,7 @@
 import Stripe from "stripe";
 import { getOrCreateStripeCustomer } from "./stripe-customer";
 import type { PlanType } from "./stripe-types";
+import { getRedisClient } from "./rate-limit";
 
 // Initialize Stripe client
 export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY ?? "", {
@@ -28,14 +29,37 @@ export function mapPriceToPlan(
   return null;
 }
 
-/**
- * Get promotion code details and remaining redemptions
- */
-export async function getPromotionCodeDetails(code: string): Promise<{
+// Cache TTL for promotion codes (1 hour in seconds)
+const PROMO_CACHE_TTL_SECONDS = 3600;
+
+type PromotionCodeDetails = {
   id: string | null;
   remaining: number;
   total: number;
-} | null> {
+};
+
+/**
+ * Get promotion code details and remaining redemptions
+ * Results are cached in Redis for 1 hour to avoid hitting Stripe rate limits
+ */
+export async function getPromotionCodeDetails(code: string): Promise<PromotionCodeDetails | null> {
+  const cacheKey = `promo:${code}`;
+  const redis = getRedisClient();
+
+  // Try to get from cache first
+  if (redis) {
+    try {
+      const cached = await redis.get<PromotionCodeDetails>(cacheKey);
+      if (cached) {
+        return cached;
+      }
+    } catch (cacheError) {
+      // Log but continue - fail open to Stripe API
+      console.warn(`[Promo Cache] Failed to read cache for "${code}":`, cacheError);
+    }
+  }
+
+  // Cache miss or Redis unavailable - fetch from Stripe
   try {
     const promoCodes = await stripe.promotionCodes.list({
       code,
@@ -53,11 +77,23 @@ export async function getPromotionCodeDetails(code: string): Promise<{
     const timesRedeemed = promoCode.times_redeemed || 0;
     const remaining = Math.max(0, maxRedemptions - timesRedeemed);
 
-    return {
+    const result: PromotionCodeDetails = {
       id: promoCode.id,
       remaining,
       total: maxRedemptions,
     };
+
+    // Cache the result
+    if (redis) {
+      try {
+        await redis.set(cacheKey, result, { ex: PROMO_CACHE_TTL_SECONDS });
+      } catch (cacheError) {
+        // Log but don't fail - caching is best-effort
+        console.warn(`[Promo Cache] Failed to write cache for "${code}":`, cacheError);
+      }
+    }
+
+    return result;
   } catch (error) {
     console.error(`Failed to fetch promotion code details for "${code}":`, error);
     return null;
