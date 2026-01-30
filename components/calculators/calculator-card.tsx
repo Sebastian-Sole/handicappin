@@ -49,6 +49,16 @@ export function CalculatorCard({
       <CardHeader
         className="cursor-pointer md:cursor-default"
         onClick={handleToggle}
+        onKeyDown={(event) => {
+          if (event.key === "Enter" || event.key === " ") {
+            event.preventDefault();
+            handleToggle();
+          }
+        }}
+        role="button"
+        tabIndex={0}
+        aria-expanded={isExpanded}
+        aria-controls={`calculator-content-${meta.id}`}
       >
         <div className="flex items-center justify-between">
           <div>
@@ -58,7 +68,7 @@ export function CalculatorCard({
             </CardDescription>
           </div>
           {/* Mobile expand indicator */}
-          <div className="md:hidden">
+          <div className="md:hidden" aria-hidden="true">
             {isExpanded ? (
               <ChevronUp className="h-5 w-5 text-muted-foreground" />
             ) : (
@@ -70,6 +80,7 @@ export function CalculatorCard({
 
       {/* Content - always visible on desktop, accordion on mobile */}
       <CardContent
+        id={`calculator-content-${meta.id}`}
         className={cn(
           "space-y-4",
           "md:block", // Always show on desktop

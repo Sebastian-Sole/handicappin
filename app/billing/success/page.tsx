@@ -36,6 +36,9 @@ export default function BillingSuccessPage() {
   }, []);
 
   async function checkWebhookStatus() {
+    // Track status locally to avoid stale closure issues with React state
+    let currentStatus: "loading" | "processing" | "success" | "delayed" | "failed" = "loading";
+
     try {
       const supabase = createClientComponentClient();
 
@@ -92,6 +95,7 @@ export default function BillingSuccessPage() {
         // Update UI state based on API response
         if (data.status === "success") {
           console.log(`✅ Subscription activated successfully!`);
+          currentStatus = "success";
           setStatus("success");
 
           // Wait 2 seconds to show success message
@@ -139,7 +143,7 @@ export default function BillingSuccessPage() {
           // Wait 1 more second to ensure middleware picks up new claims
           await new Promise((resolve) => setTimeout(resolve, 1000));
 
-          console.log("🚀 Redirecting to dashboard...");
+          console.log("🚀 Redirecting...");
           if (!currentUser) {
             console.error(
               "❌ No currentUser at redirect - this should not happen!",
@@ -151,15 +155,18 @@ export default function BillingSuccessPage() {
           return;
         } else if (data.status === "failed") {
           console.error(`❌ Webhook failed ${data.failureCount} times`);
+          currentStatus = "failed";
           setStatus("failed");
           return;
         } else if (data.status === "delayed") {
           console.warn(`⚠️ Webhook delayed (${data.failureCount} failures)`);
+          currentStatus = "delayed";
           setStatus("delayed");
           // Don't return - keep showing delayed UI, let user decide
           return;
         } else {
           // Still processing
+          currentStatus = "processing";
           setStatus("processing");
         }
 
@@ -170,7 +177,7 @@ export default function BillingSuccessPage() {
       }
 
       // After all attempts, if still processing, show delayed state
-      if (status === "processing") {
+      if (currentStatus === "processing") {
         console.warn(
           "⚠️ Webhook not completed after 20 seconds - showing delayed state",
         );
@@ -276,9 +283,8 @@ export default function BillingSuccessPage() {
                 <p className="text-sm text-gray-600">
                   Still waiting after 5 minutes?{" "}
                   <a
-                    href={`mailto:sebastiansole@handicappin.com?subject=Subscription Activation Delayed&body=Session ID: ${
-                      sessionId || "unknown"
-                    }%0D%0AUser ID: ${userId || "unknown"}`}
+                    href={`mailto:sebastiansole@handicappin.com?subject=Subscription Activation Delayed&body=Session ID: ${sessionId || "unknown"
+                      }%0D%0AUser ID: ${userId || "unknown"}`}
                     className="text-blue-600 hover:underline"
                   >
                     Contact Support
@@ -323,11 +329,9 @@ export default function BillingSuccessPage() {
 
               <div className="space-y-4">
                 <a
-                  href={`mailto:sebastiansole@handicappin.com?subject=Subscription Activation Issue&body=Session ID: ${
-                    sessionId || "unknown"
-                  }%0D%0AUser ID: ${
-                    userId || "unknown"
-                  }%0D%0A%0D%0APlease describe the issue:`}
+                  href={`mailto:sebastiansole@handicappin.com?subject=Subscription Activation Issue&body=Session ID: ${sessionId || "unknown"
+                    }%0D%0AUser ID: ${userId || "unknown"
+                    }%0D%0A%0D%0APlease describe the issue:`}
                   className="block w-full bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition text-center"
                 >
                   📧 Email Support

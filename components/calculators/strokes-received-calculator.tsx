@@ -7,9 +7,9 @@ import { Muted, P, Small } from "@/components/ui/typography";
 import { Badge } from "@/components/ui/badge";
 import { CalculatorCard } from "./calculator-card";
 import { useCalculatorContext } from "@/contexts/calculatorContext";
-import { getCalculatorById } from "@/lib/calculator-registry";
+import { getCalculatorByIdOrThrow } from "@/lib/calculator-registry";
 
-const meta = getCalculatorById("strokes-received")!;
+const meta = getCalculatorByIdOrThrow("strokes-received");
 
 // Default hole handicap allocation (1 = hardest, 18 = easiest)
 const DEFAULT_HOLE_HANDICAPS = [

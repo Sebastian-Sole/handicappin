@@ -8,11 +8,11 @@ import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { CalculatorCard } from "./calculator-card";
 import { useCalculatorContext } from "@/contexts/calculatorContext";
-import { getCalculatorById } from "@/lib/calculator-registry";
+import { getCalculatorByIdOrThrow } from "@/lib/calculator-registry";
 import { EXCEPTIONAL_ROUND_THRESHOLD } from "@/lib/handicap/constants";
 import { AlertTriangle, CheckCircle } from "lucide-react";
 
-const meta = getCalculatorById("exceptional-score")!;
+const meta = getCalculatorByIdOrThrow("exceptional-score");
 
 export function ExceptionalScoreCalculator() {
   const { values, setValue } = useCalculatorContext();

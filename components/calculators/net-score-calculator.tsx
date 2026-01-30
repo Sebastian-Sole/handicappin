@@ -6,16 +6,9 @@ import { Label } from "@/components/ui/label";
 import { Muted, P } from "@/components/ui/typography";
 import { CalculatorCard } from "./calculator-card";
 import { useCalculatorContext } from "@/contexts/calculatorContext";
-import { CalculatorMeta } from "@/types/calculators";
+import { getCalculatorByIdOrThrow } from "@/lib/calculator-registry";
 
-const meta: CalculatorMeta = {
-  id: "net-score",
-  name: "Net Score",
-  description: "Calculate your net score after applying handicap strokes",
-  category: "core",
-  inputs: ["adjustedGrossScore", "courseHandicap"],
-  outputs: [],
-};
+const meta = getCalculatorByIdOrThrow("net-score");
 
 export function NetScoreCalculator() {
   const { values, setValue } = useCalculatorContext();

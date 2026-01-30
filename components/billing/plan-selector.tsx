@@ -2,19 +2,13 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { CheckCircle2, XCircle, Clock, X } from "lucide-react";
 import { createFreeTierSubscription } from "@/app/onboarding/actions";
 import { api } from "@/trpc/react";
-import type { PlanType } from "@/lib/stripe-types";
 import { PricingCard, PricingCardSkeleton } from "./pricing-card";
 import { PLAN_FEATURES, PLAN_DETAILS } from "./plan-features";
-
-// Helper to check if user has an active paid subscription
-const isPaidPlan = (plan: string | null | undefined): boolean => {
-  return plan === "premium" || plan === "unlimited" || plan === "lifetime";
-};
+import { isPaidPlan } from "@/utils/billing/access-helpers";
 
 interface PlanSelectorProps {
   userId: string;
@@ -40,7 +34,6 @@ export function PlanSelector({
   userId,
   currentPlan = null,
   mode = "onboarding",
-  onPlanChange,
 }: PlanSelectorProps) {
   const router = useRouter();
   const [loading, setLoading] = useState<string | null>(null);
@@ -51,8 +44,6 @@ export function PlanSelector({
   } | null>(null);
 
   // tRPC mutations
-  const updateSubscriptionMutation =
-    api.stripe.updateSubscription.useMutation();
   const createCheckoutMutation = api.stripe.createCheckout.useMutation();
   const createPortalMutation = api.stripe.createPortal.useMutation();
 
@@ -82,7 +73,7 @@ export function PlanSelector({
 
       // If in upgrade mode and user has a paid plan, redirect to Stripe Portal
       // Portal handles cancellations properly with correct billing cycle behavior
-      if (mode === "upgrade" && isPaidPlan(currentPlan)) {
+      if (mode === "upgrade" && currentPlan && isPaidPlan(currentPlan)) {
         const result = await createPortalMutation.mutateAsync();
         window.location.href = result.url;
         return;
@@ -169,7 +160,7 @@ export function PlanSelector({
 
       // If in upgrade mode and user has a paid plan, redirect to Stripe Portal
       // Portal handles plan changes with proper proration and billing
-      if (mode === "upgrade" && isPaidPlan(currentPlan)) {
+      if (mode === "upgrade" && currentPlan && isPaidPlan(currentPlan)) {
         const result = await createPortalMutation.mutateAsync();
         window.location.href = result.url;
         return;
@@ -254,7 +245,7 @@ export function PlanSelector({
               <>Select a plan to change your subscription</>
             )}
           </p>
-          {availablePlans.length > 0 && isPaidPlan(currentPlan) && (
+          {availablePlans.length > 0 && currentPlan && isPaidPlan(currentPlan) && (
             <div className="mt-4 space-y-2 text-sm text-gray-500">
               <p>You&apos;ll be redirected to Stripe to complete your plan change</p>
               <p>✓ Upgrades take effect immediately (prorated charge)</p>
@@ -273,161 +264,160 @@ export function PlanSelector({
         </div>
       ) : (
         <div
-        className={`grid gap-6 ${
-          availablePlans.length === 4
+          className={`grid gap-6 ${availablePlans.length === 4
             ? "xl:grid-cols-4 md:grid-cols-2"
             : availablePlans.length === 3
-            ? "lg:grid-cols-3"
-            : availablePlans.length === 2
-            ? "md:grid-cols-2"
-            : "md:grid-cols-1"
-        }`}
-      >
-        {/* Free Plan */}
-        {shouldShowPlan("free") && (
-          <PricingCard
-            plan="free"
-            price={PLAN_DETAILS.free.price}
-            interval={PLAN_DETAILS.free.interval}
-            title={PLAN_DETAILS.free.title}
-            description={PLAN_DETAILS.free.description}
-            features={PLAN_FEATURES.free}
-            badge={
-              currentPlan === "free"
-                ? { text: "Current Plan", variant: "default" }
-                : undefined
-            }
-            buttonText={
-              currentPlan === "free"
-                ? "Current Plan"
-                : loading === "free"
-                ? "Setting up..."
-                : "Start Free"
-            }
-            onButtonClick={handleFreePlan}
-            buttonDisabled={loading !== null || currentPlan === "free"}
-            buttonVariant="outline"
-            currentPlan={currentPlan === "free"}
-          />
-        )}
+              ? "lg:grid-cols-3"
+              : availablePlans.length === 2
+                ? "md:grid-cols-2"
+                : "md:grid-cols-1"
+            }`}
+        >
+          {/* Free Plan */}
+          {shouldShowPlan("free") && (
+            <PricingCard
+              plan="free"
+              price={PLAN_DETAILS.free.price}
+              interval={PLAN_DETAILS.free.interval}
+              title={PLAN_DETAILS.free.title}
+              description={PLAN_DETAILS.free.description}
+              features={PLAN_FEATURES.free}
+              badge={
+                currentPlan === "free"
+                  ? { text: "Current Plan", variant: "default" }
+                  : undefined
+              }
+              buttonText={
+                currentPlan === "free"
+                  ? "Current Plan"
+                  : loading === "free"
+                    ? "Setting up..."
+                    : "Start Free"
+              }
+              onButtonClick={handleFreePlan}
+              buttonDisabled={loading !== null || currentPlan === "free"}
+              buttonVariant="outline"
+              currentPlan={currentPlan === "free"}
+            />
+          )}
 
-        {/* Premium Plan */}
-        {shouldShowPlan("premium") && (
-          <PricingCard
-            plan="premium"
-            price={PLAN_DETAILS.premium.price}
-            interval={PLAN_DETAILS.premium.interval}
-            title={PLAN_DETAILS.premium.title}
-            description={PLAN_DETAILS.premium.description}
-            features={PLAN_FEATURES.premium}
-            badge={
-              currentPlan === "premium"
-                ? {
+          {/* Premium Plan */}
+          {shouldShowPlan("premium") && (
+            <PricingCard
+              plan="premium"
+              price={PLAN_DETAILS.premium.price}
+              interval={PLAN_DETAILS.premium.interval}
+              title={PLAN_DETAILS.premium.title}
+              description={PLAN_DETAILS.premium.description}
+              features={PLAN_FEATURES.premium}
+              badge={
+                currentPlan === "premium"
+                  ? {
                     text: "Current Plan",
                     variant: "default",
                   }
-                : undefined
-            }
-            buttonText={
-              currentPlan === "premium"
-                ? "Current Plan"
-                : loading === "premium"
-                ? "Loading..."
-                : "Subscribe"
-            }
-            onButtonClick={() => handlePaidPlan("premium")}
-            buttonDisabled={loading !== null || currentPlan === "premium"}
-            currentPlan={currentPlan === "premium"}
-            costComparison={PLAN_DETAILS.premium.costComparison}
-          />
-        )}
+                  : undefined
+              }
+              buttonText={
+                currentPlan === "premium"
+                  ? "Current Plan"
+                  : loading === "premium"
+                    ? "Loading..."
+                    : "Subscribe"
+              }
+              onButtonClick={() => handlePaidPlan("premium")}
+              buttonDisabled={loading !== null || currentPlan === "premium"}
+              currentPlan={currentPlan === "premium"}
+              costComparison={PLAN_DETAILS.premium.costComparison}
+            />
+          )}
 
-        {/* Unlimited Plan */}
-        {shouldShowPlan("unlimited") && (
-          <PricingCard
-            plan="unlimited"
-            price={PLAN_DETAILS.unlimited.price}
-            interval={PLAN_DETAILS.unlimited.interval}
-            title={PLAN_DETAILS.unlimited.title}
-            description={PLAN_DETAILS.unlimited.description}
-            features={PLAN_FEATURES.unlimited}
-            badge={
-              currentPlan === "unlimited"
-                ? { text: "Current Plan", variant: "default" }
-                : { text: "Best Value", variant: "value" }
-            }
-            buttonText={
-              currentPlan === "unlimited"
-                ? "Current Plan"
-                : loading === "unlimited"
-                ? "Loading..."
-                : "Subscribe"
-            }
-            onButtonClick={() => handlePaidPlan("unlimited")}
-            buttonDisabled={loading !== null || currentPlan === "unlimited"}
-            currentPlan={currentPlan === "unlimited"}
-            costComparison={PLAN_DETAILS.unlimited.costComparison}
-            highlighted={false || !isActiveLifetimePromo}
-          />
-        )}
+          {/* Unlimited Plan */}
+          {shouldShowPlan("unlimited") && (
+            <PricingCard
+              plan="unlimited"
+              price={PLAN_DETAILS.unlimited.price}
+              interval={PLAN_DETAILS.unlimited.interval}
+              title={PLAN_DETAILS.unlimited.title}
+              description={PLAN_DETAILS.unlimited.description}
+              features={PLAN_FEATURES.unlimited}
+              badge={
+                currentPlan === "unlimited"
+                  ? { text: "Current Plan", variant: "default" }
+                  : { text: "Best Value", variant: "value" }
+              }
+              buttonText={
+                currentPlan === "unlimited"
+                  ? "Current Plan"
+                  : loading === "unlimited"
+                    ? "Loading..."
+                    : "Subscribe"
+              }
+              onButtonClick={() => handlePaidPlan("unlimited")}
+              buttonDisabled={loading !== null || currentPlan === "unlimited"}
+              currentPlan={currentPlan === "unlimited"}
+              costComparison={PLAN_DETAILS.unlimited.costComparison}
+              highlighted={false || !isActiveLifetimePromo}
+            />
+          )}
 
-        {/* Lifetime Plan */}
-        {shouldShowPlan("lifetime") && isActiveLifetimePromo && (
-          <PricingCard
-            plan="lifetime"
-            price="FREE"
-            originalPrice={PLAN_DETAILS.lifetime_early_100.price}
-            interval={PLAN_DETAILS.lifetime_early_100.interval}
-            title={PLAN_DETAILS.lifetime_early_100.title}
-            description={PLAN_DETAILS.lifetime_early_100.description}
-            features={PLAN_FEATURES.lifetime}
-            badge={{
-              text:
-                currentPlan === "lifetime" ? "Current Plan" : "Launch Offer!",
-              variant: "default",
-            }}
-            buttonText={
-              currentPlan === "lifetime"
-                ? "Current Plan"
-                : loading === "lifetime"
-                ? "Loading..."
-                : "Claim Free Lifetime"
-            }
-            onButtonClick={() => handlePaidPlan("lifetime")}
-            buttonDisabled={loading !== null || currentPlan === "lifetime"}
-            currentPlan={currentPlan === "lifetime"}
-            costComparison={PLAN_DETAILS.lifetime_early_100.costComparison}
-            slotsRemaining={promoSlots?.remaining}
-            highlighted
-          />
-        )}
+          {/* Lifetime Plan */}
+          {shouldShowPlan("lifetime") && isActiveLifetimePromo && (
+            <PricingCard
+              plan="lifetime"
+              price="FREE"
+              originalPrice={PLAN_DETAILS.lifetime_early_100.price}
+              interval={PLAN_DETAILS.lifetime_early_100.interval}
+              title={PLAN_DETAILS.lifetime_early_100.title}
+              description={PLAN_DETAILS.lifetime_early_100.description}
+              features={PLAN_FEATURES.lifetime}
+              badge={{
+                text:
+                  currentPlan === "lifetime" ? "Current Plan" : "Launch Offer!",
+                variant: "default",
+              }}
+              buttonText={
+                currentPlan === "lifetime"
+                  ? "Current Plan"
+                  : loading === "lifetime"
+                    ? "Loading..."
+                    : "Claim Free Lifetime"
+              }
+              onButtonClick={() => handlePaidPlan("lifetime")}
+              buttonDisabled={loading !== null || currentPlan === "lifetime"}
+              currentPlan={currentPlan === "lifetime"}
+              costComparison={PLAN_DETAILS.lifetime_early_100.costComparison}
+              slotsRemaining={promoSlots?.remaining}
+              highlighted
+            />
+          )}
 
-        {shouldShowPlan("lifetime") && !isActiveLifetimePromo && (
-          <PricingCard
-            plan="lifetime"
-            price={PLAN_DETAILS.lifetime.price}
-            interval={PLAN_DETAILS.lifetime.interval}
-            title={PLAN_DETAILS.lifetime.title}
-            description={PLAN_DETAILS.lifetime.description}
-            features={PLAN_FEATURES.lifetime}
-            badge={
-              currentPlan === "lifetime"
-                ? { text: "Current Plan", variant: "default" }
-                : undefined
-            }
-            buttonText={
-              currentPlan === "lifetime"
-                ? "Current Plan"
-                : loading === "lifetime"
-                ? "Loading..."
-                : "Subscribe"
-            }
-            onButtonClick={() => handlePaidPlan("lifetime")}
-            buttonDisabled={loading !== null || currentPlan === "lifetime"}
-            currentPlan={currentPlan === "lifetime"}
-            costComparison={PLAN_DETAILS.lifetime.costComparison}
-          />
-        )}
+          {shouldShowPlan("lifetime") && !isActiveLifetimePromo && (
+            <PricingCard
+              plan="lifetime"
+              price={PLAN_DETAILS.lifetime.price}
+              interval={PLAN_DETAILS.lifetime.interval}
+              title={PLAN_DETAILS.lifetime.title}
+              description={PLAN_DETAILS.lifetime.description}
+              features={PLAN_FEATURES.lifetime}
+              badge={
+                currentPlan === "lifetime"
+                  ? { text: "Current Plan", variant: "default" }
+                  : undefined
+              }
+              buttonText={
+                currentPlan === "lifetime"
+                  ? "Current Plan"
+                  : loading === "lifetime"
+                    ? "Loading..."
+                    : "Subscribe"
+              }
+              onButtonClick={() => handlePaidPlan("lifetime")}
+              buttonDisabled={loading !== null || currentPlan === "lifetime"}
+              currentPlan={currentPlan === "lifetime"}
+              costComparison={PLAN_DETAILS.lifetime.costComparison}
+            />
+          )}
         </div>
       )}
     </>

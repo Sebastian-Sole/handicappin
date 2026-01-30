@@ -6,14 +6,14 @@ import { Label } from "@/components/ui/label";
 import { Muted, P, Small } from "@/components/ui/typography";
 import { CalculatorCard } from "./calculator-card";
 import { useCalculatorContext } from "@/contexts/calculatorContext";
-import { getCalculatorById } from "@/lib/calculator-registry";
+import { getCalculatorByIdOrThrow } from "@/lib/calculator-registry";
 import {
   calculateScoreDifferential,
   calculateHandicapIndex,
 } from "@/lib/handicap";
 import { ArrowRight, TrendingDown, TrendingUp, Minus } from "lucide-react";
 
-const meta = getCalculatorById("what-if-scenario")!;
+const meta = getCalculatorByIdOrThrow("what-if-scenario");
 
 export function WhatIfCalculator() {
   const { values } = useCalculatorContext();

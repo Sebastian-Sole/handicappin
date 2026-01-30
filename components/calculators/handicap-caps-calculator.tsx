@@ -7,14 +7,14 @@ import { Muted, P, Small } from "@/components/ui/typography";
 import { Progress } from "@/components/ui/progress";
 import { CalculatorCard } from "./calculator-card";
 import { useCalculatorContext } from "@/contexts/calculatorContext";
-import { getCalculatorById } from "@/lib/calculator-registry";
+import { getCalculatorByIdOrThrow } from "@/lib/calculator-registry";
 import { applyHandicapCaps } from "@/lib/handicap";
 import {
   SOFT_CAP_THRESHOLD,
   HARD_CAP_THRESHOLD,
 } from "@/lib/handicap/constants";
 
-const meta = getCalculatorById("handicap-caps")!;
+const meta = getCalculatorByIdOrThrow("handicap-caps");
 
 export function HandicapCapsCalculator() {
   const { values, setValue } = useCalculatorContext();
@@ -42,9 +42,9 @@ export function HandicapCapsCalculator() {
     }
 
     // Calculate progress percentage (0-100) within the cap range
-    const progressPercent = Math.min(
-      100,
-      (difference / HARD_CAP_THRESHOLD) * 100
+    const progressPercent = Math.max(
+      0,
+      Math.min(100, (difference / HARD_CAP_THRESHOLD) * 100)
     );
 
     return {

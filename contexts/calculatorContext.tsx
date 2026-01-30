@@ -22,13 +22,13 @@ interface CalculatorContextProps {
   resetValues: () => void;
   // Track which calculator last updated each field for UI highlighting
   lastUpdatedBy: Partial<Record<CalculatorFieldType, string | null>>;
-  setLastUpdatedBy: (field: CalculatorFieldType, calculatorId: string) => void;
+  setLastUpdatedBy: (field: CalculatorFieldType, calculatorId: string | null) => void;
   // Expansion state for mobile accordion
   expandedCalculator: string | null;
   setExpandedCalculator: (id: string | null) => void;
 }
 
-const defaultValues: CalculatorValues = {
+const createDefaultValues = (): CalculatorValues => ({
   handicapIndex: null,
   courseHandicap: null,
   playingHandicap: null,
@@ -40,14 +40,14 @@ const defaultValues: CalculatorValues = {
   holesPlayed: 18,
   lowHandicapIndex: null,
   scoreDifferentials: [],
-};
+});
 
 const CalculatorContext = createContext<CalculatorContextProps | undefined>(
   undefined
 );
 
 export function CalculatorProvider({ children }: { children: ReactNode }) {
-  const [values, setValuesState] = useState<CalculatorValues>(defaultValues);
+  const [values, setValuesState] = useState<CalculatorValues>(createDefaultValues);
   const [lastUpdatedBy, setLastUpdatedByState] = useState<
     Partial<Record<CalculatorFieldType, string | null>>
   >({});
@@ -67,12 +67,12 @@ export function CalculatorProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const resetValues = useCallback(() => {
-    setValuesState(defaultValues);
+    setValuesState(createDefaultValues());
     setLastUpdatedByState({});
   }, []);
 
   const setLastUpdatedBy = useCallback(
-    (field: CalculatorFieldType, calculatorId: string) => {
+    (field: CalculatorFieldType, calculatorId: string | null) => {
       setLastUpdatedByState((prev) => ({ ...prev, [field]: calculatorId }));
     },
     []

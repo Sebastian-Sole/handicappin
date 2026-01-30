@@ -7,9 +7,9 @@ import { Switch } from "@/components/ui/switch";
 import { Muted, P } from "@/components/ui/typography";
 import { CalculatorCard } from "./calculator-card";
 import { useCalculatorContext } from "@/contexts/calculatorContext";
-import { getCalculatorById } from "@/lib/calculator-registry";
+import { getCalculatorByIdOrThrow } from "@/lib/calculator-registry";
 
-const meta = getCalculatorById("course-handicap")!;
+const meta = getCalculatorByIdOrThrow("course-handicap");
 
 export function CourseHandicapCalculator() {
   const { values, setValue, setLastUpdatedBy } = useCalculatorContext();
@@ -38,8 +38,8 @@ export function CourseHandicapCalculator() {
 
   // Update shared context when result changes
   useEffect(() => {
+    setValue("courseHandicap", courseHandicap);
     if (courseHandicap !== null) {
-      setValue("courseHandicap", courseHandicap);
       setLastUpdatedBy("courseHandicap", meta.id);
     }
   }, [courseHandicap, setValue, setLastUpdatedBy]);

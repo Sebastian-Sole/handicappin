@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -13,9 +13,9 @@ import {
 import { Muted, P } from "@/components/ui/typography";
 import { CalculatorCard } from "./calculator-card";
 import { useCalculatorContext } from "@/contexts/calculatorContext";
-import { getCalculatorById } from "@/lib/calculator-registry";
+import { getCalculatorByIdOrThrow } from "@/lib/calculator-registry";
 
-const meta = getCalculatorById("playing-handicap")!;
+const meta = getCalculatorByIdOrThrow("playing-handicap");
 
 // Common handicap allowances per USGA
 const FORMAT_ALLOWANCES = [
@@ -28,7 +28,7 @@ const FORMAT_ALLOWANCES = [
 ];
 
 export function PlayingHandicapCalculator() {
-  const { values, setValue } = useCalculatorContext();
+  const { values, setValue, setLastUpdatedBy } = useCalculatorContext();
   const [format, setFormat] = useState("stroke");
 
   const selectedFormat = FORMAT_ALLOWANCES.find((f) => f.id === format);
@@ -37,6 +37,14 @@ export function PlayingHandicapCalculator() {
     if (values.courseHandicap === null || !selectedFormat) return null;
     return Math.round(values.courseHandicap * (selectedFormat.allowance / 100));
   }, [values.courseHandicap, selectedFormat]);
+
+  // Update shared context when result changes
+  useEffect(() => {
+    setValue("playingHandicap", playingHandicap);
+    if (playingHandicap !== null) {
+      setLastUpdatedBy("playingHandicap", meta.id);
+    }
+  }, [playingHandicap, setValue, setLastUpdatedBy]);
 
   const result = (
     <div className="flex items-center justify-between">

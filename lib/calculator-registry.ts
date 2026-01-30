@@ -130,6 +130,14 @@ export function getCalculatorsByCategory(category: CalculatorMeta["category"]) {
   return CALCULATOR_REGISTRY.filter((calc) => calc.category === category);
 }
 
-export function getCalculatorById(id: string) {
+export function getCalculatorById(id: string): CalculatorMeta | undefined {
   return CALCULATOR_REGISTRY.find((calc) => calc.id === id);
+}
+
+export function getCalculatorByIdOrThrow(id: string): CalculatorMeta {
+  const calculator = CALCULATOR_REGISTRY.find((calc) => calc.id === id);
+  if (!calculator) {
+    throw new Error(`Calculator '${id}' not found in registry`);
+  }
+  return calculator;
 }

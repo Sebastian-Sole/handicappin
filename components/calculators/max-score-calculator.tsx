@@ -7,19 +7,9 @@ import { Muted, P, Small } from "@/components/ui/typography";
 import { Badge } from "@/components/ui/badge";
 import { CalculatorCard } from "./calculator-card";
 import { useCalculatorContext } from "@/contexts/calculatorContext";
-import { CalculatorMeta } from "@/types/calculators";
+import { getCalculatorByIdOrThrow } from "@/lib/calculator-registry";
 
-const meta: CalculatorMeta = {
-  id: "max-score",
-  name: "Maximum Hole Score",
-  description:
-    "See your max score per hole for handicap purposes (Net Double Bogey)",
-  category: "educational",
-  inputs: ["courseHandicap"],
-  outputs: [],
-  usgaLink:
-    "https://www.usga.org/handicapping/roh/Content/rules/3%201%20Maximum%20Hole%20Score.htm",
-};
+const meta = getCalculatorByIdOrThrow("max-score");
 
 // Standard par values for demonstration
 const SAMPLE_HOLES = [
@@ -148,8 +138,8 @@ export function MaxScoreCalculator() {
         <P className="font-medium">Examples:</P>
         <ul className="list-disc pl-4 space-y-1 text-muted-foreground">
           <li>Par 4, 0 strokes: Max = 4 + 2 + 0 = 6</li>
-          <li>Par 4, 1 stroke: Max = 4 + 2 + 1 = 7</li>
-          <li>Par 5, 2 strokes: Max = 5 + 2 + 2 = 9 (but capped at 10)</li>
+          <li>Par 5, 1 stroke: Max = 5 + 2 + 1 = 8</li>
+          <li>Par 4, 4 strokes: Max = 4 + 2 + 4 = 10, but capped at 9 (Par + 5)</li>
         </ul>
       </div>
     </div>

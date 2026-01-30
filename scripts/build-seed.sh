@@ -30,7 +30,7 @@ for sql_file in "$COURSES_DIR"/*.sql; do
     echo "" >> "$SEED_OUTPUT"
     echo "-- Source: scripts/sql/$filename" >> "$SEED_OUTPUT"
     cat "$sql_file" >> "$SEED_OUTPUT"
-    ((file_count++))
+    ((++file_count))
   fi
 done
 

@@ -6,10 +6,10 @@ import { Label } from "@/components/ui/label";
 import { Muted, P } from "@/components/ui/typography";
 import { CalculatorCard } from "./calculator-card";
 import { useCalculatorContext } from "@/contexts/calculatorContext";
-import { getCalculatorById } from "@/lib/calculator-registry";
+import { getCalculatorByIdOrThrow } from "@/lib/calculator-registry";
 import { calculateScoreDifferential } from "@/lib/handicap";
 
-const meta = getCalculatorById("score-differential")!;
+const meta = getCalculatorByIdOrThrow("score-differential");
 
 export function ScoreDifferentialCalculator() {
   const { values, setValue, setLastUpdatedBy } = useCalculatorContext();
@@ -31,9 +31,11 @@ export function ScoreDifferentialCalculator() {
   }, [values]);
 
   useEffect(() => {
+    setValue("scoreDifferential", scoreDifferential);
     if (scoreDifferential !== null) {
-      setValue("scoreDifferential", scoreDifferential);
       setLastUpdatedBy("scoreDifferential", meta.id);
+    } else {
+      setLastUpdatedBy("scoreDifferential", null);
     }
   }, [scoreDifferential, setValue, setLastUpdatedBy]);
 

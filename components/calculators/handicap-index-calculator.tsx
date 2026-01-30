@@ -8,14 +8,14 @@ import { Muted, P, Small } from "@/components/ui/typography";
 import { Badge } from "@/components/ui/badge";
 import { CalculatorCard } from "./calculator-card";
 import { useCalculatorContext } from "@/contexts/calculatorContext";
-import { getCalculatorById } from "@/lib/calculator-registry";
+import { getCalculatorByIdOrThrow } from "@/lib/calculator-registry";
 import {
   calculateHandicapIndex,
   getRelevantDifferentials,
 } from "@/lib/handicap";
 import { Plus, X } from "lucide-react";
 
-const meta = getCalculatorById("handicap-index")!;
+const meta = getCalculatorByIdOrThrow("handicap-index");
 
 export function HandicapIndexCalculator() {
   const { values, setValue, setLastUpdatedBy } = useCalculatorContext();
@@ -73,8 +73,8 @@ export function HandicapIndexCalculator() {
   }, [differentials, relevantDifferentials]);
 
   useEffect(() => {
+    setValue("handicapIndex", handicapIndex);
     if (handicapIndex !== null) {
-      setValue("handicapIndex", handicapIndex);
       setLastUpdatedBy("handicapIndex", meta.id);
     }
   }, [handicapIndex, setValue, setLastUpdatedBy]);
@@ -166,6 +166,7 @@ export function HandicapIndexCalculator() {
                 <button
                   onClick={() => removeDifferential(index)}
                   className="hover:bg-white/20 rounded-full p-0.5"
+                  aria-label={`Remove differential ${diff.toFixed(1)}`}
                 >
                   <X className="h-3 w-3" />
                 </button>

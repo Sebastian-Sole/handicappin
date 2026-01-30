@@ -6,17 +6,10 @@ import { Label } from "@/components/ui/label";
 import { Muted, P, Small } from "@/components/ui/typography";
 import { CalculatorCard } from "./calculator-card";
 import { useCalculatorContext } from "@/contexts/calculatorContext";
-import { CalculatorMeta } from "@/types/calculators";
+import { getCalculatorByIdOrThrow } from "@/lib/calculator-registry";
 import { Target } from "lucide-react";
 
-const meta: CalculatorMeta = {
-  id: "target-score",
-  name: "Target Score",
-  description: "Find what score you need to reach a target handicap index",
-  category: "advanced",
-  inputs: ["handicapIndex", "courseRating", "slopeRating"],
-  outputs: [],
-};
+const meta = getCalculatorByIdOrThrow("target-score");
 
 export function TargetScoreCalculator() {
   const { values } = useCalculatorContext();

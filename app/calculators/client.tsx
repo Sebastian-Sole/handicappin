@@ -8,13 +8,7 @@ import { LinkedValuesBar } from "@/components/calculators/linked-values-bar";
 import { CalculatorGrid } from "@/components/calculators/calculator-grid";
 import { Calculator, Lightbulb, GraduationCap } from "lucide-react";
 
-interface CalculatorsPageClientProps {
-  userHandicapIndex: number | null;
-}
-
-export function CalculatorsPageClient({
-  userHandicapIndex,
-}: CalculatorsPageClientProps) {
+export function CalculatorsPageClient() {
   const [activeTab, setActiveTab] = useState<
     "core" | "advanced" | "educational"
   >("core");

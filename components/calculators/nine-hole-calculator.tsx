@@ -6,23 +6,26 @@ import { Label } from "@/components/ui/label";
 import { Muted, P, Small } from "@/components/ui/typography";
 import { CalculatorCard } from "./calculator-card";
 import { useCalculatorContext } from "@/contexts/calculatorContext";
-import { getCalculatorById } from "@/lib/calculator-registry";
+import { getCalculatorByIdOrThrow } from "@/lib/calculator-registry";
 import {
   calculate9HoleScoreDifferential,
   calculateExpected9HoleDifferential,
 } from "@/lib/handicap";
 import { ArrowRight } from "lucide-react";
 
-const meta = getCalculatorById("nine-hole-equivalency")!;
+const meta = getCalculatorByIdOrThrow("nine-hole-equivalency");
 
 export function NineHoleCalculator() {
   const { values, setValue } = useCalculatorContext();
+  // Local state for 9-hole specific values (not shared with 18-hole calculators)
   const [nineHoleScore, setNineHoleScore] = useState<number | null>(null);
-
-  // Use values from context, with 9-hole specific overrides
-  const nineHoleCourseRating = values.courseRating;
-  const nineHoleSlopeRating = values.slopeRating;
-  const nineHolePar = values.par;
+  const [nineHoleCourseRating, setNineHoleCourseRating] = useState<
+    number | null
+  >(null);
+  const [nineHoleSlopeRating, setNineHoleSlopeRating] = useState<number | null>(
+    null
+  );
+  const [nineHolePar, setNineHolePar] = useState<number | null>(null);
 
   const calculation = useMemo(() => {
     if (
@@ -157,10 +160,9 @@ export function NineHoleCalculator() {
             type="number"
             step="0.1"
             placeholder="e.g., 35.2"
-            value={values.courseRating ?? ""}
+            value={nineHoleCourseRating ?? ""}
             onChange={(e) =>
-              setValue(
-                "courseRating",
+              setNineHoleCourseRating(
                 e.target.value ? parseFloat(e.target.value) : null
               )
             }
@@ -172,10 +174,9 @@ export function NineHoleCalculator() {
             id="slopeRating-9hole"
             type="number"
             placeholder="e.g., 125"
-            value={values.slopeRating ?? ""}
+            value={nineHoleSlopeRating ?? ""}
             onChange={(e) =>
-              setValue(
-                "slopeRating",
+              setNineHoleSlopeRating(
                 e.target.value ? parseInt(e.target.value) : null
               )
             }
@@ -187,9 +188,9 @@ export function NineHoleCalculator() {
             id="par-9hole"
             type="number"
             placeholder="e.g., 36"
-            value={values.par ?? ""}
+            value={nineHolePar ?? ""}
             onChange={(e) =>
-              setValue("par", e.target.value ? parseInt(e.target.value) : null)
+              setNineHolePar(e.target.value ? parseInt(e.target.value) : null)
             }
           />
         </div>
