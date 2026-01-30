@@ -1,4 +1,8 @@
-import { Session } from "@supabase/supabase-js";
+// Minimal session type to avoid version conflicts between @supabase/auth-js versions
+// The function only needs access_token, so we don't require the full Session type
+type SessionWithToken = {
+  access_token: string;
+} | null;
 
 // Define billing claims type (minimal)
 export type BillingClaims = {
@@ -57,7 +61,7 @@ function base64urlDecode(str: string): string {
   }
 }
 
-export function getBillingFromJWT(session: Session | null): BillingClaims | null {
+export function getBillingFromJWT(session: SessionWithToken): BillingClaims | null {
   if (!session?.access_token) {
     return null;
   }
@@ -94,7 +98,7 @@ export function getBillingFromJWT(session: Session | null): BillingClaims | null
  * @param session - The Supabase session object containing the access token
  * @returns The app_metadata from the JWT, or null if not available
  */
-export function getAppMetadataFromJWT(session: Session | null): Record<string, any> | null {
+export function getAppMetadataFromJWT(session: SessionWithToken): Record<string, unknown> | null {
   if (!session?.access_token) {
     return null;
   }
