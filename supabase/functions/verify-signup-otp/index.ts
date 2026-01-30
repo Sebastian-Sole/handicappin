@@ -226,36 +226,10 @@ Deno.serve(async (req) => {
       // User is verified, OTP record is just not marked as consumed
     }
 
-    // Generate a magic link token for auto-login after successful verification
-    const { data: linkData, error: linkError } =
-      await supabaseAdmin.auth.admin.generateLink({
-        type: "magiclink",
-        email: normalizedEmail,
-      });
-
-    if (linkError) {
-      console.error("Failed to generate login link:", linkError);
-      // Non-critical: user can still log in manually
-      return new Response(
-        JSON.stringify({
-          success: true,
-          message: "Email verified successfully!",
-          autoLogin: false,
-        }),
-        {
-          status: 200,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        }
-      );
-    }
-
-    // Return the hashed token for frontend to establish session
     return new Response(
       JSON.stringify({
         success: true,
-        message: "Email verified successfully!",
-        autoLogin: true,
-        tokenHash: linkData.properties.hashed_token,
+        message: "Email verified successfully! Please sign in to continue.",
       }),
       {
         status: 200,
