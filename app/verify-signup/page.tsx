@@ -2,6 +2,7 @@
 
 import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { createClientComponentClient } from "@/utils/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -84,12 +85,34 @@ function VerifySignupContent() {
 
       if (response.ok && data.success) {
         setStatus("success");
-        setMessage("Email verified successfully! Redirecting...");
 
-        // Redirect to login after 2 seconds
-        setTimeout(() => {
-          router.push("/login?verified=true");
-        }, 2000);
+        if (data.autoLogin && data.tokenHash) {
+          setMessage("Email verified! Logging you in...");
+
+          // Establish session using the token
+          const supabase = createClientComponentClient();
+          const { error: verifyError } = await supabase.auth.verifyOtp({
+            token_hash: data.tokenHash,
+            type: "email",
+          });
+
+          if (verifyError) {
+            console.error("Auto-login failed:", verifyError);
+            setMessage("Email verified! Redirecting to login...");
+            setTimeout(() => router.push("/login?verified=true"), 2000);
+            return;
+          }
+
+          // Refresh session to ensure cookies are synced
+          await supabase.auth.refreshSession();
+
+          // Session established - redirect to onboarding/dashboard
+          setTimeout(() => router.push("/onboarding"), 1500);
+        } else {
+          // Fallback to manual login
+          setMessage("Email verified successfully! Redirecting...");
+          setTimeout(() => router.push("/login?verified=true"), 2000);
+        }
       } else {
         setStatus("error");
         setMessage(
