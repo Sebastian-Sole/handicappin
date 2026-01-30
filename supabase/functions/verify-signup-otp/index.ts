@@ -229,7 +229,7 @@ Deno.serve(async (req) => {
     return new Response(
       JSON.stringify({
         success: true,
-        message: "Email verified successfully!",
+        message: "Email verified successfully! Please sign in to continue.",
       }),
       {
         status: 200,

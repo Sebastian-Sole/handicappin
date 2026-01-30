@@ -7,6 +7,13 @@ import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 
+// Helper function to extract country name from label (removes emoji)
+const getCountryName = (label: string): string => {
+  // Remove emoji and any trailing whitespace
+  // Emojis are typically at the end of the label
+  return label.replace(/\s*[\u{1F1E0}-\u{1F1FF}][\u{1F1E0}-\u{1F1FF}]|\s*[\u{1F3F4}\u{E0067}\u{E0062}\u{E0065}\u{E006E}\u{E0067}\u{E007F}]+|\s*[\u{1F3F4}\u{E0067}\u{E0062}\u{E0073}\u{E0063}\u{E0074}\u{E007F}]+|\s*[\u{1F3F4}\u{E0067}\u{E0062}\u{E0077}\u{E006C}\u{E0073}\u{E007F}]+|\s*🍀/gu, '').trim();
+};
+
 const countries = [
   { value: "afghanistan", label: "Afghanistan 🇦🇫" },
   { value: "albania", label: "Albania 🇦🇱" },
@@ -236,7 +243,10 @@ export function CountryCombobox({
   const [highlightedIndex, setHighlightedIndex] = React.useState(-1);
   const inputRef = React.useRef<HTMLInputElement>(null);
 
-  const selectedCountry = countries.find((country) => country.value === value);
+  // Match by country name (value passed in should be the actual country name like "Bosnia and Herzegovina")
+  const selectedCountry = countries.find(
+    (country) => getCountryName(country.label) === value
+  );
 
   // Show all countries if no search term, or filter based on search
   const filteredCountries =
@@ -247,7 +257,8 @@ export function CountryCombobox({
         );
 
   const handleCountrySelect = (country: (typeof countries)[0]) => {
-    onValueChange?.(country.value);
+    // Send the actual country name (without emoji) instead of hyphenated value
+    onValueChange?.(getCountryName(country.label));
     setInputValue(country.label);
     setIsOpen(false);
 

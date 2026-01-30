@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, Suspense } from "react";
+import { useState, useEffect, useRef, useCallback, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,6 +20,11 @@ import {
 } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Check, Loader2 } from "lucide-react";
+import * as Sentry from "@sentry/nextjs";
+
+// Delay constants for UX timing
+const REDIRECT_DELAY_MS = 2000;
+const STATUS_RESET_DELAY_MS = 3000;
 
 function VerifySignupContent() {
   const router = useRouter();
@@ -37,6 +42,28 @@ function VerifySignupContent() {
   );
   const [resendCooldown, setResendCooldown] = useState(0);
 
+  // Refs for cleanup to prevent race conditions
+  const abortControllerRef = useRef<AbortController | null>(null);
+  const redirectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const statusResetTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Cleanup on unmount to prevent state updates after unmount
+  useEffect(() => {
+    return () => {
+      // Abort any in-flight requests
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+      // Clear any pending timeouts
+      if (redirectTimeoutRef.current) {
+        clearTimeout(redirectTimeoutRef.current);
+      }
+      if (statusResetTimeoutRef.current) {
+        clearTimeout(statusResetTimeoutRef.current);
+      }
+    };
+  }, []);
+
   // Countdown timer for resend cooldown
   useEffect(() => {
     if (resendCooldown > 0) {
@@ -47,7 +74,7 @@ function VerifySignupContent() {
     }
   }, [resendCooldown]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!email || !otp) {
@@ -61,6 +88,12 @@ function VerifySignupContent() {
       setMessage("Verification code must be 6 digits");
       return;
     }
+
+    // Abort any previous request to prevent race conditions
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+    abortControllerRef.current = new AbortController();
 
     setStatus("loading");
 
@@ -77,6 +110,7 @@ function VerifySignupContent() {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ email, otp }),
+          signal: abortControllerRef.current.signal,
         }
       );
 
@@ -84,12 +118,14 @@ function VerifySignupContent() {
 
       if (response.ok && data.success) {
         setStatus("success");
-        setMessage("Email verified successfully! Redirecting...");
-
-        // Redirect to login after 2 seconds
-        setTimeout(() => {
-          router.push("/login?verified=true");
-        }, 2000);
+        setMessage(
+          data.message || "Email verified successfully! Redirecting to login..."
+        );
+        // Store timeout ref for cleanup on unmount
+        redirectTimeoutRef.current = setTimeout(
+          () => router.push("/login?verified=true"),
+          REDIRECT_DELAY_MS
+        );
       } else {
         setStatus("error");
         setMessage(
@@ -114,19 +150,31 @@ function VerifySignupContent() {
         }
       }
     } catch (error) {
-      console.error("Verification error:", error);
+      // Don't update state if request was aborted (component unmounting or new request)
+      if (error instanceof Error && error.name === "AbortError") {
+        return;
+      }
+      Sentry.captureException(error, {
+        tags: { feature: "otp_verification" },
+      });
       setStatus("error");
       setMessage("An unexpected error occurred. Please try again.");
       setOtp("");
     }
-  };
+  }, [email, otp, router]);
 
-  const handleResend = async () => {
+  const handleResend = useCallback(async () => {
     if (!email) {
       setStatus("error");
       setMessage("Please enter your email address");
       return;
     }
+
+    // Abort any previous request to prevent race conditions
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+    abortControllerRef.current = new AbortController();
 
     setStatus("loading");
 
@@ -143,6 +191,7 @@ function VerifySignupContent() {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ email }),
+          signal: abortControllerRef.current.signal,
         }
       );
 
@@ -156,7 +205,11 @@ function VerifySignupContent() {
         setRemainingAttempts(null); // Reset attempts with new code
         setOtp("");
 
-        setTimeout(() => setStatus("idle"), 3000);
+        // Store timeout ref for cleanup on unmount
+        statusResetTimeoutRef.current = setTimeout(
+          () => setStatus("idle"),
+          STATUS_RESET_DELAY_MS
+        );
       } else if (response.status === 429 && data.waitSeconds) {
         // Rate limited - show countdown
         setStatus("error");
@@ -167,11 +220,17 @@ function VerifySignupContent() {
         setMessage(data.error || "Failed to resend code. Please try again.");
       }
     } catch (error) {
-      console.error("Resend error:", error);
+      // Don't update state if request was aborted (component unmounting or new request)
+      if (error instanceof Error && error.name === "AbortError") {
+        return;
+      }
+      Sentry.captureException(error, {
+        tags: { feature: "otp_resend" },
+      });
       setStatus("error");
       setMessage("Failed to resend code. Please try again.");
     }
-  };
+  }, [email]);
 
   return (
     <div className="flex-1 flex justify-center items-center flex-col py-2 md:py-4 lg:py-8">
@@ -296,8 +355,8 @@ function VerifySignupContent() {
                 status === "loading"
                   ? "Verifying email, please wait"
                   : status === "success"
-                  ? "Email verified successfully"
-                  : "Verify email"
+                    ? "Email verified successfully"
+                    : "Verify email"
               }
               aria-busy={status === "loading"}
             >
