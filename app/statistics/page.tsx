@@ -16,21 +16,26 @@ const StatisticsPage = async () => {
   // Note: Unlimited access check is handled by middleware
   // This page path (/statistics) is listed in UNLIMITED_PATHS, requiring unlimited/lifetime plan
 
-  try {
-    const scorecards = await api.scorecard.getAllScorecardsByUserId({
-      userId: data.user.id,
-    });
-    const profile = await api.auth.getProfileFromUserId(data.user.id);
+  const [scorecardsResult, profileResult] = await Promise.allSettled([
+    api.scorecard.getAllScorecardsByUserId({ userId: data.user.id }),
+    api.auth.getProfileFromUserId(data.user.id),
+  ]);
 
-    return (
-      <Suspense fallback={<StatisticsSkeleton />}>
-        <Statistics profile={profile} scorecards={scorecards} />
-      </Suspense>
+  if (scorecardsResult.status === "rejected" || profileResult.status === "rejected") {
+    console.error("Error loading statistics:",
+      scorecardsResult.status === "rejected" ? scorecardsResult.reason : profileResult.status === "rejected" ? profileResult.reason : "Unknown error"
     );
-  } catch (error) {
-    console.error(error);
     return <div>Error loading statistics</div>;
   }
+
+  const scorecards = scorecardsResult.value;
+  const profile = profileResult.value;
+
+  return (
+    <Suspense fallback={<StatisticsSkeleton />}>
+      <Statistics profile={profile} scorecards={scorecards} />
+    </Suspense>
+  );
 };
 
 export default StatisticsPage;

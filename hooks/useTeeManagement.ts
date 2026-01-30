@@ -132,7 +132,7 @@ export function useTeeManagement() {
   }, []);
 
   const editTee = useCallback(
-    (courseId: number, currentTeeName: string | undefined, updatedTee: Tee) => {
+    (courseId: number, _currentTeeName: string | undefined, updatedTee: Tee) => {
       const editedTee: Tee = {
         ...updatedTee,
         id: generateTempId(),
@@ -156,7 +156,7 @@ export function useTeeManagement() {
         teeKey,
       };
     },
-    [getEffectiveTees]
+    []
   );
 
   // Get the currently selected tee

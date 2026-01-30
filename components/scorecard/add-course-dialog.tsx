@@ -251,12 +251,14 @@ export function AddCourseDialog({
             <FormField
               control={form.control}
               name="tees.0" // <--- references first tee
-              render={({ field }) => (
-                <TeeFormContent
-                  tee={field.value}
-                  onTeeChange={field.onChange}
-                />
-              )}
+              render={({ field }) =>
+                field.value ? (
+                  <TeeFormContent
+                    tee={field.value}
+                    onTeeChange={field.onChange}
+                  />
+                ) : <></>
+              }
             />
           </DialogPage>
         </form>

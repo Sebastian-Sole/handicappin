@@ -28,27 +28,33 @@ const DashboardPage = async (props: { params: Promise<{ id: string }> }) => {
   // Note: Unlimited access check is handled by middleware
   // This page path (/dashboard/*) is listed in UNLIMITED_PATHS, so middleware redirects users without unlimited/lifetime plan
 
-  try {
-    const scorecards = await api.scorecard.getAllScorecardsByUserId({
-      userId: id,
-    });
-    const profile = await api.auth.getProfileFromUserId(id);
-    const header = getRandomHeader();
-    return (
-      <Suspense fallback={<DashboardSkeleton />}>
-        <div>
-          <Dashboard
-            profile={profile}
-            scorecards={scorecards}
-            header={header}
-          />
-        </div>
-      </Suspense>
+  const [scorecardsResult, profileResult] = await Promise.allSettled([
+    api.scorecard.getAllScorecardsByUserId({ userId: id }),
+    api.auth.getProfileFromUserId(id),
+  ]);
+
+  if (scorecardsResult.status === "rejected" || profileResult.status === "rejected") {
+    console.error("Error loading dashboard data:",
+      scorecardsResult.status === "rejected" ? scorecardsResult.reason : profileResult.status === "rejected" ? profileResult.reason : "Unknown error"
     );
-  } catch (error) {
-    console.error(error);
     return <div>Error loading scorecards</div>;
   }
+
+  const scorecards = scorecardsResult.value;
+  const profile = profileResult.value;
+  const header = getRandomHeader();
+
+  return (
+    <Suspense fallback={<DashboardSkeleton />}>
+      <div>
+        <Dashboard
+          profile={profile}
+          scorecards={scorecards}
+          header={header}
+        />
+      </div>
+    </Suspense>
+  );
 };
 
 export default DashboardPage;
