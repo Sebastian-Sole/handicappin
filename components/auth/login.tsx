@@ -165,7 +165,7 @@ export function Login() {
       </div>
       <div className="space-y-4">
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+          <form onSubmit={(e) => form.handleSubmit(onSubmit)(e)} className="space-y-8">
             <div className="space-y-2">
               <FormField
                 control={form.control}

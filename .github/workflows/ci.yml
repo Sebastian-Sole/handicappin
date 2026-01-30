@@ -52,8 +52,6 @@ jobs:
 
       - name: Lint
         run: pnpm lint
-        env:
-          ESLINT_USE_FLAT_CONFIG: false
 
       - name: Type check
         run: pnpm build

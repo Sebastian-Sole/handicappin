@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useState, useMemo } from "react";
 import {
   Card,
   CardHeader,
@@ -28,24 +28,18 @@ const CourseHandicapCalculator = ({
   const [slopeRating, setSlopeRating] = useState(0);
   const [courseRating, setCourseRating] = useState(0);
   const [par, setPar] = useState(0);
-  const [courseHandicap, setCourseHandicap] = useState(0);
-  const [numberOfHolesPlayed, setNumberOfHolesPlayed] = useState(18);
+  const [numberOfHolesPlayed] = useState(18);
 
-  useEffect(() => {
+  const courseHandicap = useMemo(() => {
     if (numberOfHolesPlayed === 9) {
       const adjustedHandicapIndex = Math.round((handicapIndex / 2) * 10) / 10;
-      const courseHandicap = Math.round(
-        adjustedHandicapIndex * (slopeRating / 113) +
-          (courseRating - par)
+      return Math.round(
+        adjustedHandicapIndex * (slopeRating / 113) + (courseRating - par)
       );
-      setCourseHandicap(courseHandicap);
-    } else {
-      const courseHandicap = Math.round(
-        handicapIndex * (slopeRating / 113) +
-          (courseRating - par)
-      );
-      setCourseHandicap(courseHandicap);
-    } 
+    }
+    return Math.round(
+      handicapIndex * (slopeRating / 113) + (courseRating - par)
+    );
   }, [handicapIndex, slopeRating, courseRating, par, numberOfHolesPlayed]);
 
   return (

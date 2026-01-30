@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useSyncExternalStore } from "react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
@@ -12,22 +12,31 @@ import { AccountDeletionSection } from "../account-deletion-section";
 import { FormFeedback } from "@/components/ui/form-feedback";
 import type { FeedbackState } from "@/types/feedback";
 
+const subscribe = () => () => {};
+const getSnapshot = () => true;
+const getServerSnapshot = () => false;
+
 export function SettingsTab() {
   const [saveState, setSaveState] = useState<"idle" | "saving" | "saved">(
     "idle"
   );
   const { theme, setTheme } = useTheme();
-  const [mounted, setMounted] = useState(false);
+  const mounted = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
   const [feedback, setFeedback] = useState<FeedbackState | null>(null);
-
-  // Notification preferences - will be loaded from database
-  const [featureUpdates, setFeatureUpdates] = useState(true);
 
   // Fetch email preferences on mount
   // Auth is enforced server-side by authedProcedure
   const { data: preferences, isLoading } = api.auth.getEmailPreferences.useQuery(undefined, {
     refetchOnWindowFocus: false,
   });
+
+  // Notification preferences - use fetched value or default
+  const [featureUpdatesOverride, setFeatureUpdatesOverride] = useState<boolean | null>(null);
+  const featureUpdates = featureUpdatesOverride ?? preferences?.feature_updates ?? true;
+
+  const setFeatureUpdates = (value: boolean) => {
+    setFeatureUpdatesOverride(value);
+  };
 
   // Update preferences mutation
   const { mutate: updatePreferences } = api.auth.updateEmailPreferences.useMutation({
@@ -44,18 +53,6 @@ export function SettingsTab() {
       setSaveState("idle");
     },
   });
-
-  // Sync state with fetched preferences
-  useEffect(() => {
-    if (preferences) {
-      setFeatureUpdates(preferences.feature_updates);
-    }
-  }, [preferences]);
-
-  // Prevent hydration mismatch by only rendering theme buttons after mount
-  useEffect(() => {
-    setMounted(true);
-  }, []);
 
   const handleSaveSettings = async () => {
     if (isLoading) return;

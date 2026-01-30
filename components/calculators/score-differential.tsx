@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useState, useMemo } from "react";
 import {
   Card,
   CardHeader,
@@ -22,15 +22,9 @@ const ScoreDifferentialCalculator = () => {
   const [adjustedGrossScore, setAdjustedGrossScore] = useState(0);
   const [slopeRating, setSlopeRating] = useState(0);
   const [courseRating, setCourseRating] = useState(0);
-  const [scoreDifferential, setScoreDifferential] = useState(0);
 
-  useEffect(() => {
-    const scoreDifferential = calculateScoreDifferential(
-      adjustedGrossScore,
-      slopeRating,
-      courseRating
-    );
-    setScoreDifferential(scoreDifferential);
+  const scoreDifferential = useMemo(() => {
+    return calculateScoreDifferential(adjustedGrossScore, slopeRating, courseRating);
   }, [adjustedGrossScore, slopeRating, courseRating]);
 
   return (
