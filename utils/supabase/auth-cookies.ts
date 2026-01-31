@@ -40,12 +40,6 @@ export async function getUserIdFromCookies(): Promise<string | null> {
   const projectRef = new URL(supabaseUrl).hostname.split(".")[0];
   const cookieBaseName = `sb-${projectRef}-auth-token`;
 
-  // DEBUG: Log all cookies to understand the format
-  const allCookies = cookieStore.getAll();
-  const authRelatedCookies = allCookies.filter(
-    (c) => c.name.includes("sb-") || c.name.includes("supabase"),
-  );
-
   try {
     // Try to get the session from cookies
     // Supabase SSR may chunk large sessions across multiple cookies

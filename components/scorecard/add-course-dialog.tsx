@@ -126,7 +126,6 @@ export function AddCourseDialog({
     setErrorMessage(
       "Please check the form for errors/missing data, or contact support",
     );
-    console.log(errors);
   };
 
   return (

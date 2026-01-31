@@ -104,7 +104,12 @@ export async function POST(request: NextRequest) {
     const handler = webhookHandlers[event.type];
 
     if (handler) {
-      await handler({ event, eventId: event.id });
+      const result = await handler({ event, eventId: event.id });
+      if (!result.success) {
+        throw new Error(
+          result.message ?? `Handler reported failure for ${event.type}`
+        );
+      }
     } else {
       logWebhookInfo(`Unhandled event type: ${event.type}`);
     }

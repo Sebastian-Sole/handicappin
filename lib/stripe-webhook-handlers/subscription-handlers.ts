@@ -147,7 +147,14 @@ export async function handleSubscriptionChange(
         cancelAtPeriodEnd: subscription.cancel_at_period_end,
       });
 
-      logger.debug("RECEIVED SUB", { subscription });
+      logger.debug("Processing subscription update", {
+        subscriptionId: subscription.id,
+        userId,
+        status: subscription.status,
+        priceId: subscription.items.data[0]?.price.id,
+        cancelAtPeriodEnd: subscription.cancel_at_period_end,
+        cancelAt: subscription.cancel_at,
+      });
 
       // Check if subscription is set to cancel
       const isCancelling =

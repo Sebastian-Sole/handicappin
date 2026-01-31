@@ -1,5 +1,6 @@
 import { Ratelimit } from '@upstash/ratelimit';
 import { Redis } from '@upstash/redis';
+import { logger } from '@/lib/logging';
 
 /**
  * Rate limiting configuration
@@ -29,17 +30,20 @@ try {
         url: restUrl,
         token: restToken,
       });
-      console.log(`[Rate Limit] ✅ Connected to Upstash Redis`);
+      logger.info("Rate limit: Connected to Upstash Redis");
     } else {
-      console.warn('[Rate Limit] ⚠️  No Redis credentials found');
-      console.warn('[Rate Limit] Set KV_REST_API_URL and KV_REST_API_TOKEN');
+      logger.warn("Rate limit: No Redis credentials found", {
+        hint: "Set KV_REST_API_URL and KV_REST_API_TOKEN",
+      });
     }
   } else {
-    console.log('[Rate Limit] Disabled (RATE_LIMIT_ENABLED=false)');
+    logger.info("Rate limit: Disabled (RATE_LIMIT_ENABLED=false)");
   }
 } catch (error) {
-  console.error('[Rate Limit] ❌ Failed to initialize Redis client:', error);
-  console.error('[Rate Limit] Will fail-open (allow all requests)');
+  logger.error("Rate limit: Failed to initialize Redis client", {
+    error: error instanceof Error ? error.message : String(error),
+    fallback: "Will fail-open (allow all requests)",
+  });
 }
 
 /**
@@ -50,7 +54,7 @@ try {
 function createRateLimiter(limit: number, prefix: string) {
   // If rate limiting disabled, return bypass limiter
   if (!isEnabled) {
-    console.log(`[Rate Limit] Disabled for ${prefix} (RATE_LIMIT_ENABLED not set to 'true')`);
+    logger.debug("Rate limit: Disabled for limiter", { prefix, reason: "RATE_LIMIT_ENABLED not set to 'true'" });
     return {
       limit: async () => ({
         success: true,
@@ -63,7 +67,7 @@ function createRateLimiter(limit: number, prefix: string) {
 
   // If Redis client not available, fail open
   if (!redis) {
-    console.warn(`[Rate Limit] Redis not available for ${prefix} - failing open`);
+    logger.warn("Rate limit: Redis not available - failing open", { prefix });
     return {
       limit: async () => ({
         success: true,
@@ -81,10 +85,13 @@ function createRateLimiter(limit: number, prefix: string) {
       analytics: false, // Disable analytics to save Redis commands
       prefix: `ratelimit:${prefix}`,
     });
-    console.log(`[Rate Limit] Created active limiter for ${prefix} (${limit}/min)`);
+    logger.debug("Rate limit: Created active limiter", { prefix, limit, window: "1 min" });
     return limiter;
   } catch (error) {
-    console.error(`[Rate Limit] Failed to create limiter for ${prefix}:`, error);
+    logger.error("Rate limit: Failed to create limiter", {
+      prefix,
+      error: error instanceof Error ? error.message : String(error),
+    });
     // Fail open - return bypass limiter
     return {
       limit: async () => ({
@@ -105,7 +112,7 @@ function createRateLimiter(limit: number, prefix: string) {
 function createHourlyRateLimiter(limit: number, prefix: string) {
   // If rate limiting disabled, return bypass limiter
   if (!isEnabled) {
-    console.log(`[Rate Limit] Disabled for ${prefix} (RATE_LIMIT_ENABLED not set to 'true')`);
+    logger.debug("Rate limit: Disabled for limiter", { prefix, reason: "RATE_LIMIT_ENABLED not set to 'true'" });
     return {
       limit: async () => ({
         success: true,
@@ -118,7 +125,7 @@ function createHourlyRateLimiter(limit: number, prefix: string) {
 
   // If Redis client not available, fail open
   if (!redis) {
-    console.warn(`[Rate Limit] Redis not available for ${prefix} - failing open`);
+    logger.warn("Rate limit: Redis not available - failing open", { prefix });
     return {
       limit: async () => ({
         success: true,
@@ -136,10 +143,13 @@ function createHourlyRateLimiter(limit: number, prefix: string) {
       analytics: false,
       prefix: `ratelimit:${prefix}`,
     });
-    console.log(`[Rate Limit] Created active limiter for ${prefix} (${limit}/hour)`);
+    logger.debug("Rate limit: Created active limiter", { prefix, limit, window: "1 hour" });
     return limiter;
   } catch (error) {
-    console.error(`[Rate Limit] Failed to create limiter for ${prefix}:`, error);
+    logger.error("Rate limit: Failed to create limiter", {
+      prefix,
+      error: error instanceof Error ? error.message : String(error),
+    });
     return {
       limit: async () => ({
         success: true,

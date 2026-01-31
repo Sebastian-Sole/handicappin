@@ -2,6 +2,7 @@ import { Database } from "@/types/supabase";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { NextResponse, type NextRequest } from "next/server";
+import type { ResponseCookie } from "next/dist/compiled/@edge-runtime/cookies";
 import { portalRateLimit, getIdentifier } from "@/lib/rate-limit";
 import { logger } from "@/lib/logging";
 
@@ -56,8 +57,11 @@ export async function GET(request: NextRequest) {
     const cookieStore = await cookies();
 
     // Collect cookies that need to be set
-    const cookiesToSet: Array<{ name: string; value: string; options: any }> =
-      [];
+    const cookiesToSet: Array<{
+      name: string;
+      value: string;
+      options: Partial<ResponseCookie>;
+    }> = [];
 
     // Create Supabase client with proper cookie handling
     const supabase = createServerClient<Database>(

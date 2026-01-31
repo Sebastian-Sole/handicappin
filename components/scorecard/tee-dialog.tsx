@@ -70,7 +70,15 @@ export function TeeDialog({
         onSave({ ...data, approvalStatus: "pending" });
         setIsOpen(false);
       },
-      (errors) => {},
+      (errors) => {
+        console.error("Tee form validation errors:", errors);
+        // Form errors are automatically displayed by react-hook-form's FormField components
+        // Focus on the first field with an error for better UX
+        const firstErrorField = Object.keys(errors)[0];
+        if (firstErrorField) {
+          form.setFocus(firstErrorField as keyof Tee);
+        }
+      },
     )(e);
   };
 

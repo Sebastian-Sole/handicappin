@@ -7,8 +7,6 @@
 
 import { describe, test, expect, vi, beforeEach, afterEach } from "vitest";
 
-// Store original env values
-const originalEnv = { ...process.env };
 
 describe("mapPriceToPlan", () => {
   beforeEach(() => {
@@ -22,8 +20,10 @@ describe("mapPriceToPlan", () => {
   });
 
   afterEach(() => {
-    // Restore original env
-    process.env = { ...originalEnv };
+    // Delete the specific keys we set in beforeEach
+    delete process.env.STRIPE_PREMIUM_PRICE_ID;
+    delete process.env.STRIPE_UNLIMITED_PRICE_ID;
+    delete process.env.STRIPE_UNLIMITED_LIFETIME_PRICE_ID;
   });
 
   test("maps premium price ID to premium plan", async () => {
@@ -85,7 +85,10 @@ describe("PLAN_TO_PRICE_MAP", () => {
   });
 
   afterEach(() => {
-    process.env = { ...originalEnv };
+    // Delete the specific keys we set in beforeEach
+    delete process.env.STRIPE_PREMIUM_PRICE_ID;
+    delete process.env.STRIPE_UNLIMITED_PRICE_ID;
+    delete process.env.STRIPE_UNLIMITED_LIFETIME_PRICE_ID;
   });
 
   test("contains all paid plan types", async () => {

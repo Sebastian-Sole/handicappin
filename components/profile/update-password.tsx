@@ -45,7 +45,7 @@ const UpdatePassword = ({ email: initialEmail }: UpdatePasswordProps) => {
     },
   });
 
-  const otpValue = useWatch({ control: form.control, name: "otp" });
+  const otpValue = useWatch({ control: form.control, name: "otp", defaultValue: "" });
 
   const handleSubmit = async (values: z.infer<typeof resetPasswordSchema>) => {
     setLoading(true);
