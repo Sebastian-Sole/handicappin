@@ -31,14 +31,14 @@ export async function POST(request: NextRequest) {
     } = await supabase.auth.getUser();
 
     if (userError || !user) {
-      logger.error("JWT refresh failed: No authenticated user", { error: userError?.message });
+      logger.error("JWT refresh failed: No authenticated user", {
+        error: userError?.message,
+      });
       return NextResponse.json(
         { error: "Unauthorized", message: "No authenticated user" },
-        { status: 401 }
+        { status: 401 },
       );
     }
-
-    logger.info(`🔄 JWT Refresh requested for user: ${user.id}`);
 
     // Force token refresh by updating user metadata
     // This triggers Supabase to issue a new JWT with updated claims
@@ -53,16 +53,11 @@ export async function POST(request: NextRequest) {
       logger.error("JWT refresh failed", { error: error.message });
       return NextResponse.json(
         { error: "Refresh failed", message: error.message },
-        { status: 500 }
+        { status: 500 },
       );
     }
 
     const billing = data.user?.app_metadata?.billing;
-
-    logger.info("✅ JWT refresh successful", {
-      user: user.id,
-      billing,
-    });
 
     return NextResponse.json(
       {
@@ -70,7 +65,7 @@ export async function POST(request: NextRequest) {
         billing,
         message: "JWT claims refreshed successfully",
       },
-      { status: 200 }
+      { status: 200 },
     );
   } catch (error) {
     logger.error("JWT refresh error", {
@@ -81,7 +76,7 @@ export async function POST(request: NextRequest) {
         error: "Internal server error",
         message: error instanceof Error ? error.message : "Unknown error",
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

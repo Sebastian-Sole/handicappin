@@ -28,14 +28,15 @@ export async function POST(request: NextRequest) {
       });
       return NextResponse.json(
         { error: "Server configuration error" },
-        { status: 500 }
+        { status: 500 },
       );
     }
 
     const cookieStore = await cookies();
 
     // Collect cookies that need to be set
-    const cookiesToSet: Array<{ name: string; value: string; options: any }> = [];
+    const cookiesToSet: Array<{ name: string; value: string; options: any }> =
+      [];
 
     // Create Supabase client with proper cookie handling for route handlers
     const supabase = createServerClient<Database>(
@@ -51,38 +52,29 @@ export async function POST(request: NextRequest) {
             cookiesToSet.push(...cookies);
           },
         },
-      }
+      },
     );
 
     // Refresh session server-side (this will trigger setAll with new cookies)
     const { data, error } = await supabase.auth.refreshSession();
 
     if (error) {
-      logger.error("❌ Server-side session refresh failed", { error: error.message });
+      logger.error("❌ Server-side session refresh failed", {
+        error: error.message,
+      });
       return NextResponse.json(
         { error: "Session refresh failed", details: error.message },
-        { status: 500 }
+        { status: 500 },
       );
     }
 
     if (!data.session) {
       logger.error("❌ No session returned from refresh");
-      return NextResponse.json(
-        { error: "No session found" },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: "No session found" }, { status: 401 });
     }
 
     // Extract billing claims from new JWT
     const billing = data.session.user.app_metadata?.billing;
-
-    logger.info("✅ Server-side session refreshed successfully", {
-      userId: data.session.user.id,
-      plan: billing?.plan,
-      status: billing?.status,
-      billingVersion: billing?.billing_version,
-      cookiesUpdated: cookiesToSet.length,
-    });
 
     // Create response with billing info
     const response = NextResponse.json({
@@ -95,8 +87,6 @@ export async function POST(request: NextRequest) {
       response.cookies.set(name, value, options);
     });
 
-    logger.info(`✅ Set ${cookiesToSet.length} cookies in response`);
-
     return response;
   } catch (error) {
     logger.error("❌ Unexpected error in session sync", {
@@ -104,7 +94,7 @@ export async function POST(request: NextRequest) {
     });
     return NextResponse.json(
       { error: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

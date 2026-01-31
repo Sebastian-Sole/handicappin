@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { api } from "@/trpc/react";
+import { clientLogger } from "@/lib/client-logger";
 
 export function BillingPortalButton() {
   const [loading, setLoading] = useState(false);
@@ -15,7 +16,7 @@ export function BillingPortalButton() {
 
       window.location.href = result.url;
     } catch (error: any) {
-      console.error("Portal access error:", error);
+      clientLogger.error("Portal access error", error);
 
       if (error?.data?.code === "TOO_MANY_REQUESTS" && error?.data?.cause?.retryAfter) {
         alert(

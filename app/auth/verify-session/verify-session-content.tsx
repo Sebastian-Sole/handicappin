@@ -3,15 +3,12 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClientComponentClient } from "@/utils/supabase/client";
+import { clientLogger } from "@/lib/client-logger";
 
 const MAX_RETRY_ATTEMPTS = 3;
 const RETRY_DELAY_MS = 2000; // 2 seconds between retries
 
-type VerificationState =
-  | "verifying"
-  | "retrying"
-  | "failed"
-  | "error";
+type VerificationState = "verifying" | "retrying" | "failed" | "error";
 
 interface VerifySessionContentProps {
   userId: string;
@@ -28,7 +25,7 @@ export function VerifySessionContent({
   const [state, setState] = useState<VerificationState>("verifying");
   const [attemptCount, setAttemptCount] = useState(0);
   const [errorMessage, setErrorMessage] = useState<string | null>(
-    initialError || null
+    initialError || null,
   );
 
   useEffect(() => {
@@ -36,75 +33,37 @@ export function VerifySessionContent({
       const supabase = createClientComponentClient();
 
       try {
-        console.log(
-          `🔄 Verification attempt ${attemptCount + 1}/${MAX_RETRY_ATTEMPTS}`,
-          {
-            userId, // Browser console - user sees their own UUID (no privacy issue)
-            returnTo,
-          }
-        );
-
         // Force session refresh to re-run JWT hook
         const { data, error } = await supabase.auth.refreshSession();
 
-        console.log("🔍 Refresh session result:", {
-          hasData: !!data,
-          hasSession: !!data?.session,
-          hasUser: !!data?.session?.user,
-          hasAppMetadata: !!data?.session?.user?.app_metadata,
-          hasBilling: !!data?.session?.user?.app_metadata?.billing,
-          error: error?.message,
-        });
-
-        // 🔍 DIAGNOSTIC: Log the entire app_metadata to see what's actually there
-        if (data?.session?.user?.app_metadata) {
-          console.log("🔍 Full app_metadata:", data.session.user.app_metadata);
-          console.log(
-            "🔍 app_metadata keys:",
-            Object.keys(data.session.user.app_metadata)
-          );
-        } else {
-          console.error("🚨 app_metadata is completely missing!");
-          // PII redacted - not logging full user object
-        }
-
         // 🔍 DIAGNOSTIC: Check if profile exists in database
-        console.log("🔍 Checking if profile exists in database...");
         try {
           const { data: profileCheck, error: profileError } = await supabase
             .from("profile")
             .select(
-              "id, plan_selected, subscription_status, current_period_end, billing_version"
+              "id, plan_selected, subscription_status, current_period_end, billing_version",
             )
             .eq("id", userId)
             .single();
 
           if (profileError) {
-            console.error("🚨 Profile query error:", profileError);
+            clientLogger.error("Profile query error", profileError);
           } else {
-            console.log("🔍 Profile exists in database:", {
-              id: profileCheck.id, // UUID logged directly (browser console, user's own data)
-              plan_selected: profileCheck.plan_selected,
-              subscription_status: profileCheck.subscription_status,
-              billing_version: profileCheck.billing_version,
-            });
             if (!profileCheck.plan_selected) {
-              console.warn(
-                "⚠️ Profile exists but plan_selected is NULL - user needs onboarding"
-              );
+              clientLogger.warn("Profile exists but plan_selected is NULL - user needs onboarding");
             }
           }
         } catch (diagError) {
-          console.error("🚨 Failed to check profile:", diagError);
+          clientLogger.error("Failed to check profile", diagError);
         }
 
         if (error) {
-          console.error("❌ Session refresh failed:", error);
+          clientLogger.error("Session refresh failed", error);
           throw error;
         }
 
         if (!data.session) {
-          console.error("❌ No session returned from refresh");
+          clientLogger.error("No session returned from refresh");
           throw new Error("No session returned");
         }
 
@@ -112,11 +71,7 @@ export function VerifySessionContent({
         const billing = data.session.user.app_metadata?.billing;
 
         if (!billing) {
-          console.warn(
-            `⚠️ Billing claims still missing after refresh (attempt ${
-              attemptCount + 1
-            })`
-          );
+          clientLogger.warn("Billing claims still missing after refresh", { attempt: attemptCount + 1 });
 
           // Retry if we haven't exceeded max attempts
           if (attemptCount < MAX_RETRY_ATTEMPTS - 1) {
@@ -127,91 +82,73 @@ export function VerifySessionContent({
             return; // useEffect will re-run due to attemptCount change
           } else {
             // Last attempt failed - try diagnostic database query
-            console.error(
-              "🔍 JWT hook appears to be failing. Checking database directly for diagnosis..."
-            );
+            clientLogger.error("JWT hook appears to be failing. Checking database directly for diagnosis...");
 
             try {
               const { data: profile, error: profileError } = await supabase
                 .from("profile")
                 .select(
-                  "id, plan_selected, subscription_status, current_period_end, cancel_at_period_end, billing_version"
+                  "id, plan_selected, subscription_status, current_period_end, cancel_at_period_end, billing_version",
                 )
                 .eq("id", userId)
                 .single();
 
               if (profileError) {
-                console.error("❌ Profile query failed:", profileError);
-                console.error(
-                  "🚨 This suggests the profile table might not have a row for this user!"
-                );
+                clientLogger.error("Profile query failed - profile table might not have a row for this user", profileError);
               } else if (!profile) {
-                console.error("❌ No profile found for user:", userId);
-                console.error(
-                  "🚨 Missing profile row! This is why JWT hook can't populate claims."
-                );
+                clientLogger.error("No profile found for user - Missing profile row prevents JWT hook from populating claims", undefined, { userId });
               } else {
-                console.log("✅ Profile exists in database:", {
+                clientLogger.debug("Profile exists in database", {
                   id: profile.id,
                   plan_selected: profile.plan_selected,
                   subscription_status: profile.subscription_status,
                   billing_version: profile.billing_version,
                 });
-                console.error(
-                  "🚨 Profile exists but JWT hook isn't populating claims!"
-                );
-                console.error(
-                  "🚨 Check Supabase dashboard: Auth > Hooks > Custom Access Token Hook"
-                );
-                console.error(
-                  "🚨 The hook should be enabled and pointing to: pg-functions://postgres/public/custom_access_token_hook"
-                );
+                clientLogger.error("Profile exists but JWT hook isn't populating claims - check Supabase Auth Hooks configuration");
               }
             } catch (diagError) {
-              console.error("❌ Diagnostic query failed:", diagError);
+              clientLogger.error("Diagnostic query failed", diagError);
             }
             // Max retries exceeded
             // Metric: Failed verification
-            console.error("METRIC: session_verification_failed", {
+            clientLogger.error("Session verification failed", undefined, {
               userId,
               attemptCount: MAX_RETRY_ATTEMPTS,
               reason: "max_retries_exceeded",
-              timestamp: new Date().toISOString(),
             });
 
             setState("failed");
             setErrorMessage(
-              "Unable to verify your session after multiple attempts. Please try logging in again."
+              "Unable to verify your session after multiple attempts. Please try logging in again.",
             );
             return;
           }
         }
 
         // Success! Claims are present
-        console.log("✅ Session verified successfully:", {
+        clientLogger.info("Session verified successfully", {
           plan: billing.plan,
           status: billing.status,
           version: billing.billing_version,
         });
 
         // Metric: Successful verification
-        console.info("METRIC: session_verification_success", {
+        clientLogger.info("Session verification success", {
           userId,
           attemptCount: attemptCount + 1,
-          timestamp: new Date().toISOString(),
         });
 
         // Check if user needs onboarding (no plan selected)
         if (!billing.plan || billing.plan === null) {
-          console.log(`↪️ No plan selected, redirecting to onboarding`);
+          clientLogger.debug("No plan selected, redirecting to onboarding");
           router.push("/onboarding");
         } else {
-          console.log(`↪️ Redirecting to: ${returnTo}`);
+          clientLogger.debug("Redirecting", { returnTo });
           router.push(returnTo);
         }
         router.refresh(); // Force middleware to re-run
       } catch (error) {
-        console.error("❌ Verification error:", error);
+        clientLogger.error("Verification error", error);
 
         // Retry if we haven't exceeded max attempts
         if (attemptCount < MAX_RETRY_ATTEMPTS - 1) {
@@ -222,18 +159,16 @@ export function VerifySessionContent({
         } else {
           // Max retries exceeded
           // Metric: Error during verification
-          console.error("METRIC: session_verification_error", {
+          clientLogger.error("Session verification error", error, {
             userId,
             attemptCount: attemptCount + 1,
-            error: error instanceof Error ? error.message : "Unknown error",
-            timestamp: new Date().toISOString(),
           });
 
           setState("error");
           setErrorMessage(
             error instanceof Error
               ? error.message
-              : "An unexpected error occurred"
+              : "An unexpected error occurred",
           );
         }
       }

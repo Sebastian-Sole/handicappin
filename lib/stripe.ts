@@ -2,6 +2,7 @@ import Stripe from "stripe";
 import { getOrCreateStripeCustomer } from "./stripe-customer";
 import type { PlanType } from "./stripe-types";
 import { getRedisClient } from "./rate-limit";
+import { logger } from "./logging";
 
 // Initialize Stripe client
 export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY ?? "", {
@@ -55,7 +56,10 @@ export async function getPromotionCodeDetails(code: string): Promise<PromotionCo
       }
     } catch (cacheError) {
       // Log but continue - fail open to Stripe API
-      console.warn(`[Promo Cache] Failed to read cache for "${code}":`, cacheError);
+      logger.warn("Promo cache read failed", {
+        code,
+        error: cacheError instanceof Error ? cacheError.message : String(cacheError),
+      });
     }
   }
 
@@ -89,13 +93,19 @@ export async function getPromotionCodeDetails(code: string): Promise<PromotionCo
         await redis.set(cacheKey, result, { ex: PROMO_CACHE_TTL_SECONDS });
       } catch (cacheError) {
         // Log but don't fail - caching is best-effort
-        console.warn(`[Promo Cache] Failed to write cache for "${code}":`, cacheError);
+        logger.warn("Promo cache write failed", {
+          code,
+          error: cacheError instanceof Error ? cacheError.message : String(cacheError),
+        });
       }
     }
 
     return result;
   } catch (error) {
-    console.error(`Failed to fetch promotion code details for "${code}":`, error);
+    logger.error("Failed to fetch promotion code details", {
+      code,
+      error: error instanceof Error ? error.message : String(error),
+    });
     return null;
   }
 }

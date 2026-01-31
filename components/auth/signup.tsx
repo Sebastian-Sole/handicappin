@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
+import { clientLogger } from "@/lib/client-logger";
 import {
   Form,
   FormControl,
@@ -118,7 +119,7 @@ export function Signup({
         router.push(`/verify-signup?email=${encodeURIComponent(values.email)}`);
       }, 1500);
     } catch (error: unknown) {
-      console.error("Error during sign up:", error);
+      clientLogger.error("Error during sign up", error);
       const errorMessage = error instanceof Error ? error.message : "An error occurred during sign up.";
 
       // Check for duplicate key constraint from profile creation edge function

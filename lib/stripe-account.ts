@@ -2,6 +2,7 @@ import { stripe } from "./stripe";
 import { db } from "@/db";
 import { stripeCustomers } from "@/db/schema";
 import { eq } from "drizzle-orm";
+import { logger } from "@/lib/logging";
 
 /**
  * Cancel all active Stripe subscriptions for a user
@@ -48,7 +49,10 @@ export async function cancelAllUserSubscriptions(userId: string): Promise<{
 
     return { success: true, cancelledCount };
   } catch (error) {
-    console.error("Failed to cancel subscriptions:", error);
+    logger.error("Failed to cancel subscriptions", {
+      userId,
+      error: error instanceof Error ? error.message : String(error),
+    });
     return {
       success: false,
       cancelledCount: 0,

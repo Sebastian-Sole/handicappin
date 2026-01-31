@@ -70,7 +70,9 @@ export function maskEmail(email: string | null | undefined): string {
  * @example
  * redactCustomerId("cus_ABC123DEF456") // "cus_ABC..."
  */
-export function redactCustomerId(customerId: string | null | undefined): string {
+export function redactCustomerId(
+  customerId: string | null | undefined,
+): string {
   if (!customerId) return "cus_unknown";
 
   const idPart = customerId.startsWith("cus_")
@@ -122,7 +124,7 @@ export function redactSessionId(sessionId: string | null | undefined): string {
  * redactSubscriptionId("sub_1234567890ABCDEF") // "sub_123..."
  */
 export function redactSubscriptionId(
-  subscriptionId: string | null | undefined
+  subscriptionId: string | null | undefined,
 ): string {
   if (!subscriptionId) return "sub_unknown";
 
@@ -295,7 +297,7 @@ export function logEmailChangeEvent(
     newEmail?: string;
     reason?: string;
     ip?: string;
-  }
+  },
 ) {
   logger.info("EMAIL_CHANGE_EVENT", {
     event,

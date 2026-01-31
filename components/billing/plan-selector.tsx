@@ -9,6 +9,7 @@ import { api } from "@/trpc/react";
 import { PricingCard, PricingCardSkeleton } from "./pricing-card";
 import { PLAN_FEATURES, PLAN_DETAILS } from "./plan-features";
 import { isPaidPlan } from "@/utils/billing/access-helpers";
+import { clientLogger } from "@/lib/client-logger";
 
 /**
  * Polls an async function with exponential backoff until success condition is met.
@@ -116,14 +117,14 @@ export function PlanSelector({
       );
       const supabase = createClientComponentClient();
 
-      console.log("🔄 Refreshing session after free plan selection...");
+      clientLogger.debug("Refreshing session after free plan selection...");
       const { error: refreshError } = await supabase.auth.refreshSession();
 
       if (refreshError) {
-        console.error("❌ Failed to refresh session:", refreshError);
+        clientLogger.error("Failed to refresh session", refreshError);
         // Continue anyway - BillingSync will catch it eventually
       } else {
-        console.log("✅ Session refreshed with new billing data");
+        clientLogger.debug("Session refreshed with new billing data");
       }
 
       // Poll session until billing claims reflect the new plan (exponential backoff)
@@ -138,17 +139,15 @@ export function PlanSelector({
       );
 
       if (claimsUpdated) {
-        console.log("✅ JWT claims updated, proceeding with redirect");
+        clientLogger.debug("JWT claims updated, proceeding with redirect");
       } else {
-        console.warn(
-          "⚠️ JWT claims not updated after polling, BillingSync will catch up"
-        );
+        clientLogger.warn("JWT claims not updated after polling, BillingSync will catch up");
       }
 
       router.push("/");
       router.refresh();
     } catch (error: any) {
-      console.error("Error selecting free plan:", error);
+      clientLogger.error("Error selecting free plan", error);
 
       // Check if it's a rate limit error
       if (
@@ -192,7 +191,7 @@ export function PlanSelector({
 
       window.location.href = result.url;
     } catch (error: any) {
-      console.error("Error with plan change:", error);
+      clientLogger.error("Error with plan change", error);
 
       // Check if it's a rate limit error
       if (

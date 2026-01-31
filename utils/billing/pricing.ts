@@ -11,6 +11,8 @@
  * - Verifies the base price before discounts
  */
 
+import { logger } from "@/lib/logging";
+
 /**
  * Expected pricing in cents (USD only)
  *
@@ -79,7 +81,7 @@ export function verifyPaymentAmount(
 
   // Only USD supported currently
   if (currencyLower !== 'usd') {
-    console.warn(`Currency ${currency} not configured - defaulting to USD pricing`);
+    logger.warn("Currency not configured - defaulting to USD pricing", { currency });
   }
 
   let expectedAmount: number;

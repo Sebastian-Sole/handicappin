@@ -103,6 +103,31 @@ export const teeSchema = z
         message: "totalDistance must equal outDistance + inDistance",
       });
     }
+
+    // Validate that all handicap values are unique across all 18 holes
+    if (v.holes && v.holes.length === 18) {
+      const hcpValues = v.holes.map((hole) => hole.hcp);
+      const nonZeroHcpValues = hcpValues.filter((hcp) => hcp !== 0);
+      const uniqueHcpValues = new Set(nonZeroHcpValues);
+
+      if (uniqueHcpValues.size !== nonZeroHcpValues.length) {
+        // Find which values are duplicated
+        const seen = new Set<number>();
+        const duplicates = new Set<number>();
+        for (const hcp of nonZeroHcpValues) {
+          if (seen.has(hcp)) {
+            duplicates.add(hcp);
+          }
+          seen.add(hcp);
+        }
+
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["holes"],
+          message: `Handicap values must be unique for each hole. Duplicate values: ${Array.from(duplicates).sort((a, b) => a - b).join(", ")}`,
+        });
+      }
+    }
   });
 
 export const courseSchema = z.object({

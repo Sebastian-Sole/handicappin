@@ -5,6 +5,7 @@
 
 import * as Sentry from "@sentry/nextjs";
 import { captureSentryError } from "@/lib/sentry-utils";
+import { logger } from "@/lib/logging";
 
 export interface WebhookFailureAlert {
   userId: string;
@@ -31,15 +32,16 @@ export function shouldAlertAdmin(retryCount: number): boolean {
  * Captures exception with full context for debugging
  */
 export async function sendAdminWebhookAlert(failure: WebhookFailureAlert): Promise<void> {
-  // Log to console with high visibility (keep for local dev)
-  console.error('═══════════════════════════════════════════');
-  console.error('🚨 CRITICAL WEBHOOK FAILURE - ADMIN ALERT');
-  console.error('═══════════════════════════════════════════');
-  console.error(`User: ${failure.userId}`);
-  console.error(`Event Type: ${failure.eventType}`);
-  console.error(`Retry Count: ${failure.retryCount}`);
-  console.error(`Error: ${failure.errorMessage}`);
-  console.error('═══════════════════════════════════════════');
+  // Log critical failure with structured data (PII will be redacted by logger)
+  logger.error("CRITICAL WEBHOOK FAILURE - ADMIN ALERT", {
+    userId: failure.userId,
+    eventType: failure.eventType,
+    eventId: failure.eventId,
+    retryCount: failure.retryCount,
+    errorMessage: failure.errorMessage,
+    customerId: failure.customerId,
+    subscriptionId: failure.subscriptionId,
+  });
 
   // Use centralized Sentry utility with PII redaction
   captureSentryError(
@@ -65,5 +67,5 @@ export async function sendAdminWebhookAlert(failure: WebhookFailureAlert): Promi
     }
   );
 
-  console.log('✅ Critical webhook failure sent to Sentry (PII redacted)');
+  logger.info("Critical webhook failure sent to Sentry", { eventId: failure.eventId });
 }

@@ -116,15 +116,28 @@ const getRoundCalculations = (
 type TeeInfoInsert = typeof teeInfo.$inferInsert;
 type RoundInsert = typeof round.$inferInsert;
 
+// Exported input schemas for testing and reuse
+export const getAllByUserIdInputSchema = z.object({
+  userId: z.string().uuid(),
+  startIndex: z.number().int().optional().default(0),
+  amount: z.number().int().optional().default(Number.MAX_SAFE_INTEGER),
+});
+
+export const getCountByUserIdInputSchema = z.object({
+  userId: z.string().uuid(),
+});
+
+export const getRoundByIdInputSchema = z.object({
+  roundId: z.number(),
+});
+
+export const getBestRoundInputSchema = z.object({
+  userId: z.string().uuid(),
+});
+
 export const roundRouter = createTRPCRouter({
   getAllByUserId: authedProcedure
-    .input(
-      z.object({
-        userId: z.string().uuid(),
-        startIndex: z.number().int().optional().default(0),
-        amount: z.number().int().optional().default(Number.MAX_SAFE_INTEGER),
-      })
-    )
+    .input(getAllByUserIdInputSchema)
     .query(async ({ ctx, input }) => {
       const { data: rounds, error } = await ctx.supabase
         .from("round")
@@ -145,7 +158,7 @@ export const roundRouter = createTRPCRouter({
       return rounds;
     }),
   getCountByUserId: authedProcedure
-    .input(z.object({ userId: z.string().uuid() }))
+    .input(getCountByUserIdInputSchema)
     .query(async ({ ctx, input }) => {
       const { count, error } = await ctx.supabase
         .from("round")
@@ -163,7 +176,7 @@ export const roundRouter = createTRPCRouter({
       return count ?? 0;
     }),
   getRoundById: authedProcedure
-    .input(z.object({ roundId: z.number() }))
+    .input(getRoundByIdInputSchema)
     .query(async ({ ctx, input }) => {
       const { data: round, error } = await ctx.supabase
         .from("round")
@@ -182,11 +195,7 @@ export const roundRouter = createTRPCRouter({
       return round;
     }),
   getBestRound: authedProcedure
-    .input(
-      z.object({
-        userId: z.string().uuid(),
-      })
-    )
+    .input(getBestRoundInputSchema)
     .query(async ({ ctx, input }) => {
       const { data: round, error } = await ctx.supabase
         .from("round")

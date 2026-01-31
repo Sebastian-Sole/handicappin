@@ -1,6 +1,7 @@
 "use client";
 import { signupSchema } from "@/types/auth";
 import { createClientComponentClient } from "../supabase/client";
+import { clientLogger } from "@/lib/client-logger";
 
 export type SignUpResult =
   | { success: true }
@@ -67,7 +68,7 @@ export const signUpUser = async (values: signupSchema): Promise<SignUpResult> =>
     }
   } catch (error) {
     // Log the original error for debugging
-    console.error("Failed to create profile:", error);
+    clientLogger.error("Failed to create profile", error);
 
     // If it's already a user-friendly error we threw, re-throw it
     if (error instanceof Error && error.message.includes("Failed to create profile")) {

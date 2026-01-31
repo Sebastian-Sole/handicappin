@@ -44,8 +44,6 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
     }
 
-    logger.info("Queue processor invoked");
-
     const supabase = createAdminClient();
 
     // Fetch pending jobs from queue (up to BATCH_SIZE users)
@@ -61,29 +59,20 @@ export async function GET(request: NextRequest) {
     }
 
     if (!pendingJobs || pendingJobs.length === 0) {
-      logger.info("No pending jobs in queue");
       return NextResponse.json({
         message: "No pending jobs",
         processed: 0,
       });
     }
 
-    logger.info("Processing users from queue", { count: pendingJobs.length });
-
     // Process all jobs in parallel using Promise.allSettled
     const results = await Promise.allSettled(
-      pendingJobs.map((job: QueueJob) => processUserHandicap(supabase, job))
+      pendingJobs.map((job: QueueJob) => processUserHandicap(supabase, job)),
     );
 
     // Count successes and failures
     const succeeded = results.filter((r) => r.status === "fulfilled").length;
     const failed = results.filter((r) => r.status === "rejected").length;
-
-    logger.info("Queue processing complete", {
-      total: pendingJobs.length,
-      succeeded,
-      failed,
-    });
 
     return NextResponse.json({
       message: "Queue processing complete",
@@ -116,15 +105,9 @@ export async function GET(request: NextRequest) {
  */
 async function processUserHandicap(
   supabase: ReturnType<typeof createAdminClient>,
-  job: QueueJob
+  job: QueueJob,
 ): Promise<void> {
   try {
-    logger.info("Processing user handicap", {
-      userId: job.user_id,
-      attempt: job.attempts + 1,
-      eventType: job.event_type,
-    });
-
     const userId = job.user_id;
 
     // 1. Fetch user profile
@@ -171,17 +154,13 @@ async function processUserHandicap(
           user_id: userId,
           max_handicap: MAX_SCORE_DIFFERENTIAL,
           queue_job_id: job.id,
-        }
+        },
       );
 
       if (rpcError) {
         throw rpcError;
       }
 
-      logger.info("No approved rounds for user, handicap set to max", {
-        userId,
-        maxHandicap: MAX_SCORE_DIFFERENTIAL,
-      });
       return;
     }
 
@@ -215,7 +194,7 @@ async function processUserHandicap(
         // Apply ESR offset to rounds in the window (most recent 20 at the time)
         const startIdx = Math.max(
           0,
-          i - (Math.min(ESR_WINDOW_SIZE, i + 1) - 1)
+          i - (Math.min(ESR_WINDOW_SIZE, i + 1) - 1),
         );
         for (let j = startIdx; j <= i; j++) {
           processedRounds[j].esrOffset += offset;
@@ -242,7 +221,7 @@ async function processUserHandicap(
         const lowHandicapIndex = calculateLowHandicapIndex(processedRounds, i);
         pr.updatedHandicapIndex = applyHandicapCaps(
           calculatedIndex,
-          lowHandicapIndex
+          lowHandicapIndex,
         );
       } else {
         pr.updatedHandicapIndex = calculatedIndex;
@@ -251,7 +230,7 @@ async function processUserHandicap(
       // Cap at maximum
       pr.updatedHandicapIndex = Math.min(
         pr.updatedHandicapIndex,
-        MAX_SCORE_DIFFERENTIAL
+        MAX_SCORE_DIFFERENTIAL,
       );
     }
 
@@ -280,13 +259,6 @@ async function processUserHandicap(
     if (rpcError) {
       throw rpcError;
     }
-
-    logger.info("Successfully processed handicap for user", {
-      userId,
-      roundsProcessed: processedRounds.length,
-      finalHandicapIndex:
-        processedRounds[processedRounds.length - 1].updatedHandicapIndex,
-    });
   } catch (error: unknown) {
     const errorInstance =
       error instanceof Error ? error : new Error("Unknown error");

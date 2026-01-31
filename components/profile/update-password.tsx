@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import { z } from "zod";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { resetPasswordSchema } from "@/types/auth";
 import { CardDescription } from "../ui/card";
@@ -44,6 +44,8 @@ const UpdatePassword = ({ email: initialEmail }: UpdatePasswordProps) => {
       confirmPassword: "",
     },
   });
+
+  const otpValue = useWatch({ control: form.control, name: "otp", defaultValue: "" });
 
   const handleSubmit = async (values: z.infer<typeof resetPasswordSchema>) => {
     setLoading(true);
@@ -263,7 +265,7 @@ const UpdatePassword = ({ email: initialEmail }: UpdatePasswordProps) => {
             <Button
               type="submit"
               className="w-full"
-              disabled={loading || form.watch("otp").length !== 6}
+              disabled={loading || otpValue.length !== 6}
               aria-label={
                 loading
                   ? "Resetting password, please wait"

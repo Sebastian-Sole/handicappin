@@ -17,7 +17,7 @@ export function logWebhookReceived(eventType: string) {
  */
 export function logWebhookSuccess(
   message: string,
-  context?: Record<string, any>
+  context?: Record<string, any>,
 ) {
   logger.info(`✅ ${message}`, context);
 }
@@ -39,7 +39,7 @@ export function logWebhookError(message: string, error?: any) {
  */
 export function logWebhookWarning(
   message: string,
-  context?: Record<string, any>
+  context?: Record<string, any>,
 ) {
   logger.warn(`⚠️ ${message}`, context);
 }
