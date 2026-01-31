@@ -11,8 +11,8 @@ import {
 import { Pencil, Plus } from "lucide-react";
 import { useState } from "react";
 import { TeeFormContent } from "./tee-form-content";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm, useWatch } from "react-hook-form";
+import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import { Tee, teeSchema } from "@/types/scorecard-input";
 import { Form } from "../ui/form";
 import { blankTee } from "@/utils/scorecard/tee";
@@ -45,11 +45,11 @@ export function TeeDialog({
   const [isOpen, setIsOpen] = useState(false);
 
   const form = useForm<Tee>({
-    resolver: zodResolver(teeSchema),
+    resolver: standardSchemaResolver(teeSchema),
     defaultValues: existingTee,
   });
 
-  const tee = form.watch();
+  const tee = useWatch({ control: form.control }) as Tee;
 
   const handleTeeChange = (updated: Tee) => {
     form.reset(updated);
@@ -70,9 +70,7 @@ export function TeeDialog({
         onSave({ ...data, approvalStatus: "pending" });
         setIsOpen(false);
       },
-      (errors) => {
-        console.log(errors);
-      }
+      (errors) => {},
     )(e);
   };
 

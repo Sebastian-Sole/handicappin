@@ -4,6 +4,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { PREMIUM_PATHS, UNLIMITED_PATHS } from "@/utils/billing/constants";
 import { BillingClaims, getAppMetadataFromJWT } from "@/utils/supabase/jwt";
 import { hasPremiumAccess, hasUnlimitedAccess } from "@/utils/billing/access";
+import { logger } from "@/lib/logging";
 
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({
@@ -126,15 +127,12 @@ export async function updateSession(request: NextRequest) {
       if (!billing) {
         // No billing claims in JWT - redirect to verification to refresh token
         // This is an edge case that should rarely happen
-        console.error(
-          `🚨 CRITICAL: Missing JWT billing claims for user ${enrichedUser.id}`,
-          {
-            pathname,
-            timestamp: new Date().toISOString(),
-            hasSession: !!session,
-            hasAccessToken: !!session?.access_token,
-          }
-        );
+        logger.error("Missing JWT billing claims", {
+          userId: enrichedUser.id,
+          pathname,
+          hasSession: !!session,
+          hasAccessToken: !!session?.access_token,
+        });
 
         // Redirect to verification page to refresh the JWT
         // This will trigger a token refresh which should add billing claims
@@ -146,9 +144,12 @@ export async function updateSession(request: NextRequest) {
       }
 
       // ✅ SUCCESS: Using JWT claims from custom access token hook
-      console.log(
-        `✅ JWT Auth: plan=${billing.plan}, status=${billing.status}, user=${enrichedUser.id}, version=${billing.billing_version}`
-      );
+      logger.debug("JWT Auth successful", {
+        plan: billing.plan,
+        status: billing.status,
+        userId: enrichedUser.id,
+        billingVersion: billing.billing_version,
+      });
 
       // Use shared access control logic
       const userHasPremiumAccess = hasPremiumAccess(billing);
@@ -159,23 +160,19 @@ export async function updateSession(request: NextRequest) {
       const duration = endTime - startTime;
 
       // Log successful JWT-only authorization (no database queries!)
-      console.log(
-        `⚡ Middleware completed in ${duration.toFixed(
-          2
-        )}ms (JWT-only, no database)`
-      );
+      logger.debug("Middleware completed", {
+        durationMs: Number(duration.toFixed(2)),
+        method: "JWT-only",
+      });
 
       // Alert if middleware is slow (should be < 10ms with JWT-only)
       if (duration > 10) {
-        console.warn(
-          `🐌 Slow middleware detected: ${duration.toFixed(
-            2
-          )}ms (threshold: 10ms)`,
-          {
-            user: enrichedUser.id,
-            pathname,
-          }
-        );
+        logger.warn("Slow middleware detected", {
+          durationMs: Number(duration.toFixed(2)),
+          thresholdMs: 10,
+          userId: enrichedUser.id,
+          pathname,
+        });
       }
 
       // Check if user needs onboarding (no plan selected)
@@ -219,10 +216,10 @@ export async function updateSession(request: NextRequest) {
       }
     } catch (error) {
       // ✅ NEW: On error, redirect to verification page (not onboarding)
-      console.error(
-        "❌ Middleware error - redirecting to session verification:",
-        error
-      );
+      logger.error("Middleware error - redirecting to session verification", {
+        error: error instanceof Error ? error.message : String(error),
+        pathname,
+      });
 
       const url = request.nextUrl.clone();
       url.pathname = "/auth/verify-session";

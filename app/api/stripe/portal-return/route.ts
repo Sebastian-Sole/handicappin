@@ -31,15 +31,16 @@ export async function GET(request: NextRequest) {
 
     // Apply rate limiting (5 requests per minute per user/IP)
     const identifier = getIdentifier(request, userId);
-    const { success, limit, remaining, reset } = await portalRateLimit.limit(identifier);
+    const { success, limit, remaining, reset } =
+      await portalRateLimit.limit(identifier);
 
     if (!success) {
       logger.warn(`⚠️ Portal return rate limit exceeded for ${identifier}`);
       // Still redirect but without refresh - prevents abuse
-      return NextResponse.redirect(new URL(`/profile/${userId}?tab=${tab}`, request.url));
+      return NextResponse.redirect(
+        new URL(`/profile/${userId}?tab=${tab}`, request.url),
+      );
     }
-
-    logger.info(`🔄 Processing Stripe portal return for user ${userId}`, { remaining, limit });
 
     // Validate required environment variables
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -56,7 +57,8 @@ export async function GET(request: NextRequest) {
     const cookieStore = await cookies();
 
     // Collect cookies that need to be set
-    const cookiesToSet: Array<{ name: string; value: string; options: any }> = [];
+    const cookiesToSet: Array<{ name: string; value: string; options: any }> =
+      [];
 
     // Create Supabase client with proper cookie handling
     const supabase = createServerClient<Database>(
@@ -72,31 +74,32 @@ export async function GET(request: NextRequest) {
             cookiesToSet.push(...cookies);
           },
         },
-      }
+      },
     );
 
     // Verify user is authenticated
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
 
     if (authError || !user || user.id !== userId) {
-      logger.error("❌ Portal return: Authentication failed", { error: authError?.message });
+      logger.error("❌ Portal return: Authentication failed", {
+        error: authError?.message,
+      });
       return NextResponse.redirect(new URL("/login", request.url));
     }
 
     // Refresh session server-side to get latest JWT with updated billing
-    logger.info("🔄 Refreshing JWT with latest billing data");
     const { data, error: refreshError } = await supabase.auth.refreshSession();
 
     if (refreshError) {
-      logger.error("❌ Portal return: Session refresh failed", { error: refreshError.message });
+      logger.error("❌ Portal return: Session refresh failed", {
+        error: refreshError.message,
+      });
       // Continue anyway - user can still access their profile
     } else if (data.session) {
       const billing = data.session.user.app_metadata?.billing;
-      logger.info("✅ JWT refreshed successfully", {
-        plan: billing?.plan,
-        status: billing?.status,
-        billingVersion: billing?.billing_version,
-      });
     }
 
     // Create redirect response to profile page
@@ -109,8 +112,6 @@ export async function GET(request: NextRequest) {
     cookiesToSet.forEach(({ name, value, options }) => {
       response.cookies.set(name, value, options);
     });
-
-    logger.info(`✅ Redirecting to profile with ${cookiesToSet.length} updated cookies`);
 
     return response;
   } catch (error) {

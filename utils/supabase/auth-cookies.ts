@@ -43,15 +43,7 @@ export async function getUserIdFromCookies(): Promise<string | null> {
   // DEBUG: Log all cookies to understand the format
   const allCookies = cookieStore.getAll();
   const authRelatedCookies = allCookies.filter(
-    (c) => c.name.includes("sb-") || c.name.includes("supabase")
-  );
-  console.log(
-    "[auth-cookies] Looking for cookie base name:",
-    cookieBaseName
-  );
-  console.log(
-    "[auth-cookies] Auth-related cookies found:",
-    authRelatedCookies.map((c) => ({ name: c.name, valueLength: c.value.length }))
+    (c) => c.name.includes("sb-") || c.name.includes("supabase"),
   );
 
   try {
@@ -62,7 +54,6 @@ export async function getUserIdFromCookies(): Promise<string | null> {
     // First, try the non-chunked cookie
     const singleCookie = cookieStore.get(cookieBaseName);
     if (singleCookie?.value) {
-      console.log("[auth-cookies] Found single cookie, length:", singleCookie.value.length);
       sessionString = singleCookie.value;
     } else {
       // Try chunked cookies (for large JWTs)
@@ -79,17 +70,13 @@ export async function getUserIdFromCookies(): Promise<string | null> {
       }
 
       if (chunks.length > 0) {
-        console.log("[auth-cookies] Found", chunks.length, "chunked cookies");
         sessionString = chunks.join("");
       }
     }
 
     if (!sessionString) {
-      console.log("[auth-cookies] No session string found");
       return null;
     }
-
-    console.log("[auth-cookies] Session string preview:", sessionString.substring(0, 100) + "...");
 
     // Supabase SSR stores cookies with "base64-" prefix followed by base64-encoded JSON
     let decodedString = sessionString;
@@ -98,7 +85,6 @@ export async function getUserIdFromCookies(): Promise<string | null> {
     if (sessionString.startsWith("base64-")) {
       const base64Content = sessionString.slice(7); // Remove "base64-" prefix
       decodedString = Buffer.from(base64Content, "base64").toString("utf-8");
-      console.log("[auth-cookies] Decoded base64 content preview:", decodedString.substring(0, 100) + "...");
     } else if (sessionString.includes("%")) {
       // Fallback: URL-encoded JSON (older format)
       try {
@@ -114,11 +100,8 @@ export async function getUserIdFromCookies(): Promise<string | null> {
       user?: { id?: string };
     };
 
-    console.log("[auth-cookies] Parsed session, has user:", !!session?.user, "has access_token:", !!session?.access_token);
-
     // Method 1: Try to get user ID directly from session.user
     if (session?.user?.id) {
-      console.log("[auth-cookies] Found user ID from session.user:", session.user.id);
       return session.user.id;
     }
 
@@ -130,16 +113,13 @@ export async function getUserIdFromCookies(): Promise<string | null> {
           sub?: string;
         };
         if (payload.sub) {
-          console.log("[auth-cookies] Found user ID from JWT sub claim:", payload.sub);
           return payload.sub;
         }
       }
     }
 
-    console.log("[auth-cookies] Could not extract user ID");
     return null;
   } catch (error) {
-    console.error("[auth-cookies] Error parsing session:", error);
     return null;
   }
 }

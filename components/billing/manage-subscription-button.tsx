@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { api } from "@/trpc/react";
+import { clientLogger } from "@/lib/client-logger";
 
 export function ManageSubscriptionButton() {
   const [loading, setLoading] = useState(false);
@@ -16,11 +17,14 @@ export function ManageSubscriptionButton() {
 
       window.location.href = result.url;
     } catch (error: any) {
-      console.error("Error opening customer portal:", error);
+      clientLogger.error("Error opening customer portal", error);
 
-      if (error?.data?.code === "TOO_MANY_REQUESTS" && error?.data?.cause?.retryAfter) {
+      if (
+        error?.data?.code === "TOO_MANY_REQUESTS" &&
+        error?.data?.cause?.retryAfter
+      ) {
         alert(
-          `Too many requests. Please wait ${error.data.cause.retryAfter} seconds and try again.`
+          `Too many requests. Please wait ${error.data.cause.retryAfter} seconds and try again.`,
         );
       } else {
         alert("Failed to open subscription management. Please try again.");

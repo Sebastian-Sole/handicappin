@@ -18,11 +18,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    logger.info("🔄 [Reconciliation] Starting scheduled job");
-
     const result = await reconcileStripeSubscriptions();
-
-    logger.info("✅ [Reconciliation] Job complete", result);
 
     return NextResponse.json({
       success: true,
@@ -38,7 +34,7 @@ export async function GET(request: NextRequest) {
         success: false,
         error: error instanceof Error ? error.message : "Unknown error",
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

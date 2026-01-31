@@ -1,0 +1,1 @@
+ALTER TABLE "round" ADD COLUMN "holes_played" integer NOT NULL;

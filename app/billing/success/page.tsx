@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { createClientComponentClient } from "@/utils/supabase/client";
+import { clientLogger } from "@/lib/client-logger";
 
 type WebhookStatus = {
   status: "processing" | "success" | "delayed" | "failed";
@@ -48,7 +49,7 @@ export default function BillingSuccessPage() {
       } = await supabase.auth.getUser();
 
       if (!currentUser) {
-        console.log("⚠️ No user session - redirecting to login");
+        clientLogger.debug("No user session - redirecting to login");
         const params = new URLSearchParams(window.location.search);
         const stripeSessionId = params.get("session_id");
         const returnUrl = `/billing/success${stripeSessionId ? `?session_id=${stripeSessionId}` : ""}`;
@@ -56,10 +57,10 @@ export default function BillingSuccessPage() {
         return;
       }
 
-      console.log("✅ User authenticated:", currentUser.id);
+      clientLogger.debug("User authenticated", { userId: currentUser.id });
       setUserId(currentUser.id);
 
-      console.log("🔄 Checking webhook status...");
+      clientLogger.debug("Checking webhook status...");
 
       // Poll webhook status API (up to 20 seconds, every 2 seconds)
       const maxAttempts = 10;
@@ -67,15 +68,13 @@ export default function BillingSuccessPage() {
 
       for (let attempt = 1; attempt <= maxAttempts; attempt++) {
         setAttemptCount(attempt);
-        console.log(
-          `⏳ Polling webhook status (attempt ${attempt}/${maxAttempts})...`,
-        );
+        clientLogger.debug("Polling webhook status", { attempt, maxAttempts });
 
         // Call webhook status API
         const response = await fetch("/api/billing/webhook-status");
 
         if (!response.ok) {
-          console.error("Failed to fetch webhook status:", response.statusText);
+          clientLogger.error("Failed to fetch webhook status", new Error(response.statusText));
           // Continue polling on API errors
           if (attempt < maxAttempts) {
             await new Promise((resolve) => setTimeout(resolve, pollInterval));
@@ -90,11 +89,11 @@ export default function BillingSuccessPage() {
         const data: WebhookStatus = await response.json();
         setWebhookData(data);
 
-        console.log(`🔍 Webhook status (attempt ${attempt}):`, data);
+        clientLogger.debug("Webhook status received", { attempt, status: data.status });
 
         // Update UI state based on API response
         if (data.status === "success") {
-          console.log(`✅ Subscription activated successfully!`);
+          clientLogger.info("Subscription activated successfully");
           currentStatus = "success";
           setStatus("success");
 
@@ -102,7 +101,7 @@ export default function BillingSuccessPage() {
           await new Promise((resolve) => setTimeout(resolve, 2000));
 
           // Refresh session to update JWT claims before redirecting
-          console.log("🔄 Refreshing session to update JWT claims...");
+          clientLogger.debug("Refreshing session to update JWT claims...");
 
           // Step 1: Client-side refresh
           const { error: refreshError } = await supabase.auth.refreshSession();
@@ -110,56 +109,47 @@ export default function BillingSuccessPage() {
           if (refreshError) {
             // Local dev JWT refresh issues can be safely ignored
             // JWT will be refreshed automatically on next page load
-            if (process.env.NODE_ENV === "development") {
-              console.warn(
-                "⚠️ Local dev: Session refresh failed (non-critical):",
-                refreshError.message,
-              );
-            } else {
-              console.error("Failed to refresh session:", refreshError);
-            }
+            clientLogger.warn("Session refresh failed (non-critical)", { error: refreshError.message });
             // Continue anyway - JWT will refresh on navigation
           } else {
-            console.log("✅ Client-side session refreshed successfully!");
+            clientLogger.debug("Client-side session refreshed successfully");
           }
 
           // Step 2: Server-side cookie sync to ensure middleware gets updated JWT
           try {
-            console.log("🔄 Syncing server-side session cookies...");
+            clientLogger.debug("Syncing server-side session cookies...");
             const response = await fetch("/api/auth/sync-session", {
               method: "POST",
             });
 
             if (!response.ok) {
-              console.error("❌ Server-side JWT sync failed:", response.status);
+              clientLogger.error("Server-side JWT sync failed", new Error(`Status: ${response.status}`));
             } else {
-              console.log("✅ Server-side session synced successfully!");
+              clientLogger.debug("Server-side session synced successfully");
             }
           } catch (syncError) {
-            console.error("❌ Failed to sync server-side session:", syncError);
+            clientLogger.error("Failed to sync server-side session", syncError);
             // Continue anyway - critical for user experience
           }
 
           // Wait 1 more second to ensure middleware picks up new claims
           await new Promise((resolve) => setTimeout(resolve, 1000));
 
-          console.log("🚀 Redirecting...");
+          clientLogger.debug("Redirecting...");
           if (!currentUser) {
-            console.error(
-              "❌ No currentUser at redirect - this should not happen!",
-            );
+            clientLogger.error("No currentUser at redirect - this should not happen");
             window.location.href = "/";
             return;
           }
           window.location.href = `/`;
           return;
         } else if (data.status === "failed") {
-          console.error(`❌ Webhook failed ${data.failureCount} times`);
+          clientLogger.error("Webhook failed", new Error("Webhook processing failed"), { failureCount: data.failureCount });
           currentStatus = "failed";
           setStatus("failed");
           return;
         } else if (data.status === "delayed") {
-          console.warn(`⚠️ Webhook delayed (${data.failureCount} failures)`);
+          clientLogger.warn("Webhook delayed", { failureCount: data.failureCount });
           currentStatus = "delayed";
           setStatus("delayed");
           // Don't return - keep showing delayed UI, let user decide
@@ -178,13 +168,11 @@ export default function BillingSuccessPage() {
 
       // After all attempts, if still processing, show delayed state
       if (currentStatus === "processing") {
-        console.warn(
-          "⚠️ Webhook not completed after 20 seconds - showing delayed state",
-        );
+        clientLogger.warn("Webhook not completed after 20 seconds - showing delayed state");
         setStatus("delayed");
       }
     } catch (error) {
-      console.error("Error checking webhook status:", error);
+      clientLogger.error("Error checking webhook status", error);
 
       // On error, show delayed state with support contact
       setStatus("delayed");

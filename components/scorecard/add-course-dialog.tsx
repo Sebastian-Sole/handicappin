@@ -5,9 +5,9 @@ import { Input } from "@/components/ui/input";
 import { CountryCombobox } from "@/components/scorecard/country-combobox";
 import { Plus } from "lucide-react";
 import { DialogPage, MultiPageDialog } from "../ui/multi-page-dialog";
-import { Course, courseSchema } from "@/types/scorecard-input";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
+import { Course, courseSchema, Tee } from "@/types/scorecard-input";
+import { useForm, useWatch } from "react-hook-form";
+import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import {
   Form,
   FormControl,
@@ -43,7 +43,7 @@ export function AddCourseDialog({
     : setInternalOpen;
 
   const form = useForm<Course>({
-    resolver: zodResolver(courseSchema),
+    resolver: standardSchemaResolver(courseSchema),
     mode: "onChange",
     defaultValues: {
       id: -1,
@@ -94,13 +94,13 @@ export function AddCourseDialog({
     }
   }, [open, initialCourseName, form]);
 
-  const { control, handleSubmit, watch } = form;
+  const { control, handleSubmit } = form;
 
-  const watchName = watch("name");
-  const watchCountry = watch("country");
-  const watchCity = watch("city");
-  const watchWebsite = watch("website");
-  const watchTee = watch("tees.0");
+  const watchName = useWatch({ control, name: "name" });
+  const watchCountry = useWatch({ control, name: "country" });
+  const watchCity = useWatch({ control, name: "city" });
+  const watchWebsite = useWatch({ control, name: "website" });
+  const watchTee = useWatch({ control, name: "tees.0" });
 
   // Use schema validation instead of custom logic
   const isFormValid = useMemo(() => {
@@ -123,8 +123,10 @@ export function AddCourseDialog({
   };
 
   const onError = (errors: unknown) => {
+    setErrorMessage(
+      "Please check the form for errors/missing data, or contact support",
+    );
     console.log(errors);
-    setErrorMessage("Please check the form for errors/missing data, or contact support");
   };
 
   return (
@@ -225,10 +227,7 @@ export function AddCourseDialog({
                   <FormLabel htmlFor="website">Website (optional)</FormLabel>
                   <FormItem>
                     <FormControl>
-                      <Input
-                        {...field}
-                        placeholder="https://example.com"
-                      />
+                      <Input {...field} placeholder="https://example.com" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -257,7 +256,9 @@ export function AddCourseDialog({
                     tee={field.value}
                     onTeeChange={field.onChange}
                   />
-                ) : <></>
+                ) : (
+                  <></>
+                )
               }
             />
           </DialogPage>

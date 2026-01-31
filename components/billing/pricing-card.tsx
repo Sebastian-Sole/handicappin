@@ -127,7 +127,7 @@ export function PricingCard({
             First 100 users, forever
           </p>
         )} */}
-        <p className="text-gray-600 mt-2 mb-4">{description}</p>
+        <p className="text-muted-foreground mt-2 mb-4">{description}</p>
         {slotsRemaining !== undefined && slotsRemaining !== null && (
           <p className="text-sm font-semibold text-destructive mb-2">
             {slotsRemaining > 0
@@ -147,7 +147,7 @@ export function PricingCard({
             <span className="text-3xl font-bold">
               {typeof price === "number" ? `$${price}` : price}
             </span>
-            <span className="text-lg text-gray-600">
+            <span className="text-lg text-muted-foreground">
               {interval === "year" && "/year"}
               {interval === "month" && "/mo"}
               {interval === "once" && " once"}
@@ -171,7 +171,7 @@ export function PricingCard({
               ) : (
                 <span className="text-red-500 mr-2">✗</span>
               )}
-              <span className={feature.included ? "" : "text-gray-400"}>
+              <span className={feature.included ? "" : "text-muted-foreground/70"}>
                 {feature.text}
               </span>
             </li>

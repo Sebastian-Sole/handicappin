@@ -3,6 +3,7 @@
 import { useEffect, useState, useMemo, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { Card, CardContent } from "@/components/ui/card";
+import { clientLogger } from "@/lib/client-logger";
 import {
   Select,
   SelectContent,
@@ -329,7 +330,7 @@ export default function GolfScorecard({ profile, access }: GolfScorecardProps) {
       // Redirect to home page
       router.push(`/`);
     } catch (error) {
-      console.error("Error submitting scorecard:", error);
+      clientLogger.error("Error submitting scorecard", error);
       setSubmitState("error");
 
       // Better error handling - check for specific error types
@@ -362,7 +363,7 @@ export default function GolfScorecard({ profile, access }: GolfScorecardProps) {
   };
 
   const onError = (errors: unknown) => {
-    console.error("Form validation errors:", errors);
+    clientLogger.error("Form validation errors", errors);
     setFeedback({
       type: "error",
       message: "Please check all required fields are filled correctly",

@@ -101,7 +101,9 @@ export default function RootLayout({
               <BillingSync />
 
               <Navbar />
-              <section className="pt-16 grow bg-background flex flex-col">{children}</section>
+              <main className="pt-16 grow bg-background flex flex-col">
+                {children}
+              </main>
               <Footer />
             </ThemeProvider>
           </TRPCReactProvider>

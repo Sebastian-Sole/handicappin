@@ -1,5 +1,5 @@
 import { stripe } from "./stripe";
-import { redactEmail } from "./logging";
+import { logger, redactEmail } from "./logging";
 
 /**
  * Get or create a Stripe customer for a user
@@ -30,7 +30,6 @@ export async function getOrCreateStripeCustomer({
 
     if (existingRecord && existingRecord.length > 0) {
       const customerId = existingRecord[0].stripeCustomerId;
-      console.log("Found existing Stripe customer in database:", customerId);
       return customerId;
     }
 
@@ -42,7 +41,6 @@ export async function getOrCreateStripeCustomer({
 
     if (existingCustomers.data.length > 0) {
       const customerId = existingCustomers.data[0].id;
-      console.log("Found existing Stripe customer by email:", customerId);
 
       // Store in database for future lookups
       try {
@@ -54,7 +52,9 @@ export async function getOrCreateStripeCustomer({
           })
           .onConflictDoNothing(); // In case webhook already created it
       } catch (dbError) {
-        console.error("Error storing existing customer in database:", dbError);
+        logger.error("Error storing existing customer in database", {
+          error: dbError instanceof Error ? dbError.message : String(dbError),
+        });
         // Continue - we have the customer ID
       }
 
@@ -69,8 +69,6 @@ export async function getOrCreateStripeCustomer({
       },
     });
 
-    console.log("Created new Stripe customer:", customer.id);
-
     // Store in database immediately
     try {
       await db
@@ -81,14 +79,19 @@ export async function getOrCreateStripeCustomer({
         })
         .onConflictDoNothing(); // Webhook might create it concurrently
     } catch (dbError) {
-      console.error("Error storing new customer in database:", dbError);
+      logger.error("Error storing new customer in database", {
+        error: dbError instanceof Error ? dbError.message : String(dbError),
+      });
       // Continue - customer was created in Stripe
     }
 
     return customer.id;
   } catch (error) {
-    console.error(`Error managing Stripe customer for user ${userId}:`, error);
-    console.error(`Email: ${redactEmail(email)}`);
+    logger.error("Error managing Stripe customer", {
+      userId,
+      email: redactEmail(email),
+      error: error instanceof Error ? error.message : String(error),
+    });
     // Return undefined - caller will use customer_email fallback
     return undefined;
   }

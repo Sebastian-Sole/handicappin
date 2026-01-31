@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Tables } from "@/types/supabase";
+import { clientLogger } from "@/lib/client-logger";
 import {
   Form,
   FormControl,
@@ -210,7 +211,7 @@ export function PersonalInformationTab({
         });
       }
     } catch (error) {
-      console.error("Email change request error:", error);
+      clientLogger.error("Email change request error", error);
       setFeedback({
         type: "error",
         message: "An unexpected error occurred",
@@ -270,7 +271,7 @@ export function PersonalInformationTab({
         setOtp(""); // Clear OTP on error
       }
     } catch (error) {
-      console.error("OTP verification error:", error);
+      clientLogger.error("OTP verification error", error);
       setOtpError("An unexpected error occurred. Please try again.");
       setOtp("");
     } finally {
@@ -331,7 +332,7 @@ export function PersonalInformationTab({
         setOtpError(data.error || "Failed to resend email");
       }
     } catch (error) {
-      console.error("Email resend error:", error);
+      clientLogger.error("Email resend error", error);
       setOtpError("An unexpected error occurred");
     } finally {
       setIsResending(false);

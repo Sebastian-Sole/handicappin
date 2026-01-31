@@ -6,6 +6,7 @@ import { useRouter, usePathname } from "next/navigation";
 import { getBillingFromJWT } from "@/utils/supabase/jwt";
 import { PREMIUM_PATHS, UNLIMITED_PATHS } from "@/utils/billing/constants";
 import { hasPremiumAccess, hasUnlimitedAccess } from "@/utils/billing/access";
+import { clientLogger } from "@/lib/client-logger";
 
 /**
  * Background component that listens for billing changes via Supabase Realtime
@@ -43,16 +44,15 @@ export function BillingSync() {
     const forceEnable = process.env.NEXT_PUBLIC_ENABLE_BILLING_SYNC === 'true';
 
     if (isLocalDev && !forceEnable) {
-      console.log(`🔄 BillingSync: Skipped in local dev (Realtime not available)`);
-      console.log(`💡 To enable for testing, set NEXT_PUBLIC_ENABLE_BILLING_SYNC=true`);
+      clientLogger.debug("BillingSync: Skipped in local dev (Realtime not available)");
       return;
     }
 
     if (forceEnable && isLocalDev) {
-      console.log(`🔄 BillingSync: Force-enabled in local dev for testing`);
+      clientLogger.debug("BillingSync: Force-enabled in local dev for testing");
     }
 
-    console.log(`🔄 BillingSync mounted for user ${userId}`);
+    clientLogger.debug("BillingSync mounted", { userId });
 
     // Subscribe to profile changes for this user
     const channel = supabase
@@ -75,29 +75,25 @@ export function BillingSync() {
             oldBillingVersion !== undefined &&
             newBillingVersion !== oldBillingVersion
           ) {
-            console.log(
-              "🔄 Billing update detected, refreshing JWT...",
-              {
-                old: oldBillingVersion,
-                new: newBillingVersion,
-                plan: payload.new?.plan_selected,
-                status: payload.new?.subscription_status,
-              }
-            );
+            clientLogger.debug("Billing update detected, refreshing JWT...", {
+              old: oldBillingVersion,
+              new: newBillingVersion,
+              plan: payload.new?.plan_selected,
+              status: payload.new?.subscription_status,
+            });
 
             try {
-              console.log("🔄 Detected billing update - refreshing session...");
+              clientLogger.debug("Detected billing update - refreshing session...");
 
               // Step 1: Refresh client-side session first
               const { data: clientData, error: clientError } = await supabase.auth.refreshSession();
 
               if (clientError || !clientData?.session) {
-                console.error("❌ Client-side JWT refresh failed:",
-                  clientError || "No session returned");
+                clientLogger.error("Client-side JWT refresh failed", clientError || new Error("No session returned"));
                 return;
               }
 
-              console.log("✅ Client-side JWT refreshed");
+              clientLogger.debug("Client-side JWT refreshed");
 
               // Step 2: Force server-side cookie update via API route
               try {
@@ -106,14 +102,14 @@ export function BillingSync() {
                 });
 
                 if (!response.ok) {
-                  console.error("❌ Server-side session sync failed:", response.status);
+                  clientLogger.error("Server-side session sync failed", new Error(`Status: ${response.status}`));
                   // Continue anyway - client-side refresh may be enough
                 } else {
                   const result = await response.json();
-                  console.log("✅ Server-side session synced, new billing:", result.billing);
+                  clientLogger.debug("Server-side session synced", { billing: result.billing });
                 }
               } catch (fetchError) {
-                console.error("❌ Failed to call sync-session API:", fetchError);
+                clientLogger.error("Failed to call sync-session API", fetchError);
                 // Continue anyway - client-side refresh may be enough
               }
 
@@ -127,7 +123,7 @@ export function BillingSync() {
                 const userHasPremiumAccess = hasPremiumAccess(newBilling);
                 const userHasUnlimitedAccess = hasUnlimitedAccess(newBilling);
 
-                console.log("🔐 Access check:", {
+                clientLogger.debug("Access check", {
                   hasPremiumAccess: userHasPremiumAccess,
                   hasUnlimitedAccess: userHasUnlimitedAccess,
                   isOnPremiumPage,
@@ -139,13 +135,13 @@ export function BillingSync() {
                 // Step 4: Redirect if access was revoked while on protected page
                 // Check unlimited pages first (more restrictive)
                 if (isOnUnlimitedPage && !userHasUnlimitedAccess) {
-                  console.warn("⚠️ Unlimited access revoked while on unlimited page - redirecting to /upgrade");
+                  clientLogger.warn("Unlimited access revoked while on unlimited page - redirecting to /upgrade");
                   router.push("/upgrade?expired=true");
                   return; // Don't call router.refresh() - we're navigating
                 }
 
                 if (isOnPremiumPage && !userHasPremiumAccess) {
-                  console.warn("⚠️ Premium access revoked while on premium page - redirecting to /upgrade");
+                  clientLogger.warn("Premium access revoked while on premium page - redirecting to /upgrade");
                   router.push("/upgrade?expired=true");
                   return; // Don't call router.refresh() - we're navigating
                 }
@@ -154,24 +150,24 @@ export function BillingSync() {
               // Step 5: Refresh server components to reflect new JWT
               router.refresh();
 
-              console.log("✅ Billing sync complete");
+              clientLogger.info("Billing sync complete");
             } catch (err) {
-              console.error("❌ Error during billing sync:", err);
+              clientLogger.error("Error during billing sync", err);
             }
           }
         }
       )
       .subscribe((status) => {
         if (status === "SUBSCRIBED") {
-          console.log(`✅ Subscribed to billing updates for user ${userId}`);
+          clientLogger.debug("Subscribed to billing updates", { userId });
         } else if (status === "CHANNEL_ERROR") {
-          console.error(`❌ Failed to subscribe to billing updates for user ${userId}`);
+          clientLogger.error("Failed to subscribe to billing updates", undefined, { userId });
         }
       });
 
     // Cleanup on unmount
     return () => {
-      console.log(`🔄 BillingSync unmounting for user ${userId}`);
+      clientLogger.debug("BillingSync unmounting", { userId });
       supabase.removeChannel(channel);
     };
   }, [userId, supabase, router, pathname]);
