@@ -36,10 +36,6 @@ export function VerifySessionContent({
         // Force session refresh to re-run JWT hook
         const { data, error } = await supabase.auth.refreshSession();
 
-        // 🔍 DIAGNOSTIC: Log the entire app_metadata to see what's actually there
-        if (data?.session?.user?.app_metadata) {
-        }
-
         // 🔍 DIAGNOSTIC: Check if profile exists in database
         try {
           const { data: profileCheck, error: profileError } = await supabase

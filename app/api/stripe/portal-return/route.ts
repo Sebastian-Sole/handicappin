@@ -31,8 +31,7 @@ export async function GET(request: NextRequest) {
 
     // Apply rate limiting (5 requests per minute per user/IP)
     const identifier = getIdentifier(request, userId);
-    const { success, limit, remaining, reset } =
-      await portalRateLimit.limit(identifier);
+    const { success } = await portalRateLimit.limit(identifier);
 
     if (!success) {
       logger.warn(`⚠️ Portal return rate limit exceeded for ${identifier}`);
@@ -91,15 +90,13 @@ export async function GET(request: NextRequest) {
     }
 
     // Refresh session server-side to get latest JWT with updated billing
-    const { data, error: refreshError } = await supabase.auth.refreshSession();
+    const { error: refreshError } = await supabase.auth.refreshSession();
 
     if (refreshError) {
       logger.error("❌ Portal return: Session refresh failed", {
         error: refreshError.message,
       });
       // Continue anyway - user can still access their profile
-    } else if (data.session) {
-      const billing = data.session.user.app_metadata?.billing;
     }
 
     // Create redirect response to profile page

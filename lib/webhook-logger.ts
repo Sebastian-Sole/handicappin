@@ -9,7 +9,7 @@ import { logger } from "./logging";
  * Log webhook receipt
  */
 export function logWebhookReceived(eventType: string) {
-  logger.debug(`📥 Received webhook event: ${eventType}`);
+  logger.info(`📥 Received webhook event: ${eventType}`);
 }
 
 /**
@@ -19,7 +19,7 @@ export function logWebhookSuccess(
   message: string,
   context?: Record<string, any>,
 ) {
-  logger.debug(`✅ ${message}`, context);
+  logger.info(`✅ ${message}`, context);
 }
 
 /**
@@ -55,19 +55,19 @@ export function logWebhookDebug(message: string, data: Record<string, any>) {
  * Log webhook info
  */
 export function logWebhookInfo(message: string) {
-  logger.debug(`ℹ️ ${message}`);
+  logger.info(`ℹ️ ${message}`);
 }
 
 /**
  * Log payment-specific events
  */
 export function logPaymentEvent(message: string) {
-  logger.debug(`💳 ${message}`);
+  logger.info(`💳 ${message}`);
 }
 
 /**
  * Log subscription-specific events
  */
 export function logSubscriptionEvent(message: string) {
-  logger.debug(`📝 ${message}`);
+  logger.info(`📝 ${message}`);
 }

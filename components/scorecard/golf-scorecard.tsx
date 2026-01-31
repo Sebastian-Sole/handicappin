@@ -25,7 +25,7 @@ import {
 } from "@/components/ui/command";
 import { ChevronsUpDown, Loader2 } from "lucide-react";
 import { AddCourseDialog } from "./add-course-dialog";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 
 import {
@@ -112,6 +112,8 @@ export default function GolfScorecard({ profile, access }: GolfScorecardProps) {
     },
   });
 
+  const scoresValue = useWatch({ control: form.control, name: "scores" });
+
   // Fetch data queries
   const { data: searchedCourses, isLoading: isSearchLoading } =
     api.course.searchCourses.useQuery(
@@ -134,8 +136,10 @@ export default function GolfScorecard({ profile, access }: GolfScorecardProps) {
   const isLoading = isSearchLoading || isTeesLoading;
 
   // Update fetched data when queries return results
+  // This accumulator pattern is intentional - we want to cache previous search results
   useEffect(() => {
     if (searchedCourses) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- Accumulator pattern for search result caching
       setFetchedCourses((prev) => {
         const newCourses = searchedCourses.filter(
           (course) => !prev.some((p) => p.id === course.id)
@@ -761,7 +765,7 @@ export default function GolfScorecard({ profile, access }: GolfScorecardProps) {
                     selectedTee={selectedTee}
                     displayedHoles={displayedHoles}
                     holeCount={holeCount}
-                    scores={form.watch("scores")}
+                    scores={scoresValue}
                     onScoreChange={handleScoreChange}
                     disabled={submitState === "loading" || submitState === "success"}
                   />

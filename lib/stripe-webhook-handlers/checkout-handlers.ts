@@ -265,7 +265,10 @@ async function handlePaymentCheckout(
             severity: "HIGH",
           }
         );
-        return; // DO NOT GRANT LIFETIME ACCESS
+        // Throw error to ensure this failure is surfaced and not silently ignored
+        throw new Error(
+          `Customer ownership verification failed: customer ${customerId} does not belong to user ${userId}`
+        );
       }
 
       logWebhookDebug(
@@ -432,13 +435,19 @@ async function storePendingPurchase(
     `Payment pending for user ${userId} - waiting for payment_intent.succeeded`
   );
 
+  // Safely extract payment intent ID - can be string, PaymentIntent object, or null
+  const paymentIntentId =
+    typeof session.payment_intent === "string"
+      ? session.payment_intent
+      : session.payment_intent?.id ?? null;
+
   try {
     await db
       .insert(pendingLifetimePurchases)
       .values({
         userId,
         checkoutSessionId: session.id,
-        paymentIntentId: session.payment_intent as string,
+        paymentIntentId,
         priceId,
         plan: plan as "lifetime",
         status: "pending",
@@ -447,7 +456,7 @@ async function storePendingPurchase(
         target: pendingLifetimePurchases.checkoutSessionId,
         set: {
           updatedAt: new Date(),
-          paymentIntentId: session.payment_intent as string,
+          paymentIntentId,
         },
       });
 
@@ -464,7 +473,8 @@ async function sendWelcomeEmailSafely(
   userId: string
 ) {
   try {
-    const dashboardUrl = `${process.env.NEXT_PUBLIC_APP_URL}/dashboard`;
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://handicappin.com";
+    const dashboardUrl = `${appUrl.replace(/\/$/, "")}/dashboard`;
 
     const emailResult = await sendWelcomeEmail({
       to: userEmail,

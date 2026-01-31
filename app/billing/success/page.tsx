@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import { createClientComponentClient } from "@/utils/supabase/client";
 import { clientLogger } from "@/lib/client-logger";
@@ -27,16 +27,7 @@ export default function BillingSuccessPage() {
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [attemptCount, setAttemptCount] = useState(0);
 
-  useEffect(() => {
-    // Get session ID from URL params (passed from checkout redirect)
-    const params = new URLSearchParams(window.location.search);
-    setSessionId(params.get("session_id"));
-
-    checkWebhookStatus();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  async function checkWebhookStatus() {
+  const checkWebhookStatus = useCallback(async () => {
     // Track status locally to avoid stale closure issues with React state
     let currentStatus: "loading" | "processing" | "success" | "delayed" | "failed" = "loading";
 
@@ -177,7 +168,16 @@ export default function BillingSuccessPage() {
       // On error, show delayed state with support contact
       setStatus("delayed");
     }
-  }
+  }, []);
+
+  useEffect(() => {
+    // Get session ID from URL params (passed from checkout redirect)
+    const params = new URLSearchParams(window.location.search);
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- Initial URL param read, runs once on mount
+    setSessionId(params.get("session_id"));
+
+    checkWebhookStatus();
+  }, [checkWebhookStatus]);
 
   // Allow user to manually re-check status
   const handleCheckAgain = () => {
