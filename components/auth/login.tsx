@@ -17,6 +17,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import useMounted from "@/hooks/useMounted";
 import { Skeleton } from "../ui/skeleton";
 import { Input } from "../ui/input";
+import { PasswordInput } from "../ui/password-input";
 import { VerificationBox } from "./verification-box";
 import { useState, useEffect, useRef } from "react";
 import { getBillingFromJWT } from "@/utils/supabase/jwt";
@@ -190,9 +191,8 @@ export function Login() {
                   <FormItem>
                     <FormLabel>Password</FormLabel>
                     <FormControl>
-                      <Input
+                      <PasswordInput
                         id="password"
-                        type="password"
                         required
                         {...field}
                       />

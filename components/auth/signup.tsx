@@ -19,6 +19,7 @@ import { useState, useEffect, useRef } from "react";
 import { signupSchema } from "@/types/auth";
 import { signUpUser } from "@/utils/auth/helpers";
 import { Input } from "../ui/input";
+import { PasswordInput } from "../ui/password-input";
 import { useRouter } from "next/navigation";
 import { FormFeedback } from "../ui/form-feedback";
 import type { FeedbackState } from "@/types/feedback";
@@ -223,9 +224,8 @@ export function Signup({
                   <FormItem>
                     <FormLabel>Password</FormLabel>
                     <FormControl>
-                      <Input
+                      <PasswordInput
                         id="password"
-                        type="password"
                         required
                         {...field}
                       />

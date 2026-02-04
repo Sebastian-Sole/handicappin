@@ -14,6 +14,7 @@ import {
   FormMessage,
 } from "../ui/form";
 import { Input } from "../ui/input";
+import { PasswordInput } from "../ui/password-input";
 import { Button } from "../ui/button";
 import {
   InputOTP,
@@ -218,9 +219,8 @@ const UpdatePassword = ({ email: initialEmail }: UpdatePasswordProps) => {
                   <FormItem>
                     <FormLabel>New Password</FormLabel>
                     <FormControl>
-                      <Input
+                      <PasswordInput
                         id="password"
-                        type="password"
                         required
                         {...field}
                       />
@@ -239,9 +239,8 @@ const UpdatePassword = ({ email: initialEmail }: UpdatePasswordProps) => {
                   <FormItem>
                     <FormLabel>Confirm Password</FormLabel>
                     <FormControl>
-                      <Input
+                      <PasswordInput
                         id="confirmPassword"
-                        type="password"
                         required
                         {...field}
                       />
