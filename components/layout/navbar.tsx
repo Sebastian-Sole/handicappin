@@ -2,7 +2,6 @@ import Link from "next/link";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Avatar } from "@/components/ui/avatar";
-import { Sheet, SheetTrigger, SheetContent } from "@/components/ui/sheet";
 import LogoutButton from "../auth/logoutButton";
 import { Large } from "../ui/typography";
 import {
@@ -16,22 +15,17 @@ import {
   BarChart3,
   CirclePlus,
   LayoutDashboardIcon,
-  Menu,
   SettingsIcon,
   UserIcon,
   UserRound,
 } from "lucide-react";
-import { Separator } from "../ui/separator";
 import ThemeButton from "./themeButton";
+import { MobileNavSheet } from "./mobile-nav-sheet";
 import { getUserIdFromCookies } from "@/utils/supabase/auth-cookies";
 
 function LogoBrand() {
   return (
-    <Link
-      href="/"
-      className="flex items-center gap-2 flex-shrink-0"
-      prefetch={true}
-    >
+    <Link href="/" className="flex items-center gap-2 shrink-0" prefetch={true}>
       <Image
         src="/images/logo.png"
         alt="Handicappin Golf Handicap Tracker Logo"
@@ -82,61 +76,23 @@ function UnauthenticatedNavbar() {
           </Link>
           <ThemeButton size="icon" className="lg:flex hidden" />
 
-          <div className="flex items-center gap-4 lg:hidden">
-            <Sheet>
-              <SheetTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="rounded-full"
-                  aria-label="Open navigation menu"
-                >
-                  <Menu className="h-6 w-6" />
-                </Button>
-              </SheetTrigger>
-              <SheetContent side="right" className="xs:w-64">
-                <div className="flex flex-col gap-4 p-4">
-                  <Link
-                    href="/"
-                    className="hover:underline hover:underline-offset-4"
-                    prefetch={true}
-                  >
-                    Home
-                  </Link>
-                  <Link
-                    href="/about"
-                    className="hover:underline hover:underline-offset-4"
-                    prefetch={true}
-                  >
-                    About
-                  </Link>
-                  <Link
-                    href="/calculators"
-                    className="hover:underline hover:underline-offset-4"
-                    prefetch={true}
-                  >
-                    Calculators
-                  </Link>
-                  <Link
-                    href="/contact"
-                    className="hover:underline hover:underline-offset-4"
-                    prefetch={true}
-                  >
-                    Contact
-                  </Link>
-                  <Separator />
-                  <div className="flex flex-col">
-                    <Link href={"/signup"} className="">
-                      <Button className="w-full mb-4">Sign Up</Button>
-                    </Link>
-                    <Link href={"/login"} className="">
-                      <Button className="w-full">Login</Button>
-                    </Link>
-                  </div>
-                </div>
-              </SheetContent>
-            </Sheet>
-          </div>
+          <MobileNavSheet
+            links={[
+              { href: "/", label: "Home" },
+              { href: "/about", label: "About" },
+              { href: "/calculators", label: "Calculators" },
+              { href: "/contact", label: "Contact" },
+            ]}
+          >
+            <div className="flex flex-col">
+              <Link href="/signup">
+                <Button className="w-full mb-4">Sign Up</Button>
+              </Link>
+              <Link href="/login">
+                <Button className="w-full">Login</Button>
+              </Link>
+            </div>
+          </MobileNavSheet>
         </div>
       </div>
     </header>
@@ -249,68 +205,18 @@ export async function Navbar() {
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
-          <div className="flex items-center gap-4 lg:hidden">
-            <Sheet>
-              <SheetTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="rounded-full"
-                  aria-label="Open navigation menu"
-                >
-                  <Menu className="h-6 w-6" />
-                </Button>
-              </SheetTrigger>
-              <SheetContent side="right" className="xs:w-64">
-                <div className="flex flex-col gap-4 p-4">
-                  <Link
-                    href="/"
-                    className="hover:underline hover:underline-offset-4"
-                    prefetch={true}
-                  >
-                    Home
-                  </Link>
-                  <Link
-                    href="/about"
-                    className="hover:underline hover:underline-offset-4"
-                    prefetch={true}
-                  >
-                    About
-                  </Link>
-                  <Link
-                    href="/calculators"
-                    className="hover:underline hover:underline-offset-4"
-                    prefetch={true}
-                  >
-                    Calculators
-                  </Link>
-                  <Link
-                    href={`/dashboard/${userId}`}
-                    className="hover:underline hover:underline-offset-4"
-                    prefetch={true}
-                  >
-                    Dashboard
-                  </Link>
-                  <Link
-                    href="/statistics"
-                    className="hover:underline hover:underline-offset-4"
-                    prefetch={true}
-                  >
-                    Statistics
-                  </Link>
-                  <Link
-                    href="/contact"
-                    className="hover:underline hover:underline-offset-4"
-                    prefetch={true}
-                  >
-                    Contact
-                  </Link>
-
-                  <LogoutButton />
-                </div>
-              </SheetContent>
-            </Sheet>
-          </div>
+          <MobileNavSheet
+            links={[
+              { href: "/", label: "Home" },
+              { href: "/about", label: "About" },
+              { href: "/calculators", label: "Calculators" },
+              { href: `/dashboard/${userId}`, label: "Dashboard" },
+              { href: "/statistics", label: "Statistics" },
+              { href: "/contact", label: "Contact" },
+            ]}
+          >
+            <LogoutButton />
+          </MobileNavSheet>
         </div>
       </div>
     </header>

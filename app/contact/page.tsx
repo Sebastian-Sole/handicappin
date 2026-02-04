@@ -65,26 +65,24 @@ export default function ContactPage() {
 
       {/* Hero Section */}
       <section className="w-full py-12 md:py-24 lg:py-32 bg-gradient-to-br from-primary/5 to-primary/20 dark:from-primary/5 dark:to-primary/35">
-        <div className="container px-4 md:px-6 mx-auto">
-          <div className="mx-auto max-w-3xl text-center">
-            <Badge className="mb-4">Contact Us</Badge>
-            <h1 className="lg:leading-tighter text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl xl:text-[3.4rem] 2xl:text-[3.75rem] mb-4">
-              We&apos;re Here to Help
-            </h1>
-            <P className="text-foreground/80 md:text-xl/relaxed max-w-2xl mx-auto">
-              Have questions about your handicap, need help with the app, or
-              want to request a feature? We&apos;d love to hear from you.
-            </P>
-          </div>
+        <div className="mx-auto max-w-3xl px-4 md:px-6 text-center">
+          <Badge className="mb-4">Contact Us</Badge>
+          <h1 className="lg:leading-tighter text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl xl:text-[3.4rem] 2xl:text-[3.75rem] mb-4">
+            We&apos;re Here to Help
+          </h1>
+          <P className="text-foreground/80 md:text-xl/relaxed max-w-2xl mx-auto">
+            Have questions about your handicap, need help with the app, or
+            want to request a feature? We&apos;d love to hear from you.
+          </P>
         </div>
       </section>
 
       {/* Contact Form Section */}
       <section id="contact-form" className="w-full py-12 md:py-24">
-        <div className="container px-4 md:px-6 mx-auto">
-          <div className="mx-auto grid max-w-5xl gap-12 lg:grid-cols-2">
+        <div className="mx-auto max-w-5xl px-4 md:px-6">
+          <div className="grid gap-12 lg:grid-cols-2">
             {/* Form */}
-            <div>
+            <div className="min-w-0">
               <div className="mb-6">
                 <h2 className="text-2xl font-bold tracking-tight mb-2">
                   Send us a Message
@@ -98,7 +96,7 @@ export default function ContactPage() {
             </div>
 
             {/* Contact Info */}
-            <div className="space-y-6">
+            <div className="space-y-6 min-w-0">
               <div>
                 <h2 className="text-2xl font-bold tracking-tight mb-6">
                   Other Ways to Reach Us
@@ -106,19 +104,19 @@ export default function ContactPage() {
               </div>
 
               {/* Email Card */}
-              <div className="rounded-lg border bg-card p-6">
-                <div className="flex items-start space-x-4">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 flex-shrink-0">
-                    <Mail className="h-6 w-6 text-primary" />
+              <div className="rounded-lg border bg-card p-4 sm:p-6">
+                <div className="flex items-start gap-3 sm:gap-4">
+                  <div className="flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-lg bg-primary/10 flex-shrink-0">
+                    <Mail className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
                   </div>
-                  <div>
+                  <div className="min-w-0">
                     <h3 className="text-lg font-semibold mb-1">Email Us</h3>
                     <P className="text-muted-foreground mb-2">
                       For direct inquiries or detailed questions
                     </P>
                     <a
                       href="mailto:sebastiansole@handicappin.com"
-                      className="text-primary hover:underline font-medium"
+                      className="text-primary hover:underline font-medium break-all"
                     >
                       sebastiansole@handicappin.com
                     </a>
@@ -127,12 +125,12 @@ export default function ContactPage() {
               </div>
 
               {/* Response Time Card */}
-              <div className="rounded-lg border bg-card p-6">
-                <div className="flex items-start space-x-4">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 flex-shrink-0">
-                    <Clock className="h-6 w-6 text-primary" />
+              <div className="rounded-lg border bg-card p-4 sm:p-6">
+                <div className="flex items-start gap-3 sm:gap-4">
+                  <div className="flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-lg bg-primary/10 flex-shrink-0">
+                    <Clock className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
                   </div>
-                  <div>
+                  <div className="min-w-0">
                     <h3 className="text-lg font-semibold mb-1">Response Time</h3>
                     <P className="text-muted-foreground">
                       We typically respond within{" "}
@@ -146,12 +144,12 @@ export default function ContactPage() {
               </div>
 
               {/* Feature Requests Card */}
-              <div className="rounded-lg border bg-card p-6">
-                <div className="flex items-start space-x-4">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 flex-shrink-0">
-                    <MessageSquare className="h-6 w-6 text-primary" />
+              <div className="rounded-lg border bg-card p-4 sm:p-6">
+                <div className="flex items-start gap-3 sm:gap-4">
+                  <div className="flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-lg bg-primary/10 flex-shrink-0">
+                    <MessageSquare className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
                   </div>
-                  <div>
+                  <div className="min-w-0">
                     <h3 className="text-lg font-semibold mb-1">
                       Feature Requests
                     </h3>
@@ -170,49 +168,47 @@ export default function ContactPage() {
 
       {/* FAQ Section */}
       <section id="faq" className="w-full py-12 md:py-24 bg-muted/50">
-        <div className="container px-4 md:px-6 mx-auto">
-          <div className="mx-auto max-w-4xl">
-            <div className="text-center mb-12">
-              <Badge className="mb-4">FAQ</Badge>
-              <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl mb-4">
-                Frequently Asked Questions
-              </h2>
-              <P className="text-muted-foreground md:text-lg">
-                Find quick answers to common questions about Handicappin&apos;
-              </P>
-            </div>
+        <div className="mx-auto max-w-4xl px-4 md:px-6">
+          <div className="text-center mb-12">
+            <Badge className="mb-4">FAQ</Badge>
+            <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl mb-4">
+              Frequently Asked Questions
+            </h2>
+            <P className="text-muted-foreground md:text-lg">
+              Find quick answers to common questions about Handicappin&apos;
+            </P>
+          </div>
 
-            <div className="grid gap-6 md:grid-cols-2">
-              {faqs.map((faq, index) => (
-                <div
-                  key={index}
-                  className="rounded-lg border bg-card p-6 h-fit"
-                >
-                  <div className="flex items-start gap-3 mb-3">
-                    <HelpCircle className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
-                    <h3 className="font-semibold text-foreground">
-                      {faq.question}
-                    </h3>
-                  </div>
-                  <P className="text-muted-foreground text-sm pl-8">
-                    {faq.answer}
-                  </P>
+          <div className="grid gap-6 md:grid-cols-2">
+            {faqs.map((faq, faqIndex) => (
+              <div
+                key={faqIndex}
+                className="rounded-lg border bg-card p-4 sm:p-6 h-fit"
+              >
+                <div className="flex items-start gap-3 mb-3">
+                  <HelpCircle className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
+                  <h3 className="font-semibold text-foreground">
+                    {faq.question}
+                  </h3>
                 </div>
-              ))}
-            </div>
+                <P className="text-muted-foreground text-sm pl-8">
+                  {faq.answer}
+                </P>
+              </div>
+            ))}
+          </div>
 
-            <div className="mt-12 text-center">
-              <P className="text-muted-foreground">
-                Still have questions?{" "}
-                <a
-                  href="#contact-form"
-                  className="text-primary hover:underline font-medium"
-                >
-                  Send us a message
-                </a>{" "}
-                above and we&apos;ll be happy to help.
-              </P>
-            </div>
+          <div className="mt-12 text-center">
+            <P className="text-muted-foreground">
+              Still have questions?{" "}
+              <a
+                href="#contact-form"
+                className="text-primary hover:underline font-medium"
+              >
+                Send us a message
+              </a>{" "}
+              above and we&apos;ll be happy to help.
+            </P>
           </div>
         </div>
       </section>
