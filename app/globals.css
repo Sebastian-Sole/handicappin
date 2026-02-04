@@ -132,6 +132,65 @@
   input[type="search"]::-webkit-search-cancel-button {
     cursor: pointer;
   }
+
+  /* ===============================
+     INPUT AUTOFILL FIX (SHADCN SAFE)
+     =============================== */
+  input,
+  textarea,
+  select {
+    background-color: transparent !important;
+    caret-color: var(--foreground);
+    box-shadow: 0 0 0 1000px var(--input) inset !important;
+  }
+
+  /* Focus - override Tailwind ring utilities */
+  input:focus,
+  input:focus-visible,
+  textarea:focus,
+  textarea:focus-visible,
+  select:focus,
+  select:focus-visible {
+    background-color: transparent !important;
+    box-shadow:
+      0 0 0 2px var(--ring),
+      0 0 0 1000px var(--input) inset !important;
+    --tw-ring-offset-shadow: none !important;
+    --tw-ring-shadow: none !important;
+  }
+
+  /* ===============================
+     CHROME / EDGE / SAFARI AUTOFILL
+     =============================== */
+  input:-webkit-autofill,
+  textarea:-webkit-autofill,
+  select:-webkit-autofill {
+    -webkit-text-fill-color: var(--foreground) !important;
+    caret-color: var(--foreground) !important;
+    background-color: transparent !important;
+    box-shadow: 0 0 0 1000px var(--input) inset !important;
+    -webkit-box-shadow: 0 0 0 1000px var(--input) inset !important;
+    transition: background-color 9999s ease-in-out 0s;
+  }
+
+  /* Autofill focus */
+  input:-webkit-autofill:focus,
+  input:-webkit-autofill:focus-visible,
+  textarea:-webkit-autofill:focus,
+  textarea:-webkit-autofill:focus-visible,
+  select:-webkit-autofill:focus,
+  select:-webkit-autofill:focus-visible {
+    -webkit-text-fill-color: var(--foreground) !important;
+    background-color: transparent !important;
+    box-shadow:
+      0 0 0 2px var(--ring),
+      0 0 0 1000px var(--input) inset !important;
+    -webkit-box-shadow:
+      0 0 0 2px var(--ring),
+      0 0 0 1000px var(--input) inset !important;
+    --tw-ring-offset-shadow: none !important;
+    --tw-ring-shadow: none !important;
+  }
   .theme {
     --font-sans: "Inter", "Manrope", var(--font-sans);
     --font-mono: ui-monospace, Menlo, Monaco, "Cascadia Mono", "Segoe UI Mono",
