@@ -69,16 +69,20 @@ const ScoreDiffCalculationDisplay = () => {
         Your handicap index at the time this round was registered:{" "}
         {scorecard.round.existingHandicapIndex}
       </p>
-      <p>Your handicap index after this round: {scorecard.round.updatedHandicapIndex}</p>
+      <p>
+        Your handicap index after this round:{" "}
+        {scorecard.round.updatedHandicapIndex}
+      </p>
       <Blockquote className="not-italic border-r-2 pr-2">
         Your handicap index adjusts if the round registered is one of your 8
         best rounds in your last 20 played. If you&apos;ve played less than 20
         rounds, there is a different calculation which can be viewed here:{" "}
         <Link
           href={
-            "https://www.usga.org/handicapping/roh/Content/rules/5%202%20Calculation%20of%20a%20Handicap%20Index.htm"
+            "https://www.usga.org/handicapping/roh/Content/rules/5%202a%20For%20Fewer%20Than%2020%20Scores.htm"
           }
           target="_blank"
+          rel="noopener noreferrer"
         >
           <Button className="p-0 h-0" variant="link">
             UGSA Handicap Rules

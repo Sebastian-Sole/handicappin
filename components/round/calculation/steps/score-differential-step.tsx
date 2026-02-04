@@ -40,7 +40,8 @@ const ScoreDifferentialStep = () => {
     setRating(originalRating);
   };
 
-  const isModified = (current: number, original: number) => current !== original;
+  const isModified = (current: number, original: number) =>
+    current !== original;
 
   return (
     <CalculationStep
@@ -70,7 +71,7 @@ const ScoreDifferentialStep = () => {
             </div>
           )}
           <Link
-            href="https://www.usga.org/handicapping/roh/Content/rules/5%201%20Calculation%20of%20a%20Score%20Differential.htm"
+            href="https://www.usga.org/handicapping/roh/rules-of-handicapping.html#cshid=rule51a"
             target="_blank"
             className="text-primary hover:underline text-sm"
             rel="noopener noreferrer"
@@ -97,9 +98,17 @@ const ScoreDifferentialStep = () => {
         {/* Inputs */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div>
-            <Label>{isNineHoles ? "Adjusted Played Score (9 holes)" : "Adjusted Gross Score"}</Label>
+            <Label>
+              {isNineHoles
+                ? "Adjusted Played Score (9 holes)"
+                : "Adjusted Gross Score"}
+            </Label>
             <Input
-              value={isNineHoles ? adjustedPlayedScore : adjustedGrossScoreCalculation}
+              value={
+                isNineHoles
+                  ? adjustedPlayedScore
+                  : adjustedGrossScoreCalculation
+              }
               disabled
               className="bg-muted"
             />
@@ -147,28 +156,40 @@ const ScoreDifferentialStep = () => {
         {isNineHoles ? (
           <div className="bg-muted/50 rounded-lg p-4 space-y-4">
             <Muted>
-              9-Hole Score Differential = Played Differential + Expected Differential
+              9-Hole Score Differential = Played Differential + Expected
+              Differential
             </Muted>
 
             {/* Played Differential */}
             <div className="space-y-1">
-              <div className="text-sm font-medium">Played Differential (Front 9):</div>
+              <div className="text-sm font-medium">
+                Played Differential (Front 9):
+              </div>
               <div className="flex flex-wrap items-center gap-2 text-sm">
                 <Muted>
                   ({adjustedPlayedScore} − {rating}) × 113 ÷ {slope}
                 </Muted>
                 <span className="font-medium">=</span>
-                <span className="font-semibold">{playedDifferential.toFixed(2)}</span>
+                <span className="font-semibold">
+                  {playedDifferential.toFixed(2)}
+                </span>
               </div>
             </div>
 
             {/* Expected Differential */}
             <div className="space-y-1">
-              <div className="text-sm font-medium">Expected Differential (Unplayed 9):</div>
+              <div className="text-sm font-medium">
+                Expected Differential (Unplayed 9):
+              </div>
               <div className="flex flex-wrap items-center gap-2 text-sm">
-                <Muted>Based on handicap index {scorecard.round.existingHandicapIndex}</Muted>
+                <Muted>
+                  Based on handicap index{" "}
+                  {scorecard.round.existingHandicapIndex}
+                </Muted>
                 <span className="font-medium">=</span>
-                <span className="font-semibold">{expectedDifferential.toFixed(2)}</span>
+                <span className="font-semibold">
+                  {expectedDifferential.toFixed(2)}
+                </span>
               </div>
             </div>
 
@@ -176,7 +197,10 @@ const ScoreDifferentialStep = () => {
             <div className="border-t pt-3 mt-3">
               <div className="flex flex-wrap items-center gap-2">
                 <span className="font-medium">18-Hole Equivalent =</span>
-                <Muted>{playedDifferential.toFixed(2)} + {expectedDifferential.toFixed(2)}</Muted>
+                <Muted>
+                  {playedDifferential.toFixed(2)} +{" "}
+                  {expectedDifferential.toFixed(2)}
+                </Muted>
                 <span className="font-medium">=</span>
                 <span className="text-xl font-bold text-primary">
                   {scoreDifferentialCalculation.toFixed(1)}
@@ -187,7 +211,8 @@ const ScoreDifferentialStep = () => {
         ) : (
           <div className="bg-muted/50 rounded-lg p-4 space-y-2">
             <Muted>
-              Score Differential = (Adjusted Gross Score − Course Rating) × 113 ÷ Slope Rating
+              Score Differential = (Adjusted Gross Score − Course Rating) × 113
+              ÷ Slope Rating
             </Muted>
             <div className="flex flex-wrap items-center gap-2">
               <span className="font-medium">Score Differential =</span>
@@ -206,8 +231,9 @@ const ScoreDifferentialStep = () => {
         {isNineHoles && (
           <div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
             <P className="text-blue-800 dark:text-blue-200 text-sm">
-              <strong>Note:</strong> Per USGA Rule 5.1b, 9-hole rounds are converted to 18-hole equivalents
-              by combining your actual played differential with an expected differential for the unplayed holes.
+              <strong>Note:</strong> Per USGA Rule 5.1b, 9-hole rounds are
+              converted to 18-hole equivalents by combining your actual played
+              differential with an expected differential for the unplayed holes.
             </P>
           </div>
         )}

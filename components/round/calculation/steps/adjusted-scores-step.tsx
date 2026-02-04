@@ -7,7 +7,8 @@ import { calculateHoleAdjustedScore } from "@/lib/handicap";
 import Link from "next/link";
 
 const AdjustedScoresStep = () => {
-  const { scorecard, apsStat, hasEstablishedHandicap } = useRoundCalculationContext();
+  const { scorecard, apsStat, hasEstablishedHandicap } =
+    useRoundCalculationContext();
 
   // Calculate how many holes had scores capped
   const cappedHoles = scorecard.teePlayed.holes
@@ -15,7 +16,11 @@ const AdjustedScoresStep = () => {
     .filter((hole) => {
       const score = scorecard.scores[hole.holeNumber - 1];
       if (!score) return false;
-      const adjustedScore = calculateHoleAdjustedScore(hole, score, hasEstablishedHandicap);
+      const adjustedScore = calculateHoleAdjustedScore(
+        hole,
+        score,
+        hasEstablishedHandicap
+      );
       return adjustedScore < score.strokes;
     });
 
@@ -37,9 +42,7 @@ const AdjustedScoresStep = () => {
             prevent one bad hole from disproportionately affecting your
             handicap. This is called &quot;Net Double Bogey&quot; adjustment.
           </Blockquote>
-          <P>
-            The maximum score per hole is the lower of:
-          </P>
+          <P>The maximum score per hole is the lower of:</P>
           <ul className="list-disc list-inside space-y-1 text-sm text-muted-foreground">
             <li>Par + 5 (absolute maximum)</li>
             <li>Par + 2 + your handicap strokes on that hole</li>
@@ -49,11 +52,11 @@ const AdjustedScoresStep = () => {
             maximum adjusted score is the lower of 9 (4+5) or 7 (4+2+1) = 7.
           </P>
           <P className="text-xs italic">
-            Note: Players with fewer than 3 approved rounds use a simpler Par + 5
-            maximum on all holes.
+            Note: Players with fewer than 3 approved rounds use a simpler Par +
+            5 maximum on all holes.
           </P>
           <Link
-            href="https://www.usga.org/handicapping/roh/Content/rules/3%202%20Acceptable%20Scores.htm"
+            href="https://www.usga.org/handicapping/roh/Content/rules/3%201a%20Before%20a%20Handicap%20Index%20Has%20Been%20Established.htm"
             target="_blank"
             rel="noopener noreferrer"
             className="text-primary hover:underline text-sm"
@@ -92,8 +95,9 @@ const AdjustedScoresStep = () => {
         {cappedHoles && cappedHoles.length > 0 ? (
           <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-lg p-4">
             <P className="text-amber-800 dark:text-amber-200">
-              {cappedHoles.length} hole{cappedHoles.length > 1 ? "s were" : " was"}{" "}
-              adjusted: Hole{cappedHoles.length > 1 ? "s" : ""}{" "}
+              {cappedHoles.length} hole
+              {cappedHoles.length > 1 ? "s were" : " was"} adjusted: Hole
+              {cappedHoles.length > 1 ? "s" : ""}{" "}
               {cappedHoles.map((h) => h.holeNumber).join(", ")}. This saved you{" "}
               {adjustmentAmount} stroke{adjustmentAmount > 1 ? "s" : ""} in your
               handicap calculation.
@@ -110,9 +114,7 @@ const AdjustedScoresStep = () => {
 
         {/* Formula reminder */}
         <div className="bg-muted/50 rounded-lg p-4">
-          <Muted>
-            Adjusted Played Score = Sum of all adjusted hole scores
-          </Muted>
+          <Muted>Adjusted Played Score = Sum of all adjusted hole scores</Muted>
           <div className="flex items-center gap-2 mt-2">
             <span className="font-medium">Adjusted Played Score =</span>
             <span className="text-xl font-bold text-primary">{apsStat}</span>

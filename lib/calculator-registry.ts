@@ -8,10 +8,16 @@ export const CALCULATOR_REGISTRY: CalculatorMeta[] = [
     name: "Course Handicap",
     description: "Calculate your course handicap for a specific set of tees",
     category: "core",
-    inputs: ["handicapIndex", "slopeRating", "courseRating", "par", "holesPlayed"],
+    inputs: [
+      "handicapIndex",
+      "slopeRating",
+      "courseRating",
+      "par",
+      "holesPlayed",
+    ],
     outputs: ["courseHandicap"],
     usgaLink:
-      "https://www.usga.org/handicapping/roh/Content/rules/6%201%20Calculation%20of%20Course%20Handicap.htm",
+      "https://www.usga.org/handicapping/roh/Content/rules/6%201a%2018%20holes.htm",
   },
   {
     id: "score-differential",
@@ -21,7 +27,7 @@ export const CALCULATOR_REGISTRY: CalculatorMeta[] = [
     inputs: ["adjustedGrossScore", "courseRating", "slopeRating"],
     outputs: ["scoreDifferential"],
     usgaLink:
-      "https://www.usga.org/handicapping/roh/Content/rules/5%201%20Calculation%20of%20a%20Score%20Differential.htm",
+      "https://www.usga.org/handicapping/roh/rules-of-handicapping.html#cshid=rule51a",
   },
   {
     id: "handicap-index",
@@ -31,7 +37,7 @@ export const CALCULATOR_REGISTRY: CalculatorMeta[] = [
     inputs: [], // Uses scoreDifferentials array
     outputs: ["handicapIndex"],
     usgaLink:
-      "https://www.usga.org/handicapping/roh/Content/rules/5%202%20Calculation%20of%20a%20Handicap%20Index.htm",
+      "https://www.usga.org/handicapping/roh/Content/rules/5%201a%20Calculation%20of%20a%20Score%20Differential18Hole.htm",
   },
   {
     id: "net-score",
@@ -50,7 +56,7 @@ export const CALCULATOR_REGISTRY: CalculatorMeta[] = [
     inputs: ["courseHandicap"],
     outputs: ["playingHandicap"],
     usgaLink:
-      "https://www.usga.org/handicapping/roh/Content/rules/6%202%20Calculation%20of%20Playing%20Handicap.htm",
+      "https://www.usga.org/handicapping/roh/rules-of-handicapping.html#cshid=rule6",
   },
   {
     id: "what-if-scenario",
@@ -68,7 +74,7 @@ export const CALCULATOR_REGISTRY: CalculatorMeta[] = [
     inputs: ["handicapIndex", "scoreDifferential"],
     outputs: [],
     usgaLink:
-      "https://www.usga.org/handicapping/roh/Content/rules/5%209%20Exceptional%20Score%20Reduction.htm",
+      "https://www.usga.org/content/usga/home-page/handicapping/world-handicap-system/topics/exceptional-score-reduction.html",
   },
   {
     id: "target-score",
@@ -87,7 +93,7 @@ export const CALCULATOR_REGISTRY: CalculatorMeta[] = [
     inputs: ["handicapIndex", "lowHandicapIndex"],
     outputs: [],
     usgaLink:
-      "https://www.usga.org/handicapping/roh/Content/rules/5%207%20Cap%20Procedure.htm",
+      "https://www.usga.org/content/usga/home-page/handicapping/world-handicap-system/topics/soft-cap-hard-cap.html",
   },
   {
     id: "nine-hole-equivalency",
@@ -104,7 +110,7 @@ export const CALCULATOR_REGISTRY: CalculatorMeta[] = [
     ],
     outputs: ["scoreDifferential"],
     usgaLink:
-      "https://www.usga.org/handicapping/roh/Content/rules/5%201b%20Nine%20Hole%20Score.htm",
+      "https://www.usga.org/handicapping/roh/rules-of-handicapping.html#cshid=rule51b",
   },
   {
     id: "strokes-received",
@@ -117,12 +123,13 @@ export const CALCULATOR_REGISTRY: CalculatorMeta[] = [
   {
     id: "max-score",
     name: "Maximum Hole Score",
-    description: "See your max score per hole for handicap purposes (Net Double Bogey)",
+    description:
+      "See your max score per hole for handicap purposes (Net Double Bogey)",
     category: "educational",
     inputs: ["courseHandicap"],
     outputs: [],
     usgaLink:
-      "https://www.usga.org/handicapping/roh/Content/rules/3%201%20Maximum%20Hole%20Score.htm",
+      "https://www.usga.org/handicapping/roh/Content/rules/3%201a%20Before%20a%20Handicap%20Index%20Has%20Been%20Established.htm",
   },
 ];
 

@@ -71,7 +71,8 @@ const CourseHandicapStep = () => {
     setPar(originalPar);
   };
 
-  const isModified = (current: number, original: number) => current !== original;
+  const isModified = (current: number, original: number) =>
+    current !== original;
 
   return (
     <CalculationStep
@@ -91,7 +92,7 @@ const CourseHandicapStep = () => {
             (the expected score for a scratch golfer).
           </P>
           <Link
-            href="https://www.usga.org/handicapping/roh/Content/rules/5%201%20Course%20Handicap%20Calculation.htm"
+            href="https://www.usga.org/handicapping/roh/Content/rules/6%201a%2018%20holes.htm"
             target="_blank"
             className="text-primary hover:underline text-sm"
             rel="noopener noreferrer"
@@ -138,9 +139,7 @@ const CourseHandicapStep = () => {
             <Input
               type="number"
               value={slope !== 0 ? slope : ""}
-              onChange={(e) =>
-                setSlope(Number.parseFloat(e.target.value) || 0)
-              }
+              onChange={(e) => setSlope(Number.parseFloat(e.target.value) || 0)}
               className={cn(
                 isModified(slope, originalSlope) &&
                   "border-amber-500 bg-amber-50 dark:bg-amber-950/20"
@@ -197,8 +196,8 @@ const CourseHandicapStep = () => {
           <div className="flex flex-wrap items-center gap-2">
             <span className="font-medium">Course Handicap =</span>
             <Muted>
-              {isNineHoles ? `(${handicapIndex} ÷ 2)` : handicapIndex} × ({slope}{" "}
-              ÷ 113) + ({rating} − {par})
+              {isNineHoles ? `(${handicapIndex} ÷ 2)` : handicapIndex} × (
+              {slope} ÷ 113) + ({rating} − {par})
             </Muted>
             <span className="font-medium">=</span>
             <span className="text-xl font-bold text-primary">

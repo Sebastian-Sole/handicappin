@@ -28,7 +28,9 @@ const StatCalculationDisplay = () => {
           </Muted>
         </div>
         <div>
-          <Large>Adjusted Gross Score: {scorecard.round.adjustedGrossScore}</Large>
+          <Large>
+            Adjusted Gross Score: {scorecard.round.adjustedGrossScore}
+          </Large>
           <Muted>
             Your score adjusted for 18 holes, factoring in expected score for
             rounds with fewer than 18 holes played.
@@ -36,7 +38,8 @@ const StatCalculationDisplay = () => {
         </div>
         <div>
           <Large>
-            Score Differential: {Math.round(scorecard.round.scoreDifferential * 10) / 10}
+            Score Differential:{" "}
+            {Math.round(scorecard.round.scoreDifferential * 10) / 10}
           </Large>
           <Muted>
             Your performance of the round in relation to the relative difficulty
@@ -58,6 +61,7 @@ const StatCalculationDisplay = () => {
                   "https://www.usga.org/content/usga/home-page/handicapping/world-handicap-system/topics/exceptional-score-reduction.html"
                 }
                 target="_blank"
+                rel="noopener noreferrer"
               >
                 <Button variant={"link"} className="p-0 items-start">
                   here

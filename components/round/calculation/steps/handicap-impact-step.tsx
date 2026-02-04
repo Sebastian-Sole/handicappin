@@ -8,7 +8,8 @@ import { cn } from "@/lib/utils";
 import Link from "next/link";
 
 const HandicapImpactStep = () => {
-  const { scorecard, scoreDifferentialCalculation } = useRoundCalculationContext();
+  const { scorecard, scoreDifferentialCalculation } =
+    useRoundCalculationContext();
 
   const handicapBefore = Number(scorecard.round.existingHandicapIndex);
   const handicapAfter = Number(scorecard.round.updatedHandicapIndex);
@@ -18,8 +19,7 @@ const HandicapImpactStep = () => {
   const getTrendIcon = () => {
     if (change < -0.05)
       return <TrendingDown className="w-6 h-6 text-green-600" />;
-    if (change > 0.05)
-      return <TrendingUp className="w-6 h-6 text-red-600" />;
+    if (change > 0.05) return <TrendingUp className="w-6 h-6 text-red-600" />;
     return <Minus className="w-6 h-6 text-muted-foreground" />;
   };
 
@@ -56,7 +56,7 @@ const HandicapImpactStep = () => {
             </div>
           )}
           <Link
-            href="https://www.usga.org/handicapping/roh/Content/rules/5%202%20Calculation%20of%20a%20Handicap%20Index.htm"
+            href="https://www.usga.org/handicapping/roh/Content/rules/5%201a%20Calculation%20of%20a%20Score%20Differential18Hole.htm"
             target="_blank"
             className="text-primary hover:underline text-sm"
             rel="noopener noreferrer"
@@ -71,7 +71,9 @@ const HandicapImpactStep = () => {
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-8 py-4">
           <div className="text-center">
             <Muted>Before this round</Muted>
-            <div className="text-3xl font-bold">{handicapBefore.toFixed(1)}</div>
+            <div className="text-3xl font-bold">
+              {handicapBefore.toFixed(1)}
+            </div>
           </div>
           <ArrowRight className="w-8 h-8 text-muted-foreground hidden sm:block" />
           <div className="text-center">
@@ -95,8 +97,8 @@ const HandicapImpactStep = () => {
               {Math.abs(change) <= 0.05
                 ? "No change"
                 : change > 0
-                ? `+${change.toFixed(1)} strokes`
-                : `${change.toFixed(1)} strokes`}
+                  ? `+${change.toFixed(1)} strokes`
+                  : `${change.toFixed(1)} strokes`}
             </P>
             <Muted>
               {change < -0.05 && "Your handicap decreased (improved)"}

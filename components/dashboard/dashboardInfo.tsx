@@ -33,13 +33,7 @@ const DashboardIndex = ({ handicapIndex, header }: DashboardIndexProps) => {
           handicaps and scoring can be viewed by clicking the button below, or
           by viewing a specific round&apos;s calculation.
         </P>
-        <Link
-          href={
-            "https://www.usga.org/handicapping/roh/rules-of-handicapping.html#cshid=rule51a"
-          }
-          target="_blank"
-          rel="noopener noreferrer"
-        >
+        <Link href={"/calculators"}>
           <Button variant="link" className="text-primary underline px-0 mb-6">
             Click here to learn more
           </Button>
