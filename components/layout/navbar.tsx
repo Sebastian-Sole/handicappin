@@ -42,32 +42,32 @@ function LogoBrand() {
 function UnauthenticatedNavbar() {
   return (
     <header className="fixed top-0 z-50 w-full bg-background shadow-xs">
-      <div className="container flex h-16 items-center justify-between px-4 sm:px-6 m-0 max-w-full">
+      <div className="container relative flex h-16 items-center justify-between px-4 sm:px-6 m-0 max-w-full">
         <LogoBrand />
-        <nav className="hidden w-1/3 items-center justify-center gap-6 text-sm font-medium md:flex">
+        <nav className="absolute left-1/2 top-1/2 hidden -translate-x-1/2 -translate-y-1/2 items-center gap-6 text-sm font-medium md:flex">
           <Link
             href="/"
-            className="hover:underline hover:underline-offset-4"
+            className="hover:underline hover:underline-offset-4 whitespace-nowrap"
             prefetch={true}
           >
             Home
           </Link>
           <Link
             href="/about"
-            className="hover:underline hover:underline-offset-4"
+            className="hover:underline hover:underline-offset-4 whitespace-nowrap"
             prefetch={true}
           >
             About
           </Link>
           <Link
             href="/calculators"
-            className="hover:underline hover:underline-offset-4"
+            className="hover:underline hover:underline-offset-4 whitespace-nowrap"
             prefetch={true}
           >
             Calculators
           </Link>
         </nav>
-        <div className="flex items-center gap-4 xs:w-1/3 justify-end">
+        <div className="flex items-center gap-4 justify-end flex-shrink-0">
           <Link href={"/signup"} className="lg:block hidden">
             <Button>Sign Up</Button>
           </Link>
