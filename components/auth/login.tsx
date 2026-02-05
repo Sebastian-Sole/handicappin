@@ -30,10 +30,21 @@ export function Login() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const isVerified = searchParams.get("verified");
+  const errorParam = searchParams.get("error");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [feedback, setFeedback] = useState<FeedbackState | null>(null);
   const [buttonError, setButtonError] = useState(false);
   const buttonErrorTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Show OAuth error from URL query parameter
+  useEffect(() => {
+    if (errorParam) {
+      setFeedback({
+        type: "error",
+        message: decodeURIComponent(errorParam),
+      });
+    }
+  }, [errorParam]);
 
   // Clean up timeout on unmount
   useEffect(() => {

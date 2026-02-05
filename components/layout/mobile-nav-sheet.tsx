@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { Menu } from "lucide-react";
@@ -21,10 +21,12 @@ interface MobileNavSheetProps {
 export function MobileNavSheet({ links, children }: MobileNavSheetProps) {
   const [isOpen, setIsOpen] = useState(false);
   const pathname = usePathname();
+  const previousPathname = useRef(pathname);
 
-  useEffect(() => {
+  if (previousPathname.current !== pathname) {
+    previousPathname.current = pathname;
     setIsOpen(false);
-  }, [pathname]);
+  }
 
   return (
     <div className="flex items-center gap-4 lg:hidden">

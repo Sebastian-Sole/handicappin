@@ -128,7 +128,7 @@ client_id = "env(GOOGLE_CLIENT_ID)"
 # DO NOT commit your OAuth provider secret to git. Use environment variable substitution instead:
 secret = "env(GOOGLE_CLIENT_SECRET)"
 # Overrides the default auth redirectUrl.
-redirect_uri = "http://localhost:54321/auth/v1/callback"
+redirect_uri = "env(GOOGLE_REDIRECT_URI)"
 url=""
 skip_nonce_check=true
 

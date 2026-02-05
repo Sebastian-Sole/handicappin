@@ -19,7 +19,7 @@ import { useState, useEffect, useRef } from "react";
 import { signupSchema } from "@/types/auth";
 import { signUpUser } from "@/utils/auth/helpers";
 import { Input } from "../ui/input";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { FormFeedback } from "../ui/form-feedback";
 import type { FeedbackState } from "@/types/feedback";
 import { GoogleSignInButton } from "./google-sign-in-button";
@@ -38,6 +38,18 @@ export function Signup({
   const [buttonError, setButtonError] = useState(false);
   const buttonErrorTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const errorParam = searchParams.get("error");
+
+  // Show OAuth error from URL query parameter
+  useEffect(() => {
+    if (errorParam) {
+      setFeedback({
+        type: "error",
+        message: decodeURIComponent(errorParam),
+      });
+    }
+  }, [errorParam]);
 
   const form = useForm<z.infer<typeof signupSchema>>({
     resolver: zodResolver(signupSchema),

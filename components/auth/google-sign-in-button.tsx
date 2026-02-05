@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { FormFeedback } from "@/components/ui/form-feedback";
 import { createClientComponentClient } from "@/utils/supabase/client";
 import { clientLogger } from "@/lib/client-logger";
 
@@ -21,32 +22,36 @@ export function GoogleSignInButton({
   className,
 }: GoogleSignInButtonProps) {
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const supabase = createClientComponentClient();
 
   const handleGoogleSignIn = async () => {
     setIsLoading(true);
+    setError(null);
 
     try {
-      const { error } = await supabase.auth.signInWithOAuth({
+      const { error: oauthError } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
           redirectTo: `${window.location.origin}/auth/callback`,
           queryParams: {
             access_type: "offline",
-            prompt: "consent",
+            prompt: "select_account",
           },
         },
       });
 
-      if (error) {
-        clientLogger.error("Google OAuth error", error);
+      if (oauthError) {
+        clientLogger.error("Google OAuth error", oauthError);
         setIsLoading(false);
+        setError("Failed to connect to Google. Please try again.");
       }
       // If successful, the page will redirect to Google
       // No need to reset loading state
-    } catch (error) {
-      clientLogger.error("Google sign-in failed", error);
+    } catch (caughtError) {
+      clientLogger.error("Google sign-in failed", caughtError);
       setIsLoading(false);
+      setError("Something went wrong. Please try again.");
     }
   };
 
@@ -57,13 +62,21 @@ export function GoogleSignInButton({
       : "Sign in with Google";
 
   return (
-    <Button
-      type="button"
-      variant="outline"
-      className={className}
-      onClick={handleGoogleSignIn}
-      disabled={isLoading}
-    >
+    <>
+      {error && (
+        <FormFeedback
+          type="error"
+          message={error}
+          onClose={() => setError(null)}
+        />
+      )}
+      <Button
+        type="button"
+        variant="outline"
+        className={className}
+        onClick={handleGoogleSignIn}
+        disabled={isLoading}
+      >
       {/* Google "G" Logo SVG */}
       <svg
         className="mr-2 h-4 w-4"
@@ -89,5 +102,6 @@ export function GoogleSignInButton({
       </svg>
       {buttonText}
     </Button>
+    </>
   );
 }

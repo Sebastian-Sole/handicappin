@@ -4,6 +4,7 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { Database } from "@/types/supabase";
 import { logger } from "@/lib/logging";
+import { env } from "@/env";
 
 /**
  * OAuth Callback Route Handler
@@ -45,8 +46,8 @@ export async function GET(request: NextRequest) {
   const cookieStore = await cookies();
 
   const supabase = createServerClient<Database>(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    env.NEXT_PUBLIC_SUPABASE_URL,
+    env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
     {
       cookies: {
         getAll() {
@@ -82,14 +83,13 @@ export async function GET(request: NextRequest) {
 
   logger.info("OAuth user authenticated", {
     userId: user.id,
-    email: user.email,
     provider: user.app_metadata?.provider,
   });
 
   // Check if profile exists for this user
   const { data: existingProfile, error: profileQueryError } = await supabase
     .from("profile")
-    .select("id, planSelected: plan_selected")
+    .select("id, planSelected: plan_selected, verified")
     .eq("id", user.id)
     .maybeSingle();
 
@@ -112,13 +112,22 @@ export async function GET(request: NextRequest) {
 
     logger.info("Creating profile for OAuth user", {
       userId: user.id,
-      email: user.email,
-      name: fullName,
+      provider: user.app_metadata?.provider,
     });
+
+    if (!user.email) {
+      logger.error("OAuth user has no email address", {
+        userId: user.id,
+        provider: user.app_metadata?.provider,
+      });
+      return NextResponse.redirect(
+        `${origin}/login?error=${encodeURIComponent("No email associated with this account. Please try a different sign-in method.")}`
+      );
+    }
 
     const { error: insertError } = await supabase.from("profile").insert({
       id: user.id,
-      email: user.email!,
+      email: user.email,
       name: fullName,
       verified: true, // OAuth users are already verified by the provider
       // handicapIndex and initialHandicapIndex use DB defaults (54)
@@ -155,8 +164,24 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(`${origin}/onboarding`);
   }
 
-  // Profile exists - update verified status if needed (for users who signed up with email first)
-  // This handles the case where a user signed up with email but then logs in with Google
+  // Update verified status for users who signed up with email first then log in with Google
+  if (!existingProfile.verified) {
+    const { error: verifyError } = await supabase
+      .from("profile")
+      .update({ verified: true })
+      .eq("id", user.id);
+
+    if (verifyError) {
+      logger.warn("Failed to update verified status for OAuth user", {
+        userId: user.id,
+        error: verifyError.message,
+      });
+    } else {
+      logger.info("Updated verified status for OAuth user", {
+        userId: user.id,
+      });
+    }
+  }
 
   // Determine redirect based on plan status
   // Note: We check planSelected from the profile query, not JWT claims
