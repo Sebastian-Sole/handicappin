@@ -22,6 +22,7 @@ import { Input } from "../ui/input";
 import { useRouter } from "next/navigation";
 import { FormFeedback } from "../ui/form-feedback";
 import type { FeedbackState } from "@/types/feedback";
+import { GoogleSignInButton } from "./google-sign-in-button";
 
 interface SignupProps {
   description?: string;
@@ -243,17 +244,32 @@ export function Signup({
             >
               {loading ? "Signing up..." : buttonError ? "Email already in use" : "Sign Up"}
             </Button>
-
-            <div className="flex items-center justify-center flex-wrap">
-              <Link href="/forgot-password" className="" prefetch={false}>
-                <Button variant={"link"}>Forgot password?</Button>
-              </Link>
-              <Link href="/login" prefetch={false}>
-                <Button variant={"link"}>Already have an account?</Button>
-              </Link>
-            </div>
           </form>
         </Form>
+
+        {/* OAuth Divider */}
+        <div className="relative my-4">
+          <div className="absolute inset-0 flex items-center">
+            <span className="w-full border-t" />
+          </div>
+          <div className="relative flex justify-center text-xs uppercase">
+            <span className="bg-background px-2 text-muted-foreground">
+              Or continue with
+            </span>
+          </div>
+        </div>
+
+        {/* Google Sign-In Button */}
+        <GoogleSignInButton mode="signup" className="w-full" />
+
+        <div className="flex items-center justify-center flex-wrap">
+          <Link href="/forgot-password" className="" prefetch={false}>
+            <Button variant={"link"}>Forgot password?</Button>
+          </Link>
+          <Link href="/login" prefetch={false}>
+            <Button variant={"link"}>Already have an account?</Button>
+          </Link>
+        </div>
       </div>
     </div>
   );

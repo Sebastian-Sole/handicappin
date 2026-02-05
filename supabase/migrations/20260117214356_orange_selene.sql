@@ -14,7 +14,7 @@ ALTER TABLE "round" ADD COLUMN "course_rating_used" numeric;--> statement-breakp
 ALTER TABLE "round" ADD COLUMN "slope_rating_used" integer;--> statement-breakpoint
 
 -- Track number of holes played (9 or 18)
-ALTER TABLE "round" ADD COLUMN "holes_played" integer;--> statement-breakpoint
+ALTER TABLE "round" ADD COLUMN "holes_played" integer NOT NULL DEFAULT 18;--> statement-breakpoint
 
 -- ============================================================
 -- PHASE 2: Backfill holes_played by counting scores per round

@@ -22,6 +22,7 @@ import { useState, useEffect, useRef } from "react";
 import { getBillingFromJWT } from "@/utils/supabase/jwt";
 import { FormFeedback } from "../ui/form-feedback";
 import type { FeedbackState } from "@/types/feedback";
+import { GoogleSignInButton } from "./google-sign-in-button";
 
 export function Login() {
   const isMounted = useMounted();
@@ -209,17 +210,32 @@ export function Login() {
             >
               {isSubmitting ? "Signing In..." : buttonError ? "Invalid credentials" : "Sign In"}
             </Button>
-
-            <div className="flex items-center justify-center flex-wrap">
-              <Link href="/forgot-password" className="" prefetch={false}>
-                <Button variant={"link"}> Forgot password?</Button>
-              </Link>
-              <Link href="/signup" className="" prefetch={false}>
-                <Button variant={"link"}>Don&apos;t have an account?</Button>
-              </Link>
-            </div>
           </form>
         </Form>
+
+        {/* OAuth Divider */}
+        <div className="relative my-4">
+          <div className="absolute inset-0 flex items-center">
+            <span className="w-full border-t" />
+          </div>
+          <div className="relative flex justify-center text-xs uppercase">
+            <span className="bg-background px-2 text-muted-foreground">
+              Or continue with
+            </span>
+          </div>
+        </div>
+
+        {/* Google Sign-In Button */}
+        <GoogleSignInButton mode="login" className="w-full" />
+
+        <div className="flex items-center justify-center flex-wrap">
+          <Link href="/forgot-password" className="" prefetch={false}>
+            <Button variant={"link"}> Forgot password?</Button>
+          </Link>
+          <Link href="/signup" className="" prefetch={false}>
+            <Button variant={"link"}>Don&apos;t have an account?</Button>
+          </Link>
+        </div>
       </div>
     </div>
   );
