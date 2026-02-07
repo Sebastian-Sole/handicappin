@@ -34,22 +34,17 @@ export function Signup({
   notify = false,
 }: SignupProps) {
   const [loading, setLoading] = useState(false);
-  const [feedback, setFeedback] = useState<FeedbackState | null>(null);
-  const [buttonError, setButtonError] = useState(false);
-  const buttonErrorTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const router = useRouter();
   const searchParams = useSearchParams();
   const errorParam = searchParams.get("error");
-
-  // Show OAuth error from URL query parameter
-  useEffect(() => {
+  const [feedback, setFeedback] = useState<FeedbackState | null>(() => {
     if (errorParam) {
-      setFeedback({
-        type: "error",
-        message: decodeURIComponent(errorParam),
-      });
+      return { type: "error", message: decodeURIComponent(errorParam) };
     }
-  }, [errorParam]);
+    return null;
+  });
+  const [buttonError, setButtonError] = useState(false);
+  const buttonErrorTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const form = useForm<z.infer<typeof signupSchema>>({
     resolver: zodResolver(signupSchema),

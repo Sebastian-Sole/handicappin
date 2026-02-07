@@ -2,10 +2,20 @@ import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { z } from "zod";
 import { Database } from "@/types/supabase";
 import { logger } from "@/lib/logging";
 import { env } from "@/env";
 import { createAdminClient } from "@/utils/supabase/admin";
+
+const MAX_NAME_LENGTH = 100;
+const DEFAULT_NAME = "Golfer";
+
+const oauthNameSchema = z
+  .string()
+  .max(MAX_NAME_LENGTH)
+  .transform((value) => value.replace(/<[^>]*>/g, "").trim())
+  .pipe(z.string().min(1));
 
 /**
  * OAuth Callback Route Handler
@@ -104,16 +114,39 @@ export async function GET(request: NextRequest) {
 
   // If no profile exists, create one for the OAuth user
   if (!existingProfile) {
-    // Extract name from user metadata (Google provides full_name)
-    const fullName =
+    // Extract and validate name from OAuth metadata (Google provides full_name)
+    const rawName =
       user.user_metadata?.full_name ||
       user.user_metadata?.name ||
       user.email?.split("@")[0] ||
-      "Golfer";
+      "";
+
+    const nameParseResult = oauthNameSchema.safeParse(rawName);
+    const fullName = nameParseResult.success
+      ? nameParseResult.data
+      : DEFAULT_NAME;
+
+    if (!nameParseResult.success) {
+      logger.warn("OAuth user name failed validation, using default", {
+        userId: user.id,
+        provider: user.app_metadata?.provider,
+        reason: nameParseResult.error.issues[0]?.message,
+      });
+    }
+
+    // Determine email verification status from the OAuth provider.
+    // Google includes `email_verified` in user_metadata, and Supabase sets
+    // `email_confirmed_at` when the provider confirms the email. We check both
+    // to be defensive: the email is only considered verified if at least one
+    // source confirms it.
+    const isEmailVerifiedByProvider =
+      user.user_metadata?.email_verified === true ||
+      user.email_confirmed_at != null;
 
     logger.info("Creating profile for OAuth user", {
       userId: user.id,
       provider: user.app_metadata?.provider,
+      emailVerifiedByProvider: isEmailVerifiedByProvider,
     });
 
     if (!user.email) {
@@ -130,6 +163,26 @@ export async function GET(request: NextRequest) {
     // dependency on RLS policies, consistent with the email signup flow
     const supabaseAdmin = createAdminClient();
 
+    // Re-check if profile was created by a concurrent request between
+    // the initial query and now (race condition window)
+    const { data: concurrentProfile } = await supabaseAdmin
+      .from("profile")
+      .select("id, plan_selected")
+      .eq("id", user.id)
+      .maybeSingle();
+
+    if (concurrentProfile) {
+      logger.info("Profile already created by concurrent OAuth request", {
+        userId: user.id,
+        provider: user.app_metadata?.provider,
+      });
+      // Profile exists now - redirect based on plan status
+      if (!concurrentProfile.plan_selected) {
+        return NextResponse.redirect(`${origin}/onboarding`);
+      }
+      return NextResponse.redirect(`${origin}/`);
+    }
+
     const { error: upsertError } = await supabaseAdmin
       .from("profile")
       .upsert(
@@ -137,13 +190,27 @@ export async function GET(request: NextRequest) {
           id: user.id,
           email: user.email,
           name: fullName,
-          verified: true, // OAuth users are already verified by the provider
+          verified: isEmailVerifiedByProvider,
           handicapIndex: 54, // Explicit default to match email signup path
         },
         { onConflict: "id" }
       );
 
     if (upsertError) {
+      // Handle PostgreSQL unique violation - profile was created by a concurrent request
+      const POSTGRES_UNIQUE_VIOLATION = "23505";
+      if (upsertError.code === POSTGRES_UNIQUE_VIOLATION) {
+        logger.info(
+          "Profile creation hit unique constraint - concurrent request already created it",
+          {
+            userId: user.id,
+            provider: user.app_metadata?.provider,
+          }
+        );
+        // Profile exists, this is safe to treat as success - redirect to onboarding
+        return NextResponse.redirect(`${origin}/onboarding`);
+      }
+
       logger.error("Failed to upsert profile for OAuth user", {
         error: upsertError.message,
         code: upsertError.code,
@@ -154,7 +221,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    logger.info("Profile upserted for OAuth user", {
+    logger.info("Profile created for OAuth user", {
       userId: user.id,
     });
 
@@ -162,8 +229,13 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(`${origin}/onboarding`);
   }
 
-  // Update verified status for users who signed up with email first then log in with Google
-  if (!existingProfile.verified) {
+  // Update verified status for users who signed up with email first then log
+  // in with Google — but only if the OAuth provider actually verified the email.
+  const isEmailVerifiedByProvider =
+    user.user_metadata?.email_verified === true ||
+    user.email_confirmed_at != null;
+
+  if (!existingProfile.verified && isEmailVerifiedByProvider) {
     const supabaseAdmin = createAdminClient();
     const { error: verifyError } = await supabaseAdmin
       .from("profile")
@@ -178,8 +250,14 @@ export async function GET(request: NextRequest) {
     } else {
       logger.info("Updated verified status for OAuth user", {
         userId: user.id,
+        emailVerifiedByProvider: isEmailVerifiedByProvider,
       });
     }
+  } else if (!existingProfile.verified) {
+    logger.info("OAuth user email not verified by provider, skipping auto-verify", {
+      userId: user.id,
+      provider: user.app_metadata?.provider,
+    });
   }
 
   // Determine redirect based on plan status

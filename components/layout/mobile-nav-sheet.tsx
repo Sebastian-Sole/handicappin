@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { Menu } from "lucide-react";
@@ -21,10 +21,10 @@ interface MobileNavSheetProps {
 export function MobileNavSheet({ links, children }: MobileNavSheetProps) {
   const [isOpen, setIsOpen] = useState(false);
   const pathname = usePathname();
-  const previousPathname = useRef(pathname);
+  const [previousPathname, setPreviousPathname] = useState(pathname);
 
-  if (previousPathname.current !== pathname) {
-    previousPathname.current = pathname;
+  if (previousPathname !== pathname) {
+    setPreviousPathname(pathname);
     setIsOpen(false);
   }
 
