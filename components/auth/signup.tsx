@@ -24,6 +24,21 @@ import { FormFeedback } from "../ui/form-feedback";
 import type { FeedbackState } from "@/types/feedback";
 import { GoogleSignInButton } from "./google-sign-in-button";
 
+const SIGNUP_ERROR_MESSAGES: Record<string, string> = {
+  oauth_cancelled: "Sign-in was cancelled. Please try again.",
+  oauth_unsupported:
+    "This sign-in method is not supported. Please try a different option.",
+  oauth_provider_error:
+    "Something went wrong with sign-in. Please try again.",
+  signup_failed: "Sign-up failed. Please try again.",
+};
+
+const DEFAULT_SIGNUP_ERROR = "An unexpected error occurred. Please try again.";
+
+function getSignupErrorMessage(code: string): string {
+  return SIGNUP_ERROR_MESSAGES[code] ?? DEFAULT_SIGNUP_ERROR;
+}
+
 interface SignupProps {
   description?: string;
   notify?: boolean;
@@ -39,7 +54,7 @@ export function Signup({
   const errorParam = searchParams.get("error");
   const [feedback, setFeedback] = useState<FeedbackState | null>(() => {
     if (errorParam) {
-      return { type: "error", message: decodeURIComponent(errorParam) };
+      return { type: "error", message: getSignupErrorMessage(errorParam) };
     }
     return null;
   });

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import * as Sentry from "@sentry/nextjs";
 import { Button } from "@/components/ui/button";
 import { FormFeedback } from "@/components/ui/form-feedback";
 import { createClientComponentClient } from "@/utils/supabase/client";
@@ -29,30 +30,53 @@ export function GoogleSignInButton({
     setIsLoading(true);
     setError(null);
 
-    try {
-      const { error: oauthError } = await supabase.auth.signInWithOAuth({
-        provider: "google",
-        options: {
-          redirectTo: `${window.location.origin}/auth/callback`,
-          queryParams: {
-            access_type: "offline",
-            prompt: "select_account",
-          },
-        },
-      });
+    await Sentry.startSpan(
+      {
+        op: "auth.oauth",
+        name: "Google OAuth Sign-In",
+      },
+      async (span) => {
+        const redirectTo = `${window.location.origin}/auth/callback`;
+        span.setAttribute("auth.provider", "google");
+        span.setAttribute("auth.mode", mode);
+        span.setAttribute("auth.redirectTo", redirectTo);
 
-      if (oauthError) {
-        clientLogger.error("Google OAuth error", oauthError);
-        setIsLoading(false);
-        setError("Failed to connect to Google. Please try again.");
+        try {
+          const { error: oauthError } = await supabase.auth.signInWithOAuth({
+            provider: "google",
+            options: {
+              redirectTo,
+              queryParams: {
+                access_type: "offline",
+                prompt: "select_account",
+              },
+            },
+          });
+
+          if (oauthError) {
+            span.setStatus({ code: 2, message: oauthError.message });
+            Sentry.captureException(oauthError, {
+              tags: { provider: "google", mode },
+            });
+            clientLogger.error("Google OAuth error", oauthError);
+            setIsLoading(false);
+            setError("Failed to connect to Google. Please try again.");
+            return;
+          }
+          // If successful, the page will redirect to Google
+          // No need to reset loading state
+          span.setStatus({ code: 1 });
+        } catch (caughtError) {
+          span.setStatus({ code: 2, message: "Google sign-in failed" });
+          Sentry.captureException(caughtError, {
+            tags: { provider: "google", mode },
+          });
+          clientLogger.error("Google sign-in failed", caughtError);
+          setIsLoading(false);
+          setError("Something went wrong. Please try again.");
+        }
       }
-      // If successful, the page will redirect to Google
-      // No need to reset loading state
-    } catch (caughtError) {
-      clientLogger.error("Google sign-in failed", caughtError);
-      setIsLoading(false);
-      setError("Something went wrong. Please try again.");
-    }
+    );
   };
 
   const buttonText = isLoading
