@@ -18,7 +18,7 @@ import useMounted from "@/hooks/useMounted";
 import { Skeleton } from "../ui/skeleton";
 import { Input } from "../ui/input";
 import { VerificationBox } from "./verification-box";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { getBillingFromJWT } from "@/utils/supabase/jwt";
 import { FormFeedback } from "../ui/form-feedback";
 import type { FeedbackState } from "@/types/feedback";
@@ -31,20 +31,11 @@ export function Login() {
   const searchParams = useSearchParams();
   const isVerified = searchParams.get("verified");
   const errorParam = searchParams.get("error");
+  const oauthError = errorParam ? decodeURIComponent(errorParam) : null;
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [feedback, setFeedback] = useState<FeedbackState | null>(null);
   const [buttonError, setButtonError] = useState(false);
   const buttonErrorTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-
-  // Show OAuth error from URL query parameter
-  useEffect(() => {
-    if (errorParam) {
-      setFeedback({
-        type: "error",
-        message: decodeURIComponent(errorParam),
-      });
-    }
-  }, [errorParam]);
 
   // Clean up timeout on unmount
   useEffect(() => {
@@ -64,6 +55,14 @@ export function Login() {
       setButtonError(false);
     }, 2000);
   };
+
+  const dismissOAuthError = useCallback(() => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.delete("error");
+    const newQuery = params.toString();
+    router.replace(newQuery ? `?${newQuery}` : window.location.pathname, { scroll: false });
+    setButtonError(false);
+  }, [searchParams, router]);
 
   const clearFeedback = () => {
     setFeedback(null);
@@ -161,6 +160,14 @@ export function Login() {
   return (
     <div className="mx-auto max-w-sm space-y-6 py-4 md:py-4 lg:py-4 xl:py-4 sm:min-w-[40%] min-h-full w-[90%]">
       {isVerified && <VerificationBox />}
+      {oauthError && (
+        <FormFeedback
+          type="error"
+          message={oauthError}
+          className="mb-4"
+          onClose={dismissOAuthError}
+        />
+      )}
       {feedback && (
         <FormFeedback
           type={feedback.type}

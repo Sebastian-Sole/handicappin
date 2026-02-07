@@ -5,6 +5,7 @@ import type { NextRequest } from "next/server";
 import { Database } from "@/types/supabase";
 import { logger } from "@/lib/logging";
 import { env } from "@/env";
+import { createAdminClient } from "@/utils/supabase/admin";
 
 /**
  * OAuth Callback Route Handler
@@ -55,9 +56,9 @@ export async function GET(request: NextRequest) {
         },
         setAll(cookiesToSet) {
           try {
-            cookiesToSet.forEach(({ name, value, options }) =>
-              cookieStore.set(name, value, options)
-            );
+            cookiesToSet.forEach(({ name, value, options }) => {
+              cookieStore.set(name, value, options);
+            });
           } catch {
             // Ignore errors from setting cookies in middleware context
           }
@@ -125,40 +126,37 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const { error: insertError } = await supabase.from("profile").insert({
-      id: user.id,
-      email: user.email,
-      name: fullName,
-      verified: true, // OAuth users are already verified by the provider
-      // handicapIndex and initialHandicapIndex use DB defaults (54)
-    });
+    // Use admin client (service role key) for profile creation to avoid
+    // dependency on RLS policies, consistent with the email signup flow
+    const supabaseAdmin = createAdminClient();
 
-    if (insertError) {
-      // Handle race condition: profile might have been created by another request
-      const isDuplicateKey =
-        insertError.code === "23505" ||
-        insertError.message.includes("duplicate key");
+    const { error: upsertError } = await supabaseAdmin
+      .from("profile")
+      .upsert(
+        {
+          id: user.id,
+          email: user.email,
+          name: fullName,
+          verified: true, // OAuth users are already verified by the provider
+          handicapIndex: 54, // Explicit default to match email signup path
+        },
+        { onConflict: "id" }
+      );
 
-      if (isDuplicateKey) {
-        logger.info("Profile already exists (race condition)", {
-          userId: user.id,
-        });
-        // Profile exists, continue to redirect
-      } else {
-        logger.error("Failed to create profile for OAuth user", {
-          error: insertError.message,
-          code: insertError.code,
-          userId: user.id,
-        });
-        return NextResponse.redirect(
-          `${origin}/login?error=${encodeURIComponent("Failed to create account. Please try again.")}`
-        );
-      }
-    } else {
-      logger.info("Profile created successfully for OAuth user", {
+    if (upsertError) {
+      logger.error("Failed to upsert profile for OAuth user", {
+        error: upsertError.message,
+        code: upsertError.code,
         userId: user.id,
       });
+      return NextResponse.redirect(
+        `${origin}/login?error=${encodeURIComponent("Failed to create account. Please try again.")}`
+      );
     }
+
+    logger.info("Profile upserted for OAuth user", {
+      userId: user.id,
+    });
 
     // New OAuth user - always redirect to onboarding
     return NextResponse.redirect(`${origin}/onboarding`);
@@ -166,7 +164,8 @@ export async function GET(request: NextRequest) {
 
   // Update verified status for users who signed up with email first then log in with Google
   if (!existingProfile.verified) {
-    const { error: verifyError } = await supabase
+    const supabaseAdmin = createAdminClient();
+    const { error: verifyError } = await supabaseAdmin
       .from("profile")
       .update({ verified: true })
       .eq("id", user.id);
