@@ -25,9 +25,6 @@ export default async function OnboardingPage() {
 
   // If user has a plan in JWT, redirect to billing (they've completed onboarding)
   if (billing?.plan) {
-    console.log(
-      `✅ Onboarding: User has plan=${billing.plan} in JWT, redirecting to billing`
-    );
     redirect("/billing");
   }
 

@@ -26,6 +26,7 @@ export const env = createEnv({
     ADMIN_ALERT_EMAILS: z.string(),
     RESET_TOKEN_SECRET: z.string(),
 
+    GOOGLE_CLIENT_SECRET: z.string().min(1),
     SUPABASE_SERVICE_ROLE_KEY: z.string().min(1),
     HANDICAP_CRON_SECRET: z.string().min(1),
     STRIPE_CRON_SECRET: z.string().min(1),
@@ -45,9 +46,9 @@ export const env = createEnv({
    * `NEXT_PUBLIC_`.
    */
   client: {
-    // NEXT_PUBLIC_CLIENTVAR: z.string(),
     NEXT_PUBLIC_SUPABASE_URL: z.url(),
     NEXT_PUBLIC_SUPABASE_ANON_KEY: z.string(),
+    NEXT_PUBLIC_GOOGLE_CLIENT_ID: z.string().min(1),
   },
 
   /**
@@ -71,6 +72,7 @@ export const env = createEnv({
     REDIS_URL: process.env.REDIS_URL,
     ADMIN_ALERT_EMAILS: process.env.ADMIN_ALERT_EMAILS,
     RESET_TOKEN_SECRET: process.env.RESET_TOKEN_SECRET,
+    GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET,
     SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY,
     HANDICAP_CRON_SECRET: process.env.HANDICAP_CRON_SECRET,
     STRIPE_CRON_SECRET: process.env.STRIPE_CRON_SECRET,
@@ -79,6 +81,7 @@ export const env = createEnv({
     NODE_ENV: process.env.NODE_ENV,
     NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
     NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+    NEXT_PUBLIC_GOOGLE_CLIENT_ID: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID,
   },
   /**
    * Run `build` or `dev` with `SKIP_ENV_VALIDATION` to skip env validation. This is especially
