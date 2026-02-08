@@ -1,13 +1,10 @@
-import { createServerClient } from "@supabase/ssr";
-import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import * as Sentry from "@sentry/nextjs";
 import { z } from "zod";
-import { Database } from "@/types/supabase";
 import { logger } from "@/lib/logging";
-import { env } from "@/env";
 import { oauthCallbackRateLimit, getIdentifier } from "@/lib/rate-limit";
+import { createServerComponentClient } from "@/utils/supabase/server";
 
 const MAX_NAME_LENGTH = 100;
 const DEFAULT_NAME = "Golfer";
@@ -141,28 +138,7 @@ export async function GET(request: NextRequest) {
         );
       }
 
-      const cookieStore = await cookies();
-
-      const supabase = createServerClient<Database>(
-        env.NEXT_PUBLIC_SUPABASE_URL,
-        env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
-        {
-          cookies: {
-            getAll() {
-              return cookieStore.getAll();
-            },
-            setAll(cookiesToSet) {
-              try {
-                cookiesToSet.forEach(({ name, value, options }) => {
-                  cookieStore.set(name, value, options);
-                });
-              } catch {
-                // Ignore errors from setting cookies in middleware context
-              }
-            },
-          },
-        }
-      );
+      const supabase = await createServerComponentClient();
 
       // Exchange the authorization code for a session
       const { data: sessionData, error: sessionError } =
