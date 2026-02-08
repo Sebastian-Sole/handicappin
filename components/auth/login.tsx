@@ -23,22 +23,7 @@ import { getBillingFromJWT } from "@/utils/supabase/jwt";
 import { FormFeedback } from "../ui/form-feedback";
 import type { FeedbackState } from "@/types/feedback";
 import { GoogleSignInButton } from "./google-sign-in-button";
-
-const OAUTH_ERROR_MESSAGES: Record<string, string> = {
-  oauth_cancelled: "Sign-in was cancelled. Please try again.",
-  oauth_unsupported:
-    "This sign-in method is not supported. Please try a different option.",
-  oauth_provider_error:
-    "Something went wrong with sign-in. Please try again.",
-  oauth_no_email:
-    "No email associated with this account. Please try a different sign-in method.",
-  oauth_account_creation_failed:
-    "Failed to create account. Please try again.",
-};
-
-function getOAuthErrorMessage(code: string): string {
-  return OAUTH_ERROR_MESSAGES[code] ?? OAUTH_ERROR_MESSAGES.oauth_provider_error;
-}
+import { getOAuthErrorMessage } from "@/lib/oauth-errors";
 
 export function Login() {
   const isMounted = useMounted();

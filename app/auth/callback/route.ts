@@ -7,6 +7,7 @@ import { z } from "zod";
 import { Database } from "@/types/supabase";
 import { logger } from "@/lib/logging";
 import { env } from "@/env";
+import { oauthCallbackRateLimit, getIdentifier } from "@/lib/rate-limit";
 
 const MAX_NAME_LENGTH = 100;
 const DEFAULT_NAME = "Golfer";
@@ -59,6 +60,8 @@ function isEmailVerifiedByOAuthProvider(user: {
   );
 }
 
+const oauthEmailSchema = z.string().email().min(3).max(255);
+
 const oauthNameSchema = z
   .string()
   .max(MAX_NAME_LENGTH)
@@ -71,8 +74,8 @@ const oauthNameSchema = z
  * Handles the redirect from OAuth providers (Google) after user authentication.
  * This route:
  * 1. Exchanges the authorization code for a session
- * 2. Checks if a profile exists for the user
- * 3. Creates a profile if missing (OAuth users skip the signup form)
+ * 2. Upserts the profile (insert if new, no-op if exists) to avoid race conditions
+ * 3. Queries the profile to determine current state
  * 4. Redirects to /onboarding if no plan, else to /
  */
 export async function GET(request: NextRequest) {
@@ -83,10 +86,37 @@ export async function GET(request: NextRequest) {
     },
     async (span) => {
       const requestUrl = new URL(request.url);
+      const origin = requestUrl.origin;
+
+      // Rate limit by IP before any OAuth processing
+      const identifier = getIdentifier(request);
+      const { success: rateLimitSuccess, limit, remaining, reset } =
+        await oauthCallbackRateLimit.limit(identifier);
+
+      if (!rateLimitSuccess) {
+        const retryAfterSeconds = Math.ceil((reset - Date.now()) / 1000);
+        logger.warn("OAuth callback rate limit exceeded", {
+          identifier,
+          limit,
+          remaining,
+          reset: new Date(reset).toISOString(),
+        });
+        span.setStatus({ code: 2, message: "Rate limit exceeded" });
+        span.setAttribute("rate_limit.exceeded", true);
+
+        const redirectUrl = new URL(`${origin}/login`);
+        redirectUrl.searchParams.set("error", "rate_limit_exceeded");
+        const response = NextResponse.redirect(redirectUrl);
+        response.headers.set("X-RateLimit-Limit", limit.toString());
+        response.headers.set("X-RateLimit-Remaining", "0");
+        response.headers.set("X-RateLimit-Reset", new Date(reset).toISOString());
+        response.headers.set("Retry-After", retryAfterSeconds.toString());
+        return response;
+      }
+
       const code = requestUrl.searchParams.get("code");
       const errorParam = requestUrl.searchParams.get("error");
       const errorDescription = requestUrl.searchParams.get("error_description");
-      const origin = requestUrl.origin;
 
       // Handle OAuth errors (user cancelled, provider error, etc.)
       if (errorParam) {
@@ -161,126 +191,126 @@ export async function GET(request: NextRequest) {
         provider,
       });
 
-      // Check if profile exists for this user
-      const { data: existingProfile, error: profileQueryError } = await supabase
+      // Validate email before attempting profile upsert
+      if (!user.email) {
+        logger.error("OAuth user has no email address", {
+          userId: user.id,
+          provider,
+        });
+        span.setStatus({ code: 2, message: "OAuth user has no email" });
+        return NextResponse.redirect(
+          `${origin}/login?error=oauth_no_email`
+        );
+      }
+
+      const emailValidation = oauthEmailSchema.safeParse(user.email);
+      if (!emailValidation.success) {
+        logger.error("OAuth user email failed validation", {
+          userId: user.id,
+          provider,
+          reason: emailValidation.error.issues[0]?.message,
+        });
+        Sentry.captureException(
+          new Error("OAuth email validation failed"),
+          {
+            tags: { flow: "oauth_callback", step: "email_validation" },
+            extra: {
+              userId: user.id,
+              provider,
+              validationError: emailValidation.error.issues[0]?.message,
+            },
+          }
+        );
+        span.setStatus({ code: 2, message: "OAuth user has invalid email" });
+        return NextResponse.redirect(
+          `${origin}/login?error=oauth_invalid_email`
+        );
+      }
+
+      // Extract and validate name from OAuth metadata (Google provides full_name)
+      const rawName =
+        user.user_metadata?.full_name ||
+        user.user_metadata?.name ||
+        user.email?.split("@")[0] ||
+        "";
+
+      const nameParseResult = oauthNameSchema.safeParse(rawName);
+      const fullName = nameParseResult.success
+        ? nameParseResult.data
+        : DEFAULT_NAME;
+
+      if (!nameParseResult.success) {
+        logger.warn("OAuth user name failed validation, using default", {
+          userId: user.id,
+          provider,
+          reason: nameParseResult.error.issues[0]?.message,
+        });
+      }
+
+      const isEmailVerifiedByProvider = isEmailVerifiedByOAuthProvider(user);
+
+      // Atomic upsert with ignoreDuplicates: true (ON CONFLICT DO NOTHING).
+      // If no profile exists, this inserts one. If it already exists, this is a
+      // no-op. Using ignoreDuplicates avoids triggering the RLS UPDATE policy
+      // which blocks modifications to billing fields.
+      const { error: upsertError } = await supabase
+        .from("profile")
+        .upsert(
+          {
+            id: user.id,
+            email: user.email,
+            name: fullName,
+            verified: isEmailVerifiedByProvider,
+            handicapIndex: 54, // Explicit default to match email signup path
+          },
+          { onConflict: "id", ignoreDuplicates: true }
+        );
+
+      if (upsertError) {
+        logger.error("Failed to upsert profile for OAuth user", {
+          error: upsertError.message,
+          code: upsertError.code,
+          userId: user.id,
+        });
+        span.setStatus({ code: 2, message: "Profile upsert failed" });
+        Sentry.captureException(new Error(upsertError.message), {
+          tags: { flow: "oauth_callback", step: "profile_upsert" },
+          extra: { code: upsertError.code, userId: user.id },
+        });
+        return NextResponse.redirect(
+          `${origin}/login?error=oauth_account_creation_failed`
+        );
+      }
+
+      // Query the profile to get current state (planSelected, verified).
+      // This always runs after the upsert so we see the latest data.
+      const { data: profile, error: profileQueryError } = await supabase
         .from("profile")
         .select("id, planSelected: plan_selected, verified")
         .eq("id", user.id)
         .maybeSingle();
 
-      if (profileQueryError) {
-        logger.error("Failed to query profile", {
-          error: profileQueryError.message,
+      if (profileQueryError || !profile) {
+        logger.error("Failed to query profile after upsert", {
+          error: profileQueryError?.message,
           userId: user.id,
         });
-        // Continue anyway - we'll try to create profile if needed
-      }
-
-      // If no profile exists, create one for the OAuth user
-      if (!existingProfile) {
-        return Sentry.startSpan(
+        span.setStatus({ code: 2, message: "Profile query failed after upsert" });
+        Sentry.captureException(
+          profileQueryError ?? new Error("Profile not found after upsert"),
           {
-            op: "db.insert",
-            name: "Create OAuth User Profile",
-          },
-          async (profileSpan) => {
-            profileSpan.setAttribute("auth.userId", user.id);
-            profileSpan.setAttribute("auth.provider", provider);
-
-            // Extract and validate name from OAuth metadata (Google provides full_name)
-            const rawName =
-              user.user_metadata?.full_name ||
-              user.user_metadata?.name ||
-              user.email?.split("@")[0] ||
-              "";
-
-            const nameParseResult = oauthNameSchema.safeParse(rawName);
-            const fullName = nameParseResult.success
-              ? nameParseResult.data
-              : DEFAULT_NAME;
-
-            if (!nameParseResult.success) {
-              logger.warn("OAuth user name failed validation, using default", {
-                userId: user.id,
-                provider,
-                reason: nameParseResult.error.issues[0]?.message,
-              });
-            }
-
-            const isEmailVerifiedByProvider = isEmailVerifiedByOAuthProvider(user);
-
-            logger.info("Creating profile for OAuth user", {
-              userId: user.id,
-              provider,
-              emailVerifiedByProvider: isEmailVerifiedByProvider,
-            });
-
-            if (!user.email) {
-              logger.error("OAuth user has no email address", {
-                userId: user.id,
-                provider,
-              });
-              profileSpan.setStatus({ code: 2, message: "No email address" });
-              span.setStatus({ code: 2, message: "OAuth user has no email" });
-              return NextResponse.redirect(
-                `${origin}/login?error=oauth_no_email`
-              );
-            }
-
-            // After exchangeCodeForSession, the supabase client is authenticated as
-            // the user. RLS INSERT policy ("Users can insert their own profile")
-            // allows inserting where auth.uid() = id. The upsert with ignoreDuplicates
-            // (ON CONFLICT DO NOTHING) handles race conditions — if a concurrent
-            // request already created the profile, this is a no-op.
-            const { error: insertError } = await supabase
-              .from("profile")
-              .upsert(
-                {
-                  id: user.id,
-                  email: user.email,
-                  name: fullName,
-                  verified: isEmailVerifiedByProvider,
-                  handicapIndex: 54, // Explicit default to match email signup path
-                },
-                { onConflict: "id", ignoreDuplicates: true }
-              );
-
-            if (insertError) {
-              logger.error("Failed to create profile for OAuth user", {
-                error: insertError.message,
-                code: insertError.code,
-                userId: user.id,
-              });
-              profileSpan.setStatus({ code: 2, message: "Profile insert failed" });
-              span.setStatus({ code: 2, message: "Profile creation failed" });
-              Sentry.captureException(new Error(insertError.message), {
-                tags: { flow: "oauth_callback", step: "profile_creation" },
-                extra: { code: insertError.code, userId: user.id },
-              });
-              return NextResponse.redirect(
-                `${origin}/login?error=oauth_account_creation_failed`
-              );
-            }
-
-            logger.info("Profile created for OAuth user", {
-              userId: user.id,
-            });
-
-            profileSpan.setStatus({ code: 1 });
-            span.setAttribute("oauth.result", "new_user");
-            span.setStatus({ code: 1 });
-
-            // New OAuth user - always redirect to onboarding
-            return NextResponse.redirect(`${origin}/onboarding`);
+            tags: { flow: "oauth_callback", step: "profile_query" },
+            extra: { userId: user.id },
           }
+        );
+        return NextResponse.redirect(
+          `${origin}/login?error=oauth_account_creation_failed`
         );
       }
 
       // Update verified status for users who signed up with email first then log
       // in with Google — but only if the OAuth provider actually verified the email.
-      const isEmailVerifiedByProvider = isEmailVerifiedByOAuthProvider(user);
-
-      if (!existingProfile.verified && isEmailVerifiedByProvider) {
+      if (!profile.verified && isEmailVerifiedByProvider) {
         await Sentry.startSpan(
           {
             op: "db.update",
@@ -312,7 +342,7 @@ export async function GET(request: NextRequest) {
             }
           }
         );
-      } else if (!existingProfile.verified) {
+      } else if (!profile.verified) {
         logger.info("OAuth user email not verified by provider, skipping auto-verify", {
           userId: user.id,
           provider,
@@ -322,7 +352,7 @@ export async function GET(request: NextRequest) {
       // Determine redirect based on plan status
       // Note: We check planSelected from the profile query, not JWT claims
       // This is because JWT claims may not be updated yet for OAuth flow
-      if (!existingProfile.planSelected) {
+      if (!profile.planSelected) {
         logger.info("OAuth user has no plan, redirecting to onboarding", {
           userId: user.id,
         });
@@ -334,11 +364,11 @@ export async function GET(request: NextRequest) {
       // User has a plan - redirect to home
       logger.info("OAuth user authenticated successfully", {
         userId: user.id,
-        plan: existingProfile.planSelected,
+        plan: profile.planSelected,
       });
 
       span.setAttribute("oauth.result", "existing_user");
-      span.setAttribute("oauth.plan", existingProfile.planSelected);
+      span.setAttribute("oauth.plan", profile.planSelected);
       span.setStatus({ code: 1 });
 
       return NextResponse.redirect(`${origin}/`);
