@@ -104,10 +104,7 @@ function GoogleSignInButtonContent({
                 signInError ?? new Error("No user after signInWithIdToken"),
                 { tags: { provider: "google", mode } }
               );
-              clientLogger.error(
-                "Google ID token sign-in failed",
-                signInError
-              );
+              clientLogger.error("Google ID token sign-in failed", signInError);
               setError("Failed to sign in with Google. Please try again.");
               return;
             }
@@ -129,6 +126,11 @@ function GoogleSignInButtonContent({
               "";
             const fullName = sanitizeName(rawName);
 
+            // Google verifies email as part of OAuth — mark as verified.
+            const isVerified =
+              user.user_metadata?.email_verified === true ||
+              user.email_confirmed_at != null;
+
             // Upsert profile (insert if new, no-op if exists)
             const { error: upsertError } = await supabase
               .from("profile")
@@ -137,6 +139,7 @@ function GoogleSignInButtonContent({
                   id: user.id,
                   email: user.email,
                   name: fullName,
+                  verified: isVerified,
                   handicapIndex: DEFAULT_HANDICAP_INDEX,
                 },
                 { onConflict: "id", ignoreDuplicates: true }
