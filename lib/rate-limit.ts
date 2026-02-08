@@ -16,6 +16,7 @@ const PORTAL_LIMIT = parseInt(process.env.RATE_LIMIT_PORTAL_PER_MIN || '5', 10);
 const WEBHOOK_LIMIT = parseInt(process.env.RATE_LIMIT_WEBHOOK_PER_MIN || '100', 10);
 const CONTACT_LIMIT = parseInt(process.env.RATE_LIMIT_CONTACT_PER_MIN || '3', 10);
 const DELETION_LIMIT = parseInt(process.env.RATE_LIMIT_DELETION_PER_HOUR || '3', 10);
+const OAUTH_CALLBACK_LIMIT = parseInt(process.env.RATE_LIMIT_OAUTH_CALLBACK_PER_MIN || '10', 10);
 
 // Initialize Redis client (only if rate limiting is enabled)
 let redis: Redis | null = null;
@@ -167,6 +168,7 @@ export const portalRateLimit = createRateLimiter(PORTAL_LIMIT, 'portal');
 export const webhookRateLimit = createRateLimiter(WEBHOOK_LIMIT, 'webhook');
 export const contactRateLimit = createRateLimiter(CONTACT_LIMIT, 'contact');
 export const deletionRateLimit = createHourlyRateLimiter(DELETION_LIMIT, 'deletion');
+export const oauthCallbackRateLimit = createRateLimiter(OAUTH_CALLBACK_LIMIT, 'oauth-callback');
 
 /**
  * Extract identifier for rate limiting

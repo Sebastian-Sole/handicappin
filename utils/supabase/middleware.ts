@@ -79,6 +79,7 @@ export async function updateSession(request: NextRequest) {
     "/billing/success", // Allow access after Stripe redirect (session may be temporarily lost)
     "/verify-signup",
     "/contact",
+    "/auth/callback", // OAuth callback route for Google sign-in
   ];
 
   // Special case: "/" is public, but not paths that start with "/"

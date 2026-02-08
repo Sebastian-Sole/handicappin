@@ -19,9 +19,11 @@ import { useState, useEffect, useRef } from "react";
 import { signupSchema } from "@/types/auth";
 import { signUpUser } from "@/utils/auth/helpers";
 import { Input } from "../ui/input";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { FormFeedback } from "../ui/form-feedback";
 import type { FeedbackState } from "@/types/feedback";
+import { GoogleSignInButton } from "./google-sign-in-button";
+import { getOAuthErrorMessage } from "@/lib/oauth-errors";
 
 interface SignupProps {
   description?: string;
@@ -33,10 +35,17 @@ export function Signup({
   notify = false,
 }: SignupProps) {
   const [loading, setLoading] = useState(false);
-  const [feedback, setFeedback] = useState<FeedbackState | null>(null);
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const errorParam = searchParams.get("error");
+  const [feedback, setFeedback] = useState<FeedbackState | null>(() => {
+    if (errorParam) {
+      return { type: "error", message: getOAuthErrorMessage(errorParam) };
+    }
+    return null;
+  });
   const [buttonError, setButtonError] = useState(false);
   const buttonErrorTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const router = useRouter();
 
   const form = useForm<z.infer<typeof signupSchema>>({
     resolver: zodResolver(signupSchema),
@@ -243,17 +252,32 @@ export function Signup({
             >
               {loading ? "Signing up..." : buttonError ? "Email already in use" : "Sign Up"}
             </Button>
-
-            <div className="flex items-center justify-center flex-wrap">
-              <Link href="/forgot-password" className="" prefetch={false}>
-                <Button variant={"link"}>Forgot password?</Button>
-              </Link>
-              <Link href="/login" prefetch={false}>
-                <Button variant={"link"}>Already have an account?</Button>
-              </Link>
-            </div>
           </form>
         </Form>
+
+        {/* OAuth Divider */}
+        <div className="relative my-4">
+          <div className="absolute inset-0 flex items-center">
+            <span className="w-full border-t" />
+          </div>
+          <div className="relative flex justify-center text-xs uppercase">
+            <span className="bg-background px-2 text-muted-foreground">
+              Or continue with
+            </span>
+          </div>
+        </div>
+
+        {/* Google Sign-In Button */}
+        <GoogleSignInButton mode="signup" className="w-full" />
+
+        <div className="flex items-center justify-center flex-wrap">
+          <Link href="/forgot-password" className="" prefetch={false}>
+            <Button variant={"link"}>Forgot password?</Button>
+          </Link>
+          <Link href="/login" prefetch={false}>
+            <Button variant={"link"}>Already have an account?</Button>
+          </Link>
+        </div>
       </div>
     </div>
   );

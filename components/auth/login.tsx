@@ -18,10 +18,12 @@ import useMounted from "@/hooks/useMounted";
 import { Skeleton } from "../ui/skeleton";
 import { Input } from "../ui/input";
 import { VerificationBox } from "./verification-box";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { getBillingFromJWT } from "@/utils/supabase/jwt";
 import { FormFeedback } from "../ui/form-feedback";
 import type { FeedbackState } from "@/types/feedback";
+import { GoogleSignInButton } from "./google-sign-in-button";
+import { getOAuthErrorMessage } from "@/lib/oauth-errors";
 
 export function Login() {
   const isMounted = useMounted();
@@ -29,6 +31,10 @@ export function Login() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const isVerified = searchParams.get("verified");
+  const errorParam = searchParams.get("error");
+  const oauthError = errorParam
+    ? getOAuthErrorMessage(decodeURIComponent(errorParam))
+    : null;
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [feedback, setFeedback] = useState<FeedbackState | null>(null);
   const [buttonError, setButtonError] = useState(false);
@@ -52,6 +58,14 @@ export function Login() {
       setButtonError(false);
     }, 2000);
   };
+
+  const dismissOAuthError = useCallback(() => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.delete("error");
+    const newQuery = params.toString();
+    router.replace(newQuery ? `?${newQuery}` : window.location.pathname, { scroll: false });
+    setButtonError(false);
+  }, [searchParams, router]);
 
   const clearFeedback = () => {
     setFeedback(null);
@@ -149,6 +163,14 @@ export function Login() {
   return (
     <div className="mx-auto max-w-sm space-y-6 py-4 md:py-4 lg:py-4 xl:py-4 sm:min-w-[40%] min-h-full w-[90%]">
       {isVerified && <VerificationBox />}
+      {oauthError && (
+        <FormFeedback
+          type="error"
+          message={oauthError}
+          className="mb-4"
+          onClose={dismissOAuthError}
+        />
+      )}
       {feedback && (
         <FormFeedback
           type={feedback.type}
@@ -209,17 +231,32 @@ export function Login() {
             >
               {isSubmitting ? "Signing In..." : buttonError ? "Invalid credentials" : "Sign In"}
             </Button>
-
-            <div className="flex items-center justify-center flex-wrap">
-              <Link href="/forgot-password" className="" prefetch={false}>
-                <Button variant={"link"}> Forgot password?</Button>
-              </Link>
-              <Link href="/signup" className="" prefetch={false}>
-                <Button variant={"link"}>Don&apos;t have an account?</Button>
-              </Link>
-            </div>
           </form>
         </Form>
+
+        {/* OAuth Divider */}
+        <div className="relative my-4">
+          <div className="absolute inset-0 flex items-center">
+            <span className="w-full border-t" />
+          </div>
+          <div className="relative flex justify-center text-xs uppercase">
+            <span className="bg-background px-2 text-muted-foreground">
+              Or continue with
+            </span>
+          </div>
+        </div>
+
+        {/* Google Sign-In Button */}
+        <GoogleSignInButton mode="login" className="w-full" />
+
+        <div className="flex items-center justify-center flex-wrap">
+          <Link href="/forgot-password" className="" prefetch={false}>
+            <Button variant={"link"}> Forgot password?</Button>
+          </Link>
+          <Link href="/signup" className="" prefetch={false}>
+            <Button variant={"link"}>Don&apos;t have an account?</Button>
+          </Link>
+        </div>
       </div>
     </div>
   );

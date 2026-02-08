@@ -1,7 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { usePathname } from "next/navigation";
+import { useState } from "react";
 import Link from "next/link";
 import { Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -20,11 +19,6 @@ interface MobileNavSheetProps {
 
 export function MobileNavSheet({ links, children }: MobileNavSheetProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const pathname = usePathname();
-
-  useEffect(() => {
-    setIsOpen(false);
-  }, [pathname]);
 
   return (
     <div className="flex items-center gap-4 lg:hidden">
@@ -47,6 +41,7 @@ export function MobileNavSheet({ links, children }: MobileNavSheetProps) {
                 href={link.href}
                 className="hover:underline hover:underline-offset-4"
                 prefetch={true}
+                onClick={() => setIsOpen(false)}
               >
                 {link.label}
               </Link>
