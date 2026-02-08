@@ -15,7 +15,9 @@ interface GoogleSignInButtonProps {
   className?: string;
 }
 
-const GOOGLE_CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID!;
+import { env } from "@/env";
+
+const GOOGLE_CLIENT_ID = env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
 const MAX_NAME_LENGTH = 100;
 const DEFAULT_NAME = "Golfer";
 const DEFAULT_HANDICAP_INDEX = 54;
@@ -64,13 +66,13 @@ function GoogleSignInButtonContent({
       setIsLoading(true);
       setError(null);
 
-      await Sentry.startSpan(
-        { op: "auth.id_token", name: "Google ID Token Sign-In" },
-        async (span) => {
-          span.setAttribute("auth.provider", "google");
-          span.setAttribute("auth.mode", mode);
+      try {
+        await Sentry.startSpan(
+          { op: "auth.id_token", name: "Google ID Token Sign-In" },
+          async (span) => {
+            span.setAttribute("auth.provider", "google");
+            span.setAttribute("auth.mode", mode);
 
-          try {
             // Exchange auth code for ID token via our API
             const exchangeResponse = await fetch("/api/auth/google-token", {
               method: "POST",
@@ -80,7 +82,6 @@ function GoogleSignInButtonContent({
 
             if (!exchangeResponse.ok) {
               span.setStatus({ code: 2, message: "Token exchange failed" });
-              setIsLoading(false);
               setError("Failed to sign in with Google. Please try again.");
               return;
             }
@@ -107,7 +108,6 @@ function GoogleSignInButtonContent({
                 "Google ID token sign-in failed",
                 signInError
               );
-              setIsLoading(false);
               setError("Failed to sign in with Google. Please try again.");
               return;
             }
@@ -117,7 +117,6 @@ function GoogleSignInButtonContent({
 
             if (!user.email) {
               span.setStatus({ code: 2, message: "No email from Google" });
-              setIsLoading(false);
               setError("No email address found. Please try again.");
               return;
             }
@@ -138,7 +137,6 @@ function GoogleSignInButtonContent({
                   id: user.id,
                   email: user.email,
                   name: fullName,
-                  verified: true,
                   handicapIndex: DEFAULT_HANDICAP_INDEX,
                 },
                 { onConflict: "id", ignoreDuplicates: true }
@@ -150,6 +148,9 @@ function GoogleSignInButtonContent({
                 extra: { code: upsertError.code, userId: user.id },
               });
               clientLogger.error("Profile upsert failed", upsertError);
+              span.setStatus({ code: 2, message: "Profile upsert failed" });
+              setError("Failed to create your profile. Please try again.");
+              return;
             }
 
             // Determine redirect destination
@@ -178,17 +179,17 @@ function GoogleSignInButtonContent({
             span.setStatus({ code: 1 });
             router.push("/");
             router.refresh();
-          } catch (caughtError) {
-            span.setStatus({ code: 2, message: "Google sign-in failed" });
-            Sentry.captureException(caughtError, {
-              tags: { provider: "google", mode },
-            });
-            clientLogger.error("Google sign-in failed", caughtError);
-            setIsLoading(false);
-            setError("Something went wrong. Please try again.");
           }
-        }
-      );
+        );
+      } catch (caughtError) {
+        Sentry.captureException(caughtError, {
+          tags: { provider: "google", mode },
+        });
+        clientLogger.error("Google sign-in failed", caughtError);
+        setError("Something went wrong. Please try again.");
+      } finally {
+        setIsLoading(false);
+      }
     },
     [supabase, router, mode]
   );
