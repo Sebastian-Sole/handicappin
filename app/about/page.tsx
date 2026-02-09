@@ -53,6 +53,9 @@ export const metadata: Metadata = {
   title: "About Us - Why Handicappin' Exists",
   description:
     "Learn why we built Handicappin' - a golf handicap tracker that puts user experience first. USGA compliant calculations, detailed round tracking, and transparent statistics.",
+  alternates: {
+    canonical: "https://handicappin.com/about",
+  },
   openGraph: {
     title: "About Handicappin' - Our Mission",
     description:

@@ -11,6 +11,7 @@ import { BillingSync } from "@/components/billing-sync";
 import {
   OrganizationJsonLd,
   SoftwareApplicationJsonLd,
+  WebSiteJsonLd,
 } from "@/components/seo/json-ld";
 
 const inter = Inter({ subsets: ["latin"] });
@@ -44,6 +45,9 @@ export const metadata: Metadata = {
     email: false,
     address: false,
     telephone: false,
+  },
+  alternates: {
+    canonical: "https://handicappin.com",
   },
   openGraph: {
     type: "website",
@@ -86,6 +90,7 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <head>
         <OrganizationJsonLd />
+        <WebSiteJsonLd />
         <SoftwareApplicationJsonLd />
       </head>
       <body className={inter.className}>

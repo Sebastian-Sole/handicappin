@@ -16,6 +16,9 @@ export const metadata: Metadata = {
     "handicap tracking help",
     "golf app support",
   ],
+  alternates: {
+    canonical: "https://handicappin.com/contact",
+  },
   openGraph: {
     title: "Contact Us - Handicappin' Support",
     description:

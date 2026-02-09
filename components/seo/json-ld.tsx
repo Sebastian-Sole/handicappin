@@ -4,9 +4,33 @@ export function OrganizationJsonLd() {
     "@type": "Organization",
     name: "Handicappin'",
     url: "https://handicappin.com",
-    logo: "https://handicappin.com/logo.png",
+    logo: "https://handicappin.com/images/logo.png",
     description:
       "Golf handicap tracking app with USGA-compliant calculations. Track rounds, calculate handicap index, and understand your golf statistics.",
+  };
+
+  return (
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+    />
+  );
+}
+
+export function WebSiteJsonLd() {
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    name: "Handicappin'",
+    url: "https://handicappin.com",
+    potentialAction: {
+      "@type": "SearchAction",
+      target: {
+        "@type": "EntryPoint",
+        urlTemplate: "https://handicappin.com/?q={search_term_string}",
+      },
+      "query-input": "required name=search_term_string",
+    },
   };
 
   return (
@@ -22,13 +46,15 @@ export function SoftwareApplicationJsonLd() {
     "@context": "https://schema.org",
     "@type": "SoftwareApplication",
     name: "Handicappin'",
+    url: "https://handicappin.com",
     applicationCategory: "SportsApplication",
     operatingSystem: "Web",
     offers: {
-      "@type": "Offer",
-      price: "0",
+      "@type": "AggregateOffer",
+      lowPrice: "0",
+      highPrice: "149",
       priceCurrency: "USD",
-      description: "Free tier with 25 rounds",
+      offerCount: 4,
     },
     description:
       "USGA-compliant golf handicap tracking application. Log rounds, calculate handicap index automatically, and get detailed insights into your golf game.",
