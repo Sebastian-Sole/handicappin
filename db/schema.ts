@@ -659,18 +659,18 @@ export const legalConsents = pgTable(
   "legal_consents",
   {
     id: serial("id").primaryKey(),
-    userId: uuid("user_id").notNull(),
+    userId: uuid("user_id"),
     consentType: text("consent_type")
       .$type<"terms_of_service" | "privacy_policy">()
       .notNull(),
     legalVersion: text("legal_version").notNull(),
-    acceptedAt: timestamp("accepted_at").notNull(),
-    withdrawnAt: timestamp("withdrawn_at"),
+    acceptedAt: timestamp("accepted_at", { withTimezone: true }).notNull(),
+    withdrawnAt: timestamp("withdrawn_at", { withTimezone: true }),
     ipAddress: text("ip_address"),
     acceptanceMethod: text("acceptance_method")
       .$type<"signup" | "google_oauth" | "re_consent">()
       .notNull(),
-    createdAt: timestamp("created_at")
+    createdAt: timestamp("created_at", { withTimezone: true })
       .default(sql`CURRENT_TIMESTAMP`)
       .notNull(),
   },
@@ -686,13 +686,13 @@ export const legalConsents = pgTable(
       name: "legal_consents_user_id_fkey",
     })
       .onUpdate("cascade")
-      .onDelete("cascade"),
-    // Users can view their own consent records
+      .onDelete("set null"),
+    // Users can view their own consent records (user_id is nullable for GDPR retention after account deletion)
     pgPolicy("Users can view their own legal consents", {
       as: "permissive",
       for: "select",
       to: ["authenticated"],
-      using: sql`(auth.uid()::uuid = user_id)`,
+      using: sql`((select auth.uid()) = user_id)`,
     }),
     // No direct insert/update/delete - managed by service role via API routes and edge functions
   ]
