@@ -651,3 +651,52 @@ export const otpVerifications = pgTable(
 
 export const otpVerificationsSchema = createSelectSchema(otpVerifications);
 export type OtpVerification = InferSelectModel<typeof otpVerifications>;
+
+// Legal consent tracking table (GDPR Article 7 audit trail)
+// Separate from profile to avoid bloat and support multiple consent records per user
+// (e.g. re-consent on legal version changes, consent withdrawal)
+export const legalConsents = pgTable(
+  "legal_consents",
+  {
+    id: serial("id").primaryKey(),
+    userId: uuid("user_id"),
+    consentType: text("consent_type")
+      .$type<"terms_of_service" | "privacy_policy">()
+      .notNull(),
+    legalVersion: text("legal_version").notNull(),
+    acceptedAt: timestamp("accepted_at", { withTimezone: true }).notNull(),
+    withdrawnAt: timestamp("withdrawn_at", { withTimezone: true }),
+    ipAddress: text("ip_address"),
+    acceptanceMethod: text("acceptance_method")
+      .$type<"signup" | "google_oauth" | "re_consent">()
+      .notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .default(sql`CURRENT_TIMESTAMP`)
+      .notNull(),
+  },
+  (table) => [
+    index("idx_legal_consents_user_id").on(table.userId),
+    index("idx_legal_consents_user_consent_type").on(
+      table.userId,
+      table.consentType
+    ),
+    foreignKey({
+      columns: [table.userId],
+      foreignColumns: [profile.id],
+      name: "legal_consents_user_id_fkey",
+    })
+      .onUpdate("cascade")
+      .onDelete("set null"),
+    // Users can view their own consent records (user_id is nullable for GDPR retention after account deletion)
+    pgPolicy("Users can view their own legal consents", {
+      as: "permissive",
+      for: "select",
+      to: ["authenticated"],
+      using: sql`((select auth.uid()) = user_id)`,
+    }),
+    // No direct insert/update/delete - managed by service role via API routes and edge functions
+  ]
+);
+
+export const legalConsentsSchema = createSelectSchema(legalConsents);
+export type LegalConsent = InferSelectModel<typeof legalConsents>;

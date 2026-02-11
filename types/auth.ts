@@ -4,6 +4,9 @@ export const signupSchema = z.object({
   email: z.string().email(),
   password: z.string().min(8, "Password must be at least 8 characters"),
   name: z.string().min(3),
+  legalConsent: z.boolean().refine((val) => val === true, {
+    message: "You must agree to the Terms of Service and Privacy Policy",
+  }),
 });
 
 export const loginSchema = z.object({

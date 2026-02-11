@@ -134,38 +134,26 @@
   }
 
   /* ===============================
-     INPUT AUTOFILL FIX (SHADCN SAFE)
-     =============================== */
-  input,
-  textarea,
-  select {
-    background-color: transparent !important;
-    caret-color: var(--foreground);
-    box-shadow: 0 0 0 1000px var(--input) inset !important;
-  }
-
-  /* Focus - override Tailwind ring utilities */
-  input:focus,
-  input:focus-visible,
-  textarea:focus,
-  textarea:focus-visible,
-  select:focus,
-  select:focus-visible {
-    background-color: transparent !important;
-    box-shadow:
-      0 0 0 2px var(--ring),
-      0 0 0 1000px var(--input) inset !important;
-    --tw-ring-offset-shadow: none !important;
-    --tw-ring-shadow: none !important;
-  }
-
-  /* ===============================
      CHROME / EDGE / SAFARI AUTOFILL
      =============================== */
+  :is(input, textarea, select):autofill,
   input:-webkit-autofill,
+  input:-webkit-autofill:hover,
+  input:-webkit-autofill:active,
+  input:autofill:hover,
+  input:autofill:active,
+  input[data-com-onepassword-filled],
+  textarea[data-com-onepassword-filled],
+  select[data-com-onepassword-filled],
   textarea:-webkit-autofill,
-  select:-webkit-autofill {
+  textarea:-webkit-autofill:hover,
+  textarea:-webkit-autofill:active,
+  textarea:autofill:hover,
+  textarea:autofill:active,
+  select:-webkit-autofill,
+  select:-webkit-autofill:hover {
     -webkit-text-fill-color: var(--foreground) !important;
+    color: var(--foreground) !important;
     caret-color: var(--foreground) !important;
     background-color: transparent !important;
     box-shadow: 0 0 0 1000px var(--input) inset !important;
@@ -174,13 +162,26 @@
   }
 
   /* Autofill focus */
+  input:autofill:focus,
+  input:autofill:focus-visible,
   input:-webkit-autofill:focus,
   input:-webkit-autofill:focus-visible,
+  input[data-com-onepassword-filled]:focus,
+  input[data-com-onepassword-filled]:focus-visible,
+  textarea:autofill:focus,
+  textarea:autofill:focus-visible,
   textarea:-webkit-autofill:focus,
   textarea:-webkit-autofill:focus-visible,
+  textarea[data-com-onepassword-filled]:focus,
+  textarea[data-com-onepassword-filled]:focus-visible,
+  select:autofill:focus,
+  select:autofill:focus-visible,
   select:-webkit-autofill:focus,
-  select:-webkit-autofill:focus-visible {
+  select:-webkit-autofill:focus-visible,
+  select[data-com-onepassword-filled]:focus,
+  select[data-com-onepassword-filled]:focus-visible {
     -webkit-text-fill-color: var(--foreground) !important;
+    color: var(--foreground) !important;
     background-color: transparent !important;
     box-shadow:
       0 0 0 2px var(--ring),
@@ -416,4 +417,3 @@
     @apply bg-background text-foreground;
   }
 }
-

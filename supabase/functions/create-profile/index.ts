@@ -44,6 +44,8 @@ Deno.serve(async (req: Request) => {
       name: z.string().min(1, "Name is required"),
       userId: z.string().uuid("Invalid user ID format"),
       handicapIndex: z.number().optional(),
+      legalVersion: z.string().optional(),
+      acceptanceMethod: z.enum(["signup", "google_oauth", "re_consent"]).optional(),
     });
 
     // Validate input with Zod
@@ -66,7 +68,12 @@ Deno.serve(async (req: Request) => {
       );
     }
 
-    const { email, name, handicapIndex, userId } = validation.data;
+    const { email, name, handicapIndex, userId, legalVersion, acceptanceMethod } = validation.data;
+
+    // Extract client IP from request headers (set by reverse proxy / CDN)
+    const clientIp = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim()
+      ?? req.headers.get("x-real-ip")
+      ?? null;
 
     // Initialize the Supabase client
     const supabaseUrl =
@@ -101,6 +108,85 @@ Deno.serve(async (req: Request) => {
       },
     ]);
 
+    // Record legal consent in separate audit table (GDPR Article 7)
+    // This is idempotent: checks for existing records before inserting to handle retries
+    let consentPending = false;
+    if (!error && legalVersion) {
+      const now = new Date().toISOString();
+      const consentMethod = acceptanceMethod ?? "signup";
+
+      const insertConsents = async (): Promise<{ error: { message: string } | null }> => {
+        // Check if consent records already exist for this user + version (idempotency for retries)
+        const { data: existingConsents, error: lookupError } = await supabase
+          .from("legal_consents")
+          .select("consent_type")
+          .eq("user_id", userId)
+          .eq("legal_version", legalVersion)
+          .in("consent_type", ["terms_of_service", "privacy_policy"]);
+
+        if (lookupError) {
+          return { error: { message: `Consent lookup failed: ${lookupError.message}` } };
+        }
+
+        const existingTypes = new Set(
+          (existingConsents ?? []).map((record: { consent_type: string }) => record.consent_type),
+        );
+
+        const consentsToInsert = [
+          { consentType: "terms_of_service" },
+          { consentType: "privacy_policy" },
+        ]
+          .filter(({ consentType }) => !existingTypes.has(consentType))
+          .map(({ consentType }) => ({
+            user_id: userId,
+            consent_type: consentType,
+            legal_version: legalVersion,
+            accepted_at: now,
+            ip_address: clientIp,
+            acceptance_method: consentMethod,
+          }));
+
+        // All consent records already exist — nothing to insert
+        if (consentsToInsert.length === 0) {
+          return { error: null };
+        }
+
+        const { error: insertError } = await supabase
+          .from("legal_consents")
+          .insert(consentsToInsert);
+
+        return { error: insertError ? { message: insertError.message } : null };
+      };
+
+      // First attempt
+      const firstAttempt = await insertConsents();
+
+      if (firstAttempt.error) {
+        console.error("Failed to record legal consent (attempt 1)", {
+          userId,
+          legalVersion,
+          clientIp,
+          acceptanceMethod: acceptanceMethod ?? "signup",
+          error: firstAttempt.error.message,
+        });
+
+        // Retry once
+        const retryAttempt = await insertConsents();
+
+        if (retryAttempt.error) {
+          console.error("Failed to record legal consent (attempt 2 — giving up)", {
+            userId,
+            legalVersion,
+            clientIp,
+            acceptanceMethod: acceptanceMethod ?? "signup",
+            error: retryAttempt.error.message,
+          });
+          // Profile was created successfully; flag consent for reconciliation
+          consentPending = true;
+        }
+      }
+    }
+
     if (error) {
       return new Response(JSON.stringify({ error: error.message }), {
         status: 400,
@@ -112,7 +198,8 @@ Deno.serve(async (req: Request) => {
     }
 
     // Return success response
-    return new Response(JSON.stringify({ success: true }), {
+    // consentPending signals that consent records need reconciliation
+    return new Response(JSON.stringify({ success: true, ...(consentPending && { consentPending: true }) }), {
       status: 200,
       headers: {
         ...corsHeaders,

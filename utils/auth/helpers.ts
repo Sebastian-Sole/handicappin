@@ -2,6 +2,7 @@
 import { signupSchema } from "@/types/auth";
 import { createClientComponentClient } from "../supabase/client";
 import { clientLogger } from "@/lib/client-logger";
+import { LEGAL_VERSION } from "@/lib/legal-config";
 
 export type SignUpResult =
   | { success: true }
@@ -59,6 +60,8 @@ export const signUpUser = async (values: signupSchema): Promise<SignUpResult> =>
         name: values.name,
         handicapIndex: 54,
         userId: signupData.user.id,
+        legalVersion: LEGAL_VERSION,
+        acceptanceMethod: "signup",
       }),
     });
 

@@ -24,6 +24,8 @@ import { FormFeedback } from "../ui/form-feedback";
 import type { FeedbackState } from "@/types/feedback";
 import { GoogleSignInButton } from "./google-sign-in-button";
 import { getOAuthErrorMessage } from "@/lib/oauth-errors";
+import { LegalDialog } from "@/components/legal/legal-dialog";
+import { Checkbox } from "@/components/ui/checkbox";
 
 interface SignupProps {
   description?: string;
@@ -53,6 +55,7 @@ export function Signup({
       name: "",
       email: "",
       password: "",
+      legalConsent: false,
     },
   });
 
@@ -245,6 +248,29 @@ export function Signup({
                 )}
               ></FormField>
             </div>
+            <FormField
+              control={form.control}
+              name="legalConsent"
+              render={({ field }) => (
+                <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                  <FormControl>
+                    <Checkbox
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                    />
+                  </FormControl>
+                  <div className="space-y-1 leading-none">
+                    <FormLabel className="text-xs font-normal text-muted-foreground">
+                      I agree to the{" "}
+                      <LegalDialog type="terms">Terms of Service</LegalDialog>{" "}
+                      and{" "}
+                      <LegalDialog type="privacy">Privacy Policy</LegalDialog>
+                    </FormLabel>
+                    <FormMessage />
+                  </div>
+                </FormItem>
+              )}
+            />
             <Button
               type="submit"
               className={buttonError ? "w-full bg-destructive hover:bg-destructive/90" : "w-full"}
