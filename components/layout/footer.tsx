@@ -46,13 +46,13 @@ const Footer = () => {
               className="text-sm font-medium hover:underline underline-offset-4"
               href="/terms-of-service"
             >
-              Terms
+              Terms of Service
             </Link>
             <Link
               className="text-sm font-medium hover:underline underline-offset-4"
               href="/privacy-policy"
             >
-              Privacy
+              Privacy Policy
             </Link>
           </nav>
         </div>

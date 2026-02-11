@@ -9,6 +9,16 @@ import { FormFeedback } from "@/components/ui/form-feedback";
 import { createClientComponentClient } from "@/utils/supabase/client";
 import { clientLogger } from "@/lib/client-logger";
 import { getBillingFromJWT } from "@/utils/supabase/jwt";
+import { LEGAL_VERSION } from "@/lib/legal-config";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
+import { Checkbox } from "@/components/ui/checkbox";
+import { LegalDialog } from "@/components/legal/legal-dialog";
 
 interface GoogleSignInButtonProps {
   mode?: "login" | "signup";
@@ -40,6 +50,8 @@ function sanitizeName(rawName: string): string {
  * The Google popup displays the app name (from OAuth consent screen)
  * instead of the Supabase project domain. The auth code is exchanged
  * server-side for an ID token, then signed in via Supabase's signInWithIdToken.
+ *
+ * In signup mode, a consent dialog is shown before initiating the Google flow.
  */
 export function GoogleSignInButton({
   mode = "login",
@@ -58,6 +70,8 @@ function GoogleSignInButtonContent({
 }: GoogleSignInButtonProps) {
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [showConsentDialog, setShowConsentDialog] = useState(false);
+  const [consentChecked, setConsentChecked] = useState(false);
   const router = useRouter();
   const supabase = createClientComponentClient();
 
@@ -156,6 +170,26 @@ function GoogleSignInButtonContent({
               return;
             }
 
+            // Record legal consent server-side (captures IP for GDPR audit trail)
+            if (mode === "signup") {
+              try {
+                await fetch("/api/legal/record-consent", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({
+                    legalVersion: LEGAL_VERSION,
+                    acceptanceMethod: "google_oauth",
+                  }),
+                });
+              } catch (consentError) {
+                // Log but don't block signup - consent can be reconciled later
+                clientLogger.error("Failed to record legal consent", consentError);
+                Sentry.captureException(consentError, {
+                  tags: { flow: "google_id_token", step: "legal_consent" },
+                });
+              }
+            }
+
             // Determine redirect destination
             const {
               data: { session },
@@ -208,6 +242,20 @@ function GoogleSignInButtonContent({
     },
   });
 
+  const handleButtonClick = () => {
+    if (mode === "signup") {
+      setConsentChecked(false);
+      setShowConsentDialog(true);
+    } else {
+      login();
+    }
+  };
+
+  const handleConsentContinue = () => {
+    setShowConsentDialog(false);
+    login();
+  };
+
   const buttonText = isLoading
     ? "Signing in..."
     : mode === "signup"
@@ -227,7 +275,7 @@ function GoogleSignInButtonContent({
         type="button"
         variant="outline"
         className={className}
-        onClick={() => login()}
+        onClick={handleButtonClick}
         disabled={isLoading}
       >
         {/* Google "G" Logo SVG */}
@@ -255,6 +303,41 @@ function GoogleSignInButtonContent({
         </svg>
         {buttonText}
       </Button>
+
+      {/* Legal consent dialog for signup mode */}
+      <Dialog open={showConsentDialog} onOpenChange={setShowConsentDialog}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Before you continue</DialogTitle>
+            <DialogDescription>
+              Please review and accept our legal terms to create your account.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex items-start space-x-3 py-4">
+            <Checkbox
+              id="google-legal-consent"
+              checked={consentChecked}
+              onCheckedChange={(checked) => setConsentChecked(checked === true)}
+            />
+            <label
+              htmlFor="google-legal-consent"
+              className="text-sm text-muted-foreground leading-snug cursor-pointer"
+            >
+              I agree to the{" "}
+              <LegalDialog type="terms">Terms of Service</LegalDialog>{" "}
+              and{" "}
+              <LegalDialog type="privacy">Privacy Policy</LegalDialog>
+            </label>
+          </div>
+          <Button
+            className="w-full"
+            disabled={!consentChecked}
+            onClick={handleConsentContinue}
+          >
+            Continue with Google
+          </Button>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }

@@ -44,6 +44,8 @@ Deno.serve(async (req: Request) => {
       name: z.string().min(1, "Name is required"),
       userId: z.string().uuid("Invalid user ID format"),
       handicapIndex: z.number().optional(),
+      legalVersion: z.string().optional(),
+      acceptanceMethod: z.string().optional(),
     });
 
     // Validate input with Zod
@@ -66,7 +68,12 @@ Deno.serve(async (req: Request) => {
       );
     }
 
-    const { email, name, handicapIndex, userId } = validation.data;
+    const { email, name, handicapIndex, userId, legalVersion, acceptanceMethod } = validation.data;
+
+    // Extract client IP from request headers (set by reverse proxy / CDN)
+    const clientIp = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim()
+      ?? req.headers.get("x-real-ip")
+      ?? null;
 
     // Initialize the Supabase client
     const supabaseUrl =
@@ -100,6 +107,30 @@ Deno.serve(async (req: Request) => {
         verified: false, // Mark as unverified initially
       },
     ]);
+
+    // Record legal consent in separate audit table (GDPR Article 7)
+    if (!error && legalVersion) {
+      const now = new Date().toISOString();
+      const consentMethod = acceptanceMethod ?? "signup";
+      await supabase.from("legal_consents").insert([
+        {
+          user_id: userId,
+          consent_type: "terms_of_service",
+          legal_version: legalVersion,
+          accepted_at: now,
+          ip_address: clientIp,
+          acceptance_method: consentMethod,
+        },
+        {
+          user_id: userId,
+          consent_type: "privacy_policy",
+          legal_version: legalVersion,
+          accepted_at: now,
+          ip_address: clientIp,
+          acceptance_method: consentMethod,
+        },
+      ]);
+    }
 
     if (error) {
       return new Response(JSON.stringify({ error: error.message }), {
