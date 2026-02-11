@@ -41,7 +41,13 @@ export function LegalDialog({ type, children }: LegalDialogProps) {
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <button
         type="button"
-        onClick={() => setIsOpen(true)}
+        onClick={(e) => {
+          e.stopPropagation();
+          e.preventDefault();
+          setIsOpen(true);
+        }}
+        onMouseDown={(e) => e.stopPropagation()}
+        onKeyDown={(e) => e.stopPropagation()}
         className="underline underline-offset-4 hover:text-primary"
       >
         {children}

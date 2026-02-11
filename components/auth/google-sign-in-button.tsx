@@ -170,23 +170,81 @@ function GoogleSignInButtonContent({
               return;
             }
 
-            // Record legal consent server-side (captures IP for GDPR audit trail)
+            // Record legal consent server-side (captures IP for GDPR audit trail).
+            // Account already exists at this point, so failures are logged for
+            // reconciliation rather than blocking the flow (which would leave an
+            // orphaned account with no consent *and* a confused user).
             if (mode === "signup") {
-              try {
-                await fetch("/api/legal/record-consent", {
-                  method: "POST",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({
-                    legalVersion: LEGAL_VERSION,
-                    acceptanceMethod: "google_oauth",
-                  }),
-                });
-              } catch (consentError) {
-                // Log but don't block signup - consent can be reconciled later
-                clientLogger.error("Failed to record legal consent", consentError);
-                Sentry.captureException(consentError, {
-                  tags: { flow: "google_id_token", step: "legal_consent" },
-                });
+              const consentBody = JSON.stringify({
+                legalVersion: LEGAL_VERSION,
+                acceptanceMethod: "google_oauth",
+              });
+              const consentHeaders = { "Content-Type": "application/json" };
+
+              let consentRecorded = false;
+              for (
+                let attempt = 0;
+                attempt < 2 && !consentRecorded;
+                attempt++
+              ) {
+                try {
+                  const consentResponse = await fetch(
+                    "/api/legal/record-consent",
+                    {
+                      method: "POST",
+                      headers: consentHeaders,
+                      body: consentBody,
+                    }
+                  );
+                  consentRecorded = consentResponse.ok;
+
+                  if (!consentRecorded) {
+                    let responseBody: string | undefined;
+                    try {
+                      responseBody = await consentResponse.text();
+                    } catch {
+                      // ignore body read failures
+                    }
+
+                    clientLogger.error(
+                      `Consent API returned ${consentResponse.status} ${consentResponse.statusText} (attempt ${attempt + 1})`,
+                      { status: consentResponse.status, body: responseBody }
+                    );
+                    Sentry.captureException(
+                      new Error(
+                        `Consent API returned ${consentResponse.status} ${consentResponse.statusText}`
+                      ),
+                      {
+                        tags: {
+                          flow: "google_id_token",
+                          step: "legal_consent",
+                        },
+                        extra: {
+                          userId: user.id,
+                          attempt: attempt + 1,
+                          status: consentResponse.status,
+                          statusText: consentResponse.statusText,
+                          responseBody,
+                        },
+                      }
+                    );
+                  }
+                } catch (consentError) {
+                  clientLogger.error(
+                    `Consent fetch failed (attempt ${attempt + 1})`,
+                    consentError
+                  );
+                }
+              }
+
+              if (!consentRecorded) {
+                Sentry.captureException(
+                  new Error("Legal consent recording failed after retries"),
+                  {
+                    tags: { flow: "google_id_token", step: "legal_consent" },
+                    extra: { userId: user.id },
+                  }
+                );
               }
             }
 

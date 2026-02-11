@@ -112,7 +112,7 @@ Deno.serve(async (req: Request) => {
     if (!error && legalVersion) {
       const now = new Date().toISOString();
       const consentMethod = acceptanceMethod ?? "signup";
-      await supabase.from("legal_consents").insert([
+      const { error: consentError } = await supabase.from("legal_consents").insert([
         {
           user_id: userId,
           consent_type: "terms_of_service",
@@ -130,6 +130,22 @@ Deno.serve(async (req: Request) => {
           acceptance_method: consentMethod,
         },
       ]);
+
+      if (consentError) {
+        console.error("Failed to record legal consent", {
+          userId,
+          legalVersion,
+          clientIp,
+          error: consentError.message,
+        });
+        return new Response(
+          JSON.stringify({ error: "Failed to record legal consent" }),
+          {
+            status: 500,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          },
+        );
+      }
     }
 
     if (error) {

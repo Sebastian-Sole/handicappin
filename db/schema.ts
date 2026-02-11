@@ -692,7 +692,7 @@ export const legalConsents = pgTable(
       as: "permissive",
       for: "select",
       to: ["authenticated"],
-      using: sql`((select auth.uid()) = user_id)`,
+      using: sql`(auth.uid()::uuid = user_id)`,
     }),
     // No direct insert/update/delete - managed by service role via API routes and edge functions
   ]

@@ -1,9 +1,11 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { z } from "zod";
+import * as Sentry from "@sentry/nextjs";
 import { createServerComponentClient } from "@/utils/supabase/server";
 import { db } from "@/db";
 import { legalConsents } from "@/db/schema";
+import { consentRecordingRateLimit, getIdentifier } from "@/lib/rate-limit";
 
 const requestSchema = z.object({
   legalVersion: z.string().min(1),
@@ -24,6 +26,26 @@ export async function POST(request: NextRequest) {
 
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const identifier = getIdentifier(request, user.id);
+    const { success, limit, remaining, reset } =
+      await consentRecordingRateLimit.limit(identifier);
+
+    if (!success) {
+      const retryAfterSeconds = Math.ceil((reset - Date.now()) / 1000);
+      return NextResponse.json(
+        { error: "Too many requests", retryAfter: retryAfterSeconds },
+        {
+          status: 429,
+          headers: {
+            "X-RateLimit-Limit": limit.toString(),
+            "X-RateLimit-Remaining": remaining.toString(),
+            "X-RateLimit-Reset": new Date(reset).toISOString(),
+            "Retry-After": retryAfterSeconds.toString(),
+          },
+        }
+      );
     }
 
     const body = await request.json();
@@ -65,9 +87,15 @@ export async function POST(request: NextRequest) {
     ]);
 
     return NextResponse.json({ success: true });
-  } catch {
+  } catch (error) {
+    Sentry.captureException(error, {
+      tags: {
+        endpoint: "/api/legal/record-consent",
+      },
+    });
+
     return NextResponse.json(
-      { error: "Internal server error" },
+      { error: "Failed to record consent. Please try again." },
       { status: 500 }
     );
   }

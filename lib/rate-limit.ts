@@ -18,6 +18,7 @@ const CONTACT_LIMIT = parseInt(process.env.RATE_LIMIT_CONTACT_PER_MIN || '3', 10
 const DELETION_LIMIT = parseInt(process.env.RATE_LIMIT_DELETION_PER_HOUR || '3', 10);
 const OAUTH_CALLBACK_LIMIT = parseInt(process.env.RATE_LIMIT_OAUTH_CALLBACK_PER_MIN || '10', 10);
 const GOOGLE_TOKEN_LIMIT = parseInt(process.env.RATE_LIMIT_GOOGLE_TOKEN_PER_MIN || '10', 10);
+const CONSENT_LIMIT = parseInt(process.env.RATE_LIMIT_CONSENT_PER_HOUR || '5', 10);
 
 // Initialize Redis client (only if rate limiting is enabled)
 let redis: Redis | null = null;
@@ -171,6 +172,7 @@ export const contactRateLimit = createRateLimiter(CONTACT_LIMIT, 'contact');
 export const deletionRateLimit = createHourlyRateLimiter(DELETION_LIMIT, 'deletion');
 export const oauthCallbackRateLimit = createRateLimiter(OAUTH_CALLBACK_LIMIT, 'oauth-callback');
 export const googleTokenRateLimit = createRateLimiter(GOOGLE_TOKEN_LIMIT, 'google-token');
+export const consentRecordingRateLimit = createHourlyRateLimiter(CONSENT_LIMIT, 'consent');
 
 /**
  * Extract identifier for rate limiting
