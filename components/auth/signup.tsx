@@ -24,6 +24,7 @@ import { FormFeedback } from "../ui/form-feedback";
 import type { FeedbackState } from "@/types/feedback";
 import { GoogleSignInButton } from "./google-sign-in-button";
 import { getOAuthErrorMessage } from "@/lib/oauth-errors";
+import { LegalDialog } from "@/components/legal/legal-dialog";
 
 interface SignupProps {
   description?: string;
@@ -278,6 +279,12 @@ export function Signup({
             <Button variant={"link"}>Already have an account?</Button>
           </Link>
         </div>
+
+        <p className="text-center text-xs leading-5 text-muted-foreground">
+          By signing up, you agree to our{" "}
+          <LegalDialog type="terms">Terms of Service</LegalDialog> and{" "}
+          <LegalDialog type="privacy">Privacy Policy</LegalDialog>.
+        </p>
       </div>
     </div>
   );

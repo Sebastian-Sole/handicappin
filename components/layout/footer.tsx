@@ -17,7 +17,7 @@ const Footer = () => {
               </Link>
             </p>
           </div>
-          <nav className="flex gap-4 md:gap-6">
+          <nav className="flex flex-wrap justify-center gap-4 md:gap-6">
             <Link
               className="text-sm font-medium hover:underline underline-offset-4"
               href="/"
@@ -41,6 +41,18 @@ const Footer = () => {
               href="/contact"
             >
               Contact
+            </Link>
+            <Link
+              className="text-sm font-medium hover:underline underline-offset-4"
+              href="/terms-of-service"
+            >
+              Terms
+            </Link>
+            <Link
+              className="text-sm font-medium hover:underline underline-offset-4"
+              href="/privacy-policy"
+            >
+              Privacy
             </Link>
           </nav>
         </div>
