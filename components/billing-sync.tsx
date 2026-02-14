@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { createClientComponentClient } from "@/utils/supabase/client";
 import { useRouter, usePathname } from "next/navigation";
 import { getBillingFromJWT } from "@/utils/supabase/jwt";
@@ -21,6 +21,19 @@ export function BillingSync() {
   const router = useRouter();
   const pathname = usePathname();
   const [userId, setUserId] = useState<string | null>(null);
+
+  // Use refs so the Realtime callback always reads the latest values
+  // without causing the subscription to tear down/re-create on every navigation
+  const pathnameRef = useRef(pathname);
+  const routerRef = useRef(router);
+
+  useEffect(() => {
+    pathnameRef.current = pathname;
+  }, [pathname]);
+
+  useEffect(() => {
+    routerRef.current = router;
+  }, [router]);
 
   // Detect authenticated user
   useEffect(() => {
@@ -115,8 +128,9 @@ export function BillingSync() {
 
               // Step 3: Check if user lost access while on a protected page
               const newBilling = getBillingFromJWT(clientData.session);
-              const isOnPremiumPage = PREMIUM_PATHS.some((path) => pathname.startsWith(path));
-              const isOnUnlimitedPage = UNLIMITED_PATHS.some((path) => pathname.startsWith(path));
+              const currentPathname = pathnameRef.current;
+              const isOnPremiumPage = PREMIUM_PATHS.some((path) => currentPathname.startsWith(path));
+              const isOnUnlimitedPage = UNLIMITED_PATHS.some((path) => currentPathname.startsWith(path));
 
               if (newBilling) {
                 // Use shared access control logic (same as middleware)
@@ -136,19 +150,19 @@ export function BillingSync() {
                 // Check unlimited pages first (more restrictive)
                 if (isOnUnlimitedPage && !userHasUnlimitedAccess) {
                   clientLogger.warn("Unlimited access revoked while on unlimited page - redirecting to /upgrade");
-                  router.push("/upgrade?expired=true");
+                  routerRef.current.push("/upgrade?expired=true");
                   return; // Don't call router.refresh() - we're navigating
                 }
 
                 if (isOnPremiumPage && !userHasPremiumAccess) {
                   clientLogger.warn("Premium access revoked while on premium page - redirecting to /upgrade");
-                  router.push("/upgrade?expired=true");
+                  routerRef.current.push("/upgrade?expired=true");
                   return; // Don't call router.refresh() - we're navigating
                 }
               }
 
               // Step 5: Refresh server components to reflect new JWT
-              router.refresh();
+              routerRef.current.refresh();
 
               clientLogger.info("Billing sync complete");
             } catch (err) {
@@ -170,7 +184,7 @@ export function BillingSync() {
       clientLogger.debug("BillingSync unmounting", { userId });
       supabase.removeChannel(channel);
     };
-  }, [userId, supabase, router, pathname]);
+  }, [userId, supabase]);
 
   // No UI - this component is invisible
   return null;
