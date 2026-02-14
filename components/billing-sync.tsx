@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { createClientComponentClient } from "@/utils/supabase/client";
 import { useRouter, usePathname } from "next/navigation";
 import { getBillingFromJWT } from "@/utils/supabase/jwt";
@@ -21,6 +21,14 @@ export function BillingSync() {
   const router = useRouter();
   const pathname = usePathname();
   const [userId, setUserId] = useState<string | null>(null);
+
+  // Use a ref so the Realtime callback always reads the latest pathname
+  // without causing the subscription to tear down/re-create on every navigation
+  const pathnameRef = useRef(pathname);
+
+  useEffect(() => {
+    pathnameRef.current = pathname;
+  }, [pathname]);
 
   // Detect authenticated user
   useEffect(() => {
@@ -115,8 +123,9 @@ export function BillingSync() {
 
               // Step 3: Check if user lost access while on a protected page
               const newBilling = getBillingFromJWT(clientData.session);
-              const isOnPremiumPage = PREMIUM_PATHS.some((path) => pathname.startsWith(path));
-              const isOnUnlimitedPage = UNLIMITED_PATHS.some((path) => pathname.startsWith(path));
+              const currentPathname = pathnameRef.current;
+              const isOnPremiumPage = PREMIUM_PATHS.some((path) => currentPathname.startsWith(path));
+              const isOnUnlimitedPage = UNLIMITED_PATHS.some((path) => currentPathname.startsWith(path));
 
               if (newBilling) {
                 // Use shared access control logic (same as middleware)
@@ -170,7 +179,7 @@ export function BillingSync() {
       clientLogger.debug("BillingSync unmounting", { userId });
       supabase.removeChannel(channel);
     };
-  }, [userId, supabase, router, pathname]);
+  }, [userId, supabase, router]);
 
   // No UI - this component is invisible
   return null;
