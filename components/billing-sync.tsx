@@ -179,7 +179,7 @@ export function BillingSync() {
       clientLogger.debug("BillingSync unmounting", { userId });
       supabase.removeChannel(channel);
     };
-  }, [userId, supabase]);
+  }, [userId, supabase, router]);
 
   // No UI - this component is invisible
   return null;
