@@ -22,18 +22,13 @@ export function BillingSync() {
   const pathname = usePathname();
   const [userId, setUserId] = useState<string | null>(null);
 
-  // Use refs so the Realtime callback always reads the latest values
+  // Use a ref so the Realtime callback always reads the latest pathname
   // without causing the subscription to tear down/re-create on every navigation
   const pathnameRef = useRef(pathname);
-  const routerRef = useRef(router);
 
   useEffect(() => {
     pathnameRef.current = pathname;
   }, [pathname]);
-
-  useEffect(() => {
-    routerRef.current = router;
-  }, [router]);
 
   // Detect authenticated user
   useEffect(() => {
@@ -150,19 +145,19 @@ export function BillingSync() {
                 // Check unlimited pages first (more restrictive)
                 if (isOnUnlimitedPage && !userHasUnlimitedAccess) {
                   clientLogger.warn("Unlimited access revoked while on unlimited page - redirecting to /upgrade");
-                  routerRef.current.push("/upgrade?expired=true");
+                  router.push("/upgrade?expired=true");
                   return; // Don't call router.refresh() - we're navigating
                 }
 
                 if (isOnPremiumPage && !userHasPremiumAccess) {
                   clientLogger.warn("Premium access revoked while on premium page - redirecting to /upgrade");
-                  routerRef.current.push("/upgrade?expired=true");
+                  router.push("/upgrade?expired=true");
                   return; // Don't call router.refresh() - we're navigating
                 }
               }
 
               // Step 5: Refresh server components to reflect new JWT
-              routerRef.current.refresh();
+              router.refresh();
 
               clientLogger.info("Billing sync complete");
             } catch (err) {
