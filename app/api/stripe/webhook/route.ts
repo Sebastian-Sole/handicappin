@@ -70,6 +70,23 @@ export async function POST(request: NextRequest) {
 
     logWebhookReceived(event.type);
 
+    // Diagnostic: verify DB connection before proceeding
+    try {
+      await db.execute(sql`select 1`);
+    } catch (dbError) {
+      logger.error("❌ Database connection failed", {
+        error: dbError instanceof Error ? dbError.message : String(dbError),
+        code: (dbError as any)?.code,
+        cause: dbError instanceof Error && dbError.cause instanceof Error ? dbError.cause.message : (dbError as any)?.cause,
+        databaseUrlDefined: !!process.env.DATABASE_URL,
+        databaseUrlPrefix: process.env.DATABASE_URL?.substring(0, 40),
+      });
+      return NextResponse.json(
+        { error: "Database connection failed" },
+        { status: 500 }
+      );
+    }
+
     // Check for duplicate event (only block successful duplicates)
     const existingEvent = await db
       .select()

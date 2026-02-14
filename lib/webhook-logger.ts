@@ -28,7 +28,15 @@ export function logWebhookSuccess(
 export function logWebhookError(message: string, error?: any) {
   const errorContext = error
     ? error instanceof Error
-      ? { error: error.message, stack: error.stack }
+      ? {
+          error: error.message,
+          stack: error.stack,
+          code: (error as any).code,
+          severity: (error as any).severity,
+          detail: (error as any).detail,
+          hint: (error as any).hint,
+          cause: error.cause instanceof Error ? error.cause.message : error.cause,
+        }
       : error
     : undefined;
   logger.error(`❌ ${message}`, errorContext);
