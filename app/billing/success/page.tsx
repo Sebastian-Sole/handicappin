@@ -29,7 +29,12 @@ export default function BillingSuccessPage() {
 
   const checkWebhookStatus = useCallback(async () => {
     // Track status locally to avoid stale closure issues with React state
-    let currentStatus: "loading" | "processing" | "success" | "delayed" | "failed" = "loading";
+    let currentStatus:
+      | "loading"
+      | "processing"
+      | "success"
+      | "delayed"
+      | "failed" = "loading";
 
     try {
       const supabase = createClientComponentClient();
@@ -65,7 +70,10 @@ export default function BillingSuccessPage() {
         const response = await fetch("/api/billing/webhook-status");
 
         if (!response.ok) {
-          clientLogger.error("Failed to fetch webhook status", new Error(response.statusText));
+          clientLogger.error(
+            "Failed to fetch webhook status",
+            new Error(response.statusText),
+          );
           // Continue polling on API errors
           if (attempt < maxAttempts) {
             await new Promise((resolve) => setTimeout(resolve, pollInterval));
@@ -80,7 +88,10 @@ export default function BillingSuccessPage() {
         const data: WebhookStatus = await response.json();
         setWebhookData(data);
 
-        clientLogger.debug("Webhook status received", { attempt, status: data.status });
+        clientLogger.debug("Webhook status received", {
+          attempt,
+          status: data.status,
+        });
 
         // Update UI state based on API response
         if (data.status === "success") {
@@ -100,7 +111,9 @@ export default function BillingSuccessPage() {
           if (refreshError) {
             // Local dev JWT refresh issues can be safely ignored
             // JWT will be refreshed automatically on next page load
-            clientLogger.warn("Session refresh failed (non-critical)", { error: refreshError.message });
+            clientLogger.warn("Session refresh failed (non-critical)", {
+              error: refreshError.message,
+            });
             // Continue anyway - JWT will refresh on navigation
           } else {
             clientLogger.debug("Client-side session refreshed successfully");
@@ -114,7 +127,10 @@ export default function BillingSuccessPage() {
             });
 
             if (!response.ok) {
-              clientLogger.error("Server-side JWT sync failed", new Error(`Status: ${response.status}`));
+              clientLogger.error(
+                "Server-side JWT sync failed",
+                new Error(`Status: ${response.status}`),
+              );
             } else {
               clientLogger.debug("Server-side session synced successfully");
             }
@@ -128,19 +144,27 @@ export default function BillingSuccessPage() {
 
           clientLogger.debug("Redirecting...");
           if (!currentUser) {
-            clientLogger.error("No currentUser at redirect - this should not happen");
+            clientLogger.error(
+              "No currentUser at redirect - this should not happen",
+            );
             window.location.href = "/";
             return;
           }
           window.location.href = `/`;
           return;
         } else if (data.status === "failed") {
-          clientLogger.error("Webhook failed", new Error("Webhook processing failed"), { failureCount: data.failureCount });
+          clientLogger.error(
+            "Webhook failed",
+            new Error("Webhook processing failed"),
+            { failureCount: data.failureCount },
+          );
           currentStatus = "failed";
           setStatus("failed");
           return;
         } else if (data.status === "delayed") {
-          clientLogger.warn("Webhook delayed", { failureCount: data.failureCount });
+          clientLogger.warn("Webhook delayed", {
+            failureCount: data.failureCount,
+          });
           currentStatus = "delayed";
           setStatus("delayed");
           // Don't return - keep showing delayed UI, let user decide
@@ -159,7 +183,9 @@ export default function BillingSuccessPage() {
 
       // After all attempts, if still processing, show delayed state
       if (currentStatus === "processing") {
-        clientLogger.warn("Webhook not completed after 20 seconds - showing delayed state");
+        clientLogger.warn(
+          "Webhook not completed after 20 seconds - showing delayed state",
+        );
         setStatus("delayed");
       }
     } catch (error) {
@@ -230,7 +256,7 @@ export default function BillingSuccessPage() {
                 features.
               </p>
               <p className="text-sm text-gray-500">
-                Redirecting to dashboard...
+                Redirecting to homepage...
               </p>
             </>
           )}
@@ -260,7 +286,7 @@ export default function BillingSuccessPage() {
                 </button>
 
                 <Link
-                  href={userId ? `/dashboard/${userId}` : "/"}
+                  href="/"
                   className="block w-full border border-gray-300 px-6 py-3 rounded-lg hover:bg-gray-50 transition"
                 >
                   Continue to Dashboard
@@ -271,8 +297,9 @@ export default function BillingSuccessPage() {
                 <p className="text-sm text-gray-600">
                   Still waiting after 5 minutes?{" "}
                   <a
-                    href={`mailto:sebastiansole@handicappin.com?subject=Subscription Activation Delayed&body=Session ID: ${sessionId || "unknown"
-                      }%0D%0AUser ID: ${userId || "unknown"}`}
+                    href={`mailto:sebastiansole@handicappin.com?subject=Subscription Activation Delayed&body=Session ID: ${
+                      sessionId || "unknown"
+                    }%0D%0AUser ID: ${userId || "unknown"}`}
                     className="text-blue-600 hover:underline"
                   >
                     Contact Support
@@ -317,9 +344,11 @@ export default function BillingSuccessPage() {
 
               <div className="space-y-4">
                 <a
-                  href={`mailto:sebastiansole@handicappin.com?subject=Subscription Activation Issue&body=Session ID: ${sessionId || "unknown"
-                    }%0D%0AUser ID: ${userId || "unknown"
-                    }%0D%0A%0D%0APlease describe the issue:`}
+                  href={`mailto:sebastiansole@handicappin.com?subject=Subscription Activation Issue&body=Session ID: ${
+                    sessionId || "unknown"
+                  }%0D%0AUser ID: ${
+                    userId || "unknown"
+                  }%0D%0A%0D%0APlease describe the issue:`}
                   className="block w-full bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition text-center"
                 >
                   📧 Email Support
@@ -365,7 +394,7 @@ export default function BillingSuccessPage() {
           status !== "failed" && (
             <div className="space-y-4">
               <Link
-                href={userId ? `/dashboard/${userId}` : "/"}
+                href="/"
                 className="block w-full bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition"
               >
                 Go to Dashboard
