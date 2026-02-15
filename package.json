@@ -97,7 +97,6 @@
   },
   "pnpm": {
     "overrides": {
-      "@types/react": "19.2.10",
       "@types/react-dom": "19.2.3",
       "import-in-the-middle": "1.15.0",
       "require-in-the-middle": "7.5.2"
