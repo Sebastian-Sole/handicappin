@@ -4,6 +4,7 @@ import { createServerComponentClient } from "@/utils/supabase/server";
 import { db } from "@/db";
 import { profile } from "@/db/schema";
 import { eq, sql } from "drizzle-orm";
+import { logger } from "@/lib/logging";
 
 export async function createFreeTierSubscription(userId: string) {
   const supabase = await createServerComponentClient();
@@ -29,7 +30,7 @@ export async function createFreeTierSubscription(userId: string) {
       })
       .where(eq(profile.id, userId));
 
-    console.log("✅ Free tier plan selected for user:", userId);
+    logger.info("Free tier plan selected", { userId });
     return { success: true };
   } catch (error) {
     console.error("❌ Error setting free tier:", error);

@@ -168,7 +168,7 @@ export function redactObject<T>(obj: T): T {
     return obj;
   }
 
-  const redacted: any = {};
+  const redacted: Record<string, unknown> = {};
 
   for (const [key, value] of Object.entries(obj)) {
     const lowerKey = key.toLowerCase();

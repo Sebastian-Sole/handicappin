@@ -1,8 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
 import { Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -20,16 +19,12 @@ interface NavLink {
 
 interface MobileNavSheetProps {
   links: NavLink[];
+  headerContent?: React.ReactNode;
   children?: React.ReactNode;
 }
 
-export function MobileNavSheet({ links, children }: MobileNavSheetProps) {
+export function MobileNavSheet({ links, headerContent, children }: MobileNavSheetProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const pathname = usePathname();
-
-  useEffect(() => {
-    setIsOpen(false);
-  }, [pathname]);
 
   return (
     <div className="flex items-center gap-4 lg:hidden">
@@ -47,6 +42,14 @@ export function MobileNavSheet({ links, children }: MobileNavSheetProps) {
         <SheetContent side="right" className="xs:w-64">
           <SheetTitle className="sr-only">Navigation menu</SheetTitle>
           <div className="flex flex-col gap-4 p-4">
+            {headerContent && (
+              <>
+                <div onClick={() => setIsOpen(false)}>
+                  {headerContent}
+                </div>
+                <Separator />
+              </>
+            )}
             {links.map((link) => (
               <Link
                 key={link.href}
