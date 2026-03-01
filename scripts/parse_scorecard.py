@@ -142,21 +142,16 @@ def convert_9_to_18_hole_handicaps(nine_hole_hcps: list[int]) -> list[int]:
     """
     Convert 9-hole handicaps to 18-hole handicaps.
 
-    For 9-hole courses played twice as 18, the handicaps are interleaved:
-    - The hole with 9-hcp 1 gets 18-hcp 1 (front) and 2 (back)
-    - The hole with 9-hcp 2 gets 18-hcp 3 (front) and 4 (back)
-    - etc.
+    For 9-hole courses, the input values are the odd-numbered handicaps
+    (front 9). The back 9 gets the next value (+1) for each hole.
 
-    Formula:
-    - Front 9: 18_hcp = (9_hcp * 2) - 1
-    - Back 9: 18_hcp = 9_hcp * 2
+    Example:
+    - Input:   [1, 13, 9, 3, 11, 5, 15, 17, 7]
+    - Front 9: [1, 13, 9, 3, 11, 5, 15, 17, 7]
+    - Back 9:  [2, 14, 10, 4, 12, 6, 16, 18, 8]
     """
-    front_9_hcps = []
-    back_9_hcps = []
-
-    for nine_hcp in nine_hole_hcps:
-        front_9_hcps.append((nine_hcp * 2) - 1)
-        back_9_hcps.append(nine_hcp * 2)
+    front_9_hcps = nine_hole_hcps
+    back_9_hcps = [hcp + 1 for hcp in nine_hole_hcps]
 
     return front_9_hcps + back_9_hcps
 
