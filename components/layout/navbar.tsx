@@ -214,6 +214,14 @@ export async function Navbar() {
               { href: "/statistics", label: "Statistics" },
               { href: "/contact", label: "Contact" },
             ]}
+            headerContent={
+              <Link href="/rounds/add">
+                <Button className="w-full">
+                  <CirclePlus className="h-4 w-4 mr-2" />
+                  Add Round
+                </Button>
+              </Link>
+            }
           >
             <LogoutButton />
           </MobileNavSheet>

@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { api } from "@/trpc/react";
 import { clientLogger } from "@/lib/client-logger";
+import { getTRPCRateLimitRetryAfter } from "@/lib/trpc-error";
 
 export function ManageSubscriptionButton() {
   const [loading, setLoading] = useState(false);
@@ -16,15 +17,13 @@ export function ManageSubscriptionButton() {
       const result = await createPortalMutation.mutateAsync();
 
       window.location.href = result.url;
-    } catch (error: any) {
+    } catch (error: unknown) {
       clientLogger.error("Error opening customer portal", error);
 
-      if (
-        error?.data?.code === "TOO_MANY_REQUESTS" &&
-        error?.data?.cause?.retryAfter
-      ) {
+      const retryAfter = getTRPCRateLimitRetryAfter(error);
+      if (retryAfter) {
         alert(
-          `Too many requests. Please wait ${error.data.cause.retryAfter} seconds and try again.`,
+          `Too many requests. Please wait ${retryAfter} seconds and try again.`,
         );
       } else {
         alert("Failed to open subscription management. Please try again.");

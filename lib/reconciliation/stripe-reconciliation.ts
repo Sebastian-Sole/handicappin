@@ -3,6 +3,7 @@ import { stripe, mapPriceToPlan } from "@/lib/stripe";
 import { db } from "@/db";
 import { profile, stripeCustomers } from "@/db/schema";
 import { eq, sql, inArray } from "drizzle-orm";
+import { logger } from "@/lib/logging";
 
 type ReconciliationResult = {
   checked: number;
@@ -40,7 +41,7 @@ export async function reconcileStripeSubscriptions(): Promise<ReconciliationResu
     duration_ms: 0,
   };
 
-  console.log("🔄 Starting Stripe reconciliation...");
+  logger.info("Starting Stripe reconciliation");
 
   // Get all users with paid plans (exclude free and null)
   const paidUsers = await db
@@ -54,7 +55,7 @@ export async function reconcileStripeSubscriptions(): Promise<ReconciliationResu
     .from(profile)
     .where(inArray(profile.planSelected, ["premium", "unlimited", "lifetime"]));
 
-  console.log(`📊 Found ${paidUsers.length} users with paid plans`);
+  logger.info(`Found ${paidUsers.length} users with paid plans`);
 
   // Process in parallel batches to respect Stripe's rate limits without blocking
   const BATCH_SIZE = 100;
@@ -77,7 +78,9 @@ export async function reconcileStripeSubscriptions(): Promise<ReconciliationResu
           }
         } catch (error) {
           result.errors++;
-          console.error(`❌ Error reconciling user ${user.id}:`, error);
+          logger.error(`Error reconciling user ${user.id}`, {
+            error: error instanceof Error ? error.message : String(error),
+          });
           result.issues.push({
             userId: user.id,
             field: "reconciliation",
@@ -99,7 +102,7 @@ export async function reconcileStripeSubscriptions(): Promise<ReconciliationResu
 
   result.duration_ms = Date.now() - startTime;
 
-  console.log("✅ Reconciliation complete:", {
+  logger.info("Reconciliation complete", {
     checked: result.checked,
     drift_detected: result.drift_detected,
     auto_fixed: result.auto_fixed,
@@ -194,8 +197,8 @@ async function reconcileSubscription(
 
   // Case 1: Database says active, Stripe says no subscription
   if (!activeSubscription && user.subscriptionStatus === "active") {
-    console.warn(
-      `⚠️ Drift detected: User ${user.id} has active status but no Stripe subscription`
+    logger.warn(
+      `Drift detected: User ${user.id} has active status but no Stripe subscription`
     );
 
     // Auto-fix: Revert to free tier
@@ -223,8 +226,8 @@ async function reconcileSubscription(
 
   // Case 2: Database says canceled/null, Stripe says active
   if (activeSubscription && user.subscriptionStatus !== "active") {
-    console.warn(
-      `⚠️ Drift detected: User ${user.id} not active in DB but active in Stripe`
+    logger.warn(
+      `Drift detected: User ${user.id} not active in DB but active in Stripe`
     );
 
     // Auto-fix: Restore active status
@@ -270,8 +273,8 @@ async function reconcileSubscription(
     activeSubscription &&
     activeSubscription.status !== user.subscriptionStatus
   ) {
-    console.warn(
-      `⚠️ Drift detected: Status mismatch for user ${user.id} (DB: ${user.subscriptionStatus}, Stripe: ${activeSubscription.status})`
+    logger.warn(
+      `Drift detected: Status mismatch for user ${user.id} (DB: ${user.subscriptionStatus}, Stripe: ${activeSubscription.status})`
     );
 
     // Auto-fix: Update status to match Stripe
@@ -305,12 +308,12 @@ function sendReconciliationAlert(result: ReconciliationResult) {
     (i) => i.action === "manual_review"
   );
 
-  console.error("🚨 CRITICAL: Billing drift requires manual review", {
+  logger.error("CRITICAL: Billing drift requires manual review", {
     total_drift: result.drift_detected,
     auto_fixed: result.auto_fixed,
     manual_review: result.manual_review,
     errors: result.errors,
-    critical_issues: criticalIssues, // UUIDs logged directly (server-side, secure environment)
+    critical_issues: JSON.stringify(criticalIssues),
   });
 
   // TODO: Send email to admin (separate enhancement)

@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { createServerComponentClient } from "@/utils/supabase/server";
 import { PlanSelector } from "@/components/billing/plan-selector";
 import { getBillingFromJWT } from "@/utils/supabase/jwt";
+import { logger } from "@/lib/logging";
 
 export default async function OnboardingPage() {
   const supabase = await createServerComponentClient();
@@ -29,11 +30,9 @@ export default async function OnboardingPage() {
   }
 
   // If JWT billing claims are missing, this is expected for new users who haven't selected a plan yet
-  console.log(
-    `🔄 Onboarding: No plan in JWT (billing=${JSON.stringify(
-      billing
-    )}), showing plan selection`
-  );
+  logger.info("Onboarding: No plan in JWT, showing plan selection", {
+    billing: billing ?? undefined,
+  });
 
   // If no access, show onboarding
   return (

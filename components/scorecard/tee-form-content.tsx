@@ -241,7 +241,7 @@ function TeeRatingFields({ tee, onTeeChange }: TeeFormContentProps) {
       <Separator />
       <Large>Course Rating</Large>
 
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         {/* FRONT 9 */}
         <div className="space-y-2">
           <label className="font-semibold" htmlFor="courseRatingFrontNine">
@@ -304,7 +304,7 @@ function TeeRatingFields({ tee, onTeeChange }: TeeFormContentProps) {
       </div>
 
       <Large>Slope Rating</Large>
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         {/* FRONT 9 */}
         <div className="space-y-2">
           <label className="font-semibold" htmlFor="slopeRatingFront9">
@@ -451,7 +451,7 @@ function TeeHoleTable({ tee, onTeeChange }: TeeFormContentProps) {
     <div className="space-y-4">
       <Separator />
       <Large>Hole Information</Large>
-      <div className="rounded-lg border max-w-[270px] sm:max-w-[350px] md:max-w-[600px] lg:max-w-[725px] xl:max-w-[975px] 2xl:max-w-[1225px] 3xl:max-w-[1600px]">
+      <div className="rounded-lg border max-w-[calc(100vw-5rem)] sm:max-w-[350px] md:max-w-[600px] lg:max-w-[725px] xl:max-w-[975px] 2xl:max-w-[1225px] 3xl:max-w-[1600px]">
         <div className="overflow-x-auto max-w-full">
           <Table>
             <TableHeader>

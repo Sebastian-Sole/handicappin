@@ -131,7 +131,7 @@ export function AddCourseDialog({
   return (
     <MultiPageDialog
       trigger={
-        <div className="flex gap-2 justify-between flex-wrap sm:flex-row flex-col w-full">
+        <div className="flex w-full">
           <Button
             variant="outline"
             size="sm"
@@ -146,7 +146,7 @@ export function AddCourseDialog({
           <Button
             variant="outline"
             size="lg"
-            className="h-10 md:hidden sm:flex w-full"
+            className="h-10 flex md:hidden w-full"
             onClick={() => {
               setOpen(true);
             }}
@@ -237,7 +237,7 @@ export function AddCourseDialog({
 
           <DialogPage
             title="Add New Tee"
-            className="max-w-[250px] sm:max-w-[350px] md:max-w-[550px]"
+            className="sm:max-w-[350px] md:max-w-[550px]"
           >
             {errorMessage && (
               <FormFeedback

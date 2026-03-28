@@ -61,11 +61,11 @@ export const HomePage = async ({ profile }: HomepageProps) => {
   const percentageChange =
     initialHandicapIndex !== null && initialHandicapIndex !== 0
       ? Number(
-          (
-            (handicapIndex - initialHandicapIndex) /
-            Math.abs(initialHandicapIndex)
-          ).toFixed(2)
-        )
+        (
+          (handicapIndex - initialHandicapIndex) /
+          Math.abs(initialHandicapIndex)
+        ).toFixed(2)
+      )
       : 0;
 
   // Calculate lowest differential for QuickStats
@@ -111,9 +111,9 @@ export const HomePage = async ({ profile }: HomepageProps) => {
         {/* Hero Section */}
         <section className="w-full relative overflow-hidden">
           {/* Premium gradient background with brand colors */}
-          <div className="absolute inset-0 bg-gradient-to-br from-primary/8 via-accent/20 to-primary/20" />
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_50%_at_50%_-20%,oklch(0.46_0.16_148_/_0.12),transparent)]" />
-          <div className="absolute top-0 right-0 w-1/3 h-full bg-gradient-to-l from-accent/10 to-transparent" />
+          <div className="absolute inset-0 bg-linear-to-br from-primary/8 via-accent/20 to-primary/20" />
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_50%_at_50%_-20%,oklch(0.46_0.16_148/0.12),transparent)]" />
+          <div className="absolute top-0 right-0 w-1/3 h-full bg-linear-to-l from-accent/10 to-transparent" />
           {/* Content */}
           <div className="relative">
             <Hero
@@ -130,7 +130,7 @@ export const HomePage = async ({ profile }: HomepageProps) => {
 
         {/* Activity Feed Section */}
         <section className="w-full py-8 lg:py-12">
-          <div className="container px-4 lg:px-6">
+          <div className="sm:container px-4 lg:px-6">
             <div className="grid gap-6 lg:grid-cols-[2fr_1fr]">
               <ActivityFeed activities={activities} profileId={profile.id} />
               <div className="space-y-4">
@@ -151,7 +151,7 @@ export const HomePage = async ({ profile }: HomepageProps) => {
 
         {/* Charts Section - Desktop only */}
         <section className="hidden md:block w-full py-8 lg:py-12 bg-muted/30">
-          <div className="container px-4 lg:px-6">
+          <div className="sm:container px-4 lg:px-6">
             <h2 className="text-xl font-semibold mb-6">Performance Analytics</h2>
             <div className="grid gap-6 xl:grid-cols-2">
               <HandicapTrendChartDisplay
