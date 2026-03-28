@@ -1,6 +1,13 @@
 "use client";
 
-import React, { useState, type ReactElement } from "react";
+import React, {
+  useState,
+  useRef,
+  useCallback,
+  useImperativeHandle,
+  useEffect,
+  type ReactElement,
+} from "react";
 import {
   Dialog,
   DialogContent,
@@ -30,16 +37,25 @@ export const DialogPage: React.FC<DialogPageProps> = ({
   </div>
 );
 
+export interface MultiPageDialogHandle {
+  goToPage: (pageIndex: number) => void;
+}
+
 interface MultiPageDialogProps {
   trigger: React.ReactNode;
-  isNextButtonDisabled: boolean;
-  isSaveButtonDisabled?: boolean;
-  children: ReactElement<DialogPageProps> | ReactElement<DialogPageProps>[];
+  isNextButtonDisabled: boolean | ((pageIndex: number) => boolean);
+  isSaveButtonDisabled?: boolean | ((pageIndex: number) => boolean);
+  children: React.ReactNode;
   handleSave: () => void;
   open: boolean;
   setOpen: (open: boolean) => void;
   className?: string;
   hideProgressDots?: boolean;
+  extraFooterContent?: (
+    pageIndex: number,
+    totalPages: number,
+  ) => React.ReactNode;
+  dialogRef?: React.Ref<MultiPageDialogHandle>;
 }
 
 const ProgressDots: React.FC<{ total: number; current: number }> = ({
@@ -69,15 +85,52 @@ export const MultiPageDialog: React.FC<MultiPageDialogProps> = ({
   setOpen,
   className,
   hideProgressDots = false,
+  extraFooterContent,
+  dialogRef,
 }) => {
   const [currentPage, setCurrentPage] = useState(0);
-  const pages = React.Children.toArray(
-    children
-  ) as ReactElement<DialogPageProps>[];
+  const contentRef = useRef<HTMLDivElement>(null);
+  const pages = React.Children.toArray(children).flat().filter(
+    (child): child is ReactElement<DialogPageProps> =>
+      React.isValidElement(child),
+  );
+
+  // Clamp currentPage if pages were removed (e.g. tee deleted)
+  const safePage = Math.min(currentPage, Math.max(pages.length - 1, 0));
+
+  const scrollToTop = useCallback(() => {
+    contentRef.current?.scrollTo({ top: 0, behavior: "instant" });
+  }, []);
+
+  const goToPage = useCallback(
+    (pageIndex: number) => {
+      setCurrentPage(pageIndex);
+      // Use requestAnimationFrame so new content renders before scrolling
+      requestAnimationFrame(() => scrollToTop());
+    },
+    [scrollToTop],
+  );
+
+  useImperativeHandle(dialogRef, () => ({ goToPage }), [goToPage]);
+
+  // Scroll to top whenever the page changes
+  useEffect(() => {
+    scrollToTop();
+  }, [safePage, scrollToTop]);
+
+  const resolvedNextDisabled =
+    typeof isNextButtonDisabled === "function"
+      ? isNextButtonDisabled(safePage)
+      : isNextButtonDisabled;
+
+  const resolvedSaveDisabled =
+    typeof isSaveButtonDisabled === "function"
+      ? isSaveButtonDisabled(safePage)
+      : isSaveButtonDisabled;
 
   const handleNext = () => {
-    if (currentPage < pages.length - 1) {
-      setCurrentPage(currentPage + 1);
+    if (safePage < pages.length - 1) {
+      setCurrentPage(safePage + 1);
     } else {
       setOpen(false);
       setCurrentPage(0);
@@ -85,39 +138,43 @@ export const MultiPageDialog: React.FC<MultiPageDialogProps> = ({
   };
 
   const handlePrevious = () => {
-    if (currentPage > 0) {
-      setCurrentPage(currentPage - 1);
+    if (safePage > 0) {
+      setCurrentPage(safePage - 1);
     }
   };
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>{trigger}</DialogTrigger>
-      <DialogContent className="max-w-[calc(100vw-2rem)] sm:max-w-[400px] md:max-w-[600px] max-h-[90vh] overflow-y-auto">
-        {pages[currentPage]}
+      <DialogContent
+        ref={contentRef}
+        className="max-w-[calc(100vw-2rem)] sm:max-w-[400px] md:max-w-[600px] max-h-[90vh] overflow-y-auto"
+      >
+        {pages[safePage]}
+        {extraFooterContent?.(safePage, pages.length)}
         <div className="flex justify-between mt-4">
           <Button
             variant="outline"
             onClick={handlePrevious}
-            disabled={currentPage === 0}
-            className={cn(currentPage === 0 && "invisible")}
+            disabled={safePage === 0}
+            className={cn(safePage === 0 && "invisible")}
           >
             Previous
           </Button>
           {!hideProgressDots && (
-            <ProgressDots total={pages.length} current={currentPage} />
+            <ProgressDots total={pages.length} current={safePage} />
           )}
-          {currentPage === pages.length - 1 && (
+          {safePage === pages.length - 1 && (
             <Button
               type="submit"
               onClick={handleSave}
-              disabled={isSaveButtonDisabled}
+              disabled={resolvedSaveDisabled}
             >
               Save
             </Button>
           )}
-          {currentPage !== pages.length - 1 && (
-            <Button onClick={handleNext} disabled={isNextButtonDisabled}>
+          {safePage !== pages.length - 1 && (
+            <Button onClick={handleNext} disabled={resolvedNextDisabled}>
               Next
             </Button>
           )}

@@ -377,6 +377,71 @@ export const roundRouter = createTRPCRouter({
         }
       }
 
+      // 4. Persist additional tees from the course (not the played tee)
+      if (coursePlayed.tees && coursePlayed.tees.length > 1) {
+        for (const additionalTee of coursePlayed.tees) {
+          // Skip the tee that was played — it's already handled above
+          if (
+            additionalTee.name === teePlayed.name &&
+            additionalTee.gender === teePlayed.gender
+          ) {
+            continue;
+          }
+
+          // Check if this tee already exists for the course
+          const existingAdditionalTee = await db
+            .select()
+            .from(teeInfo)
+            .where(
+              and(
+                eq(teeInfo.courseId, courseId!),
+                eq(teeInfo.name, additionalTee.name),
+                eq(teeInfo.gender, additionalTee.gender),
+              ),
+            )
+            .limit(1);
+
+          if (existingAdditionalTee[0]) {
+            continue;
+          }
+
+          const [newAdditionalTee] = await db
+            .insert(teeInfo)
+            .values({
+              courseId: courseId!,
+              name: additionalTee.name,
+              gender: additionalTee.gender,
+              courseRating18: additionalTee.courseRating18,
+              slopeRating18: additionalTee.slopeRating18,
+              courseRatingFront9: additionalTee.courseRatingFront9,
+              slopeRatingFront9: additionalTee.slopeRatingFront9,
+              courseRatingBack9: additionalTee.courseRatingBack9,
+              slopeRatingBack9: additionalTee.slopeRatingBack9,
+              outPar: additionalTee.outPar,
+              inPar: additionalTee.inPar,
+              totalPar: additionalTee.totalPar,
+              outDistance: additionalTee.outDistance,
+              inDistance: additionalTee.inDistance,
+              totalDistance: additionalTee.totalDistance,
+              distanceMeasurement: additionalTee.distanceMeasurement,
+              approvalStatus: "pending",
+            })
+            .returning();
+
+          if (additionalTee.holes && newAdditionalTee) {
+            const additionalHoleInserts = additionalTee.holes.map((h) => ({
+              teeId: newAdditionalTee.id,
+              holeNumber: h.holeNumber,
+              par: h.par,
+              hcp: h.hcp,
+              distance: h.distance,
+            }));
+
+            await db.insert(hole).values(additionalHoleInserts);
+          }
+        }
+      }
+
       // Match scores with holes to calculate the par played
       let parPlayed = 0;
       if (teePlayed.holes && Array.isArray(scores)) {

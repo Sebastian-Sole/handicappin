@@ -77,15 +77,22 @@ export function useTeeManagement() {
       approvalStatus: "pending" as const,
     };
 
-    const firstTee = {
-      ...course.tees[0],
+    const allTees = course.tees.map((tee) => ({
+      ...tee,
       id: generateTempId(),
       courseId: newCourse.id,
       approvalStatus: "pending" as const,
-      holes: course.tees[0].holes,
-    };
+      holes: tee.holes,
+    }));
 
-    const teeKey = getTeeKey(newCourse.id, firstTee.name, firstTee.gender);
+    const teeEntries: Record<string, typeof allTees[number]> = {};
+    for (const tee of allTees) {
+      const key = getTeeKey(newCourse.id, tee.name, tee.gender);
+      teeEntries[key] = tee;
+    }
+
+    const firstTee = allTees[0];
+    const firstTeeKey = getTeeKey(newCourse.id, firstTee.name, firstTee.gender);
 
     setModifications((prev) => ({
       ...prev,
@@ -95,14 +102,14 @@ export function useTeeManagement() {
       },
       tees: {
         ...prev.tees,
-        [teeKey]: firstTee,
+        ...teeEntries,
       },
     }));
 
     return {
       course: newCourse,
       tee: firstTee,
-      teeKey,
+      teeKey: firstTeeKey,
     };
   }, []);
 

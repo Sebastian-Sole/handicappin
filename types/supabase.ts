@@ -149,6 +149,50 @@ export type Database = {
           },
         ]
       }
+      legal_consents: {
+        Row: {
+          acceptance_method: string
+          accepted_at: string
+          consent_type: string
+          created_at: string
+          id: number
+          ip_address: string | null
+          legal_version: string
+          user_id: string | null
+          withdrawn_at: string | null
+        }
+        Insert: {
+          acceptance_method: string
+          accepted_at: string
+          consent_type: string
+          created_at?: string
+          id?: number
+          ip_address?: string | null
+          legal_version: string
+          user_id?: string | null
+          withdrawn_at?: string | null
+        }
+        Update: {
+          acceptance_method?: string
+          accepted_at?: string
+          consent_type?: string
+          created_at?: string
+          id?: number
+          ip_address?: string | null
+          legal_version?: string
+          user_id?: string | null
+          withdrawn_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "legal_consents_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profile"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       otp_verifications: {
         Row: {
           created_at: string
@@ -338,15 +382,18 @@ export type Database = {
           adjustedGrossScore: number
           adjustedPlayedScore: number
           approvalStatus: string
+          course_rating_used: number
           courseHandicap: number
           courseId: number
           createdAt: string
           exceptionalScoreAdjustment: number
           existingHandicapIndex: number
+          holes_played: number
           id: number
           notes: string | null
           parPlayed: number
           scoreDifferential: number
+          slope_rating_used: number
           teeId: number
           teeTime: string
           totalStrokes: number
@@ -357,15 +404,18 @@ export type Database = {
           adjustedGrossScore: number
           adjustedPlayedScore: number
           approvalStatus?: string
+          course_rating_used: number
           courseHandicap: number
           courseId: number
           createdAt?: string
           exceptionalScoreAdjustment?: number
           existingHandicapIndex: number
+          holes_played: number
           id?: number
           notes?: string | null
           parPlayed: number
           scoreDifferential: number
+          slope_rating_used: number
           teeId: number
           teeTime: string
           totalStrokes: number
@@ -376,15 +426,18 @@ export type Database = {
           adjustedGrossScore?: number
           adjustedPlayedScore?: number
           approvalStatus?: string
+          course_rating_used?: number
           courseHandicap?: number
           courseId?: number
           createdAt?: string
           exceptionalScoreAdjustment?: number
           existingHandicapIndex?: number
+          holes_played?: number
           id?: number
           notes?: string | null
           parPlayed?: number
           scoreDifferential?: number
+          slope_rating_used?: number
           teeId?: number
           teeTime?: string
           totalStrokes?: number
