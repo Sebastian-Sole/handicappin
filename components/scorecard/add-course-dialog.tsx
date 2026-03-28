@@ -44,8 +44,22 @@ export function AddCourseDialog({
   const isControlled = controlledOpen !== undefined;
   const open = isControlled ? controlledOpen : internalOpen;
   const setOpen = isControlled
-    ? (newOpen: boolean) => onOpenChange?.(newOpen)
-    : setInternalOpen;
+    ? (newOpen: boolean) => {
+        if (!newOpen) {
+          form.reset();
+          setErrorMessage(null);
+          dialogRef.current?.goToPage(0);
+        }
+        onOpenChange?.(newOpen);
+      }
+    : (newOpen: boolean) => {
+        if (!newOpen) {
+          form.reset();
+          setErrorMessage(null);
+          dialogRef.current?.goToPage(0);
+        }
+        setInternalOpen(newOpen);
+      };
 
   const form = useForm<Course>({
     resolver: standardSchemaResolver(courseSchema),
@@ -87,7 +101,7 @@ export function AddCourseDialog({
       if (pageIndex === 0) {
         return (
           !watchName ||
-          watchName.length < 2 ||
+          watchName.length < 3 ||
           !watchCountry ||
           watchCountry.length < 1 ||
           !watchCity ||
