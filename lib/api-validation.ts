@@ -48,7 +48,8 @@ export function successResponse<T>(data: T, headers?: Record<string, string>) {
 export function errorResponse(
   error: string,
   status: number = 500,
-  details?: { retryAfter?: number; details?: string }
+  details?: { retryAfter?: number; details?: string },
+  headers?: Record<string, string>
 ) {
-  return NextResponse.json({ error, ...details }, { status });
+  return NextResponse.json({ error, ...details }, { status, headers });
 }

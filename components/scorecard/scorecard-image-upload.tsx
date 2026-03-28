@@ -511,23 +511,8 @@ export function ScorecardImageUpload({
     }
 
     if (allExtractedTees.length > 0) {
-      // Debug: log raw AI output per file
-      console.group("[AI Extraction] Raw results from all files");
-      for (const [resultIndex, result] of results.entries()) {
-        if (result.status === "fulfilled" && result.value.length > 0) {
-          console.log(`File ${resultIndex + 1}:`, JSON.stringify(result.value, null, 2));
-        }
-      }
-      console.groupEnd();
-
       // Deduplicate across files (e.g., same tee found in scorecard + rating card)
       const deduplicatedTees = deduplicateExtractedTees(allExtractedTees);
-
-      console.group("[AI Extraction] After deduplication");
-      for (const [teeIndex, tee] of deduplicatedTees.entries()) {
-        console.log(`Tee ${teeIndex + 1} (${tee.teeName} / ${tee.gender}):`, JSON.stringify(tee, null, 2));
-      }
-      console.groupEnd();
 
       // First tee merges into the current form tee
       const firstExtracted = deduplicatedTees[0];
@@ -536,8 +521,6 @@ export function ScorecardImageUpload({
         accumulatedTeeRef.current
       );
 
-      console.log("[AI Extraction] Merged first tee into form:", JSON.stringify(accumulatedTeeRef.current, null, 2));
-
       onExtracted(accumulatedTeeRef.current);
 
       // Additional tees get created as new full Tee objects
@@ -545,7 +528,6 @@ export function ScorecardImageUpload({
         const additionalTees = deduplicatedTees
           .slice(1)
           .map(extractedTeeToFullTee);
-        console.log("[AI Extraction] Additional tees created:", JSON.stringify(additionalTees, null, 2));
         onAdditionalTeesExtracted(additionalTees);
       }
 

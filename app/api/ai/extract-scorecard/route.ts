@@ -5,12 +5,14 @@ import { getComprehensiveUserAccess } from "@/utils/billing/access-control";
 import { aiExtractionRateLimit, getIdentifier } from "@/lib/rate-limit";
 import {
   extractionResponseSchema,
+  extractScorecardRequestSchema,
   SCORECARD_EXTRACTION_PROMPT,
   OPENAI_EXTRACTION_JSON_SCHEMA,
   postProcessExtractedTees,
 } from "@/lib/scorecard-extraction";
-import { successResponse, errorResponse } from "@/lib/api-validation";
+import { validateRequest, successResponse, errorResponse } from "@/lib/api-validation";
 import { env } from "@/env";
+import { logger } from "@/lib/logging";
 
 const MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024; // 10MB
 const MAX_OUTPUT_TOKENS = 4096; // Cap AI response size to control cost
@@ -60,21 +62,20 @@ export async function POST(request: NextRequest) {
 
     if (!withinLimit) {
       const retryAfterSeconds = Math.ceil((reset - Date.now()) / 1000);
-      return errorResponse("Too many requests. Please wait before trying again.", 429, {
-        retryAfter: retryAfterSeconds,
-      });
+      return errorResponse(
+        "Too many requests. Please wait before trying again.",
+        429,
+        { retryAfter: retryAfterSeconds },
+        rateLimitHeaders
+      );
     }
 
     // 4. Parse and validate request body
-    const body = await request.json();
-    const { image, mimeType } = body as {
-      image: string;
-      mimeType: string;
-    };
-
-    if (!image || !mimeType) {
-      return errorResponse("Missing image or mimeType", 400);
+    const validation = await validateRequest(request, extractScorecardRequestSchema);
+    if ("error" in validation) {
+      return validation.error;
     }
+    const { image, mimeType } = validation.data;
 
     if (!ALLOWED_MIME_TYPES.includes(mimeType)) {
       return errorResponse(
@@ -131,21 +132,10 @@ export async function POST(request: NextRequest) {
     // 6. Parse and validate the AI response
     const parsed = JSON.parse(response.output_text);
 
-    console.log("[AI Extraction] Raw OpenAI response:", JSON.stringify(parsed, null, 2));
-    console.log(`[AI Extraction] Tees found: ${parsed.tees?.length ?? 0}`);
-    for (const [teeIndex, tee] of (parsed.tees ?? []).entries()) {
-      console.log(`[AI Extraction] Tee ${teeIndex + 1}: name=${tee.teeName}, gender=${tee.gender}, courseRating18=${tee.courseRating18}, slopeRating18=${tee.slopeRating18}`);
-    }
-
     const validated = extractionResponseSchema.parse(parsed);
 
     // 7. Post-process to fix common AI mistakes
     const postProcessed = postProcessExtractedTees(validated.tees);
-
-    console.log("[AI Extraction] After post-processing:");
-    for (const [teeIndex, tee] of postProcessed.entries()) {
-      console.log(`[AI Extraction] Post-processed tee ${teeIndex + 1}: name=${tee.teeName}, gender=${tee.gender}, CR18=${tee.courseRating18}, SR18=${tee.slopeRating18}, CRF9=${tee.courseRatingFront9}, CRB9=${tee.courseRatingBack9}`);
-    }
 
     return successResponse({ tees: postProcessed }, rateLimitHeaders);
   } catch (error) {
@@ -155,7 +145,9 @@ export async function POST(request: NextRequest) {
         500
       );
     }
-    console.error("AI extraction error:", error);
+    logger.error("AI extraction error", {
+      error: error instanceof Error ? error.message : String(error),
+    });
     return errorResponse(
       "Failed to extract scorecard data. Please try again or enter the data manually."
     );

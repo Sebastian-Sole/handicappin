@@ -29,6 +29,16 @@ export const extractedTeeSchema = z.object({
 export type ExtractedTee = z.infer<typeof extractedTeeSchema>;
 
 /**
+ * Schema for the scorecard image extraction request body.
+ */
+export const extractScorecardRequestSchema = z.object({
+  image: z.string().min(1),
+  mimeType: z.string().min(1),
+});
+
+export type ExtractScorecardRequest = z.infer<typeof extractScorecardRequestSchema>;
+
+/**
  * Schema for the full extraction response — an array of tees.
  * A single image may contain multiple tees (e.g., Red, White, Blue).
  */
@@ -87,34 +97,34 @@ function handleSlashSeparatedTeeName(tee: ExtractedTee): ExtractedTee[] {
   if (!gender1 || !gender2 || gender1 === gender2) return [tee];
 
   // The front9/back9 values are likely gendered splits, not actual front/back 9.
-  // Assign: first value → gender1, second value → gender2
-  const mensTee: ExtractedTee = {
+  // Positional mapping: first column (front9 fields) → gender1, second column (back9 fields) → gender2
+  const entry1: ExtractedTee = {
     teeName: null, // No specific tee color known
     gender: gender1,
     distanceMeasurement: tee.distanceMeasurement,
     courseRatingFront9: null,
     courseRatingBack9: null,
-    courseRating18: gender1 === "mens" ? tee.courseRatingFront9 : tee.courseRatingBack9,
+    courseRating18: tee.courseRatingFront9,
     slopeRatingFront9: null,
     slopeRatingBack9: null,
-    slopeRating18: gender1 === "mens" ? tee.slopeRatingFront9 : tee.slopeRatingBack9,
+    slopeRating18: tee.slopeRatingFront9,
     holes: tee.holes,
   };
 
-  const ladiesTee: ExtractedTee = {
+  const entry2: ExtractedTee = {
     teeName: null,
     gender: gender2,
     distanceMeasurement: tee.distanceMeasurement,
     courseRatingFront9: null,
     courseRatingBack9: null,
-    courseRating18: gender2 === "ladies" ? tee.courseRatingBack9 : tee.courseRatingFront9,
+    courseRating18: tee.courseRatingBack9,
     slopeRatingFront9: null,
     slopeRatingBack9: null,
-    slopeRating18: gender2 === "ladies" ? tee.slopeRatingBack9 : tee.slopeRatingFront9,
+    slopeRating18: tee.slopeRatingBack9,
     holes: tee.holes,
   };
 
-  return [mensTee, ladiesTee];
+  return [entry1, entry2];
 }
 
 /**
