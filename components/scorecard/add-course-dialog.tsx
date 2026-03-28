@@ -29,6 +29,7 @@ interface AddCourseDialogProps {
   initialCourseName?: string;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
+  isPremium?: boolean;
 }
 
 export function AddCourseDialog({
@@ -36,6 +37,7 @@ export function AddCourseDialog({
   initialCourseName,
   open: controlledOpen,
   onOpenChange,
+  isPremium = false,
 }: AddCourseDialogProps) {
   const [internalOpen, setInternalOpen] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -149,17 +151,17 @@ export function AddCourseDialog({
     [fields.length, remove],
   );
 
-  const onSubmit = (values: Course) => {
+  const onSubmit = useCallback((values: Course) => {
     setErrorMessage(null);
     onAdd(values);
     setOpen(false);
-  };
+  }, [onAdd, setOpen]);
 
-  const onError = () => {
+  const onError = useCallback(() => {
     setErrorMessage(
       "Please check the form for errors/missing data, or contact support",
     );
-  };
+  }, []);
 
   return (
     <FormProvider {...form}>
@@ -194,7 +196,7 @@ export function AddCourseDialog({
           }
           isNextButtonDisabled={isNextDisabled}
           isSaveButtonDisabled={!isFormValid}
-          handleSave={handleSubmit(onSubmit, onError)}
+          handleSave={() => handleSubmit(onSubmit, onError)()}
           open={open}
           setOpen={(newOpen) => {
             setOpen(newOpen);
@@ -325,6 +327,12 @@ export function AddCourseDialog({
                     <TeeFormContent
                       tee={teeField.value}
                       onTeeChange={teeField.onChange}
+                      isPremium={isPremium}
+                      onAdditionalTeesExtracted={(additionalTees) => {
+                        for (const newTee of additionalTees) {
+                          append({ ...newTee });
+                        }
+                      }}
                     />
                   ) : (
                     <></>

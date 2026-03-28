@@ -26,6 +26,7 @@ export const env = createEnv({
     ADMIN_ALERT_EMAILS: z.string(),
     RESET_TOKEN_SECRET: z.string(),
 
+    OPENAI_API_KEY: z.string().min(1),
     GOOGLE_CLIENT_SECRET: z.string().min(1),
     SUPABASE_SERVICE_ROLE_KEY: z.string().min(1),
     HANDICAP_CRON_SECRET: z.string().min(1),
@@ -72,6 +73,7 @@ export const env = createEnv({
     REDIS_URL: process.env.REDIS_URL,
     ADMIN_ALERT_EMAILS: process.env.ADMIN_ALERT_EMAILS,
     RESET_TOKEN_SECRET: process.env.RESET_TOKEN_SECRET,
+    OPENAI_API_KEY: process.env.OPENAI_API_KEY,
     GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET,
     SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY,
     HANDICAP_CRON_SECRET: process.env.HANDICAP_CRON_SECRET,
