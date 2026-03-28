@@ -31,16 +31,21 @@ interface TeeDialogProps {
   mode: "add" | "edit";
   existingTee?: Tee;
   onSave: (updatedTee: Tee) => void;
+  /** Called when AI extraction finds additional tees beyond the current one. */
+  onSaveAdditionalTees?: (tees: Tee[]) => void;
   onOpenChange?: (open: boolean) => void;
   disabled?: boolean;
+  isPremium?: boolean;
 }
 
 export function TeeDialog({
   mode,
   existingTee = blankTee,
   onSave,
+  onSaveAdditionalTees,
   onOpenChange,
   disabled,
+  isPremium = false,
 }: TeeDialogProps) {
   const [isOpen, setIsOpen] = useState(false);
 
@@ -155,7 +160,12 @@ export function TeeDialog({
         <div className="sm:max-w-[350px] md:max-w-[550px]">
           <Form {...form}>
             <form onSubmit={handleSubmit}>
-              <TeeFormContent tee={tee} onTeeChange={handleTeeChange} />
+              <TeeFormContent
+                tee={tee}
+                onTeeChange={handleTeeChange}
+                isPremium={isPremium}
+                onAdditionalTeesExtracted={onSaveAdditionalTees}
+              />
               <div className="flex justify-end mt-4">
                 <Button type="submit">
                   {mode === "edit" ? "Save Changes" : "Add Tee"}

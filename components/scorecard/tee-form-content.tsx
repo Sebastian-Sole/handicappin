@@ -18,10 +18,13 @@ import {
 import { Input } from "@/components/ui/input";
 import { Tee, teeSchema } from "@/types/scorecard-input";
 import { Badge } from "../ui/badge";
+import { ScorecardImageUpload } from "./scorecard-image-upload";
 
 interface TeeFormContentProps {
   tee: Tee; // The entire tee we are editing
   onTeeChange: (updated: Tee) => void; // Callback any time a field changes
+  isPremium?: boolean; // Whether user has premium access (for AI features)
+  onAdditionalTeesExtracted?: (tees: Tee[]) => void; // Called when AI finds multiple tees
 }
 
 // Use the teeSchema for validation
@@ -58,12 +61,21 @@ function getTeeValidationErrors(tee: Tee): string[] {
     .map((err) => err.message);
 }
 
-export function TeeFormContent({ tee, onTeeChange }: TeeFormContentProps) {
+export function TeeFormContent({ tee, onTeeChange, isPremium = false, onAdditionalTeesExtracted }: TeeFormContentProps) {
   const validationErrors = useMemo(() => getTeeValidationErrors(tee), [tee]);
   const isValid = validationErrors.length === 0;
 
   return (
     <>
+      <div className="mb-6">
+        <ScorecardImageUpload
+          currentTee={tee}
+          onExtracted={onTeeChange}
+          onAdditionalTeesExtracted={onAdditionalTeesExtracted}
+          isPremium={isPremium}
+        />
+      </div>
+
       <Alert>
         <TriangleAlert className="h-4 w-4" />
         <AlertTitle>Heads up!</AlertTitle>

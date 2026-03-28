@@ -542,6 +542,7 @@ export default function GolfScorecard({ profile, access }: GolfScorecardProps) {
                                     open={addCourseDialogOpen}
                                     onOpenChange={setAddCourseDialogOpen}
                                     initialCourseName={searchTerm}
+                                    isPremium={access.hasPremiumAccess}
                                   />
                                 </div>
                               </div>
@@ -635,7 +636,11 @@ export default function GolfScorecard({ profile, access }: GolfScorecardProps) {
                                       key={`${selectedCourseId}-${selectedTeeKey}`}
                                       existingTee={getCompleteEditTee}
                                       onSave={handleEditTee}
+                                      onSaveAdditionalTees={(tees) =>
+                                        tees.forEach(handleAddTee)
+                                      }
                                       aria-label="Edit selected tee"
+                                      isPremium={access.hasPremiumAccess}
                                       disabled={
                                         !selectedTeeKey &&
                                         getEffectiveTees(selectedCourseId) &&
@@ -648,7 +653,11 @@ export default function GolfScorecard({ profile, access }: GolfScorecardProps) {
                                       key={`${selectedCourseId}-${selectedCourseId}-new`}
                                       mode="add"
                                       onSave={handleAddTee}
+                                      onSaveAdditionalTees={(tees) =>
+                                        tees.forEach(handleAddTee)
+                                      }
                                       aria-label="Add new tee"
+                                      isPremium={access.hasPremiumAccess}
                                       disabled={
                                         !selectedCourseId ||
                                         getEffectiveTees(selectedCourseId)
