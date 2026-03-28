@@ -64,6 +64,9 @@ export function createMockScorecard(
     approvalStatus: "approved",
     notes: null,
     createdAt: new Date().toISOString(),
+    course_rating_used: 72.0,
+    slope_rating_used: 113,
+    holes_played: 18,
   };
 
   return {
