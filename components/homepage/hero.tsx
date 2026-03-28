@@ -74,7 +74,7 @@ const Hero = ({
 
   return (
     <section className="w-full py-6 md:py-10 lg:py-12">
-      <div className="container px-4 lg:px-6">
+      <div className="sm:container px-4 lg:px-6">
         {/* Welcome Header */}
         <div className="mb-8">
           <h1 className="text-xl md:text-2xl font-semibold text-foreground">

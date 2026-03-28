@@ -5,6 +5,18 @@ import { logger } from "./logging";
  * Provides consistent emoji-based logging patterns with automatic PII redaction
  */
 
+/** PostgreSQL/Drizzle errors include these additional diagnostic fields */
+interface DatabaseError extends Error {
+  code?: string;
+  severity?: string;
+  detail?: string;
+  hint?: string;
+}
+
+function isDatabaseError(error: Error): error is DatabaseError {
+  return "code" in error || "severity" in error || "detail" in error || "hint" in error;
+}
+
 /**
  * Log webhook receipt
  */
@@ -17,7 +29,7 @@ export function logWebhookReceived(eventType: string) {
  */
 export function logWebhookSuccess(
   message: string,
-  context?: Record<string, any>,
+  context?: Record<string, unknown>,
 ) {
   logger.info(`✅ ${message}`, context);
 }
@@ -25,19 +37,21 @@ export function logWebhookSuccess(
 /**
  * Log webhook error
  */
-export function logWebhookError(message: string, error?: any) {
+export function logWebhookError(message: string, error?: unknown) {
   const errorContext = error
     ? error instanceof Error
       ? {
           error: error.message,
           stack: error.stack,
-          code: (error as any).code,
-          severity: (error as any).severity,
-          detail: (error as any).detail,
-          hint: (error as any).hint,
+          ...(isDatabaseError(error) && {
+            code: error.code,
+            severity: error.severity,
+            detail: error.detail,
+            hint: error.hint,
+          }),
           cause: error.cause instanceof Error ? error.cause.message : error.cause,
         }
-      : error
+      : { error: String(error) }
     : undefined;
   logger.error(`❌ ${message}`, errorContext);
 }
@@ -47,7 +61,7 @@ export function logWebhookError(message: string, error?: any) {
  */
 export function logWebhookWarning(
   message: string,
-  context?: Record<string, any>,
+  context?: Record<string, unknown>,
 ) {
   logger.warn(`⚠️ ${message}`, context);
 }
@@ -55,7 +69,7 @@ export function logWebhookWarning(
 /**
  * Log webhook debug info
  */
-export function logWebhookDebug(message: string, data: Record<string, any>) {
+export function logWebhookDebug(message: string, data: Record<string, unknown>) {
   logger.debug(`🔍 ${message}`, data);
 }
 

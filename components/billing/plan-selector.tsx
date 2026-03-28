@@ -10,6 +10,7 @@ import { PricingCard, PricingCardSkeleton } from "./pricing-card";
 import { PLAN_FEATURES, PLAN_DETAILS } from "./plan-features";
 import { isPaidPlan } from "@/utils/billing/access-helpers";
 import { clientLogger } from "@/lib/client-logger";
+import { getTRPCRateLimitRetryAfter, getErrorMessage } from "@/lib/trpc-error";
 
 /**
  * Polls an async function with exponential backoff until success condition is met.
@@ -146,25 +147,22 @@ export function PlanSelector({
 
       router.push("/");
       router.refresh();
-    } catch (error: any) {
+    } catch (error: unknown) {
       clientLogger.error("Error selecting free plan", error);
 
-      // Check if it's a rate limit error
-      if (
-        error?.data?.code === "TOO_MANY_REQUESTS" &&
-        error?.data?.cause?.retryAfter
-      ) {
+      const retryAfter = getTRPCRateLimitRetryAfter(error);
+      if (retryAfter) {
         setFeedbackMessage({
           type: "error",
           title: "Too Many Requests",
-          message: `Please wait ${error.data.cause.retryAfter} seconds before trying again. This helps us keep the service running smoothly for everyone.`,
+          message: `Please wait ${retryAfter} seconds before trying again. This helps us keep the service running smoothly for everyone.`,
         });
       } else {
         setFeedbackMessage({
           type: "error",
           title: "Failed to Update Plan",
           message:
-            error?.message ||
+            getErrorMessage(error) ||
             "We couldn't switch you to the free plan. Please try again or contact support if the issue persists.",
         });
       }
@@ -190,25 +188,22 @@ export function PlanSelector({
       const result = await createCheckoutMutation.mutateAsync({ plan });
 
       window.location.href = result.url;
-    } catch (error: any) {
+    } catch (error: unknown) {
       clientLogger.error("Error with plan change", error);
 
-      // Check if it's a rate limit error
-      if (
-        error?.data?.code === "TOO_MANY_REQUESTS" &&
-        error?.data?.cause?.retryAfter
-      ) {
+      const retryAfter = getTRPCRateLimitRetryAfter(error);
+      if (retryAfter) {
         setFeedbackMessage({
           type: "error",
           title: "Too Many Requests",
-          message: `Please wait ${error.data.cause.retryAfter} seconds before trying again. This helps us keep the service running smoothly for everyone.`,
+          message: `Please wait ${retryAfter} seconds before trying again. This helps us keep the service running smoothly for everyone.`,
         });
       } else {
         setFeedbackMessage({
           type: "error",
           title: "Failed to Process Plan Change",
           message:
-            error?.message ||
+            getErrorMessage(error) ||
             "We couldn't complete your plan change. Please try again or contact support if the issue persists.",
         });
       }

@@ -10,7 +10,7 @@ const CourseHandicapCalculator = dynamic(
     import("./course-handicap-calculator").then(
       (mod) => mod.CourseHandicapCalculator
     ),
-  { loading: () => <CalculatorSkeleton /> }
+  { ssr: false, loading: () => <CalculatorSkeleton /> }
 );
 
 const ScoreDifferentialCalculator = dynamic(
@@ -18,7 +18,7 @@ const ScoreDifferentialCalculator = dynamic(
     import("./score-differential-calculator").then(
       (mod) => mod.ScoreDifferentialCalculator
     ),
-  { loading: () => <CalculatorSkeleton /> }
+  { ssr: false, loading: () => <CalculatorSkeleton /> }
 );
 
 const HandicapIndexCalculator = dynamic(
@@ -26,13 +26,13 @@ const HandicapIndexCalculator = dynamic(
     import("./handicap-index-calculator").then(
       (mod) => mod.HandicapIndexCalculator
     ),
-  { loading: () => <CalculatorSkeleton /> }
+  { ssr: false, loading: () => <CalculatorSkeleton /> }
 );
 
 const NetScoreCalculator = dynamic(
   () =>
     import("./net-score-calculator").then((mod) => mod.NetScoreCalculator),
-  { loading: () => <CalculatorSkeleton /> }
+  { ssr: false, loading: () => <CalculatorSkeleton /> }
 );
 
 const PlayingHandicapCalculator = dynamic(
@@ -40,12 +40,12 @@ const PlayingHandicapCalculator = dynamic(
     import("./playing-handicap-calculator").then(
       (mod) => mod.PlayingHandicapCalculator
     ),
-  { loading: () => <CalculatorSkeleton /> }
+  { ssr: false, loading: () => <CalculatorSkeleton /> }
 );
 
 const WhatIfCalculator = dynamic(
   () => import("./what-if-calculator").then((mod) => mod.WhatIfCalculator),
-  { loading: () => <CalculatorSkeleton /> }
+  { ssr: false, loading: () => <CalculatorSkeleton /> }
 );
 
 const ExceptionalScoreCalculator = dynamic(
@@ -53,7 +53,7 @@ const ExceptionalScoreCalculator = dynamic(
     import("./exceptional-score-calculator").then(
       (mod) => mod.ExceptionalScoreCalculator
     ),
-  { loading: () => <CalculatorSkeleton /> }
+  { ssr: false, loading: () => <CalculatorSkeleton /> }
 );
 
 const TargetScoreCalculator = dynamic(
@@ -61,7 +61,7 @@ const TargetScoreCalculator = dynamic(
     import("./target-score-calculator").then(
       (mod) => mod.TargetScoreCalculator
     ),
-  { loading: () => <CalculatorSkeleton /> }
+  { ssr: false, loading: () => <CalculatorSkeleton /> }
 );
 
 const HandicapCapsCalculator = dynamic(
@@ -69,13 +69,13 @@ const HandicapCapsCalculator = dynamic(
     import("./handicap-caps-calculator").then(
       (mod) => mod.HandicapCapsCalculator
     ),
-  { loading: () => <CalculatorSkeleton /> }
+  { ssr: false, loading: () => <CalculatorSkeleton /> }
 );
 
 const NineHoleCalculator = dynamic(
   () =>
     import("./nine-hole-calculator").then((mod) => mod.NineHoleCalculator),
-  { loading: () => <CalculatorSkeleton /> }
+  { ssr: false, loading: () => <CalculatorSkeleton /> }
 );
 
 const StrokesReceivedCalculator = dynamic(
@@ -83,13 +83,13 @@ const StrokesReceivedCalculator = dynamic(
     import("./strokes-received-calculator").then(
       (mod) => mod.StrokesReceivedCalculator
     ),
-  { loading: () => <CalculatorSkeleton /> }
+  { ssr: false, loading: () => <CalculatorSkeleton /> }
 );
 
 const MaxScoreCalculator = dynamic(
   () =>
     import("./max-score-calculator").then((mod) => mod.MaxScoreCalculator),
-  { loading: () => <CalculatorSkeleton /> }
+  { ssr: false, loading: () => <CalculatorSkeleton /> }
 );
 
 interface CalculatorGridProps {

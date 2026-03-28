@@ -5,6 +5,7 @@ import Link from "next/link";
 import { getBillingFromJWT } from "@/utils/supabase/jwt";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
+import { logger } from "@/lib/logging";
 
 interface UpgradePageProps {
   searchParams: Promise<{ expired?: string }>;
@@ -34,7 +35,7 @@ export default async function UpgradePage({ searchParams }: UpgradePageProps) {
 
   // No plan in JWT - redirect to onboarding
   if (!billing?.plan) {
-    console.log(`⚠️ Upgrade page: No plan in JWT, redirecting to onboarding`);
+    logger.warn("Upgrade page: No plan in JWT, redirecting to onboarding");
     redirect("/onboarding");
   }
 
@@ -44,7 +45,7 @@ export default async function UpgradePage({ searchParams }: UpgradePageProps) {
     : "free";
 
   return (
-    <div className="container mx-auto px-4 py-16">
+    <div className="sm:container mx-auto px-4 py-16">
       <div className="max-w-6xl mx-auto">
         {/* Expired subscription alert */}
         {isExpired && (

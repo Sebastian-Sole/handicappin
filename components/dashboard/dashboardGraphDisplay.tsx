@@ -2,8 +2,16 @@ import Link from "next/link";
 import { Button } from "../ui/button";
 import ScoreBarChart from "../charts/score-bar-chart";
 
+interface ScoreGraphDataPoint {
+  key: string;
+  roundDate: string;
+  roundTime: string;
+  score: number;
+  influencesHcp: boolean;
+}
+
 interface DashboardGraphDisplayProps {
-  graphData: any;
+  graphData: ScoreGraphDataPoint[];
 }
 
 const DashboardGraphDisplay = ({ graphData }: DashboardGraphDisplayProps) => {

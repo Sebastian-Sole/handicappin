@@ -5,7 +5,7 @@ export default function AboutSkeleton() {
     <div className="min-h-screen bg-background">
       {/* Mission Section Skeleton */}
       <section className="w-full py-12 md:py-24 lg:py-32 bg-gradient-to-br from-primary/5 to-primary/20 dark:from-primary/5 dark:to-primary/35">
-        <div className="container px-4 md:px-6 mx-auto">
+        <div className="sm:container px-4 md:px-6 mx-auto">
           <div className="mx-auto grid max-w-5xl items-start gap-6 py-12 xl:grid-cols-2 lg:gap-12">
             <div className="flex flex-col justify-start space-y-4">
               <div className="space-y-2">
@@ -62,7 +62,7 @@ export default function AboutSkeleton() {
       </section>
       {/* Why Choose Us Section Skeleton */}
       <section className="w-full py-12 md:py-24 lg:py-32">
-        <div className="container px-4 md:px-6 mx-auto">
+        <div className="sm:container px-4 md:px-6 mx-auto">
           <div className="flex flex-col items-center justify-center space-y-4 text-center">
             <div className="space-y-2 w-full">
               <Skeleton className="h-6 w-32 mb-2 mx-auto" />

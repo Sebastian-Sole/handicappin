@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import { createClientComponentClient } from "@/utils/supabase/client";
 import { clientLogger } from "@/lib/client-logger";
+import { Button } from "@/components/ui/button";
 
 type WebhookStatus = {
   status: "processing" | "success" | "delayed" | "failed";
@@ -213,7 +214,7 @@ export default function BillingSuccessPage() {
   };
 
   return (
-    <div className="container mx-auto px-4 py-16">
+    <div className="sm:container mx-auto px-4 py-16">
       <div className="max-w-2xl mx-auto text-center">
         <div className="mb-8">
           {/* Loading State */}
@@ -278,28 +279,25 @@ export default function BillingSuccessPage() {
               </p>
 
               <div className="space-y-4">
-                <button
+                <Button
                   onClick={handleCheckAgain}
-                  className="w-full bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition"
+                  size="lg"
+                  className="w-full"
                 >
                   Check Again
-                </button>
+                </Button>
 
-                <Link
-                  href="/"
-                  className="block w-full border border-gray-300 px-6 py-3 rounded-lg hover:bg-gray-50 transition"
-                >
-                  Continue to Dashboard
-                </Link>
+                <Button asChild variant="outline" size="lg" className="w-full">
+                  <Link href="/">Continue to Dashboard</Link>
+                </Button>
               </div>
 
               <div className="mt-8 pt-8 border-t">
                 <p className="text-sm text-gray-600">
                   Still waiting after 5 minutes?{" "}
                   <a
-                    href={`mailto:sebastiansole@handicappin.com?subject=Subscription Activation Delayed&body=Session ID: ${
-                      sessionId || "unknown"
-                    }%0D%0AUser ID: ${userId || "unknown"}`}
+                    href={`mailto:sebastiansole@handicappin.com?subject=Subscription Activation Delayed&body=Session ID: ${sessionId || "unknown"
+                      }%0D%0AUser ID: ${userId || "unknown"}`}
                     className="text-blue-600 hover:underline"
                   >
                     Contact Support
@@ -343,30 +341,28 @@ export default function BillingSuccessPage() {
               )}
 
               <div className="space-y-4">
-                <a
-                  href={`mailto:sebastiansole@handicappin.com?subject=Subscription Activation Issue&body=Session ID: ${
-                    sessionId || "unknown"
-                  }%0D%0AUser ID: ${
-                    userId || "unknown"
-                  }%0D%0A%0D%0APlease describe the issue:`}
-                  className="block w-full bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition text-center"
-                >
-                  📧 Email Support
-                </a>
+                <Button asChild size="lg" className="w-full">
+                  <a
+                    href={`mailto:sebastiansole@handicappin.com?subject=Subscription Activation Issue&body=Session ID: ${sessionId || "unknown"
+                      }%0D%0AUser ID: ${userId || "unknown"
+                      }%0D%0A%0D%0APlease describe the issue:`}
+                  >
+                    Email Support
+                  </a>
+                </Button>
 
-                <button
+                <Button
                   onClick={handleCheckAgain}
-                  className="w-full border border-gray-300 px-6 py-3 rounded-lg hover:bg-gray-50 transition"
+                  variant="outline"
+                  size="lg"
+                  className="w-full"
                 >
                   Try Checking Again
-                </button>
+                </Button>
 
-                <Link
-                  href="/"
-                  className="block w-full border border-gray-300 px-6 py-3 rounded-lg hover:bg-gray-50 transition text-center"
-                >
-                  Return to Home
-                </Link>
+                <Button asChild variant="outline" size="lg" className="w-full">
+                  <Link href="/">Return to Home</Link>
+                </Button>
               </div>
 
               <div className="mt-8 pt-8 border-t">
@@ -393,18 +389,12 @@ export default function BillingSuccessPage() {
           status !== "delayed" &&
           status !== "failed" && (
             <div className="space-y-4">
-              <Link
-                href="/"
-                className="block w-full bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition"
-              >
-                Go to Dashboard
-              </Link>
-              <Link
-                href="/"
-                className="block w-full border border-gray-300 px-6 py-3 rounded-lg hover:bg-gray-50 transition"
-              >
-                Back to Home
-              </Link>
+              <Button asChild size="lg" className="w-full">
+                <Link href="/">Go to Dashboard</Link>
+              </Button>
+              <Button asChild variant="outline" size="lg" className="w-full">
+                <Link href="/">Back to Home</Link>
+              </Button>
             </div>
           )}
       </div>

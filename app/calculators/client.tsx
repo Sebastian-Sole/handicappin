@@ -18,7 +18,7 @@ export function CalculatorsPageClient() {
       <div className="min-h-screen">
         <LinkedValuesBar />
 
-        <div className="container mx-auto px-4 py-8 space-y-8">
+        <div className="sm:container mx-auto px-4 py-8 space-y-8">
           {/* Header */}
           <div className="text-center space-y-4">
             <H1>Golf Calculators</H1>
