@@ -103,6 +103,9 @@ export const scorecardRouter = createTRPCRouter({
           ...roundData,
           teeTime: roundData.teeTime.toISOString(),
           createdAt: roundData.createdAt.toISOString(),
+          course_rating_used: roundData.courseRatingUsed,
+          slope_rating_used: roundData.slopeRatingUsed,
+          holes_played: roundData.holesPlayed,
         },
         roundsBeforeTeeTime,
       };
@@ -222,6 +225,9 @@ export const scorecardRouter = createTRPCRouter({
                 roundData.courseRatingUsed == null
                   ? null
                   : Number(roundData.courseRatingUsed),
+              course_rating_used: Number(roundData.courseRatingUsed ?? 0),
+              slope_rating_used: roundData.slopeRatingUsed ?? 0,
+              holes_played: roundData.holesPlayed ?? 0,
             },
           };
         })

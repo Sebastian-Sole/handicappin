@@ -253,237 +253,282 @@ export const roundRouter = createTRPCRouter({
 
 
 
-      // 1. Get user profile for handicap calculations
-      const userProfile = await db
-        .select()
-        .from(profile)
-        .where(eq(profile.id, userId))
-        .limit(1);
-
-      if (!userProfile[0]) {
-        throw new Error("User profile not found");
-      }
-
-
-      // 2. Handle course
-      let courseId = coursePlayed.id;
-
-      // First, try to find existing course by name
-      const existingCourse = await db
-        .select()
-        .from(course)
-        .where(eq(course.name, coursePlayed.name))
-        .limit(1);
-
-      if (existingCourse[0]) {
-        // Course already exists, use its ID
-        courseId = existingCourse[0].id;
-      } else if (coursePlayed.approvalStatus === "pending") {
-        // Course doesn't exist and is pending, insert new one
-        const [newCourse] = await db
-          .insert(course)
-          .values({
-            name: coursePlayed.name,
-            approvalStatus: "pending",
-            country: coursePlayed.country,
-            city: coursePlayed.city,
-            website: coursePlayed.website,
-          })
-          .returning();
-        courseId = newCourse.id;
-      }
-
-
-      if (!courseId) {
-        throw new Error("Course ID not found");
-      }
-
-
-      // 3. Handle tee
-      let teeId = teePlayed.id;
-
-      // First, try to find existing tee by name, course, and gender
-      const existingTee = await db
-        .select()
-        .from(teeInfo)
-        .where(
-          and(
-            eq(teeInfo.courseId, courseId),
-            eq(teeInfo.name, teePlayed.name),
-            eq(teeInfo.gender, teePlayed.gender)
-          )
-        )
-        .limit(1);
-
-      if (existingTee[0]) {
-        // Tee already exists, use its ID
-        teeId = existingTee[0].id;
-      } else if (teePlayed.id && teePlayed.approvalStatus === "approved") {
-        // Approved tee with ID from frontend - try to find by ID directly
-        // This handles cases where the tee exists but name/gender matching failed
-        const teeById = await db
+      // Wrap all database mutations in a transaction so partial failures roll back
+      const newRound = await db.transaction(async (tx) => {
+        // 1. Get user profile for handicap calculations
+        const userProfile = await tx
           .select()
-          .from(teeInfo)
-          .where(eq(teeInfo.id, teePlayed.id))
+          .from(profile)
+          .where(eq(profile.id, userId))
           .limit(1);
 
-        if (teeById[0]) {
-          teeId = teeById[0].id;
-        } else {
-          throw new Error(`Approved tee with ID ${teePlayed.id} not found in database`);
+        if (!userProfile[0]) {
+          throw new Error("User profile not found");
         }
-      } else if (teePlayed.approvalStatus === "pending") {
 
-        const teeInsert: TeeInfoInsert = {
-          courseId: courseId!,
-          name: teePlayed.name,
-          gender: teePlayed.gender,
-          courseRating18: teePlayed.courseRating18,
-          slopeRating18: teePlayed.slopeRating18,
-          courseRatingFront9: teePlayed.courseRatingFront9,
-          slopeRatingFront9: teePlayed.slopeRatingFront9,
-          courseRatingBack9: teePlayed.courseRatingBack9,
-          slopeRatingBack9: teePlayed.slopeRatingBack9,
-          outPar: teePlayed.outPar,
-          inPar: teePlayed.inPar,
-          totalPar: teePlayed.totalPar,
-          outDistance: teePlayed.outDistance,
-          inDistance: teePlayed.inDistance,
-          totalDistance: teePlayed.totalDistance,
-          distanceMeasurement: teePlayed.distanceMeasurement,
-          approvalStatus: "pending",
-          // isArchived and version are optional (defaulted in schema)
+        // 2. Handle course
+        let courseId = coursePlayed.id;
+
+        const existingCourse = await tx
+          .select()
+          .from(course)
+          .where(eq(course.name, coursePlayed.name))
+          .limit(1);
+
+        if (existingCourse[0]) {
+          courseId = existingCourse[0].id;
+        } else if (coursePlayed.approvalStatus === "pending") {
+          const [newCourse] = await tx
+            .insert(course)
+            .values({
+              name: coursePlayed.name,
+              approvalStatus: "pending",
+              country: coursePlayed.country,
+              city: coursePlayed.city,
+              website: coursePlayed.website,
+            })
+            .returning();
+          courseId = newCourse.id;
+        }
+
+        if (!courseId) {
+          throw new Error("Course ID not found");
+        }
+
+        // 3. Handle tee
+        let teeId = teePlayed.id;
+
+        const existingTee = await tx
+          .select()
+          .from(teeInfo)
+          .where(
+            and(
+              eq(teeInfo.courseId, courseId),
+              eq(teeInfo.name, teePlayed.name),
+              eq(teeInfo.gender, teePlayed.gender)
+            )
+          )
+          .limit(1);
+
+        if (existingTee[0]) {
+          teeId = existingTee[0].id;
+        } else if (teePlayed.id && teePlayed.approvalStatus === "approved") {
+          const teeById = await tx
+            .select()
+            .from(teeInfo)
+            .where(eq(teeInfo.id, teePlayed.id))
+            .limit(1);
+
+          if (teeById[0]) {
+            teeId = teeById[0].id;
+          } else {
+            throw new Error(`Approved tee with ID ${teePlayed.id} not found in database`);
+          }
+        } else if (teePlayed.approvalStatus === "pending") {
+          const teeInsert: TeeInfoInsert = {
+            courseId: courseId!,
+            name: teePlayed.name,
+            gender: teePlayed.gender,
+            courseRating18: teePlayed.courseRating18,
+            slopeRating18: teePlayed.slopeRating18,
+            courseRatingFront9: teePlayed.courseRatingFront9,
+            slopeRatingFront9: teePlayed.slopeRatingFront9,
+            courseRatingBack9: teePlayed.courseRatingBack9,
+            slopeRatingBack9: teePlayed.slopeRatingBack9,
+            outPar: teePlayed.outPar,
+            inPar: teePlayed.inPar,
+            totalPar: teePlayed.totalPar,
+            outDistance: teePlayed.outDistance,
+            inDistance: teePlayed.inDistance,
+            totalDistance: teePlayed.totalDistance,
+            distanceMeasurement: teePlayed.distanceMeasurement,
+            approvalStatus: "pending",
+          };
+
+          const [newTee] = await tx.insert(teeInfo).values(teeInsert).returning();
+          teeId = newTee.id;
+
+          if (teeId === null) {
+            throw new Error("Failed to insert tee");
+          }
+
+          if (teePlayed.holes) {
+            const holeInserts = teePlayed.holes.map((h) => ({
+              teeId: teeId!,
+              holeNumber: h.holeNumber,
+              par: h.par,
+              hcp: h.hcp,
+              distance: h.distance,
+            }));
+
+            await tx.insert(hole).values(holeInserts);
+          }
+        }
+
+        // 4. Persist additional tees from the course (not the played tee)
+        if (coursePlayed.tees && coursePlayed.tees.length > 1) {
+          for (const additionalTee of coursePlayed.tees) {
+            if (
+              additionalTee.name === teePlayed.name &&
+              additionalTee.gender === teePlayed.gender
+            ) {
+              continue;
+            }
+
+            const existingAdditionalTee = await tx
+              .select()
+              .from(teeInfo)
+              .where(
+                and(
+                  eq(teeInfo.courseId, courseId!),
+                  eq(teeInfo.name, additionalTee.name),
+                  eq(teeInfo.gender, additionalTee.gender),
+                ),
+              )
+              .limit(1);
+
+            if (existingAdditionalTee[0]) {
+              continue;
+            }
+
+            const [newAdditionalTee] = await tx
+              .insert(teeInfo)
+              .values({
+                courseId: courseId!,
+                name: additionalTee.name,
+                gender: additionalTee.gender,
+                courseRating18: additionalTee.courseRating18,
+                slopeRating18: additionalTee.slopeRating18,
+                courseRatingFront9: additionalTee.courseRatingFront9,
+                slopeRatingFront9: additionalTee.slopeRatingFront9,
+                courseRatingBack9: additionalTee.courseRatingBack9,
+                slopeRatingBack9: additionalTee.slopeRatingBack9,
+                outPar: additionalTee.outPar,
+                inPar: additionalTee.inPar,
+                totalPar: additionalTee.totalPar,
+                outDistance: additionalTee.outDistance,
+                inDistance: additionalTee.inDistance,
+                totalDistance: additionalTee.totalDistance,
+                distanceMeasurement: additionalTee.distanceMeasurement,
+                approvalStatus: "pending",
+              })
+              .returning();
+
+            if (additionalTee.holes && newAdditionalTee) {
+              const additionalHoleInserts = additionalTee.holes.map((h) => ({
+                teeId: newAdditionalTee.id,
+                holeNumber: h.holeNumber,
+                par: h.par,
+                hcp: h.hcp,
+                distance: h.distance,
+              }));
+
+              await tx.insert(hole).values(additionalHoleInserts);
+            }
+          }
+        }
+
+        // Match scores with holes to calculate the par played
+        let parPlayed = 0;
+        if (teePlayed.holes && Array.isArray(scores)) {
+          const holeParMap = new Map<number, number>();
+          teePlayed.holes.forEach((h) => {
+            holeParMap.set(h.holeNumber, h.par);
+          });
+
+          parPlayed = scores.reduce((sum, score, idx) => {
+            const holeNumber = idx + 1;
+            const par = holeParMap.get(holeNumber) ?? 0;
+            return sum + par;
+          }, 0);
+        }
+
+        // Determine if player has an established handicap (USGA requires 3+ approved rounds)
+        const roundTeeTime = new Date(teeTime);
+        const roundsBeforeThis = await tx
+          .select({ count: count() })
+          .from(round)
+          .where(
+            and(
+              eq(round.userId, userId),
+              lt(round.teeTime, roundTeeTime),
+              eq(round.approvalStatus, "approved")
+            )
+          );
+        const hasEstablishedHandicap = (roundsBeforeThis[0]?.count ?? 0) >= 3;
+
+        const {
+          adjustedGrossScore: tempAdjustedGrossScore,
+          adjustedPlayedScore: tempAdjustedPlayedScore,
+          scoreDifferential: tempScoreDifferential,
+          courseHandicap: tempCourseHandicap,
+          courseRatingUsed: tempCourseRatingUsed,
+          slopeRatingUsed: tempSlopeRatingUsed,
+          holesPlayed: tempHolesPlayed,
+        } = getRoundCalculations(input, Number(userProfile[0].handicapIndex), hasEstablishedHandicap);
+
+        if (!teeId) {
+          throw new Error("Course or tee ID not found");
+        }
+
+        const roundInsert: RoundInsert = {
+          userId: userId,
+          courseId: courseId,
+          teeId: teeId,
+          teeTime: new Date(teeTime),
+          existingHandicapIndex: userProfile[0].handicapIndex,
+          updatedHandicapIndex: userProfile[0].handicapIndex,
+          scoreDifferential: tempScoreDifferential,
+          totalStrokes: scores.reduce((sum, score) => sum + score.strokes, 0),
+          adjustedGrossScore: tempAdjustedGrossScore,
+          adjustedPlayedScore: tempAdjustedPlayedScore,
+          parPlayed: parPlayed,
+          notes,
+          exceptionalScoreAdjustment: 0,
+          courseHandicap: tempCourseHandicap,
+          approvalStatus,
+          courseRatingUsed: tempCourseRatingUsed,
+          slopeRatingUsed: tempSlopeRatingUsed,
+          holesPlayed: tempHolesPlayed,
         };
 
-        const [newTee] = await db.insert(teeInfo).values(teeInsert).returning();
-        teeId = newTee.id;
+        // 5. Insert round
+        const [insertedRound] = await tx.insert(round).values(roundInsert).returning();
 
-
-        if (teeId === null) {
-          throw new Error("Failed to insert tee");
+        if (!insertedRound) {
+          throw new Error("Failed to insert round");
         }
 
-        // Insert holes if tee is pending
-        if (teePlayed.holes) {
-          const holeInserts = teePlayed.holes.map((h) => ({
-            teeId: teeId!,
-            holeNumber: h.holeNumber,
-            par: h.par,
-            hcp: h.hcp,
-            distance: h.distance,
-          }));
+        // Get the actual hole IDs from the database
+        const dbHoles = await tx
+          .select()
+          .from(hole)
+          .where(eq(hole.teeId, teeId))
+          .orderBy(hole.holeNumber);
 
-          await db.insert(hole).values(holeInserts);
+        if (dbHoles.length < scores.length) {
+          throw new Error(
+            `Expected at least ${scores.length} holes but found ${dbHoles.length} in database`
+          );
         }
-      }
 
-      // Match scores with holes to calculate the par played
-      let parPlayed = 0;
-      if (teePlayed.holes && Array.isArray(scores)) {
-        // Create a map of holeNumber to par for quick lookup
-        const holeParMap = new Map<number, number>();
-        teePlayed.holes.forEach((h) => {
-          holeParMap.set(h.holeNumber, h.par);
-        });
+        const holesToUse = dbHoles.slice(0, scores.length);
 
-        // For each score, find the corresponding hole's par and sum
-        parPlayed = scores.reduce((sum, score, idx) => {
-          // Assume scores are in order of holeNumber (1-based)
-          const holeNumber = idx + 1;
-          const par = holeParMap.get(holeNumber) ?? 0;
-          return sum + par;
-        }, 0);
-      }
+        const scoreInserts = scores.map((score, index) => ({
+          userId,
+          roundId: insertedRound.id,
+          holeId: holesToUse[index].id,
+          strokes: score.strokes,
+          hcpStrokes: score.hcpStrokes,
+        }));
 
-      // Determine if player has an established handicap (USGA requires 3+ approved rounds)
-      // Count approved rounds played BEFORE this round's tee time
-      const roundTeeTime = new Date(teeTime);
-      const roundsBeforeThis = await db
-        .select({ count: count() })
-        .from(round)
-        .where(
-          and(
-            eq(round.userId, userId),
-            lt(round.teeTime, roundTeeTime),
-            eq(round.approvalStatus, "approved")
-          )
-        );
-      const hasEstablishedHandicap = (roundsBeforeThis[0]?.count ?? 0) >= 3;
+        await tx.insert(score).values(scoreInserts);
 
-      const {
-        adjustedGrossScore: tempAdjustedGrossScore,
-        adjustedPlayedScore: tempAdjustedPlayedScore,
-        scoreDifferential: tempScoreDifferential,
-        courseHandicap: tempCourseHandicap,
-        courseRatingUsed: tempCourseRatingUsed,
-        slopeRatingUsed: tempSlopeRatingUsed,
-        holesPlayed: tempHolesPlayed,
-      } = getRoundCalculations(input, Number(userProfile[0].handicapIndex), hasEstablishedHandicap);
-
-
-      if (!teeId) {
-        throw new Error("Course or tee ID not found");
-      }
-
-      const roundInsert: RoundInsert = {
-        userId: userId,
-        courseId: courseId,
-        teeId: teeId,
-        teeTime: new Date(teeTime),
-        existingHandicapIndex: userProfile[0].handicapIndex,
-        updatedHandicapIndex: userProfile[0].handicapIndex,
-        scoreDifferential: tempScoreDifferential,
-        totalStrokes: scores.reduce((sum, score) => sum + score.strokes, 0),
-        adjustedGrossScore: tempAdjustedGrossScore,
-        adjustedPlayedScore: tempAdjustedPlayedScore,
-        parPlayed: parPlayed,
-        notes,
-        exceptionalScoreAdjustment: 0,
-        courseHandicap: tempCourseHandicap,
-        approvalStatus,
-        // Lock tee ratings at time of play - preserved even if tee data changes later
-        // For 9-hole rounds, uses front9 ratings per USGA Rule 5.1b
-        courseRatingUsed: tempCourseRatingUsed,
-        slopeRatingUsed: tempSlopeRatingUsed,
-        holesPlayed: tempHolesPlayed,
-      };
-      // 5. Insert round
-      const [newRound] = await db.insert(round).values(roundInsert).returning();
-
-      if (!newRound) {
-        throw new Error("Failed to insert round");
-      }
-      // Get the actual hole IDs from the database
-      const dbHoles = await db
-        .select()
-        .from(hole)
-        .where(eq(hole.teeId, teeId))
-        .orderBy(hole.holeNumber);
-
-      // Validate that we have enough holes in the database
-      if (dbHoles.length < scores.length) {
-        throw new Error(
-          `Expected at least ${scores.length} holes but found ${dbHoles.length} in database`
-        );
-      }
-
-      // For 9-hole rounds, only use the first 9 holes from the database
-      // For 18-hole rounds, use all 18 holes
-      const holesToUse = dbHoles.slice(0, scores.length);
-
-      // Create score inserts with the correct holeIds from database
-      const scoreInserts = scores.map((score, index) => ({
-        userId,
-        roundId: newRound.id,
-        holeId: holesToUse[index].id,
-        strokes: score.strokes,
-        hcpStrokes: score.hcpStrokes, // Will be updated by the trigger
-      }));
-
-      await db.insert(score).values(scoreInserts);
+        return insertedRound;
+      });
 
       // Race condition protection: re-check count for free tier users
-      // This prevents parallel submissions from exceeding the limit
+      // This runs outside the transaction since it uses the Supabase REST API
       if (access.plan === "free") {
         const { count, error: countError } = await ctx.supabase
           .from("round")
@@ -492,9 +537,7 @@ export const roundRouter = createTRPCRouter({
 
         if (countError) {
           console.error("Error re-checking round count:", countError);
-          // Allow the submission - count check already passed pre-flight
         } else if (count && count > FREE_TIER_ROUND_LIMIT) {
-          // User exceeded limit via race condition - rollback
           console.warn(
             `⚠️ Race condition detected: User ${userId} has ${count} rounds (limit: ${FREE_TIER_ROUND_LIMIT}). Rolling back round ${newRound.id}`
           );
@@ -507,7 +550,6 @@ export const roundRouter = createTRPCRouter({
               "Round limit exceeded due to concurrent submissions. Your submission was not saved. Please try again.",
           });
         }
-
       }
 
       return newRound;

@@ -144,6 +144,16 @@ export const courseSchema = z.object({
   tees: z
     .array(teeSchema)
     .min(1, "At least one tee required")
+    .refine(
+      (tees) => {
+        const keys = tees.map((tee) => `${tee.name}_${tee.gender}`);
+        return new Set(keys).size === keys.length;
+      },
+      {
+        message:
+          "Each tee must have a unique name and gender combination",
+      }
+    )
     .or(z.undefined()),
 });
 

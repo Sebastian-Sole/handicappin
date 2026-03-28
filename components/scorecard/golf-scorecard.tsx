@@ -211,7 +211,7 @@ export default function GolfScorecard({ profile, access }: GolfScorecardProps) {
       selectTee(teeKey);
 
       // Update form values
-      form.setValue("course", { ...newCourse, tees: undefined });
+      form.setValue("course", { ...newCourse });
       form.setValue("teePlayed", {
         ...firstTee,
         id: undefined,

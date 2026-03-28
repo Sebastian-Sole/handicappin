@@ -77,15 +77,27 @@ export function useTeeManagement() {
       approvalStatus: "pending" as const,
     };
 
-    const firstTee = {
-      ...course.tees[0],
+    const allTees = course.tees.map((tee) => ({
+      ...tee,
       id: generateTempId(),
       courseId: newCourse.id,
       approvalStatus: "pending" as const,
-      holes: course.tees[0].holes,
-    };
+      holes: tee.holes,
+    }));
 
-    const teeKey = getTeeKey(newCourse.id, firstTee.name, firstTee.gender);
+    const teeEntries: Record<string, typeof allTees[number]> = {};
+    for (const tee of allTees) {
+      const key = getTeeKey(newCourse.id, tee.name, tee.gender);
+      if (teeEntries[key]) {
+        throw new Error(
+          `Duplicate tee: "${tee.name}" (${tee.gender}) appears more than once`
+        );
+      }
+      teeEntries[key] = tee;
+    }
+
+    const firstTee = allTees[0];
+    const firstTeeKey = getTeeKey(newCourse.id, firstTee.name, firstTee.gender);
 
     setModifications((prev) => ({
       ...prev,
@@ -95,18 +107,30 @@ export function useTeeManagement() {
       },
       tees: {
         ...prev.tees,
-        [teeKey]: firstTee,
+        ...teeEntries,
       },
     }));
 
     return {
       course: newCourse,
       tee: firstTee,
-      teeKey,
+      teeKey: firstTeeKey,
     };
   }, []);
 
   const addTee = useCallback((courseId: number, newTee: Tee) => {
+    const teeKey = getTeeKey(courseId, newTee.name, newTee.gender);
+
+    const existingTees = getEffectiveTees(courseId);
+    const isDuplicate = existingTees.some(
+      (tee) => tee.name === newTee.name && tee.gender === newTee.gender
+    );
+    if (isDuplicate) {
+      throw new Error(
+        `Duplicate tee: "${newTee.name}" (${newTee.gender}) already exists for this course`
+      );
+    }
+
     const teeWithId = {
       ...newTee,
       id: generateTempId(),
@@ -114,8 +138,6 @@ export function useTeeManagement() {
       approvalStatus: "pending" as const,
       holes: newTee.holes,
     };
-
-    const teeKey = getTeeKey(courseId, newTee.name, newTee.gender);
 
     setModifications((prev) => ({
       ...prev,
@@ -129,7 +151,7 @@ export function useTeeManagement() {
       tee: teeWithId,
       teeKey,
     };
-  }, []);
+  }, [getEffectiveTees]);
 
   const editTee = useCallback(
     (courseId: number, _currentTeeName: string | undefined, updatedTee: Tee) => {
