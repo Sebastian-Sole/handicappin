@@ -224,14 +224,11 @@ function TeeRatingFields({ tee, onTeeChange }: TeeFormContentProps) {
   };
 
   const handleTotalSlopeChange = (val: number) => {
-    // Example logic splitting into front/back
-    const halfFront = Math.floor(val / 2);
-    const halfBack = Math.ceil(val / 2);
     const newTee = {
       ...tee,
       slopeRating18: val,
-      slopeRatingFront9: halfFront,
-      slopeRatingBack9: halfBack,
+      slopeRatingFront9: val,
+      slopeRatingBack9: val,
     };
     onTeeChange(newTee);
   };
