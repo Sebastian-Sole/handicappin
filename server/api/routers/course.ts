@@ -4,10 +4,6 @@ import { db } from "@/db";
 import { course } from "@/db/schema";
 import { ilike, and, eq } from "drizzle-orm";
 
-const courseQuery = z.object({
-  userId: z.string(),
-});
-
 export const courseRouter = createTRPCRouter({
   getCourseById: publicProcedure
     .input(z.object({ courseId: z.number() }))
@@ -23,20 +19,6 @@ export const courseRouter = createTRPCRouter({
         return null;
       }
       return course;
-    }),
-  getAllUserCourses: publicProcedure
-    .input(courseQuery)
-    .query(async ({ ctx, input }) => {
-      const { userId } = input;
-      const { data: courses, error } = await ctx.supabase
-        .from("course")
-        .select("*")
-        .eq("userId", userId);
-      if (error) {
-        console.error(error);
-        throw new Error("Error fetching courses");
-      }
-      return courses;
     }),
   searchCourses: publicProcedure
     .input(z.object({ query: z.string().min(1) }))
