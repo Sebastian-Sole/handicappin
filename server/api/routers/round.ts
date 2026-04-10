@@ -1,6 +1,14 @@
 import { z } from "zod";
 import { createTRPCRouter, authedProcedure } from "@/server/api/trpc";
-import { round, score, profile, teeInfo, course, hole } from "@/db/schema";
+import {
+  round,
+  score,
+  profile,
+  teeInfo,
+  course,
+  hole,
+  submissions,
+} from "@/db/schema";
 import { eq, and, lt, count } from "drizzle-orm";
 import * as Sentry from "@sentry/nextjs";
 
@@ -268,6 +276,7 @@ export const roundRouter = createTRPCRouter({
 
         // 2. Handle course
         let courseId = coursePlayed.id;
+        let courseIsNew = false;
 
         const existingCourse = await tx
           .select()
@@ -286,9 +295,11 @@ export const roundRouter = createTRPCRouter({
               country: coursePlayed.country,
               city: coursePlayed.city,
               website: coursePlayed.website,
+              submittedBy: userId,
             })
             .returning();
           courseId = newCourse.id;
+          courseIsNew = true;
         }
 
         if (!courseId) {
@@ -297,71 +308,230 @@ export const roundRouter = createTRPCRouter({
 
         // 3. Handle tee
         let teeId = teePlayed.id;
+        let teeIsNew = false;
+        let teeIsEdit = false;
+        let parentTeeId: number | null = null;
+        let resolvedApprovalStatus = approvalStatus;
 
-        const existingTee = await tx
-          .select()
-          .from(teeInfo)
-          .where(
-            and(
-              eq(teeInfo.courseId, courseId),
-              eq(teeInfo.name, teePlayed.name),
-              eq(teeInfo.gender, teePlayed.gender)
-            )
-          )
-          .limit(1);
+        // Helper for comparing decimal ratings with tolerance
+        const ratingEqual = (a: unknown, b: unknown): boolean =>
+          Math.abs(Number(a) - Number(b)) < 0.001;
 
-        if (existingTee[0]) {
-          teeId = existingTee[0].id;
-        } else if (teePlayed.id && teePlayed.approvalStatus === "approved") {
-          const teeById = await tx
+        // 3a. Check if user selected their own pending tee (not editing it)
+        if (
+          teePlayed.approvalStatus === "pending" &&
+          teePlayed.id &&
+          teePlayed.id > 0
+        ) {
+          const pendingTee = await tx
             .select()
             .from(teeInfo)
-            .where(eq(teeInfo.id, teePlayed.id))
+            .where(
+              and(
+                eq(teeInfo.id, teePlayed.id),
+                eq(teeInfo.approvalStatus, "pending"),
+                eq(teeInfo.submittedBy, userId)
+              )
+            )
             .limit(1);
 
-          if (teeById[0]) {
-            teeId = teeById[0].id;
-          } else {
-            throw new Error(`Approved tee with ID ${teePlayed.id} not found in database`);
+          if (pendingTee.length > 0) {
+            teeId = pendingTee[0]!.id;
+            resolvedApprovalStatus = "pending";
+            parentTeeId = pendingTee[0]!.parentTeeId;
           }
-        } else if (teePlayed.approvalStatus === "pending") {
-          const teeInsert: TeeInfoInsert = {
-            courseId: courseId!,
-            name: teePlayed.name,
-            gender: teePlayed.gender,
-            courseRating18: teePlayed.courseRating18,
-            slopeRating18: teePlayed.slopeRating18,
-            courseRatingFront9: teePlayed.courseRatingFront9,
-            slopeRatingFront9: teePlayed.slopeRatingFront9,
-            courseRatingBack9: teePlayed.courseRatingBack9,
-            slopeRatingBack9: teePlayed.slopeRatingBack9,
-            outPar: teePlayed.outPar,
-            inPar: teePlayed.inPar,
-            totalPar: teePlayed.totalPar,
-            outDistance: teePlayed.outDistance,
-            inDistance: teePlayed.inDistance,
-            totalDistance: teePlayed.totalDistance,
-            distanceMeasurement: teePlayed.distanceMeasurement,
-            approvalStatus: "pending",
-          };
+        }
 
-          const [newTee] = await tx.insert(teeInfo).values(teeInsert).returning();
-          teeId = newTee.id;
+        // 3b. Find existing APPROVED non-archived tee by courseId + name + gender
+        if (!teeIsNew && !teeIsEdit && teeId === teePlayed.id) {
+          const existingTee = await tx
+            .select()
+            .from(teeInfo)
+            .where(
+              and(
+                eq(teeInfo.courseId, courseId),
+                eq(teeInfo.name, teePlayed.name),
+                eq(teeInfo.gender, teePlayed.gender),
+                eq(teeInfo.approvalStatus, "approved"),
+                eq(teeInfo.isArchived, false)
+              )
+            )
+            .limit(1);
 
-          if (teeId === null) {
-            throw new Error("Failed to insert tee");
-          }
+          if (existingTee.length > 0 && teePlayed.approvalStatus === "pending") {
+            const existing = existingTee[0]!;
 
-          if (teePlayed.holes) {
-            const holeInserts = teePlayed.holes.map((h) => ({
-              teeId: teeId!,
-              holeNumber: h.holeNumber,
-              par: h.par,
-              hcp: h.hcp,
-              distance: h.distance,
-            }));
+            // Compare submitted tee data against existing approved row
+            const hasRatingChanges =
+              !ratingEqual(existing.courseRating18, teePlayed.courseRating18) ||
+              Number(existing.slopeRating18) !==
+                Number(teePlayed.slopeRating18) ||
+              !ratingEqual(
+                existing.courseRatingFront9,
+                teePlayed.courseRatingFront9
+              ) ||
+              Number(existing.slopeRatingFront9) !==
+                Number(teePlayed.slopeRatingFront9) ||
+              !ratingEqual(
+                existing.courseRatingBack9,
+                teePlayed.courseRatingBack9
+              ) ||
+              Number(existing.slopeRatingBack9) !==
+                Number(teePlayed.slopeRatingBack9);
 
-            await tx.insert(hole).values(holeInserts);
+            const hasParChanges =
+              existing.outPar !== teePlayed.outPar ||
+              existing.inPar !== teePlayed.inPar ||
+              existing.totalPar !== teePlayed.totalPar;
+
+            const hasDistanceChanges =
+              existing.outDistance !== teePlayed.outDistance ||
+              existing.inDistance !== teePlayed.inDistance ||
+              existing.totalDistance !== teePlayed.totalDistance;
+
+            // Also compare hole-level data
+            const existingHoles = await tx
+              .select()
+              .from(hole)
+              .where(eq(hole.teeId, existing.id))
+              .orderBy(hole.holeNumber);
+
+            const hasHoleChanges = teePlayed.holes
+              ? teePlayed.holes.some((submittedHole, holeIndex) => {
+                  const existingHole = existingHoles[holeIndex];
+                  if (!existingHole) return true;
+                  return (
+                    submittedHole.par !== existingHole.par ||
+                    submittedHole.distance !== existingHole.distance ||
+                    submittedHole.hcp !== existingHole.hcp
+                  );
+                })
+              : false;
+
+            if (
+              hasRatingChanges ||
+              hasParChanges ||
+              hasDistanceChanges ||
+              hasHoleChanges
+            ) {
+              // Real changes detected -- create a new pending tee row
+              const [newTee] = await tx
+                .insert(teeInfo)
+                .values({
+                  courseId: courseId!,
+                  name: teePlayed.name,
+                  gender: teePlayed.gender,
+                  courseRating18: teePlayed.courseRating18,
+                  slopeRating18: teePlayed.slopeRating18,
+                  courseRatingFront9: teePlayed.courseRatingFront9,
+                  slopeRatingFront9: teePlayed.slopeRatingFront9,
+                  courseRatingBack9: teePlayed.courseRatingBack9,
+                  slopeRatingBack9: teePlayed.slopeRatingBack9,
+                  outPar: teePlayed.outPar,
+                  inPar: teePlayed.inPar,
+                  totalPar: teePlayed.totalPar,
+                  outDistance: teePlayed.outDistance,
+                  inDistance: teePlayed.inDistance,
+                  totalDistance: teePlayed.totalDistance,
+                  distanceMeasurement: teePlayed.distanceMeasurement,
+                  approvalStatus: "pending",
+                  parentTeeId: existing.id,
+                  submittedBy: userId,
+                  version: existing.version + 1,
+                })
+                .returning({ id: teeInfo.id });
+
+              teeId = newTee!.id;
+              teeIsEdit = true;
+              parentTeeId = existing.id;
+              resolvedApprovalStatus = "pending";
+
+              // Insert holes for the new pending tee
+              if (teePlayed.holes) {
+                const holeValues = teePlayed.holes.map((h) => ({
+                  teeId: teeId!,
+                  holeNumber: h.holeNumber,
+                  par: h.par,
+                  distance: h.distance,
+                  hcp: h.hcp,
+                }));
+                await tx.insert(hole).values(holeValues);
+              }
+            } else {
+              // No real changes -- user opened edit dialog but didn't change anything
+              // Use existing tee and keep its approval status
+              teeId = existing.id;
+              resolvedApprovalStatus = existing.approvalStatus as
+                | "approved"
+                | "pending";
+            }
+          } else if (existingTee.length > 0) {
+            // Tee is approved and not edited -- reuse as-is
+            teeId = existingTee[0]!.id;
+          } else if (
+            teePlayed.id &&
+            teePlayed.approvalStatus === "approved"
+          ) {
+            // Approved tee by ID (no name+gender match needed)
+            const teeById = await tx
+              .select()
+              .from(teeInfo)
+              .where(eq(teeInfo.id, teePlayed.id))
+              .limit(1);
+
+            if (teeById[0]) {
+              teeId = teeById[0].id;
+            } else {
+              throw new Error(
+                `Approved tee with ID ${teePlayed.id} not found in database`
+              );
+            }
+          } else if (teePlayed.approvalStatus === "pending") {
+            // Brand new tee (no existing approved match)
+            const teeInsert: TeeInfoInsert = {
+              courseId: courseId!,
+              name: teePlayed.name,
+              gender: teePlayed.gender,
+              courseRating18: teePlayed.courseRating18,
+              slopeRating18: teePlayed.slopeRating18,
+              courseRatingFront9: teePlayed.courseRatingFront9,
+              slopeRatingFront9: teePlayed.slopeRatingFront9,
+              courseRatingBack9: teePlayed.courseRatingBack9,
+              slopeRatingBack9: teePlayed.slopeRatingBack9,
+              outPar: teePlayed.outPar,
+              inPar: teePlayed.inPar,
+              totalPar: teePlayed.totalPar,
+              outDistance: teePlayed.outDistance,
+              inDistance: teePlayed.inDistance,
+              totalDistance: teePlayed.totalDistance,
+              distanceMeasurement: teePlayed.distanceMeasurement,
+              approvalStatus: "pending",
+              submittedBy: userId,
+            };
+
+            const [newTee] = await tx
+              .insert(teeInfo)
+              .values(teeInsert)
+              .returning();
+            teeId = newTee.id;
+            teeIsNew = true;
+            resolvedApprovalStatus = "pending";
+
+            if (teeId === null) {
+              throw new Error("Failed to insert tee");
+            }
+
+            if (teePlayed.holes) {
+              const holeInserts = teePlayed.holes.map((h) => ({
+                teeId: teeId!,
+                holeNumber: h.holeNumber,
+                par: h.par,
+                hcp: h.hcp,
+                distance: h.distance,
+              }));
+
+              await tx.insert(hole).values(holeInserts);
+            }
           }
         }
 
@@ -383,6 +553,8 @@ export const roundRouter = createTRPCRouter({
                   eq(teeInfo.courseId, courseId!),
                   eq(teeInfo.name, additionalTee.name),
                   eq(teeInfo.gender, additionalTee.gender),
+                  eq(teeInfo.approvalStatus, "approved"),
+                  eq(teeInfo.isArchived, false),
                 ),
               )
               .limit(1);
@@ -411,6 +583,7 @@ export const roundRouter = createTRPCRouter({
                 totalDistance: additionalTee.totalDistance,
                 distanceMeasurement: additionalTee.distanceMeasurement,
                 approvalStatus: "pending",
+                submittedBy: userId,
               })
               .returning();
 
@@ -486,7 +659,7 @@ export const roundRouter = createTRPCRouter({
           notes,
           exceptionalScoreAdjustment: 0,
           courseHandicap: tempCourseHandicap,
-          approvalStatus,
+          approvalStatus: resolvedApprovalStatus,
           courseRatingUsed: tempCourseRatingUsed,
           slopeRatingUsed: tempSlopeRatingUsed,
           holesPlayed: tempHolesPlayed,
@@ -523,6 +696,36 @@ export const roundRouter = createTRPCRouter({
         }));
 
         await tx.insert(score).values(scoreInserts);
+
+        // 7. Create submission records for audit trail
+        if (courseIsNew) {
+          await tx.insert(submissions).values({
+            submittedBy: userId,
+            roundId: insertedRound.id,
+            courseId: courseId,
+            teeId: teeId,
+            submissionType: "new_course",
+            parentTeeId: null,
+          });
+        } else if (teeIsEdit) {
+          await tx.insert(submissions).values({
+            submittedBy: userId,
+            roundId: insertedRound.id,
+            courseId: courseId,
+            teeId: teeId,
+            submissionType: "tee_edit",
+            parentTeeId: parentTeeId,
+          });
+        } else if (teeIsNew) {
+          await tx.insert(submissions).values({
+            submittedBy: userId,
+            roundId: insertedRound.id,
+            courseId: courseId,
+            teeId: teeId,
+            submissionType: "new_tee",
+            parentTeeId: null,
+          });
+        }
 
         return insertedRound;
       });

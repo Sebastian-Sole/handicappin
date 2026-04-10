@@ -108,6 +108,7 @@ export const course = pgTable(
     country: text().default("Scotland").notNull(),
     city: text().notNull().default("St. Andrews"),
     website: text(),
+    submittedBy: uuid().references(() => profile.id, { onDelete: "set null" }),
   },
   (table) => [
     uniqueIndex("course_name_country_city_key").using(
@@ -151,14 +152,17 @@ export const teeInfo = pgTable(
     approvalStatus: text().default("pending").notNull(),
     isArchived: boolean().default(false).notNull(),
     version: integer().default(1).notNull(),
+    submittedBy: uuid().references(() => profile.id, { onDelete: "set null" }),
+    parentTeeId: integer().references((): any => teeInfo.id, {
+      onDelete: "set null",
+    }),
   },
   (table) => [
-    uniqueIndex("teeInfo_courseId_name_gender_key").using(
-      "btree",
-      table.courseId.asc().nullsLast().op("int4_ops"),
-      table.name.asc().nullsLast().op("text_ops"),
-      table.gender.asc().nullsLast().op("text_ops")
-    ),
+    uniqueIndex("teeInfo_active_unique")
+      .on(table.courseId, table.name, table.gender)
+      .where(
+        sql`"isArchived" = false and "approvalStatus" = 'approved'`
+      ),
     foreignKey({
       columns: [table.courseId],
       foreignColumns: [course.id],
@@ -356,6 +360,36 @@ export const score = pgTable(
 
 export const scoreSchema = createSelectSchema(score);
 export type Score = InferSelectModel<typeof score>;
+
+export const submissions = pgTable(
+  "submissions",
+  {
+    id: bigint({ mode: "number" })
+      .generatedAlwaysAsIdentity()
+      .primaryKey(),
+    submittedBy: uuid().notNull().references(() => profile.id, { onDelete: "cascade" }),
+    roundId: integer().references(() => round.id, { onDelete: "set null" }),
+    courseId: integer().references(() => course.id, { onDelete: "set null" }),
+    teeId: integer().references(() => teeInfo.id, { onDelete: "set null" }),
+    submissionType: text().notNull(),
+    parentTeeId: integer().references(() => teeInfo.id, { onDelete: "set null" }),
+    createdAt: timestamp({ withTimezone: true })
+      .default(sql`now()`)
+      .notNull(),
+  },
+  (table) => [
+    index("submissions_submitted_by_idx").on(table.submittedBy),
+    pgPolicy("Users can view their own submissions", {
+      as: "permissive",
+      for: "select",
+      to: ["authenticated"],
+      using: sql`((select auth.uid()) = "submittedBy")`,
+    }),
+  ]
+);
+
+export const submissionsSchema = createSelectSchema(submissions);
+export type Submission = InferSelectModel<typeof submissions>;
 
 // Stripe customers table for managing Stripe customer IDs
 export const stripeCustomers = pgTable(

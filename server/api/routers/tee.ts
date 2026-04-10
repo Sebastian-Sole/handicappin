@@ -1,8 +1,8 @@
 import { z } from "zod";
-import { createTRPCRouter, publicProcedure } from "../trpc";
+import { createTRPCRouter, publicProcedure, authedProcedure } from "../trpc";
 import { db } from "@/db";
 import { teeInfo, hole } from "@/db/schema";
-import { and, eq } from "drizzle-orm";
+import { and, eq, or } from "drizzle-orm";
 
 export const teeRouter = createTRPCRouter({
   getTeeById: publicProcedure
@@ -16,23 +16,52 @@ export const teeRouter = createTRPCRouter({
       }
       return tee;
     }),
-  fetchTees: publicProcedure
+  fetchTees: authedProcedure
     .input(z.object({ courseId: z.number() }))
     .query(async ({ ctx, input }) => {
-      // First fetch all approved tees for the course
+      const userId = ctx.user.id;
+
+      // Fetch approved non-archived tees + current user's own pending tees
       const tees = await db
         .select()
         .from(teeInfo)
         .where(
           and(
             eq(teeInfo.courseId, input.courseId),
-            eq(teeInfo.approvalStatus, "approved")
+            or(
+              // All approved non-archived tees (everyone sees these)
+              and(
+                eq(teeInfo.approvalStatus, "approved"),
+                eq(teeInfo.isArchived, false)
+              ),
+              // User's own pending tees (only the submitter sees these)
+              and(
+                eq(teeInfo.approvalStatus, "pending"),
+                eq(teeInfo.submittedBy, userId)
+              )
+            )
           )
         );
 
+      // Deduplicate by (courseId, name, gender):
+      // - If a pending edit exists for an approved tee, show only the pending version
+      // - If multiple pending edits exist for the same combo, show only the latest one
+      const teesByCombo = new Map<string, typeof tees[number]>();
+      // Sort so approved come first, then pending by id ascending — last write wins
+      const sorted = [...tees].sort((a, b) => {
+        if (a.approvalStatus === "approved" && b.approvalStatus !== "approved") return -1;
+        if (a.approvalStatus !== "approved" && b.approvalStatus === "approved") return 1;
+        return a.id - b.id;
+      });
+      for (const tee of sorted) {
+        const combo = `${tee.courseId}_${tee.name}_${tee.gender}`;
+        teesByCombo.set(combo, tee);
+      }
+      const deduplicatedTees = Array.from(teesByCombo.values());
+
       // For each tee, fetch its holes
       const teesWithHoles = await Promise.all(
-        tees.map(async (tee) => {
+        deduplicatedTees.map(async (tee) => {
           const holes = await db
             .select()
             .from(hole)
@@ -44,10 +73,10 @@ export const teeRouter = createTRPCRouter({
             courseRating18: Number(tee.courseRating18),
             courseRatingFront9: Number(tee.courseRatingFront9),
             courseRatingBack9: Number(tee.courseRatingBack9),
-            approvalStatus: "approved" as const,
+            approvalStatus: tee.approvalStatus as "approved" | "pending",
             distanceMeasurement: tee.distanceMeasurement as "meters" | "yards",
             gender: tee.gender as "mens" | "ladies",
-            holes: holes.sort((a, b) => a.holeNumber - b.holeNumber), // Ensure holes are in order
+            holes: holes.sort((a, b) => a.holeNumber - b.holeNumber),
           };
         })
       );

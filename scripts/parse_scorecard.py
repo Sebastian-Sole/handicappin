@@ -267,8 +267,8 @@ def generate_sql(course: CourseData) -> str:
     # Insert course
     website_value = f"'{course.website}'" if course.website else "null"
     sql_parts.append("-- Insert course")
-    sql_parts.append(f"""insert into public.course (name, city, country, website, approval_status)
-values ('{course.name}', '{course.city}', '{course.country}', {website_value}, 'approved')
+    sql_parts.append(f"""insert into public.course (name, city, country, website, "approvalStatus", "submittedBy")
+values ('{course.name}', '{course.city}', '{course.country}', {website_value}, 'approved', null)
 returning id;""")
     sql_parts.append("")
     sql_parts.append("-- NOTE: Replace @course_id with the returned id from above")
@@ -299,7 +299,7 @@ returning id;""")
     "courseRatingBack9", "slopeRatingBack9",
     "outPar", "inPar", "totalPar",
     "outDistance", "inDistance", "totalDistance",
-    "distanceMeasurement", "approvalStatus"
+    "distanceMeasurement", "approvalStatus", "submittedBy"
 )
 values (
     @course_id, '{tee.name}', '{tee.gender}',
@@ -308,7 +308,7 @@ values (
     {course_rating_9:.1f}, {slope_rating_9},
     {out_par}, {in_par}, {total_par},
     {out_distance}, {in_distance}, {total_distance},
-    'yards', 'approved'
+    'yards', 'approved', null
 )
 returning id;""")
         sql_parts.append("")
@@ -378,8 +378,8 @@ def generate_sql_with_variables(course: CourseData) -> str:
 
     # Insert course
     sql_parts.append("    -- Insert course")
-    sql_parts.append(f"""    insert into public.course (name, city, country, website, "approvalStatus")
-    values ('{name_escaped}', '{city_escaped}', '{country_escaped}', {website_value}, 'approved')
+    sql_parts.append(f"""    insert into public.course (name, city, country, website, "approvalStatus", "submittedBy")
+    values ('{name_escaped}', '{city_escaped}', '{country_escaped}', {website_value}, 'approved', null)
     returning id into v_course_id;""")
     sql_parts.append("")
 
@@ -412,7 +412,7 @@ def generate_sql_with_variables(course: CourseData) -> str:
         "courseRatingBack9", "slopeRatingBack9",
         "outPar", "inPar", "totalPar",
         "outDistance", "inDistance", "totalDistance",
-        "distanceMeasurement", "approvalStatus"
+        "distanceMeasurement", "approvalStatus", "submittedBy"
     )
     values (
         v_course_id, '{tee_name_escaped}', '{tee.gender}',
@@ -421,7 +421,7 @@ def generate_sql_with_variables(course: CourseData) -> str:
         {course_rating_9:.1f}, {slope_rating_9},
         {out_par}, {in_par}, {total_par},
         {out_distance}, {in_distance}, {total_distance},
-        '{course.distance_measurement}', 'approved'
+        '{course.distance_measurement}', 'approved', null
     )
     returning id into v_tee_id_{i};""")
         sql_parts.append("")
