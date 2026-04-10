@@ -255,7 +255,7 @@ def generate_sql_for_tee(
         "courseRatingBack9", "slopeRatingBack9",
         "outPar", "inPar", "totalPar",
         "outDistance", "inDistance", "totalDistance",
-        "distanceMeasurement", "approvalStatus"
+        "distanceMeasurement", "approvalStatus", "submittedBy"
     )
     values (
         v_course_id, '{tee_name_escaped}', '{tee.gender}',
@@ -264,7 +264,7 @@ def generate_sql_for_tee(
         {course_rating_9:.1f}, {tee.slope_rating_18},
         {out_par}, {in_par}, {total_par},
         {out_distance}, {in_distance}, {total_distance},
-        '{course.distance_measurement}', 'approved'
+        '{course.distance_measurement}', 'approved', null
     )
     returning id into v_tee_id;""")
     sql_parts.append("")
@@ -342,8 +342,8 @@ def generate_full_sql(
 
     # Insert course
     sql_parts.append("    -- Insert course")
-    sql_parts.append(f"""    insert into public.course (name, city, country, website, "approvalStatus")
-    values ('{name_escaped}', '{city_escaped}', '{country_escaped}', {website_value}, 'approved')
+    sql_parts.append(f"""    insert into public.course (name, city, country, website, "approvalStatus", "submittedBy")
+    values ('{name_escaped}', '{city_escaped}', '{country_escaped}', {website_value}, 'approved', null)
     returning id into v_course_id;""")
     sql_parts.append("")
 

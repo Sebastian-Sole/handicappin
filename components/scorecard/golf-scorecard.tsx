@@ -609,14 +609,14 @@ export default function GolfScorecard({ profile, access }: GolfScorecardProps) {
                                             tee.gender === "mens"
                                               ? "(M)"
                                               : "(F)";
-                                          const displayName = `${tee.name} ${genderIndicator}`;
+                                          const pendingIndicator =
+                                            tee.approvalStatus === "pending"
+                                              ? " (Pending)"
+                                              : "";
+                                          const displayName = `${tee.name} ${genderIndicator}${pendingIndicator}`;
                                           return (
                                             <SelectItem
-                                              key={getTeeKey(
-                                                selectedCourseId || 0,
-                                                tee.name,
-                                                tee.gender
-                                              )}
+                                              key={`${tee.id ?? getTeeKey(selectedCourseId || 0, tee.name, tee.gender)}`}
                                               value={getTeeKey(
                                                 selectedCourseId || 0,
                                                 tee.name,
