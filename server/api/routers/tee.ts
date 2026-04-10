@@ -2,7 +2,7 @@ import { z } from "zod";
 import { createTRPCRouter, publicProcedure, authedProcedure } from "../trpc";
 import { db } from "@/db";
 import { teeInfo, hole } from "@/db/schema";
-import { and, eq, or } from "drizzle-orm";
+import { and, eq, inArray, or } from "drizzle-orm";
 
 export const teeRouter = createTRPCRouter({
   getTeeById: publicProcedure
@@ -59,27 +59,36 @@ export const teeRouter = createTRPCRouter({
       }
       const deduplicatedTees = Array.from(teesByCombo.values());
 
-      // For each tee, fetch its holes
-      const teesWithHoles = await Promise.all(
-        deduplicatedTees.map(async (tee) => {
-          const holes = await db
+      // Fetch all holes for the deduplicated tees in a single query
+      const teeIds = deduplicatedTees.map((tee) => tee.id);
+      const allHoles = teeIds.length > 0
+        ? await db
             .select()
             .from(hole)
-            .where(eq(hole.teeId, tee.id));
+            .where(inArray(hole.teeId, teeIds))
+        : [];
 
-          return {
-            ...tee,
-            // Convert decimal strings to numbers
-            courseRating18: Number(tee.courseRating18),
-            courseRatingFront9: Number(tee.courseRatingFront9),
-            courseRatingBack9: Number(tee.courseRatingBack9),
-            approvalStatus: tee.approvalStatus as "approved" | "pending",
-            distanceMeasurement: tee.distanceMeasurement as "meters" | "yards",
-            gender: tee.gender as "mens" | "ladies",
-            holes: holes.sort((a, b) => a.holeNumber - b.holeNumber),
-          };
-        })
-      );
+      // Group holes by teeId
+      const holesByTeeId = new Map<number, typeof allHoles>();
+      for (const h of allHoles) {
+        const existing = holesByTeeId.get(h.teeId) ?? [];
+        existing.push(h);
+        holesByTeeId.set(h.teeId, existing);
+      }
+
+      const teesWithHoles = deduplicatedTees.map((tee) => {
+        const teeHoles = holesByTeeId.get(tee.id) ?? [];
+        return {
+          ...tee,
+          courseRating18: Number(tee.courseRating18),
+          courseRatingFront9: Number(tee.courseRatingFront9),
+          courseRatingBack9: Number(tee.courseRatingBack9),
+          approvalStatus: tee.approvalStatus as "approved" | "pending",
+          distanceMeasurement: tee.distanceMeasurement as "meters" | "yards",
+          gender: tee.gender as "mens" | "ladies",
+          holes: teeHoles.sort((a, b) => a.holeNumber - b.holeNumber),
+        };
+      });
 
       return teesWithHoles;
     }),

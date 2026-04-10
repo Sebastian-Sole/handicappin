@@ -370,11 +370,11 @@ export const submissions = pgTable(
     id: bigint({ mode: "number" })
       .generatedAlwaysAsIdentity()
       .primaryKey(),
-    submittedBy: uuid().notNull().references(() => profile.id, { onDelete: "cascade" }),
+    submittedBy: uuid().references(() => profile.id, { onDelete: "set null" }),
     roundId: integer().references(() => round.id, { onDelete: "set null" }),
     courseId: integer().references(() => course.id, { onDelete: "set null" }),
     teeId: integer().references(() => teeInfo.id, { onDelete: "set null" }),
-    submissionType: text().notNull(),
+    submissionType: text().$type<"new_course" | "new_tee" | "tee_edit">().notNull(),
     parentTeeId: integer().references(() => teeInfo.id, { onDelete: "set null" }),
     createdAt: timestamp({ withTimezone: true })
       .default(sql`now()`)

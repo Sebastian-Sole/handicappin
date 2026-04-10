@@ -310,6 +310,7 @@ export const roundRouter = createTRPCRouter({
         let teeId = teePlayed.id;
         let teeIsNew = false;
         let teeIsEdit = false;
+        let teeResolved = false;
         let parentTeeId: number | null = null;
         let resolvedApprovalStatus = approvalStatus;
 
@@ -339,11 +340,13 @@ export const roundRouter = createTRPCRouter({
             teeId = pendingTee[0]!.id;
             resolvedApprovalStatus = "pending";
             parentTeeId = pendingTee[0]!.parentTeeId;
+            teeResolved = true;
           }
         }
 
         // 3b. Find existing APPROVED non-archived tee by courseId + name + gender
-        if (!teeIsNew && !teeIsEdit && teeId === teePlayed.id) {
+        // Skip if 3a already resolved the tee (user reusing their own pending tee)
+        if (!teeResolved && !teeIsNew && !teeIsEdit) {
           const existingTee = await tx
             .select()
             .from(teeInfo)

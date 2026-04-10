@@ -5,6 +5,9 @@
 --   2. Add validation to remap_round_to_tee (defense-in-depth)
 --   3. Fix handle_tee_rejection to approve ALL remapped rounds, not just
 --      those with submissions rows (orphaned pending round bug)
+--   4. Add null FK guards to approve/reject_submission
+--   5. Reject tee when rejecting a new_course submission
+--   6. Fix submissions.submittedBy CASCADE → SET NULL for consistency
 -- Affected functions: remap_round_to_tee, handle_tee_rejection,
 --                     approve_submission, reject_submission
 -- =============================================================================
@@ -175,3 +178,159 @@ begin
   return new;
 end;
 $$;
+
+-- =============================================================================
+-- 4. Fix approve_submission: add null FK guards + fix reject_submission to
+--    also reject the tee when rejecting a new_course submission
+-- =============================================================================
+create or replace function public.approve_submission(
+  p_submission_id bigint
+)
+returns void
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  v_submission record;
+  v_sibling record;
+  v_affected_round record;
+begin
+  select * into v_submission
+  from public.submissions
+  where id = p_submission_id;
+
+  if not found then
+    raise exception 'Submission % not found', p_submission_id;
+  end if;
+
+  -- Guard: FK targets must still exist (could be SET NULL if entity was deleted)
+  if v_submission."teeId" is null then
+    raise exception 'Submission % has a null teeId — the submitted tee was deleted', p_submission_id;
+  end if;
+
+  if v_submission."courseId" is null then
+    raise exception 'Submission % has a null courseId — the submitted course was deleted', p_submission_id;
+  end if;
+
+  -- For tee_edit: handle parent archival and sibling rejection
+  if v_submission."submissionType" = 'tee_edit' and v_submission."parentTeeId" is not null then
+
+    -- 1. Archive the parent BEFORE approving the new tee
+    -- to avoid violating the partial unique index
+    update public."teeInfo"
+    set "isArchived" = true
+    where id = v_submission."parentTeeId";
+
+    -- 2. Remap sibling pending tees' rounds to the tee being approved,
+    -- then reject the siblings. Must remap BEFORE rejecting.
+    for v_sibling in
+      select id from public."teeInfo"
+      where "parentTeeId" = v_submission."parentTeeId"
+        and id != v_submission."teeId"
+        and "approvalStatus" = 'pending'
+    loop
+      -- Remap each sibling's rounds to the tee being approved
+      for v_affected_round in
+        select id from public.round where "teeId" = v_sibling.id
+      loop
+        perform public.remap_round_to_tee(
+          v_affected_round.id, v_sibling.id, v_submission."teeId"
+        );
+      end loop;
+
+      -- Clean up the sibling's submission rows
+      delete from public.submissions where "teeId" = v_sibling.id;
+
+      -- Reject the sibling tee (triggers handle round status cascade)
+      update public."teeInfo"
+      set "approvalStatus" = 'rejected'
+      where id = v_sibling.id;
+    end loop;
+  end if;
+
+  -- Approve the entity (cascade trigger handles round approval)
+  if v_submission."submissionType" = 'new_course' then
+    -- New course: approve course first, then tee
+    update public.course
+    set "approvalStatus" = 'approved'
+    where id = v_submission."courseId";
+
+    update public."teeInfo"
+    set "approvalStatus" = 'approved'
+    where id = v_submission."teeId";
+  else
+    -- new_tee or tee_edit: approve just the tee
+    update public."teeInfo"
+    set "approvalStatus" = 'approved'
+    where id = v_submission."teeId";
+  end if;
+
+  -- Clean up: delete the approved submission row.
+  -- The submittedBy column on course/teeInfo preserves the audit trail.
+  delete from public.submissions where id = p_submission_id;
+end;
+$$;
+
+create or replace function public.reject_submission(
+  p_submission_id bigint
+)
+returns void
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  v_submission record;
+begin
+  select * into v_submission
+  from public.submissions
+  where id = p_submission_id;
+
+  if not found then
+    raise exception 'Submission % not found', p_submission_id;
+  end if;
+
+  -- Guard: FK targets must still exist
+  if v_submission."teeId" is null then
+    raise exception 'Submission % has a null teeId — the submitted tee was deleted', p_submission_id;
+  end if;
+
+  -- Reject the entity (triggers handle cascade)
+  if v_submission."submissionType" = 'new_course' then
+    -- Reject the course
+    update public.course
+    set "approvalStatus" = 'rejected'
+    where id = v_submission."courseId";
+
+    -- Also reject the associated tee to prevent orphaned pending tees
+    update public."teeInfo"
+    set "approvalStatus" = 'rejected'
+    where id = v_submission."teeId";
+  else
+    -- new_tee or tee_edit: reject just the tee
+    update public."teeInfo"
+    set "approvalStatus" = 'rejected'
+    where id = v_submission."teeId";
+  end if;
+
+  -- Clean up: delete the submission row now that it's resolved.
+  -- The submittedBy column on course/teeInfo preserves the audit trail.
+  delete from public.submissions where id = p_submission_id;
+end;
+$$;
+
+-- =============================================================================
+-- 5. Fix submissions.submittedBy: CASCADE → SET NULL for consistency
+-- When a user is deleted, keep the submission in the review queue rather than
+-- silently deleting it. The underlying course/tee still exist (their submittedBy
+-- is already SET NULL), so the admin should still be able to review them.
+-- =============================================================================
+alter table public.submissions
+  drop constraint if exists "submissions_submittedBy_profile_id_fk",
+  add constraint "submissions_submittedBy_profile_id_fk"
+    foreign key ("submittedBy") references public.profile(id) on delete set null;
+
+-- Column was NOT NULL — allow null now that we use SET NULL
+alter table public.submissions
+  alter column "submittedBy" drop not null;
