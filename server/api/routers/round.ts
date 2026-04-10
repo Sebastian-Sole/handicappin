@@ -9,7 +9,7 @@ import {
   hole,
   submissions,
 } from "@/db/schema";
-import { eq, and, lt, count } from "drizzle-orm";
+import { eq, and, lt, count, or, inArray } from "drizzle-orm";
 import * as Sentry from "@sentry/nextjs";
 
 import { db } from "@/db";
@@ -25,6 +25,7 @@ import {
 import { getComprehensiveUserAccess } from "@/utils/billing/access-control";
 import { TRPCError } from "@trpc/server";
 import { FREE_TIER_ROUND_LIMIT } from "@/utils/billing/constants";
+import { logger } from "@/lib/logging";
 
 type RoundCalculations = {
   adjustedGrossScore: number;
@@ -471,22 +472,25 @@ export const roundRouter = createTRPCRouter({
           } else if (existingTee.length > 0) {
             // Tee is approved and not edited -- reuse as-is
             teeId = existingTee[0]!.id;
-          } else if (
-            teePlayed.id &&
-            teePlayed.approvalStatus === "approved"
-          ) {
-            // Approved tee by ID (no name+gender match needed)
+          } else if (teePlayed.id) {
+            // Tee referenced by ID — verify it's actually approved and active in the DB
             const teeById = await tx
               .select()
               .from(teeInfo)
-              .where(eq(teeInfo.id, teePlayed.id))
+              .where(
+                and(
+                  eq(teeInfo.id, teePlayed.id),
+                  eq(teeInfo.approvalStatus, "approved"),
+                  eq(teeInfo.isArchived, false),
+                )
+              )
               .limit(1);
 
             if (teeById[0]) {
               teeId = teeById[0].id;
             } else {
               throw new Error(
-                `Approved tee with ID ${teePlayed.id} not found in database`
+                `Approved, non-archived tee with ID ${teePlayed.id} not found in database`
               );
             }
           } else if (teePlayed.approvalStatus === "pending") {
@@ -539,6 +543,7 @@ export const roundRouter = createTRPCRouter({
         }
 
         // 4. Persist additional tees from the course (not the played tee)
+        const additionalTeeIds: number[] = [];
         if (coursePlayed.tees && coursePlayed.tees.length > 1) {
           for (const additionalTee of coursePlayed.tees) {
             if (
@@ -548,6 +553,7 @@ export const roundRouter = createTRPCRouter({
               continue;
             }
 
+            // Check for existing approved OR pending (same submitter) tee to avoid duplicates
             const existingAdditionalTee = await tx
               .select()
               .from(teeInfo)
@@ -556,8 +562,16 @@ export const roundRouter = createTRPCRouter({
                   eq(teeInfo.courseId, courseId!),
                   eq(teeInfo.name, additionalTee.name),
                   eq(teeInfo.gender, additionalTee.gender),
-                  eq(teeInfo.approvalStatus, "approved"),
-                  eq(teeInfo.isArchived, false),
+                  or(
+                    and(
+                      eq(teeInfo.approvalStatus, "approved"),
+                      eq(teeInfo.isArchived, false),
+                    ),
+                    and(
+                      eq(teeInfo.approvalStatus, "pending"),
+                      eq(teeInfo.submittedBy, userId),
+                    ),
+                  ),
                 ),
               )
               .limit(1);
@@ -589,6 +603,10 @@ export const roundRouter = createTRPCRouter({
                 submittedBy: userId,
               })
               .returning();
+
+            if (newAdditionalTee) {
+              additionalTeeIds.push(newAdditionalTee.id);
+            }
 
             if (additionalTee.holes && newAdditionalTee) {
               const additionalHoleInserts = additionalTee.holes.map((h) => ({
@@ -730,25 +748,62 @@ export const roundRouter = createTRPCRouter({
           });
         }
 
-        return insertedRound;
+        // 8. Create submission records for additional tees so admins can approve them
+        for (const additionalTeeId of additionalTeeIds) {
+          await tx.insert(submissions).values({
+            submittedBy: userId,
+            roundId: insertedRound.id,
+            courseId: courseId,
+            teeId: additionalTeeId,
+            submissionType: "new_tee",
+            parentTeeId: null,
+          });
+        }
+
+        return {
+          round: insertedRound,
+          createdCourseId: courseIsNew ? courseId : null,
+          createdTeeId: (teeIsNew || teeIsEdit) ? teeId : null,
+          additionalTeeIds,
+        };
       });
 
       // Race condition protection: re-check count for free tier users
       // This runs outside the transaction since it uses the Supabase REST API
       if (access.plan === "free") {
-        const { count, error: countError } = await ctx.supabase
+        const { count: roundCount, error: countError } = await ctx.supabase
           .from("round")
           .select("*", { count: "exact", head: true })
           .eq("userId", userId);
 
         if (countError) {
-          console.error("Error re-checking round count:", countError);
-        } else if (count && count > FREE_TIER_ROUND_LIMIT) {
-          console.warn(
-            `⚠️ Race condition detected: User ${userId} has ${count} rounds (limit: ${FREE_TIER_ROUND_LIMIT}). Rolling back round ${newRound.id}`
-          );
+          logger.error("Error re-checking round count", {
+            error: countError.message,
+            userId,
+          });
+        } else if (roundCount && roundCount > FREE_TIER_ROUND_LIMIT) {
+          logger.warn("Race condition detected: rolling back over-limit round", {
+            userId,
+            roundCount,
+            limit: FREE_TIER_ROUND_LIMIT,
+            roundId: newRound.round.id,
+          });
 
-          await db.delete(round).where(eq(round.id, newRound.id));
+          // Clean up all entities created by this transaction
+          await db.delete(submissions).where(eq(submissions.roundId, newRound.round.id));
+          await db.delete(round).where(eq(round.id, newRound.round.id));
+
+          if (newRound.additionalTeeIds.length > 0) {
+            await db.delete(hole).where(inArray(hole.teeId, newRound.additionalTeeIds));
+            await db.delete(teeInfo).where(inArray(teeInfo.id, newRound.additionalTeeIds));
+          }
+          if (newRound.createdTeeId) {
+            await db.delete(hole).where(eq(hole.teeId, newRound.createdTeeId));
+            await db.delete(teeInfo).where(eq(teeInfo.id, newRound.createdTeeId));
+          }
+          if (newRound.createdCourseId) {
+            await db.delete(course).where(eq(course.id, newRound.createdCourseId));
+          }
 
           throw new TRPCError({
             code: "FORBIDDEN",
@@ -758,6 +813,6 @@ export const roundRouter = createTRPCRouter({
         }
       }
 
-      return newRound;
+      return newRound.round;
     }),
 });

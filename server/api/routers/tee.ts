@@ -3,6 +3,7 @@ import { createTRPCRouter, publicProcedure, authedProcedure } from "../trpc";
 import { db } from "@/db";
 import { teeInfo, hole } from "@/db/schema";
 import { and, eq, inArray, or } from "drizzle-orm";
+import { logger } from "@/lib/logging";
 
 export const teeRouter = createTRPCRouter({
   getTeeById: publicProcedure
@@ -11,7 +12,11 @@ export const teeRouter = createTRPCRouter({
       const { teeId } = input;
       const { data: tee, error } = await ctx.supabase.from("teeInfo").select("*").eq("id", teeId).single();
       if (error) {
-        console.error(error);
+        logger.error("Failed to fetch tee by ID", {
+          teeId,
+          error: error.message,
+          code: error.code,
+        });
         return null;
       }
       return tee;
