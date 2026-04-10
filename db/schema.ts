@@ -163,6 +163,9 @@ export const teeInfo = pgTable(
       .where(
         sql`"isArchived" = false and "approvalStatus" = 'approved'`
       ),
+    index("teeInfo_parent_tee_id_idx")
+      .on(table.parentTeeId)
+      .where(sql`"parentTeeId" is not null`),
     foreignKey({
       columns: [table.courseId],
       foreignColumns: [course.id],
