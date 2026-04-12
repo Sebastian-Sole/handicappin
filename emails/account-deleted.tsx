@@ -72,7 +72,7 @@ export default function AccountDeletedEmail({ email }: AccountDeletedEmailProps)
                 <Text className="text-xs text-gray-500 text-center">
                   This email was sent by Handicappin&apos; to {email}
                   <br />
-                  &copy; 2025 Handicappin&apos;. All rights reserved.
+                  &copy; {new Date().getFullYear()} Handicappin&apos;. All rights reserved.
                 </Text>
               </Section>
             </Section>

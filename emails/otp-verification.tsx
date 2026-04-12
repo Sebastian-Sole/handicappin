@@ -105,7 +105,7 @@ export default function OtpVerificationEmail({
                 <Text className="text-xs text-gray-500 text-center">
                   This email was sent by Handicappin' to {email}
                   <br />
-                  © 2025 Handicappin'. All rights reserved.
+                  © {new Date().getFullYear()} Handicappin'. All rights reserved.
                 </Text>
               </Section>
             </Section>

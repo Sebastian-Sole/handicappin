@@ -9,6 +9,8 @@ import ContactConfirmationEmail from "@/emails/contact-confirmation";
 import AdminSubmissionNotificationEmail, {
   type SubmissionSummary,
 } from "@/emails/admin-submission-notification";
+import RoundApprovedEmail from "@/emails/round-approved";
+import RoundRejectedEmail from "@/emails/round-rejected";
 import {
   logWebhookInfo,
   logWebhookError,
@@ -57,7 +59,7 @@ export async function sendSubscriptionUpgradedEmail({
         currency,
         billingUrl,
         supportEmail: "sebastiansole@handicappin.com",
-      })
+      }),
     );
 
     const result = await resend.emails.send({
@@ -75,7 +77,7 @@ export async function sendSubscriptionUpgradedEmail({
         messageId: result.data?.id,
         oldPlan,
         newPlan,
-      }
+      },
     );
 
     return {
@@ -85,9 +87,9 @@ export async function sendSubscriptionUpgradedEmail({
   } catch (error) {
     logWebhookError(
       `Failed to send subscription upgraded email to ${redactEmail(
-        to
+        to,
       )} (${oldPlan} → ${newPlan})`,
-      error
+      error,
     );
 
     return {
@@ -115,7 +117,7 @@ export async function sendSubscriptionDowngradedEmail({
 }): Promise<SendEmailResult> {
   try {
     logWebhookInfo(
-      `Sending subscription downgraded email to ${redactEmail(to)}`
+      `Sending subscription downgraded email to ${redactEmail(to)}`,
     );
 
     const emailHtml = await render(
@@ -125,7 +127,7 @@ export async function sendSubscriptionDowngradedEmail({
         effectiveDate,
         billingUrl,
         supportEmail: "sebastiansole@handicappin.com",
-      })
+      }),
     );
 
     const result = await resend.emails.send({
@@ -143,7 +145,7 @@ export async function sendSubscriptionDowngradedEmail({
         messageId: result.data?.id,
         oldPlan,
         newPlan,
-      }
+      },
     );
 
     return {
@@ -153,9 +155,9 @@ export async function sendSubscriptionDowngradedEmail({
   } catch (error) {
     logWebhookError(
       `Failed to send subscription downgraded email to ${redactEmail(
-        to
+        to,
       )} (${oldPlan} → ${newPlan})`,
-      error
+      error,
     );
 
     return {
@@ -181,7 +183,7 @@ export async function sendSubscriptionCancelledEmail({
 }): Promise<SendEmailResult> {
   try {
     logWebhookInfo(
-      `Sending subscription cancelled email to ${redactEmail(to)}`
+      `Sending subscription cancelled email to ${redactEmail(to)}`,
     );
 
     const emailHtml = await render(
@@ -190,7 +192,7 @@ export async function sendSubscriptionCancelledEmail({
         endDate,
         billingUrl,
         supportEmail: "sebastiansole@handicappin.com",
-      })
+      }),
     );
 
     const result = await resend.emails.send({
@@ -205,7 +207,7 @@ export async function sendSubscriptionCancelledEmail({
       {
         messageId: result.data?.id,
         plan,
-      }
+      },
     );
 
     return {
@@ -215,9 +217,9 @@ export async function sendSubscriptionCancelledEmail({
   } catch (error) {
     logWebhookError(
       `Failed to send subscription cancelled email to ${redactEmail(
-        to
+        to,
       )} (plan: ${plan})`,
-      error
+      error,
     );
 
     return {
@@ -248,7 +250,7 @@ export async function sendWelcomeEmail({
         plan,
         redirectUrl: dashboardUrl,
         supportEmail: "sebastiansole@handicappin.com",
-      })
+      }),
     );
 
     const result = await resend.emails.send({
@@ -272,7 +274,7 @@ export async function sendWelcomeEmail({
   } catch (error) {
     logWebhookError(
       `Failed to send welcome email to ${redactEmail(to)} (plan: ${plan})`,
-      error
+      error,
     );
 
     return {
@@ -298,7 +300,9 @@ export async function sendContactFormEmail({
   message: string;
 }): Promise<SendEmailResult> {
   try {
-    logWebhookInfo(`Sending contact form notification for ${redactEmail(email)}`);
+    logWebhookInfo(
+      `Sending contact form notification for ${redactEmail(email)}`,
+    );
 
     const emailHtml = await render(
       ContactFormEmail({
@@ -306,7 +310,7 @@ export async function sendContactFormEmail({
         email,
         subject,
         message,
-      })
+      }),
     );
 
     const result = await resend.emails.send({
@@ -322,7 +326,7 @@ export async function sendContactFormEmail({
       {
         messageId: result.data?.id,
         subject,
-      }
+      },
     );
 
     return {
@@ -332,7 +336,7 @@ export async function sendContactFormEmail({
   } catch (error) {
     logWebhookError(
       `Failed to send contact form notification for ${redactEmail(email)}`,
-      error
+      error,
     );
 
     return {
@@ -359,7 +363,7 @@ export async function sendContactConfirmationEmail({
       ContactConfirmationEmail({
         name,
         supportEmail: "sebastiansole@handicappin.com",
-      })
+      }),
     );
 
     const result = await resend.emails.send({
@@ -373,7 +377,7 @@ export async function sendContactConfirmationEmail({
       `Contact confirmation sent successfully to ${redactEmail(to)}`,
       {
         messageId: result.data?.id,
-      }
+      },
     );
 
     return {
@@ -383,7 +387,7 @@ export async function sendContactConfirmationEmail({
   } catch (error) {
     logWebhookError(
       `Failed to send contact confirmation to ${redactEmail(to)}`,
-      error
+      error,
     );
 
     return {
@@ -437,7 +441,7 @@ export async function sendAdminSubmissionNotification({
 
   if (recipients.length === 0) {
     logger.warn(
-      "Admin submission notification skipped: ADMIN_ALERT_EMAILS is empty"
+      "Admin submission notification skipped: ADMIN_ALERT_EMAILS is empty",
     );
     return {
       success: false,
@@ -470,7 +474,7 @@ export async function sendAdminSubmissionNotification({
         courseIsNew,
         submissions,
         roundId,
-      })
+      }),
     );
 
     const submissionCount = submissions.length + (courseIsNew ? 1 : 0);
@@ -502,6 +506,152 @@ export async function sendAdminSubmissionNotification({
       courseId,
       roundId,
       submitter: redactEmail(submitterEmail),
+    });
+
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Unknown error",
+    };
+  }
+}
+
+/**
+ * Notify a user that their submitted round has been approved and now counts
+ * toward their handicap index.
+ */
+export async function sendRoundApprovedEmail({
+  to,
+  name,
+  courseName,
+  teeName,
+  teePlayedAt,
+  adjustedGrossScore,
+  scoreDifferential,
+  roundsUrl,
+  scorecard,
+}: {
+  to: string;
+  name?: string | null;
+  courseName: string;
+  teeName?: string;
+  teePlayedAt?: Date | string;
+  adjustedGrossScore?: number;
+  scoreDifferential?: number;
+  roundsUrl: string;
+  scorecard?: {
+    holes: { holeNumber: number; par: number; hcp: number }[];
+    scores: number[];
+    outPar: number;
+    inPar?: number;
+    totalPar: number;
+  };
+}): Promise<SendEmailResult> {
+  try {
+    logger.info("Sending round approved email", {
+      to: redactEmail(to),
+      courseName,
+    });
+
+    const emailHtml = await render(
+      RoundApprovedEmail({
+        name,
+        courseName,
+        teeName,
+        teePlayedAt,
+        adjustedGrossScore,
+        scoreDifferential,
+        roundsUrl,
+        supportEmail: "sebastiansole@handicappin.com",
+        scorecard,
+      }),
+    );
+
+    const result = await resend.emails.send({
+      from: FROM_EMAIL,
+      to,
+      subject: `Your round at ${courseName} was approved`,
+      html: emailHtml,
+    });
+
+    logger.info("Round approved email sent", {
+      messageId: result.data?.id,
+      to: redactEmail(to),
+    });
+
+    return {
+      success: true,
+      messageId: result.data?.id,
+    };
+  } catch (error) {
+    logger.error("Failed to send round approved email", {
+      error: error instanceof Error ? error.message : String(error),
+      to: redactEmail(to),
+    });
+
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Unknown error",
+    };
+  }
+}
+
+/**
+ * Notify a user that their submitted round was not approved. Uses the generic
+ * rejection message so the user understands next steps (contact support or
+ * resubmit) without exposing admin-only details.
+ */
+export async function sendRoundRejectedEmail({
+  to,
+  name,
+  courseName,
+  teeName,
+  teePlayedAt,
+  roundsUrl,
+}: {
+  to: string;
+  name?: string | null;
+  courseName: string;
+  teeName?: string;
+  teePlayedAt?: Date | string;
+  roundsUrl: string;
+}): Promise<SendEmailResult> {
+  try {
+    logger.info("Sending round rejected email", {
+      to: redactEmail(to),
+      courseName,
+    });
+
+    const emailHtml = await render(
+      RoundRejectedEmail({
+        name,
+        courseName,
+        teeName,
+        teePlayedAt,
+        roundsUrl,
+        supportEmail: "sebastiansole@handicappin.com",
+      }),
+    );
+
+    const result = await resend.emails.send({
+      from: FROM_EMAIL,
+      to,
+      subject: `Your round at ${courseName} was not approved`,
+      html: emailHtml,
+    });
+
+    logger.info("Round rejected email sent", {
+      messageId: result.data?.id,
+      to: redactEmail(to),
+    });
+
+    return {
+      success: true,
+      messageId: result.data?.id,
+    };
+  } catch (error) {
+    logger.error("Failed to send round rejected email", {
+      error: error instanceof Error ? error.message : String(error),
+      to: redactEmail(to),
     });
 
     return {
