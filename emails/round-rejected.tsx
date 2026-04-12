@@ -34,20 +34,21 @@ function formatDate(value: Date | string | undefined): string | null {
 
 export default function RoundRejectedEmail({
   name = null,
-  courseName = "St. Andrews Old Course",
-  teeName = "White",
-  teePlayedAt = "2026-04-10T12:00:00Z",
-  roundsUrl = "https://handicappin.com/rounds",
-  supportEmail = "sebastiansole@handicappin.com",
+  courseName,
+  teeName,
+  teePlayedAt,
+  roundsUrl,
+  supportEmail,
 }: RoundRejectedEmailProps) {
   const playedOn = formatDate(teePlayedAt);
   const greeting = name ? `Hi ${name},` : "Hi,";
+  const previewCourseName = courseName ?? "your course";
 
   return (
     <Html>
       <Head />
       <Preview>
-        {`Your round at ${courseName} needs another look before it can count.`}
+        {`Your round at ${previewCourseName} needs another look before it can count.`}
       </Preview>
       <Tailwind>
         <Body className="bg-gray-50 font-sans">

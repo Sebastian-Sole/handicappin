@@ -10,7 +10,7 @@ export interface ActivityItem {
   handicapAfter: number;
   handicapChange: number;
   isPersonalBest: boolean;
-  approvalStatus: "approved" | "pending";
+  approvalStatus: "approved" | "pending" | "rejected";
   isMilestone?: string;
 }
 
@@ -82,7 +82,10 @@ export function transformRoundsToActivities(
       handicapAfter: round.updatedHandicapIndex,
       handicapChange,
       isPersonalBest: personalBestIds.has(round.id),
-      approvalStatus: round.approvalStatus === "pending" ? "pending" : "approved",
+      approvalStatus:
+        round.approvalStatus === "pending" || round.approvalStatus === "rejected"
+          ? round.approvalStatus
+          : "approved",
       isMilestone: milestone,
     };
   });

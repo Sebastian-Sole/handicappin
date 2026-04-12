@@ -875,10 +875,7 @@ export const roundRouter = createTRPCRouter({
       }
 
       // Notify admins (best-effort) if this round produced any pending submissions.
-      const hasPendingSubmissions =
-        newRound.submissionSummaries.length > 0 || newRound.courseIsNew;
-
-      if (hasPendingSubmissions) {
+      if (newRound.submissionSummaries.length > 0) {
         try {
           await sendAdminSubmissionNotification({
             submitterEmail: newRound.submitterEmail,

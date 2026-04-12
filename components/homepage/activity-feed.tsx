@@ -94,7 +94,7 @@ function ActivityItemRow({
           "group",
         )}
       >
-        {/* Timeline indicator — green = approved, yellow = pending approval */}
+        {/* Timeline indicator — green = approved, yellow = pending, red = rejected */}
         <div className="flex flex-col items-center">
           <Tooltip>
             <TooltipTrigger asChild>
@@ -104,21 +104,27 @@ function ActivityItemRow({
                 aria-label={
                   activity.approvalStatus === "approved"
                     ? "Approved round"
-                    : "Round pending approval"
+                    : activity.approvalStatus === "rejected"
+                      ? "Round rejected"
+                      : "Round pending approval"
                 }
                 className={cn(
                   "w-2.5 h-2.5 rounded-full mt-2 ring-2 ring-background cursor-default",
                   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
                   activity.approvalStatus === "approved"
                     ? "bg-chart-1"
-                    : "bg-chart-5",
+                    : activity.approvalStatus === "rejected"
+                      ? "bg-destructive"
+                      : "bg-chart-5",
                 )}
               />
             </TooltipTrigger>
             <TooltipContent side="right">
               {activity.approvalStatus === "approved"
                 ? "Approved round"
-                : "Round pending approval"}
+                : activity.approvalStatus === "rejected"
+                  ? "Round rejected"
+                  : "Round pending approval"}
             </TooltipContent>
           </Tooltip>
           {!isLast && <div className="w-px h-full bg-border flex-1 mt-1" />}

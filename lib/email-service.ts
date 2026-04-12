@@ -16,7 +16,8 @@ import {
   logWebhookError,
   logWebhookSuccess,
 } from "./webhook-logger";
-import { logger, maskEmail, redactEmail } from "./logging";
+import { logger, redactEmail } from "./logging";
+import { env } from "@/env";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -437,7 +438,7 @@ export async function sendAdminSubmissionNotification({
   submissions: SubmissionSummary[];
   roundId?: number;
 }): Promise<SendEmailResult> {
-  const recipients = parseAdminRecipients(process.env.ADMIN_ALERT_EMAILS);
+  const recipients = parseAdminRecipients(env.ADMIN_ALERT_EMAILS);
 
   if (recipients.length === 0) {
     logger.warn(

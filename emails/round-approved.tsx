@@ -49,32 +49,6 @@ function formatDate(value: Date | string | undefined): string | null {
   });
 }
 
-function buildSampleScorecard(): ScorecardData {
-  const frontPars = [4, 5, 4, 3, 4, 4, 5, 3, 4];
-  const backPars = [4, 4, 3, 5, 4, 4, 3, 5, 4];
-  const frontHcps = [11, 1, 7, 17, 5, 13, 3, 15, 9];
-  const backHcps = [10, 4, 18, 2, 12, 8, 16, 6, 14];
-  const frontScores = [5, 6, 4, 3, 5, 4, 6, 4, 5];
-  const backScores = [4, 5, 3, 6, 5, 4, 4, 6, 5];
-
-  const pars = [...frontPars, ...backPars];
-  const hcps = [...frontHcps, ...backHcps];
-  const scores = [...frontScores, ...backScores];
-  const holes: ScorecardHole[] = pars.map((par, i) => ({
-    holeNumber: i + 1,
-    par,
-    hcp: hcps[i],
-  }));
-
-  return {
-    holes,
-    scores,
-    outPar: frontPars.reduce((s, v) => s + v, 0),
-    inPar: backPars.reduce((s, v) => s + v, 0),
-    totalPar: pars.reduce((s, v) => s + v, 0),
-  };
-}
-
 interface NineHoleTableProps {
   label: "OUT" | "IN";
   holes: ScorecardHole[];
@@ -214,23 +188,24 @@ function EmailScorecard({ scorecard, teeName }: { scorecard: ScorecardData; teeN
 
 export default function RoundApprovedEmail({
   name = null,
-  courseName = "St. Andrews Old Course",
-  teeName = "White",
-  teePlayedAt = "2026-04-10T12:00:00Z",
-  adjustedGrossScore = 83,
-  scoreDifferential = 10.5,
-  roundsUrl = "https://handicappin.com/rounds",
-  supportEmail = "sebastiansole@handicappin.com",
-  scorecard = buildSampleScorecard(),
+  courseName,
+  teeName,
+  teePlayedAt,
+  adjustedGrossScore,
+  scoreDifferential,
+  roundsUrl,
+  supportEmail,
+  scorecard,
 }: RoundApprovedEmailProps) {
   const playedOn = formatDate(teePlayedAt);
   const greeting = name ? `Hi ${name},` : "Hi,";
+  const previewCourseName = courseName ?? "your course";
 
   return (
     <Html>
       <Head />
       <Preview>
-        {`Your round at ${courseName} has been approved and counts toward your handicap.`}
+        {`Your round at ${previewCourseName} has been approved and counts toward your handicap.`}
       </Preview>
       <Tailwind>
         <Body className="bg-gray-50 font-sans">

@@ -89,6 +89,11 @@ begin
   order by created_at desc
   limit 1;
 
+  if service_role_key is null then
+    raise warning 'SUPABASE_SERVICE_ROLE_KEY not found in vault.decrypted_secrets; skipping notification for round %', new.id;
+    return new;
+  end if;
+
   perform net.http_post(
     url := target_url,
     body := payload,
