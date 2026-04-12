@@ -33,6 +33,7 @@ env:
   NEXT_PUBLIC_APP_URL: "http://localhost:3000"
   GOOGLE_CLIENT_SECRET: "dummy_google_client_secret"
   NEXT_PUBLIC_GOOGLE_CLIENT_ID: "dummy_google_client_id"
+  OPENAI_API_KEY: "sk-dummy_openai_key"
 
 jobs:
   build-and-test:
