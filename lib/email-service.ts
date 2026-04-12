@@ -6,12 +6,15 @@ import SubscriptionCancelledEmail from "@/emails/subscription-cancelled";
 import WelcomeEmail from "@/emails/welcome";
 import ContactFormEmail from "@/emails/contact-form";
 import ContactConfirmationEmail from "@/emails/contact-confirmation";
+import AdminSubmissionNotificationEmail, {
+  type SubmissionSummary,
+} from "@/emails/admin-submission-notification";
 import {
   logWebhookInfo,
   logWebhookError,
   logWebhookSuccess,
 } from "./webhook-logger";
-import { maskEmail, redactEmail } from "./logging";
+import { logger, maskEmail, redactEmail } from "./logging";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -390,3 +393,120 @@ export async function sendContactConfirmationEmail({
   }
 }
 
+/**
+ * Parse a comma-separated list of admin email addresses.
+ * Trims whitespace and drops empty entries.
+ */
+function parseAdminRecipients(raw: string | undefined): string[] {
+  if (!raw) return [];
+  return raw
+    .split(",")
+    .map((entry) => entry.trim())
+    .filter((entry) => entry.length > 0);
+}
+
+/**
+ * Notify admins via email when a user submits new course or tee data
+ * that requires approval. Recipients are read from the ADMIN_ALERT_EMAILS
+ * environment variable (comma-separated).
+ *
+ * This is best-effort and should not fail the underlying user action.
+ */
+export async function sendAdminSubmissionNotification({
+  submitterEmail,
+  submitterName,
+  courseName,
+  courseCity,
+  courseCountry,
+  courseId,
+  courseIsNew,
+  submissions,
+  roundId,
+}: {
+  submitterEmail: string;
+  submitterName?: string | null;
+  courseName: string;
+  courseCity?: string | null;
+  courseCountry?: string | null;
+  courseId?: number;
+  courseIsNew: boolean;
+  submissions: SubmissionSummary[];
+  roundId?: number;
+}): Promise<SendEmailResult> {
+  const recipients = parseAdminRecipients(process.env.ADMIN_ALERT_EMAILS);
+
+  if (recipients.length === 0) {
+    logger.warn(
+      "Admin submission notification skipped: ADMIN_ALERT_EMAILS is empty"
+    );
+    return {
+      success: false,
+      error: "No admin recipients configured",
+    };
+  }
+
+  if (submissions.length === 0 && !courseIsNew) {
+    // Nothing to notify about — should not happen but guard anyway.
+    return { success: true };
+  }
+
+  try {
+    logger.info("Sending admin submission notification", {
+      recipients: recipients.length,
+      courseId,
+      courseIsNew,
+      submissionCount: submissions.length,
+      roundId,
+    });
+
+    const emailHtml = await render(
+      AdminSubmissionNotificationEmail({
+        submitterEmail,
+        submitterName,
+        courseName,
+        courseCity,
+        courseCountry,
+        courseId,
+        courseIsNew,
+        submissions,
+        roundId,
+      })
+    );
+
+    const submissionCount = submissions.length + (courseIsNew ? 1 : 0);
+    const subject = `[Handicappin' Admin] ${submissionCount} submission${
+      submissionCount === 1 ? "" : "s"
+    } pending review — ${courseName}`;
+
+    const result = await resend.emails.send({
+      from: FROM_EMAIL,
+      to: recipients,
+      subject,
+      html: emailHtml,
+    });
+
+    logger.info("Admin submission notification sent", {
+      messageId: result.data?.id,
+      courseId,
+      submissionCount,
+      submitter: redactEmail(submitterEmail),
+    });
+
+    return {
+      success: true,
+      messageId: result.data?.id,
+    };
+  } catch (error) {
+    logger.error("Failed to send admin submission notification", {
+      error: error instanceof Error ? error.message : String(error),
+      courseId,
+      roundId,
+      submitter: redactEmail(submitterEmail),
+    });
+
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Unknown error",
+    };
+  }
+}

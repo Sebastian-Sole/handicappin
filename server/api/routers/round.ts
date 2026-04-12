@@ -26,6 +26,8 @@ import { getComprehensiveUserAccess } from "@/utils/billing/access-control";
 import { TRPCError } from "@trpc/server";
 import { FREE_TIER_ROUND_LIMIT } from "@/utils/billing/constants";
 import { logger } from "@/lib/logging";
+import { sendAdminSubmissionNotification } from "@/lib/email-service";
+import type { SubmissionSummary } from "@/emails/admin-submission-notification";
 
 type RoundCalculations = {
   adjustedGrossScore: number;
@@ -543,7 +545,11 @@ export const roundRouter = createTRPCRouter({
         }
 
         // 4. Persist additional tees from the course (not the played tee)
-        const additionalTeeIds: number[] = [];
+        const additionalTees: Array<{
+          id: number;
+          name: string;
+          gender: string;
+        }> = [];
         if (coursePlayed.tees && coursePlayed.tees.length > 1) {
           for (const additionalTee of coursePlayed.tees) {
             if (
@@ -605,7 +611,11 @@ export const roundRouter = createTRPCRouter({
               .returning();
 
             if (newAdditionalTee) {
-              additionalTeeIds.push(newAdditionalTee.id);
+              additionalTees.push({
+                id: newAdditionalTee.id,
+                name: additionalTee.name,
+                gender: additionalTee.gender,
+              });
             }
 
             if (additionalTee.holes && newAdditionalTee) {
@@ -719,44 +729,88 @@ export const roundRouter = createTRPCRouter({
         await tx.insert(score).values(scoreInserts);
 
         // 7. Create submission records for audit trail
+        const submissionSummaries: SubmissionSummary[] = [];
+
         if (courseIsNew) {
-          await tx.insert(submissions).values({
-            submittedBy: userId,
-            roundId: insertedRound.id,
-            courseId: courseId,
-            teeId: teeId,
-            submissionType: "new_course",
-            parentTeeId: null,
+          const [inserted] = await tx
+            .insert(submissions)
+            .values({
+              submittedBy: userId,
+              roundId: insertedRound.id,
+              courseId: courseId,
+              teeId: teeId,
+              submissionType: "new_course",
+              parentTeeId: null,
+            })
+            .returning({ id: submissions.id });
+          submissionSummaries.push({
+            type: "new_course",
+            teeName: teePlayed.name,
+            teeGender: teePlayed.gender,
+            submissionId: inserted?.id,
+            teeId: teeId ?? undefined,
           });
         } else if (teeIsEdit) {
-          await tx.insert(submissions).values({
-            submittedBy: userId,
-            roundId: insertedRound.id,
-            courseId: courseId,
-            teeId: teeId,
-            submissionType: "tee_edit",
+          const [inserted] = await tx
+            .insert(submissions)
+            .values({
+              submittedBy: userId,
+              roundId: insertedRound.id,
+              courseId: courseId,
+              teeId: teeId,
+              submissionType: "tee_edit",
+              parentTeeId: parentTeeId,
+            })
+            .returning({ id: submissions.id });
+          submissionSummaries.push({
+            type: "tee_edit",
+            teeName: teePlayed.name,
+            teeGender: teePlayed.gender,
+            submissionId: inserted?.id,
+            teeId: teeId ?? undefined,
             parentTeeId: parentTeeId,
           });
         } else if (teeIsNew) {
-          await tx.insert(submissions).values({
-            submittedBy: userId,
-            roundId: insertedRound.id,
-            courseId: courseId,
-            teeId: teeId,
-            submissionType: "new_tee",
-            parentTeeId: null,
+          const [inserted] = await tx
+            .insert(submissions)
+            .values({
+              submittedBy: userId,
+              roundId: insertedRound.id,
+              courseId: courseId,
+              teeId: teeId,
+              submissionType: "new_tee",
+              parentTeeId: null,
+            })
+            .returning({ id: submissions.id });
+          submissionSummaries.push({
+            type: "new_tee",
+            teeName: teePlayed.name,
+            teeGender: teePlayed.gender,
+            submissionId: inserted?.id,
+            teeId: teeId ?? undefined,
           });
         }
 
         // 8. Create submission records for additional tees so admins can approve them
-        for (const additionalTeeId of additionalTeeIds) {
-          await tx.insert(submissions).values({
-            submittedBy: userId,
-            roundId: insertedRound.id,
-            courseId: courseId,
-            teeId: additionalTeeId,
-            submissionType: "new_tee",
-            parentTeeId: null,
+        for (const extraTee of additionalTees) {
+          const [inserted] = await tx
+            .insert(submissions)
+            .values({
+              submittedBy: userId,
+              roundId: insertedRound.id,
+              courseId: courseId,
+              teeId: extraTee.id,
+              submissionType: "new_tee",
+              parentTeeId: null,
+            })
+            .returning({ id: submissions.id });
+
+          submissionSummaries.push({
+            type: "new_tee",
+            teeName: extraTee.name,
+            teeGender: extraTee.gender,
+            submissionId: inserted?.id,
+            teeId: extraTee.id,
           });
         }
 
@@ -764,7 +818,14 @@ export const roundRouter = createTRPCRouter({
           round: insertedRound,
           createdCourseId: courseIsNew ? courseId : null,
           createdTeeId: (teeIsNew || teeIsEdit) ? teeId : null,
-          additionalTeeIds,
+          additionalTeeIds: additionalTees.map((extraTee) => extraTee.id),
+          submissionSummaries,
+          courseIsNew,
+          submitterEmail: userProfile[0].email,
+          submitterName: userProfile[0].name,
+          courseName: coursePlayed.name,
+          courseCity: coursePlayed.city,
+          courseCountry: coursePlayed.country,
         };
       });
 
@@ -810,6 +871,36 @@ export const roundRouter = createTRPCRouter({
             message:
               "Round limit exceeded due to concurrent submissions. Your submission was not saved. Please try again.",
           });
+        }
+      }
+
+      // Notify admins (best-effort) if this round produced any pending submissions.
+      const hasPendingSubmissions =
+        newRound.submissionSummaries.length > 0 || newRound.courseIsNew;
+
+      if (hasPendingSubmissions) {
+        try {
+          await sendAdminSubmissionNotification({
+            submitterEmail: newRound.submitterEmail,
+            submitterName: newRound.submitterName,
+            courseName: newRound.courseName,
+            courseCity: newRound.courseCity,
+            courseCountry: newRound.courseCountry,
+            courseId: newRound.createdCourseId ?? newRound.round.courseId,
+            courseIsNew: newRound.courseIsNew,
+            submissions: newRound.submissionSummaries,
+            roundId: newRound.round.id,
+          });
+        } catch (error) {
+          // Never fail the user's round submission on email failure.
+          logger.error(
+            "Failed to send admin submission notification (non-fatal)",
+            {
+              error: error instanceof Error ? error.message : String(error),
+              roundId: newRound.round.id,
+              userId,
+            }
+          );
         }
       }
 
