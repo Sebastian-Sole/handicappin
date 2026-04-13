@@ -151,7 +151,12 @@ export async function Navbar() {
           <Link href={"/rounds/add"} className="xl:block hidden">
             <Button variant={"default"}>Add Round</Button>
           </Link>
-          <ThemeButton size="icon" className="md:flex hidden" />
+          <Link href={"/rounds/add"} className="xl:hidden">
+            <Button variant={"default"} size="icon" aria-label="Add Round">
+              <CirclePlus className="h-5 w-5" />
+            </Button>
+          </Link>
+          <ThemeButton size="icon" className="xl:flex hidden" />
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button

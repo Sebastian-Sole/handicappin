@@ -150,7 +150,7 @@ export default function WelcomeEmail({
                   This is a transactional email about your Handicappin' account.
                 </Text>
                 <Text className="text-xs text-gray-500 text-center">
-                  © 2025 Sole Innovations. All rights reserved.
+                  © {new Date().getFullYear()} Sole Innovations. All rights reserved.
                 </Text>
               </Section>
             </Section>

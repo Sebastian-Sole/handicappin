@@ -93,7 +93,7 @@ export default function ContactFormEmail({
                   This email was sent from the Handicappin' contact form.
                 </Text>
                 <Text className="text-xs text-gray-500 text-center">
-                  © 2025 Sole Innovations. All rights reserved.
+                  © {new Date().getFullYear()} Sole Innovations. All rights reserved.
                 </Text>
               </Section>
             </Section>

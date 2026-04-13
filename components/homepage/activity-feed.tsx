@@ -1,6 +1,14 @@
+"use client";
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { Trophy, TrendingDown, TrendingUp, ChevronRight } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
@@ -49,15 +57,17 @@ export function ActivityFeed({
         </Link>
       </CardHeader>
       <CardContent className="pt-0">
-        <div className="space-y-1">
-          {activities.slice(0, 5).map((activity, index) => (
-            <ActivityItemRow
-              key={activity.id}
-              activity={activity}
-              isLast={index === activities.length - 1 || index === 4}
-            />
-          ))}
-        </div>
+        <TooltipProvider delayDuration={150}>
+          <div className="space-y-1">
+            {activities.slice(0, 5).map((activity, index) => (
+              <ActivityItemRow
+                key={activity.id}
+                activity={activity}
+                isLast={index === activities.length - 1 || index === 4}
+              />
+            ))}
+          </div>
+        </TooltipProvider>
       </CardContent>
     </Card>
   );
@@ -84,14 +94,39 @@ function ActivityItemRow({
           "group",
         )}
       >
-        {/* Timeline indicator */}
+        {/* Timeline indicator — green = approved, yellow = pending, red = rejected */}
         <div className="flex flex-col items-center">
-          <div
-            className={cn(
-              "w-2 h-2 rounded-full mt-2",
-              activity.isPersonalBest ? "bg-yellow-500" : "bg-primary",
-            )}
-          />
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                type="button"
+                onClick={(event) => event.preventDefault()}
+                aria-label={
+                  activity.approvalStatus === "approved"
+                    ? "Approved round"
+                    : activity.approvalStatus === "rejected"
+                      ? "Round rejected"
+                      : "Round pending approval"
+                }
+                className={cn(
+                  "w-2.5 h-2.5 rounded-full mt-2 ring-2 ring-background cursor-default",
+                  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                  activity.approvalStatus === "approved"
+                    ? "bg-chart-1"
+                    : activity.approvalStatus === "rejected"
+                      ? "bg-destructive"
+                      : "bg-chart-5",
+                )}
+              />
+            </TooltipTrigger>
+            <TooltipContent side="right">
+              {activity.approvalStatus === "approved"
+                ? "Approved round"
+                : activity.approvalStatus === "rejected"
+                  ? "Round rejected"
+                  : "Round pending approval"}
+            </TooltipContent>
+          </Tooltip>
           {!isLast && <div className="w-px h-full bg-border flex-1 mt-1" />}
         </div>
 
