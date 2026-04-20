@@ -1,18 +1,41 @@
 import { cn } from "@/lib/utils";
-import { ReactNode } from "react";
+import type { CSSProperties, ReactNode } from "react";
+
+/**
+ * Typography primitives. Sizes, line heights, weights, and tracking come
+ * from the `--text-*` CSS variables declared in `app/globals.css`, which
+ * mirror `lib/design/tokens.ts`. Consumers should prefer these primitives
+ * over raw heading tags; the ESLint config enforces that outside
+ * `components/ui/`.
+ */
 
 type TypographyProps = {
   children: ReactNode;
   className?: string;
 };
 
+type ScaleKey =
+  | "display"
+  | "h1"
+  | "h2"
+  | "h3"
+  | "h4"
+  | "body"
+  | "body-sm"
+  | "caption";
+
+const scaleStyle = (key: ScaleKey): CSSProperties => ({
+  fontSize: `var(--text-${key}-size)`,
+  lineHeight: `var(--text-${key}-line-height)`,
+  fontWeight: `var(--text-${key}-weight)` as unknown as CSSProperties["fontWeight"],
+  letterSpacing: `var(--text-${key}-tracking)`,
+});
+
 export function H1({ children, className }: TypographyProps) {
   return (
     <h1
-      className={cn(
-        "scroll-m-20 text-4xl font-extrabold tracking-tight lg:text-5xl",
-        className
-      )}
+      style={scaleStyle("h1")}
+      className={cn("scroll-m-20", className)}
     >
       {children}
     </h1>
@@ -22,8 +45,9 @@ export function H1({ children, className }: TypographyProps) {
 export function H2({ children, className }: TypographyProps) {
   return (
     <h2
+      style={scaleStyle("h2")}
       className={cn(
-        "scroll-m-20 pb-2 text-3xl font-semibold tracking-tight transition-colors first:mt-0",
+        "scroll-m-20 pb-2 transition-colors first:mt-0",
         className
       )}
     >
@@ -34,12 +58,7 @@ export function H2({ children, className }: TypographyProps) {
 
 export function H3({ children, className }: TypographyProps) {
   return (
-    <h3
-      className={cn(
-        "scroll-m-20 text-2xl font-semibold tracking-tight",
-        className
-      )}
-    >
+    <h3 style={scaleStyle("h3")} className={cn("scroll-m-20", className)}>
       {children}
     </h3>
   );
@@ -47,12 +66,7 @@ export function H3({ children, className }: TypographyProps) {
 
 export function H4({ children, className }: TypographyProps) {
   return (
-    <h4
-      className={cn(
-        "scroll-m-20 text-xl font-semibold tracking-tight",
-        className
-      )}
-    >
+    <h4 style={scaleStyle("h4")} className={cn("scroll-m-20", className)}>
       {children}
     </h4>
   );
@@ -60,7 +74,10 @@ export function H4({ children, className }: TypographyProps) {
 
 export function P({ children, className }: TypographyProps) {
   return (
-    <p className={cn("leading-7 not-first:mt-6", className)}>
+    <p
+      style={scaleStyle("body")}
+      className={cn("not-first:mt-6", className)}
+    >
       {children}
     </p>
   );
@@ -68,7 +85,10 @@ export function P({ children, className }: TypographyProps) {
 
 export function Blockquote({ children, className }: TypographyProps) {
   return (
-    <blockquote className={cn("mt-6 border-l-2 pl-6 italic", className)}>
+    <blockquote
+      style={scaleStyle("body")}
+      className={cn("mt-6 border-l-2 pl-6 italic", className)}
+    >
       {children}
     </blockquote>
   );
@@ -77,8 +97,9 @@ export function Blockquote({ children, className }: TypographyProps) {
 export function InlineCode({ children, className }: TypographyProps) {
   return (
     <code
+      style={scaleStyle("body-sm")}
       className={cn(
-        "relative rounded bg-muted px-[0.3rem] py-[0.2rem] font-mono text-sm font-semibold",
+        "relative rounded bg-muted px-[0.3rem] py-[0.2rem] font-mono font-semibold",
         className
       )}
     >
@@ -89,19 +110,32 @@ export function InlineCode({ children, className }: TypographyProps) {
 
 export function Lead({ children, className }: TypographyProps) {
   return (
-    <p className={cn("text-xl text-muted-foreground", className)}>{children}</p>
+    <p
+      style={scaleStyle("h4")}
+      className={cn("text-muted-foreground font-normal", className)}
+    >
+      {children}
+    </p>
   );
 }
 
 export function Large({ children, className }: TypographyProps) {
   return (
-    <div className={cn("text-lg font-semibold", className)}>{children}</div>
+    <div
+      style={scaleStyle("body")}
+      className={cn("text-lg font-semibold", className)}
+    >
+      {children}
+    </div>
   );
 }
 
 export function Small({ children, className }: TypographyProps) {
   return (
-    <small className={cn("text-sm font-medium leading-none", className)}>
+    <small
+      style={scaleStyle("body-sm")}
+      className={cn("font-medium leading-none", className)}
+    >
       {children}
     </small>
   );
@@ -109,6 +143,11 @@ export function Small({ children, className }: TypographyProps) {
 
 export function Muted({ children, className }: TypographyProps) {
   return (
-    <p className={cn("text-sm text-muted-foreground", className)}>{children}</p>
+    <p
+      style={scaleStyle("body-sm")}
+      className={cn("text-muted-foreground", className)}
+    >
+      {children}
+    </p>
   );
 }
