@@ -1,8 +1,15 @@
+/*
+ * Design tokens are mirrored from `lib/design/tokens.ts` — that module is
+ * the single source of truth (including for the upcoming React Native app).
+ * Update both files together when adjusting the palette, typography scale,
+ * or spacing ramp.
+ */
+
 @import "tailwindcss";
 
 @custom-variant dark (&:is(.dark *));
 
-@theme {
+@theme inline {
   --breakpoint-*: initial;
   --breakpoint-xs: 320px;
   --breakpoint-sm: 480px;
@@ -12,9 +19,8 @@
   --breakpoint-2xl: 1280px;
   --breakpoint-3xl: 1400px;
 
-  /* CORRECTION: Removed hsl() wrappers because the variables 
-     in :root now contain the full color space function (oklch).
-  */
+  /* Semantic color tokens. The variables in :root / .dark carry the full
+     oklch() values so no color-space wrapper is required here. */
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
@@ -33,6 +39,15 @@
 
   --color-destructive: var(--destructive);
   --color-destructive-foreground: var(--destructive-foreground);
+
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+
+  --color-info: var(--info);
+  --color-info-foreground: var(--info-foreground);
 
   --color-muted: var(--muted);
   --color-muted-foreground: var(--muted-foreground);
@@ -59,9 +74,39 @@
   --color-chart-primary: var(--primary);
   --color-chart-destructive: var(--destructive);
 
-  --radius-lg: var(--radius);
-  --radius-md: calc(var(--radius) - 2px);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+
+  --font-sans: var(--font-sans);
+  --font-mono: var(--font-mono);
+  --font-serif: var(--font-serif);
+
   --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+
+  --shadow-2xs: var(--shadow-2xs);
+  --shadow-xs: var(--shadow-xs);
+  --shadow-sm: var(--shadow-sm);
+  --shadow: var(--shadow);
+  --shadow-md: var(--shadow-md);
+  --shadow-lg: var(--shadow-lg);
+  --shadow-xl: var(--shadow-xl);
+  --shadow-2xl: var(--shadow-2xl);
+
+  --tracking-tighter: calc(var(--tracking-normal) - 0.05em);
+  --tracking-tight: calc(var(--tracking-normal) - 0.025em);
+  --tracking-normal: var(--tracking-normal);
+  --tracking-wide: calc(var(--tracking-normal) + 0.025em);
+  --tracking-wider: calc(var(--tracking-normal) + 0.05em);
+  --tracking-widest: calc(var(--tracking-normal) + 0.1em);
 
   --animate-accordion-down: accordion-down 0.2s ease-out;
   --animate-accordion-up: accordion-up 0.2s ease-out;
@@ -240,6 +285,18 @@
     --destructive: oklch(0.55 0.2 25);
     --destructive-foreground: oklch(0.98 0.005 240);
 
+    /* SUCCESS: "Fairway Green" - Positive confirmation, distinct from primary */
+    --success: oklch(0.58 0.15 150);
+    --success-foreground: oklch(0.98 0 0);
+
+    /* WARNING: "Caution Amber" - Attention without alarm */
+    --warning: oklch(0.78 0.14 75);
+    --warning-foreground: oklch(0.2 0.03 145);
+
+    /* INFO: "Sky Blue" - Neutral informational cues */
+    --info: oklch(0.6 0.14 240);
+    --info-foreground: oklch(0.98 0 0);
+
     /* BORDERS & INPUTS */
     --border: oklch(0.9 0.01 160);
     --input: oklch(0.9 0.01 160);
@@ -273,6 +330,57 @@
     --shadow-2xl: 0px 2px 0.5rem 0px oklch(0.2 0.03 145 / 0.13);
     --tracking-normal: 0.025em;
     --spacing: 0.25rem;
+
+    /* Typography scale — mirrors `lib/design/tokens.ts`. These variables are
+       consumed by the Typography primitives in `components/ui/typography.tsx`
+       via inline style(); update both files together. */
+    --text-display-size: 3rem;
+    --text-display-line-height: 1;
+    --text-display-weight: 800;
+    --text-display-tracking: -0.02em;
+
+    --text-h1-size: 2.25rem;
+    --text-h1-line-height: 2.5rem;
+    --text-h1-weight: 800;
+    --text-h1-tracking: -0.02em;
+
+    --text-h2-size: 1.875rem;
+    --text-h2-line-height: 2.25rem;
+    --text-h2-weight: 600;
+    --text-h2-tracking: -0.01em;
+
+    --text-h3-size: 1.5rem;
+    --text-h3-line-height: 2rem;
+    --text-h3-weight: 600;
+    --text-h3-tracking: -0.01em;
+
+    --text-h4-size: 1.25rem;
+    --text-h4-line-height: 1.75rem;
+    --text-h4-weight: 600;
+    --text-h4-tracking: -0.005em;
+
+    --text-body-size: 1rem;
+    --text-body-line-height: 1.75rem;
+    --text-body-weight: 400;
+    --text-body-tracking: 0em;
+
+    --text-body-sm-size: 0.875rem;
+    --text-body-sm-line-height: 1.25rem;
+    --text-body-sm-weight: 400;
+    --text-body-sm-tracking: 0em;
+
+    --text-caption-size: 0.75rem;
+    --text-caption-line-height: 1rem;
+    --text-caption-weight: 500;
+    --text-caption-tracking: 0.01em;
+
+    /* Semantic spacing ramp — mirrors `lib/design/tokens.ts`. */
+    --spacing-xs: 0.25rem;
+    --spacing-sm: 0.5rem;
+    --spacing-md: 1rem;
+    --spacing-lg: 1.5rem;
+    --spacing-xl: 2rem;
+    --spacing-2xl: 3rem;
 
     /* Bars */
     --bar-active: oklch(0.46 0.16 148);
@@ -313,6 +421,16 @@
     --destructive: oklch(0.6 0.2 25);
     --destructive-foreground: oklch(0.98 0 0);
 
+    /* SUCCESS / WARNING / INFO — tuned for dark-mode contrast */
+    --success: oklch(0.62 0.15 150);
+    --success-foreground: oklch(0.98 0 0);
+
+    --warning: oklch(0.74 0.14 75);
+    --warning-foreground: oklch(0.14 0.04 150);
+
+    --info: oklch(0.66 0.14 240);
+    --info-foreground: oklch(0.98 0 0);
+
     /* BORDERS & INPUTS */
     --border: oklch(0.28 0.03 150);
     --input: oklch(0.28 0.03 150);
@@ -338,70 +456,6 @@
     /* Bars */
     --bar-active: oklch(0.55 0.16 148);
     --bar-inactive: oklch(0.25 0.03 150);
-  }
-
-  @theme inline {
-    --color-background: var(--background);
-    --color-background-alternate: var(--background-alternate);
-    --color-foreground: var(--foreground);
-    --color-card: var(--card);
-    --color-card-foreground: var(--card-foreground);
-    --color-popover: var(--popover);
-    --color-popover-foreground: var(--popover-foreground);
-    --color-primary: var(--primary);
-    --color-primary-foreground: var(--primary-foreground);
-    --color-primary-alternate: var(--primary-alternate);
-    --color-secondary: var(--secondary);
-    --color-secondary-foreground: var(--secondary-foreground);
-    --color-muted: var(--muted);
-    --color-muted-foreground: var(--muted-foreground);
-    --color-accent: var(--accent);
-    --color-accent-foreground: var(--accent-foreground);
-    --color-destructive: var(--destructive);
-    --color-destructive-foreground: var(--destructive-foreground);
-    --color-border: var(--border);
-    --color-input: var(--input);
-    --color-ring: var(--ring);
-    --color-bar: var(--bar-inactive);
-    --color-bar-active: var(--bar-active);
-    --color-chart-1: var(--chart-1);
-    --color-chart-2: var(--chart-2);
-    --color-chart-3: var(--chart-3);
-    --color-chart-4: var(--chart-4);
-    --color-chart-5: var(--chart-5);
-    --color-sidebar: var(--sidebar);
-    --color-sidebar-foreground: var(--sidebar-foreground);
-    --color-sidebar-primary: var(--sidebar-primary);
-    --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
-    --color-sidebar-accent: var(--sidebar-accent);
-    --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
-    --color-sidebar-border: var(--sidebar-border);
-    --color-sidebar-ring: var(--sidebar-ring);
-
-    --font-sans: var(--font-sans);
-    --font-mono: var(--font-mono);
-    --font-serif: var(--font-serif);
-
-    --radius-sm: calc(var(--radius) - 4px);
-    --radius-md: calc(var(--radius) - 2px);
-    --radius-lg: var(--radius);
-    --radius-xl: calc(var(--radius) + 4px);
-
-    --shadow-2xs: var(--shadow-2xs);
-    --shadow-xs: var(--shadow-xs);
-    --shadow-sm: var(--shadow-sm);
-    --shadow: var(--shadow);
-    --shadow-md: var(--shadow-md);
-    --shadow-lg: var(--shadow-lg);
-    --shadow-xl: var(--shadow-xl);
-    --shadow-2xl: var(--shadow-2xl);
-
-    --tracking-tighter: calc(var(--tracking-normal) - 0.05em);
-    --tracking-tight: calc(var(--tracking-normal) - 0.025em);
-    --tracking-normal: var(--tracking-normal);
-    --tracking-wide: calc(var(--tracking-normal) + 0.025em);
-    --tracking-wider: calc(var(--tracking-normal) + 0.05em);
-    --tracking-widest: calc(var(--tracking-normal) + 0.1em);
   }
 
   body {
