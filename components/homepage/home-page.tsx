@@ -7,7 +7,7 @@ import { QuickStats } from "./quick-stats";
 import { HandicapGoal } from "./handicap-goal";
 import HandicapTrendChartDisplay from "../charts/lazy-handicap-trend-chart-display";
 import ScoreBarChartDisplay from "../charts/lazy-score-bar-chart-display";
-import { getRelevantRounds } from "@/lib/handicap";
+import { getRelevantRounds } from "@handicappin/handicap-core";
 import { transformRoundsToActivities } from "@/utils/activity-transform";
 import { HOMEPAGE_ROUNDS_LIMIT } from "@/utils/golf-stats";
 

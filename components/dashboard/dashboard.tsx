@@ -5,7 +5,7 @@ import DashboardGraphDisplay from "./dashboardGraphDisplay";
 import useMounted from "@/hooks/useMounted";
 import { Tables } from "@/types/supabase";
 import DashboardSkeleton from "./dashboardSkeleton";
-import { getRelevantRounds } from "@/lib/handicap";
+import { getRelevantRounds } from "@handicappin/handicap-core";
 import { ScorecardWithRound } from "@/types/scorecard-input";
 import { RoundsTable } from "./roundsTable";
 
