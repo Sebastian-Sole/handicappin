@@ -11,7 +11,7 @@ import {
   calculate9HoleScoreDifferential,
   calculateExpected9HoleDifferential,
   calculateScoreDifferential,
-} from "@/lib/handicap";
+} from "@handicappin/handicap-core";
 import { ArrowRight } from "lucide-react";
 
 const meta = getCalculatorByIdOrThrow("nine-hole-equivalency");

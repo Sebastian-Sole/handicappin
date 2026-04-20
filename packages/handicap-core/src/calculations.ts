@@ -1,10 +1,9 @@
-import { Hole, Score, Tee } from "@/types/scorecard-input";
+import type { Hole, Score, Tee } from "./types";
 import {
   SOFT_CAP_THRESHOLD,
   HARD_CAP_THRESHOLD,
   LOW_HANDICAP_WINDOW_DAYS,
 } from "./constants";
-import { Tables } from "@/types/supabase";
 
 export type ProcessedRound = {
   id: number;
@@ -19,6 +18,18 @@ export type ProcessedRound = {
   teeId: number;
   courseHandicap: number;
   approvalStatus: string;
+};
+
+/**
+ * Minimal shape of a round record consumed by {@link getRelevantRounds}.
+ *
+ * Defined structurally (rather than importing a database Row type) so this
+ * package remains free of Drizzle/Supabase dependencies. Any record with
+ * these two fields is accepted.
+ */
+export type RoundLike = {
+  id: number;
+  scoreDifferential: number;
 };
 
 /**
@@ -379,8 +390,12 @@ export function addHcpStrokesToScores(
 /**
  * Retrieves the rounds which contribute to the handicap index calculation based on the number of rounds provided.
  * Note: This function creates a sorted copy and does not mutate the input array.
+ *
+ * The parameter is generic over {@link RoundLike} so that callers can pass in
+ * their own row type (e.g. a Drizzle / Supabase row) without this package
+ * needing to know about the database.
  */
-export function getRelevantRounds(rounds: Tables<"round">[]) {
+export function getRelevantRounds<T extends RoundLike>(rounds: T[]): T[] {
   // Create a copy to avoid mutating the input array
   // Use round.id as secondary sort for stable ordering when scoreDifferentials are identical
   const sortedRounds = [...rounds].sort((a, b) => {

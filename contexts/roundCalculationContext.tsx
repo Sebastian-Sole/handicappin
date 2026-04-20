@@ -12,7 +12,7 @@ import {
   calculateScoreDifferential,
   calculate9HoleScoreDifferential,
   calculateExpected9HoleDifferential,
-} from "@/lib/handicap";
+} from "@handicappin/handicap-core";
 import { ScorecardWithRound } from "@/types/scorecard-input";
 
 interface RoundCalculationContextProps {

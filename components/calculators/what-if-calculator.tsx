@@ -10,7 +10,7 @@ import { getCalculatorByIdOrThrow } from "@/lib/calculator-registry";
 import {
   calculateScoreDifferential,
   calculateHandicapIndex,
-} from "@/lib/handicap";
+} from "@handicappin/handicap-core";
 import { ArrowRight, TrendingDown, TrendingUp, Minus } from "lucide-react";
 
 const meta = getCalculatorByIdOrThrow("what-if-scenario");

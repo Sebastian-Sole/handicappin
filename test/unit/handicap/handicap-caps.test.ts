@@ -3,7 +3,7 @@ import {
   calculateLowHandicapIndex,
   applyHandicapCaps,
   type ProcessedRound,
-} from "@/lib/handicap/calculations";
+} from "@handicappin/handicap-core";
 
 /**
  * Helper to create a ProcessedRound with minimal required fields

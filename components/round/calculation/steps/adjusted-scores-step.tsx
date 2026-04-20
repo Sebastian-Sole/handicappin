@@ -3,7 +3,7 @@
 import { Muted, P, Blockquote } from "@/components/ui/typography";
 import { CalculationStep } from "../calculation-step";
 import { useRoundCalculationContext } from "@/contexts/roundCalculationContext";
-import { calculateHoleAdjustedScore } from "@/lib/handicap";
+import { calculateHoleAdjustedScore } from "@handicappin/handicap-core";
 import Link from "next/link";
 
 const AdjustedScoresStep = () => {
