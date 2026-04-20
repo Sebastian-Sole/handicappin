@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "npx block-no-verify@1.1.2"
+          }
+        ],
+        "description": "Block git hook-bypass flags (--no-verify)"
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/a11y-check.sh",
+            "timeout": 10
+          }
+        ],
+        "description": "ESLint jsx-a11y check on TSX/JSX edits (WCAG 2.1 AA)"
+      },
+      {
+        "matcher": "Edit|Write|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/claude-md-audit.sh",
+            "timeout": 10
+          }
+        ],
+        "description": "Audit CLAUDE.md files for bloat, stale refs, and anti-patterns"
+      }
+    ]
+  }
+}
