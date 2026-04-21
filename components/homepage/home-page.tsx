@@ -7,6 +7,7 @@ import { QuickStats } from "./quick-stats";
 import { HandicapGoal } from "./handicap-goal";
 import HandicapTrendChartDisplay from "../charts/lazy-handicap-trend-chart-display";
 import ScoreBarChartDisplay from "../charts/lazy-score-bar-chart-display";
+import { H2 } from "@/components/ui/typography";
 import { getRelevantRounds } from "@handicappin/handicap-core";
 import { transformRoundsToActivities } from "@/utils/activity-transform";
 import { HOMEPAGE_ROUNDS_LIMIT } from "@/utils/golf-stats";
@@ -152,7 +153,7 @@ export const HomePage = async ({ profile }: HomepageProps) => {
         {/* Charts Section - Desktop only */}
         <section className="hidden md:block w-full py-8 lg:py-12 bg-muted/30">
           <div className="sm:container px-4 lg:px-6">
-            <h2 className="text-xl font-semibold mb-6">Performance Analytics</h2>
+            <H2 className="text-xl font-semibold mb-6 pb-0">Performance Analytics</H2>
             <div className="grid gap-6 xl:grid-cols-2">
               <HandicapTrendChartDisplay
                 handicapIndex={handicapIndex}

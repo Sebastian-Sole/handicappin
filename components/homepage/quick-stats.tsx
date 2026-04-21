@@ -61,7 +61,7 @@ export function QuickStats({
         {lowestDifferential !== null && (
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Trophy className="h-4 w-4 text-yellow-500" />
+              <Trophy className="h-4 w-4 text-warning" />
               <span>Best Differential</span>
             </div>
             <span className="text-sm font-semibold text-foreground">
@@ -88,9 +88,9 @@ export function QuickStats({
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               {improvements > increases ? (
-                <TrendingDown className="h-4 w-4 text-green-500" />
+                <TrendingDown className="h-4 w-4 text-success" />
               ) : improvements < increases ? (
-                <TrendingUp className="h-4 w-4 text-red-500" />
+                <TrendingUp className="h-4 w-4 text-destructive" />
               ) : (
                 <Minus className="h-4 w-4" />
               )}
@@ -100,9 +100,9 @@ export function QuickStats({
               className={cn(
                 "text-sm font-medium",
                 improvements > increases
-                  ? "text-green-600 dark:text-green-400"
+                  ? "text-success"
                   : improvements < increases
-                    ? "text-red-600 dark:text-red-400"
+                    ? "text-destructive"
                     : "text-foreground"
               )}
             >

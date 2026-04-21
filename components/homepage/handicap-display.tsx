@@ -73,8 +73,8 @@ export function HandicapDisplay({
           className={cn(
             "flex items-center gap-1 mt-3 px-3 py-1 rounded-full text-sm font-medium",
             change < 0
-              ? "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400"
-              : "bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400"
+              ? "bg-success/20 text-success"
+              : "bg-destructive/20 text-destructive"
           )}
         >
           {change < 0 ? (

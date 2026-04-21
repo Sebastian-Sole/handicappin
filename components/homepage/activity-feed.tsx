@@ -141,7 +141,7 @@ function ActivityItemRow({
               {activity.isPersonalBest && (
                 <Badge
                   variant="secondary"
-                  className="bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 text-xs shrink-0 px-1.5 sm:px-2"
+                  className="bg-warning/20 text-warning text-xs shrink-0 px-1.5 sm:px-2"
                 >
                   <Trophy className="h-3 w-3 sm:mr-1" />
                   <span className="hidden sm:inline">Best</span>
@@ -172,8 +172,8 @@ function ActivityItemRow({
                 className={cn(
                   "flex items-center gap-0.5",
                   activity.handicapChange < 0
-                    ? "text-green-600 dark:text-green-400"
-                    : "text-red-600 dark:text-red-400",
+                    ? "text-success"
+                    : "text-destructive",
                 )}
               >
                 {activity.handicapChange < 0 ? (
