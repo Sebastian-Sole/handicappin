@@ -61,7 +61,6 @@ const RAW_COLOR_GRANDFATHERED = [
   "components/scorecard/golf-scorecard.tsx",
   "components/scorecard/scorecard-image-upload.tsx",
   "components/statistics/courses/courses-section.tsx",
-  "components/statistics/frivolities/frivolities-section.tsx",
   "components/statistics/hero/player-identity-card.tsx",
   "components/statistics/overview/overview-section.tsx",
   "components/tooltip-icon.tsx",

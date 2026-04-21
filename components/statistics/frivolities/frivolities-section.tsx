@@ -117,14 +117,14 @@ export function FrivolitiesSection({ stats }: FrivolitiesSectionProps) {
         description="Your notable golfing accomplishments"
       >
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <Card className="bg-gradient-to-br from-yellow-500/10 to-amber-500/10 border-yellow-500/20">
+          <Card className="bg-score-eagle/10 border-score-eagle/20">
             <CardContent className="p-4 text-center">
               <div className="text-2xl mb-1">🦅</div>
               <p className="text-2xl font-bold">{stats.perfectHoles.eagles}</p>
               <p className="text-sm text-muted-foreground">Eagles</p>
             </CardContent>
           </Card>
-          <Card className="bg-gradient-to-br from-green-500/10 to-emerald-500/10 border-green-500/20">
+          <Card className="bg-score-birdie/10 border-score-birdie/20">
             <CardContent className="p-4 text-center">
               <div className="text-2xl mb-1">🐦</div>
               <p className="text-2xl font-bold">{stats.perfectHoles.birdies}</p>
@@ -148,7 +148,7 @@ export function FrivolitiesSection({ stats }: FrivolitiesSectionProps) {
         </div>
 
         {stats.bogeyFreeRounds > 0 && (
-          <Card className="mt-4 bg-gradient-to-r from-purple-500/10 to-pink-500/10 border-purple-500/20">
+          <Card className="mt-4 bg-primary/10 border-primary/20">
             <CardContent className="p-4">
               <div className="flex items-center gap-4">
                 <div className="text-3xl">🌟</div>
@@ -186,7 +186,7 @@ export function FrivolitiesSection({ stats }: FrivolitiesSectionProps) {
           {/* Best and Worst Phase Highlight */}
           {lunarPerformance.bestPhase && lunarPerformance.worstPhase && (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Card className="bg-gradient-to-br from-indigo-500/10 to-purple-500/10 border-indigo-500/20">
+              <Card className="bg-info/10 border-info/20">
                 <CardContent className="p-4">
                   <div className="flex items-center justify-between">
                     <div>
@@ -203,7 +203,7 @@ export function FrivolitiesSection({ stats }: FrivolitiesSectionProps) {
                       </p>
                     </div>
                     <div className="text-right">
-                      <p className="text-2xl font-bold text-green-600">
+                      <p className="text-2xl font-bold text-success">
                         {formatDifferential(lunarPerformance.bestPhase.avgDifferential)}
                       </p>
                       <p className="text-xs text-muted-foreground">avg diff</p>
@@ -211,7 +211,7 @@ export function FrivolitiesSection({ stats }: FrivolitiesSectionProps) {
                   </div>
                 </CardContent>
               </Card>
-              <Card className="bg-gradient-to-br from-orange-500/10 to-red-500/10 border-orange-500/20">
+              <Card className="bg-score-bogey/10 border-score-bogey/20">
                 <CardContent className="p-4">
                   <div className="flex items-center justify-between">
                     <div>
@@ -230,7 +230,7 @@ export function FrivolitiesSection({ stats }: FrivolitiesSectionProps) {
                       </p>
                     </div>
                     <div className="text-right">
-                      <p className="text-2xl font-bold text-orange-600">
+                      <p className="text-2xl font-bold text-warning">
                         {formatDifferential(lunarPerformance.worstPhase.avgDifferential)}
                       </p>
                       <p className="text-xs text-muted-foreground">avg diff</p>
@@ -295,7 +295,7 @@ export function FrivolitiesSection({ stats }: FrivolitiesSectionProps) {
                   <p
                     className={cn(
                       "text-3xl font-bold",
-                      frontBackComparison.betterHalf === "front" && "text-green-600"
+                      frontBackComparison.betterHalf === "front" && "text-success"
                     )}
                   >
                     {frontBackComparison.front9.avgOverPar >= 0 ? "+" : ""}
@@ -309,7 +309,7 @@ export function FrivolitiesSection({ stats }: FrivolitiesSectionProps) {
                   <p
                     className={cn(
                       "text-3xl font-bold",
-                      frontBackComparison.betterHalf === "back" && "text-green-600"
+                      frontBackComparison.betterHalf === "back" && "text-success"
                     )}
                   >
                     {frontBackComparison.back9.avgOverPar >= 0 ? "+" : ""}
@@ -362,7 +362,7 @@ export function FrivolitiesSection({ stats }: FrivolitiesSectionProps) {
 
         {/* Streak Records */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
-          <Card className="bg-gradient-to-br from-green-500/10 to-emerald-500/10 border-green-500/20">
+          <Card className="bg-score-birdie/10 border-score-birdie/20">
             <CardContent className="p-4 text-center">
               <div className="text-2xl mb-1">🔥</div>
               <p className="text-2xl font-bold">{streakStats.longestParStreak}</p>
@@ -380,7 +380,7 @@ export function FrivolitiesSection({ stats }: FrivolitiesSectionProps) {
               <p className="text-xs text-muted-foreground">consecutive holes</p>
             </CardContent>
           </Card>
-          <Card className="bg-gradient-to-br from-orange-500/10 to-red-500/10 border-orange-500/20">
+          <Card className="bg-score-bogey/10 border-score-bogey/20">
             <CardContent className="p-4 text-center">
               <div className="text-2xl mb-1">💀</div>
               <p className="text-2xl font-bold">{streakStats.longestBogeyStreak}</p>
@@ -408,7 +408,7 @@ export function FrivolitiesSection({ stats }: FrivolitiesSectionProps) {
         description="Your worldwide golfing footprint"
       >
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <Card className="bg-gradient-to-br from-blue-500/10 to-cyan-500/10 border-blue-500/20">
+          <Card className="bg-info/10 border-info/20">
             <CardContent className="p-4 text-center">
               <div className="text-3xl mb-2">🏌️</div>
               <p className="text-3xl font-bold">{stats.uniqueCoursesPlayed}</p>
@@ -419,7 +419,7 @@ export function FrivolitiesSection({ stats }: FrivolitiesSectionProps) {
               </p>
             </CardContent>
           </Card>
-          <Card className="bg-gradient-to-br from-green-500/10 to-teal-500/10 border-green-500/20">
+          <Card className="bg-success/10 border-success/20">
             <CardContent className="p-4 text-center">
               <div className="text-3xl mb-2">🌐</div>
               <p className="text-3xl font-bold">{stats.countriesPlayed}</p>
@@ -430,7 +430,7 @@ export function FrivolitiesSection({ stats }: FrivolitiesSectionProps) {
               </p>
             </CardContent>
           </Card>
-          <Card className="bg-gradient-to-br from-purple-500/10 to-pink-500/10 border-purple-500/20">
+          <Card className="bg-primary/10 border-primary/20">
             <CardContent className="p-4 text-center">
               <div className="text-3xl mb-2">📏</div>
               <p className="text-3xl font-bold">
