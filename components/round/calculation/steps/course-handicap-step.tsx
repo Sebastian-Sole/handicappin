@@ -130,7 +130,7 @@ const CourseHandicapStep = () => {
               }
               className={cn(
                 isModified(handicapIndex, originalHandicapIndex) &&
-                  "border-amber-500 bg-amber-50 dark:bg-amber-950/20"
+                  "border-warning bg-warning/10"
               )}
             />
           </div>
@@ -142,7 +142,7 @@ const CourseHandicapStep = () => {
               onChange={(e) => setSlope(Number.parseFloat(e.target.value) || 0)}
               className={cn(
                 isModified(slope, originalSlope) &&
-                  "border-amber-500 bg-amber-50 dark:bg-amber-950/20"
+                  "border-warning bg-warning/10"
               )}
             />
           </div>
@@ -157,7 +157,7 @@ const CourseHandicapStep = () => {
               }
               className={cn(
                 isModified(rating, originalRating) &&
-                  "border-amber-500 bg-amber-50 dark:bg-amber-950/20"
+                  "border-warning bg-warning/10"
               )}
             />
           </div>
@@ -169,7 +169,7 @@ const CourseHandicapStep = () => {
               onChange={(e) => setPar(Number(e.target.value) || 0)}
               className={cn(
                 isModified(par, originalPar) &&
-                  "border-amber-500 bg-amber-50 dark:bg-amber-950/20"
+                  "border-warning bg-warning/10"
               )}
             />
           </div>

@@ -18,14 +18,15 @@ const HandicapImpactStep = () => {
 
   const getTrendIcon = () => {
     if (change < -0.05)
-      return <TrendingDown className="w-6 h-6 text-green-600" />;
-    if (change > 0.05) return <TrendingUp className="w-6 h-6 text-red-600" />;
+      return <TrendingDown className="w-6 h-6 text-success" />;
+    if (change > 0.05)
+      return <TrendingUp className="w-6 h-6 text-destructive" />;
     return <Minus className="w-6 h-6 text-muted-foreground" />;
   };
 
   const getChangeColor = () => {
-    if (change < -0.05) return "text-green-600";
-    if (change > 0.05) return "text-red-600";
+    if (change < -0.05) return "text-success";
+    if (change > 0.05) return "text-destructive";
     return "text-muted-foreground";
   };
 
@@ -46,8 +47,8 @@ const HandicapImpactStep = () => {
             smaller number of your best differentials with an adjustment factor.
           </P>
           {esrAdjustment !== 0 && (
-            <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-lg p-3">
-              <P className="text-amber-800 dark:text-amber-200 text-sm">
+            <div className="bg-warning/10 border border-warning/30 rounded-lg p-3">
+              <P className="text-warning text-sm">
                 <strong>Exceptional Score Reduction (ESR):</strong> When you
                 post a Score Differential significantly better than your
                 Handicap Index (7+ strokes), an ESR adjustment is applied to
@@ -86,8 +87,8 @@ const HandicapImpactStep = () => {
         <div
           className={cn(
             "flex items-center justify-center gap-3 p-4 rounded-lg",
-            change < -0.05 && "bg-green-50 dark:bg-green-950/20",
-            change > 0.05 && "bg-red-50 dark:bg-red-950/20",
+            change < -0.05 && "bg-success/10",
+            change > 0.05 && "bg-destructive/10",
             Math.abs(change) <= 0.05 && "bg-muted/50"
           )}
         >
@@ -110,11 +111,11 @@ const HandicapImpactStep = () => {
 
         {/* Exceptional Score Adjustment */}
         {esrAdjustment !== 0 && (
-          <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-lg p-4">
-            <P className="font-medium text-amber-800 dark:text-amber-200">
+          <div className="bg-warning/10 border border-warning/30 rounded-lg p-4">
+            <P className="font-medium text-warning">
               Exceptional Score Reduction Applied
             </P>
-            <Muted className="text-amber-700 dark:text-amber-300">
+            <Muted className="text-warning">
               This round was {Math.abs(esrAdjustment)} stroke
               {Math.abs(esrAdjustment) > 1 ? "s" : ""} better than expected. An
               ESR adjustment of {esrAdjustment} was applied to your recent

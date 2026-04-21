@@ -60,8 +60,8 @@ const ScoreDifferentialStep = () => {
             Handicap Index is calculated from your best Score Differentials.
           </P>
           {isNineHoles && (
-            <div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3 mt-4">
-              <P className="text-blue-800 dark:text-blue-200 text-sm">
+            <div className="bg-info/10 border border-info/30 rounded-lg p-3 mt-4">
+              <P className="text-info text-sm">
                 <strong>9-Hole Round Note:</strong> Since you played 9 holes,
                 your Score Differential is calculated as an 18-hole equivalent.
                 This combines your actual 9-hole performance with an
@@ -124,7 +124,7 @@ const ScoreDifferentialStep = () => {
               }
               className={cn(
                 isModified(rating, originalRating) &&
-                  "border-amber-500 bg-amber-50 dark:bg-amber-950/20"
+                  "border-warning bg-warning/10"
               )}
             />
           </div>
@@ -146,7 +146,7 @@ const ScoreDifferentialStep = () => {
               }}
               className={cn(
                 isModified(slope, originalSlope) &&
-                  "border-amber-500 bg-amber-50 dark:bg-amber-950/20"
+                  "border-warning bg-warning/10"
               )}
             />
           </div>
@@ -229,8 +229,8 @@ const ScoreDifferentialStep = () => {
 
         {/* 9-hole info note */}
         {isNineHoles && (
-          <div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
-            <P className="text-blue-800 dark:text-blue-200 text-sm">
+          <div className="bg-info/10 border border-info/30 rounded-lg p-4">
+            <P className="text-info text-sm">
               <strong>Note:</strong> Per USGA Rule 5.1b, 9-hole rounds are
               converted to 18-hole equivalents by combining your actual played
               differential with an expected differential for the unplayed holes.
