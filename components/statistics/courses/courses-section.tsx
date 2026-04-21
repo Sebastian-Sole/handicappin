@@ -143,7 +143,7 @@ export function CoursesSection({
       >
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {homeCourse && (
-            <Card className="bg-gradient-to-br from-blue-500/10 to-cyan-500/10 border-blue-500/20">
+            <Card className="bg-info/10 border-info/20">
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm text-muted-foreground">
                   🏠 Home Course
@@ -162,7 +162,7 @@ export function CoursesSection({
               </CardContent>
             </Card>
           )}
-          <Card className="bg-gradient-to-br from-green-500/10 to-emerald-500/10 border-green-500/20">
+          <Card className="bg-success/10 border-success/20">
             <CardHeader className="pb-2">
               <CardTitle className="text-sm text-muted-foreground">
                 ✅ Best Performance
@@ -175,12 +175,12 @@ export function CoursesSection({
               <p className="text-sm text-muted-foreground">
                 {bestCourse.roundCount} round{bestCourse.roundCount !== 1 ? "s" : ""}
               </p>
-              <p className="text-xs text-green-600 font-medium mt-1">
+              <p className="text-xs text-success font-medium mt-1">
                 {formatDifferential(bestCourse.avgDifferential)} avg diff
               </p>
             </CardContent>
           </Card>
-          <Card className="bg-gradient-to-br from-orange-500/10 to-amber-500/10 border-orange-500/20">
+          <Card className="bg-warning/10 border-warning/20">
             <CardHeader className="pb-2">
               <CardTitle className="text-sm text-muted-foreground">
                 💪 Challenging Course
@@ -193,13 +193,13 @@ export function CoursesSection({
               <p className="text-sm text-muted-foreground">
                 {worstCourse.roundCount} round{worstCourse.roundCount !== 1 ? "s" : ""}
               </p>
-              <p className="text-xs text-orange-600 font-medium mt-1">
+              <p className="text-xs text-warning font-medium mt-1">
                 {formatDifferential(worstCourse.avgDifferential)} avg diff
               </p>
             </CardContent>
           </Card>
           {mostConsistentCourse && (
-            <Card className="bg-gradient-to-br from-purple-500/10 to-indigo-500/10 border-purple-500/20">
+            <Card className="bg-primary/10 border-primary/20">
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm text-muted-foreground">
                   🎯 Most Consistent
@@ -213,7 +213,7 @@ export function CoursesSection({
                 <p className="text-sm text-muted-foreground">
                   {mostConsistentCourse.roundCount} rounds
                 </p>
-                <p className="text-xs text-purple-600 font-medium mt-1">
+                <p className="text-xs text-primary font-medium mt-1">
                   {(
                     mostConsistentCourse.worstDifferential -
                     mostConsistentCourse.bestDifferential
@@ -224,7 +224,7 @@ export function CoursesSection({
             </Card>
           )}
           {!mostConsistentCourse && singlePlayHighlight && (
-            <Card className="bg-gradient-to-br from-cyan-500/10 to-teal-500/10 border-cyan-500/20">
+            <Card className="bg-info/10 border-info/20">
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm text-muted-foreground">
                   ⛳ Single-Play Course
@@ -235,7 +235,7 @@ export function CoursesSection({
                   {getFlagEmoji(singlePlayHighlight.country)} {singlePlayHighlight.courseName}
                 </p>
                 <p className="text-sm text-muted-foreground">Played once</p>
-                <p className="text-xs text-cyan-600 font-medium mt-1">
+                <p className="text-xs text-info font-medium mt-1">
                   {formatDifferential(singlePlayHighlight.avgDifferential)} diff
                 </p>
               </CardContent>

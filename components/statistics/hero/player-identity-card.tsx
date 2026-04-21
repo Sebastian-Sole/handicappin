@@ -74,7 +74,7 @@ export function PlayerIdentityCard({
                 <span
                   className={cn(
                     "text-lg",
-                    handicapChange < 0 ? "text-green-600" : "text-red-600"
+                    handicapChange < 0 ? "text-success" : "text-destructive"
                   )}
                 >
                   {handicapChange < 0 ? "↓" : "↑"}
@@ -99,7 +99,7 @@ export function PlayerIdentityCard({
             <div
               className={cn(
                 "text-4xl md:text-5xl font-bold",
-                playNudge.urgent && "text-orange-500"
+                playNudge.urgent && "text-warning"
               )}
             >
               {daysSinceLastRound > 0 ? daysSinceLastRound : "0"}
@@ -108,7 +108,7 @@ export function PlayerIdentityCard({
             <p
               className={cn(
                 "text-xs",
-                playNudge.urgent ? "text-orange-500 font-medium" : "text-muted-foreground"
+                playNudge.urgent ? "text-warning font-medium" : "text-muted-foreground"
               )}
             >
               {playNudge.text}

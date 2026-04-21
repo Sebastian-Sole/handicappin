@@ -86,7 +86,7 @@ export function PerformanceSection({
       >
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {/* Best Round */}
-          <Card className="bg-gradient-to-br from-yellow-500/10 to-amber-500/10 border-yellow-500/20">
+          <Card className="bg-score-eagle/10 border-score-eagle/20">
             <CardHeader className="pb-2">
               <CardTitle className="text-sm text-muted-foreground flex items-center gap-2">
                 <span>🏆</span> Best Round
@@ -102,7 +102,7 @@ export function PerformanceSection({
                   at {bestCourse.courseName}
                 </p>
               )}
-              <p className="text-xs text-green-600 font-medium mt-2">
+              <p className="text-xs text-success font-medium mt-2">
                 Your career best!
               </p>
             </CardContent>
@@ -117,11 +117,11 @@ export function PerformanceSection({
             </CardHeader>
             <CardContent>
               <div className="flex items-baseline gap-2">
-                <span className="text-3xl font-bold text-green-600">
+                <span className="text-3xl font-bold text-success">
                   {formatDifferential(stats.bestDifferential)}
                 </span>
                 <span className="text-muted-foreground">to</span>
-                <span className="text-3xl font-bold text-red-500">
+                <span className="text-3xl font-bold text-destructive">
                   {formatDifferential(stats.worstDifferential)}
                 </span>
               </div>
@@ -137,7 +137,7 @@ export function PerformanceSection({
             className={cn(
               isValidNumber(stats.improvementRate) &&
               stats.improvementRate > 0 &&
-              "bg-gradient-to-br from-green-500/10 to-emerald-500/10 border-green-500/20"
+              "bg-success/10 border-success/20"
             )}
           >
             <CardHeader className="pb-2">
@@ -158,7 +158,7 @@ export function PerformanceSection({
                   className={cn(
                     "text-3xl font-bold",
                     isValidNumber(stats.improvementRate) && stats.improvementRate > 0
-                      ? "text-green-600"
+                      ? "text-success"
                       : "text-muted-foreground"
                   )}
                 >
@@ -172,7 +172,7 @@ export function PerformanceSection({
                 className={cn(
                   "text-xs mt-2",
                   isValidNumber(stats.improvementRate) && stats.improvementRate > 0
-                    ? "text-green-600 font-medium"
+                    ? "text-success font-medium"
                     : "text-muted-foreground"
                 )}
               >
@@ -210,7 +210,7 @@ export function PerformanceSection({
                   <span
                     className={cn(
                       "text-sm",
-                      stats.handicapChange < 0 ? "text-green-600" : "text-red-500"
+                      stats.handicapChange < 0 ? "text-success" : "text-destructive"
                     )}
                   >
                     {stats.handicapChange < 0 ? "↓" : "↑"}
@@ -270,7 +270,7 @@ export function PerformanceSection({
                     </p>
                   </div>
                   <div className="text-right">
-                    <p className="text-3xl font-bold text-green-600">
+                    <p className="text-3xl font-bold text-success">
                       {formatDifferential(extendedStats.bestMonth.avgDifferential)}
                     </p>
                     <p className="text-sm text-muted-foreground">avg differential</p>
@@ -307,7 +307,7 @@ export function PerformanceSection({
                   href={`/rounds/${round.roundId}/calculation`}
                   className="block"
                 >
-                  <Card className="bg-gradient-to-r from-yellow-500/10 to-orange-500/10 border-yellow-500/20 hover:border-yellow-500/40 transition-colors cursor-pointer">
+                  <Card className="bg-score-eagle/10 border-score-eagle/20 hover:border-score-eagle/40 transition-colors cursor-pointer">
                     <CardContent className="p-4">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
@@ -326,7 +326,7 @@ export function PerformanceSection({
                           </div>
                         </div>
                         <div className="text-right">
-                          <p className="text-2xl font-bold text-green-600">
+                          <p className="text-2xl font-bold text-success">
                             {formatDifferential(round.differential)}
                           </p>
                           <p className="text-xs text-muted-foreground">
