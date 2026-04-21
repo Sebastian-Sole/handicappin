@@ -78,6 +78,16 @@ const BASELINE_IGNORES = [
   "eslint.config.mjs",
 ];
 
+const HEADING_ONLY = RAW_HEADING_GRANDFATHERED.filter(
+  (p) => !RAW_COLOR_GRANDFATHERED.includes(p)
+);
+const COLOR_ONLY = RAW_COLOR_GRANDFATHERED.filter(
+  (p) => !RAW_HEADING_GRANDFATHERED.includes(p)
+);
+const BOTH = RAW_COLOR_GRANDFATHERED.filter((p) =>
+  RAW_HEADING_GRANDFATHERED.includes(p)
+);
+
 const eslintConfig = [
   {
     // Global ignores. `.claude/**` is tooling/harness code with a
@@ -110,37 +120,43 @@ const eslintConfig = [
       ],
     },
   },
-  {
-    // Files grandfathered for HEADINGS only — still enforce colors. Must
-    // come after the default tier because flat config replaces rule
-    // options per matching block.
-    files: RAW_HEADING_GRANDFATHERED.filter(
-      (p) => !RAW_COLOR_GRANDFATHERED.includes(p)
-    ),
-    ignores: [...BASELINE_IGNORES, ...RAW_COLOR_GRANDFATHERED],
-    rules: {
-      "no-restricted-syntax": ["error", ...colorSelectors],
-    },
-  },
-  {
-    // Files grandfathered for COLORS only — still enforce headings.
-    files: RAW_COLOR_GRANDFATHERED.filter(
-      (p) => !RAW_HEADING_GRANDFATHERED.includes(p)
-    ),
-    ignores: [...BASELINE_IGNORES, ...RAW_HEADING_GRANDFATHERED],
-    rules: {
-      "no-restricted-syntax": ["error", ...headingSelectors],
-    },
-  },
-  {
-    // Files grandfathered for BOTH — disable the rule entirely.
-    files: RAW_COLOR_GRANDFATHERED.filter((p) =>
-      RAW_HEADING_GRANDFATHERED.includes(p)
-    ),
-    rules: {
-      "no-restricted-syntax": "off",
-    },
-  },
+  // Tier blocks are emitted only when their derived file list is
+  // non-empty — flat config rejects empty `files` arrays.
+  ...(HEADING_ONLY.length > 0
+    ? [
+        {
+          // Grandfathered for HEADINGS only — still enforce colors.
+          files: HEADING_ONLY,
+          ignores: [...BASELINE_IGNORES, ...RAW_COLOR_GRANDFATHERED],
+          rules: {
+            "no-restricted-syntax": ["error", ...colorSelectors],
+          },
+        },
+      ]
+    : []),
+  ...(COLOR_ONLY.length > 0
+    ? [
+        {
+          // Grandfathered for COLORS only — still enforce headings.
+          files: COLOR_ONLY,
+          ignores: [...BASELINE_IGNORES, ...RAW_HEADING_GRANDFATHERED],
+          rules: {
+            "no-restricted-syntax": ["error", ...headingSelectors],
+          },
+        },
+      ]
+    : []),
+  ...(BOTH.length > 0
+    ? [
+        {
+          // Grandfathered for BOTH — disable the rule entirely.
+          files: BOTH,
+          rules: {
+            "no-restricted-syntax": "off",
+          },
+        },
+      ]
+    : []),
 ];
 
 export default eslintConfig;
