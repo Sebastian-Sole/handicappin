@@ -367,7 +367,7 @@ const FILE_STATUS_CONFIG: Record<
   pending: { icon: Circle, label: "Waiting", className: "text-muted-foreground" },
   uploading: { icon: Loader2, label: "Uploading", className: "text-primary animate-spin" },
   analyzing: { icon: Sparkles, label: "Analyzing", className: "text-primary animate-pulse" },
-  done: { icon: Check, label: "Complete", className: "text-green-600" },
+  done: { icon: Check, label: "Complete", className: "text-success" },
   error: { icon: AlertCircle, label: "Failed", className: "text-destructive" },
 };
 
@@ -644,7 +644,7 @@ export function ScorecardImageUpload({
             {SUMMARY_ITEMS.map(({ key, label }) => (
               <div key={key} className="flex items-center gap-1.5 text-sm">
                 {summary[key] ? (
-                  <Check className="h-3.5 w-3.5 text-green-600 shrink-0" />
+                  <Check className="h-3.5 w-3.5 text-success shrink-0" />
                 ) : (
                   <Circle className="h-3.5 w-3.5 text-muted-foreground/50 shrink-0" />
                 )}
@@ -780,7 +780,7 @@ export function ScorecardImageUpload({
                   </div>
                 )}
                 {allDone && someSucceeded && (
-                  <p className="text-sm font-medium text-green-600 flex items-center gap-1.5">
+                  <p className="text-sm font-medium text-success flex items-center gap-1.5">
                     <Check className="h-4 w-4" />
                     Extraction complete
                   </p>
@@ -813,7 +813,7 @@ export function ScorecardImageUpload({
                                   <span
                                     className={
                                       trackedFile.status === "done"
-                                        ? "text-green-600"
+                                        ? "text-success"
                                         : "text-muted-foreground"
                                     }
                                   >
@@ -869,7 +869,7 @@ export function ScorecardImageUpload({
                       className="flex items-center gap-1.5 text-sm"
                     >
                       {summary[key] ? (
-                        <Check className="h-3.5 w-3.5 text-green-600 shrink-0" />
+                        <Check className="h-3.5 w-3.5 text-success shrink-0" />
                       ) : (
                         <Circle className="h-3.5 w-3.5 text-muted-foreground/50 shrink-0" />
                       )}

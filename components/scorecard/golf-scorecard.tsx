@@ -803,7 +803,7 @@ export default function GolfScorecard({ profile, access }: GolfScorecardProps) {
                   type="submit"
                   disabled={submitState === "loading" || submitState === "success"}
                   className={`transition-all duration-300 ${
-                    submitState === "success" ? "bg-green-600 hover:bg-green-600" : ""
+                    submitState === "success" ? "bg-success hover:bg-success" : ""
                   }`}
                 >
                   {submitState === "loading" && "Submitting..."}
