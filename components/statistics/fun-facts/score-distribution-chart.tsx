@@ -7,12 +7,12 @@ interface ScoreDistributionChartProps {
 }
 
 const SCORE_TYPES = [
-  { key: "eagle", label: "Eagle or better", emoji: "🦅", color: "bg-chart-5" },
-  { key: "birdie", label: "Birdie", emoji: "🐦", color: "bg-chart-1" },
-  { key: "par", label: "Par", emoji: "✓", color: "bg-chart-2" },
-  { key: "bogey", label: "Bogey", emoji: "😅", color: "bg-chart-3" },
-  { key: "doubleBogey", label: "Double Bogey", emoji: "😰", color: "bg-chart-4" },
-  { key: "triplePlus", label: "Triple+", emoji: "💀", color: "bg-red-600" },
+  { key: "eagle", label: "Eagle or better", emoji: "🦅", color: "bg-score-eagle" },
+  { key: "birdie", label: "Birdie", emoji: "🐦", color: "bg-score-birdie" },
+  { key: "par", label: "Par", emoji: "✓", color: "bg-score-par" },
+  { key: "bogey", label: "Bogey", emoji: "😅", color: "bg-score-bogey" },
+  { key: "doubleBogey", label: "Double Bogey", emoji: "😰", color: "bg-score-double" },
+  { key: "triplePlus", label: "Triple+", emoji: "💀", color: "bg-score-triple" },
 ] as const;
 
 export function ScoreDistributionChart({ data }: ScoreDistributionChartProps) {

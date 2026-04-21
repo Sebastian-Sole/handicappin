@@ -65,6 +65,18 @@
   --color-chart-primary: var(--primary);
   --color-chart-destructive: var(--destructive);
 
+  /* Score-tier palette. Six-step vibrant categorical ramp keyed to golf
+     score outcomes. Reusable anywhere a multi-tier "better ↔ worse"
+     visualization needs more chromatic variation than the chart-* ramp
+     (which is tuned for line/bar charts). Drives the score-distribution
+     widgets and the matching achievement cards in the frivolities view. */
+  --color-score-eagle: var(--score-eagle);
+  --color-score-birdie: var(--score-birdie);
+  --color-score-par: var(--score-par);
+  --color-score-bogey: var(--score-bogey);
+  --color-score-double: var(--score-double);
+  --color-score-triple: var(--score-triple);
+
   --color-sidebar: var(--sidebar);
   --color-sidebar-foreground: var(--sidebar-foreground);
   --color-sidebar-primary: var(--sidebar-primary);
@@ -207,6 +219,14 @@
   --chart-4: oklch(0.55 0.2 25);
   --chart-5: oklch(0.85 0.15 90);
 
+  /* SCORE TIERS — vibrant categorical palette, Tailwind-500 feel */
+  --score-eagle: oklch(0.795 0.184 86.047);
+  --score-birdie: oklch(0.723 0.219 149.579);
+  --score-par: oklch(0.623 0.214 259.815);
+  --score-bogey: oklch(0.705 0.213 47.604);
+  --score-double: oklch(0.637 0.237 25.331);
+  --score-triple: oklch(0.505 0.213 27.518);
+
   /* SIDEBAR */
   --sidebar: oklch(0.98 0.01 160);
   --sidebar-foreground: oklch(0.2 0.03 145);
@@ -297,6 +317,14 @@
   --chart-3: oklch(0.65 0.15 70);
   --chart-4: oklch(0.6 0.2 25);
   --chart-5: oklch(0.85 0.15 90);
+
+  /* SCORE TIERS — slightly lifted for dark surfaces */
+  --score-eagle: oklch(0.852 0.199 91.936);
+  --score-birdie: oklch(0.792 0.209 151.711);
+  --score-par: oklch(0.707 0.165 254.624);
+  --score-bogey: oklch(0.75 0.183 55.934);
+  --score-double: oklch(0.704 0.191 22.216);
+  --score-triple: oklch(0.577 0.245 27.325);
 
   /* SIDEBAR */
   --sidebar: oklch(0.16 0.04 150);
