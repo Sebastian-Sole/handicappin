@@ -3,7 +3,7 @@ import {
   calculateExpected9HoleDifferential,
   calculate9HoleScoreDifferential,
   calculateScoreDifferential,
-} from "@/lib/handicap/calculations";
+} from "@handicappin/handicap-core";
 
 describe("9-Hole Score Differential Calculations (USGA Rule 5.1b)", () => {
   describe("calculateExpected9HoleDifferential", () => {

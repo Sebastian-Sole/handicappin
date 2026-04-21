@@ -21,7 +21,7 @@ import {
   calculateAdjustedGrossScore,
   calculateExpected9HoleDifferential,
   calculate9HoleScoreDifferential,
-} from "@/lib/handicap";
+} from "@handicappin/handicap-core";
 import { getComprehensiveUserAccess } from "@/utils/billing/access-control";
 import { TRPCError } from "@trpc/server";
 import { FREE_TIER_ROUND_LIMIT } from "@/utils/billing/constants";

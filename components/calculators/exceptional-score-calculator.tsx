@@ -9,7 +9,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { CalculatorCard } from "./calculator-card";
 import { useCalculatorContext } from "@/contexts/calculatorContext";
 import { getCalculatorByIdOrThrow } from "@/lib/calculator-registry";
-import { EXCEPTIONAL_ROUND_THRESHOLD } from "@/lib/handicap/constants";
+import { EXCEPTIONAL_ROUND_THRESHOLD } from "@handicappin/handicap-core";
 import { AlertTriangle, CheckCircle } from "lucide-react";
 
 const meta = getCalculatorByIdOrThrow("exceptional-score");
