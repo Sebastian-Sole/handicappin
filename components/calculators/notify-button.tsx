@@ -57,7 +57,7 @@ const NotifyButton = ({ user }: NotifyButtonProps) => {
         onClick={onClick}
         disabled={buttonState === "loading" || buttonState === "subscribed"}
         className={`transition-all duration-300 ${
-          buttonState === "subscribed" ? "bg-green-600 hover:bg-green-600 text-white" : ""
+          buttonState === "subscribed" ? "bg-success hover:bg-success text-success-foreground" : ""
         }`}
       >
         {buttonState === "loading" && "Saving..."}
