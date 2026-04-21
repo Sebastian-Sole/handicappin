@@ -70,14 +70,10 @@ const RAW_COLOR_GRANDFATHERED = [
  */
 const RAW_HEADING_GRANDFATHERED = [
   "app/**",
-  "components/404-page.tsx",
   "components/auth/**",
   "components/billing/**",
   "components/charts/**",
-  "components/contact/**",
   "components/layout/**",
-  "components/legal/**",
-  "components/loading/**",
   "components/profile/tabs/billing-tab.tsx",
   "components/round/**",
   "components/round-calculation.tsx",

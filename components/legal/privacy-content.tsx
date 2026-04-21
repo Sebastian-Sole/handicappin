@@ -1,4 +1,4 @@
-import { P } from "@/components/ui/typography";
+import { H2, H3, P } from "@/components/ui/typography";
 import Link from "next/link";
 
 const EFFECTIVE_DATE = "February 11, 2026";
@@ -12,9 +12,9 @@ export function PrivacyContent() {
 
       {/* 1. Introduction */}
       <div className="space-y-3">
-        <h2 className="text-xl font-semibold tracking-tight">
+        <H2>
           1. Introduction
-        </h2>
+        </H2>
         <P className="text-foreground/80">
           Handicappin&apos; (&quot;the Service&quot;) is operated by
           SoleInnovations (&quot;we,&quot; &quot;us,&quot; or &quot;our&quot;).
@@ -31,13 +31,13 @@ export function PrivacyContent() {
 
       {/* 2. Information We Collect */}
       <div className="space-y-3">
-        <h2 className="text-xl font-semibold tracking-tight">
+        <H2>
           2. Information We Collect
-        </h2>
+        </H2>
 
-        <h3 className="text-lg font-medium mt-4">
+        <H3 className="mt-4 font-medium">
           2.1 Information You Provide
-        </h3>
+        </H3>
         <P className="text-foreground/80">
           When you create an account and use the Service, we collect:
         </P>
@@ -64,9 +64,9 @@ export function PrivacyContent() {
           </li>
         </ul>
 
-        <h3 className="text-lg font-medium mt-4">
+        <H3 className="mt-4 font-medium">
           2.2 Information Collected Automatically
-        </h3>
+        </H3>
         <P className="text-foreground/80">
           When you use the Service, we may automatically collect:
         </P>
@@ -87,9 +87,9 @@ export function PrivacyContent() {
           </li>
         </ul>
 
-        <h3 className="text-lg font-medium mt-4">
+        <H3 className="mt-4 font-medium">
           2.3 Information from Third Parties
-        </h3>
+        </H3>
         <P className="text-foreground/80">
           If you sign in with Google, we receive your name, email address, and
           email verification status from Google. We do not receive or store your
@@ -99,9 +99,9 @@ export function PrivacyContent() {
 
       {/* 3. How We Use Your Information */}
       <div className="space-y-3">
-        <h2 className="text-xl font-semibold tracking-tight">
+        <H2>
           3. How We Use Your Information
-        </h2>
+        </H2>
         <P className="text-foreground/80">
           We use your information for the following purposes:
         </P>
@@ -141,9 +141,9 @@ export function PrivacyContent() {
 
       {/* 4. Calculated and Derived Data */}
       <div className="space-y-3">
-        <h2 className="text-xl font-semibold tracking-tight">
+        <H2>
           4. Calculated and Derived Data
-        </h2>
+        </H2>
         <P className="text-foreground/80">
           Based on the scores you submit, we calculate and store:
         </P>
@@ -162,9 +162,9 @@ export function PrivacyContent() {
 
       {/* 5. Data Sharing */}
       <div className="space-y-3">
-        <h2 className="text-xl font-semibold tracking-tight">
+        <H2>
           5. Data Sharing and Third-Party Services
-        </h2>
+        </H2>
         <P className="text-foreground/80">
           We share your data only with the following third-party services,
           strictly for the purposes described:
@@ -207,9 +207,9 @@ export function PrivacyContent() {
 
       {/* 6. Aggregated Data */}
       <div className="space-y-3">
-        <h2 className="text-xl font-semibold tracking-tight">
+        <H2>
           6. Anonymized and Aggregated Data
-        </h2>
+        </H2>
         <P className="text-foreground/80">
           We may use anonymized, aggregated data for analytical and marketing
           purposes, such as displaying the total number of rounds logged or
@@ -220,9 +220,9 @@ export function PrivacyContent() {
 
       {/* 7. Data Security */}
       <div className="space-y-3">
-        <h2 className="text-xl font-semibold tracking-tight">
+        <H2>
           7. Data Security
-        </h2>
+        </H2>
         <P className="text-foreground/80">
           We implement industry-standard security measures to protect your data:
         </P>
@@ -261,9 +261,9 @@ export function PrivacyContent() {
 
       {/* 8. Data Retention */}
       <div className="space-y-3">
-        <h2 className="text-xl font-semibold tracking-tight">
+        <H2>
           8. Data Retention
-        </h2>
+        </H2>
         <P className="text-foreground/80">
           We retain your data for as long as your account is active:
         </P>
@@ -294,9 +294,9 @@ export function PrivacyContent() {
 
       {/* 9. Your Rights */}
       <div className="space-y-3">
-        <h2 className="text-xl font-semibold tracking-tight">
+        <H2>
           9. Your Rights
-        </h2>
+        </H2>
         <P className="text-foreground/80">
           Depending on your location, you may have the following rights regarding
           your personal data:
@@ -332,9 +332,9 @@ export function PrivacyContent() {
 
       {/* 10. Business Transfers */}
       <div className="space-y-3">
-        <h2 className="text-xl font-semibold tracking-tight">
+        <H2>
           10. Business Transfers
-        </h2>
+        </H2>
         <P className="text-foreground/80">
           In the event of a merger, acquisition, or sale of assets, your
           personal data may be transferred to the successor entity. The
@@ -352,9 +352,9 @@ export function PrivacyContent() {
 
       {/* 11. Children's Privacy */}
       <div className="space-y-3">
-        <h2 className="text-xl font-semibold tracking-tight">
+        <H2>
           11. Children&apos;s Privacy
-        </h2>
+        </H2>
         <P className="text-foreground/80">
           The Service is not intended for children under 13. We do not knowingly
           collect personal information from children under 13. If we learn that
@@ -365,9 +365,9 @@ export function PrivacyContent() {
 
       {/* 12. Cookies and Tracking */}
       <div className="space-y-3">
-        <h2 className="text-xl font-semibold tracking-tight">
+        <H2>
           12. Cookies and Tracking Technologies
-        </h2>
+        </H2>
         <ul className="list-disc pl-6 space-y-2 text-foreground/80">
           <li>
             <strong>Authentication cookies:</strong> Essential cookies managed by
@@ -390,9 +390,9 @@ export function PrivacyContent() {
 
       {/* 13-15: Remaining sections condensed */}
       <div className="space-y-3">
-        <h2 className="text-xl font-semibold tracking-tight">
+        <H2>
           13. International Data Transfers
-        </h2>
+        </H2>
         <P className="text-foreground/80">
           Your data may be processed in the United States and other countries
           where our service providers operate. When data is transferred outside
@@ -401,9 +401,9 @@ export function PrivacyContent() {
       </div>
 
       <div className="space-y-3">
-        <h2 className="text-xl font-semibold tracking-tight">
+        <H2>
           14. Changes to This Policy
-        </h2>
+        </H2>
         <P className="text-foreground/80">
           We may update this Privacy Policy from time to time. We will notify you
           of material changes by posting the updated policy on this page and, for
@@ -413,9 +413,9 @@ export function PrivacyContent() {
       </div>
 
       <div className="space-y-3">
-        <h2 className="text-xl font-semibold tracking-tight">
+        <H2>
           15. Contact Us
-        </h2>
+        </H2>
         <P className="text-foreground/80">
           If you have questions about this Privacy Policy, contact us at{" "}
           <Link
