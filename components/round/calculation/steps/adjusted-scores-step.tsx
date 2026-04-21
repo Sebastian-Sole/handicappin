@@ -78,13 +78,13 @@ const AdjustedScoresStep = () => {
             <Muted>Adjusted Score</Muted>
           </div>
           <div className="bg-muted/50 rounded-lg p-4 text-center">
-            <div className="text-2xl font-bold text-amber-600">
+            <div className="text-2xl font-bold text-warning">
               {cappedHoles?.length || 0}
             </div>
             <Muted>Holes Capped</Muted>
           </div>
           <div className="bg-muted/50 rounded-lg p-4 text-center">
-            <div className="text-2xl font-bold text-green-600">
+            <div className="text-2xl font-bold text-success">
               {adjustmentAmount > 0 ? `-${adjustmentAmount}` : adjustmentAmount}
             </div>
             <Muted>Strokes Saved</Muted>
@@ -93,8 +93,8 @@ const AdjustedScoresStep = () => {
 
         {/* Explanation */}
         {cappedHoles && cappedHoles.length > 0 ? (
-          <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-lg p-4">
-            <P className="text-amber-800 dark:text-amber-200">
+          <div className="bg-warning/10 border border-warning/30 rounded-lg p-4">
+            <P className="text-warning">
               {cappedHoles.length} hole
               {cappedHoles.length > 1 ? "s were" : " was"} adjusted: Hole
               {cappedHoles.length > 1 ? "s" : ""}{" "}
@@ -104,8 +104,8 @@ const AdjustedScoresStep = () => {
             </P>
           </div>
         ) : (
-          <div className="bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800 rounded-lg p-4">
-            <P className="text-green-800 dark:text-green-200">
+          <div className="bg-success/10 border border-success/30 rounded-lg p-4">
+            <P className="text-success">
               No holes were capped - all your scores were within the Net Double
               Bogey limit.
             </P>
