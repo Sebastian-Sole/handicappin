@@ -53,9 +53,9 @@ const CourseHandicapCalculator = ({
 
             <TooltipProvider>
               <Tooltip>
-                <TooltipTrigger className="flex flex-row text-gray-500 items-center">
+                <TooltipTrigger className="flex flex-row text-muted-foreground items-center">
                   <InfoIcon
-                    className={`h-6 w-6 text-gray-500 dark:text-gray-400 mr-2`}
+                    className={`h-6 w-6 text-muted-foreground mr-2`}
                   />{" "}
                   <span className="sm:block hidden">Whats this? </span>
                 </TooltipTrigger>

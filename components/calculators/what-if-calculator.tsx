@@ -85,9 +85,9 @@ export function WhatIfCalculator() {
             <div
               className={`flex items-center gap-1 ${
                 handicapChange < 0
-                  ? "text-green-600"
+                  ? "text-success"
                   : handicapChange > 0
-                    ? "text-red-600"
+                    ? "text-destructive"
                     : "text-muted-foreground"
               }`}
             >
@@ -176,7 +176,7 @@ export function WhatIfCalculator() {
         </div>
       </div>
       {values.scoreDifferentials.length < 2 && (
-        <Muted className="text-sm text-amber-600">
+        <Muted className="text-sm text-warning">
           Add at least 2 differentials in the Handicap Index calculator to see
           projections.
         </Muted>

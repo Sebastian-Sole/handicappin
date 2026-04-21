@@ -69,7 +69,7 @@ export function MaxScoreCalculator() {
         </div>
         <div className="flex justify-between">
           <span className="text-muted-foreground">Handicap Strokes</span>
-          <span className="text-green-600">+{calculation.strokesReceived}</span>
+          <span className="text-success">+{calculation.strokesReceived}</span>
         </div>
         <div className="border-t pt-2 flex justify-between font-medium">
           <span>Net Double Bogey</span>

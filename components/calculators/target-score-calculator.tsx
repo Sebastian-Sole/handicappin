@@ -71,7 +71,7 @@ export function TargetScoreCalculator() {
               key={score}
               className={`p-2 rounded ${
                 meetsTarget
-                  ? "bg-green-100 dark:bg-green-900/30"
+                  ? "bg-success/20"
                   : "bg-muted/50"
               }`}
             >
@@ -163,7 +163,7 @@ export function TargetScoreCalculator() {
         </div>
       </div>
       {(values.courseRating === null || values.slopeRating === null) && (
-        <Muted className="text-sm text-amber-600">
+        <Muted className="text-sm text-warning">
           Enter course and slope rating in the Course Handicap calculator first.
         </Muted>
       )}
