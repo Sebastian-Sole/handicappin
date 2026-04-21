@@ -222,12 +222,12 @@ export function PlanSelector({
             }
             className={
               feedbackMessage.type === "success"
-                ? "border-green-500/50 bg-green-50 dark:bg-green-950/20 relative pr-12"
+                ? "border-success/50 bg-success/10 relative pr-12"
                 : "relative pr-12"
             }
           >
             {feedbackMessage.type === "success" ? (
-              <CheckCircle2 className="h-4 w-4 text-green-600 dark:text-green-500" />
+              <CheckCircle2 className="h-4 w-4 text-success" />
             ) : feedbackMessage.title === "Too Many Requests" ? (
               <Clock className="h-4 w-4" />
             ) : (
@@ -253,7 +253,7 @@ export function PlanSelector({
       {/* Context-specific messaging for upgrade mode */}
       {mode === "upgrade" && currentPlan && (
         <div className="mb-8 text-center">
-          <p className="text-gray-600 text-lg">
+          <p className="text-muted-foreground text-lg">
             {availablePlans.length === 0 ? (
               <>You&apos;re on the best plan! No changes available.</>
             ) : (
@@ -261,7 +261,7 @@ export function PlanSelector({
             )}
           </p>
           {availablePlans.length > 0 && currentPlan && isPaidPlan(currentPlan) && (
-            <div className="mt-4 space-y-2 text-sm text-gray-500">
+            <div className="mt-4 space-y-2 text-sm text-muted-foreground">
               <p>You&apos;ll be redirected to Stripe to complete your plan change</p>
               <p>✓ Upgrades take effect immediately (prorated charge)</p>
               <p>✓ Downgrades take effect at the end of your billing cycle</p>

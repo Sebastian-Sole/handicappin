@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { H2 } from "@/components/ui/typography";
 
 export type PlanTier = "free" | "premium" | "unlimited" | "lifetime";
 
@@ -112,8 +113,8 @@ export function PricingCard({
         <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
           <Badge
             className={`${
-              badge.variant ? badgeColors[badge.variant] : "bg-gray-500"
-            } text-white px-4 py-1 rounded-full text-sm font-semibold whitespace-nowrap min-h-6 flex items-center`}
+              badge.variant ? badgeColors[badge.variant] : "bg-muted-foreground"
+            } text-primary-foreground px-4 py-1 rounded-full text-sm font-semibold whitespace-nowrap min-h-6 flex items-center`}
           >
             {badge.text}
           </Badge>
@@ -121,7 +122,7 @@ export function PricingCard({
       )}
 
       <div className="mb-4">
-        <h2 className="text-2xl font-bold mb-2">{title}</h2>
+        <H2 className="text-2xl mb-2 pb-0">{title}</H2>
         {/* {badge && plan === "free" && (
           <p className="text-xs text-muted-foreground">
             First 100 users, forever
@@ -167,9 +168,9 @@ export function PricingCard({
           {features.map((feature, index) => (
             <li key={index} className="flex items-start">
               {feature.included ? (
-                <span className="text-green-500 mr-2">✓</span>
+                <span className="text-success mr-2">✓</span>
               ) : (
-                <span className="text-red-500 mr-2">✗</span>
+                <span className="text-destructive mr-2">✗</span>
               )}
               <span className={feature.included ? "" : "text-muted-foreground/70"}>
                 {feature.text}

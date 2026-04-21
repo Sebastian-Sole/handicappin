@@ -5,6 +5,7 @@ import Link from "next/link";
 import { createClientComponentClient } from "@/utils/supabase/client";
 import { clientLogger } from "@/lib/client-logger";
 import { Button } from "@/components/ui/button";
+import { H1 } from "@/components/ui/typography";
 
 type WebhookStatus = {
   status: "processing" | "success" | "delayed" | "failed";
@@ -221,8 +222,8 @@ export default function BillingSuccessPage() {
           {status === "loading" && (
             <>
               <div className="text-6xl mb-4">⏳</div>
-              <h1 className="text-4xl font-bold mb-4">Just a moment...</h1>
-              <p className="text-lg text-gray-600">
+              <H1 className="text-4xl mb-4">Just a moment...</H1>
+              <p className="text-lg text-muted-foreground">
                 Checking your subscription status...
               </p>
             </>
@@ -232,13 +233,13 @@ export default function BillingSuccessPage() {
           {status === "processing" && (
             <>
               <div className="text-6xl mb-4 animate-pulse">⏳</div>
-              <h1 className="text-4xl font-bold mb-4">
+              <H1 className="text-4xl mb-4">
                 Activating Your Subscription
-              </h1>
-              <p className="text-lg text-gray-600 mb-8">
+              </H1>
+              <p className="text-lg text-muted-foreground mb-8">
                 We&apos;re setting up your premium access...
               </p>
-              <p className="text-sm text-gray-500">
+              <p className="text-sm text-muted-foreground">
                 This usually takes just a few seconds. (Attempt {attemptCount}
                 /10)
               </p>
@@ -249,14 +250,14 @@ export default function BillingSuccessPage() {
           {status === "success" && (
             <>
               <div className="text-6xl mb-4">✅</div>
-              <h1 className="text-4xl font-bold mb-4 text-green-600">
+              <H1 className="text-4xl mb-4 text-success">
                 Welcome to Premium!
-              </h1>
-              <p className="text-lg text-gray-600 mb-8">
+              </H1>
+              <p className="text-lg text-muted-foreground mb-8">
                 Your subscription is now active. You have access to all premium
                 features.
               </p>
-              <p className="text-sm text-gray-500">
+              <p className="text-sm text-muted-foreground">
                 Redirecting to homepage...
               </p>
             </>
@@ -266,14 +267,14 @@ export default function BillingSuccessPage() {
           {status === "delayed" && (
             <>
               <div className="text-6xl mb-4">⚠️</div>
-              <h1 className="text-4xl font-bold mb-4 text-amber-600">
+              <H1 className="text-4xl mb-4 text-warning">
                 Almost There
-              </h1>
-              <p className="text-lg text-gray-600 mb-4">
+              </H1>
+              <p className="text-lg text-muted-foreground mb-4">
                 Your payment was successful! Activation is taking longer than
                 usual.
               </p>
-              <p className="text-base text-gray-600 mb-8">
+              <p className="text-base text-muted-foreground mb-8">
                 {webhookData?.action ||
                   "This usually resolves within a few minutes. Our system is working on it."}
               </p>
@@ -293,12 +294,12 @@ export default function BillingSuccessPage() {
               </div>
 
               <div className="mt-8 pt-8 border-t">
-                <p className="text-sm text-gray-600">
+                <p className="text-sm text-muted-foreground">
                   Still waiting after 5 minutes?{" "}
                   <a
                     href={`mailto:sebastiansole@handicappin.com?subject=Subscription Activation Delayed&body=Session ID: ${sessionId || "unknown"
                       }%0D%0AUser ID: ${userId || "unknown"}`}
-                    className="text-blue-600 hover:underline"
+                    className="text-info hover:underline"
                   >
                     Contact Support
                   </a>
@@ -311,15 +312,15 @@ export default function BillingSuccessPage() {
           {status === "failed" && (
             <>
               <div className="text-6xl mb-4">❌</div>
-              <h1 className="text-4xl font-bold mb-4 text-red-600">
+              <H1 className="text-4xl mb-4 text-destructive">
                 Activation Issue
-              </h1>
-              <p className="text-lg text-gray-700 mb-4">
+              </H1>
+              <p className="text-lg text-foreground mb-4">
                 We encountered an issue activating your subscription.
               </p>
 
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-                <p className="text-sm text-blue-800">
+              <div className="bg-info/10 border border-info/30 rounded-lg p-4 mb-6">
+                <p className="text-sm text-info">
                   <strong>✓ Your payment was successful</strong>
                   <br />
                   Our team has been automatically notified and will resolve this
@@ -327,13 +328,13 @@ export default function BillingSuccessPage() {
                 </p>
               </div>
 
-              <p className="text-base text-gray-600 mb-4">
+              <p className="text-base text-muted-foreground mb-4">
                 For immediate assistance, contact our support team:
               </p>
 
               {sessionId && (
-                <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-6">
-                  <p className="text-xs text-gray-500 mb-1">
+                <div className="bg-muted/50 border rounded-lg p-4 mb-6">
+                  <p className="text-xs text-muted-foreground mb-1">
                     Session ID (for support):
                   </p>
                   <p className="font-mono text-sm break-all">{sessionId}</p>
@@ -366,15 +367,15 @@ export default function BillingSuccessPage() {
               </div>
 
               <div className="mt-8 pt-8 border-t">
-                <p className="text-xs text-gray-500">
+                <p className="text-xs text-muted-foreground">
                   Support: sebastiansole@handicappin.com
                 </p>
                 {webhookData?.debug && (
                   <details className="mt-4 text-left">
-                    <summary className="text-xs text-gray-400 cursor-pointer hover:text-gray-600">
+                    <summary className="text-xs text-muted-foreground/70 cursor-pointer hover:text-muted-foreground">
                       Debug Info (for support)
                     </summary>
-                    <pre className="mt-2 text-xs bg-gray-100 p-2 rounded overflow-auto">
+                    <pre className="mt-2 text-xs bg-muted p-2 rounded overflow-auto">
                       {JSON.stringify(webhookData.debug, null, 2)}
                     </pre>
                   </details>

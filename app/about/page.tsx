@@ -1,6 +1,6 @@
 import AboutSkeleton from "@/components/loading/about-skeleton";
 import { Badge } from "@/components/ui/badge";
-import { P } from "@/components/ui/typography";
+import { H2, H3, P } from "@/components/ui/typography";
 import { createClient } from "@supabase/supabase-js";
 import { Suspense } from "react";
 import type { Metadata } from "next";
@@ -78,9 +78,9 @@ export default async function AboutPage() {
               <div className="flex flex-col justify-start space-y-4">
                 <div className="space-y-2">
                   <Badge>Our Mission</Badge>
-                  <h2 className="lg:leading-tighter text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl xl:text-[3.4rem] 2xl:text-[3.75rem]">
+                  <H2 className="lg:leading-tighter text-3xl tracking-tighter sm:text-4xl md:text-5xl xl:text-[3.4rem] 2xl:text-[3.75rem] pb-0">
                     Why Does Handicappin&apos; Even Exist?
-                  </h2>
+                  </H2>
                   <P className="text-foreground/80 md:text-xl/relaxed">
                     We found that other golf services overcomplicated golfing,
                     whether it be keeping scores, or hiding the calculations
@@ -97,9 +97,9 @@ export default async function AboutPage() {
                     <Logs className="h-7 w-7 text-primary" />
                   </div>
                   <div>
-                    <h3 className="text-lg font-semibold">
+                    <H3 className="text-lg">
                       Detailed Round Tracking
-                    </h3>
+                    </H3>
                     <P className="text-foreground/80">
                       Log your rounds and get detailed insights into how you
                       played and see your progression in real-time.
@@ -111,9 +111,9 @@ export default async function AboutPage() {
                     <LineChart className="h-7 w-7 text-primary" />
                   </div>
                   <div>
-                    <h3 className="text-lg font-semibold">
+                    <H3 className="text-lg">
                       Interactive Statistics
-                    </h3>
+                    </H3>
                     <P className="text-foreground/80">
                       We provide a wide range of ways to view statistics, from
                       high-level round summaries to detailed hole-by-hole
@@ -126,9 +126,9 @@ export default async function AboutPage() {
                     <BookOpenText className="h-7 w-7 text-primary" />
                   </div>
                   <div>
-                    <h3 className="text-lg font-semibold">
+                    <H3 className="text-lg">
                       Detailed explanations
-                    </h3>
+                    </H3>
                     <P className="text-foreground/80">
                       Understand how your played rounds affected your handicap
                       and get detailed explanations of the calculations behind
@@ -141,7 +141,7 @@ export default async function AboutPage() {
                     <Calculator className="h-7 w-7 text-primary" />
                   </div>
                   <div>
-                    <h3 className="text-lg font-semibold">Calculators</h3>
+                    <H3 className="text-lg">Calculators</H3>
                     <P className="text-foreground/80">
                       Our interactive calculators let you know how stats are
                       calculated step-by-step. See the calculations behind your
@@ -160,9 +160,9 @@ export default async function AboutPage() {
             <div className="flex flex-col items-center justify-center space-y-4 text-center">
               <div className="space-y-2">
                 <Badge>Why Choose Us</Badge>
-                <h2 className="lg:leading-tighter text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl xl:text-[3.4rem] 2xl:text-[3.75rem]">
+                <H2 className="lg:leading-tighter text-3xl tracking-tighter sm:text-4xl md:text-5xl xl:text-[3.4rem] 2xl:text-[3.75rem] pb-0">
                   What Makes Us Different?
-                </h2>
+                </H2>
                 <p className="mx-auto max-w-[900px] text-muted-foreground md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed">
                   We value your time. We know that golf statistics and round
                   calculations are complicated, and that other services
@@ -184,9 +184,9 @@ export default async function AboutPage() {
                       <Scale className="h-6 w-6 text-primary" />
                     </div>
                     <div className="space-y-1">
-                      <h3 className="text-xl font-semibold">
+                      <H3 className="text-xl">
                         USGA Compliant Calculations
-                      </h3>
+                      </H3>
                       <p className="text-muted-foreground">
                         Our app provides real-time, accurate handicap index
                         updates according to the latest USGA rules. And we
@@ -200,9 +200,9 @@ export default async function AboutPage() {
                       <Earth className="h-6 w-6 text-primary" />
                     </div>
                     <div className="space-y-1">
-                      <h3 className="text-xl font-semibold">
+                      <H3 className="text-xl">
                         International Flexibility
-                      </h3>
+                      </H3>
                       <p className="text-muted-foreground">
                         Log rounds from any USGA compliant course in the world.
                         Handicappin&apos; is designed to work with any course,
@@ -216,7 +216,7 @@ export default async function AboutPage() {
                       <Gauge className="h-6 w-6 text-primary" />
                     </div>
                     <div className="space-y-1">
-                      <h3 className="text-xl font-semibold">Dashboard</h3>
+                      <H3 className="text-xl">Dashboard</H3>
                       <p className="text-muted-foreground">
                         We provide a dashboard that gives you a high-level view
                         of your rounds and statistics. See your progress at a
@@ -230,9 +230,9 @@ export default async function AboutPage() {
                       <Trophy className="h-6 w-6 text-primary" />
                     </div>
                     <div className="space-y-1">
-                      <h3 className="text-xl font-semibold">
+                      <H3 className="text-xl">
                         Detailed Insights
-                      </h3>
+                      </H3>
                       <p className="text-muted-foreground">
                         We are working on providing detailed insights into your
                         game, such as course breakdowns, club usage, and more.
