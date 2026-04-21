@@ -4,6 +4,7 @@ import { AlertCircle, TrendingUp, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { Progress } from "../ui/progress";
+import { H1, H3 } from "../ui/typography";
 
 interface UsageLimitAlertProps {
   current: number;
@@ -76,13 +77,13 @@ export function UsageLimitAlert({
               )}
             </div>
             <div className="flex-1 space-y-1">
-              <h3 className="text-pretty font-semibold leading-tight">
+              <H3 className="text-pretty font-semibold leading-tight">
                 {variant === "critical"
                   ? "Almost at your limit"
                   : variant === "warning"
                   ? "Approaching your limit"
                   : "Usage Limit"}
-              </h3>
+              </H3>
               <p className="text-pretty text-sm text-muted-foreground">
                 You have{" "}
                 <span className="font-semibold text-foreground">
@@ -122,9 +123,9 @@ export function UsageLimitReachedView() {
         <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-muted mb-6">
           <Zap className="w-8 h-8 text-muted-foreground" />
         </div>
-        <h1 className="text-4xl md:text-5xl font-bold mb-4 text-balance">
+        <H1 className="text-4xl md:text-5xl font-bold mb-4 text-balance">
           You&apos;ve reached your round limit
-        </h1>
+        </H1>
         <p className="text-lg text-muted-foreground mb-8 text-pretty">
           You&apos;ve used all of your available rounds. Upgrade to continue
           tracking your golf game!

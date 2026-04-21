@@ -46,18 +46,18 @@ const HandicapTrendChartDisplay = ({
           {/* TODO: Conditionally render only if more than 5 rounds */}
           <div className="min-[340px]:block hidden">
             {percentageChange < 0 && (
-              <span className="flex items-center text-sm text-green-500">
+              <span className="flex items-center text-sm text-success">
                 <ArrowDown className="h-4 w-4 mr-1" />
                 {percentageChange}%
               </span>
             )}
             {percentageChange > 0 && (
-              <span className="flex items-center text-sm text-red-500">
+              <span className="flex items-center text-sm text-destructive">
                 <ArrowUp className="h-4 w-4 mr-1" />+{percentageChange}%
               </span>
             )}
             {percentageChange === 0 && (
-              <span className="flex items-center text-sm text-gray-500">
+              <span className="flex items-center text-sm text-muted-foreground">
                 +{percentageChange}%
               </span>
             )}

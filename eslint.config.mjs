@@ -54,12 +54,7 @@ const RAW_COLOR_GRANDFATHERED = [
   "app/verify-signup/page.tsx",
   "components/auth/verification-box.tsx",
   "components/billing/**",
-  "components/charts/handicap-trend-chart-display.tsx",
-  "components/charts/handicap-trend-chart.tsx",
-  "components/charts/score-bar-chart.tsx",
   "components/profile/tabs/billing-tab.tsx",
-  "components/scorecard/golf-scorecard.tsx",
-  "components/scorecard/scorecard-image-upload.tsx",
   "components/tooltip-icon.tsx",
 ];
 
@@ -73,7 +68,6 @@ const RAW_HEADING_GRANDFATHERED = [
   "components/404-page.tsx",
   "components/auth/**",
   "components/billing/**",
-  "components/charts/**",
   "components/contact/**",
   "components/layout/**",
   "components/legal/**",
@@ -81,7 +75,6 @@ const RAW_HEADING_GRANDFATHERED = [
   "components/profile/tabs/billing-tab.tsx",
   "components/round/**",
   "components/round-calculation.tsx",
-  "components/scorecard/**",
   "components/shared/**",
   "components/tooltip-icon.tsx",
 ];
