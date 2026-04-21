@@ -27,6 +27,7 @@ import { FAQJsonLd } from "@/components/seo/json-ld";
 import { unstable_cache } from "next/cache";
 import { env } from "@/env";
 import type { Database } from "@/types/supabase";
+import { H1, H2, H3 } from "@/components/ui/typography";
 
 // Create a simple Supabase client for public data that doesn't use cookies
 // This is safe for unstable_cache since it doesn't depend on dynamic request data
@@ -115,10 +116,10 @@ export default async function Landing() {
             >
               Trusted by golfers worldwide
             </Badge>
-            <h1 className="text-4xl md:text-6xl font-bold text-balance mb-6">
+            <H1 className="text-4xl md:text-6xl font-bold text-balance mb-6">
               Track Your <span className="text-primary">Golf Handicap</span>{" "}
               with Data-Driven Insights
-            </h1>
+            </H1>
             <p className="text-xl text-muted-foreground text-pretty mb-8 max-w-2xl mx-auto">
               Log every golf round, calculate your USGA handicap index
               automatically, and understand the score differential calculations
@@ -160,9 +161,9 @@ export default async function Landing() {
       <section id="features" className="py-20 bg-muted/30">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">
+            <H2 className="text-3xl md:text-4xl font-bold mb-4 pb-0">
               Professional-Grade Tools Made Accessible
-            </h2>
+            </H2>
             <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
               Everything you need to improve your game, all in one place.
             </p>
@@ -290,9 +291,9 @@ export default async function Landing() {
       <section id="pricing" className="py-20 bg-muted/30">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">
+            <H2 className="text-3xl md:text-4xl font-bold mb-4 pb-0">
               Simple, transparent pricing
-            </h2>
+            </H2>
             <p className="text-xl text-muted-foreground">
               Choose the plan that fits your golfing needs. First 100 users get
               a lifetime free base-plan subscription.
@@ -393,13 +394,13 @@ export default async function Landing() {
       {/* FAQ Section */}
       <section className="py-20">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="text-3xl md:text-4xl font-bold mb-8 text-center">
+          <H2 className="text-3xl md:text-4xl font-bold mb-8 pb-0 text-center">
             Frequently Asked Questions
-          </h2>
+          </H2>
           <div className="max-w-3xl mx-auto space-y-6">
             {faqs.map((faq, faqIndex) => (
               <div key={faqIndex} className="border-b pb-6">
-                <h3 className="text-xl font-semibold mb-2">{faq.question}</h3>
+                <H3 className="text-xl font-semibold mb-2">{faq.question}</H3>
                 <p className="text-muted-foreground">{faq.answer}</p>
               </div>
             ))}
@@ -411,9 +412,9 @@ export default async function Landing() {
       {/* Final CTA Section */}
       <section className="py-20 bg-gradient-to-r from-primary/5 to-primary/20">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-3xl md:text-4xl font-bold mb-4">
+          <H2 className="text-3xl md:text-4xl font-bold mb-4 pb-0">
             Ready to improve your golf game?
-          </h2>
+          </H2>
           <p className="text-xl mb-8 opacity-90 max-w-2xl mx-auto">
             Join a community of golfers who are already using data to lower
             their scores and improve their game.

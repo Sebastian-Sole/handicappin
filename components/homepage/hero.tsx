@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui/button";
+import { H1 } from "@/components/ui/typography";
 import { Tables } from "@/types/supabase";
 import { ChevronRight, BarChart2, TrendingDown, Award, Target } from "lucide-react";
 import Link from "next/link";
@@ -77,9 +78,9 @@ const Hero = ({
       <div className="sm:container px-4 lg:px-6">
         {/* Welcome Header */}
         <div className="mb-8">
-          <h1 className="text-xl md:text-2xl font-semibold text-foreground">
+          <H1 className="text-xl md:text-2xl font-semibold text-foreground">
             Welcome back, {profile.name?.split(" ")[0] || "Golfer"}
-          </h1>
+          </H1>
           <p className="text-sm text-muted-foreground mt-1">
             Member since {new Date(profile.createdAt).getFullYear()}
           </p>
