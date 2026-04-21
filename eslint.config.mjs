@@ -46,13 +46,7 @@ const headingSelectors = ["h1", "h2", "h3", "h4", "h5", "h6"].map((tag) => ({
  * is grandfathered because a separate audit owns that surface.
  */
 const RAW_COLOR_GRANDFATHERED = [
-  "app/auth/verify-session/page.tsx",
-  "app/auth/verify-session/verify-session-content.tsx",
   "app/billing/success/page.tsx",
-  "app/onboarding/page.tsx",
-  "app/upgrade/page.tsx",
-  "app/verify-signup/page.tsx",
-  "components/auth/verification-box.tsx",
   "components/billing/**",
   "components/calculators/course-handicap.tsx",
   "components/calculators/handicap-caps-calculator.tsx",
@@ -97,9 +91,12 @@ const RAW_COLOR_GRANDFATHERED = [
  * no-new-entries policy.
  */
 const RAW_HEADING_GRANDFATHERED = [
-  "app/**",
+  "app/about/page.tsx",
+  "app/billing/success/page.tsx",
+  "app/contact/page.tsx",
+  "app/privacy-policy/page.tsx",
+  "app/terms-of-service/page.tsx",
   "components/404-page.tsx",
-  "components/auth/**",
   "components/billing/**",
   "components/calculators/**",
   "components/charts/**",

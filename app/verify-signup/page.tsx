@@ -309,7 +309,7 @@ function VerifySignupContent() {
               </p>
 
               {/* Hint text (visible to all) */}
-              <p id="otp-hint" className="text-xs text-gray-500 text-center mt-1">
+              <p id="otp-hint" className="text-xs text-muted-foreground text-center mt-1">
                 Check your spam folder if you don&apos;t see the email
               </p>
             </div>
