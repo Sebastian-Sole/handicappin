@@ -19,6 +19,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { api } from "@/trpc/react";
 import { FormFeedback } from "@/components/ui/form-feedback";
+import { H3 } from "@/components/ui/typography";
 import type { FeedbackState } from "@/types/feedback";
 
 const contactFormSchema = z.object({
@@ -76,7 +77,7 @@ export function ContactForm() {
         <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
           <Send className="h-6 w-6 text-primary" />
         </div>
-        <h3 className="text-xl font-semibold mb-2">Message Sent!</h3>
+        <H3 className="mb-2">Message Sent!</H3>
         <p className="text-muted-foreground mb-4">
           Thank you for reaching out. We typically respond within 24 hours.
         </p>

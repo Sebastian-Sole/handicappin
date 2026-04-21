@@ -1,7 +1,7 @@
 // app/contact/page.tsx
 import type { Metadata } from "next";
 import { Badge } from "@/components/ui/badge";
-import { P } from "@/components/ui/typography";
+import { H1, H2, H3, P } from "@/components/ui/typography";
 import { ContactForm } from "@/components/contact/contact-form";
 import { ContactPageJsonLd, FAQJsonLd } from "@/components/seo/json-ld";
 import { Mail, Clock, MessageSquare, HelpCircle } from "lucide-react";
@@ -70,9 +70,9 @@ export default function ContactPage() {
       <section className="w-full py-12 md:py-24 lg:py-32 bg-gradient-to-br from-primary/5 to-primary/20 dark:from-primary/5 dark:to-primary/35">
         <div className="mx-auto max-w-3xl px-4 md:px-6 text-center">
           <Badge className="mb-4">Contact Us</Badge>
-          <h1 className="lg:leading-tighter text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl xl:text-[3.4rem] 2xl:text-[3.75rem] mb-4">
+          <H1 className="lg:leading-tighter sm:text-4xl md:text-5xl xl:text-[3.4rem] 2xl:text-[3.75rem] mb-4">
             We&apos;re Here to Help
-          </h1>
+          </H1>
           <P className="text-foreground/80 md:text-xl/relaxed max-w-2xl mx-auto">
             Have questions about your handicap, need help with the app, or
             want to request a feature? We&apos;d love to hear from you.
@@ -87,9 +87,9 @@ export default function ContactPage() {
             {/* Form */}
             <div className="min-w-0">
               <div className="mb-6">
-                <h2 className="text-2xl font-bold tracking-tight mb-2">
+                <H2 className="mb-2">
                   Send us a Message
-                </h2>
+                </H2>
                 <P className="text-muted-foreground">
                   Fill out the form below and we&apos;ll get back to you as soon
                   as possible.
@@ -101,9 +101,9 @@ export default function ContactPage() {
             {/* Contact Info */}
             <div className="space-y-6 min-w-0">
               <div>
-                <h2 className="text-2xl font-bold tracking-tight mb-6">
+                <H2 className="mb-6">
                   Other Ways to Reach Us
-                </h2>
+                </H2>
               </div>
 
               {/* Email Card */}
@@ -113,7 +113,7 @@ export default function ContactPage() {
                     <Mail className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
                   </div>
                   <div className="min-w-0">
-                    <h3 className="text-lg font-semibold mb-1">Email Us</h3>
+                    <H3 className="mb-1">Email Us</H3>
                     <P className="text-muted-foreground mb-2">
                       For direct inquiries or detailed questions
                     </P>
@@ -134,7 +134,7 @@ export default function ContactPage() {
                     <Clock className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
                   </div>
                   <div className="min-w-0">
-                    <h3 className="text-lg font-semibold mb-1">Response Time</h3>
+                    <H3 className="mb-1">Response Time</H3>
                     <P className="text-muted-foreground">
                       We typically respond within{" "}
                       <span className="font-semibold text-foreground">
@@ -153,9 +153,9 @@ export default function ContactPage() {
                     <MessageSquare className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
                   </div>
                   <div className="min-w-0">
-                    <h3 className="text-lg font-semibold mb-1">
+                    <H3 className="mb-1">
                       Feature Requests
-                    </h3>
+                    </H3>
                     <P className="text-muted-foreground">
                       Have an idea to make Handicappin&apos; better? We love
                       hearing from our users and prioritize features based on
@@ -174,9 +174,9 @@ export default function ContactPage() {
         <div className="mx-auto max-w-4xl px-4 md:px-6">
           <div className="text-center mb-12">
             <Badge className="mb-4">FAQ</Badge>
-            <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl mb-4">
+            <H2 className="sm:text-4xl mb-4">
               Frequently Asked Questions
-            </h2>
+            </H2>
             <P className="text-muted-foreground md:text-lg">
               Find quick answers to common questions about Handicappin&apos;
             </P>
@@ -190,9 +190,9 @@ export default function ContactPage() {
               >
                 <div className="flex items-start gap-3 mb-3">
                   <HelpCircle className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
-                  <h3 className="font-semibold text-foreground">
+                  <H3 className="font-semibold text-foreground">
                     {faq.question}
-                  </h3>
+                  </H3>
                 </div>
                 <P className="text-muted-foreground text-sm pl-8">
                   {faq.answer}

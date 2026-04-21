@@ -1,5 +1,5 @@
 import { Badge } from "@/components/ui/badge";
-import { P } from "@/components/ui/typography";
+import { H1, P } from "@/components/ui/typography";
 import { PrivacyContent } from "@/components/legal/privacy-content";
 import type { Metadata } from "next";
 
@@ -26,9 +26,9 @@ export default function PrivacyPolicyPage() {
         <div className="sm:container px-4 md:px-6 mx-auto">
           <div className="mx-auto max-w-3xl space-y-4 text-center">
             <Badge>Legal</Badge>
-            <h1 className="lg:leading-tighter text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl">
+            <H1 className="lg:leading-tighter sm:text-4xl md:text-5xl">
               Privacy Policy
-            </h1>
+            </H1>
             <P className="text-foreground/80 md:text-xl/relaxed">
               Your privacy matters to us. This policy explains how we collect,
               use, and protect your personal data.
