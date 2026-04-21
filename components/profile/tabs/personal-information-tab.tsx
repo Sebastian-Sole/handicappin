@@ -31,6 +31,7 @@ import {
 import { REGEXP_ONLY_DIGITS } from "input-otp";
 import { verifyEmailChangeOtp } from "@/app/actions/email-change";
 import { FormFeedback } from "@/components/ui/form-feedback";
+import { H2 } from "@/components/ui/typography";
 import type { FeedbackState } from "@/types/feedback";
 
 interface PersonalInformationTabProps {
@@ -342,7 +343,7 @@ export function PersonalInformationTab({
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-semibold mb-2">Personal Information</h2>
+        <H2 className="text-2xl font-semibold mb-2">Personal Information</H2>
         <p className="text-muted-foreground">
           Manage your account details and preferences
         </p>
@@ -358,9 +359,9 @@ export function PersonalInformationTab({
 
       {/* Success alert for cancelled email change */}
       {showCancelSuccess && (
-        <Alert className="bg-green-50 border-green-200 dark:bg-green-950 dark:border-green-800">
-          <Check className="h-4 w-4 text-green-600 dark:text-green-400" />
-          <AlertDescription className="text-green-800 dark:text-green-200">
+        <Alert className="bg-success/10 border-success/30">
+          <Check className="h-4 w-4 text-success" />
+          <AlertDescription className="text-success">
             Email change cancelled successfully. Your email address remains
             unchanged.
           </AlertDescription>
@@ -369,9 +370,9 @@ export function PersonalInformationTab({
 
       {/* Success alert for verified email change */}
       {showVerifySuccess && (
-        <Alert className="bg-green-50 border-green-200 dark:bg-green-950 dark:border-green-800">
-          <Check className="h-4 w-4 text-green-600 dark:text-green-400" />
-          <AlertDescription className="text-green-800 dark:text-green-200">
+        <Alert className="bg-success/10 border-success/30">
+          <Check className="h-4 w-4 text-success" />
+          <AlertDescription className="text-success">
             Email address updated successfully!
           </AlertDescription>
         </Alert>
@@ -498,7 +499,7 @@ export function PersonalInformationTab({
 
                       {/* Visual error message */}
                       {otpError && (
-                        <p className="text-sm text-red-600" role="alert">
+                        <p className="text-sm text-destructive" role="alert">
                           {otpError}
                         </p>
                       )}
@@ -606,7 +607,7 @@ export function PersonalInformationTab({
               disabled={saveState === "saving" || saveState === "saved"}
               className={`transition-all duration-300 ${
                 saveState === "saved"
-                  ? "bg-green-600 hover:bg-green-600"
+                  ? "bg-success hover:bg-success text-success-foreground"
                   : saveState === "saving"
                   ? "bg-muted text-muted-foreground hover:bg-muted"
                   : ""

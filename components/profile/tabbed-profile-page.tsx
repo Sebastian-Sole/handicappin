@@ -10,6 +10,7 @@ import { BillingTab } from "./tabs/billing-tab";
 import { SettingsTab } from "./tabs/settings-tab";
 import { User as UserIcon, CreditCard, Settings } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { H1 } from "@/components/ui/typography";
 
 type TabId = "personal" | "billing" | "settings";
 
@@ -74,7 +75,7 @@ export function TabbedProfilePage({
       <div className="container mx-auto py-8 px-4 max-w-7xl">
         {/* Header */}
         <div className="mb-12">
-          <h1 className="text-4xl font-bold mb-2">Profile</h1>
+          <H1 className="text-4xl font-bold mb-2">Profile</H1>
           <p className="text-muted-foreground text-lg">
             Manage your account settings
           </p>
