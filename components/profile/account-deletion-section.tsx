@@ -23,6 +23,7 @@ import { Trash2, Loader2, AlertTriangle } from "lucide-react";
 import { api } from "@/trpc/react";
 import { useRouter } from "next/navigation";
 import { FormFeedback } from "@/components/ui/form-feedback";
+import { H3 } from "@/components/ui/typography";
 import type { FeedbackState } from "@/types/feedback";
 
 type DeletionStep = "initial" | "verify-otp";
@@ -124,7 +125,7 @@ export function AccountDeletionSection() {
       <div className="flex items-start gap-3 mb-4">
         <AlertTriangle className="h-6 w-6 text-destructive flex-shrink-0 mt-0.5" />
         <div>
-          <h3 className="text-xl font-semibold text-destructive">Delete Account</h3>
+          <H3 className="text-xl font-semibold text-destructive">Delete Account</H3>
           <p className="text-muted-foreground mt-1">
             Permanently delete your account and all associated data. This action cannot be undone.
           </p>

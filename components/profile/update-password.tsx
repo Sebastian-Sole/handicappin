@@ -24,6 +24,7 @@ import { REGEXP_ONLY_DIGITS } from "input-otp";
 import { Alert, AlertDescription } from "../ui/alert";
 import { useRouter } from "next/navigation";
 import { FormFeedback } from "../ui/form-feedback";
+import { H1 } from "@/components/ui/typography";
 import type { FeedbackState } from "@/types/feedback";
 
 interface UpdatePasswordProps {
@@ -106,7 +107,7 @@ const UpdatePassword = ({ email: initialEmail }: UpdatePasswordProps) => {
   return (
     <div className="mx-auto max-w-sm space-y-6 py-8 sm:min-w-[40%] min-h-full w-[90%]">
       <div className="space-y-2 text-left">
-        <h1 className="text-3xl font-bold">Reset Password</h1>
+        <H1 className="text-3xl font-bold">Reset Password</H1>
         <CardDescription>
           Enter the verification code from your email and your new password
         </CardDescription>

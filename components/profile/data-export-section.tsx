@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Download, Loader2, Check } from "lucide-react";
 import { api } from "@/trpc/react";
 import { FormFeedback } from "@/components/ui/form-feedback";
+import { H3 } from "@/components/ui/typography";
 import type { FeedbackState } from "@/types/feedback";
 
 type ExportState = "idle" | "exporting" | "success" | "error";
@@ -75,7 +76,7 @@ export function DataExportSection() {
 
   return (
     <div className="bg-card rounded-lg border p-6">
-      <h3 className="text-xl font-semibold mb-2">Export Your Data</h3>
+      <H3 className="text-xl font-semibold mb-2">Export Your Data</H3>
       <p className="text-muted-foreground mb-4">
         Download a copy of all your data including your profile, rounds, and scores in JSON format.
       </p>
@@ -91,7 +92,7 @@ export function DataExportSection() {
         disabled={exportState === "exporting" || exportState === "success"}
         variant="outline"
         className={`transition-all duration-300 ${
-          exportState === "success" ? "bg-green-600 hover:bg-green-600 text-white" : ""
+          exportState === "success" ? "bg-success hover:bg-success text-success-foreground" : ""
         }`}
       >
         {exportState === "exporting" && (

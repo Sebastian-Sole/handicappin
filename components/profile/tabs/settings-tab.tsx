@@ -10,6 +10,7 @@ import { api } from "@/trpc/react";
 import { DataExportSection } from "../data-export-section";
 import { AccountDeletionSection } from "../account-deletion-section";
 import { FormFeedback } from "@/components/ui/form-feedback";
+import { H2, H3 } from "@/components/ui/typography";
 import type { FeedbackState } from "@/types/feedback";
 
 const subscribe = () => () => {};
@@ -68,7 +69,7 @@ export function SettingsTab() {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h2 className="text-2xl font-semibold mb-2">Settings</h2>
+        <H2 className="text-2xl font-semibold mb-2">Settings</H2>
         <p className="text-muted-foreground">
           Manage your notifications and appearance preferences
         </p>
@@ -84,7 +85,7 @@ export function SettingsTab() {
 
       {/* Notifications Section */}
       <div className="bg-card rounded-lg border p-6">
-        <h3 className="text-xl font-semibold mb-4">Notifications</h3>
+        <H3 className="text-xl font-semibold mb-4">Notifications</H3>
         {isLoading ? (
           <div className="space-y-4">
             <div className="flex items-center justify-between animate-pulse">
@@ -117,7 +118,7 @@ export function SettingsTab() {
 
       {/* Theme Section */}
       <div className="bg-card rounded-lg border p-6">
-        <h3 className="text-xl font-semibold mb-4">Appearance</h3>
+        <H3 className="text-xl font-semibold mb-4">Appearance</H3>
         <div className="space-y-4">
           <div className="space-y-3">
             <Label>Theme</Label>
@@ -199,7 +200,7 @@ export function SettingsTab() {
           disabled={saveState === "saving" || saveState === "saved" || isLoading}
           className={`transition-all duration-300 ${
             saveState === "saved"
-              ? "bg-green-600 hover:bg-green-600"
+              ? "bg-success hover:bg-success text-success-foreground"
               : saveState === "saving"
               ? "bg-muted text-muted-foreground hover:bg-muted"
               : ""
