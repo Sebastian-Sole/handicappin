@@ -14,6 +14,7 @@ import {
 import { Button } from "../ui/button";
 import RoundTablePagination from "./roundTablePagination";
 import { ScorecardWithRound } from "@/types/scorecard-input";
+import { H2 } from "../ui/typography";
 
 interface RoundsTableProps {
   scorecards: ScorecardWithRound[];
@@ -98,7 +99,7 @@ export function RoundsTable({
 
   return (
     <div className="bg-card rounded-lg p-6">
-      <h2 className="text-2xl font-bold mb-4">{title}</h2>
+      <H2 className="mb-4">{title}</H2>
 
       {showSearch && (
         <div className="mb-4" id="table">

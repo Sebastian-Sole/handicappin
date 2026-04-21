@@ -104,7 +104,6 @@ const RAW_HEADING_GRANDFATHERED = [
   "components/calculators/**",
   "components/charts/**",
   "components/contact/**",
-  "components/dashboard/**",
   "components/homepage/**",
   "components/layout/**",
   "components/legal/**",
