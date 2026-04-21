@@ -60,7 +60,6 @@ const RAW_COLOR_GRANDFATHERED = [
   "components/profile/tabs/billing-tab.tsx",
   "components/scorecard/golf-scorecard.tsx",
   "components/scorecard/scorecard-image-upload.tsx",
-  "components/tooltip-icon.tsx",
 ];
 
 /**
@@ -75,15 +74,11 @@ const RAW_HEADING_GRANDFATHERED = [
   "components/billing/**",
   "components/charts/**",
   "components/contact/**",
-  "components/layout/**",
   "components/legal/**",
   "components/loading/**",
   "components/profile/tabs/billing-tab.tsx",
   "components/round/**",
-  "components/round-calculation.tsx",
   "components/scorecard/**",
-  "components/shared/**",
-  "components/tooltip-icon.tsx",
 ];
 
 const BASELINE_IGNORES = [
