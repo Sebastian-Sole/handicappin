@@ -39,7 +39,7 @@ export default async function VerifySessionPage({
   const error = params.error;
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
+    <div className="min-h-screen flex items-center justify-center bg-muted/30 px-4">
       <VerifySessionContent
         userId={user.id}
         returnTo={returnTo}

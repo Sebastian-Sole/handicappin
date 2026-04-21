@@ -24,6 +24,7 @@ import { FormFeedback } from "../ui/form-feedback";
 import type { FeedbackState } from "@/types/feedback";
 import { GoogleSignInButton } from "./google-sign-in-button";
 import { getOAuthErrorMessage } from "@/lib/oauth-errors";
+import { H1 } from "@/components/ui/typography";
 
 export function Login() {
   const isMounted = useMounted();
@@ -180,7 +181,7 @@ export function Login() {
         />
       )}
       <div className="space-y-2 text-center">
-        <h1 className="text-3xl font-bold">Welcome Back</h1>
+        <H1>Welcome Back</H1>
         <p className="text-muted-foreground">
           Sign in to your account to continue
         </p>

@@ -3,6 +3,7 @@ import { createServerComponentClient } from "@/utils/supabase/server";
 import { PlanSelector } from "@/components/billing/plan-selector";
 import { getBillingFromJWT } from "@/utils/supabase/jwt";
 import { logger } from "@/lib/logging";
+import { H1 } from "@/components/ui/typography";
 
 export default async function OnboardingPage() {
   const supabase = await createServerComponentClient();
@@ -39,8 +40,8 @@ export default async function OnboardingPage() {
     <div className="container mx-auto px-4 py-16">
       <div className="max-w-6xl mx-auto">
         <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold mb-4">Welcome to Handicappin!</h1>
-          <p className="text-lg text-gray-600">
+          <H1 className="mb-4">Welcome to Handicappin!</H1>
+          <p className="text-lg text-muted-foreground">
             Choose the plan that&apos;s right for you and start tracking your
             golf rounds
           </p>

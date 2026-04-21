@@ -26,6 +26,7 @@ import { GoogleSignInButton } from "./google-sign-in-button";
 import { getOAuthErrorMessage } from "@/lib/oauth-errors";
 import { LegalDialog } from "@/components/legal/legal-dialog";
 import { Checkbox } from "@/components/ui/checkbox";
+import { H1 } from "@/components/ui/typography";
 
 interface SignupProps {
   description?: string;
@@ -177,7 +178,7 @@ export function Signup({
         />
       )}
       <div className="space-y-2 text-center">
-        <h1 className="text-3xl font-bold">Sign Up</h1>
+        <H1>Sign Up</H1>
         <p className="text-muted-foreground">{description}</p>
       </div>
       <div className="space-y-4">
