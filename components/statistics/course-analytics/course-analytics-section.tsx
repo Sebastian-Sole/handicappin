@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/table";
 import type { CoursePerformance } from "@/types/statistics";
 import { getFlagEmoji } from "@/utils/frivolities/headerGenerator";
+import { H2 } from "@/components/ui/typography";
 
 interface CourseAnalyticsSectionProps {
   courses: CoursePerformance[];
@@ -20,7 +21,7 @@ export function CourseAnalyticsSection({ courses }: CourseAnalyticsSectionProps)
   if (courses.length === 0) {
     return (
       <section className="mb-8">
-        <h2 className="text-xl font-semibold mb-4">Course Analytics</h2>
+        <H2 className="text-xl font-semibold mb-4">Course Analytics</H2>
         <Card>
           <CardContent className="p-8 text-center text-muted-foreground">
             Play more rounds to see course analytics
@@ -42,7 +43,7 @@ export function CourseAnalyticsSection({ courses }: CourseAnalyticsSectionProps)
 
   return (
     <section className="mb-8">
-      <h2 className="text-xl font-semibold mb-4">Course Analytics</h2>
+      <H2 className="text-xl font-semibold mb-4">Course Analytics</H2>
 
       {/* Highlight Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">

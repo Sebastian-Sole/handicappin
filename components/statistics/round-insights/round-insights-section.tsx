@@ -1,6 +1,7 @@
 "use client";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { H2 } from "@/components/ui/typography";
 import { DayOfWeekChart } from "./day-of-week-chart";
 import { TimeDistributionChart } from "./time-distribution-chart";
 import { RoundsPerMonthChart } from "./rounds-per-month-chart";
@@ -29,7 +30,7 @@ export function RoundInsightsSection({
 
   return (
     <section className="mb-8">
-      <h2 className="text-xl font-semibold mb-4">Round Insights</h2>
+      <H2 className="text-xl font-semibold mb-4">Round Insights</H2>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Day of Week Chart */}

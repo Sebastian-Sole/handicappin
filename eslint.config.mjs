@@ -66,14 +66,11 @@ const RAW_COLOR_GRANDFATHERED = [
   "components/round/calculation/score-distribution-sidebar.tsx",
   "components/scorecard/golf-scorecard.tsx",
   "components/scorecard/scorecard-image-upload.tsx",
-  "components/statistics/activity/activity-section.tsx",
   "components/statistics/courses/courses-section.tsx",
   "components/statistics/frivolities/frivolities-section.tsx",
   "components/statistics/fun-facts/score-distribution-chart.tsx",
   "components/statistics/hero/player-identity-card.tsx",
   "components/statistics/overview/overview-section.tsx",
-  "components/statistics/overview/stat-card.tsx",
-  "components/statistics/patterns/best-time-insight.tsx",
   "components/tooltip-icon.tsx",
 ];
 
@@ -98,7 +95,6 @@ const RAW_HEADING_GRANDFATHERED = [
   "components/round-calculation.tsx",
   "components/scorecard/**",
   "components/shared/**",
-  "components/statistics/**",
   "components/tooltip-icon.tsx",
 ];
 
