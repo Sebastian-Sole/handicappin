@@ -46,9 +46,7 @@ export function HandicapGoal({
             <span
               className={cn(
                 "font-medium",
-                isImproving
-                  ? "text-green-600 dark:text-green-400"
-                  : "text-foreground"
+                isImproving ? "text-success" : "text-foreground"
               )}
             >
               {isImproving
