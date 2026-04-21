@@ -50,11 +50,11 @@ const ScoreDistributionSidebar = ({ layout = "vertical", compact = false }: Scor
 
   // Calculate distribution relative to par
   const distribution: Record<string, { count: number; label: string; color: string }> = {
-    "-2": { count: 0, label: "Eagle-", color: "bg-yellow-500" },
-    "-1": { count: 0, label: "Birdie", color: "bg-green-500" },
-    "0": { count: 0, label: "Par", color: "bg-blue-500" },
-    "1": { count: 0, label: "Bogey", color: "bg-orange-500" },
-    "2": { count: 0, label: "Double", color: "bg-red-500" },
+    "-2": { count: 0, label: "Eagle-", color: "bg-chart-5" },
+    "-1": { count: 0, label: "Birdie", color: "bg-chart-1" },
+    "0": { count: 0, label: "Par", color: "bg-chart-2" },
+    "1": { count: 0, label: "Bogey", color: "bg-chart-3" },
+    "2": { count: 0, label: "Double", color: "bg-chart-4" },
     "3+": { count: 0, label: "Triple+", color: "bg-red-700" },
   };
 
@@ -86,11 +86,11 @@ const ScoreDistributionSidebar = ({ layout = "vertical", compact = false }: Scor
       return { hole: hole.holeNumber, diff: null, color: "bg-muted/50 border border-dashed border-muted-foreground/30" };
     }
     const diff = score.strokes - hole.par;
-    let color = "bg-blue-500"; // par
-    if (diff <= -2) color = "bg-yellow-500";
-    else if (diff === -1) color = "bg-green-500";
-    else if (diff === 1) color = "bg-orange-500";
-    else if (diff === 2) color = "bg-red-500";
+    let color = "bg-chart-2"; // par
+    if (diff <= -2) color = "bg-chart-5";
+    else if (diff === -1) color = "bg-chart-1";
+    else if (diff === 1) color = "bg-chart-3";
+    else if (diff === 2) color = "bg-chart-4";
     else if (diff >= 3) color = "bg-red-700";
     return { hole: hole.holeNumber, diff, color };
   });
@@ -107,8 +107,8 @@ const ScoreDistributionSidebar = ({ layout = "vertical", compact = false }: Scor
         <div className="text-center">
           <div className={cn(
             "text-2xl font-bold",
-            toPar < 0 && "text-green-600",
-            toPar > 0 && "text-red-600"
+            toPar < 0 && "text-success",
+            toPar > 0 && "text-destructive"
           )}>
             {toPar === 0 ? "E" : toPar > 0 ? `+${toPar}` : toPar}
           </div>
@@ -168,23 +168,23 @@ const ScoreDistributionSidebar = ({ layout = "vertical", compact = false }: Scor
       </div>
       <div className="flex flex-wrap gap-2 mt-3 text-xs">
         <div className="flex items-center gap-1">
-          <div className="w-3 h-3 rounded bg-yellow-500" />
+          <div className="w-3 h-3 rounded bg-chart-5" />
           <span>Eagle-</span>
         </div>
         <div className="flex items-center gap-1">
-          <div className="w-3 h-3 rounded bg-green-500" />
+          <div className="w-3 h-3 rounded bg-chart-1" />
           <span>Birdie</span>
         </div>
         <div className="flex items-center gap-1">
-          <div className="w-3 h-3 rounded bg-blue-500" />
+          <div className="w-3 h-3 rounded bg-chart-2" />
           <span>Par</span>
         </div>
         <div className="flex items-center gap-1">
-          <div className="w-3 h-3 rounded bg-orange-500" />
+          <div className="w-3 h-3 rounded bg-chart-3" />
           <span>Bogey</span>
         </div>
         <div className="flex items-center gap-1">
-          <div className="w-3 h-3 rounded bg-red-500" />
+          <div className="w-3 h-3 rounded bg-chart-4" />
           <span>Double+</span>
         </div>
         {isNineHoles && (

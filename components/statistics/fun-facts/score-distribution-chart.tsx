@@ -7,11 +7,11 @@ interface ScoreDistributionChartProps {
 }
 
 const SCORE_TYPES = [
-  { key: "eagle", label: "Eagle or better", emoji: "🦅", color: "bg-yellow-500" },
-  { key: "birdie", label: "Birdie", emoji: "🐦", color: "bg-green-500" },
-  { key: "par", label: "Par", emoji: "✓", color: "bg-blue-500" },
-  { key: "bogey", label: "Bogey", emoji: "😅", color: "bg-orange-500" },
-  { key: "doubleBogey", label: "Double Bogey", emoji: "😰", color: "bg-red-400" },
+  { key: "eagle", label: "Eagle or better", emoji: "🦅", color: "bg-chart-5" },
+  { key: "birdie", label: "Birdie", emoji: "🐦", color: "bg-chart-1" },
+  { key: "par", label: "Par", emoji: "✓", color: "bg-chart-2" },
+  { key: "bogey", label: "Bogey", emoji: "😅", color: "bg-chart-3" },
+  { key: "doubleBogey", label: "Double Bogey", emoji: "😰", color: "bg-chart-4" },
   { key: "triplePlus", label: "Triple+", emoji: "💀", color: "bg-red-600" },
 ] as const;
 
