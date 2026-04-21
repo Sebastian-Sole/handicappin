@@ -1,4 +1,5 @@
 import { Card, CardContent } from "@/components/ui/card";
+import { H3 } from "@/components/ui/typography";
 import type { PlayerTypeResult } from "@/types/statistics";
 
 interface PlayerTypeBadgeProps {
@@ -10,7 +11,7 @@ export function PlayerTypeBadge({ playerType }: PlayerTypeBadgeProps) {
     <Card className="bg-gradient-to-br from-primary/10 to-primary/5 border-primary/20">
       <CardContent className="p-6 text-center">
         <div className="text-6xl mb-4">{playerType.emoji}</div>
-        <h3 className="text-2xl font-bold mb-2">{playerType.name}</h3>
+        <H3 className="text-2xl font-bold mb-2">{playerType.name}</H3>
         <p className="text-muted-foreground">{playerType.description}</p>
         <div className="mt-4 flex justify-center">
           <div className="px-3 py-1 bg-primary/10 rounded-full text-xs">

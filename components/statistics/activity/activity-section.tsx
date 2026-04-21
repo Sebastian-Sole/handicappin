@@ -112,7 +112,7 @@ export function ActivitySection({
               </CardContent>
             </Card>
             {activityStats.mostActiveMonth && (
-              <Card className="bg-gradient-to-br from-blue-500/10 to-cyan-500/10 border-blue-500/20">
+              <Card className="bg-gradient-to-br from-info/10 to-info/10 border-info/20">
                 <CardContent className="p-4 text-center">
                   <p className="text-sm text-muted-foreground">Most Active</p>
                   <p className="text-lg font-bold">
@@ -170,7 +170,7 @@ export function ActivitySection({
                     key={season.season}
                     className={
                       isBest
-                        ? "bg-gradient-to-br from-green-500/10 to-emerald-500/10 border-green-500/20"
+                        ? "bg-gradient-to-br from-success/10 to-success/10 border-success/20"
                         : ""
                     }
                   >
@@ -184,7 +184,7 @@ export function ActivitySection({
                         </p>
                       )}
                       {isBest && (
-                        <p className="text-xs text-green-600 font-medium mt-1">
+                        <p className="text-xs text-success font-medium mt-1">
                           Best season!
                         </p>
                       )}

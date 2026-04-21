@@ -1,6 +1,7 @@
 "use client";
 
 import { Card, CardContent } from "@/components/ui/card";
+import { H2 } from "@/components/ui/typography";
 import { cn } from "@/lib/utils";
 import { formatGolfAge } from "@/lib/statistics/format-utils";
 import type { PlayerTypeResult } from "@/types/statistics";
@@ -50,7 +51,7 @@ export function PlayerIdentityCard({
         {/* Player Type Hero */}
         <div className="text-center mb-6">
           <div className="text-6xl md:text-7xl mb-3">{playerType.emoji}</div>
-          <h2 className="text-2xl md:text-3xl font-bold mb-2">{playerType.name}</h2>
+          <H2 className="text-2xl md:text-3xl font-bold mb-2">{playerType.name}</H2>
           <p className="text-muted-foreground max-w-md mx-auto">
             {playerType.description}
           </p>

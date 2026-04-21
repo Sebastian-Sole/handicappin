@@ -46,6 +46,7 @@ import useMounted from "@/hooks/useMounted";
 import StatisticsSkeleton from "./statistics-skeleton";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { H1 } from "@/components/ui/typography";
 
 interface StatisticsProps {
   profile: Tables<"profile">;
@@ -155,7 +156,7 @@ export function Statistics({ profile, scorecards }: StatisticsProps) {
     return (
       <div className="bg-background text-foreground p-4 md:p-8 rounded-lg min-h-screen flex flex-col items-center justify-center">
         <div className="text-center max-w-md">
-          <h1 className="text-3xl font-bold mb-4">No Statistics Yet</h1>
+          <H1 className="text-3xl font-bold mb-4">No Statistics Yet</H1>
           <p className="text-muted-foreground text-lg mb-6">
             Record your first round to start tracking your performance.
           </p>
@@ -181,7 +182,7 @@ export function Statistics({ profile, scorecards }: StatisticsProps) {
       {/* Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
         <div>
-          <h1 className="text-3xl font-bold">Statistics</h1>
+          <H1 className="text-3xl font-bold">Statistics</H1>
           <p className="text-muted-foreground">
             Deep dive into your golf performance
           </p>
