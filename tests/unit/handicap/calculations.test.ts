@@ -11,7 +11,7 @@ import {
   roundToHandicapPrecision,
   calculateAdjustedPlayedScore,
   calculateAdjustedGrossScore,
-} from "@/lib/handicap/calculations";
+} from "@handicappin/handicap-core";
 import { Hole, Score, Tee } from "@/types/scorecard-input";
 
 describe("Score Differential Calculation", () => {

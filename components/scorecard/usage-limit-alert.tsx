@@ -39,16 +39,18 @@ export function UsageLimitAlert({
       button: "bg-primary text-primary-foreground hover:bg-primary/90",
     },
     warning: {
-      container: "border-amber-500/50 bg-amber-50 dark:bg-amber-950/20",
-      icon: "text-amber-600 dark:text-amber-500",
-      progress: "bg-amber-500",
-      button: "bg-amber-600 text-white hover:bg-amber-700",
+      container: "border-warning/50 bg-warning/10",
+      icon: "text-warning",
+      progress: "bg-warning",
+      button:
+        "bg-warning text-warning-foreground hover:bg-warning/90",
     },
     critical: {
-      container: "border-red-500/50 bg-red-50 dark:bg-red-950/20",
-      icon: "text-red-600 dark:text-red-500",
-      progress: "bg-red-500",
-      button: "bg-red-600 text-white hover:bg-red-700",
+      container: "border-destructive/50 bg-destructive/10",
+      icon: "text-destructive",
+      progress: "bg-destructive",
+      button:
+        "bg-destructive text-destructive-foreground hover:bg-destructive/90",
     },
   };
 
