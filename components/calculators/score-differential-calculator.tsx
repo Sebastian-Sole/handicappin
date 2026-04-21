@@ -7,7 +7,7 @@ import { Muted, P } from "@/components/ui/typography";
 import { CalculatorCard } from "./calculator-card";
 import { useCalculatorContext } from "@/contexts/calculatorContext";
 import { getCalculatorByIdOrThrow } from "@/lib/calculator-registry";
-import { calculateScoreDifferential } from "@/lib/handicap";
+import { calculateScoreDifferential } from "@handicappin/handicap-core";
 
 const meta = getCalculatorByIdOrThrow("score-differential");
 

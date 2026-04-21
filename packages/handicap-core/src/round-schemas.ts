@@ -1,8 +1,9 @@
 /**
- * Round validation schemas for handicap recalculation (Node.js/Vercel).
+ * Round validation schemas for handicap recalculation.
  *
- * These schemas validate database query results for the handicap recalculation
- * cron job. They are NOT synced with the main app input schemas.
+ * These schemas validate database query results for the handicap
+ * recalculation cron job. They are NOT synced with the main app input
+ * schemas.
  *
  * Note: A parallel version exists for Supabase Edge Functions (Deno) at:
  * supabase/functions/handicap-shared/round-schemas.ts

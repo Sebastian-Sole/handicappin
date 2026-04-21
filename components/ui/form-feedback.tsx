@@ -19,33 +19,27 @@ export function FormFeedback({
   onClose,
 }: FormFeedbackProps) {
   const icons = {
-    success: (
-      <CheckCircle className="h-4 w-4 shrink-0 text-green-600 dark:text-green-400" />
-    ),
+    success: <CheckCircle className="h-4 w-4 shrink-0 text-success" />,
     error: <CircleAlert className="h-4 w-4 shrink-0 text-destructive" />,
-    info: (
-      <AlertCircle className="h-4 w-4 shrink-0 text-blue-600 dark:text-blue-400" />
-    ),
+    info: <AlertCircle className="h-4 w-4 shrink-0 text-info" />,
   };
 
   const containerStyles = {
-    success:
-      "bg-green-50 border-green-200 dark:bg-green-950 dark:border-green-800",
+    success: "bg-success/10 border-success/30",
     error: "bg-destructive/10 border-destructive/20",
-    info: "bg-blue-50 border-blue-200 dark:bg-blue-950 dark:border-blue-800",
+    info: "bg-info/10 border-info/30",
   };
 
   const textStyles = {
-    success: "text-green-800 dark:text-green-200",
+    success: "text-success",
     error: "text-destructive",
-    info: "text-blue-800 dark:text-blue-200",
+    info: "text-info",
   };
 
   const closeButtonStyles = {
-    success:
-      "text-green-600 hover:text-green-800 dark:text-green-400 dark:hover:text-green-200",
+    success: "text-success hover:text-success/80",
     error: "text-destructive hover:text-destructive/80",
-    info: "text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-200",
+    info: "text-info hover:text-info/80",
   };
 
   return (

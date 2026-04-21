@@ -1,0 +1,4 @@
+/* Font loading is handled by `next/font` in `app/layout.tsx`, which injects
+   CSS variables consumed by `--font-sans` / `--font-mono` / `--font-serif`
+   in `app/globals.css`. Add `@font-face` declarations here only for assets
+   that cannot be served through next/font. */

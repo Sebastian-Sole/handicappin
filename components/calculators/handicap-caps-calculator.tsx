@@ -8,11 +8,11 @@ import { Progress } from "@/components/ui/progress";
 import { CalculatorCard } from "./calculator-card";
 import { useCalculatorContext } from "@/contexts/calculatorContext";
 import { getCalculatorByIdOrThrow } from "@/lib/calculator-registry";
-import { applyHandicapCaps } from "@/lib/handicap";
 import {
+  applyHandicapCaps,
   SOFT_CAP_THRESHOLD,
   HARD_CAP_THRESHOLD,
-} from "@/lib/handicap/constants";
+} from "@handicappin/handicap-core";
 
 const meta = getCalculatorByIdOrThrow("handicap-caps");
 
