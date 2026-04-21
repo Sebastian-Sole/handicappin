@@ -1,0 +1,102 @@
+@layer base {
+  *,
+  ::after,
+  ::before,
+  ::backdrop,
+  ::file-selector-button {
+    border-color: var(--color-gray-200, currentcolor);
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  html {
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-family: var(--font-sans);
+    letter-spacing: var(--tracking-normal);
+    margin: 0;
+  }
+
+  a {
+    color: inherit;
+    text-decoration: inherit;
+  }
+
+  ::selection {
+    background-color: var(--primary);
+    color: var(--primary-foreground);
+  }
+
+  input[type="number"]::-webkit-inner-spin-button,
+  input[type="number"]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+  input[type="search"]::-webkit-search-cancel-button {
+    cursor: pointer;
+  }
+
+  :is(input, textarea, select):autofill,
+  input:-webkit-autofill,
+  input:-webkit-autofill:hover,
+  input:-webkit-autofill:active,
+  input:autofill:hover,
+  input:autofill:active,
+  input[data-com-onepassword-filled],
+  textarea[data-com-onepassword-filled],
+  select[data-com-onepassword-filled],
+  textarea:-webkit-autofill,
+  textarea:-webkit-autofill:hover,
+  textarea:-webkit-autofill:active,
+  textarea:autofill:hover,
+  textarea:autofill:active,
+  select:-webkit-autofill,
+  select:-webkit-autofill:hover {
+    -webkit-text-fill-color: var(--foreground) !important;
+    color: var(--foreground) !important;
+    caret-color: var(--foreground) !important;
+    background-color: transparent !important;
+    box-shadow: 0 0 0 1000px var(--input) inset !important;
+    -webkit-box-shadow: 0 0 0 1000px var(--input) inset !important;
+    transition: background-color 9999s ease-in-out 0s;
+  }
+
+  input:autofill:focus,
+  input:autofill:focus-visible,
+  input:-webkit-autofill:focus,
+  input:-webkit-autofill:focus-visible,
+  input[data-com-onepassword-filled]:focus,
+  input[data-com-onepassword-filled]:focus-visible,
+  textarea:autofill:focus,
+  textarea:autofill:focus-visible,
+  textarea:-webkit-autofill:focus,
+  textarea:-webkit-autofill:focus-visible,
+  textarea[data-com-onepassword-filled]:focus,
+  textarea[data-com-onepassword-filled]:focus-visible,
+  select:autofill:focus,
+  select:autofill:focus-visible,
+  select:-webkit-autofill:focus,
+  select:-webkit-autofill:focus-visible,
+  select[data-com-onepassword-filled]:focus,
+  select[data-com-onepassword-filled]:focus-visible {
+    -webkit-text-fill-color: var(--foreground) !important;
+    color: var(--foreground) !important;
+    background-color: transparent !important;
+    box-shadow:
+      0 0 0 2px var(--ring),
+      0 0 0 1000px var(--input) inset !important;
+    -webkit-box-shadow:
+      0 0 0 2px var(--ring),
+      0 0 0 1000px var(--input) inset !important;
+    --tw-ring-offset-shadow: none !important;
+    --tw-ring-shadow: none !important;
+  }
+}

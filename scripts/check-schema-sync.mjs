@@ -9,7 +9,7 @@
   * File structure:
  * - types/scorecard-input.ts: Main app input validation schemas (source of truth)
  * - supabase/functions/handicap-shared/shared-schemas.ts: Edge function copy (synced)
- * - lib/handicap/round-schemas.ts: Main app round schemas (parallel to edge function)
+ * - packages/handicap-core/src/round-schemas.ts: Main app round schemas (parallel to edge function)
  * - supabase/functions/handicap-shared/round-schemas.ts: Edge function round schemas (NOT synced with main app)
  *
  * The synced files have expected differences:

@@ -12,7 +12,7 @@ import { getCalculatorByIdOrThrow } from "@/lib/calculator-registry";
 import {
   calculateHandicapIndex,
   getRelevantDifferentials,
-} from "@/lib/handicap";
+} from "@handicappin/handicap-core";
 import { Plus, X } from "lucide-react";
 
 const meta = getCalculatorByIdOrThrow("handicap-index");

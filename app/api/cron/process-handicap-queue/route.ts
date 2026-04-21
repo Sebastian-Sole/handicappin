@@ -12,7 +12,7 @@ import {
   EXCEPTIONAL_ROUND_THRESHOLD,
   MAX_SCORE_DIFFERENTIAL,
   ESR_WINDOW_SIZE,
-} from "@/lib/handicap";
+} from "@handicappin/handicap-core";
 
 const BATCH_SIZE = env.HANDICAP_QUEUE_BATCH_SIZE;
 const MAX_RETRIES = env.HANDICAP_MAX_RETRIES;
@@ -101,7 +101,7 @@ export async function GET(request: NextRequest) {
 
 /**
  * Process handicap calculation for a single user
- * Uses shared utilities from lib/handicap
+ * Uses shared utilities from @handicappin/handicap-core
  */
 async function processUserHandicap(
   supabase: ReturnType<typeof createAdminClient>,

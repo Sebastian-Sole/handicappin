@@ -1,5 +1,5 @@
 import { cn } from "@/lib/utils";
-import { ReactNode } from "react";
+import type { ReactNode } from "react";
 
 type TypographyProps = {
   children: ReactNode;
@@ -8,14 +8,7 @@ type TypographyProps = {
 
 export function H1({ children, className }: TypographyProps) {
   return (
-    <h1
-      className={cn(
-        "scroll-m-20 text-4xl font-extrabold tracking-tight lg:text-5xl",
-        className
-      )}
-    >
-      {children}
-    </h1>
+    <h1 className={cn("text-heading-1 scroll-m-20", className)}>{children}</h1>
   );
 }
 
@@ -23,7 +16,7 @@ export function H2({ children, className }: TypographyProps) {
   return (
     <h2
       className={cn(
-        "scroll-m-20 pb-2 text-3xl font-semibold tracking-tight transition-colors first:mt-0",
+        "text-heading-2 scroll-m-20 pb-2 transition-colors first:mt-0",
         className
       )}
     >
@@ -34,41 +27,27 @@ export function H2({ children, className }: TypographyProps) {
 
 export function H3({ children, className }: TypographyProps) {
   return (
-    <h3
-      className={cn(
-        "scroll-m-20 text-2xl font-semibold tracking-tight",
-        className
-      )}
-    >
-      {children}
-    </h3>
+    <h3 className={cn("text-heading-3 scroll-m-20", className)}>{children}</h3>
   );
 }
 
 export function H4({ children, className }: TypographyProps) {
   return (
-    <h4
-      className={cn(
-        "scroll-m-20 text-xl font-semibold tracking-tight",
-        className
-      )}
-    >
-      {children}
-    </h4>
+    <h4 className={cn("text-heading-4 scroll-m-20", className)}>{children}</h4>
   );
 }
 
 export function P({ children, className }: TypographyProps) {
   return (
-    <p className={cn("leading-7 not-first:mt-6", className)}>
-      {children}
-    </p>
+    <p className={cn("text-body not-first:mt-6", className)}>{children}</p>
   );
 }
 
 export function Blockquote({ children, className }: TypographyProps) {
   return (
-    <blockquote className={cn("mt-6 border-l-2 pl-6 italic", className)}>
+    <blockquote
+      className={cn("text-body mt-6 border-l-2 pl-6 italic", className)}
+    >
       {children}
     </blockquote>
   );
@@ -78,7 +57,7 @@ export function InlineCode({ children, className }: TypographyProps) {
   return (
     <code
       className={cn(
-        "relative rounded bg-muted px-[0.3rem] py-[0.2rem] font-mono text-sm font-semibold",
+        "text-body-sm relative rounded bg-muted px-[0.3rem] py-[0.2rem] font-mono font-semibold",
         className
       )}
     >
@@ -89,19 +68,28 @@ export function InlineCode({ children, className }: TypographyProps) {
 
 export function Lead({ children, className }: TypographyProps) {
   return (
-    <p className={cn("text-xl text-muted-foreground", className)}>{children}</p>
+    <p
+      className={cn(
+        "text-heading-4 text-muted-foreground font-normal",
+        className
+      )}
+    >
+      {children}
+    </p>
   );
 }
 
 export function Large({ children, className }: TypographyProps) {
   return (
-    <div className={cn("text-lg font-semibold", className)}>{children}</div>
+    <div className={cn("text-body text-lg font-semibold", className)}>
+      {children}
+    </div>
   );
 }
 
 export function Small({ children, className }: TypographyProps) {
   return (
-    <small className={cn("text-sm font-medium leading-none", className)}>
+    <small className={cn("text-body-sm font-medium leading-none", className)}>
       {children}
     </small>
   );
@@ -109,6 +97,8 @@ export function Small({ children, className }: TypographyProps) {
 
 export function Muted({ children, className }: TypographyProps) {
   return (
-    <p className={cn("text-sm text-muted-foreground", className)}>{children}</p>
+    <p className={cn("text-body-sm text-muted-foreground", className)}>
+      {children}
+    </p>
   );
 }
