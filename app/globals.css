@@ -98,13 +98,20 @@
   /* Semantic spacing ramp. Registered in @theme so Tailwind generates
      p-xs, gap-md, space-y-lg, etc. as first-class utilities. Components
      should prefer these over numeric-scalar utilities (p-4, gap-6) so
-     the whole spacing rhythm can be retuned in one place. */
-  --spacing-xs: 0.25rem;
-  --spacing-sm: 0.5rem;
-  --spacing-md: 1rem;
-  --spacing-lg: 1.5rem;
-  --spacing-xl: 2rem;
-  --spacing-2xl: 3rem;
+     the whole spacing rhythm can be retuned in one place.
+
+     Use xs..2xl for component-internal spacing (padding, gaps).
+     Use 3xl..5xl for page-level section rhythm (py-3xl for section
+     padding, py-5xl for marketing hero blocks). */
+  --spacing-xs: 0.25rem;   /* = 1 */
+  --spacing-sm: 0.5rem;    /* = 2 */
+  --spacing-md: 1rem;      /* = 4 */
+  --spacing-lg: 1.5rem;    /* = 6 */
+  --spacing-xl: 2rem;      /* = 8 */
+  --spacing-2xl: 3rem;     /* = 12 */
+  --spacing-3xl: 4rem;     /* = 16 */
+  --spacing-4xl: 6rem;     /* = 24 */
+  --spacing-5xl: 8rem;     /* = 32 */
 
   --shadow-2xs: var(--shadow-2xs);
   --shadow-xs: var(--shadow-xs);
