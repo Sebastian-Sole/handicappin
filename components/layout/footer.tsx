@@ -3,9 +3,9 @@ import { Button } from "../ui/button";
 
 const Footer = () => {
   return (
-    <footer className="w-full border-t py-6">
-      <div className="container px-4 lg:px-6 m-0 w-full max-w-full">
-        <div className="flex flex-col items-center justify-between gap-4 lg:flex-row ">
+    <footer className="w-full border-t py-lg">
+      <div className="container px-md lg:px-lg m-0 w-full max-w-full">
+        <div className="flex flex-col items-center justify-between gap-md lg:flex-row ">
           <div className="text-center lg:text-left flex flex-row">
             <p className="text-sm text-muted-foreground">
               © {new Date().getFullYear()} Handicappin&apos;. All rights
@@ -17,7 +17,7 @@ const Footer = () => {
               </Link>
             </p>
           </div>
-          <nav className="flex flex-wrap justify-center gap-4 md:gap-6">
+          <nav className="flex flex-wrap justify-center gap-md md:gap-lg">
             <Link
               className="text-sm font-medium hover:underline underline-offset-4"
               href="/"

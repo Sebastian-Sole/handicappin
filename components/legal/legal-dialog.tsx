@@ -57,7 +57,7 @@ export function LegalDialog({ type, children }: LegalDialogProps) {
           <DialogTitle>{config.title}</DialogTitle>
           <DialogDescription>{config.description}</DialogDescription>
         </DialogHeader>
-        <div className="mt-4">
+        <div className="mt-md">
           {type === "terms" ? <TermsContent /> : <PrivacyContent />}
         </div>
       </DialogContent>

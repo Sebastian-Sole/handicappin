@@ -22,9 +22,9 @@ export default function PrivacyPolicyPage() {
   return (
     <div className="min-h-screen bg-background">
       {/* Hero Section */}
-      <section className="w-full py-12 md:py-24 lg:py-32 bg-gradient-to-br from-primary/5 to-primary/20 dark:from-primary/5 dark:to-primary/35">
-        <div className="sm:container px-4 md:px-6 mx-auto">
-          <div className="mx-auto max-w-3xl space-y-4 text-center">
+      <section className="w-full py-2xl md:py-4xl lg:py-5xl bg-gradient-to-br from-primary/5 to-primary/20 dark:from-primary/5 dark:to-primary/35">
+        <div className="sm:container px-md md:px-lg mx-auto">
+          <div className="mx-auto max-w-3xl space-y-md text-center">
             <Badge>Legal</Badge>
             <H1 className="lg:leading-tighter sm:text-4xl md:text-5xl">
               Privacy Policy
@@ -38,8 +38,8 @@ export default function PrivacyPolicyPage() {
       </section>
 
       {/* Privacy Content */}
-      <section className="w-full py-12 md:py-24">
-        <div className="sm:container px-4 md:px-6 mx-auto">
+      <section className="w-full py-2xl md:py-4xl">
+        <div className="sm:container px-md md:px-lg mx-auto">
           <div className="mx-auto max-w-3xl">
             <PrivacyContent />
           </div>

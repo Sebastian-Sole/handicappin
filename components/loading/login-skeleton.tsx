@@ -3,25 +3,25 @@ import { Skeleton } from "@/components/ui/skeleton";
 export default function LoginSkeleton() {
   return (
     <div className="flex justify-center items-center h-full">
-      <div className="mx-auto max-w-sm space-y-6 py-4 md:py-4 lg:py-4 xl:py-4 sm:min-w-[40%] min-h-full w-[90%]">
+      <div className="mx-auto max-w-sm space-y-lg py-md md:py-md lg:py-md xl:py-md sm:min-w-[40%] min-h-full w-[90%]">
         {/* Title Skeleton */}
-        <div className="space-y-2 text-center">
-          <Skeleton className="h-10 w-1/3 mx-auto mb-4" />
+        <div className="space-y-sm text-center">
+          <Skeleton className="h-10 w-1/3 mx-auto mb-md" />
           <Skeleton className="h-4 w-1/4 mx-auto" />
         </div>
         {/* Form Skeleton */}
-        <div className="space-y-4 mt-6">
-          <div className="space-y-8">
-            <div className="space-y-2">
-              <Skeleton className="h-4 w-1/6 mb-1" />
+        <div className="space-y-md mt-lg">
+          <div className="space-y-xl">
+            <div className="space-y-sm">
+              <Skeleton className="h-4 w-1/6 mb-xs" />
               <Skeleton className="h-10 w-full" />
             </div>
-            <div className="space-y-2">
-              <Skeleton className="h-4 w-1/6 mb-1" />
+            <div className="space-y-sm">
+              <Skeleton className="h-4 w-1/6 mb-xs" />
               <Skeleton className="h-10 w-full" />
             </div>
-            <Skeleton className="h-10 w-full mt-4" />
-            <div className="flex flex-row items-center justify-center flex-wrap gap-8 mt-2">
+            <Skeleton className="h-10 w-full mt-md" />
+            <div className="flex flex-row items-center justify-center flex-wrap gap-xl mt-sm">
               <Skeleton className="h-6 w-32" />
               <Skeleton className="h-6 w-52" />
             </div>
