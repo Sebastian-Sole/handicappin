@@ -1,0 +1,99 @@
+/*
+ * Surface + tint utilities.
+ *
+ * These collapse the `bg-card rounded-lg border p-<n>` / `bg-muted/50 rounded-lg p-<n>`
+ * / `bg-<tone>/10 border-<tone>/20 rounded-lg p-<n>` patterns that recur across
+ * cards, callouts, and highlight sections. Callers compose surface + spacing
+ * utilities rather than spelling the recipe at every site.
+ *
+ * Example:
+ *   <div class="surface p-lg">…</div>
+ *   <div class="surface-muted p-md">…</div>
+ *   <Card class="tint-success">…</Card>
+ *
+ * Add a new tint only when a matching token exists. Tint utilities set
+ * bg/border; padding and radius come from composition with spacing / the
+ * Card primitive.
+ */
+
+/* Base surface — card background with border and rounded corners. */
+@utility surface {
+  background-color: var(--color-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+}
+
+/* Muted surface — de-emphasized callout / stat-tile background. */
+@utility surface-muted {
+  background-color: color-mix(in oklab, var(--color-muted) 50%, transparent);
+  border-radius: var(--radius-lg);
+}
+
+/* Semantic tints. Each sets a 10% bg + 20% border over the token color.
+   Use on a <Card> or plain <div>; compose with p-<spacing> for padding. */
+@utility tint-primary {
+  background-color: color-mix(in oklab, var(--color-primary) 10%, transparent);
+  border: 1px solid color-mix(in oklab, var(--color-primary) 20%, transparent);
+  border-radius: var(--radius-lg);
+}
+
+@utility tint-success {
+  background-color: color-mix(in oklab, var(--color-success) 10%, transparent);
+  border: 1px solid color-mix(in oklab, var(--color-success) 20%, transparent);
+  border-radius: var(--radius-lg);
+}
+
+@utility tint-warning {
+  background-color: color-mix(in oklab, var(--color-warning) 10%, transparent);
+  border: 1px solid color-mix(in oklab, var(--color-warning) 20%, transparent);
+  border-radius: var(--radius-lg);
+}
+
+@utility tint-info {
+  background-color: color-mix(in oklab, var(--color-info) 10%, transparent);
+  border: 1px solid color-mix(in oklab, var(--color-info) 20%, transparent);
+  border-radius: var(--radius-lg);
+}
+
+@utility tint-destructive {
+  background-color: color-mix(in oklab, var(--color-destructive) 10%, transparent);
+  border: 1px solid color-mix(in oklab, var(--color-destructive) 20%, transparent);
+  border-radius: var(--radius-lg);
+}
+
+/* Score-tier tints for golf-outcome visualizations. */
+@utility tint-score-eagle {
+  background-color: color-mix(in oklab, var(--color-score-eagle) 10%, transparent);
+  border: 1px solid color-mix(in oklab, var(--color-score-eagle) 20%, transparent);
+  border-radius: var(--radius-lg);
+}
+
+@utility tint-score-birdie {
+  background-color: color-mix(in oklab, var(--color-score-birdie) 10%, transparent);
+  border: 1px solid color-mix(in oklab, var(--color-score-birdie) 20%, transparent);
+  border-radius: var(--radius-lg);
+}
+
+@utility tint-score-par {
+  background-color: color-mix(in oklab, var(--color-score-par) 10%, transparent);
+  border: 1px solid color-mix(in oklab, var(--color-score-par) 20%, transparent);
+  border-radius: var(--radius-lg);
+}
+
+@utility tint-score-bogey {
+  background-color: color-mix(in oklab, var(--color-score-bogey) 10%, transparent);
+  border: 1px solid color-mix(in oklab, var(--color-score-bogey) 20%, transparent);
+  border-radius: var(--radius-lg);
+}
+
+@utility tint-score-double {
+  background-color: color-mix(in oklab, var(--color-score-double) 10%, transparent);
+  border: 1px solid color-mix(in oklab, var(--color-score-double) 20%, transparent);
+  border-radius: var(--radius-lg);
+}
+
+@utility tint-score-triple {
+  background-color: color-mix(in oklab, var(--color-score-triple) 10%, transparent);
+  border: 1px solid color-mix(in oklab, var(--color-score-triple) 20%, transparent);
+  border-radius: var(--radius-lg);
+}

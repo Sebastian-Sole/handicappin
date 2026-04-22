@@ -95,6 +95,17 @@
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
 
+  /* Semantic spacing ramp. Registered in @theme so Tailwind generates
+     p-xs, gap-md, space-y-lg, etc. as first-class utilities. Components
+     should prefer these over numeric-scalar utilities (p-4, gap-6) so
+     the whole spacing rhythm can be retuned in one place. */
+  --spacing-xs: 0.25rem;
+  --spacing-sm: 0.5rem;
+  --spacing-md: 1rem;
+  --spacing-lg: 1.5rem;
+  --spacing-xl: 2rem;
+  --spacing-2xl: 3rem;
+
   --shadow-2xs: var(--shadow-2xs);
   --shadow-xs: var(--shadow-xs);
   --shadow-sm: var(--shadow-sm);
@@ -249,14 +260,6 @@
   --tracking-normal: 0.025em;
   --spacing: 0.25rem;
 
-  /* Semantic spacing ramp */
-  --spacing-xs: 0.25rem;
-  --spacing-sm: 0.5rem;
-  --spacing-md: 1rem;
-  --spacing-lg: 1.5rem;
-  --spacing-xl: 2rem;
-  --spacing-2xl: 3rem;
-
   /* Bars */
   --bar-active: oklch(0.46 0.16 148);
   --bar-inactive: oklch(0.9 0.02 160);
@@ -344,3 +347,4 @@
 @import "./styles/fonts.css";
 @import "./styles/base.css";
 @import "./styles/utilities/typography.css";
+@import "./styles/utilities/surfaces.css";
