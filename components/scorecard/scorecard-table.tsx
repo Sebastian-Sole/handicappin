@@ -188,7 +188,7 @@ export function ScorecardTable({
                   SCORE
                 </TableCell>
                 {scores.slice(0, holeCount).map((score, i) => (
-                  <TableCell key={i} className="p-2 bg-background-alternate">
+                  <TableCell key={i} className="p-sm bg-background-alternate">
                     <Input
                       ref={(el) => {
                         desktopInputRefs.current[i] = el;
@@ -230,14 +230,14 @@ export function ScorecardTable({
       </div>
 
       {/* Mobile Table - Visible on viewports < 1024px */}
-      <div className="block xl:hidden w-full space-y-3">
+      <div className="block xl:hidden w-full space-y-sm">
         {/* Tee Info - Above table */}
-        <div className="rounded-lg bg-accent dark:bg-muted p-3 border">
-          <div className="text-sm font-medium text-secondary-foreground dark:text-primary-foreground mb-2">
+        <div className="rounded-lg bg-accent dark:bg-muted p-sm border">
+          <div className="text-sm font-medium text-secondary-foreground dark:text-primary-foreground mb-sm">
             {selectedTee?.name.toUpperCase()} TEE
           </div>
-          <div className="flex w-full md:justify-start md:gap-8 justify-between gap-2 text-sm">
-            <div className="flex justify-start gap-2">
+          <div className="flex w-full md:justify-start md:gap-xl justify-between gap-sm text-sm">
+            <div className="flex justify-start gap-sm">
               <span className="text-secondary-foreground dark:text-primary-foreground">
                 Total Distance:
               </span>
@@ -247,7 +247,7 @@ export function ScorecardTable({
                   : selectedTee?.outDistance}
               </span>
             </div>
-            <div className="flex justify-end gap-2">
+            <div className="flex justify-end gap-sm">
               <span className="text-secondary-foreground dark:text-primary-foreground">
                 Total Par:
               </span>
@@ -292,7 +292,7 @@ export function ScorecardTable({
                     <TableCell className="text-center bg-background">
                       {hole.hcp}
                     </TableCell>
-                    <TableCell className="p-2 bg-background-alternate w-24">
+                    <TableCell className="p-sm bg-background-alternate w-24">
                       <Input
                         ref={(el) => {
                           mobileInputRefs.current[i] = el;
@@ -317,12 +317,12 @@ export function ScorecardTable({
         </div>
 
         {/* Score Summary - Below table */}
-        <div className="rounded-lg border bg-background p-3">
-          <div className="text-sm font-medium mb-2">Score Summary</div>
+        <div className="rounded-lg border bg-background p-sm">
+          <div className="text-sm font-medium mb-sm">Score Summary</div>
           {holeCount === CONSTANTS.EIGHTEEN_HOLES ? (
-            <div className="grid grid-cols-3 gap-3 text-center">
-              <div className="rounded bg-background-alternate p-2">
-                <div className="text-xs text-muted-foreground mb-1">OUT</div>
+            <div className="grid grid-cols-3 gap-sm text-center">
+              <div className="rounded bg-background-alternate p-sm">
+                <div className="text-xs text-muted-foreground mb-xs">OUT</div>
                 <div className="text-lg font-bold">
                   {calculateTotal(scores, 0, CONSTANTS.NINE_HOLES)}
                 </div>
@@ -330,8 +330,8 @@ export function ScorecardTable({
                   Par {selectedTee?.outPar}
                 </div>
               </div>
-              <div className="rounded bg-background-alternate p-2">
-                <div className="text-xs text-muted-foreground mb-1">IN</div>
+              <div className="rounded bg-background-alternate p-sm">
+                <div className="text-xs text-muted-foreground mb-xs">IN</div>
                 <div className="text-lg font-bold">
                   {calculateTotal(
                     scores,
@@ -343,8 +343,8 @@ export function ScorecardTable({
                   Par {selectedTee?.inPar}
                 </div>
               </div>
-              <div className="rounded bg-primary/10 p-2">
-                <div className="text-xs text-muted-foreground mb-1">TOTAL</div>
+              <div className="tint-primary p-sm">
+                <div className="text-xs text-muted-foreground mb-xs">TOTAL</div>
                 <div className="text-lg font-bold text-primary">
                   {calculateTotal(scores, 0, holeCount)}
                 </div>
@@ -355,8 +355,8 @@ export function ScorecardTable({
             </div>
           ) : (
             <div className="flex justify-center">
-              <div className="rounded bg-primary/10 p-3 min-w-[120px] text-center">
-                <div className="text-xs text-muted-foreground mb-1">TOTAL</div>
+              <div className="tint-primary p-sm min-w-[120px] text-center">
+                <div className="text-xs text-muted-foreground mb-xs">TOTAL</div>
                 <div className="text-2xl font-bold text-primary">
                   {calculateTotal(scores, 0, holeCount)}
                 </div>
@@ -385,21 +385,21 @@ export const TableSkeleton = ({ holeCount }: { holeCount: number }) => {
                 <Skeleton className="h-6 w-12" />
               </th>
               {[...Array(holeCount)].map((_, i) => (
-                <th key={i} className="p-2 bg-secondary text-center">
+                <th key={i} className="p-sm bg-secondary text-center">
                   <Skeleton className="h-6 w-8" />
                 </th>
               ))}
               {holeCount === 18 && (
                 <>
-                  <th className="p-2 bg-secondary text-center">
+                  <th className="p-sm bg-secondary text-center">
                     <Skeleton className="h-6 w-10" />
                   </th>
-                  <th className="p-2 bg-secondary text-center">
+                  <th className="p-sm bg-secondary text-center">
                     <Skeleton className="h-6 w-10" />
                   </th>
                 </>
               )}
-              <th className="p-2 bg-secondary text-center">
+              <th className="p-sm bg-secondary text-center">
                 <Skeleton className="h-6 w-10" />
               </th>
             </tr>
@@ -407,61 +407,61 @@ export const TableSkeleton = ({ holeCount }: { holeCount: number }) => {
           <tbody>
             {/* Distance Row */}
             <tr>
-              <td className="p-2 bg-secondary">
+              <td className="p-sm bg-secondary">
                 <Skeleton className="h-6 w-24" />
               </td>
               {[...Array(holeCount)].map((_, i) => (
-                <td key={i} className="p-2 text-center">
+                <td key={i} className="p-sm text-center">
                   <Skeleton className="h-6 w-10" />
                 </td>
               ))}
               {holeCount === 18 && (
                 <>
-                  <td className="p-2 text-center">
+                  <td className="p-sm text-center">
                     <Skeleton className="h-6 w-12" />
                   </td>
-                  <td className="p-2 text-center">
+                  <td className="p-sm text-center">
                     <Skeleton className="h-6 w-12" />
                   </td>
                 </>
               )}
-              <td className="p-2 text-center">
+              <td className="p-sm text-center">
                 <Skeleton className="h-6 w-12" />
               </td>
             </tr>
 
             {/* Par Row */}
             <tr>
-              <td className="p-2 bg-secondary">
+              <td className="p-sm bg-secondary">
                 <Skeleton className="h-6 w-10" />
               </td>
               {[...Array(holeCount)].map((_, i) => (
-                <td key={i} className="p-2 text-center">
+                <td key={i} className="p-sm text-center">
                   <Skeleton className="h-6 w-10" />
                 </td>
               ))}
               {holeCount === 18 && (
                 <>
-                  <td className="p-2 text-center">
+                  <td className="p-sm text-center">
                     <Skeleton className="h-6 w-12" />
                   </td>
-                  <td className="p-2 text-center">
+                  <td className="p-sm text-center">
                     <Skeleton className="h-6 w-12" />
                   </td>
                 </>
               )}
-              <td className="p-2 text-center">
+              <td className="p-sm text-center">
                 <Skeleton className="h-6 w-12" />
               </td>
             </tr>
 
             {/* Handicap Row */}
             <tr>
-              <td className="p-2 bg-secondary">
+              <td className="p-sm bg-secondary">
                 <Skeleton className="h-6 w-14" />
               </td>
               {[...Array(holeCount)].map((_, i) => (
-                <td key={i} className="p-2 text-center">
+                <td key={i} className="p-sm text-center">
                   <Skeleton className="h-6 w-8" />
                 </td>
               ))}
@@ -477,25 +477,25 @@ export const TableSkeleton = ({ holeCount }: { holeCount: number }) => {
 
             {/* Score Row */}
             <tr>
-              <td className="p-2 bg-secondary">
+              <td className="p-sm bg-secondary">
                 <Skeleton className="h-6 w-14" />
               </td>
               {[...Array(holeCount)].map((_, i) => (
-                <td key={i} className="p-2">
+                <td key={i} className="p-sm">
                   <Skeleton className="h-10 w-full" />
                 </td>
               ))}
               {holeCount === 18 && (
                 <>
-                  <td className="p-2 text-center">
+                  <td className="p-sm text-center">
                     <Skeleton className="h-6 w-12" />
                   </td>
-                  <td className="p-2 text-center">
+                  <td className="p-sm text-center">
                     <Skeleton className="h-6 w-12" />
                   </td>
                 </>
               )}
-              <td className="p-2 text-center">
+              <td className="p-sm text-center">
                 <Skeleton className="h-6 w-12" />
               </td>
             </tr>

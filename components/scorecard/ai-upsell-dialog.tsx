@@ -69,7 +69,7 @@ export function AiUpsellDialog({ open, onOpenChange }: AiUpsellDialogProps) {
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
+          <DialogTitle className="flex items-center gap-sm">
             <Sparkles className="h-5 w-5 text-primary" />
             Add with AI
           </DialogTitle>
@@ -79,7 +79,7 @@ export function AiUpsellDialog({ open, onOpenChange }: AiUpsellDialogProps) {
         <div className="relative flex flex-col items-center justify-center h-48 rounded-lg bg-muted overflow-hidden">
           <div
             key={currentStep}
-            className="flex flex-col items-center gap-4 animate-in fade-in slide-in-from-bottom-4 duration-500"
+            className="flex flex-col items-center gap-md animate-in fade-in slide-in-from-bottom-4 duration-500"
           >
             <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
               <StepIcon className="h-8 w-8 text-primary" />
@@ -89,7 +89,7 @@ export function AiUpsellDialog({ open, onOpenChange }: AiUpsellDialogProps) {
         </div>
 
         {/* Step indicators */}
-        <div className="flex justify-center gap-2">
+        <div className="flex justify-center gap-sm">
           {STEPS.map((_, stepIndex) => (
             <button
               key={stepIndex}
@@ -114,7 +114,7 @@ export function AiUpsellDialog({ open, onOpenChange }: AiUpsellDialogProps) {
         </p>
 
         {/* CTA */}
-        <div className="flex flex-col gap-2 pt-2">
+        <div className="flex flex-col gap-sm pt-sm">
           <Button asChild>
             <Link href="/upgrade">Upgrade to Premium</Link>
           </Button>
