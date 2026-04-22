@@ -156,7 +156,7 @@ export function Statistics({ profile, scorecards }: StatisticsProps) {
     return (
       <div className="bg-background text-foreground p-md md:p-xl rounded-lg min-h-screen flex flex-col items-center justify-center">
         <div className="text-center max-w-md">
-          <H1 className="text-3xl font-bold mb-md">No Statistics Yet</H1>
+          <H1 className="text-figure-lg mb-md">No Statistics Yet</H1>
           <p className="text-muted-foreground text-lg mb-lg">
             Record your first round to start tracking your performance.
           </p>
@@ -182,7 +182,7 @@ export function Statistics({ profile, scorecards }: StatisticsProps) {
       {/* Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-lg gap-md">
         <div>
-          <H1 className="text-3xl font-bold">Statistics</H1>
+          <H1 className="text-figure-lg">Statistics</H1>
           <p className="text-muted-foreground">
             Deep dive into your golf performance
           </p>

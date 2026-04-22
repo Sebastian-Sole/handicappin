@@ -70,7 +70,7 @@ export function HandicapCapsCalculator() {
             </Small>
           )}
         </div>
-        <span className="text-3xl font-bold text-primary">
+        <span className="text-figure-lg text-primary">
           {analysis.cappedIndex.toFixed(1)}
         </span>
       </div>

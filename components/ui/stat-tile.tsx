@@ -18,9 +18,9 @@ type StatTileProps = {
 };
 
 const valueSize: Record<StatTileSize, string> = {
-  sm: "text-xl",
-  md: "text-2xl",
-  lg: "text-3xl",
+  sm: "text-figure-sm",
+  md: "text-figure",
+  lg: "text-figure-lg",
 };
 
 /**
@@ -40,7 +40,7 @@ export function StatTile({
   return (
     <div className={cn("text-center", className)}>
       {leading && <div className="mb-xs">{leading}</div>}
-      <div className={cn("font-bold", valueSize[size])}>{value}</div>
+      <div className={valueSize[size]}>{value}</div>
       <p className="text-sm text-muted-foreground">{label}</p>
       {hint && (
         <p className="text-xs text-muted-foreground/70 mt-xs">{hint}</p>

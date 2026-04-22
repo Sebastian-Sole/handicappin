@@ -52,7 +52,7 @@ export function StatDelta({
   const Icon = isPositive ? TrendingUp : isNegative ? TrendingDown : Minus;
 
   return (
-    <span className={cn("inline-flex items-center gap-1", tone, className)}>
+    <span className={cn("inline-flex items-center gap-xs", tone, className)}>
       {!numberOnly && <Icon className="h-4 w-4" aria-hidden />}
       {!iconOnly && <span>{format(value)}</span>}
     </span>

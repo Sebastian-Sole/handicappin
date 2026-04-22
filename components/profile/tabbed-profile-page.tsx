@@ -75,7 +75,7 @@ export function TabbedProfilePage({
       <div className="container mx-auto py-xl px-md max-w-7xl">
         {/* Header */}
         <div className="mb-2xl">
-          <H1 className="text-4xl font-bold mb-sm">Profile</H1>
+          <H1 className="text-figure-xl mb-sm">Profile</H1>
           <p className="text-muted-foreground text-lg">
             Manage your account settings
           </p>

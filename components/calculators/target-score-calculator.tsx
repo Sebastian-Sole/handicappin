@@ -57,7 +57,7 @@ export function TargetScoreCalculator() {
           <Target className="h-5 w-5 text-primary" />
           <P className="font-medium">Target Score:</P>
         </div>
-        <span className="text-3xl font-bold text-primary">
+        <span className="text-figure-lg text-primary">
           {calculation.targetScore}
         </span>
       </div>

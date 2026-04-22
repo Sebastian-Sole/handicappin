@@ -19,21 +19,21 @@ const StatBox = ({ title, value, change, description, icon }: StatBoxProps) => {
         <div className="ml-sm min-[400px]:block hidden">{icon}</div>
       </CardHeader>
       <CardContent>
-        <div className="text-2xl font-bold text-foreground mb-xs transition-colors duration-300">
+        <div className="text-figure text-foreground mb-xs transition-colors duration-300">
           {value}
         </div>
         <div className="flex items-center space-x-sm mb-sm">
           <Badge
-            variant="outline"
-            className={`text-xs border-transparent transition-colors duration-300 ${
+            className={`text-xs transition-colors duration-300 ${
               change === "improvement"
-                ? "chip-success"
+                ? "bg-success/20 text-success border-success/30 hover:bg-success/20 hover:text-success"
                 : change === "achievement"
-                ? "chip-warning"
+                ? "bg-warning/20 text-warning border-warning/30 hover:bg-warning/20 hover:text-warning"
                 : change === "increase"
-                ? "chip-info"
-                : "chip-muted"
-            }`}
+                ? "bg-info/20 text-info border-info/30 hover:bg-info/20 hover:text-info"
+                : "bg-muted text-muted-foreground border-muted hover:bg-muted hover:text-muted-foreground"
+            }
+             `}
           >
             {change}
           </Badge>

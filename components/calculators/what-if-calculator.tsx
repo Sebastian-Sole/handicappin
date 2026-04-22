@@ -64,7 +64,7 @@ export function WhatIfCalculator() {
       {hypotheticalDifferential !== null && (
         <div className="flex items-center justify-between">
           <P className="font-medium">Hypothetical Differential:</P>
-          <span className="text-2xl font-bold">
+          <span className="text-figure">
             {hypotheticalDifferential.toFixed(1)}
           </span>
         </div>
@@ -73,12 +73,12 @@ export function WhatIfCalculator() {
         <div className="flex items-center gap-md">
           <div className="text-center">
             <Small className="text-muted-foreground">Current</Small>
-            <P className="text-xl font-bold">{values.handicapIndex.toFixed(1)}</P>
+            <P className="text-figure-sm">{values.handicapIndex.toFixed(1)}</P>
           </div>
           <ArrowRight className="h-5 w-5 text-muted-foreground" />
           <div className="text-center">
             <Small className="text-muted-foreground">Projected</Small>
-            <P className="text-xl font-bold text-primary">
+            <P className="text-figure-sm text-primary">
               {projectedHandicap.toFixed(1)}
             </P>
           </div>

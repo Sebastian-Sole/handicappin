@@ -16,7 +16,7 @@ export function H2({ children, className }: TypographyProps) {
   return (
     <h2
       className={cn(
-        "text-heading-2 scroll-m-20 pb-2 transition-colors first:mt-0",
+        "text-heading-2 scroll-m-20 pb-sm transition-colors first:mt-0",
         className
       )}
     >
@@ -39,14 +39,14 @@ export function H4({ children, className }: TypographyProps) {
 
 export function P({ children, className }: TypographyProps) {
   return (
-    <p className={cn("text-body not-first:mt-6", className)}>{children}</p>
+    <p className={cn("text-body not-first:mt-lg", className)}>{children}</p>
   );
 }
 
 export function Blockquote({ children, className }: TypographyProps) {
   return (
     <blockquote
-      className={cn("text-body mt-6 border-l-2 pl-6 italic", className)}
+      className={cn("text-body mt-lg border-l-2 pl-lg italic", className)}
     >
       {children}
     </blockquote>

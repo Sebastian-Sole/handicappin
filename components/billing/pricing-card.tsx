@@ -145,7 +145,7 @@ export function PricingCard({
                   : originalPrice}
               </span>
             )}
-            <span className="text-3xl font-bold">
+            <span className="text-figure-lg">
               {typeof price === "number" ? `$${price}` : price}
             </span>
             <span className="text-lg text-muted-foreground">

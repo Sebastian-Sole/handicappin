@@ -126,7 +126,7 @@ export function AccountDeletionSection() {
         <AlertTriangle className="h-6 w-6 text-destructive flex-shrink-0 mt-0.5" />
         <div>
           <H3 className="text-xl font-semibold text-destructive">Delete Account</H3>
-          <p className="text-muted-foreground mt-1">
+          <p className="text-muted-foreground mt-xs">
             Permanently delete your account and all associated data. This action cannot be undone.
           </p>
         </div>

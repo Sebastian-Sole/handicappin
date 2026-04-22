@@ -1,5 +1,4 @@
 import { Card, CardContent } from "@/components/ui/card";
-import { StatTile } from "@/components/ui/stat-tile";
 
 interface FunStatCardProps {
   title: string;
@@ -11,14 +10,11 @@ interface FunStatCardProps {
 export function FunStatCard({ title, value, subtitle, emoji }: FunStatCardProps) {
   return (
     <Card className="overflow-hidden">
-      <CardContent className="p-md">
-        <StatTile
-          value={value}
-          label={title}
-          hint={subtitle}
-          leading={emoji ? <span className="text-3xl">{emoji}</span> : undefined}
-          size="lg"
-        />
+      <CardContent className="p-md text-center">
+        {emoji && <div className="text-3xl mb-sm">{emoji}</div>}
+        <p className="text-figure-lg">{value}</p>
+        <p className="text-sm font-medium">{title}</p>
+        {subtitle && <p className="text-xs text-muted-foreground">{subtitle}</p>}
       </CardContent>
     </Card>
   );

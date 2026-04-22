@@ -142,7 +142,7 @@ function ActivityItemRow({
               {activity.isPersonalBest && (
                 <Badge
                   variant="secondary"
-                  className="bg-warning/20 text-warning text-xs shrink-0 px-1.5 sm:px-sm"
+                  className="bg-warning/20 text-warning text-xs shrink-0 px-xs.5 sm:px-sm"
                 >
                   <Trophy className="h-3 w-3 sm:mr-xs" />
                   <span className="hidden sm:inline">Best</span>

@@ -11,10 +11,10 @@ export function PlayerTypeBadge({ playerType }: PlayerTypeBadgeProps) {
     <Card className="tint-primary">
       <CardContent className="p-lg text-center">
         <div className="text-6xl mb-md">{playerType.emoji}</div>
-        <H3 className="text-2xl font-bold mb-sm">{playerType.name}</H3>
+        <H3 className="text-figure mb-sm">{playerType.name}</H3>
         <p className="text-muted-foreground">{playerType.description}</p>
         <div className="mt-md flex justify-center">
-          <div className="chip-muted text-xs">
+          <div className="px-sm py-xs bg-primary/10 rounded-full text-xs">
             {Math.round(playerType.confidence * 100)}% match
           </div>
         </div>

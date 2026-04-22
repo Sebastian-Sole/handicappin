@@ -202,7 +202,7 @@ const ScoreDifferentialStep = () => {
                   {expectedDifferential.toFixed(2)}
                 </Muted>
                 <span className="font-medium">=</span>
-                <span className="text-xl font-bold text-primary">
+                <span className="text-figure-sm text-primary">
                   {scoreDifferentialCalculation.toFixed(1)}
                 </span>
               </div>
@@ -220,7 +220,7 @@ const ScoreDifferentialStep = () => {
                 ({adjustedGrossScoreCalculation} − {rating}) × 113 ÷ {slope}
               </Muted>
               <span className="font-medium">=</span>
-              <span className="text-xl font-bold text-primary">
+              <span className="text-figure-sm text-primary">
                 {scoreDifferentialCalculation.toFixed(1)}
               </span>
             </div>

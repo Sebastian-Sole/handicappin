@@ -11,7 +11,6 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { StatisticsSection } from "../shared/statistics-section";
-import { StatTile } from "@/components/ui/stat-tile";
 import { getFlagEmoji } from "@/utils/frivolities/headerGenerator";
 import { formatDifferential, formatScore, formatDecimal } from "@/lib/statistics/format-utils";
 import type { CoursePerformance } from "@/types/statistics";
@@ -93,54 +92,42 @@ export function CoursesSection({
       >
         <div className="grid grid-cols-2 md:grid-cols-4 gap-md">
           <Card>
-            <CardContent className="p-md">
-              <StatTile
-                value={uniqueCourses}
-                label="Courses Played"
-                hint="unique courses"
-                size="lg"
-              />
+            <CardContent className="p-md text-center">
+              <p className="text-sm text-muted-foreground">Courses Played</p>
+              <p className="text-figure-lg">{uniqueCourses}</p>
+              <p className="text-xs text-muted-foreground">unique courses</p>
             </CardContent>
           </Card>
           <Card>
-            <CardContent className="p-md">
-              <StatTile
-                value={uniqueCountries}
-                label="Countries"
-                hint={`countr${uniqueCountries !== 1 ? "ies" : "y"} visited`}
-                size="lg"
-              />
+            <CardContent className="p-md text-center">
+              <p className="text-sm text-muted-foreground">Countries</p>
+              <p className="text-figure-lg">{uniqueCountries}</p>
+              <p className="text-xs text-muted-foreground">
+                countr{uniqueCountries !== 1 ? "ies" : "y"} visited
+              </p>
             </CardContent>
           </Card>
           <Card>
-            <CardContent className="p-md">
-              <StatTile
-                value={`${varietyScore}%`}
-                label="Variety Score"
-                hint={
-                  <>
-                    {getVarietyLabel(varietyScore)}
-                    <span className="block text-[10px] text-muted-foreground/70 mt-xs">
-                      unique courses ÷ total rounds
-                    </span>
-                  </>
-                }
-                size="lg"
-              />
+            <CardContent className="p-md text-center">
+              <p className="text-sm text-muted-foreground">Variety Score</p>
+              <p className="text-figure-lg">{varietyScore}%</p>
+              <p className="text-xs text-muted-foreground">
+                {getVarietyLabel(varietyScore)}
+              </p>
+              <p className="text-[10px] text-muted-foreground/70 mt-xs">
+                unique courses ÷ total rounds
+              </p>
             </CardContent>
           </Card>
           <Card>
-            <CardContent className="p-md">
-              <StatTile
-                value={
-                  uniqueCourses > 0
-                    ? formatDecimal(totalRounds / uniqueCourses, 1)
-                    : "—"
-                }
-                label="Avg Rounds/Course"
-                hint="rounds per course"
-                size="lg"
-              />
+            <CardContent className="p-md text-center">
+              <p className="text-sm text-muted-foreground">Avg Rounds/Course</p>
+              <p className="text-figure-lg">
+                {uniqueCourses > 0
+                  ? formatDecimal(totalRounds / uniqueCourses, 1)
+                  : "—"}
+              </p>
+              <p className="text-xs text-muted-foreground">rounds per course</p>
             </CardContent>
           </Card>
         </div>

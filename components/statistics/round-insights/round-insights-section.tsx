@@ -70,7 +70,7 @@ export function RoundInsightsSection({
           </CardHeader>
           <CardContent className="flex items-center justify-center gap-xl py-xl">
             <div className="text-center">
-              <p className="text-4xl font-bold">{nineHole?.count || 0}</p>
+              <p className="text-figure-xl">{nineHole?.count || 0}</p>
               <p className="text-sm text-muted-foreground">9-Hole Rounds</p>
               {nineHole && nineHole.count > 0 && (
                 <p className="text-xs text-muted-foreground">
@@ -80,7 +80,7 @@ export function RoundInsightsSection({
             </div>
             <div className="text-4xl text-muted-foreground">vs</div>
             <div className="text-center">
-              <p className="text-4xl font-bold">{eighteenHole?.count || 0}</p>
+              <p className="text-figure-xl">{eighteenHole?.count || 0}</p>
               <p className="text-sm text-muted-foreground">18-Hole Rounds</p>
               {eighteenHole && eighteenHole.count > 0 && (
                 <p className="text-xs text-muted-foreground">

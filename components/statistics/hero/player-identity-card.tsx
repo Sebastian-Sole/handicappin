@@ -52,12 +52,12 @@ export function PlayerIdentityCard({
         {/* Player Type Hero */}
         <div className="text-center mb-lg">
           <div className="text-6xl md:text-7xl mb-sm">{playerType.emoji}</div>
-          <H2 className="text-2xl md:text-3xl font-bold mb-sm">{playerType.name}</H2>
+          <H2 className="text-2xl md:text-figure-lg mb-sm">{playerType.name}</H2>
           <p className="text-muted-foreground max-w-md mx-auto">
             {playerType.description}
           </p>
           <div className="mt-sm">
-            <span className="chip-muted text-xs">
+            <span className="inline-block px-sm py-xs bg-primary/10 rounded-full text-xs text-muted-foreground">
               {Math.round(playerType.confidence * 100)}% match
             </span>
           </div>
@@ -66,9 +66,9 @@ export function PlayerIdentityCard({
         {/* Stats Row */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-md md:gap-lg mt-xl">
           {/* Handicap Index */}
-          <div className="text-center p-md surface-raised">
+          <div className="text-center p-md bg-background/50 rounded-lg border">
             <div className="flex items-center justify-center gap-sm">
-              <span className="text-4xl md:text-5xl font-bold">
+              <span className="text-4xl md:text-figure-2xl">
                 {formatHandicap(currentHandicap)}
               </span>
               {handicapChange !== 0 && (
@@ -85,8 +85,8 @@ export function PlayerIdentityCard({
           </div>
 
           {/* Rounds & Golf Age */}
-          <div className="text-center p-md surface-raised">
-            <div className="text-4xl md:text-5xl font-bold">{totalRounds}</div>
+          <div className="text-center p-md bg-background/50 rounded-lg border">
+            <div className="text-4xl md:text-figure-2xl">{totalRounds}</div>
             <p className="text-sm text-muted-foreground mt-xs">Total Rounds</p>
             <p className="text-xs text-muted-foreground">
               over {formatGolfAge(golfAgeDays)}
@@ -94,10 +94,10 @@ export function PlayerIdentityCard({
           </div>
 
           {/* Last Played */}
-          <div className="text-center p-md surface-raised">
+          <div className="text-center p-md bg-background/50 rounded-lg border">
             <div
               className={cn(
-                "text-4xl md:text-5xl font-bold",
+                "text-4xl md:text-figure-2xl",
                 playNudge.urgent && "text-warning"
               )}
             >

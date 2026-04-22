@@ -78,7 +78,7 @@ const Hero = ({
       <div className="sm:container px-md lg:px-lg">
         {/* Welcome Header */}
         <div className="mb-xl">
-          <H1 className="text-xl md:text-2xl font-semibold text-foreground">
+          <H1 className="text-heading-4 md:text-heading-3 text-foreground">
             Welcome back, {profile.name?.split(" ")[0] || "Golfer"}
           </H1>
           <p className="text-sm text-muted-foreground mt-xs">

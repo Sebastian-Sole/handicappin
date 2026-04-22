@@ -11,7 +11,7 @@ const DashboardIndex = ({ handicapIndex, header }: DashboardIndexProps) => {
   return (
     <div className="surface p-lg rounded-r-none	">
       <H2 className="mb-md">Handicap</H2>
-      <div className="text-6xl font-bold text-primary">{handicapIndex}</div>
+      <div className="text-figure-3xl text-primary">{handicapIndex}</div>
       <p className="text-muted-foreground">Current Handicap</p>
       <div className="mt-0">
         <Link href={"/calculators"}>

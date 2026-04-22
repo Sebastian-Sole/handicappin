@@ -63,13 +63,13 @@ const RoundCalculationContent = () => {
             </div>
             <div className="flex items-center gap-md">
               <div className="text-center">
-                <div className="text-3xl font-bold text-primary">
+                <div className="text-figure-lg text-primary">
                   {scorecard.round.adjustedGrossScore}
                 </div>
                 <Muted>Score</Muted>
               </div>
               <div className="text-center">
-                <div className="text-3xl font-bold">
+                <div className="text-figure-lg">
                   {Number(scorecard.round.scoreDifferential).toFixed(1)}
                 </div>
                 <Muted>Differential</Muted>

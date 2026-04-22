@@ -72,14 +72,14 @@ const HandicapImpactStep = () => {
         <div className="flex flex-col sm:flex-row items-center justify-center gap-md sm:gap-xl py-md">
           <div className="text-center">
             <Muted>Before this round</Muted>
-            <div className="text-3xl font-bold">
+            <div className="text-figure-lg">
               {handicapBefore.toFixed(1)}
             </div>
           </div>
           <ArrowRight className="w-8 h-8 text-muted-foreground hidden sm:block" />
           <div className="text-center">
             <Muted>After this round</Muted>
-            <div className="text-3xl font-bold">{handicapAfter.toFixed(1)}</div>
+            <div className="text-figure-lg">{handicapAfter.toFixed(1)}</div>
           </div>
         </div>
 
@@ -129,13 +129,13 @@ const HandicapImpactStep = () => {
           <div className="flex items-center justify-between">
             <div>
               <Muted>This round&apos;s Score Differential</Muted>
-              <P className="text-2xl font-bold">
+              <P className="text-figure">
                 {Math.round(scoreDifferentialCalculation * 10) / 10}
               </P>
             </div>
             <div className="text-right">
               <Muted>Differential used in calculation</Muted>
-              <P className="text-2xl font-bold">
+              <P className="text-figure">
                 {(
                   Math.round(scoreDifferentialCalculation * 10) / 10 +
                   esrAdjustment

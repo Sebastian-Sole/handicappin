@@ -107,7 +107,7 @@ const UpdatePassword = ({ email: initialEmail }: UpdatePasswordProps) => {
   return (
     <div className="mx-auto max-w-sm space-y-lg py-xl sm:min-w-[40%] min-h-full w-[90%]">
       <div className="space-y-sm text-left">
-        <H1 className="text-3xl font-bold">Reset Password</H1>
+        <H1 className="text-figure-lg">Reset Password</H1>
         <CardDescription>
           Enter the verification code from your email and your new password
         </CardDescription>

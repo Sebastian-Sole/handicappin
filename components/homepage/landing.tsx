@@ -116,7 +116,7 @@ export default async function Landing() {
             >
               Trusted by golfers worldwide
             </Badge>
-            <H1 className="text-4xl md:text-6xl font-bold text-balance mb-lg">
+            <H1 className="text-figure-xl md:text-figure-3xl text-balance mb-lg">
               Track Your <span className="text-primary">Golf Handicap</span>{" "}
               with Data-Driven Insights
             </H1>
@@ -161,7 +161,7 @@ export default async function Landing() {
       <section id="features" className="py-4xl bg-muted/30">
         <div className="container mx-auto px-md sm:px-lg lg:px-xl">
           <div className="text-center mb-3xl">
-            <H2 className="text-3xl md:text-4xl font-bold mb-md pb-0">
+            <H2 className="text-3xl md:text-figure-xl mb-md pb-0">
               Professional-Grade Tools Made Accessible
             </H2>
             <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
@@ -266,19 +266,19 @@ export default async function Landing() {
         <div className="container mx-auto px-md sm:px-lg lg:px-xl">
           <div className="grid md:grid-cols-3 gap-xl text-center">
             <div>
-              <div className="text-4xl font-bold text-primary mb-sm">
+              <div className="text-figure-xl text-primary mb-sm">
                 {usersCount > 0 ? usersCount : "10"}+
               </div>
               <div className="text-muted-foreground">Active Users</div>
             </div>
             <div>
-              <div className="text-4xl font-bold text-primary mb-sm">
+              <div className="text-figure-xl text-primary mb-sm">
                 {roundsCount}+
               </div>
               <div className="text-muted-foreground">Rounds Logged</div>
             </div>
             <div>
-              <div className="text-4xl font-bold text-primary mb-sm">
+              <div className="text-figure-xl text-primary mb-sm">
                 {coursesCount}+
               </div>
               <div className="text-muted-foreground">Courses supported</div>
@@ -291,7 +291,7 @@ export default async function Landing() {
       <section id="pricing" className="py-4xl bg-muted/30">
         <div className="container mx-auto px-md sm:px-lg lg:px-xl">
           <div className="text-center mb-3xl">
-            <H2 className="text-3xl md:text-4xl font-bold mb-md pb-0">
+            <H2 className="text-3xl md:text-figure-xl mb-md pb-0">
               Simple, transparent pricing
             </H2>
             <p className="text-xl text-muted-foreground">
@@ -394,7 +394,7 @@ export default async function Landing() {
       {/* FAQ Section */}
       <section className="py-4xl">
         <div className="container mx-auto px-md sm:px-lg lg:px-xl">
-          <H2 className="text-3xl md:text-4xl font-bold mb-xl pb-0 text-center">
+          <H2 className="text-3xl md:text-figure-xl mb-xl pb-0 text-center">
             Frequently Asked Questions
           </H2>
           <div className="max-w-3xl mx-auto space-y-lg">
@@ -412,7 +412,7 @@ export default async function Landing() {
       {/* Final CTA Section */}
       <section className="py-4xl bg-gradient-to-r from-primary/5 to-primary/20">
         <div className="container mx-auto px-md sm:px-lg lg:px-xl text-center">
-          <H2 className="text-3xl md:text-4xl font-bold mb-md pb-0">
+          <H2 className="text-3xl md:text-figure-xl mb-md pb-0">
             Ready to improve your golf game?
           </H2>
           <p className="text-xl mb-xl opacity-90 max-w-2xl mx-auto">

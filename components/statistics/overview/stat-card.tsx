@@ -22,7 +22,7 @@ export function StatCard({
       <CardContent className="p-md">
         <p className="text-sm text-muted-foreground">{title}</p>
         <div className="flex items-baseline gap-sm">
-          <p className="text-2xl font-bold">{value}</p>
+          <p className="text-figure">{value}</p>
           {trend && trend !== "neutral" && (
             <StatDelta
               value={trend === "down" ? -1 : 1}

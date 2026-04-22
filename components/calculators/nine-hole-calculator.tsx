@@ -80,7 +80,7 @@ export function NineHoleCalculator() {
       <div className="grid grid-cols-3 gap-md text-center">
         <div className="p-sm surface-muted">
           <Small className="text-muted-foreground">Played 9</Small>
-          <P className="text-xl font-bold">
+          <P className="text-figure-sm">
             {calculation.playedDifferential.toFixed(1)}
           </P>
         </div>
@@ -91,7 +91,7 @@ export function NineHoleCalculator() {
         </div>
         <div className="p-sm surface-muted">
           <Small className="text-muted-foreground">Expected 9</Small>
-          <P className="text-xl font-bold">
+          <P className="text-figure-sm">
             {calculation.expectedDifferential.toFixed(1)}
           </P>
         </div>
@@ -99,7 +99,7 @@ export function NineHoleCalculator() {
 
       <div className="flex items-center justify-between tint-primary p-md">
         <P className="font-medium">18-Hole Equivalent:</P>
-        <span className="text-3xl font-bold text-primary">
+        <span className="text-figure-lg text-primary">
           {calculation.equivalentDifferential.toFixed(1)}
         </span>
       </div>
@@ -186,7 +186,7 @@ export function NineHoleCalculator() {
             }
           />
         </div>
-        <div className="space-y-2 sm:col-span-2">
+        <div className="space-y-sm sm:col-span-2">
           <Label htmlFor="par-9hole">9-Hole Par</Label>
           <Input
             id="par-9hole"

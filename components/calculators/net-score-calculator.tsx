@@ -26,7 +26,7 @@ export function NetScoreCalculator() {
   const result = (
     <div className="flex items-center justify-between">
       <P className="font-medium">Net Score:</P>
-      <span className="text-3xl font-bold text-primary">
+      <span className="text-figure-lg text-primary">
         {netScore !== null ? netScore : "—"}
       </span>
     </div>

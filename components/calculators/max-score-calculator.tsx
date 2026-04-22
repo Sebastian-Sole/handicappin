@@ -51,7 +51,7 @@ export function MaxScoreCalculator() {
     <div className="space-y-md">
       {/* Main result */}
       <div className="text-center">
-        <div className="text-5xl font-bold text-primary">
+        <div className="text-figure-2xl text-primary">
           {calculation.maxScore}
         </div>
         <Muted className="mt-xs">Maximum Score</Muted>

@@ -200,7 +200,7 @@ const CourseHandicapStep = () => {
               {slope} ÷ 113) + ({rating} − {par})
             </Muted>
             <span className="font-medium">=</span>
-            <span className="text-xl font-bold text-primary">
+            <span className="text-figure-sm text-primary">
               {Math.round(courseHandicapCalculation)}
             </span>
             <Muted>strokes</Muted>

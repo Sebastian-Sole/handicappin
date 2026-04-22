@@ -89,7 +89,7 @@ export function HandicapIndexCalculator() {
           </Small>
         )}
       </div>
-      <span className="text-3xl font-bold text-primary">
+      <span className="text-figure-lg text-primary">
         {handicapIndex !== null ? handicapIndex.toFixed(1) : "—"}
       </span>
     </div>

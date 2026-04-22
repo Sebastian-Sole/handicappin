@@ -642,7 +642,7 @@ export function ScorecardImageUpload({
 
           <div className="grid grid-cols-2 gap-x-md gap-y-xs">
             {SUMMARY_ITEMS.map(({ key, label }) => (
-              <div key={key} className="flex items-center gap-1.5 text-sm">
+              <div key={key} className="flex items-center gap-xs.5 text-sm">
                 {summary[key] ? (
                   <Check className="h-3.5 w-3.5 text-success shrink-0" />
                 ) : (
@@ -659,7 +659,7 @@ export function ScorecardImageUpload({
             ))}
           </div>
 
-          <div className="flex items-start gap-1.5 pt-xs">
+          <div className="flex items-start gap-xs.5 pt-xs">
             <AlertCircle className="h-3.5 w-3.5 text-muted-foreground shrink-0 mt-0.5" />
             <p className="text-xs text-muted-foreground">
               AI extraction may be inaccurate. Please review all values before saving.
@@ -681,7 +681,7 @@ export function ScorecardImageUpload({
                 <ImagePlus className="h-4 w-4" />
                 Upload rating card for missing ratings
               </Button>
-              <p className="text-xs text-muted-foreground mt-1.5">
+              <p className="text-xs text-muted-foreground mt-xs.5">
                 For accurate ratings, use a screenshot from the{" "}
                 <a
                   href="https://ncrdb.usga.org/NCRListing"
@@ -780,7 +780,7 @@ export function ScorecardImageUpload({
                   </div>
                 )}
                 {allDone && someSucceeded && (
-                  <p className="text-sm font-medium text-success flex items-center gap-1.5">
+                  <p className="text-sm font-medium text-success flex items-center gap-xs.5">
                     <Check className="h-4 w-4" />
                     Extraction complete
                   </p>
@@ -790,7 +790,7 @@ export function ScorecardImageUpload({
                   {trackedFiles.map((trackedFile, index) => (
                     <div
                       key={`${trackedFile.file.name}-${index}`}
-                      className="flex items-center gap-sm p-2.5 bg-background"
+                      className="flex items-center gap-sm p-sm.5 bg-background"
                     >
                       <FileIcon mimeType={trackedFile.file.type} />
                       <div className="w-0 flex-1">
@@ -866,7 +866,7 @@ export function ScorecardImageUpload({
                   {SUMMARY_ITEMS.map(({ key, label }) => (
                     <div
                       key={key}
-                      className="flex items-center gap-1.5 text-sm"
+                      className="flex items-center gap-xs.5 text-sm"
                     >
                       {summary[key] ? (
                         <Check className="h-3.5 w-3.5 text-success shrink-0" />

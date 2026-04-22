@@ -39,7 +39,7 @@ export function StrokesReceivedCalculator() {
     <div className="space-y-md">
       <div className="flex items-center justify-between">
         <P className="font-medium">Total Strokes:</P>
-        <span className="text-2xl font-bold text-primary">{totalStrokes}</span>
+        <span className="text-figure text-primary">{totalStrokes}</span>
       </div>
 
       {/* Visual hole grid */}

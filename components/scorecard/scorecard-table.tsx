@@ -357,7 +357,7 @@ export function ScorecardTable({
             <div className="flex justify-center">
               <div className="tint-primary p-sm min-w-[120px] text-center">
                 <div className="text-xs text-muted-foreground mb-xs">TOTAL</div>
-                <div className="text-2xl font-bold text-primary">
+                <div className="text-figure text-primary">
                   {calculateTotal(scores, 0, holeCount)}
                 </div>
                 <div className="text-xs text-muted-foreground">

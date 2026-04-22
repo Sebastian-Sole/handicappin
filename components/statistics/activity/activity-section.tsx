@@ -81,7 +81,7 @@ export function ActivitySection({
             <Card>
               <CardContent className="p-md text-center">
                 <p className="text-sm text-muted-foreground">Avg Rounds/Month</p>
-                <p className="text-2xl font-bold">
+                <p className="text-figure">
                   {formatDecimal(activityStats.avgRoundsPerMonth, 1)}
                 </p>
               </CardContent>
@@ -89,7 +89,7 @@ export function ActivitySection({
             <Card>
               <CardContent className="p-md text-center">
                 <p className="text-sm text-muted-foreground">Current Streak</p>
-                <p className="text-2xl font-bold">
+                <p className="text-figure">
                   {activityStats.currentStreak > 0
                     ? `${activityStats.currentStreak} week${activityStats.currentStreak !== 1 ? "s" : ""}`
                     : "--"}
@@ -104,7 +104,7 @@ export function ActivitySection({
             <Card>
               <CardContent className="p-md text-center">
                 <p className="text-sm text-muted-foreground">Longest Gap</p>
-                <p className="text-2xl font-bold">
+                <p className="text-figure">
                   {activityStats.longestGap > 0
                     ? formatGap(activityStats.longestGap)
                     : "--"}
@@ -172,7 +172,7 @@ export function ActivitySection({
                   >
                     <CardContent className="p-md text-center flex flex-col justify-center min-h-[130px]">
                       <p className="text-sm font-medium">{season.season}</p>
-                      <p className="text-2xl font-bold">{season.roundCount}</p>
+                      <p className="text-figure">{season.roundCount}</p>
                       <p className="text-xs text-muted-foreground">rounds</p>
                       {season.roundCount > 0 && (
                         <p className="text-xs text-muted-foreground mt-xs">
@@ -225,7 +225,7 @@ export function ActivitySection({
               <CardContent className="flex items-center justify-center min-h-[140px]">
                 <div className="flex items-center justify-center gap-xl md:gap-2xl">
                   <div className="text-center">
-                    <div className="text-4xl md:text-5xl font-bold">
+                    <div className="text-4xl md:text-figure-2xl">
                       {nineHole?.count ?? 0}
                     </div>
                     <p className="text-sm text-muted-foreground mt-xs">9-Hole</p>
@@ -237,7 +237,7 @@ export function ActivitySection({
                   </div>
                   <div className="text-3xl text-muted-foreground font-light">vs</div>
                   <div className="text-center">
-                    <div className="text-4xl md:text-5xl font-bold">
+                    <div className="text-4xl md:text-figure-2xl">
                       {eighteenHole?.count ?? 0}
                     </div>
                     <p className="text-sm text-muted-foreground mt-xs">18-Hole</p>

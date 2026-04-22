@@ -41,7 +41,7 @@ const CourseHandicapCalculator = ({
       <Card className="mx-auto max-w-[600px]">
         <CardHeader>
           <span className="flex flex-row justify-between items-center">
-            <CardTitle className="sm:text-2xl text-lg font-bold">
+            <CardTitle className="text-heading-4 sm:text-heading-3">
               Course Handicap
             </CardTitle>
 

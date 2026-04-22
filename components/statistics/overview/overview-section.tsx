@@ -94,7 +94,7 @@ export function PerformanceSection({
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-3xl font-bold">
+              <p className="text-figure-lg">
                 {formatDifferential(stats.bestDifferential)}
               </p>
               <p className="text-sm text-muted-foreground">differential</p>
@@ -118,11 +118,11 @@ export function PerformanceSection({
             </CardHeader>
             <CardContent>
               <div className="flex items-baseline gap-sm">
-                <span className="text-3xl font-bold text-success">
+                <span className="text-figure-lg text-success">
                   {formatDifferential(stats.bestDifferential)}
                 </span>
                 <span className="text-muted-foreground">to</span>
-                <span className="text-3xl font-bold text-destructive">
+                <span className="text-figure-lg text-destructive">
                   {formatDifferential(stats.worstDifferential)}
                 </span>
               </div>
@@ -157,7 +157,7 @@ export function PerformanceSection({
               <div className="flex items-baseline gap-sm">
                 <p
                   className={cn(
-                    "text-3xl font-bold",
+                    "text-figure-lg",
                     isValidNumber(stats.improvementRate) && stats.improvementRate > 0
                       ? "text-success"
                       : "text-muted-foreground"
@@ -196,7 +196,7 @@ export function PerformanceSection({
           <Card>
             <CardContent className="p-md">
               <p className="text-sm text-muted-foreground">Average Score</p>
-              <p className="text-2xl font-bold">{formatScore(stats.avgScore)}</p>
+              <p className="text-figure">{formatScore(stats.avgScore)}</p>
               <p className="text-xs text-muted-foreground">{getAvgScoreContext()}</p>
             </CardContent>
           </Card>
@@ -204,7 +204,7 @@ export function PerformanceSection({
             <CardContent className="p-md">
               <p className="text-sm text-muted-foreground">Handicap Change</p>
               <div className="flex items-baseline gap-sm">
-                <p className="text-2xl font-bold">
+                <p className="text-figure">
                   {formatWithSign(stats.handicapChange)}
                 </p>
                 {isValidNumber(stats.handicapChange) && stats.handicapChange !== 0 && (
@@ -224,7 +224,7 @@ export function PerformanceSection({
           <Card>
             <CardContent className="p-md">
               <p className="text-sm text-muted-foreground">Consistency</p>
-              <p className="text-2xl font-bold">
+              <p className="text-figure">
                 {extendedStats.consistencyRating > 0
                   ? `${extendedStats.consistencyRating}%`
                   : "--"}
@@ -239,7 +239,7 @@ export function PerformanceSection({
           <Card>
             <CardContent className="p-md">
               <p className="text-sm text-muted-foreground">Courses Played</p>
-              <p className="text-2xl font-bold">{extendedStats.uniqueCourses}</p>
+              <p className="text-figure">{extendedStats.uniqueCourses}</p>
               <p className="text-xs text-muted-foreground">
                 unique course{extendedStats.uniqueCourses !== 1 ? "s" : ""}
               </p>
@@ -261,7 +261,7 @@ export function PerformanceSection({
               <CardContent className="p-lg">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-2xl font-bold">
+                    <p className="text-figure">
                       {extendedStats.bestMonth.month} {extendedStats.bestMonth.year}
                     </p>
                     <p className="text-sm text-muted-foreground">
@@ -269,7 +269,7 @@ export function PerformanceSection({
                     </p>
                   </div>
                   <div className="text-right">
-                    <p className="text-3xl font-bold text-success">
+                    <p className="text-figure-lg text-success">
                       {formatDifferential(extendedStats.bestMonth.avgDifferential)}
                     </p>
                     <p className="text-sm text-muted-foreground">avg differential</p>
@@ -325,7 +325,7 @@ export function PerformanceSection({
                           </div>
                         </div>
                         <div className="text-right">
-                          <p className="text-2xl font-bold text-success">
+                          <p className="text-figure text-success">
                             {formatDifferential(round.differential)}
                           </p>
                           <p className="text-xs text-muted-foreground">

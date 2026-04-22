@@ -42,7 +42,7 @@ export function ScoreDifferentialCalculator() {
   const result = (
     <div className="flex items-center justify-between">
       <P className="font-medium">Score Differential:</P>
-      <span className="text-3xl font-bold text-primary">
+      <span className="text-figure-lg text-primary">
         {scoreDifferential !== null ? scoreDifferential.toFixed(1) : "—"}
       </span>
     </div>

@@ -106,7 +106,7 @@ export default function RootLayout({
               <BillingSync />
 
               <Navbar />
-              <main className="pt-16 grow bg-background flex flex-col">
+              <main className="pt-3xl grow bg-background flex flex-col">
                 {children}
               </main>
               <Footer />
