@@ -57,7 +57,7 @@ export function PlayerIdentityCard({
             {playerType.description}
           </p>
           <div className="mt-sm">
-            <span className="inline-block px-sm py-xs bg-primary/10 rounded-full text-xs text-muted-foreground">
+            <span className="chip-muted text-xs">
               {Math.round(playerType.confidence * 100)}% match
             </span>
           </div>
@@ -66,7 +66,7 @@ export function PlayerIdentityCard({
         {/* Stats Row */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-md md:gap-lg mt-xl">
           {/* Handicap Index */}
-          <div className="text-center p-md bg-background/50 rounded-lg border">
+          <div className="text-center p-md surface-raised">
             <div className="flex items-center justify-center gap-sm">
               <span className="text-4xl md:text-5xl font-bold">
                 {formatHandicap(currentHandicap)}
@@ -85,7 +85,7 @@ export function PlayerIdentityCard({
           </div>
 
           {/* Rounds & Golf Age */}
-          <div className="text-center p-md bg-background/50 rounded-lg border">
+          <div className="text-center p-md surface-raised">
             <div className="text-4xl md:text-5xl font-bold">{totalRounds}</div>
             <p className="text-sm text-muted-foreground mt-xs">Total Rounds</p>
             <p className="text-xs text-muted-foreground">
@@ -94,7 +94,7 @@ export function PlayerIdentityCard({
           </div>
 
           {/* Last Played */}
-          <div className="text-center p-md bg-background/50 rounded-lg border">
+          <div className="text-center p-md surface-raised">
             <div
               className={cn(
                 "text-4xl md:text-5xl font-bold",

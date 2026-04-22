@@ -24,16 +24,16 @@ const StatBox = ({ title, value, change, description, icon }: StatBoxProps) => {
         </div>
         <div className="flex items-center space-x-sm mb-sm">
           <Badge
-            className={`text-xs transition-colors duration-300 ${
+            variant="outline"
+            className={`text-xs border-transparent transition-colors duration-300 ${
               change === "improvement"
-                ? "bg-success/20 text-success border-success/30 hover:bg-success/20 hover:text-success"
+                ? "chip-success"
                 : change === "achievement"
-                ? "bg-warning/20 text-warning border-warning/30 hover:bg-warning/20 hover:text-warning"
+                ? "chip-warning"
                 : change === "increase"
-                ? "bg-info/20 text-info border-info/30 hover:bg-info/20 hover:text-info"
-                : "bg-muted text-muted-foreground border-muted hover:bg-muted hover:text-muted-foreground"
-            }
-             `}
+                ? "chip-info"
+                : "chip-muted"
+            }`}
           >
             {change}
           </Badge>

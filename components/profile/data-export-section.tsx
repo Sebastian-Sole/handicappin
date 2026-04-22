@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { Download } from "lucide-react";
 import { api } from "@/trpc/react";
 import { FormFeedback } from "@/components/ui/form-feedback";
 import {
@@ -91,6 +92,7 @@ export function DataExportSection() {
         onClick={handleExport}
         state={exportState}
         variant="outline"
+        idleIcon={Download}
         idleLabel="Export Data"
         savingLabel="Exporting..."
         savedLabel="Downloaded!"

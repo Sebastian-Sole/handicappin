@@ -14,7 +14,7 @@ export function PlayerTypeBadge({ playerType }: PlayerTypeBadgeProps) {
         <H3 className="text-2xl font-bold mb-sm">{playerType.name}</H3>
         <p className="text-muted-foreground">{playerType.description}</p>
         <div className="mt-md flex justify-center">
-          <div className="px-sm py-xs bg-primary/10 rounded-full text-xs">
+          <div className="chip-muted text-xs">
             {Math.round(playerType.confidence * 100)}% match
           </div>
         </div>

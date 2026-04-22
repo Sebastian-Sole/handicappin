@@ -8,6 +8,7 @@ import { ScoreDistributionChart } from "../fun-facts/score-distribution-chart";
 import { StrokesByDayChart } from "./strokes-by-day-chart";
 import { FunComparisonsCard } from "./fun-comparisons-card";
 import { cn } from "@/lib/utils";
+import { StatTile } from "@/components/ui/stat-tile";
 import {
   formatNumber,
   formatGolfAge,
@@ -118,31 +119,39 @@ export function FrivolitiesSection({ stats }: FrivolitiesSectionProps) {
       >
         <div className="grid grid-cols-2 md:grid-cols-4 gap-md">
           <Card className="tint-score-eagle">
-            <CardContent className="p-md text-center">
-              <div className="text-2xl mb-xs">🦅</div>
-              <p className="text-2xl font-bold">{stats.perfectHoles.eagles}</p>
-              <p className="text-sm text-muted-foreground">Eagles</p>
+            <CardContent className="p-md">
+              <StatTile
+                value={stats.perfectHoles.eagles}
+                label="Eagles"
+                leading={<span className="text-2xl">🦅</span>}
+              />
             </CardContent>
           </Card>
           <Card className="tint-score-birdie">
-            <CardContent className="p-md text-center">
-              <div className="text-2xl mb-xs">🐦</div>
-              <p className="text-2xl font-bold">{stats.perfectHoles.birdies}</p>
-              <p className="text-sm text-muted-foreground">Birdies</p>
+            <CardContent className="p-md">
+              <StatTile
+                value={stats.perfectHoles.birdies}
+                label="Birdies"
+                leading={<span className="text-2xl">🐦</span>}
+              />
             </CardContent>
           </Card>
           <Card>
-            <CardContent className="p-md text-center">
-              <div className="text-2xl mb-xs">✓</div>
-              <p className="text-2xl font-bold">{stats.perfectHoles.pars}</p>
-              <p className="text-sm text-muted-foreground">Pars</p>
+            <CardContent className="p-md">
+              <StatTile
+                value={stats.perfectHoles.pars}
+                label="Pars"
+                leading={<span className="text-2xl">✓</span>}
+              />
             </CardContent>
           </Card>
           <Card>
-            <CardContent className="p-md text-center">
-              <div className="text-2xl mb-xs">🎯</div>
-              <p className="text-2xl font-bold">{perfectHolesPercentage}%</p>
-              <p className="text-sm text-muted-foreground">Par or Better</p>
+            <CardContent className="p-md">
+              <StatTile
+                value={`${perfectHolesPercentage}%`}
+                label="Par or Better"
+                leading={<span className="text-2xl">🎯</span>}
+              />
             </CardContent>
           </Card>
         </div>
@@ -290,33 +299,37 @@ export function FrivolitiesSection({ stats }: FrivolitiesSectionProps) {
             </CardHeader>
             <CardContent>
               <div className="flex items-center justify-center gap-xl py-md">
-                <div className="text-center">
-                  <p className="text-sm text-muted-foreground">Front 9</p>
-                  <p
-                    className={cn(
-                      "text-3xl font-bold",
-                      frontBackComparison.betterHalf === "front" && "text-success"
-                    )}
-                  >
-                    {frontBackComparison.front9.avgOverPar >= 0 ? "+" : ""}
-                    {frontBackComparison.front9.avgOverPar.toFixed(2)}
-                  </p>
-                  <p className="text-xs text-muted-foreground">avg over par</p>
-                </div>
+                <StatTile
+                  value={
+                    <span
+                      className={cn(
+                        frontBackComparison.betterHalf === "front" && "text-success"
+                      )}
+                    >
+                      {frontBackComparison.front9.avgOverPar >= 0 ? "+" : ""}
+                      {frontBackComparison.front9.avgOverPar.toFixed(2)}
+                    </span>
+                  }
+                  label="avg over par"
+                  leading={<p className="text-sm text-muted-foreground">Front 9</p>}
+                  size="lg"
+                />
                 <div className="text-2xl text-muted-foreground">vs</div>
-                <div className="text-center">
-                  <p className="text-sm text-muted-foreground">Back 9</p>
-                  <p
-                    className={cn(
-                      "text-3xl font-bold",
-                      frontBackComparison.betterHalf === "back" && "text-success"
-                    )}
-                  >
-                    {frontBackComparison.back9.avgOverPar >= 0 ? "+" : ""}
-                    {frontBackComparison.back9.avgOverPar.toFixed(2)}
-                  </p>
-                  <p className="text-xs text-muted-foreground">avg over par</p>
-                </div>
+                <StatTile
+                  value={
+                    <span
+                      className={cn(
+                        frontBackComparison.betterHalf === "back" && "text-success"
+                      )}
+                    >
+                      {frontBackComparison.back9.avgOverPar >= 0 ? "+" : ""}
+                      {frontBackComparison.back9.avgOverPar.toFixed(2)}
+                    </span>
+                  }
+                  label="avg over par"
+                  leading={<p className="text-sm text-muted-foreground">Back 9</p>}
+                  size="lg"
+                />
               </div>
               {frontBackComparison.betterHalf !== "even" && (
                 <p className="text-center text-sm text-muted-foreground">
@@ -363,37 +376,43 @@ export function FrivolitiesSection({ stats }: FrivolitiesSectionProps) {
         {/* Streak Records */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-md mt-md">
           <Card className="tint-score-birdie">
-            <CardContent className="p-md text-center">
-              <div className="text-2xl mb-xs">🔥</div>
-              <p className="text-2xl font-bold">{streakStats.longestParStreak}</p>
-              <p className="text-sm text-muted-foreground">Longest Par Streak</p>
-              <p className="text-xs text-muted-foreground">holes at par or better</p>
+            <CardContent className="p-md">
+              <StatTile
+                value={streakStats.longestParStreak}
+                label="Longest Par Streak"
+                hint="holes at par or better"
+                leading={<span className="text-2xl">🔥</span>}
+              />
             </CardContent>
           </Card>
           <Card>
-            <CardContent className="p-md text-center">
-              <div className="text-2xl mb-xs">📊</div>
-              <p className="text-2xl font-bold">
-                {streakStats.averageParStreak.toFixed(1)}
-              </p>
-              <p className="text-sm text-muted-foreground">Avg Par Streak</p>
-              <p className="text-xs text-muted-foreground">consecutive holes</p>
+            <CardContent className="p-md">
+              <StatTile
+                value={streakStats.averageParStreak.toFixed(1)}
+                label="Avg Par Streak"
+                hint="consecutive holes"
+                leading={<span className="text-2xl">📊</span>}
+              />
             </CardContent>
           </Card>
           <Card className="tint-score-bogey">
-            <CardContent className="p-md text-center">
-              <div className="text-2xl mb-xs">💀</div>
-              <p className="text-2xl font-bold">{streakStats.longestBogeyStreak}</p>
-              <p className="text-sm text-muted-foreground">Longest Bogey Streak</p>
-              <p className="text-xs text-muted-foreground">holes at bogey+</p>
+            <CardContent className="p-md">
+              <StatTile
+                value={streakStats.longestBogeyStreak}
+                label="Longest Bogey Streak"
+                hint="holes at bogey+"
+                leading={<span className="text-2xl">💀</span>}
+              />
             </CardContent>
           </Card>
           <Card>
-            <CardContent className="p-md text-center">
-              <div className="text-2xl mb-xs">🎯</div>
-              <p className="text-2xl font-bold">{stats.uniqueHolesPlayed}</p>
-              <p className="text-sm text-muted-foreground">Unique Holes</p>
-              <p className="text-xs text-muted-foreground">holes you&apos;ve played</p>
+            <CardContent className="p-md">
+              <StatTile
+                value={stats.uniqueHolesPlayed}
+                label="Unique Holes"
+                hint={<>holes you&apos;ve played</>}
+                leading={<span className="text-2xl">🎯</span>}
+              />
             </CardContent>
           </Card>
         </div>
@@ -409,37 +428,36 @@ export function FrivolitiesSection({ stats }: FrivolitiesSectionProps) {
       >
         <div className="grid grid-cols-1 md:grid-cols-3 gap-md">
           <Card className="tint-info">
-            <CardContent className="p-md text-center">
-              <div className="text-3xl mb-sm">🏌️</div>
-              <p className="text-3xl font-bold">{stats.uniqueCoursesPlayed}</p>
-              <p className="text-sm text-muted-foreground">Courses Played</p>
-              <p className="text-xs text-muted-foreground mt-xs">
-                {worldCoursesPercentage}% of world&apos;s ~{formatNumber(WORLD_GOLF_COURSES)}{" "}
-                courses
-              </p>
+            <CardContent className="p-md">
+              <StatTile
+                value={stats.uniqueCoursesPlayed}
+                label="Courses Played"
+                hint={`${worldCoursesPercentage}% of world's ~${formatNumber(WORLD_GOLF_COURSES)} courses`}
+                leading={<span className="text-3xl">🏌️</span>}
+                size="lg"
+              />
             </CardContent>
           </Card>
           <Card className="tint-success">
-            <CardContent className="p-md text-center">
-              <div className="text-3xl mb-sm">🌐</div>
-              <p className="text-3xl font-bold">{stats.countriesPlayed}</p>
-              <p className="text-sm text-muted-foreground">Countries Visited</p>
-              <p className="text-xs text-muted-foreground mt-xs">
-                {((stats.countriesPlayed / 195) * 100).toFixed(1)}% of world&apos;s
-                nations
-              </p>
+            <CardContent className="p-md">
+              <StatTile
+                value={stats.countriesPlayed}
+                label="Countries Visited"
+                hint={`${((stats.countriesPlayed / 195) * 100).toFixed(1)}% of world's nations`}
+                leading={<span className="text-3xl">🌐</span>}
+                size="lg"
+              />
             </CardContent>
           </Card>
           <Card className="tint-primary">
-            <CardContent className="p-md text-center">
-              <div className="text-3xl mb-sm">📏</div>
-              <p className="text-3xl font-bold">
-                {formatDistance(holeByHoleStats.totalDistancePlayed)}
-              </p>
-              <p className="text-sm text-muted-foreground">Total Distance</p>
-              <p className="text-xs text-muted-foreground mt-xs">
-                walked to every shot
-              </p>
+            <CardContent className="p-md">
+              <StatTile
+                value={formatDistance(holeByHoleStats.totalDistancePlayed)}
+                label="Total Distance"
+                hint="walked to every shot"
+                leading={<span className="text-3xl">📏</span>}
+                size="lg"
+              />
             </CardContent>
           </Card>
         </div>
