@@ -16,7 +16,7 @@ export function PatternsSection({
   timeOfDayStats,
 }: PatternsSectionProps) {
   return (
-    <div className="space-y-6">
+    <div className="space-y-lg">
       {/* Best Time Insight Card */}
       <BestTimeInsight
         dayOfWeekStats={dayOfWeekStats}
@@ -24,7 +24,7 @@ export function PatternsSection({
       />
 
       {/* Charts Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-lg">
         {/* Day of Week Chart */}
         <Card>
           <CardHeader>

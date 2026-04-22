@@ -29,8 +29,8 @@ export function CoursesSection({
   if (courses.length === 0) {
     return (
       <Card>
-        <CardContent className="p-12 text-center text-muted-foreground">
-          <div className="text-4xl mb-4">🏌️</div>
+        <CardContent className="p-2xl text-center text-muted-foreground">
+          <div className="text-4xl mb-md">🏌️</div>
           <p className="text-lg font-medium">No course data yet</p>
           <p className="text-sm">Play more rounds to see course analytics</p>
         </CardContent>
@@ -83,23 +83,23 @@ export function CoursesSection({
   };
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-xl">
       {/* Course Overview Section */}
       <StatisticsSection
         icon="⛳"
         title="Course Overview"
         description="Your golfing journey across different courses"
       >
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-md">
           <Card>
-            <CardContent className="p-4 text-center">
+            <CardContent className="p-md text-center">
               <p className="text-sm text-muted-foreground">Courses Played</p>
               <p className="text-3xl font-bold">{uniqueCourses}</p>
               <p className="text-xs text-muted-foreground">unique courses</p>
             </CardContent>
           </Card>
           <Card>
-            <CardContent className="p-4 text-center">
+            <CardContent className="p-md text-center">
               <p className="text-sm text-muted-foreground">Countries</p>
               <p className="text-3xl font-bold">{uniqueCountries}</p>
               <p className="text-xs text-muted-foreground">
@@ -108,19 +108,19 @@ export function CoursesSection({
             </CardContent>
           </Card>
           <Card>
-            <CardContent className="p-4 text-center">
+            <CardContent className="p-md text-center">
               <p className="text-sm text-muted-foreground">Variety Score</p>
               <p className="text-3xl font-bold">{varietyScore}%</p>
               <p className="text-xs text-muted-foreground">
                 {getVarietyLabel(varietyScore)}
               </p>
-              <p className="text-[10px] text-muted-foreground/70 mt-1">
+              <p className="text-[10px] text-muted-foreground/70 mt-xs">
                 unique courses ÷ total rounds
               </p>
             </CardContent>
           </Card>
           <Card>
-            <CardContent className="p-4 text-center">
+            <CardContent className="p-md text-center">
               <p className="text-sm text-muted-foreground">Avg Rounds/Course</p>
               <p className="text-3xl font-bold">
                 {uniqueCourses > 0
@@ -141,10 +141,10 @@ export function CoursesSection({
         title="Course Highlights"
         description="Your most played and best performing courses"
       >
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-md">
           {homeCourse && (
-            <Card className="bg-info/10 border-info/20">
-              <CardHeader className="pb-2">
+            <Card className="tint-info">
+              <CardHeader className="pb-sm">
                 <CardTitle className="text-sm text-muted-foreground">
                   🏠 Home Course
                 </CardTitle>
@@ -156,14 +156,14 @@ export function CoursesSection({
                 <p className="text-sm text-muted-foreground">
                   {homeCourse.roundCount} rounds
                 </p>
-                <p className="text-xs text-muted-foreground mt-1">
+                <p className="text-xs text-muted-foreground mt-xs">
                   Avg diff: {formatDifferential(homeCourse.avgDifferential)}
                 </p>
               </CardContent>
             </Card>
           )}
-          <Card className="bg-success/10 border-success/20">
-            <CardHeader className="pb-2">
+          <Card className="tint-success">
+            <CardHeader className="pb-sm">
               <CardTitle className="text-sm text-muted-foreground">
                 ✅ Best Performance
               </CardTitle>
@@ -175,13 +175,13 @@ export function CoursesSection({
               <p className="text-sm text-muted-foreground">
                 {bestCourse.roundCount} round{bestCourse.roundCount !== 1 ? "s" : ""}
               </p>
-              <p className="text-xs text-success font-medium mt-1">
+              <p className="text-xs text-success font-medium mt-xs">
                 {formatDifferential(bestCourse.avgDifferential)} avg diff
               </p>
             </CardContent>
           </Card>
-          <Card className="bg-warning/10 border-warning/20">
-            <CardHeader className="pb-2">
+          <Card className="tint-warning">
+            <CardHeader className="pb-sm">
               <CardTitle className="text-sm text-muted-foreground">
                 💪 Challenging Course
               </CardTitle>
@@ -193,14 +193,14 @@ export function CoursesSection({
               <p className="text-sm text-muted-foreground">
                 {worstCourse.roundCount} round{worstCourse.roundCount !== 1 ? "s" : ""}
               </p>
-              <p className="text-xs text-warning font-medium mt-1">
+              <p className="text-xs text-warning font-medium mt-xs">
                 {formatDifferential(worstCourse.avgDifferential)} avg diff
               </p>
             </CardContent>
           </Card>
           {mostConsistentCourse && (
-            <Card className="bg-primary/10 border-primary/20">
-              <CardHeader className="pb-2">
+            <Card className="tint-primary">
+              <CardHeader className="pb-sm">
                 <CardTitle className="text-sm text-muted-foreground">
                   🎯 Most Consistent
                 </CardTitle>
@@ -213,7 +213,7 @@ export function CoursesSection({
                 <p className="text-sm text-muted-foreground">
                   {mostConsistentCourse.roundCount} rounds
                 </p>
-                <p className="text-xs text-primary font-medium mt-1">
+                <p className="text-xs text-primary font-medium mt-xs">
                   {(
                     mostConsistentCourse.worstDifferential -
                     mostConsistentCourse.bestDifferential
@@ -224,8 +224,8 @@ export function CoursesSection({
             </Card>
           )}
           {!mostConsistentCourse && singlePlayHighlight && (
-            <Card className="bg-info/10 border-info/20">
-              <CardHeader className="pb-2">
+            <Card className="tint-info">
+              <CardHeader className="pb-sm">
                 <CardTitle className="text-sm text-muted-foreground">
                   ⛳ Single-Play Course
                 </CardTitle>
@@ -235,7 +235,7 @@ export function CoursesSection({
                   {getFlagEmoji(singlePlayHighlight.country)} {singlePlayHighlight.courseName}
                 </p>
                 <p className="text-sm text-muted-foreground">Played once</p>
-                <p className="text-xs text-info font-medium mt-1">
+                <p className="text-xs text-info font-medium mt-xs">
                   {formatDifferential(singlePlayHighlight.avgDifferential)} diff
                 </p>
               </CardContent>
@@ -280,9 +280,9 @@ export function CoursesSection({
                 {courses.map((course) => (
                   <TableRow key={course.courseId}>
                     <TableCell>
-                      <span className="mr-2">{getFlagEmoji(course.country)}</span>
+                      <span className="mr-sm">{getFlagEmoji(course.country)}</span>
                       {course.courseName}
-                      <span className="text-muted-foreground text-xs ml-2 hidden sm:inline">
+                      <span className="text-muted-foreground text-xs ml-sm hidden sm:inline">
                         {course.city}
                       </span>
                     </TableCell>

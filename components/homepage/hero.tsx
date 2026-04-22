@@ -74,33 +74,33 @@ const Hero = ({
   }
 
   return (
-    <section className="w-full py-6 md:py-10 lg:py-12">
-      <div className="sm:container px-4 lg:px-6">
+    <section className="w-full py-lg md:py-2xl lg:py-2xl">
+      <div className="sm:container px-md lg:px-lg">
         {/* Welcome Header */}
-        <div className="mb-8">
+        <div className="mb-xl">
           <H1 className="text-xl md:text-2xl font-semibold text-foreground">
             Welcome back, {profile.name?.split(" ")[0] || "Golfer"}
           </H1>
-          <p className="text-sm text-muted-foreground mt-1">
+          <p className="text-sm text-muted-foreground mt-xs">
             Member since {new Date(profile.createdAt).getFullYear()}
           </p>
         </div>
 
         {/* Main Content Grid */}
-        <div className="grid gap-6 lg:grid-cols-[1fr_1.5fr] lg:gap-10">
+        <div className="grid gap-lg lg:grid-cols-[1fr_1.5fr] lg:gap-2xl">
           {/* Left: Handicap Display + CTAs */}
-          <div className="flex flex-col items-center lg:items-start space-y-6">
+          <div className="flex flex-col items-center lg:items-start space-y-lg">
             <HandicapDisplay
               handicapIndex={profile.handicapIndex}
               previousHandicapIndex={initialHandicapIndex ?? undefined}
-              className="py-6"
+              className="py-lg"
             />
 
-            <div className="flex flex-col sm:flex-row gap-3 w-full max-w-sm">
+            <div className="flex flex-col sm:flex-row gap-sm w-full max-w-sm">
               <Link href="/rounds/add" className="flex-1">
                 <Button size="lg" className="w-full">
                   Log Round
-                  <ChevronRight className="ml-2 h-4 w-4" />
+                  <ChevronRight className="ml-sm h-4 w-4" />
                 </Button>
               </Link>
               <Link href={`/dashboard/${profile.id}`} className="flex-1">
@@ -112,7 +112,7 @@ const Hero = ({
           </div>
 
           {/* Right: Stat Cards Grid (using original StatBox) */}
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 gap-md">
             <StatBox
               title="Handicap Index"
               value={profile.handicapIndex.toString()}

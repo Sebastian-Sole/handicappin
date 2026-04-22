@@ -53,18 +53,18 @@ export function StatisticsSection({
     <section
       ref={ref}
       className={cn(
-        "space-y-4 transition-all duration-500",
+        "space-y-md transition-all duration-500",
         isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4",
         className
       )}
     >
-      <div className="flex items-start gap-4">
+      <div className="flex items-start gap-md">
         <div className="flex-shrink-0 w-10 h-10 rounded-full bg-muted flex items-center justify-center text-xl">
           {icon}
         </div>
         <div className="flex-1">
           <H3 className="mt-0">{title}</H3>
-          {description && <Muted className="mt-1">{description}</Muted>}
+          {description && <Muted className="mt-xs">{description}</Muted>}
         </div>
       </div>
 
@@ -72,7 +72,7 @@ export function StatisticsSection({
 
       {learnMoreContent && (
         <Collapsible open={isOpen} onOpenChange={setIsOpen} className="ml-14">
-          <CollapsibleTrigger className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors">
+          <CollapsibleTrigger className="flex items-center gap-sm text-sm text-muted-foreground hover:text-foreground transition-colors">
             <ChevronDown
               className={cn(
                 "w-4 h-4 transition-transform duration-200",
@@ -81,8 +81,8 @@ export function StatisticsSection({
             />
             {isOpen ? "Hide" : "Learn more"}
           </CollapsibleTrigger>
-          <CollapsibleContent className="mt-4 space-y-2 animate-in slide-in-from-top-2 duration-200">
-            <div className="text-sm text-muted-foreground bg-muted/50 rounded-lg p-4">
+          <CollapsibleContent className="mt-md space-y-sm animate-in slide-in-from-top-2 duration-200">
+            <div className="text-sm text-muted-foreground surface-muted p-md">
               {learnMoreContent}
             </div>
           </CollapsibleContent>

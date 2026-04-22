@@ -292,8 +292,8 @@ export function FunComparisonsCard({
   if (comparisons.length === 0) {
     return (
       <Card>
-        <CardContent className="p-6 text-center text-muted-foreground">
-          <p className="text-4xl mb-2">🏌️</p>
+        <CardContent className="p-lg text-center text-muted-foreground">
+          <p className="text-4xl mb-sm">🏌️</p>
           <p>Play more rounds to unlock fun comparisons!</p>
         </CardContent>
       </Card>
@@ -303,23 +303,23 @@ export function FunComparisonsCard({
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-base flex items-center gap-2">
+        <CardTitle className="text-base flex items-center gap-sm">
           <span>🎪</span> Fun Facts About Your Game
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-sm">
           {comparisons.map((comparison, index) => (
             <div
               key={index}
-              className="flex items-start gap-3 p-3 bg-muted/50 rounded-lg"
+              className="flex items-start gap-sm surface-muted p-sm"
             >
               <span className="text-2xl flex-shrink-0">{comparison.emoji}</span>
               <p className="text-sm">{comparison.text}</p>
             </div>
           ))}
         </div>
-        <p className="text-xs text-center text-muted-foreground mt-4">
+        <p className="text-xs text-center text-muted-foreground mt-md">
           Based on {formatNumber(totalStrokes)} total strokes across{" "}
           {formatNumber(totalHoles)} holes
         </p>

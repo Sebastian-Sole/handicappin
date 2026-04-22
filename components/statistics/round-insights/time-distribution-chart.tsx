@@ -24,17 +24,17 @@ export function TimeDistributionChart({ data }: TimeDistributionChartProps) {
   }
 
   return (
-    <div className="space-y-4 py-4">
+    <div className="space-y-md py-md">
       {data.map((period) => {
         const info = PERIOD_INFO[period.period];
         const percentage = (period.roundCount / total) * 100;
 
         return (
-          <div key={period.period} className="space-y-2">
+          <div key={period.period} className="space-y-sm">
             <div className="flex justify-between text-sm">
               <span>
                 {info.emoji} {info.label}
-                <span className="text-muted-foreground ml-2 text-xs">
+                <span className="text-muted-foreground ml-sm text-xs">
                   ({info.range})
                 </span>
               </span>

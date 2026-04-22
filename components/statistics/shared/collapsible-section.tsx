@@ -26,7 +26,7 @@ export function CollapsibleSection({
   const [isOpen, setIsOpen] = useState(defaultOpen);
 
   return (
-    <section className="mb-8">
+    <section className="mb-xl">
       <Collapsible open={isOpen} onOpenChange={setIsOpen}>
         <Card>
           <CollapsibleTrigger asChild>
@@ -35,7 +35,7 @@ export function CollapsibleSection({
                 <div>
                   <CardTitle className="text-xl font-semibold">{title}</CardTitle>
                   {subtitle && (
-                    <p className="text-sm text-muted-foreground mt-1">{subtitle}</p>
+                    <p className="text-sm text-muted-foreground mt-xs">{subtitle}</p>
                   )}
                 </div>
                 <ChevronDown
