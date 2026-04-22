@@ -363,7 +363,7 @@ export function CountryCombobox({
           onKeyDown={handleKeyDown}
           onFocus={handleInputFocus}
           onBlur={handleInputBlur}
-          className={cn("pl-10 pr-10", className)}
+          className={cn("pl-2xl pr-2xl", className)}
           disabled={disabled}
           autoComplete="off"
           role="combobox"
@@ -375,7 +375,7 @@ export function CountryCombobox({
 
       {isOpen && (
         <div
-          className="absolute top-full left-0 right-0 z-50 mt-1 bg-background border rounded-md shadow-lg max-h-[200px] overflow-y-auto"
+          className="absolute top-full left-0 right-0 z-50 mt-xs bg-background border rounded-md shadow-lg max-h-[200px] overflow-y-auto"
           role="listbox"
         >
           {filteredCountries.length > 0 ? (
@@ -384,7 +384,7 @@ export function CountryCombobox({
                 key={country.value}
                 type="button"
                 className={cn(
-                  "w-full text-left px-3 py-2 hover:bg-accent hover:text-accent-foreground text-sm border-b last:border-b-0 focus:bg-accent focus:text-accent-foreground focus:outline-none",
+                  "w-full text-left px-sm py-sm hover:bg-accent hover:text-accent-foreground text-sm border-b last:border-b-0 focus:bg-accent focus:text-accent-foreground focus:outline-none",
                   value === country.value && "bg-accent text-accent-foreground",
                   highlightedIndex === index && "bg-muted"
                 )}
@@ -401,7 +401,7 @@ export function CountryCombobox({
               </button>
             ))
           ) : (
-            <div className="px-3 py-2 text-sm text-muted-foreground">
+            <div className="px-sm py-sm text-sm text-muted-foreground">
               No countries found
             </div>
           )}

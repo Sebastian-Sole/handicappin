@@ -67,7 +67,7 @@ export function TeeFormContent({ tee, onTeeChange, isPremium = false, onAddition
 
   return (
     <>
-      <div className="mb-6">
+      <div className="mb-lg">
         <ScorecardImageUpload
           currentTee={tee}
           onExtracted={onTeeChange}
@@ -87,14 +87,14 @@ export function TeeFormContent({ tee, onTeeChange, isPremium = false, onAddition
         </AlertDescription>
       </Alert>
 
-      <div className="space-y-2 py-4">
+      <div className="space-y-sm py-md">
         <TeeInfoFields tee={tee} onTeeChange={onTeeChange} />
         <TeeRatingFields tee={tee} onTeeChange={onTeeChange} />
         <TeeHoleTable tee={tee} onTeeChange={onTeeChange} />
       </div>
 
-      <div className="space-y-2 py-4">
-        <div className="flex items-center gap-2">
+      <div className="space-y-sm py-md">
+        <div className="flex items-center gap-sm">
           <Badge variant={isValid ? "default" : "destructive"}>
             {isValid ? "✓ Valid" : "⚠ Incomplete"}
           </Badge>
@@ -111,7 +111,7 @@ export function TeeFormContent({ tee, onTeeChange, isPremium = false, onAddition
             <AlertCircle className="h-4 w-4" />
             <AlertTitle>Validation Issues</AlertTitle>
             <AlertDescription>
-              <ul className="list-disc list-inside space-y-1 mt-2">
+              <ul className="list-disc list-inside space-y-xs mt-sm">
                 {validationErrors.map((error, index) => (
                   <li key={index} className="text-sm">
                     {error}
@@ -128,12 +128,12 @@ export function TeeFormContent({ tee, onTeeChange, isPremium = false, onAddition
 
 function TeeInfoFields({ tee, onTeeChange }: TeeFormContentProps) {
   return (
-    <div className="space-y-4 pb-4">
+    <div className="space-y-md pb-md">
       <Separator />
       <Large>Tee Information</Large>
 
       {/* Name */}
-      <div className="space-y-2">
+      <div className="space-y-sm">
         <label htmlFor="teeName" className="font-semibold">
           Name
         </label>
@@ -149,7 +149,7 @@ function TeeInfoFields({ tee, onTeeChange }: TeeFormContentProps) {
       </div>
 
       {/* Distance Measurement */}
-      <div className="space-y-2">
+      <div className="space-y-sm">
         <label className="font-semibold">Distance Measurement</label>
         <RadioGroup
           value={tee.distanceMeasurement}
@@ -160,11 +160,11 @@ function TeeInfoFields({ tee, onTeeChange }: TeeFormContentProps) {
             })
           }
         >
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center space-x-sm">
             <RadioGroupItem value="meters" />
             <label className="mt-0!">meters</label>
           </div>
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center space-x-sm">
             <RadioGroupItem value="yards" />
             <label className="mt-0!">yards</label>
           </div>
@@ -172,7 +172,7 @@ function TeeInfoFields({ tee, onTeeChange }: TeeFormContentProps) {
       </div>
 
       {/* Gender */}
-      <div className="space-y-2">
+      <div className="space-y-sm">
         <label className="font-semibold">Men&apos;s/Ladies</label>
         <RadioGroup
           value={tee.gender}
@@ -180,11 +180,11 @@ function TeeInfoFields({ tee, onTeeChange }: TeeFormContentProps) {
             onTeeChange({ ...tee, gender: val as Tee["gender"] })
           }
         >
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center space-x-sm">
             <RadioGroupItem value="mens" />
             <label className="mt-0!">mens</label>
           </div>
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center space-x-sm">
             <RadioGroupItem value="ladies" />
             <label className="mt-0!">ladies</label>
           </div>
@@ -246,13 +246,13 @@ function TeeRatingFields({ tee, onTeeChange }: TeeFormContentProps) {
   };
 
   return (
-    <div className="space-y-4 pb-4">
+    <div className="space-y-md pb-md">
       <Separator />
       <Large>Course Rating</Large>
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-md">
         {/* FRONT 9 */}
-        <div className="space-y-2">
+        <div className="space-y-sm">
           <label className="font-semibold" htmlFor="courseRatingFrontNine">
             Front 9
           </label>
@@ -272,7 +272,7 @@ function TeeRatingFields({ tee, onTeeChange }: TeeFormContentProps) {
         </div>
 
         {/* BACK 9 */}
-        <div className="space-y-2">
+        <div className="space-y-sm">
           <label className="font-semibold" htmlFor="courseRatingBack9">
             Back 9
           </label>
@@ -292,7 +292,7 @@ function TeeRatingFields({ tee, onTeeChange }: TeeFormContentProps) {
         </div>
 
         {/* TOTAL */}
-        <div className="space-y-2">
+        <div className="space-y-sm">
           <label className="font-semibold" htmlFor="courseRating18">
             Total
           </label>
@@ -313,9 +313,9 @@ function TeeRatingFields({ tee, onTeeChange }: TeeFormContentProps) {
       </div>
 
       <Large>Slope Rating</Large>
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-md">
         {/* FRONT 9 */}
-        <div className="space-y-2">
+        <div className="space-y-sm">
           <label className="font-semibold" htmlFor="slopeRatingFront9">
             Front 9
           </label>
@@ -334,7 +334,7 @@ function TeeRatingFields({ tee, onTeeChange }: TeeFormContentProps) {
         </div>
 
         {/* BACK 9 */}
-        <div className="space-y-2">
+        <div className="space-y-sm">
           <label className="font-semibold" htmlFor="slopeRatingBack9">
             Back 9
           </label>
@@ -353,7 +353,7 @@ function TeeRatingFields({ tee, onTeeChange }: TeeFormContentProps) {
         </div>
 
         {/* TOTAL */}
-        <div className="space-y-2">
+        <div className="space-y-sm">
           <label className="font-semibold" htmlFor="slopeRating18">
             Total
           </label>
@@ -457,7 +457,7 @@ function TeeHoleTable({ tee, onTeeChange }: TeeFormContentProps) {
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-md">
       <Separator />
       <Large>Hole Information</Large>
       <div className="rounded-lg border max-w-[calc(100vw-5rem)] sm:max-w-[350px] md:max-w-[600px] lg:max-w-[725px] xl:max-w-[975px] 2xl:max-w-[1225px] 3xl:max-w-[1600px]">
@@ -484,7 +484,7 @@ function TeeHoleTable({ tee, onTeeChange }: TeeFormContentProps) {
                   <TableCell key={index} className="p-0 min-w-[50px]">
                     <Input
                       type="number"
-                      className="border border-border text-center w-16 mx-1"
+                      className="border border-border text-center w-16 mx-xs"
                       value={hole.distance === 0 ? "" : hole.distance}
                       onChange={(e) =>
                         handleDistanceChange(
@@ -510,7 +510,7 @@ function TeeHoleTable({ tee, onTeeChange }: TeeFormContentProps) {
                   <TableCell key={index} className="p-0">
                     <Input
                       type="number"
-                      className="border border-border text-center w-16 mx-1"
+                      className="border border-border text-center w-16 mx-xs"
                       value={hole.par === 0 ? "" : hole.par}
                       onChange={(e) =>
                         handleParChange(index, parseInt(e.target.value) || 0)
@@ -533,7 +533,7 @@ function TeeHoleTable({ tee, onTeeChange }: TeeFormContentProps) {
                   <TableCell key={index} className="p-0">
                     <Input
                       type="number"
-                      className="border border-border text-center w-16 mx-1"
+                      className="border border-border text-center w-16 mx-xs"
                       value={hole.hcp === 0 ? "" : hole.hcp}
                       onChange={(e) =>
                         handleHandicapChange(

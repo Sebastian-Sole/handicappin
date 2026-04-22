@@ -5,13 +5,13 @@ const EFFECTIVE_DATE = "February 11, 2026";
 
 export function TermsContent() {
   return (
-    <div className="space-y-8">
+    <div className="space-y-xl">
       <p className="text-sm text-muted-foreground">
         Effective Date: {EFFECTIVE_DATE}
       </p>
 
       {/* 1. Acceptance of Terms */}
-      <div className="space-y-3">
+      <div className="space-y-sm">
         <H2>
           1. Acceptance of Terms
         </H2>
@@ -31,7 +31,7 @@ export function TermsContent() {
       </div>
 
       {/* 2. Description of Service */}
-      <div className="space-y-3">
+      <div className="space-y-sm">
         <H2>
           2. Description of Service
         </H2>
@@ -52,7 +52,7 @@ export function TermsContent() {
       </div>
 
       {/* 3. Account Registration */}
-      <div className="space-y-3">
+      <div className="space-y-sm">
         <H2>
           3. Account Registration and Security
         </H2>
@@ -71,14 +71,14 @@ export function TermsContent() {
       </div>
 
       {/* 4. Subscription Plans and Pricing */}
-      <div className="space-y-3">
+      <div className="space-y-sm">
         <H2>
           4. Subscription Plans and Pricing
         </H2>
         <P className="text-foreground/80">
           Handicappin&apos; offers the following subscription plans:
         </P>
-        <ul className="list-disc pl-6 space-y-2 text-foreground/80">
+        <ul className="list-disc pl-lg space-y-sm text-foreground/80">
           <li>
             <strong>Free</strong> &mdash; $0, limited to 25 rounds with basic
             handicap calculation.
@@ -104,7 +104,7 @@ export function TermsContent() {
       </div>
 
       {/* 5. Lifetime Plan */}
-      <div className="space-y-3">
+      <div className="space-y-sm">
         <H2>
           5. Lifetime Plan
         </H2>
@@ -131,7 +131,7 @@ export function TermsContent() {
       </div>
 
       {/* 6. Payment and Billing */}
-      <div className="space-y-3">
+      <div className="space-y-sm">
         <H2>
           6. Payment and Billing
         </H2>
@@ -156,7 +156,7 @@ export function TermsContent() {
       </div>
 
       {/* 7. Refund Policy */}
-      <div className="space-y-3">
+      <div className="space-y-sm">
         <H2>
           7. Refund Policy
         </H2>
@@ -174,7 +174,7 @@ export function TermsContent() {
           .
         </P>
         <P className="text-foreground/80">After the 30-day window:</P>
-        <ul className="list-disc pl-6 space-y-2 text-foreground/80">
+        <ul className="list-disc pl-lg space-y-sm text-foreground/80">
           <li>
             <strong>Annual plans (Premium, Unlimited):</strong> No refunds for
             the current billing period. You may cancel auto-renewal at any time
@@ -193,7 +193,7 @@ export function TermsContent() {
       </div>
 
       {/* 8. Service Modifications and Discontinuation */}
-      <div className="space-y-3">
+      <div className="space-y-sm">
         <H2>
           8. Service Modifications and Discontinuation
         </H2>
@@ -206,7 +206,7 @@ export function TermsContent() {
         <P className="text-foreground/80">
           In the event of permanent discontinuation of the Service:
         </P>
-        <ul className="list-disc pl-6 space-y-2 text-foreground/80">
+        <ul className="list-disc pl-lg space-y-sm text-foreground/80">
           <li>
             We will provide at least 90 days&apos; advance notice to all users.
           </li>
@@ -225,7 +225,7 @@ export function TermsContent() {
       </div>
 
       {/* 9. Assignment and Transfer */}
-      <div className="space-y-3">
+      <div className="space-y-sm">
         <H2>
           9. Assignment and Transfer
         </H2>
@@ -244,7 +244,7 @@ export function TermsContent() {
       </div>
 
       {/* 10. User Content and Data */}
-      <div className="space-y-3">
+      <div className="space-y-sm">
         <H2>
           10. User Content and Data
         </H2>
@@ -268,12 +268,12 @@ export function TermsContent() {
       </div>
 
       {/* 11. Acceptable Use */}
-      <div className="space-y-3">
+      <div className="space-y-sm">
         <H2>
           11. Acceptable Use
         </H2>
         <P className="text-foreground/80">You agree not to:</P>
-        <ul className="list-disc pl-6 space-y-2 text-foreground/80">
+        <ul className="list-disc pl-lg space-y-sm text-foreground/80">
           <li>
             Use the Service for any unlawful purpose or in violation of any
             applicable laws.
@@ -300,7 +300,7 @@ export function TermsContent() {
       </div>
 
       {/* 12. Intellectual Property */}
-      <div className="space-y-3">
+      <div className="space-y-sm">
         <H2>
           12. Intellectual Property
         </H2>
@@ -320,7 +320,7 @@ export function TermsContent() {
       </div>
 
       {/* 13. Disclaimer of Warranties */}
-      <div className="space-y-3">
+      <div className="space-y-sm">
         <H2>
           13. Disclaimer of Warranties
         </H2>
@@ -340,7 +340,7 @@ export function TermsContent() {
       </div>
 
       {/* 14. Limitation of Liability */}
-      <div className="space-y-3">
+      <div className="space-y-sm">
         <H2>
           14. Limitation of Liability
         </H2>
@@ -359,7 +359,7 @@ export function TermsContent() {
       </div>
 
       {/* 15. Privacy */}
-      <div className="space-y-3">
+      <div className="space-y-sm">
         <H2>15. Privacy</H2>
         <P className="text-foreground/80">
           Your use of the Service is also governed by our{" "}
@@ -377,7 +377,7 @@ export function TermsContent() {
       </div>
 
       {/* 16. Termination */}
-      <div className="space-y-3">
+      <div className="space-y-sm">
         <H2>
           16. Termination
         </H2>
@@ -401,7 +401,7 @@ export function TermsContent() {
       </div>
 
       {/* 17. Governing Law and Dispute Resolution */}
-      <div className="space-y-3">
+      <div className="space-y-sm">
         <H2>
           17. Governing Law and Dispute Resolution
         </H2>
@@ -421,7 +421,7 @@ export function TermsContent() {
       </div>
 
       {/* 18. Indemnification */}
-      <div className="space-y-3">
+      <div className="space-y-sm">
         <H2>
           18. Indemnification
         </H2>
@@ -435,7 +435,7 @@ export function TermsContent() {
       </div>
 
       {/* 19. Severability */}
-      <div className="space-y-3">
+      <div className="space-y-sm">
         <H2>
           19. Severability
         </H2>
@@ -448,7 +448,7 @@ export function TermsContent() {
       </div>
 
       {/* 20. Entire Agreement */}
-      <div className="space-y-3">
+      <div className="space-y-sm">
         <H2>
           20. Entire Agreement
         </H2>
@@ -460,7 +460,7 @@ export function TermsContent() {
       </div>
 
       {/* 21. Contact */}
-      <div className="space-y-3">
+      <div className="space-y-sm">
         <H2>
           21. Contact Us
         </H2>

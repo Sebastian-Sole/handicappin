@@ -5,13 +5,13 @@ const EFFECTIVE_DATE = "February 11, 2026";
 
 export function PrivacyContent() {
   return (
-    <div className="space-y-8">
+    <div className="space-y-xl">
       <p className="text-sm text-muted-foreground">
         Effective Date: {EFFECTIVE_DATE}
       </p>
 
       {/* 1. Introduction */}
-      <div className="space-y-3">
+      <div className="space-y-sm">
         <H2>
           1. Introduction
         </H2>
@@ -30,18 +30,18 @@ export function PrivacyContent() {
       </div>
 
       {/* 2. Information We Collect */}
-      <div className="space-y-3">
+      <div className="space-y-sm">
         <H2>
           2. Information We Collect
         </H2>
 
-        <H3 className="mt-4 font-medium">
+        <H3 className="mt-md font-medium">
           2.1 Information You Provide
         </H3>
         <P className="text-foreground/80">
           When you create an account and use the Service, we collect:
         </P>
-        <ul className="list-disc pl-6 space-y-2 text-foreground/80">
+        <ul className="list-disc pl-lg space-y-sm text-foreground/80">
           <li>
             <strong>Account information:</strong> Email address, name, and
             password (hashed, never stored in plain text).
@@ -64,13 +64,13 @@ export function PrivacyContent() {
           </li>
         </ul>
 
-        <H3 className="mt-4 font-medium">
+        <H3 className="mt-md font-medium">
           2.2 Information Collected Automatically
         </H3>
         <P className="text-foreground/80">
           When you use the Service, we may automatically collect:
         </P>
-        <ul className="list-disc pl-6 space-y-2 text-foreground/80">
+        <ul className="list-disc pl-lg space-y-sm text-foreground/80">
           <li>
             <strong>IP address:</strong> Logged during account security events
             (email changes, verification requests) for fraud prevention. Not used
@@ -87,7 +87,7 @@ export function PrivacyContent() {
           </li>
         </ul>
 
-        <H3 className="mt-4 font-medium">
+        <H3 className="mt-md font-medium">
           2.3 Information from Third Parties
         </H3>
         <P className="text-foreground/80">
@@ -98,14 +98,14 @@ export function PrivacyContent() {
       </div>
 
       {/* 3. How We Use Your Information */}
-      <div className="space-y-3">
+      <div className="space-y-sm">
         <H2>
           3. How We Use Your Information
         </H2>
         <P className="text-foreground/80">
           We use your information for the following purposes:
         </P>
-        <ul className="list-disc pl-6 space-y-2 text-foreground/80">
+        <ul className="list-disc pl-lg space-y-sm text-foreground/80">
           <li>
             <strong>Provide the Service:</strong> Calculate your handicap index,
             store your round history, and display your performance analytics.
@@ -140,14 +140,14 @@ export function PrivacyContent() {
       </div>
 
       {/* 4. Calculated and Derived Data */}
-      <div className="space-y-3">
+      <div className="space-y-sm">
         <H2>
           4. Calculated and Derived Data
         </H2>
         <P className="text-foreground/80">
           Based on the scores you submit, we calculate and store:
         </P>
-        <ul className="list-disc pl-6 space-y-2 text-foreground/80">
+        <ul className="list-disc pl-lg space-y-sm text-foreground/80">
           <li>Handicap index (current and historical values)</li>
           <li>Score differentials for each round</li>
           <li>Adjusted gross scores per USGA guidelines</li>
@@ -161,7 +161,7 @@ export function PrivacyContent() {
       </div>
 
       {/* 5. Data Sharing */}
-      <div className="space-y-3">
+      <div className="space-y-sm">
         <H2>
           5. Data Sharing and Third-Party Services
         </H2>
@@ -169,7 +169,7 @@ export function PrivacyContent() {
           We share your data only with the following third-party services,
           strictly for the purposes described:
         </P>
-        <ul className="list-disc pl-6 space-y-2 text-foreground/80">
+        <ul className="list-disc pl-lg space-y-sm text-foreground/80">
           <li>
             <strong>Supabase</strong> &mdash; Database hosting and
             authentication. Receives all account and golf data.
@@ -206,7 +206,7 @@ export function PrivacyContent() {
       </div>
 
       {/* 6. Aggregated Data */}
-      <div className="space-y-3">
+      <div className="space-y-sm">
         <H2>
           6. Anonymized and Aggregated Data
         </H2>
@@ -219,14 +219,14 @@ export function PrivacyContent() {
       </div>
 
       {/* 7. Data Security */}
-      <div className="space-y-3">
+      <div className="space-y-sm">
         <H2>
           7. Data Security
         </H2>
         <P className="text-foreground/80">
           We implement industry-standard security measures to protect your data:
         </P>
-        <ul className="list-disc pl-6 space-y-2 text-foreground/80">
+        <ul className="list-disc pl-lg space-y-sm text-foreground/80">
           <li>
             <strong>Encryption in transit:</strong> All data is transmitted over
             HTTPS/TLS.
@@ -260,14 +260,14 @@ export function PrivacyContent() {
       </div>
 
       {/* 8. Data Retention */}
-      <div className="space-y-3">
+      <div className="space-y-sm">
         <H2>
           8. Data Retention
         </H2>
         <P className="text-foreground/80">
           We retain your data for as long as your account is active:
         </P>
-        <ul className="list-disc pl-6 space-y-2 text-foreground/80">
+        <ul className="list-disc pl-lg space-y-sm text-foreground/80">
           <li>
             <strong>Account and golf data:</strong> Retained for the lifetime of
             your account. Deleted upon account closure, subject to legal
@@ -293,7 +293,7 @@ export function PrivacyContent() {
       </div>
 
       {/* 9. Your Rights */}
-      <div className="space-y-3">
+      <div className="space-y-sm">
         <H2>
           9. Your Rights
         </H2>
@@ -301,7 +301,7 @@ export function PrivacyContent() {
           Depending on your location, you may have the following rights regarding
           your personal data:
         </P>
-        <ul className="list-disc pl-6 space-y-2 text-foreground/80">
+        <ul className="list-disc pl-lg space-y-sm text-foreground/80">
           <li>
             <strong>Access:</strong> View all personal data we hold about you
             through your account dashboard.
@@ -331,7 +331,7 @@ export function PrivacyContent() {
       </div>
 
       {/* 10. Business Transfers */}
-      <div className="space-y-3">
+      <div className="space-y-sm">
         <H2>
           10. Business Transfers
         </H2>
@@ -351,7 +351,7 @@ export function PrivacyContent() {
       </div>
 
       {/* 11. Children's Privacy */}
-      <div className="space-y-3">
+      <div className="space-y-sm">
         <H2>
           11. Children&apos;s Privacy
         </H2>
@@ -364,11 +364,11 @@ export function PrivacyContent() {
       </div>
 
       {/* 12. Cookies and Tracking */}
-      <div className="space-y-3">
+      <div className="space-y-sm">
         <H2>
           12. Cookies and Tracking Technologies
         </H2>
-        <ul className="list-disc pl-6 space-y-2 text-foreground/80">
+        <ul className="list-disc pl-lg space-y-sm text-foreground/80">
           <li>
             <strong>Authentication cookies:</strong> Essential cookies managed by
             Supabase to maintain your login session.
@@ -389,7 +389,7 @@ export function PrivacyContent() {
       </div>
 
       {/* 13-15: Remaining sections condensed */}
-      <div className="space-y-3">
+      <div className="space-y-sm">
         <H2>
           13. International Data Transfers
         </H2>
@@ -400,7 +400,7 @@ export function PrivacyContent() {
         </P>
       </div>
 
-      <div className="space-y-3">
+      <div className="space-y-sm">
         <H2>
           14. Changes to This Policy
         </H2>
@@ -412,7 +412,7 @@ export function PrivacyContent() {
         </P>
       </div>
 
-      <div className="space-y-3">
+      <div className="space-y-sm">
         <H2>
           15. Contact Us
         </H2>

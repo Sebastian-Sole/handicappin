@@ -112,7 +112,7 @@ export function TeeDialog({
             className="h-10 flex md:hidden w-full"
             disabled={disabled}
           >
-            <Pencil className="h-4 w-4 mr-2" />
+            <Pencil className="h-4 w-4 mr-sm" />
             Edit Tee
           </Button>
         </div>
@@ -136,7 +136,7 @@ export function TeeDialog({
             className="h-10 flex md:hidden w-full"
             disabled={disabled}
           >
-            <Plus className="h-4 w-4 mr-2" />
+            <Plus className="h-4 w-4 mr-sm" />
             Add Tee
           </Button>
         </div>
@@ -166,7 +166,7 @@ export function TeeDialog({
                 isPremium={isPremium}
                 onAdditionalTeesExtracted={onSaveAdditionalTees}
               />
-              <div className="flex justify-end mt-4">
+              <div className="flex justify-end mt-md">
                 <Button type="submit">
                   {mode === "edit" ? "Save Changes" : "Add Tee"}
                 </Button>

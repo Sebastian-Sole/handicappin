@@ -72,11 +72,11 @@ export default async function AboutPage() {
     <Suspense fallback={<AboutSkeleton />}>
       <div className="min-h-screen bg-background">
         {/* Mission Section */}
-        <section className="w-full py-12 md:py-24 lg:py-32 bg-gradient-to-br from-primary/5 to-primary/20 dark:from-primary/5 dark:to-primary/35">
-          <div className="sm:container px-4 md:px-6 mx-auto">
-            <div className="mx-auto grid max-w-5xl items-start gap-6 py-12 xl:grid-cols-2 lg:gap-12">
-              <div className="flex flex-col justify-start space-y-4">
-                <div className="space-y-2">
+        <section className="w-full py-2xl md:py-4xl lg:py-5xl bg-gradient-to-br from-primary/5 to-primary/20 dark:from-primary/5 dark:to-primary/35">
+          <div className="sm:container px-md md:px-lg mx-auto">
+            <div className="mx-auto grid max-w-5xl items-start gap-lg py-2xl xl:grid-cols-2 lg:gap-2xl">
+              <div className="flex flex-col justify-start space-y-md">
+                <div className="space-y-sm">
                   <Badge>Our Mission</Badge>
                   <H2 className="lg:leading-tighter text-3xl tracking-tighter sm:text-4xl md:text-5xl xl:text-[3.4rem] 2xl:text-[3.75rem] pb-0">
                     Why Does Handicappin&apos; Even Exist?
@@ -91,8 +91,8 @@ export default async function AboutPage() {
                   </P>
                 </div>
               </div>
-              <div className="grid gap-6 sm:grid-cols-2 h-fit">
-                <div className="flex items-start space-x-4">
+              <div className="grid gap-lg sm:grid-cols-2 h-fit">
+                <div className="flex items-start space-x-md">
                   <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 flex-shrink-0">
                     <Logs className="h-7 w-7 text-primary" />
                   </div>
@@ -106,7 +106,7 @@ export default async function AboutPage() {
                     </P>
                   </div>
                 </div>
-                <div className="flex items-start space-x-4">
+                <div className="flex items-start space-x-md">
                   <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 flex-shrink-0">
                     <LineChart className="h-7 w-7 text-primary" />
                   </div>
@@ -121,7 +121,7 @@ export default async function AboutPage() {
                     </P>
                   </div>
                 </div>
-                <div className="flex items-start space-x-4">
+                <div className="flex items-start space-x-md">
                   <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 flex-shrink-0">
                     <BookOpenText className="h-7 w-7 text-primary" />
                   </div>
@@ -136,7 +136,7 @@ export default async function AboutPage() {
                     </P>
                   </div>
                 </div>
-                <div className="flex items-start space-x-4">
+                <div className="flex items-start space-x-md">
                   <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 flex-shrink-0">
                     <Calculator className="h-7 w-7 text-primary" />
                   </div>
@@ -155,10 +155,10 @@ export default async function AboutPage() {
         </section>
 
         {/* Why Choose Us Section */}
-        <section className="w-full py-12 md:py-24 lg:py-32">
-          <div className="sm:container px-4 md:px-6 mx-auto">
-            <div className="flex flex-col items-center justify-center space-y-4 text-center">
-              <div className="space-y-2">
+        <section className="w-full py-2xl md:py-4xl lg:py-5xl">
+          <div className="sm:container px-md md:px-lg mx-auto">
+            <div className="flex flex-col items-center justify-center space-y-md text-center">
+              <div className="space-y-sm">
                 <Badge>Why Choose Us</Badge>
                 <H2 className="lg:leading-tighter text-3xl tracking-tighter sm:text-4xl md:text-5xl xl:text-[3.4rem] 2xl:text-[3.75rem] pb-0">
                   What Makes Us Different?
@@ -176,14 +176,14 @@ export default async function AboutPage() {
               </div>
             </div>
 
-            <div className="mx-auto grid max-w-5xl items-center gap-6 py-12 lg:gap-12">
-              <div className="flex flex-col justify-center space-y-6">
-                <div className="grid gap-6 xl:grid-cols-2">
-                  <div className="flex items-start space-x-4">
+            <div className="mx-auto grid max-w-5xl items-center gap-lg py-2xl lg:gap-2xl">
+              <div className="flex flex-col justify-center space-y-lg">
+                <div className="grid gap-lg xl:grid-cols-2">
+                  <div className="flex items-start space-x-md">
                     <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 flex-shrink-0">
                       <Scale className="h-6 w-6 text-primary" />
                     </div>
-                    <div className="space-y-1">
+                    <div className="space-y-xs">
                       <H3 className="text-xl">
                         USGA Compliant Calculations
                       </H3>
@@ -195,11 +195,11 @@ export default async function AboutPage() {
                     </div>
                   </div>
 
-                  <div className="flex items-start space-x-4">
+                  <div className="flex items-start space-x-md">
                     <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 flex-shrink-0">
                       <Earth className="h-6 w-6 text-primary" />
                     </div>
-                    <div className="space-y-1">
+                    <div className="space-y-xs">
                       <H3 className="text-xl">
                         International Flexibility
                       </H3>
@@ -211,11 +211,11 @@ export default async function AboutPage() {
                     </div>
                   </div>
 
-                  <div className="flex items-start space-x-4">
+                  <div className="flex items-start space-x-md">
                     <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 flex-shrink-0">
                       <Gauge className="h-6 w-6 text-primary" />
                     </div>
-                    <div className="space-y-1">
+                    <div className="space-y-xs">
                       <H3 className="text-xl">Dashboard</H3>
                       <p className="text-muted-foreground">
                         We provide a dashboard that gives you a high-level view
@@ -225,11 +225,11 @@ export default async function AboutPage() {
                     </div>
                   </div>
 
-                  <div className="flex items-start space-x-4">
+                  <div className="flex items-start space-x-md">
                     <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 flex-shrink-0">
                       <Trophy className="h-6 w-6 text-primary" />
                     </div>
-                    <div className="space-y-1">
+                    <div className="space-y-xs">
                       <H3 className="text-xl">
                         Detailed Insights
                       </H3>
@@ -243,8 +243,8 @@ export default async function AboutPage() {
               </div>
             </div>
             <div className="mx-auto max-w-5xl flex flex-col items-center justify-center">
-              <div className="flex flex-col gap-4 w-full sm:grid xl:grid-cols-4 sm:grid-cols-2 xl:gap-4">
-                <div className="flex flex-col items-center space-y-2 rounded-lg border bg-card p-6 text-center w-full">
+              <div className="flex flex-col gap-md w-full sm:grid xl:grid-cols-4 sm:grid-cols-2 xl:gap-md">
+                <div className="surface flex flex-col items-center space-y-sm p-lg text-center w-full">
                   <div className="text-2xl font-bold text-primary">
                     {totalRounds}
                   </div>
@@ -252,13 +252,13 @@ export default async function AboutPage() {
                     Total Rounds Logged
                   </div>
                 </div>
-                <div className="flex flex-col items-center space-y-2 rounded-lg border bg-card p-6 text-center w-full">
+                <div className="surface flex flex-col items-center space-y-sm p-lg text-center w-full">
                   <div className="text-2xl font-bold text-primary">USGA</div>
                   <div className="text-sm text-muted-foreground">
                     Ruling Compliant
                   </div>
                 </div>
-                <div className="flex flex-col items-center space-y-2 rounded-lg border bg-card p-6 text-center w-full">
+                <div className="surface flex flex-col items-center space-y-sm p-lg text-center w-full">
                   <div className="text-2xl font-bold text-primary">
                     {totalCourses}
                   </div>
@@ -266,7 +266,7 @@ export default async function AboutPage() {
                     Courses Supported
                   </div>
                 </div>
-                <div className="flex flex-col items-center space-y-2 rounded-lg border bg-card p-6 text-center w-full">
+                <div className="surface flex flex-col items-center space-y-sm p-lg text-center w-full">
                   <div className="text-2xl font-bold text-primary">GDPR</div>
                   <div className="text-sm text-muted-foreground">Compliant</div>
                 </div>

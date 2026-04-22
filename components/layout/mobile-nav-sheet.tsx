@@ -27,7 +27,7 @@ export function MobileNavSheet({ links, headerContent, children }: MobileNavShee
   const [isOpen, setIsOpen] = useState(false);
 
   return (
-    <div className="flex items-center gap-4 lg:hidden">
+    <div className="flex items-center gap-md lg:hidden">
       <Sheet open={isOpen} onOpenChange={setIsOpen}>
         <SheetTrigger asChild>
           <Button
@@ -41,7 +41,7 @@ export function MobileNavSheet({ links, headerContent, children }: MobileNavShee
         </SheetTrigger>
         <SheetContent side="right" className="xs:w-64">
           <SheetTitle className="sr-only">Navigation menu</SheetTitle>
-          <div className="flex flex-col gap-4 p-4">
+          <div className="flex flex-col gap-md p-md">
             {headerContent && (
               <>
                 <div onClick={() => setIsOpen(false)}>

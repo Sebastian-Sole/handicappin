@@ -28,8 +28,8 @@ const ScoreBarChartDisplay = ({
 }: ScoreBarChartDisplayProps) => {
   return (
     <Card>
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <div className="flex items-center gap-4 justify-between w-full">
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-sm">
+        <div className="flex items-center gap-md justify-between w-full">
           <CardTitle className="sm:text-2xl text-xl">
             Score Differential
           </CardTitle>
@@ -45,12 +45,12 @@ const ScoreBarChartDisplay = ({
           </div>
         )}
         {previousScores.length >= 5 && (
-          <div className="w-full h-full pt-8 pr-8">
+          <div className="w-full h-full pt-xl pr-xl">
             <ScoreBarChart scores={previousScores} />
           </div>
         )}
       </CardContent>
-      <CardFooter className="pt-4 flex justify-center">
+      <CardFooter className="pt-md flex justify-center">
         <Link href={`/stats/${profile.id}`}>
           <Button variant={"link"}>View stats</Button>
         </Link>
