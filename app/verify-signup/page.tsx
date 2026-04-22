@@ -233,7 +233,7 @@ function VerifySignupContent() {
   }, [email]);
 
   return (
-    <div className="flex-1 flex justify-center items-center flex-col py-2 md:py-4 lg:py-8">
+    <div className="flex-1 flex justify-center items-center flex-col py-sm md:py-md lg:py-xl">
       <Card className="w-[90%] max-w-md">
         <CardHeader className="text-center">
           <CardTitle>Verify Your Email</CardTitle>
@@ -242,8 +242,8 @@ function VerifySignupContent() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="space-y-2">
+          <form onSubmit={handleSubmit} className="space-y-lg">
+            <div className="space-y-sm">
               <label
                 htmlFor="email"
                 className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
@@ -261,7 +261,7 @@ function VerifySignupContent() {
               />
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-sm">
               <label
                 id="otp-label"
                 htmlFor="otp-input"
@@ -309,7 +309,7 @@ function VerifySignupContent() {
               </p>
 
               {/* Hint text (visible to all) */}
-              <p id="otp-hint" className="text-xs text-muted-foreground text-center mt-1">
+              <p id="otp-hint" className="text-xs text-muted-foreground text-center mt-xs">
                 Check your spam folder if you don&apos;t see the email
               </p>
             </div>
@@ -335,7 +335,7 @@ function VerifySignupContent() {
                   {remainingAttempts !== null &&
                     remainingAttempts > 0 &&
                     status === "error" && (
-                      <div className="mt-2 text-sm">
+                      <div className="mt-sm text-sm">
                         {remainingAttempts}{" "}
                         {remainingAttempts === 1 ? "attempt" : "attempts"}{" "}
                         remaining
@@ -362,13 +362,13 @@ function VerifySignupContent() {
             >
               {status === "loading" && (
                 <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />
+                  <Loader2 className="mr-sm h-4 w-4 animate-spin" aria-hidden="true" />
                   <span className="sr-only">Verifying your email, please wait</span>
                 </>
               )}
               {status === "success" && (
                 <>
-                  <Check className="mr-2 h-4 w-4" aria-hidden="true" />
+                  <Check className="mr-sm h-4 w-4" aria-hidden="true" />
                   <span className="sr-only">Email verified successfully</span>
                 </>
               )}

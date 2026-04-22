@@ -46,11 +46,11 @@ export default async function UpgradePage({ searchParams }: UpgradePageProps) {
     : "free";
 
   return (
-    <div className="sm:container mx-auto px-4 py-16">
+    <div className="sm:container mx-auto px-md py-3xl">
       <div className="max-w-6xl mx-auto">
         {/* Expired subscription alert */}
         {isExpired && (
-          <Alert className="mb-8 bg-warning/10 border-warning/30">
+          <Alert className="mb-xl tint-warning">
             <AlertCircle className="h-4 w-4 text-warning" />
             <AlertDescription className="text-warning">
               Your premium subscription has ended. Upgrade to continue accessing premium features.
@@ -58,8 +58,8 @@ export default async function UpgradePage({ searchParams }: UpgradePageProps) {
           </Alert>
         )}
 
-        <div className="text-center mb-12">
-          <H1 className="mb-4">Change Your Plan</H1>
+        <div className="text-center mb-2xl">
+          <H1 className="mb-md">Change Your Plan</H1>
           <p className="text-lg text-muted-foreground">
             Currently on: <span className="font-semibold capitalize">{currentPlan}</span> Plan
           </p>
@@ -73,7 +73,7 @@ export default async function UpgradePage({ searchParams }: UpgradePageProps) {
         />
 
         {/* Back to billing link */}
-        <div className="text-center mt-12">
+        <div className="text-center mt-2xl">
           <Link href="/billing" className="text-muted-foreground hover:text-foreground">
             ← Back to Billing
           </Link>

@@ -1,17 +1,17 @@
 "use client";
 
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Download, Loader2, Check } from "lucide-react";
 import { api } from "@/trpc/react";
 import { FormFeedback } from "@/components/ui/form-feedback";
+import {
+  SaveStateButton,
+  type SaveState,
+} from "@/components/ui/save-state-button";
 import { H3 } from "@/components/ui/typography";
 import type { FeedbackState } from "@/types/feedback";
 
-type ExportState = "idle" | "exporting" | "success" | "error";
-
 export function DataExportSection() {
-  const [exportState, setExportState] = useState<ExportState>("idle");
+  const [exportState, setExportState] = useState<SaveState>("idle");
   const [feedback, setFeedback] = useState<FeedbackState | null>(null);
 
   const exportQuery = api.auth.exportUserData.useQuery(undefined, {
@@ -20,7 +20,7 @@ export function DataExportSection() {
   });
 
   const handleExport = async () => {
-    setExportState("exporting");
+    setExportState("saving");
     setFeedback(null);
     try {
       const result = await exportQuery.refetch();
@@ -61,7 +61,7 @@ export function DataExportSection() {
         URL.revokeObjectURL(url);
       }
 
-      setExportState("success");
+      setExportState("saved");
       setFeedback(null);
       setTimeout(() => setExportState("idle"), 2000);
     } catch {
@@ -75,45 +75,28 @@ export function DataExportSection() {
   };
 
   return (
-    <div className="bg-card rounded-lg border p-6">
-      <H3 className="text-xl font-semibold mb-2">Export Your Data</H3>
-      <p className="text-muted-foreground mb-4">
+    <div className="surface p-lg">
+      <H3 className="text-xl font-semibold mb-sm">Export Your Data</H3>
+      <p className="text-muted-foreground mb-md">
         Download a copy of all your data including your profile, rounds, and scores in JSON format.
       </p>
       {feedback && (
         <FormFeedback
           type={feedback.type}
           message={feedback.message}
-          className="mb-4"
+          className="mb-md"
         />
       )}
-      <Button
+      <SaveStateButton
         onClick={handleExport}
-        disabled={exportState === "exporting" || exportState === "success"}
+        state={exportState}
         variant="outline"
-        className={`transition-all duration-300 ${
-          exportState === "success" ? "bg-success hover:bg-success text-success-foreground" : ""
-        }`}
-      >
-        {exportState === "exporting" && (
-          <>
-            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            Exporting...
-          </>
-        )}
-        {exportState === "success" && (
-          <>
-            <Check className="mr-2 h-4 w-4" />
-            Downloaded!
-          </>
-        )}
-        {(exportState === "idle" || exportState === "error") && (
-          <>
-            <Download className="mr-2 h-4 w-4" />
-            Export Data
-          </>
-        )}
-      </Button>
+        idleLabel="Export Data"
+        savingLabel="Exporting..."
+        savedLabel="Downloaded!"
+        errorLabel="Export Data"
+        className="transition-all duration-300"
+      />
     </div>
   );
 }

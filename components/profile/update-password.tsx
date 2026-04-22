@@ -105,8 +105,8 @@ const UpdatePassword = ({ email: initialEmail }: UpdatePasswordProps) => {
   };
 
   return (
-    <div className="mx-auto max-w-sm space-y-6 py-8 sm:min-w-[40%] min-h-full w-[90%]">
-      <div className="space-y-2 text-left">
+    <div className="mx-auto max-w-sm space-y-lg py-xl sm:min-w-[40%] min-h-full w-[90%]">
+      <div className="space-y-sm text-left">
         <H1 className="text-3xl font-bold">Reset Password</H1>
         <CardDescription>
           Enter the verification code from your email and your new password
@@ -118,16 +118,16 @@ const UpdatePassword = ({ email: initialEmail }: UpdatePasswordProps) => {
           message={feedback.message}
         />
       )}
-      <div className="space-y-4">
+      <div className="space-y-md">
         <Form {...form}>
           <form
             onSubmit={(event) => {
               event.preventDefault();
               form.handleSubmit(handleSubmit)();
             }}
-            className="space-y-6"
+            className="space-y-lg"
           >
-            <div className="space-y-2">
+            <div className="space-y-sm">
               <FormField
                 control={form.control}
                 name="email"
@@ -149,7 +149,7 @@ const UpdatePassword = ({ email: initialEmail }: UpdatePasswordProps) => {
               />
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-sm">
               <FormField
                 control={form.control}
                 name="otp"
@@ -211,7 +211,7 @@ const UpdatePassword = ({ email: initialEmail }: UpdatePasswordProps) => {
               />
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-sm">
               <FormField
                 control={form.control}
                 name="password"
@@ -232,7 +232,7 @@ const UpdatePassword = ({ email: initialEmail }: UpdatePasswordProps) => {
               />
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-sm">
               <FormField
                 control={form.control}
                 name="confirmPassword"
@@ -279,7 +279,7 @@ const UpdatePassword = ({ email: initialEmail }: UpdatePasswordProps) => {
           </form>
         </Form>
 
-        <Alert className="mt-4">
+        <Alert className="mt-md">
           <AlertDescription className="text-xs">
             <strong>Tip:</strong> Check your email for the 6-digit verification
             code. The code expires in 15 minutes.

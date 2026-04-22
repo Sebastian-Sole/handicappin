@@ -215,15 +215,15 @@ export function PlanSelector({
     <>
       {/* Inline Feedback Alert */}
       {feedbackMessage && (
-        <div className="mb-6 animate-in fade-in-0 slide-in-from-top-2 duration-300">
+        <div className="mb-lg animate-in fade-in-0 slide-in-from-top-2 duration-300">
           <Alert
             variant={
               feedbackMessage.type === "error" ? "destructive" : "default"
             }
             className={
               feedbackMessage.type === "success"
-                ? "border-success/50 bg-success/10 relative pr-12"
-                : "relative pr-12"
+                ? "tint-success relative pr-2xl"
+                : "relative pr-2xl"
             }
           >
             {feedbackMessage.type === "success" ? (
@@ -240,7 +240,7 @@ export function PlanSelector({
             {feedbackMessage.type === "error" && (
               <button
                 onClick={() => setFeedbackMessage(null)}
-                className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                className="absolute right-md top-md rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
                 aria-label="Dismiss error message"
               >
                 <X className="h-4 w-4" />
@@ -252,7 +252,7 @@ export function PlanSelector({
 
       {/* Context-specific messaging for upgrade mode */}
       {mode === "upgrade" && currentPlan && (
-        <div className="mb-8 text-center">
+        <div className="mb-xl text-center">
           <p className="text-muted-foreground text-lg">
             {availablePlans.length === 0 ? (
               <>You&apos;re on the best plan! No changes available.</>
@@ -261,7 +261,7 @@ export function PlanSelector({
             )}
           </p>
           {availablePlans.length > 0 && currentPlan && isPaidPlan(currentPlan) && (
-            <div className="mt-4 space-y-2 text-sm text-muted-foreground">
+            <div className="mt-md space-y-sm text-sm text-muted-foreground">
               <p>You&apos;ll be redirected to Stripe to complete your plan change</p>
               <p>✓ Upgrades take effect immediately (prorated charge)</p>
               <p>✓ Downgrades take effect at the end of your billing cycle</p>
@@ -272,14 +272,14 @@ export function PlanSelector({
 
       {/* Show skeletons while loading promo slots */}
       {isLoadingPromoSlots ? (
-        <div className="grid gap-6 xl:grid-cols-4 md:grid-cols-2">
+        <div className="grid gap-lg xl:grid-cols-4 md:grid-cols-2">
           {[1, 2, 3, 4].map((i) => (
             <PricingCardSkeleton key={i} />
           ))}
         </div>
       ) : (
         <div
-          className={`grid gap-6 ${availablePlans.length === 4
+          className={`grid gap-lg ${availablePlans.length === 4
             ? "xl:grid-cols-4 md:grid-cols-2"
             : availablePlans.length === 3
               ? "lg:grid-cols-3"

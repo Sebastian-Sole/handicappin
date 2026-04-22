@@ -215,14 +215,14 @@ export default function BillingSuccessPage() {
   };
 
   return (
-    <div className="sm:container mx-auto px-4 py-16">
+    <div className="sm:container mx-auto px-md py-3xl">
       <div className="max-w-2xl mx-auto text-center">
-        <div className="mb-8">
+        <div className="mb-xl">
           {/* Loading State */}
           {status === "loading" && (
             <>
-              <div className="text-6xl mb-4">⏳</div>
-              <H1 className="text-4xl mb-4">Just a moment...</H1>
+              <div className="text-6xl mb-md">⏳</div>
+              <H1 className="text-4xl mb-md">Just a moment...</H1>
               <p className="text-lg text-muted-foreground">
                 Checking your subscription status...
               </p>
@@ -232,11 +232,11 @@ export default function BillingSuccessPage() {
           {/* Processing State (0-5 seconds) */}
           {status === "processing" && (
             <>
-              <div className="text-6xl mb-4 animate-pulse">⏳</div>
-              <H1 className="text-4xl mb-4">
+              <div className="text-6xl mb-md animate-pulse">⏳</div>
+              <H1 className="text-4xl mb-md">
                 Activating Your Subscription
               </H1>
-              <p className="text-lg text-muted-foreground mb-8">
+              <p className="text-lg text-muted-foreground mb-xl">
                 We&apos;re setting up your premium access...
               </p>
               <p className="text-sm text-muted-foreground">
@@ -249,11 +249,11 @@ export default function BillingSuccessPage() {
           {/* Success State */}
           {status === "success" && (
             <>
-              <div className="text-6xl mb-4">✅</div>
-              <H1 className="text-4xl mb-4 text-success">
+              <div className="text-6xl mb-md">✅</div>
+              <H1 className="text-4xl mb-md text-success">
                 Welcome to Premium!
               </H1>
-              <p className="text-lg text-muted-foreground mb-8">
+              <p className="text-lg text-muted-foreground mb-xl">
                 Your subscription is now active. You have access to all premium
                 features.
               </p>
@@ -266,20 +266,20 @@ export default function BillingSuccessPage() {
           {/* Delayed State (5-20 seconds, 1-2 failures) */}
           {status === "delayed" && (
             <>
-              <div className="text-6xl mb-4">⚠️</div>
-              <H1 className="text-4xl mb-4 text-warning">
+              <div className="text-6xl mb-md">⚠️</div>
+              <H1 className="text-4xl mb-md text-warning">
                 Almost There
               </H1>
-              <p className="text-lg text-muted-foreground mb-4">
+              <p className="text-lg text-muted-foreground mb-md">
                 Your payment was successful! Activation is taking longer than
                 usual.
               </p>
-              <p className="text-base text-muted-foreground mb-8">
+              <p className="text-base text-muted-foreground mb-xl">
                 {webhookData?.action ||
                   "This usually resolves within a few minutes. Our system is working on it."}
               </p>
 
-              <div className="space-y-4">
+              <div className="space-y-md">
                 <Button
                   onClick={handleCheckAgain}
                   size="lg"
@@ -293,7 +293,7 @@ export default function BillingSuccessPage() {
                 </Button>
               </div>
 
-              <div className="mt-8 pt-8 border-t">
+              <div className="mt-xl pt-xl border-t">
                 <p className="text-sm text-muted-foreground">
                   Still waiting after 5 minutes?{" "}
                   <a
@@ -311,15 +311,15 @@ export default function BillingSuccessPage() {
           {/* Failed State (3+ failures) */}
           {status === "failed" && (
             <>
-              <div className="text-6xl mb-4">❌</div>
-              <H1 className="text-4xl mb-4 text-destructive">
+              <div className="text-6xl mb-md">❌</div>
+              <H1 className="text-4xl mb-md text-destructive">
                 Activation Issue
               </H1>
-              <p className="text-lg text-foreground mb-4">
+              <p className="text-lg text-foreground mb-md">
                 We encountered an issue activating your subscription.
               </p>
 
-              <div className="bg-info/10 border border-info/30 rounded-lg p-4 mb-6">
+              <div className="tint-info p-md mb-lg">
                 <p className="text-sm text-info">
                   <strong>✓ Your payment was successful</strong>
                   <br />
@@ -328,20 +328,20 @@ export default function BillingSuccessPage() {
                 </p>
               </div>
 
-              <p className="text-base text-muted-foreground mb-4">
+              <p className="text-base text-muted-foreground mb-md">
                 For immediate assistance, contact our support team:
               </p>
 
               {sessionId && (
-                <div className="bg-muted/50 border rounded-lg p-4 mb-6">
-                  <p className="text-xs text-muted-foreground mb-1">
+                <div className="surface-muted border p-md mb-lg">
+                  <p className="text-xs text-muted-foreground mb-xs">
                     Session ID (for support):
                   </p>
                   <p className="font-mono text-sm break-all">{sessionId}</p>
                 </div>
               )}
 
-              <div className="space-y-4">
+              <div className="space-y-md">
                 <Button asChild size="lg" className="w-full">
                   <a
                     href={`mailto:sebastiansole@handicappin.com?subject=Subscription Activation Issue&body=Session ID: ${sessionId || "unknown"
@@ -366,16 +366,16 @@ export default function BillingSuccessPage() {
                 </Button>
               </div>
 
-              <div className="mt-8 pt-8 border-t">
+              <div className="mt-xl pt-xl border-t">
                 <p className="text-xs text-muted-foreground">
                   Support: sebastiansole@handicappin.com
                 </p>
                 {webhookData?.debug && (
-                  <details className="mt-4 text-left">
+                  <details className="mt-md text-left">
                     <summary className="text-xs text-muted-foreground/70 cursor-pointer hover:text-muted-foreground">
                       Debug Info (for support)
                     </summary>
-                    <pre className="mt-2 text-xs bg-muted p-2 rounded overflow-auto">
+                    <pre className="mt-sm text-xs bg-muted p-sm rounded overflow-auto">
                       {JSON.stringify(webhookData.debug, null, 2)}
                     </pre>
                   </details>
@@ -389,7 +389,7 @@ export default function BillingSuccessPage() {
         {status !== "success" &&
           status !== "delayed" &&
           status !== "failed" && (
-            <div className="space-y-4">
+            <div className="space-y-md">
               <Button asChild size="lg" className="w-full">
                 <Link href="/">Go to Dashboard</Link>
               </Button>

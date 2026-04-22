@@ -17,7 +17,7 @@ const LogoutButton = () => {
 
   return (
     <div onClick={onClick} className="flex flex-row items-center">
-      <LogOutIcon className="h-4 w-4 mr-2" />
+      <LogOutIcon className="h-4 w-4 mr-sm" />
       Logout
     </div>
   );
