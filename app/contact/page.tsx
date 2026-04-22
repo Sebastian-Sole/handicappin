@@ -194,7 +194,7 @@ export default function ContactPage() {
                     {faq.question}
                   </H3>
                 </div>
-                <P className="text-muted-foreground text-sm pl-8">
+                <P className="text-muted-foreground text-sm pl-xl">
                   {faq.answer}
                 </P>
               </div>

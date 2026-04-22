@@ -381,7 +381,7 @@ export const TableSkeleton = ({ holeCount }: { holeCount: number }) => {
         <table className="w-full border-collapse">
           <thead>
             <tr>
-              <th className="p-2 bg-secondary w-20">
+              <th className="p-sm bg-secondary w-20">
                 <Skeleton className="h-6 w-12" />
               </th>
               {[...Array(holeCount)].map((_, i) => (

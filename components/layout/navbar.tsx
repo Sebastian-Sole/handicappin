@@ -25,7 +25,7 @@ import { getUserIdFromCookies } from "@/utils/supabase/auth-cookies";
 
 function LogoBrand() {
   return (
-    <Link href="/" className="flex items-center gap-2 shrink-0" prefetch={true}>
+    <Link href="/" className="flex items-center gap-sm shrink-0" prefetch={true}>
       <Image
         src="/images/logo.png"
         alt="Handicappin Golf Handicap Tracker Logo"

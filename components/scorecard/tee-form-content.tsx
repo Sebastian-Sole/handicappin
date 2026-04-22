@@ -252,7 +252,7 @@ function TeeRatingFields({ tee, onTeeChange }: TeeFormContentProps) {
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-md">
         {/* FRONT 9 */}
-        <div className="space-y-2">
+        <div className="space-y-sm">
           <label className="font-semibold" htmlFor="courseRatingFrontNine">
             Front 9
           </label>
@@ -272,7 +272,7 @@ function TeeRatingFields({ tee, onTeeChange }: TeeFormContentProps) {
         </div>
 
         {/* BACK 9 */}
-        <div className="space-y-2">
+        <div className="space-y-sm">
           <label className="font-semibold" htmlFor="courseRatingBack9">
             Back 9
           </label>
@@ -292,7 +292,7 @@ function TeeRatingFields({ tee, onTeeChange }: TeeFormContentProps) {
         </div>
 
         {/* TOTAL */}
-        <div className="space-y-2">
+        <div className="space-y-sm">
           <label className="font-semibold" htmlFor="courseRating18">
             Total
           </label>
@@ -315,7 +315,7 @@ function TeeRatingFields({ tee, onTeeChange }: TeeFormContentProps) {
       <Large>Slope Rating</Large>
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-md">
         {/* FRONT 9 */}
-        <div className="space-y-2">
+        <div className="space-y-sm">
           <label className="font-semibold" htmlFor="slopeRatingFront9">
             Front 9
           </label>
@@ -334,7 +334,7 @@ function TeeRatingFields({ tee, onTeeChange }: TeeFormContentProps) {
         </div>
 
         {/* BACK 9 */}
-        <div className="space-y-2">
+        <div className="space-y-sm">
           <label className="font-semibold" htmlFor="slopeRatingBack9">
             Back 9
           </label>
@@ -353,7 +353,7 @@ function TeeRatingFields({ tee, onTeeChange }: TeeFormContentProps) {
         </div>
 
         {/* TOTAL */}
-        <div className="space-y-2">
+        <div className="space-y-sm">
           <label className="font-semibold" htmlFor="slopeRating18">
             Total
           </label>
