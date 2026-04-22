@@ -97,9 +97,9 @@ const ScoreDistributionSidebar = ({ layout = "vertical", compact = false }: Scor
 
   // Shared section components
   const roundSummarySection = (
-    <div className="bg-muted/50 rounded-lg p-4 h-full">
-      <Muted className="text-xs uppercase tracking-wide mb-3">Round Summary</Muted>
-      <div className="grid grid-cols-2 gap-3">
+    <div className="surface-muted p-md h-full">
+      <Muted className="text-xs uppercase tracking-wide mb-sm">Round Summary</Muted>
+      <div className="grid grid-cols-2 gap-sm">
         <div className="text-center">
           <div className="text-2xl font-bold">{totalStrokes}</div>
           <Muted className="text-xs">Gross Score</Muted>
@@ -129,11 +129,11 @@ const ScoreDistributionSidebar = ({ layout = "vertical", compact = false }: Scor
   );
 
   const scoreDistributionSection = (
-    <div className="bg-muted/50 rounded-lg p-4 h-full">
-      <Muted className="text-xs uppercase tracking-wide mb-3">Score Distribution</Muted>
-      <div className="space-y-2">
+    <div className="surface-muted p-md h-full">
+      <Muted className="text-xs uppercase tracking-wide mb-sm">Score Distribution</Muted>
+      <div className="space-y-sm">
         {Object.entries(distribution).map(([key, { count, label, color }]) => (
-          <div key={key} className="flex items-center gap-2 text-sm">
+          <div key={key} className="flex items-center gap-sm text-sm">
             <span className="w-14 text-right text-muted-foreground">{label}</span>
             <div className="flex-1 h-5 bg-muted rounded overflow-hidden">
               <div
@@ -149,9 +149,9 @@ const ScoreDistributionSidebar = ({ layout = "vertical", compact = false }: Scor
   );
 
   const holeByHoleSection = (
-    <div className="bg-muted/50 rounded-lg p-4 h-full">
-      <Muted className="text-xs uppercase tracking-wide mb-3">Hole-by-Hole</Muted>
-      <div className="grid grid-cols-9 gap-1">
+    <div className="surface-muted p-md h-full">
+      <Muted className="text-xs uppercase tracking-wide mb-sm">Hole-by-Hole</Muted>
+      <div className="grid grid-cols-9 gap-xs">
         {holeScores.map(({ hole, diff, color }) => (
           <div
             key={hole}
@@ -166,29 +166,29 @@ const ScoreDistributionSidebar = ({ layout = "vertical", compact = false }: Scor
           </div>
         ))}
       </div>
-      <div className="flex flex-wrap gap-2 mt-3 text-xs">
-        <div className="flex items-center gap-1">
+      <div className="flex flex-wrap gap-sm mt-sm text-xs">
+        <div className="flex items-center gap-xs">
           <div className="w-3 h-3 rounded bg-score-eagle" />
           <span>Eagle-</span>
         </div>
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-xs">
           <div className="w-3 h-3 rounded bg-score-birdie" />
           <span>Birdie</span>
         </div>
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-xs">
           <div className="w-3 h-3 rounded bg-score-par" />
           <span>Par</span>
         </div>
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-xs">
           <div className="w-3 h-3 rounded bg-score-bogey" />
           <span>Bogey</span>
         </div>
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-xs">
           <div className="w-3 h-3 rounded bg-score-double" />
           <span>Double+</span>
         </div>
         {isNineHoles && (
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-xs">
             <div className="w-3 h-3 rounded bg-muted/50 border border-dashed border-muted-foreground/30" />
             <span>Not played</span>
           </div>
@@ -198,9 +198,9 @@ const ScoreDistributionSidebar = ({ layout = "vertical", compact = false }: Scor
   );
 
   const quickStatsSection = (
-    <div className="bg-muted/50 rounded-lg p-4 h-full">
-      <Muted className="text-xs uppercase tracking-wide mb-3">Quick Stats</Muted>
-      <div className="grid grid-cols-2 gap-3 text-sm">
+    <div className="surface-muted p-md h-full">
+      <Muted className="text-xs uppercase tracking-wide mb-sm">Quick Stats</Muted>
+      <div className="grid grid-cols-2 gap-sm text-sm">
         <div>
           <div className="font-semibold">
             {((distribution["0"].count + distribution["-1"].count + distribution["-2"].count) / totalPlayedHoles * 100).toFixed(0)}%
@@ -234,7 +234,7 @@ const ScoreDistributionSidebar = ({ layout = "vertical", compact = false }: Scor
       <div
         ref={ref}
         className={cn(
-          "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 transition-all duration-500",
+          "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-md transition-all duration-500",
           isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
         )}
       >
@@ -252,14 +252,14 @@ const ScoreDistributionSidebar = ({ layout = "vertical", compact = false }: Scor
       <div
         ref={ref}
         className={cn(
-          "space-y-4 transition-all duration-500",
+          "space-y-md transition-all duration-500",
           isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
         )}
       >
         {/* Combined Summary & Stats */}
-        <div className="bg-muted/50 rounded-lg p-4">
-          <Muted className="text-xs uppercase tracking-wide mb-3">Round Summary</Muted>
-          <div className="grid grid-cols-4 gap-2 text-center">
+        <div className="surface-muted p-md">
+          <Muted className="text-xs uppercase tracking-wide mb-sm">Round Summary</Muted>
+          <div className="grid grid-cols-4 gap-sm text-center">
             <div>
               <div className="text-xl font-bold">{totalStrokes}</div>
               <Muted className="text-xs">Gross</Muted>
@@ -288,11 +288,11 @@ const ScoreDistributionSidebar = ({ layout = "vertical", compact = false }: Scor
         </div>
 
         {/* Score Distribution - compact */}
-        <div className="bg-muted/50 rounded-lg p-4">
-          <Muted className="text-xs uppercase tracking-wide mb-2">Score Distribution</Muted>
-          <div className="space-y-1.5">
+        <div className="surface-muted p-md">
+          <Muted className="text-xs uppercase tracking-wide mb-sm">Score Distribution</Muted>
+          <div className="space-y-xs">
             {Object.entries(distribution).map(([key, { count, label, color }]) => (
-              <div key={key} className="flex items-center gap-2 text-xs">
+              <div key={key} className="flex items-center gap-sm text-xs">
                 <span className="w-12 text-right text-muted-foreground">{label}</span>
                 <div className="flex-1 h-4 bg-muted rounded overflow-hidden">
                   <div
@@ -307,8 +307,8 @@ const ScoreDistributionSidebar = ({ layout = "vertical", compact = false }: Scor
         </div>
 
         {/* Quick Stats - inline */}
-        <div className="bg-muted/50 rounded-lg p-4">
-          <div className="grid grid-cols-4 gap-2 text-center text-sm">
+        <div className="surface-muted p-md">
+          <div className="grid grid-cols-4 gap-sm text-center text-sm">
             <div>
               <div className="font-semibold">
                 {((distribution["0"].count + distribution["-1"].count + distribution["-2"].count) / totalPlayedHoles * 100).toFixed(0)}%
@@ -343,7 +343,7 @@ const ScoreDistributionSidebar = ({ layout = "vertical", compact = false }: Scor
     <div
       ref={ref}
       className={cn(
-        "space-y-4 transition-all duration-500",
+        "space-y-md transition-all duration-500",
         isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
       )}
     >

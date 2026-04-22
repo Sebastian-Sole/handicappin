@@ -36,14 +36,14 @@ const AdjustedScoresStep = () => {
       title="Adjusted Scores"
       description="How your hole scores were capped for handicap purposes"
       learnMoreContent={
-        <div className="space-y-3">
+        <div className="space-y-sm">
           <Blockquote>
             The USGA limits the maximum score you can post on any hole to
             prevent one bad hole from disproportionately affecting your
             handicap. This is called &quot;Net Double Bogey&quot; adjustment.
           </Blockquote>
           <P>The maximum score per hole is the lower of:</P>
-          <ul className="list-disc list-inside space-y-1 text-sm text-muted-foreground">
+          <ul className="list-disc list-inside space-y-xs text-sm text-muted-foreground">
             <li>Par + 5 (absolute maximum)</li>
             <li>Par + 2 + your handicap strokes on that hole</li>
           </ul>
@@ -66,24 +66,24 @@ const AdjustedScoresStep = () => {
         </div>
       }
     >
-      <div className="space-y-4">
+      <div className="space-y-md">
         {/* Summary stats */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-          <div className="bg-muted/50 rounded-lg p-4 text-center">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-md">
+          <div className="surface-muted p-md text-center">
             <div className="text-2xl font-bold">{totalStrokes}</div>
             <Muted>Total Strokes</Muted>
           </div>
-          <div className="bg-muted/50 rounded-lg p-4 text-center">
+          <div className="surface-muted p-md text-center">
             <div className="text-2xl font-bold">{apsStat}</div>
             <Muted>Adjusted Score</Muted>
           </div>
-          <div className="bg-muted/50 rounded-lg p-4 text-center">
+          <div className="surface-muted p-md text-center">
             <div className="text-2xl font-bold text-warning">
               {cappedHoles?.length || 0}
             </div>
             <Muted>Holes Capped</Muted>
           </div>
-          <div className="bg-muted/50 rounded-lg p-4 text-center">
+          <div className="surface-muted p-md text-center">
             <div className="text-2xl font-bold text-success">
               {adjustmentAmount > 0 ? `-${adjustmentAmount}` : adjustmentAmount}
             </div>
@@ -93,7 +93,7 @@ const AdjustedScoresStep = () => {
 
         {/* Explanation */}
         {cappedHoles && cappedHoles.length > 0 ? (
-          <div className="bg-warning/10 border border-warning/30 rounded-lg p-4">
+          <div className="tint-warning p-md">
             <P className="text-warning">
               {cappedHoles.length} hole
               {cappedHoles.length > 1 ? "s were" : " was"} adjusted: Hole
@@ -104,7 +104,7 @@ const AdjustedScoresStep = () => {
             </P>
           </div>
         ) : (
-          <div className="bg-success/10 border border-success/30 rounded-lg p-4">
+          <div className="tint-success p-md">
             <P className="text-success">
               No holes were capped - all your scores were within the Net Double
               Bogey limit.
@@ -113,9 +113,9 @@ const AdjustedScoresStep = () => {
         )}
 
         {/* Formula reminder */}
-        <div className="bg-muted/50 rounded-lg p-4">
+        <div className="surface-muted p-md">
           <Muted>Adjusted Played Score = Sum of all adjusted hole scores</Muted>
-          <div className="flex items-center gap-2 mt-2">
+          <div className="flex items-center gap-sm mt-sm">
             <span className="font-medium">Adjusted Played Score =</span>
             <span className="text-xl font-bold text-primary">{apsStat}</span>
           </div>
