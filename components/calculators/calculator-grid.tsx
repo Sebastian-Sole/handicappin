@@ -98,7 +98,7 @@ interface CalculatorGridProps {
 
 export function CalculatorGrid({ category }: CalculatorGridProps) {
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-lg">
       {category === "core" && (
         <>
           <Suspense fallback={<CalculatorSkeleton />}>

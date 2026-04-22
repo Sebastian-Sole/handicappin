@@ -8,31 +8,31 @@ export function CalculatorSkeleton() {
     <Card className="transition-all">
       <CardHeader>
         <div className="flex items-center justify-between">
-          <div className="space-y-2">
+          <div className="space-y-sm">
             <Skeleton className="h-6 w-48" />
             <Skeleton className="h-4 w-64" />
           </div>
         </div>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className="space-y-md">
         {/* Input fields skeleton */}
-        <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-2">
+        <div className="grid grid-cols-2 gap-md">
+          <div className="space-y-sm">
             <Skeleton className="h-4 w-24" />
             <Skeleton className="h-10 w-full" />
           </div>
-          <div className="space-y-2">
+          <div className="space-y-sm">
             <Skeleton className="h-4 w-24" />
             <Skeleton className="h-10 w-full" />
           </div>
         </div>
-        <div className="space-y-2">
+        <div className="space-y-sm">
           <Skeleton className="h-4 w-20" />
           <Skeleton className="h-10 w-full" />
         </div>
 
         {/* Result skeleton */}
-        <div className="pt-4 border-t">
+        <div className="pt-md border-t">
           <div className="flex items-center justify-between">
             <Skeleton className="h-5 w-32" />
             <Skeleton className="h-8 w-16" />

@@ -96,12 +96,12 @@ export function HandicapIndexCalculator() {
   );
 
   const explanation = (
-    <div className="space-y-3">
+    <div className="space-y-sm">
       <Muted>
         Your Handicap Index is calculated by averaging your best score
         differentials, based on how many rounds you have:
       </Muted>
-      <div className="grid grid-cols-2 gap-2 text-sm">
+      <div className="grid grid-cols-2 gap-sm text-sm">
         <div>3 rounds: Best 1 (-2.0)</div>
         <div>4 rounds: Best 1 (-1.0)</div>
         <div>5 rounds: Best 1</div>
@@ -115,7 +115,7 @@ export function HandicapIndexCalculator() {
         <div>20+ rounds: Best 8</div>
       </div>
       {handicapIndex !== null && (
-        <div className="bg-muted/50 rounded-lg p-3">
+        <div className="surface-muted p-sm">
           <P className="text-sm text-muted-foreground">
             Using {relevantDifferentials.length} of {differentials.length}{" "}
             differentials:
@@ -123,7 +123,7 @@ export function HandicapIndexCalculator() {
           <P className="font-mono">
             ({relevantDifferentials.join(" + ")}) / {relevantDifferentials.length}
           </P>
-          <P className="font-bold mt-1">= {handicapIndex.toFixed(1)}</P>
+          <P className="font-bold mt-xs">= {handicapIndex.toFixed(1)}</P>
         </div>
       )}
     </div>
@@ -131,9 +131,9 @@ export function HandicapIndexCalculator() {
 
   return (
     <CalculatorCard meta={meta} result={result} explanation={explanation}>
-      <div className="space-y-4">
-        <div className="flex gap-2">
-          <div className="flex-1 space-y-2">
+      <div className="space-y-md">
+        <div className="flex gap-sm">
+          <div className="flex-1 space-y-sm">
             <Label htmlFor="newDifferential">Add Score Differential</Label>
             <Input
               id="newDifferential"
@@ -155,17 +155,17 @@ export function HandicapIndexCalculator() {
         </div>
 
         {differentials.length > 0 && (
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-sm">
             {differentials.map((diff, index) => (
               <Badge
                 key={index}
                 variant={usedIndices.has(index) ? "default" : "secondary"}
-                className="gap-1"
+                className="gap-xs"
               >
                 {diff.toFixed(1)}
                 <button
                   onClick={() => removeDifferential(index)}
-                  className="hover:bg-white/20 rounded-full p-0.5"
+                  className="hover:bg-white/20 rounded-full p-xs"
                   aria-label={`Remove differential ${diff.toFixed(1)}`}
                 >
                   <X className="h-3 w-3" />

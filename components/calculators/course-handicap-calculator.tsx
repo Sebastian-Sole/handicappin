@@ -54,7 +54,7 @@ export function CourseHandicapCalculator() {
   );
 
   const explanation = (
-    <div className="space-y-3">
+    <div className="space-y-sm">
       <Muted>
         {values.holesPlayed === 9 ? (
           <span>
@@ -69,7 +69,7 @@ export function CourseHandicapCalculator() {
         )}
       </Muted>
       {courseHandicap !== null && values.handicapIndex !== null && (
-        <div className="bg-muted/50 rounded-lg p-3 font-mono text-sm">
+        <div className="surface-muted p-sm font-mono text-sm">
           <P className="text-muted-foreground">
             {values.holesPlayed === 9 ? (
               <>
@@ -83,7 +83,7 @@ export function CourseHandicapCalculator() {
               </>
             )}
           </P>
-          <P className="font-bold mt-1">= {courseHandicap}</P>
+          <P className="font-bold mt-xs">= {courseHandicap}</P>
         </div>
       )}
     </div>
@@ -91,8 +91,8 @@ export function CourseHandicapCalculator() {
 
   return (
     <CalculatorCard meta={meta} result={result} explanation={explanation}>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <div className="space-y-2">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-md">
+        <div className="space-y-sm">
           <Label htmlFor="handicapIndex">Handicap Index</Label>
           <Input
             id="handicapIndex"
@@ -108,7 +108,7 @@ export function CourseHandicapCalculator() {
             }
           />
         </div>
-        <div className="space-y-2">
+        <div className="space-y-sm">
           <Label htmlFor="slopeRating">Slope Rating</Label>
           <Input
             id="slopeRating"
@@ -123,7 +123,7 @@ export function CourseHandicapCalculator() {
             }
           />
         </div>
-        <div className="space-y-2">
+        <div className="space-y-sm">
           <Label htmlFor="courseRating">Course Rating</Label>
           <Input
             id="courseRating"
@@ -139,7 +139,7 @@ export function CourseHandicapCalculator() {
             }
           />
         </div>
-        <div className="space-y-2">
+        <div className="space-y-sm">
           <Label htmlFor="par">Par</Label>
           <Input
             id="par"
@@ -152,7 +152,7 @@ export function CourseHandicapCalculator() {
           />
         </div>
       </div>
-      <div className="flex items-center gap-3 pt-2">
+      <div className="flex items-center gap-sm pt-sm">
         <Label htmlFor="holesPlayed">18 holes</Label>
         <Switch
           id="holesPlayed"

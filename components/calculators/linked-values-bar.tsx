@@ -36,14 +36,14 @@ export function LinkedValuesBar() {
 
   return (
     <div className="sticky top-16 z-40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b">
-      <div className="container mx-auto px-4 py-2">
-        <div className="flex items-center justify-between gap-4">
-          <div className="flex items-center gap-2 overflow-x-auto pb-1 sm:pb-0">
+      <div className="container mx-auto px-md py-sm">
+        <div className="flex items-center justify-between gap-md">
+          <div className="flex items-center gap-sm overflow-x-auto pb-xs sm:pb-0">
             <span className="text-sm text-muted-foreground whitespace-nowrap">
               Linked:
             </span>
             {activeValues.map((item, idx) => (
-              <span key={item.label} className="flex items-center gap-1">
+              <span key={item.label} className="flex items-center gap-xs">
                 {idx > 0 && (
                   <ArrowRight className="h-3 w-3 text-muted-foreground" />
                 )}
@@ -59,7 +59,7 @@ export function LinkedValuesBar() {
             onClick={resetValues}
             className="shrink-0"
           >
-            <RotateCcw className="h-4 w-4 mr-1" />
+            <RotateCcw className="h-4 w-4 mr-xs" />
             <span className="hidden sm:inline">Reset</span>
           </Button>
         </div>

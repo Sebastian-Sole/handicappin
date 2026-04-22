@@ -33,14 +33,14 @@ export function NetScoreCalculator() {
   );
 
   const explanation = (
-    <div className="space-y-3">
+    <div className="space-y-sm">
       <Muted>Net Score = Gross Score - Course Handicap</Muted>
       {netScore !== null && (
-        <div className="bg-muted/50 rounded-lg p-3 font-mono text-sm">
+        <div className="surface-muted p-sm font-mono text-sm">
           <P className="text-muted-foreground">
             {values.adjustedGrossScore} - {values.courseHandicap}
           </P>
-          <P className="font-bold mt-1">= {netScore}</P>
+          <P className="font-bold mt-xs">= {netScore}</P>
         </div>
       )}
       <Muted className="text-xs">
@@ -53,8 +53,8 @@ export function NetScoreCalculator() {
 
   return (
     <CalculatorCard meta={meta} result={result} explanation={explanation}>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <div className="space-y-2">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-md">
+        <div className="space-y-sm">
           <Label htmlFor="grossScore-net">Gross Score</Label>
           <Input
             id="grossScore-net"
@@ -69,7 +69,7 @@ export function NetScoreCalculator() {
             }
           />
         </div>
-        <div className="space-y-2">
+        <div className="space-y-sm">
           <Label htmlFor="courseHandicap-net">Course Handicap</Label>
           <Input
             id="courseHandicap-net"
