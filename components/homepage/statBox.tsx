@@ -12,17 +12,17 @@ interface StatBoxProps {
 const StatBox = ({ title, value, change, description, icon }: StatBoxProps) => {
   return (
     <Card className="hover:shadow-md dark:hover:shadow-2xl transition-all duration-300 border-0 dark:bg-primary/20 backdrop-blur-sm hover:bg-background/75 dark:hover:bg-primary/10">
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-sm">
         <CardTitle className="text-sm font-medium text-muted-foreground transition-colors duration-300 min-h-[2.5rem] min-[423px]:min-h-0">
           {title}
         </CardTitle>
-        <div className="ml-2 min-[400px]:block hidden">{icon}</div>
+        <div className="ml-sm min-[400px]:block hidden">{icon}</div>
       </CardHeader>
       <CardContent>
-        <div className="text-2xl font-bold text-foreground mb-1 transition-colors duration-300">
+        <div className="text-2xl font-bold text-foreground mb-xs transition-colors duration-300">
           {value}
         </div>
-        <div className="flex items-center space-x-2 mb-2">
+        <div className="flex items-center space-x-sm mb-sm">
           <Badge
             className={`text-xs transition-colors duration-300 ${
               change === "improvement"

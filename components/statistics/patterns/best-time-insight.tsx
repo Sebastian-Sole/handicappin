@@ -72,14 +72,14 @@ export function BestTimeInsight({
   const insightMessage = dayInsight + timeInsight;
 
   return (
-    <Card className="bg-gradient-to-r from-success/10 to-success/10 border-success/20">
-      <CardContent className="p-6">
-        <div className="flex items-center gap-4">
+    <Card className="tint-success">
+      <CardContent className="p-lg">
+        <div className="flex items-center gap-md">
           <div className="text-4xl">🎯</div>
           <div>
             <H3 className="font-semibold text-lg">When You Play Best</H3>
             <p className="text-muted-foreground">{insightMessage}</p>
-            <p className="text-xs text-muted-foreground mt-1">
+            <p className="text-xs text-muted-foreground mt-xs">
               {bestDay.day}: {formatDifferential(bestDay.avgDifferential)} avg
               differential ({bestDay.roundCount} rounds)
             </p>

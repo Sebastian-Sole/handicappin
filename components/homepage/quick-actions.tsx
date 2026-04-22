@@ -34,12 +34,12 @@ export function QuickActions({ userId, className }: QuickActionsProps) {
   ];
 
   return (
-    <div className={cn("grid grid-cols-2 md:grid-cols-4 gap-3", className)}>
+    <div className={cn("grid grid-cols-2 md:grid-cols-4 gap-sm", className)}>
       {actions.map((action) => (
         <Link key={action.href} href={action.href}>
           <Card
             className={cn(
-              "p-4 flex flex-col items-center justify-center gap-2 h-full",
+              "p-md flex flex-col items-center justify-center gap-sm h-full",
               "hover:bg-accent/50 transition-colors cursor-pointer",
               action.primary && "bg-primary/5 border-primary/20"
             )}

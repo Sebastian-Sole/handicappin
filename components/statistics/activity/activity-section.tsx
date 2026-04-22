@@ -41,8 +41,8 @@ export function ActivitySection({
   if (hasNoData) {
     return (
       <Card>
-        <CardContent className="p-12 text-center text-muted-foreground">
-          <div className="text-4xl mb-4">📊</div>
+        <CardContent className="p-2xl text-center text-muted-foreground">
+          <div className="text-4xl mb-md">📊</div>
           <p className="text-lg font-medium">No activity data yet</p>
           <p className="text-sm">Play some rounds to see your activity patterns</p>
         </CardContent>
@@ -68,18 +68,18 @@ export function ActivitySection({
       : null;
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-xl">
       {/* Activity Overview Section */}
       <StatisticsSection
         icon="📊"
         title="Activity Overview"
         description="Track your playing frequency and round types"
       >
-        <div className="space-y-6">
+        <div className="space-y-lg">
           {/* Quick Stats Row */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-md">
             <Card>
-              <CardContent className="p-4 text-center">
+              <CardContent className="p-md text-center">
                 <p className="text-sm text-muted-foreground">Avg Rounds/Month</p>
                 <p className="text-2xl font-bold">
                   {formatDecimal(activityStats.avgRoundsPerMonth, 1)}
@@ -87,7 +87,7 @@ export function ActivitySection({
               </CardContent>
             </Card>
             <Card>
-              <CardContent className="p-4 text-center">
+              <CardContent className="p-md text-center">
                 <p className="text-sm text-muted-foreground">Current Streak</p>
                 <p className="text-2xl font-bold">
                   {activityStats.currentStreak > 0
@@ -102,7 +102,7 @@ export function ActivitySection({
               </CardContent>
             </Card>
             <Card>
-              <CardContent className="p-4 text-center">
+              <CardContent className="p-md text-center">
                 <p className="text-sm text-muted-foreground">Longest Gap</p>
                 <p className="text-2xl font-bold">
                   {activityStats.longestGap > 0
@@ -112,8 +112,8 @@ export function ActivitySection({
               </CardContent>
             </Card>
             {activityStats.mostActiveMonth && (
-              <Card className="bg-gradient-to-br from-info/10 to-info/10 border-info/20">
-                <CardContent className="p-4 text-center">
+              <Card className="tint-info">
+                <CardContent className="p-md text-center">
                   <p className="text-sm text-muted-foreground">Most Active</p>
                   <p className="text-lg font-bold">
                     {activityStats.mostActiveMonth.month.substring(0, 3)}{" "}
@@ -128,10 +128,10 @@ export function ActivitySection({
           </div>
 
           {/* Charts Row */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-lg">
             {/* Rounds Per Month Chart */}
             <Card>
-              <CardHeader className="pb-2">
+              <CardHeader className="pb-sm">
                 <CardTitle className="text-base">Rounds Per Month</CardTitle>
               </CardHeader>
               <CardContent>
@@ -141,7 +141,7 @@ export function ActivitySection({
 
             {/* Day of Week Chart */}
             <Card>
-              <CardHeader className="pb-2">
+              <CardHeader className="pb-sm">
                 <CardTitle className="text-base">Rounds by Day of Week</CardTitle>
               </CardHeader>
               <CardContent>
@@ -162,29 +162,25 @@ export function ActivitySection({
             title="Seasonal Breakdown"
             description="How your game varies throughout the year"
           >
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-md">
               {activityStats.seasonalStats.map((season) => {
                 const isBest = bestSeason && season.season === bestSeason.season;
                 return (
                   <Card
                     key={season.season}
-                    className={
-                      isBest
-                        ? "bg-gradient-to-br from-success/10 to-success/10 border-success/20"
-                        : ""
-                    }
+                    className={isBest ? "tint-success" : ""}
                   >
-                    <CardContent className="p-4 text-center flex flex-col justify-center min-h-[130px]">
+                    <CardContent className="p-md text-center flex flex-col justify-center min-h-[130px]">
                       <p className="text-sm font-medium">{season.season}</p>
                       <p className="text-2xl font-bold">{season.roundCount}</p>
                       <p className="text-xs text-muted-foreground">rounds</p>
                       {season.roundCount > 0 && (
-                        <p className="text-xs text-muted-foreground mt-1">
+                        <p className="text-xs text-muted-foreground mt-xs">
                           {formatDifferential(season.avgDifferential)} avg diff
                         </p>
                       )}
                       {isBest && (
-                        <p className="text-xs text-success font-medium mt-1">
+                        <p className="text-xs text-success font-medium mt-xs">
                           Best season!
                         </p>
                       )}
@@ -212,7 +208,7 @@ export function ActivitySection({
           </p>
         }
       >
-        <div className="space-y-6">
+        <div className="space-y-lg">
           {/* Best Time Insight Card */}
           <BestTimeInsight
             dayOfWeekStats={dayOfWeekStats}
@@ -220,19 +216,19 @@ export function ActivitySection({
           />
 
           {/* Charts Grid */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-lg">
             {/* 9 vs 18 Hole Comparison */}
             <Card>
-              <CardHeader className="pb-2">
+              <CardHeader className="pb-sm">
                 <CardTitle className="text-base">Round Types</CardTitle>
               </CardHeader>
               <CardContent className="flex items-center justify-center min-h-[140px]">
-                <div className="flex items-center justify-center gap-8 md:gap-12">
+                <div className="flex items-center justify-center gap-xl md:gap-2xl">
                   <div className="text-center">
                     <div className="text-4xl md:text-5xl font-bold">
                       {nineHole?.count ?? 0}
                     </div>
-                    <p className="text-sm text-muted-foreground mt-1">9-Hole</p>
+                    <p className="text-sm text-muted-foreground mt-xs">9-Hole</p>
                     {nineHole && nineHole.count > 0 && (
                       <p className="text-xs text-muted-foreground">
                         {formatDifferential(nineHole.avgDifferential)} avg
@@ -244,7 +240,7 @@ export function ActivitySection({
                     <div className="text-4xl md:text-5xl font-bold">
                       {eighteenHole?.count ?? 0}
                     </div>
-                    <p className="text-sm text-muted-foreground mt-1">18-Hole</p>
+                    <p className="text-sm text-muted-foreground mt-xs">18-Hole</p>
                     {eighteenHole && eighteenHole.count > 0 && (
                       <p className="text-xs text-muted-foreground">
                         {formatDifferential(eighteenHole.avgDifferential)} avg
@@ -257,7 +253,7 @@ export function ActivitySection({
 
             {/* Time of Day Distribution */}
             <Card>
-              <CardHeader className="pb-2">
+              <CardHeader className="pb-sm">
                 <CardTitle className="text-base">Time of Day</CardTitle>
               </CardHeader>
               <CardContent>

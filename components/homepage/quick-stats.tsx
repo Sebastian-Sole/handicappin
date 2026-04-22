@@ -53,14 +53,14 @@ export function QuickStats({
 
   return (
     <Card className={cn("", className)}>
-      <CardHeader className="pb-3">
+      <CardHeader className="pb-sm">
         <CardTitle className="text-base">At a Glance</CardTitle>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className="space-y-md">
         {/* Lowest Differential */}
         {lowestDifferential !== null && (
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <div className="flex items-center gap-sm text-sm text-muted-foreground">
               <Trophy className="h-4 w-4 text-warning" />
               <span>Best Differential</span>
             </div>
@@ -73,7 +73,7 @@ export function QuickStats({
         {/* Last Round Date */}
         {lastRoundDate && (
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <div className="flex items-center gap-sm text-sm text-muted-foreground">
               <Calendar className="h-4 w-4" />
               <span>Last Round</span>
             </div>
@@ -86,7 +86,7 @@ export function QuickStats({
         {/* Recent Trend */}
         {handicapChanges.length > 0 && (
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <div className="flex items-center gap-sm text-sm text-muted-foreground">
               {improvements > increases ? (
                 <TrendingDown className="h-4 w-4 text-success" />
               ) : improvements < increases ? (
@@ -118,7 +118,7 @@ export function QuickStats({
         {/* Personal Best Date */}
         {bestRoundDate && (
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <div className="flex items-center gap-sm text-sm text-muted-foreground">
               <Trophy className="h-4 w-4 text-primary" />
               <span>Personal Best</span>
             </div>
@@ -130,7 +130,7 @@ export function QuickStats({
 
         {/* Empty state */}
         {activities.length === 0 && (
-          <p className="text-sm text-muted-foreground text-center py-2">
+          <p className="text-sm text-muted-foreground text-center py-sm">
             Log rounds to see your stats
           </p>
         )}

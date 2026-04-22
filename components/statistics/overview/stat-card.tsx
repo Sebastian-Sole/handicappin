@@ -1,4 +1,5 @@
 import { Card, CardContent } from "@/components/ui/card";
+import { StatDelta } from "@/components/ui/stat-delta";
 import { cn } from "@/lib/utils";
 
 interface StatCardProps {
@@ -18,19 +19,17 @@ export function StatCard({
 }: StatCardProps) {
   return (
     <Card className={cn("", className)}>
-      <CardContent className="p-4">
+      <CardContent className="p-md">
         <p className="text-sm text-muted-foreground">{title}</p>
-        <div className="flex items-baseline gap-2">
+        <div className="flex items-baseline gap-sm">
           <p className="text-2xl font-bold">{value}</p>
           {trend && trend !== "neutral" && (
-            <span
-              className={cn(
-                "text-sm",
-                trend === "down" ? "text-success" : "text-destructive"
-              )}
-            >
-              {trend === "down" ? "↓" : "↑"}
-            </span>
+            <StatDelta
+              value={trend === "down" ? -1 : 1}
+              invert
+              iconOnly
+              className="text-sm"
+            />
           )}
         </div>
         {subtitle && <p className="text-xs text-muted-foreground">{subtitle}</p>}

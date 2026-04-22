@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import { StatDelta } from "@/components/ui/stat-delta";
 import { cn } from "@/lib/utils";
 import { StatisticsSection } from "../shared/statistics-section";
 import { getFlagEmoji } from "@/utils/frivolities/headerGenerator";
@@ -77,18 +78,18 @@ export function PerformanceSection({
 
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-xl">
       {/* Highlights Section */}
       <StatisticsSection
         icon="🏆"
         title="Highlights"
         description="Your standout performance metrics"
       >
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-md">
           {/* Best Round */}
-          <Card className="bg-score-eagle/10 border-score-eagle/20">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm text-muted-foreground flex items-center gap-2">
+          <Card className="tint-score-eagle">
+            <CardHeader className="pb-sm">
+              <CardTitle className="text-sm text-muted-foreground flex items-center gap-sm">
                 <span>🏆</span> Best Round
               </CardTitle>
             </CardHeader>
@@ -98,11 +99,11 @@ export function PerformanceSection({
               </p>
               <p className="text-sm text-muted-foreground">differential</p>
               {bestCourse && (
-                <p className="text-xs text-muted-foreground mt-1">
+                <p className="text-xs text-muted-foreground mt-xs">
                   at {bestCourse.courseName}
                 </p>
               )}
-              <p className="text-xs text-success font-medium mt-2">
+              <p className="text-xs text-success font-medium mt-sm">
                 Your career best!
               </p>
             </CardContent>
@@ -110,13 +111,13 @@ export function PerformanceSection({
 
           {/* Score Range */}
           <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm text-muted-foreground flex items-center gap-2">
+            <CardHeader className="pb-sm">
+              <CardTitle className="text-sm text-muted-foreground flex items-center gap-sm">
                 <span>📊</span> Score Range
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="flex items-baseline gap-2">
+              <div className="flex items-baseline gap-sm">
                 <span className="text-3xl font-bold text-success">
                   {formatDifferential(stats.bestDifferential)}
                 </span>
@@ -126,7 +127,7 @@ export function PerformanceSection({
                 </span>
               </div>
               <p className="text-sm text-muted-foreground">differential range</p>
-              <p className="text-xs text-muted-foreground mt-2">
+              <p className="text-xs text-muted-foreground mt-sm">
                 {getStrokeSpread()} stroke spread
               </p>
             </CardContent>
@@ -137,11 +138,11 @@ export function PerformanceSection({
             className={cn(
               isValidNumber(stats.improvementRate) &&
               stats.improvementRate > 0 &&
-              "bg-success/10 border-success/20"
+              "tint-success"
             )}
           >
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm text-muted-foreground flex items-center gap-2">
+            <CardHeader className="pb-sm">
+              <CardTitle className="text-sm text-muted-foreground flex items-center gap-sm">
                 <span>
                   {!isValidNumber(stats.improvementRate) || stats.improvementRate === 0
                     ? "📊"
@@ -153,7 +154,7 @@ export function PerformanceSection({
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="flex items-baseline gap-2">
+              <div className="flex items-baseline gap-sm">
                 <p
                   className={cn(
                     "text-3xl font-bold",
@@ -170,7 +171,7 @@ export function PerformanceSection({
               <p className="text-sm text-muted-foreground">since starting</p>
               <p
                 className={cn(
-                  "text-xs mt-2",
+                  "text-xs mt-sm",
                   isValidNumber(stats.improvementRate) && stats.improvementRate > 0
                     ? "text-success font-medium"
                     : "text-muted-foreground"
@@ -191,30 +192,28 @@ export function PerformanceSection({
         title="Overview Stats"
         description="Key metrics at a glance"
       >
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-md">
           <Card>
-            <CardContent className="p-4">
+            <CardContent className="p-md">
               <p className="text-sm text-muted-foreground">Average Score</p>
               <p className="text-2xl font-bold">{formatScore(stats.avgScore)}</p>
               <p className="text-xs text-muted-foreground">{getAvgScoreContext()}</p>
             </CardContent>
           </Card>
           <Card>
-            <CardContent className="p-4">
+            <CardContent className="p-md">
               <p className="text-sm text-muted-foreground">Handicap Change</p>
-              <div className="flex items-baseline gap-2">
+              <div className="flex items-baseline gap-sm">
                 <p className="text-2xl font-bold">
                   {formatWithSign(stats.handicapChange)}
                 </p>
                 {isValidNumber(stats.handicapChange) && stats.handicapChange !== 0 && (
-                  <span
-                    className={cn(
-                      "text-sm",
-                      stats.handicapChange < 0 ? "text-success" : "text-destructive"
-                    )}
-                  >
-                    {stats.handicapChange < 0 ? "↓" : "↑"}
-                  </span>
+                  <StatDelta
+                    value={stats.handicapChange}
+                    invert
+                    iconOnly
+                    className="text-sm"
+                  />
                 )}
               </div>
               <p className="text-xs text-muted-foreground">
@@ -223,7 +222,7 @@ export function PerformanceSection({
             </CardContent>
           </Card>
           <Card>
-            <CardContent className="p-4">
+            <CardContent className="p-md">
               <p className="text-sm text-muted-foreground">Consistency</p>
               <p className="text-2xl font-bold">
                 {extendedStats.consistencyRating > 0
@@ -238,7 +237,7 @@ export function PerformanceSection({
             </CardContent>
           </Card>
           <Card>
-            <CardContent className="p-4">
+            <CardContent className="p-md">
               <p className="text-sm text-muted-foreground">Courses Played</p>
               <p className="text-2xl font-bold">{extendedStats.uniqueCourses}</p>
               <p className="text-xs text-muted-foreground">
@@ -258,8 +257,8 @@ export function PerformanceSection({
             title="Best Month"
             description="Your peak performance period"
           >
-            <Card className="bg-gradient-to-br from-primary/10 to-primary/20 border-primary/20">
-              <CardContent className="p-6">
+            <Card className="tint-primary">
+              <CardContent className="p-lg">
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-2xl font-bold">
@@ -300,17 +299,17 @@ export function PerformanceSection({
               </p>
             }
           >
-            <div className="space-y-3">
+            <div className="space-y-sm">
               {extendedStats.exceptionalRounds.map((round) => (
                 <Link
                   key={round.roundId}
                   href={`/rounds/${round.roundId}/calculation`}
                   className="block"
                 >
-                  <Card className="bg-score-eagle/10 border-score-eagle/20 hover:border-score-eagle/40 transition-colors cursor-pointer">
-                    <CardContent className="p-4">
+                  <Card className="tint-score-eagle hover:border-score-eagle/40 transition-colors cursor-pointer">
+                    <CardContent className="p-md">
                       <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-sm">
                           <div className="text-2xl">🏆</div>
                           <div>
                             <p className="font-semibold">

@@ -29,9 +29,9 @@ export function ScoringBreakdownSection({ stats }: ScoringBreakdownSectionProps)
   const avgOverPar = stats.avgStrokesPerHole - averagePar;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-lg">
       {/* Milestone Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-md">
         <FunStatCard
           title="Total Strokes"
           value={formatNumber(stats.totalStrokes)}
@@ -59,14 +59,14 @@ export function ScoringBreakdownSection({ stats }: ScoringBreakdownSectionProps)
       </div>
 
       {/* Charts Row */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-lg">
         {/* Strokes by Par Type */}
         <Card>
           <CardHeader>
             <CardTitle className="text-base">Strokes by Par Type</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
+            <div className="space-y-md">
               {stats.strokesByParType.map((parType) => {
                 const overPar = parType.avgStrokes - parType.parType;
                 return (
@@ -79,7 +79,7 @@ export function ScoringBreakdownSection({ stats }: ScoringBreakdownSectionProps)
                       <span className="text-lg font-bold">
                         {parType.avgStrokes.toFixed(2)}
                       </span>
-                      <span className="text-muted-foreground text-sm ml-2">
+                      <span className="text-muted-foreground text-sm ml-sm">
                         avg ({overPar > 0 ? "+" : ""}
                         {overPar.toFixed(1)})
                       </span>

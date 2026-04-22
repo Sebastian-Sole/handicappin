@@ -32,14 +32,14 @@ export function HandicapGoal({
 
   return (
     <Card className={cn("", className)}>
-      <CardHeader className="pb-2">
-        <CardTitle className="text-base flex items-center gap-2">
+      <CardHeader className="pb-sm">
+        <CardTitle className="text-base flex items-center gap-sm">
           <Target className="h-4 w-4 text-primary" />
           Journey to Scratch
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="space-y-3">
+        <div className="space-y-sm">
           <Progress value={progress} className="h-2" />
           <div className="flex justify-between text-xs text-muted-foreground">
             <span>Start: {startingHandicap.toFixed(1)}</span>

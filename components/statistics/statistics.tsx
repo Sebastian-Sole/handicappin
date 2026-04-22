@@ -154,16 +154,16 @@ export function Statistics({ profile, scorecards }: StatisticsProps) {
   // Empty state for users with no rounds
   if (scorecards.length === 0) {
     return (
-      <div className="bg-background text-foreground p-4 md:p-8 rounded-lg min-h-screen flex flex-col items-center justify-center">
+      <div className="bg-background text-foreground p-md md:p-xl rounded-lg min-h-screen flex flex-col items-center justify-center">
         <div className="text-center max-w-md">
-          <H1 className="text-3xl font-bold mb-4">No Statistics Yet</H1>
-          <p className="text-muted-foreground text-lg mb-6">
+          <H1 className="text-3xl font-bold mb-md">No Statistics Yet</H1>
+          <p className="text-muted-foreground text-lg mb-lg">
             Record your first round to start tracking your performance.
           </p>
-          <p className="text-sm text-muted-foreground mb-6">
+          <p className="text-sm text-muted-foreground mb-lg">
             Once you have a few rounds recorded, you&apos;ll see:
           </p>
-          <ul className="text-left text-sm text-muted-foreground space-y-2 mb-8">
+          <ul className="text-left text-sm text-muted-foreground space-y-sm mb-xl">
             <li>- Handicap trends and performance analysis</li>
             <li>- Course-by-course breakdowns</li>
             <li>- Activity patterns and streaks</li>
@@ -178,9 +178,9 @@ export function Statistics({ profile, scorecards }: StatisticsProps) {
   }
 
   return (
-    <div className="bg-background text-foreground p-4 md:p-8 rounded-lg min-h-screen">
+    <div className="bg-background text-foreground p-md md:p-xl rounded-lg min-h-screen">
       {/* Header */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-lg gap-md">
         <div>
           <H1 className="text-3xl font-bold">Statistics</H1>
           <p className="text-muted-foreground">
@@ -202,7 +202,7 @@ export function Statistics({ profile, scorecards }: StatisticsProps) {
 
       {/* Tabbed Content - 4 tabs: Performance, Activity, Courses, Frivolities */}
       <Tabs defaultValue="performance" className="w-full">
-        <TabsList className="grid w-full grid-cols-4 mb-6">
+        <TabsList className="grid w-full grid-cols-4 mb-lg">
           <TabsTrigger value="performance">Performance</TabsTrigger>
           <TabsTrigger value="activity">Activity</TabsTrigger>
           <TabsTrigger value="courses">Courses</TabsTrigger>
