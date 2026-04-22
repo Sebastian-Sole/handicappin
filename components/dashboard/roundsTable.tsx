@@ -98,11 +98,11 @@ export function RoundsTable({
   };
 
   return (
-    <div className="bg-card rounded-lg p-6">
-      <H2 className="mb-4">{title}</H2>
+    <div className="surface p-lg">
+      <H2 className="mb-md">{title}</H2>
 
       {showSearch && (
-        <div className="mb-4" id="table">
+        <div className="mb-md" id="table">
           <Input
             type="search"
             placeholder="Search rounds..."
@@ -111,7 +111,7 @@ export function RoundsTable({
               setSearchTerm(e.target.value);
               setPage(0);
             }}
-            className="w-full rounded-lg bg-background pl-4"
+            className="w-full rounded-lg bg-background pl-md"
           />
         </div>
       )}
@@ -126,7 +126,7 @@ export function RoundsTable({
               >
                 Date{" "}
                 <span
-                  className="ml-1 opacity-0 transition-opacity"
+                  className="ml-xs opacity-0 transition-opacity"
                   style={{ opacity: sortColumn === "teeTime" ? 1 : 0 }}
                 >
                   {sortDirection === "asc" ? "\u2191" : "\u2193"}
@@ -138,7 +138,7 @@ export function RoundsTable({
               >
                 Course{" "}
                 <span
-                  className="ml-1 opacity-0 transition-opacity"
+                  className="ml-xs opacity-0 transition-opacity"
                   style={{ opacity: sortColumn === "course.name" ? 1 : 0 }}
                 >
                   {sortDirection === "asc" ? "\u2191" : "\u2193"}
@@ -150,7 +150,7 @@ export function RoundsTable({
               >
                 Score{" "}
                 <span
-                  className="ml-1 opacity-0 transition-opacity"
+                  className="ml-xs opacity-0 transition-opacity"
                   style={{
                     opacity: sortColumn === "round.adjustedGrossScore" ? 1 : 0,
                   }}
@@ -164,7 +164,7 @@ export function RoundsTable({
               >
                 Par{" "}
                 <span
-                  className="ml-1 opacity-0 transition-opacity"
+                  className="ml-xs opacity-0 transition-opacity"
                   style={{ opacity: sortColumn === "round.parPlayed" ? 1 : 0 }}
                 >
                   {sortDirection === "asc" ? "\u2191" : "\u2193"}
@@ -176,7 +176,7 @@ export function RoundsTable({
               >
                 Differential{" "}
                 <span
-                  className="ml-1 opacity-0 transition-opacity"
+                  className="ml-xs opacity-0 transition-opacity"
                   style={{
                     opacity: sortColumn === "round.scoreDifferential" ? 1 : 0,
                   }}
@@ -190,7 +190,7 @@ export function RoundsTable({
               >
                 Adjustment{" "}
                 <span
-                  className="ml-1 opacity-0 transition-opacity"
+                  className="ml-xs opacity-0 transition-opacity"
                   style={{
                     opacity:
                       sortColumn === "round.exceptionalScoreAdjustment" ? 1 : 0,
@@ -237,8 +237,8 @@ export function RoundsTable({
           </TableBody>
         </Table>
       ) : scorecards.length === 0 ? (
-        <div className="mt-8 text-center py-12">
-          <p className="text-muted-foreground mb-4">
+        <div className="mt-xl text-center py-2xl">
+          <p className="text-muted-foreground mb-md">
             You haven&apos;t logged any rounds yet. Start tracking your handicap
             by adding your first round.
           </p>
@@ -247,7 +247,7 @@ export function RoundsTable({
           </Link>
         </div>
       ) : (
-        <div className="mt-4 text-center">
+        <div className="mt-md text-center">
           <p className="text-muted-foreground">
             No rounds found for search: &quot;{searchTerm}&quot;
           </p>
