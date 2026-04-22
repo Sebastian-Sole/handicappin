@@ -107,39 +107,39 @@ export function PricingCard({
 
   return (
     <Card
-      className={`${borderClass} rounded-lg p-8 ${shadowClass} transition relative dark:bg-primary/10 ${className} flex flex-col h-full`}
+      className={`${borderClass} rounded-lg p-xl ${shadowClass} transition relative dark:bg-primary/10 ${className} flex flex-col h-full`}
     >
       {badge && (
-        <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
+        <div className="absolute -top-md left-1/2 transform -translate-x-1/2">
           <Badge
             className={`${
               badge.variant ? badgeColors[badge.variant] : "bg-muted-foreground"
-            } text-primary-foreground px-4 py-1 rounded-full text-sm font-semibold whitespace-nowrap min-h-6 flex items-center`}
+            } text-primary-foreground px-md py-xs rounded-full text-sm font-semibold whitespace-nowrap min-h-6 flex items-center`}
           >
             {badge.text}
           </Badge>
         </div>
       )}
 
-      <div className="mb-4">
-        <H2 className="text-2xl mb-2 pb-0">{title}</H2>
+      <div className="mb-md">
+        <H2 className="text-2xl mb-sm pb-0">{title}</H2>
         {/* {badge && plan === "free" && (
           <p className="text-xs text-muted-foreground">
             First 100 users, forever
           </p>
         )} */}
-        <p className="text-muted-foreground mt-2 mb-4">{description}</p>
+        <p className="text-muted-foreground mt-sm mb-md">{description}</p>
         {slotsRemaining !== undefined && slotsRemaining !== null && (
-          <p className="text-sm font-semibold text-destructive mb-2">
+          <p className="text-sm font-semibold text-destructive mb-sm">
             {slotsRemaining > 0
               ? `${slotsRemaining} slot${slotsRemaining !== 1 ? "s" : ""} left!`
               : "All slots claimed"}
           </p>
         )}
-        <div className="mb-4">
+        <div className="mb-md">
           <div>
             {originalPrice && (
-              <span className="text-lg text-muted-foreground line-through mr-2">
+              <span className="text-lg text-muted-foreground line-through mr-sm">
                 {typeof originalPrice === "number"
                   ? `$${originalPrice}`
                   : originalPrice}
@@ -156,7 +156,7 @@ export function PricingCard({
             </span>
           </div>
           {costComparison && (
-            <p className="text-xs text-muted-foreground mt-1 italic">
+            <p className="text-xs text-muted-foreground mt-xs italic">
               {costComparison}
             </p>
           )}
@@ -164,13 +164,13 @@ export function PricingCard({
       </div>
 
       <div className="flex-grow flex flex-col justify-between">
-        <ul className="space-y-3 mb-8">
+        <ul className="space-y-sm mb-xl">
           {features.map((feature, index) => (
             <li key={index} className="flex items-start">
               {feature.included ? (
-                <span className="text-success mr-2">✓</span>
+                <span className="text-success mr-sm">✓</span>
               ) : (
-                <span className="text-destructive mr-2">✗</span>
+                <span className="text-destructive mr-sm">✗</span>
               )}
               <span className={feature.included ? "" : "text-muted-foreground/70"}>
                 {feature.text}
@@ -194,32 +194,32 @@ export function PricingCard({
 
 export function PricingCardSkeleton() {
   return (
-    <Card className="rounded-lg p-8 shadow-md flex flex-col h-full">
+    <Card className="rounded-lg p-xl shadow-md flex flex-col h-full">
       {/* Badge skeleton */}
-      <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
+      <div className="absolute -top-md left-1/2 transform -translate-x-1/2">
         <Skeleton className="h-6 w-24 rounded-full" />
       </div>
 
-      <div className="mb-4">
+      <div className="mb-md">
         {/* Title */}
-        <Skeleton className="h-8 w-32 mb-2" />
+        <Skeleton className="h-8 w-32 mb-sm" />
 
         {/* Description */}
-        <Skeleton className="h-4 w-full mt-2 mb-2" />
-        <Skeleton className="h-4 w-3/4 mb-4" />
+        <Skeleton className="h-4 w-full mt-sm mb-sm" />
+        <Skeleton className="h-4 w-3/4 mb-md" />
 
         {/* Price */}
-        <div className="mb-4">
+        <div className="mb-md">
           <Skeleton className="h-10 w-40" />
         </div>
       </div>
 
       <div className="flex-grow flex flex-col justify-between">
         {/* Features */}
-        <ul className="space-y-3 mb-8">
+        <ul className="space-y-sm mb-xl">
           {[1, 2, 3, 4].map((i) => (
             <li key={i} className="flex items-start">
-              <Skeleton className="h-4 w-4 mr-2 rounded-full flex-shrink-0" />
+              <Skeleton className="h-4 w-4 mr-sm rounded-full flex-shrink-0" />
               <Skeleton className="h-4 flex-1" />
             </li>
           ))}

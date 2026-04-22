@@ -186,18 +186,18 @@ export function VerifySessionContent({
   };
 
   return (
-    <div className="max-w-md w-full bg-card rounded-lg shadow-lg p-8">
+    <div className="max-w-md w-full surface shadow-lg p-xl">
       <div className="text-center">
         {/* Verifying State */}
         {state === "verifying" && (
           <>
-            <div className="text-6xl mb-4 animate-spin">⏳</div>
-            <H1 className="text-2xl mb-2">Verifying Your Session</H1>
-            <p className="text-muted-foreground mb-6">
+            <div className="text-6xl mb-md animate-spin">⏳</div>
+            <H1 className="text-2xl mb-sm">Verifying Your Session</H1>
+            <p className="text-muted-foreground mb-lg">
               Please wait while we verify your account...
             </p>
             <div className="flex justify-center">
-              <div className="animate-pulse flex space-x-2">
+              <div className="animate-pulse flex space-x-sm">
                 <div className="w-3 h-3 bg-info rounded-full"></div>
                 <div className="w-3 h-3 bg-info rounded-full"></div>
                 <div className="w-3 h-3 bg-info rounded-full"></div>
@@ -209,16 +209,16 @@ export function VerifySessionContent({
         {/* Retrying State */}
         {state === "retrying" && (
           <>
-            <div className="text-6xl mb-4 animate-pulse">🔄</div>
-            <H1 className="text-2xl mb-2">Retrying...</H1>
-            <p className="text-muted-foreground mb-2">
+            <div className="text-6xl mb-md animate-pulse">🔄</div>
+            <H1 className="text-2xl mb-sm">Retrying...</H1>
+            <p className="text-muted-foreground mb-sm">
               Attempt {attemptCount + 1} of {MAX_RETRY_ATTEMPTS}
             </p>
-            <p className="text-sm text-muted-foreground mb-6">
+            <p className="text-sm text-muted-foreground mb-lg">
               Having trouble verifying your session. Trying again...
             </p>
             <div className="flex justify-center">
-              <div className="animate-pulse flex space-x-2">
+              <div className="animate-pulse flex space-x-sm">
                 <div className="w-3 h-3 bg-warning rounded-full"></div>
                 <div className="w-3 h-3 bg-warning rounded-full"></div>
                 <div className="w-3 h-3 bg-warning rounded-full"></div>
@@ -230,19 +230,19 @@ export function VerifySessionContent({
         {/* Failed State (Max Retries) */}
         {state === "failed" && (
           <>
-            <div className="text-6xl mb-4">❌</div>
-            <H1 className="text-2xl mb-2">Verification Failed</H1>
-            <p className="text-muted-foreground mb-6">{errorMessage}</p>
-            <div className="space-y-3">
+            <div className="text-6xl mb-md">❌</div>
+            <H1 className="text-2xl mb-sm">Verification Failed</H1>
+            <p className="text-muted-foreground mb-lg">{errorMessage}</p>
+            <div className="space-y-sm">
               <button
                 onClick={handleLogout}
-                className="w-full bg-primary text-primary-foreground px-6 py-3 rounded-lg hover:bg-primary/90 transition"
+                className="w-full bg-primary text-primary-foreground px-lg py-sm rounded-lg hover:bg-primary/90 transition"
               >
                 Sign In Again
               </button>
               <a
                 href="mailto:sebastiansole@handicappin.com"
-                className="block w-full border border-border px-6 py-3 rounded-lg hover:bg-muted/50 transition"
+                className="block w-full border border-border px-lg py-sm rounded-lg hover:bg-muted/50 transition"
               >
                 Contact Support
               </a>
@@ -253,25 +253,25 @@ export function VerifySessionContent({
         {/* Error State (Unexpected) */}
         {state === "error" && (
           <>
-            <div className="text-6xl mb-4">⚠️</div>
-            <H1 className="text-2xl mb-2">Something Went Wrong</H1>
-            <p className="text-muted-foreground mb-2">
+            <div className="text-6xl mb-md">⚠️</div>
+            <H1 className="text-2xl mb-sm">Something Went Wrong</H1>
+            <p className="text-muted-foreground mb-sm">
               We encountered an error while verifying your session.
             </p>
-            <p className="text-sm text-destructive mb-6">{errorMessage}</p>
-            <div className="space-y-3">
+            <p className="text-sm text-destructive mb-lg">{errorMessage}</p>
+            <div className="space-y-sm">
               <button
                 onClick={() => {
                   setAttemptCount(0);
                   setState("verifying");
                 }}
-                className="w-full bg-primary text-primary-foreground px-6 py-3 rounded-lg hover:bg-primary/90 transition"
+                className="w-full bg-primary text-primary-foreground px-lg py-sm rounded-lg hover:bg-primary/90 transition"
               >
                 Try Again
               </button>
               <button
                 onClick={handleLogout}
-                className="w-full border border-border px-6 py-3 rounded-lg hover:bg-muted/50 transition"
+                className="w-full border border-border px-lg py-sm rounded-lg hover:bg-muted/50 transition"
               >
                 Sign In Again
               </button>
@@ -282,8 +282,8 @@ export function VerifySessionContent({
 
       {/* Debug Info (only in development) */}
       {process.env.NODE_ENV === "development" && (
-        <div className="mt-8 p-4 bg-muted rounded text-xs text-left">
-          <p className="font-mono mb-1">
+        <div className="mt-xl p-md bg-muted rounded text-xs text-left">
+          <p className="font-mono mb-xs">
             <strong>Debug Info:</strong>
           </p>
           <p className="font-mono">State: {state}</p>

@@ -162,13 +162,13 @@ export function Login() {
   }
 
   return (
-    <div className="mx-auto max-w-sm space-y-6 py-4 md:py-4 lg:py-4 xl:py-4 sm:min-w-[40%] min-h-full w-[90%]">
+    <div className="mx-auto max-w-sm space-y-lg py-md md:py-md lg:py-md xl:py-md sm:min-w-[40%] min-h-full w-[90%]">
       {isVerified && <VerificationBox />}
       {oauthError && (
         <FormFeedback
           type="error"
           message={oauthError}
-          className="mb-4"
+          className="mb-md"
           onClose={dismissOAuthError}
         />
       )}
@@ -176,20 +176,20 @@ export function Login() {
         <FormFeedback
           type={feedback.type}
           message={feedback.message}
-          className="mb-4"
+          className="mb-md"
           onClose={clearFeedback}
         />
       )}
-      <div className="space-y-2 text-center">
+      <div className="space-y-sm text-center">
         <H1>Welcome Back</H1>
         <p className="text-muted-foreground">
           Sign in to your account to continue
         </p>
       </div>
-      <div className="space-y-4">
+      <div className="space-y-md">
         <Form {...form}>
-          <form onSubmit={(e) => form.handleSubmit(onSubmit)(e)} className="space-y-8">
-            <div className="space-y-2">
+          <form onSubmit={(e) => form.handleSubmit(onSubmit)(e)} className="space-y-xl">
+            <div className="space-y-sm">
               <FormField
                 control={form.control}
                 name="email"
@@ -205,7 +205,7 @@ export function Login() {
                 )}
               />
             </div>
-            <div className="space-y-2">
+            <div className="space-y-sm">
               <FormField
                 control={form.control}
                 name="password"
@@ -236,12 +236,12 @@ export function Login() {
         </Form>
 
         {/* OAuth Divider */}
-        <div className="relative my-4">
+        <div className="relative my-md">
           <div className="absolute inset-0 flex items-center">
             <span className="w-full border-t" />
           </div>
           <div className="relative flex justify-center text-xs uppercase">
-            <span className="bg-background px-2 text-muted-foreground">
+            <span className="bg-background px-sm text-muted-foreground">
               Or continue with
             </span>
           </div>
