@@ -1,5 +1,6 @@
 import AboutSkeleton from "@/components/loading/about-skeleton";
 import { Badge } from "@/components/ui/badge";
+import { StatTile } from "@/components/ui/stat-tile";
 import { H2, H3, P } from "@/components/ui/typography";
 import { createClient } from "@supabase/supabase-js";
 import { Suspense } from "react";
@@ -72,7 +73,7 @@ export default async function AboutPage() {
     <Suspense fallback={<AboutSkeleton />}>
       <div className="min-h-screen bg-background">
         {/* Mission Section */}
-        <section className="w-full py-2xl md:py-4xl lg:py-5xl bg-gradient-to-br from-primary/5 to-primary/20 dark:from-primary/5 dark:to-primary/35">
+        <section className="w-full py-2xl md:py-4xl lg:py-5xl hero-gradient">
           <div className="sm:container px-md md:px-lg mx-auto">
             <div className="mx-auto grid max-w-5xl items-start gap-lg py-2xl xl:grid-cols-2 lg:gap-2xl">
               <div className="flex flex-col justify-start space-y-md">
@@ -93,8 +94,8 @@ export default async function AboutPage() {
               </div>
               <div className="grid gap-lg sm:grid-cols-2 h-fit">
                 <div className="flex items-start space-x-md">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 flex-shrink-0">
-                    <Logs className="h-7 w-7 text-primary" />
+                  <div className="icon-chip-primary">
+                    <Logs className="h-7 w-7" />
                   </div>
                   <div>
                     <H3 className="text-lg">
@@ -107,8 +108,8 @@ export default async function AboutPage() {
                   </div>
                 </div>
                 <div className="flex items-start space-x-md">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 flex-shrink-0">
-                    <LineChart className="h-7 w-7 text-primary" />
+                  <div className="icon-chip-primary">
+                    <LineChart className="h-7 w-7" />
                   </div>
                   <div>
                     <H3 className="text-lg">
@@ -122,8 +123,8 @@ export default async function AboutPage() {
                   </div>
                 </div>
                 <div className="flex items-start space-x-md">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 flex-shrink-0">
-                    <BookOpenText className="h-7 w-7 text-primary" />
+                  <div className="icon-chip-primary">
+                    <BookOpenText className="h-7 w-7" />
                   </div>
                   <div>
                     <H3 className="text-lg">
@@ -137,8 +138,8 @@ export default async function AboutPage() {
                   </div>
                 </div>
                 <div className="flex items-start space-x-md">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 flex-shrink-0">
-                    <Calculator className="h-7 w-7 text-primary" />
+                  <div className="icon-chip-primary">
+                    <Calculator className="h-7 w-7" />
                   </div>
                   <div>
                     <H3 className="text-lg">Calculators</H3>
@@ -180,8 +181,8 @@ export default async function AboutPage() {
               <div className="flex flex-col justify-center space-y-lg">
                 <div className="grid gap-lg xl:grid-cols-2">
                   <div className="flex items-start space-x-md">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 flex-shrink-0">
-                      <Scale className="h-6 w-6 text-primary" />
+                    <div className="icon-chip-primary">
+                      <Scale className="h-6 w-6" />
                     </div>
                     <div className="space-y-xs">
                       <H3 className="text-xl">
@@ -196,8 +197,8 @@ export default async function AboutPage() {
                   </div>
 
                   <div className="flex items-start space-x-md">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 flex-shrink-0">
-                      <Earth className="h-6 w-6 text-primary" />
+                    <div className="icon-chip-primary">
+                      <Earth className="h-6 w-6" />
                     </div>
                     <div className="space-y-xs">
                       <H3 className="text-xl">
@@ -212,8 +213,8 @@ export default async function AboutPage() {
                   </div>
 
                   <div className="flex items-start space-x-md">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 flex-shrink-0">
-                      <Gauge className="h-6 w-6 text-primary" />
+                    <div className="icon-chip-primary">
+                      <Gauge className="h-6 w-6" />
                     </div>
                     <div className="space-y-xs">
                       <H3 className="text-xl">Dashboard</H3>
@@ -226,8 +227,8 @@ export default async function AboutPage() {
                   </div>
 
                   <div className="flex items-start space-x-md">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 flex-shrink-0">
-                      <Trophy className="h-6 w-6 text-primary" />
+                    <div className="icon-chip-primary">
+                      <Trophy className="h-6 w-6" />
                     </div>
                     <div className="space-y-xs">
                       <H3 className="text-xl">
@@ -244,31 +245,29 @@ export default async function AboutPage() {
             </div>
             <div className="mx-auto max-w-5xl flex flex-col items-center justify-center">
               <div className="flex flex-col gap-md w-full sm:grid xl:grid-cols-4 sm:grid-cols-2 xl:gap-md">
-                <div className="surface flex flex-col items-center space-y-sm p-lg text-center w-full">
-                  <div className="text-2xl font-bold text-primary">
-                    {totalRounds}
-                  </div>
-                  <div className="text-sm text-muted-foreground">
-                    Total Rounds Logged
-                  </div>
+                <div className="surface p-lg w-full">
+                  <StatTile
+                    value={<span className="text-primary">{totalRounds}</span>}
+                    label="Total Rounds Logged"
+                  />
                 </div>
-                <div className="surface flex flex-col items-center space-y-sm p-lg text-center w-full">
-                  <div className="text-2xl font-bold text-primary">USGA</div>
-                  <div className="text-sm text-muted-foreground">
-                    Ruling Compliant
-                  </div>
+                <div className="surface p-lg w-full">
+                  <StatTile
+                    value={<span className="text-primary">USGA</span>}
+                    label="Ruling Compliant"
+                  />
                 </div>
-                <div className="surface flex flex-col items-center space-y-sm p-lg text-center w-full">
-                  <div className="text-2xl font-bold text-primary">
-                    {totalCourses}
-                  </div>
-                  <div className="text-sm text-muted-foreground">
-                    Courses Supported
-                  </div>
+                <div className="surface p-lg w-full">
+                  <StatTile
+                    value={<span className="text-primary">{totalCourses}</span>}
+                    label="Courses Supported"
+                  />
                 </div>
-                <div className="surface flex flex-col items-center space-y-sm p-lg text-center w-full">
-                  <div className="text-2xl font-bold text-primary">GDPR</div>
-                  <div className="text-sm text-muted-foreground">Compliant</div>
+                <div className="surface p-lg w-full">
+                  <StatTile
+                    value={<span className="text-primary">GDPR</span>}
+                    label="Compliant"
+                  />
                 </div>
               </div>
             </div>

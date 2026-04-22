@@ -1,10 +1,11 @@
 import { Skeleton } from "@/components/ui/skeleton";
+import { StatTile } from "@/components/ui/stat-tile";
 
 export default function AboutSkeleton() {
   return (
     <div className="min-h-screen bg-background">
       {/* Mission Section Skeleton */}
-      <section className="w-full py-2xl md:py-4xl lg:py-5xl bg-gradient-to-br from-primary/5 to-primary/20 dark:from-primary/5 dark:to-primary/35">
+      <section className="w-full py-2xl md:py-4xl lg:py-5xl hero-gradient">
         <div className="sm:container px-md md:px-lg mx-auto">
           <div className="mx-auto grid max-w-5xl items-start gap-lg py-2xl xl:grid-cols-2 lg:gap-2xl">
             <div className="flex flex-col justify-start space-y-md">
@@ -94,12 +95,11 @@ export default function AboutSkeleton() {
           <div className="mx-auto max-w-5xl flex flex-col items-center justify-center">
             <div className="flex flex-col gap-md w-full sm:grid xl:grid-cols-4 sm:grid-cols-2 xl:gap-md">
               {[...Array(4)].map((_, i) => (
-                <div
-                  key={i}
-                  className="surface flex flex-col items-center space-y-sm p-lg text-center w-full"
-                >
-                  <Skeleton className="h-8 w-1/2 mx-auto mb-sm" />
-                  <Skeleton className="h-4 w-2/3 mx-auto" />
+                <div key={i} className="surface p-lg w-full">
+                  <StatTile
+                    value={<Skeleton className="h-8 w-1/2 mx-auto" />}
+                    label={<Skeleton className="h-4 w-2/3 mx-auto" />}
+                  />
                 </div>
               ))}
             </div>

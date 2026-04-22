@@ -172,8 +172,8 @@ export default async function Landing() {
           <div className="grid md:grid-cols-3 gap-xl">
             <Card className="border-0 shadow-lg dark:bg-primary/10">
               <CardHeader>
-                <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mb-md">
-                  <BarChart3 className="h-6 w-6 text-primary" />
+                <div className="icon-chip-primary mb-md">
+                  <BarChart3 className="h-6 w-6" />
                 </div>
                 <CardTitle>Round Logging</CardTitle>
                 <CardDescription>
@@ -202,8 +202,8 @@ export default async function Landing() {
 
             <Card className="border-0 shadow-lg dark:bg-primary/10">
               <CardHeader>
-                <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mb-md">
-                  <Target className="h-6 w-6 text-primary" />
+                <div className="icon-chip-primary mb-md">
+                  <Target className="h-6 w-6" />
                 </div>
                 <CardTitle>Handicap Calculation</CardTitle>
                 <CardDescription>
@@ -231,8 +231,8 @@ export default async function Landing() {
 
             <Card className="border-0 shadow-lg dark:bg-primary/10">
               <CardHeader>
-                <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mb-md">
-                  <TrendingUp className="h-6 w-6 text-primary" />
+                <div className="icon-chip-primary mb-md">
+                  <TrendingUp className="h-6 w-6" />
                 </div>
                 <CardTitle>Calculators</CardTitle>
                 <CardDescription>

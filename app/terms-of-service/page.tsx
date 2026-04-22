@@ -22,7 +22,7 @@ export default function TermsOfServicePage() {
   return (
     <div className="min-h-screen bg-background">
       {/* Hero Section */}
-      <section className="w-full py-2xl md:py-4xl lg:py-5xl bg-gradient-to-br from-primary/5 to-primary/20 dark:from-primary/5 dark:to-primary/35">
+      <section className="w-full py-2xl md:py-4xl lg:py-5xl hero-gradient">
         <div className="sm:container px-md md:px-lg mx-auto">
           <div className="mx-auto max-w-3xl space-y-md text-center">
             <Badge>Legal</Badge>

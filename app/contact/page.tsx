@@ -67,7 +67,7 @@ export default function ContactPage() {
       <FAQJsonLd faqs={faqs} />
 
       {/* Hero Section */}
-      <section className="w-full py-2xl md:py-4xl lg:py-5xl bg-gradient-to-br from-primary/5 to-primary/20 dark:from-primary/5 dark:to-primary/35">
+      <section className="w-full py-2xl md:py-4xl lg:py-5xl hero-gradient">
         <div className="mx-auto max-w-3xl px-md md:px-lg text-center">
           <Badge className="mb-md">Contact Us</Badge>
           <H1 className="lg:leading-tighter sm:text-4xl md:text-5xl xl:text-[3.4rem] 2xl:text-[3.75rem] mb-md">
@@ -109,8 +109,8 @@ export default function ContactPage() {
               {/* Email Card */}
               <div className="surface p-md sm:p-lg">
                 <div className="flex items-start gap-sm sm:gap-md">
-                  <div className="flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-lg bg-primary/10 flex-shrink-0">
-                    <Mail className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
+                  <div className="icon-chip-primary">
+                    <Mail className="h-5 w-5 sm:h-6 sm:w-6" />
                   </div>
                   <div className="min-w-0">
                     <H3 className="mb-xs">Email Us</H3>
@@ -130,8 +130,8 @@ export default function ContactPage() {
               {/* Response Time Card */}
               <div className="surface p-md sm:p-lg">
                 <div className="flex items-start gap-sm sm:gap-md">
-                  <div className="flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-lg bg-primary/10 flex-shrink-0">
-                    <Clock className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
+                  <div className="icon-chip-primary">
+                    <Clock className="h-5 w-5 sm:h-6 sm:w-6" />
                   </div>
                   <div className="min-w-0">
                     <H3 className="mb-xs">Response Time</H3>
@@ -149,8 +149,8 @@ export default function ContactPage() {
               {/* Feature Requests Card */}
               <div className="surface p-md sm:p-lg">
                 <div className="flex items-start gap-sm sm:gap-md">
-                  <div className="flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-lg bg-primary/10 flex-shrink-0">
-                    <MessageSquare className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
+                  <div className="icon-chip-primary">
+                    <MessageSquare className="h-5 w-5 sm:h-6 sm:w-6" />
                   </div>
                   <div className="min-w-0">
                     <H3 className="mb-xs">
