@@ -71,10 +71,8 @@ export function HandicapDisplay({
       {hasPreviousHandicap && change !== 0 && (
         <div
           className={cn(
-            "flex items-center gap-xs mt-sm px-sm py-xs rounded-full text-sm font-medium",
-            change < 0
-              ? "bg-success/20 text-success"
-              : "bg-destructive/20 text-destructive"
+            "gap-xs mt-sm text-sm font-medium",
+            change < 0 ? "chip-success" : "chip-destructive"
           )}
         >
           {change < 0 ? (
