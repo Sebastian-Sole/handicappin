@@ -51,9 +51,9 @@ export function TargetScoreCalculator() {
   }, [targetHandicap, values.courseRating, values.slopeRating]);
 
   const result = calculation && (
-    <div className="space-y-4">
+    <div className="space-y-md">
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-sm">
           <Target className="h-5 w-5 text-primary" />
           <P className="font-medium">Target Score:</P>
         </div>
@@ -63,13 +63,13 @@ export function TargetScoreCalculator() {
       </div>
 
       {/* Score breakdown table */}
-      <div className="space-y-2">
+      <div className="space-y-sm">
         <Small className="text-muted-foreground">Score breakdown:</Small>
-        <div className="grid grid-cols-5 gap-1 text-center text-sm">
+        <div className="grid grid-cols-5 gap-xs text-center text-sm">
           {calculation.scoreBreakdown.map(({ score, differential, meetsTarget }) => (
             <div
               key={score}
-              className={`p-2 rounded ${
+              className={`p-sm rounded ${
                 meetsTarget
                   ? "bg-success/20"
                   : "bg-muted/50"
@@ -90,13 +90,13 @@ export function TargetScoreCalculator() {
   );
 
   const explanation = (
-    <div className="space-y-3">
+    <div className="space-y-sm">
       <Muted>
         This calculator works backwards from your target handicap index to find
         what score you need to shoot. The formula rearranges the score
         differential calculation:
       </Muted>
-      <div className="bg-muted/50 rounded-lg p-3 font-mono text-sm">
+      <div className="surface-muted p-sm font-mono text-sm">
         <P className="text-muted-foreground">
           Target Score = (Target Diff × Slope / 113) + Course Rating
         </P>
@@ -110,8 +110,8 @@ export function TargetScoreCalculator() {
 
   return (
     <CalculatorCard meta={meta} result={result} explanation={explanation}>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <div className="space-y-2">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-md">
+        <div className="space-y-sm">
           <Label htmlFor="targetHandicap">Target Handicap Index</Label>
           <Input
             id="targetHandicap"
@@ -126,7 +126,7 @@ export function TargetScoreCalculator() {
             }
           />
         </div>
-        <div className="space-y-2">
+        <div className="space-y-sm">
           <Label htmlFor="currentHandicap-target">Current Handicap</Label>
           <Input
             id="currentHandicap-target"
@@ -138,7 +138,7 @@ export function TargetScoreCalculator() {
             placeholder="From other calculators"
           />
         </div>
-        <div className="space-y-2">
+        <div className="space-y-sm">
           <Label htmlFor="courseRating-target">Course Rating</Label>
           <Input
             id="courseRating-target"
@@ -150,7 +150,7 @@ export function TargetScoreCalculator() {
             className="bg-muted"
           />
         </div>
-        <div className="space-y-2">
+        <div className="space-y-sm">
           <Label htmlFor="slopeRating-target">Slope Rating</Label>
           <Input
             id="slopeRating-target"

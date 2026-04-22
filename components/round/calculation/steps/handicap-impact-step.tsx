@@ -36,7 +36,7 @@ const HandicapImpactStep = () => {
       title="Handicap Impact"
       description="How this round affected your Handicap Index"
       learnMoreContent={
-        <div className="space-y-3">
+        <div className="space-y-sm">
           <Blockquote>
             Your Handicap Index is calculated from your best Score Differentials
             out of your most recent 20 rounds. The number of differentials used
@@ -47,7 +47,7 @@ const HandicapImpactStep = () => {
             smaller number of your best differentials with an adjustment factor.
           </P>
           {esrAdjustment !== 0 && (
-            <div className="bg-warning/10 border border-warning/30 rounded-lg p-3">
+            <div className="tint-warning p-sm">
               <P className="text-warning text-sm">
                 <strong>Exceptional Score Reduction (ESR):</strong> When you
                 post a Score Differential significantly better than your
@@ -67,9 +67,9 @@ const HandicapImpactStep = () => {
         </div>
       }
     >
-      <div className="space-y-4">
+      <div className="space-y-md">
         {/* Before/After comparison */}
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-8 py-4">
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-md sm:gap-xl py-md">
           <div className="text-center">
             <Muted>Before this round</Muted>
             <div className="text-3xl font-bold">
@@ -86,7 +86,7 @@ const HandicapImpactStep = () => {
         {/* Change indicator */}
         <div
           className={cn(
-            "flex items-center justify-center gap-3 p-4 rounded-lg",
+            "flex items-center justify-center gap-sm p-md rounded-lg",
             change < -0.05 && "bg-success/10",
             change > 0.05 && "bg-destructive/10",
             Math.abs(change) <= 0.05 && "bg-muted/50"
@@ -111,7 +111,7 @@ const HandicapImpactStep = () => {
 
         {/* Exceptional Score Adjustment */}
         {esrAdjustment !== 0 && (
-          <div className="bg-warning/10 border border-warning/30 rounded-lg p-4">
+          <div className="tint-warning p-md">
             <P className="font-medium text-warning">
               Exceptional Score Reduction Applied
             </P>
@@ -125,7 +125,7 @@ const HandicapImpactStep = () => {
         )}
 
         {/* Score differential reminder */}
-        <div className="bg-muted/50 rounded-lg p-4">
+        <div className="surface-muted p-md">
           <div className="flex items-center justify-between">
             <div>
               <Muted>This round&apos;s Score Differential</Muted>

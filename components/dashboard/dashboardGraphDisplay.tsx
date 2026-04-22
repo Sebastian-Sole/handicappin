@@ -17,8 +17,8 @@ interface DashboardGraphDisplayProps {
 
 const DashboardGraphDisplay = ({ graphData }: DashboardGraphDisplayProps) => {
   return (
-    <div className="bg-card rounded-lg p-6 col-span-2 rounded-l-none 2xl:min-h-auto xl:min-h-[450px] min-h-64">
-      <div className="flex items-center justify-between mb-4">
+    <div className="surface p-lg col-span-2 rounded-l-none 2xl:min-h-auto xl:min-h-[450px] min-h-64">
+      <div className="flex items-center justify-between mb-md">
         <H2>Recent Rounds</H2>
         <Link href={`/rounds/add`} prefetch={false}>
           <Button variant={"link"} className="underline">

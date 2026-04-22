@@ -51,17 +51,17 @@ const AddRoundPage = async () => {
 
   return (
     <Suspense fallback={<AddRoundSkeleton />}>
-      <div className="flex justify-center items-center flex-col h-full py-2 md:py-4 lg:py-8">
-        <Large className="text-4xl text-primary mb-2 md:mb-4 lg:mb-8">
+      <div className="flex justify-center items-center flex-col h-full py-sm md:py-md lg:py-xl">
+        <Large className="text-4xl text-primary mb-sm md:mb-md lg:mb-xl">
           Add Round
         </Large>
-        <P className="text-sm text-muted-foreground !mt-0 mb-2">
+        <P className="text-sm text-muted-foreground !mt-0 mb-sm">
           Fill out the scorecard to register your round.
         </P>
 
         {/* Show remaining rounds for free tier users */}
         {access.plan === "free" && access.remainingRounds > 0 && (
-          <div className="w-full max-w-4xl mb-4">
+          <div className="w-full max-w-4xl mb-md">
             <UsageLimitAlert
               current={FREE_TIER_ROUND_LIMIT - access.remainingRounds}
               total={FREE_TIER_ROUND_LIMIT}

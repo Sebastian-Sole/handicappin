@@ -55,16 +55,16 @@ const HolesTable = () => {
       <Table className="text-sm w-full">
         <TableHeader>
           <TableRow className="hover:bg-inherit">
-            <TableHead className="py-2 px-4">Hole</TableHead>
-            <TableHead className="py-2 px-4">Par</TableHead>
-            <TableHead className="py-2 px-4">Strokes</TableHead>
-            <TableHead className="py-2 px-4">HCP</TableHead>
-            <TableHead className="py-2 px-4 flex flex-row items-center">
+            <TableHead className="py-sm px-md">Hole</TableHead>
+            <TableHead className="py-sm px-md">Par</TableHead>
+            <TableHead className="py-sm px-md">Strokes</TableHead>
+            <TableHead className="py-sm px-md">HCP</TableHead>
+            <TableHead className="py-sm px-md flex flex-row items-center">
               Adj.{" "}
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger>
-                    <InfoIcon className="h-4 w-4 text-muted-foreground ml-1" />
+                    <InfoIcon className="h-4 w-4 text-muted-foreground ml-xs" />
                   </TooltipTrigger>
                   <TooltipContent>
                     <p>Max: par + net double bogey (incl. handicap strokes)</p>
@@ -81,28 +81,28 @@ const HolesTable = () => {
 
             return (
               <TableRow key={hole.id} className={!isPlayed ? "text-muted-foreground" : ""}>
-                <TableCell className="py-2 px-4">{hole.holeNumber}</TableCell>
-                <TableCell className="py-2 px-4">{isPlayed ? hole.par : "-"}</TableCell>
-                <TableCell className="py-2 px-4">{isPlayed ? score.strokes : "-"}</TableCell>
-                <TableCell className="py-2 px-4">{isPlayed ? score.hcpStrokes : "-"}</TableCell>
-                <TableCell className="py-2 px-4">{isPlayed ? calculateHoleAdjustedScore(hole, score, hasEstablishedHandicap) : "-"}</TableCell>
+                <TableCell className="py-sm px-md">{hole.holeNumber}</TableCell>
+                <TableCell className="py-sm px-md">{isPlayed ? hole.par : "-"}</TableCell>
+                <TableCell className="py-sm px-md">{isPlayed ? score.strokes : "-"}</TableCell>
+                <TableCell className="py-sm px-md">{isPlayed ? score.hcpStrokes : "-"}</TableCell>
+                <TableCell className="py-sm px-md">{isPlayed ? calculateHoleAdjustedScore(hole, score, hasEstablishedHandicap) : "-"}</TableCell>
               </TableRow>
             );
           })}
           <TableRow key={"total"} className="bg-secondary dark:bg-secondary font-medium">
-            <TableCell className="py-2 px-4 first:rounded-l-lg rounded-tl-none! last:rounded-r-lg">
+            <TableCell className="py-sm px-md first:rounded-l-lg rounded-tl-none! last:rounded-r-lg">
               {isNineHoles ? "Front 9" : "Total"}
             </TableCell>
-            <TableCell className="py-2 px-4">
+            <TableCell className="py-sm px-md">
               {playedHoles.reduce((acc, hole) => acc + hole.par, 0)}
             </TableCell>
-            <TableCell className="py-2 px-4">
+            <TableCell className="py-sm px-md">
               {playedHoles.reduce((acc, hole) => acc + (scorecard.scores[hole.holeNumber - 1]?.strokes ?? 0), 0)}
             </TableCell>
-            <TableCell className="py-2 px-4">
+            <TableCell className="py-sm px-md">
               {playedHoles.reduce((acc, hole) => acc + (scorecard.scores[hole.holeNumber - 1]?.hcpStrokes ?? 0), 0)}
             </TableCell>
-            <TableCell className="py-2 px-4 first:rounded-l-lg last:rounded-r-lg rounded-tr-none!">
+            <TableCell className="py-sm px-md first:rounded-l-lg last:rounded-r-lg rounded-tr-none!">
               {playedHoles.reduce((acc, hole) => {
                 const score = scorecard.scores[hole.holeNumber - 1];
                 return acc + (score ? calculateHoleAdjustedScore(hole, score, hasEstablishedHandicap) : 0);

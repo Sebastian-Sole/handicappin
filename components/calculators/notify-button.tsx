@@ -1,43 +1,40 @@
 "use client";
 
 import { useState } from "react";
-import { Button } from "../ui/button";
 import { User } from "@supabase/supabase-js";
 import { api } from "@/trpc/react";
 import { FormFeedback } from "../ui/form-feedback";
-import { Check } from "lucide-react";
+import { SaveStateButton, type SaveState } from "../ui/save-state-button";
 import type { FeedbackState } from "@/types/feedback";
 
 interface NotifyButtonProps {
   user: User | null;
 }
 
-type ButtonState = "idle" | "loading" | "subscribed" | "error";
-
 const NotifyButton = ({ user }: NotifyButtonProps) => {
-  const [buttonState, setButtonState] = useState<ButtonState>("idle");
+  const [saveState, setSaveState] = useState<SaveState>("idle");
   const [feedback, setFeedback] = useState<FeedbackState | null>(null);
 
   // Update preferences mutation
   const { mutate: updatePreferences } = api.auth.updateEmailPreferences.useMutation({
     onSuccess: () => {
-      setButtonState("subscribed");
+      setSaveState("saved");
       setFeedback(null);
     },
     onError: (error) => {
-      setButtonState("error");
+      setSaveState("error");
       setFeedback({
         type: "error",
         message: error.message,
       });
-      setTimeout(() => setButtonState("idle"), 2000);
+      setTimeout(() => setSaveState("idle"), 2000);
     },
   });
 
   const onClick = () => {
     if (!user) return;
 
-    setButtonState("loading");
+    setSaveState("saving");
     setFeedback(null);
     updatePreferences({
       featureUpdates: true,
@@ -45,30 +42,23 @@ const NotifyButton = ({ user }: NotifyButtonProps) => {
   };
 
   return (
-    <div className="mt-6 space-y-4">
+    <div className="mt-lg space-y-md">
       {feedback && (
         <FormFeedback
           type={feedback.type}
           message={feedback.message}
         />
       )}
-      <Button
-        variant={"secondary"}
+      <SaveStateButton
+        state={saveState}
+        variant="secondary"
         onClick={onClick}
-        disabled={buttonState === "loading" || buttonState === "subscribed"}
-        className={`transition-all duration-300 ${
-          buttonState === "subscribed" ? "bg-success hover:bg-success text-success-foreground" : ""
-        }`}
-      >
-        {buttonState === "loading" && "Saving..."}
-        {buttonState === "subscribed" && (
-          <>
-            <Check className="mr-2 h-4 w-4" />
-            Subscribed!
-          </>
-        )}
-        {(buttonState === "idle" || buttonState === "error") && "Notify me when they are ready"}
-      </Button>
+        className="transition-all duration-300"
+        idleLabel="Notify me when they are ready"
+        savingLabel="Saving..."
+        savedLabel="Subscribed!"
+        errorLabel="Notify me when they are ready"
+      />
     </div>
   );
 };

@@ -49,7 +49,7 @@ const ScoreDifferentialStep = () => {
       title="Score Differential"
       description="Your performance relative to course difficulty"
       learnMoreContent={
-        <div className="space-y-3">
+        <div className="space-y-sm">
           <Blockquote>
             The Score Differential measures how well you played compared to the
             difficulty of the course. It normalizes your score across different
@@ -60,7 +60,7 @@ const ScoreDifferentialStep = () => {
             Handicap Index is calculated from your best Score Differentials.
           </P>
           {isNineHoles && (
-            <div className="bg-info/10 border border-info/30 rounded-lg p-3 mt-4">
+            <div className="tint-info p-sm mt-md">
               <P className="text-info text-sm">
                 <strong>9-Hole Round Note:</strong> Since you played 9 holes,
                 your Score Differential is calculated as an 18-hole equivalent.
@@ -81,14 +81,14 @@ const ScoreDifferentialStep = () => {
         </div>
       }
     >
-      <div className="space-y-4">
+      <div className="space-y-md">
         {/* Reset button */}
         {hasChanges && (
           <Button
             variant="outline"
             size="sm"
             onClick={resetToOriginal}
-            className="gap-2"
+            className="gap-sm"
           >
             <RotateCcw className="w-4 h-4" />
             Reset to original values
@@ -96,7 +96,7 @@ const ScoreDifferentialStep = () => {
         )}
 
         {/* Inputs */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-md">
           <div>
             <Label>
               {isNineHoles
@@ -154,18 +154,18 @@ const ScoreDifferentialStep = () => {
 
         {/* Formula - different for 9-hole vs 18-hole */}
         {isNineHoles ? (
-          <div className="bg-muted/50 rounded-lg p-4 space-y-4">
+          <div className="surface-muted p-md space-y-md">
             <Muted>
               9-Hole Score Differential = Played Differential + Expected
               Differential
             </Muted>
 
             {/* Played Differential */}
-            <div className="space-y-1">
+            <div className="space-y-xs">
               <div className="text-sm font-medium">
                 Played Differential (Front 9):
               </div>
-              <div className="flex flex-wrap items-center gap-2 text-sm">
+              <div className="flex flex-wrap items-center gap-sm text-sm">
                 <Muted>
                   ({adjustedPlayedScore} − {rating}) × 113 ÷ {slope}
                 </Muted>
@@ -177,11 +177,11 @@ const ScoreDifferentialStep = () => {
             </div>
 
             {/* Expected Differential */}
-            <div className="space-y-1">
+            <div className="space-y-xs">
               <div className="text-sm font-medium">
                 Expected Differential (Unplayed 9):
               </div>
-              <div className="flex flex-wrap items-center gap-2 text-sm">
+              <div className="flex flex-wrap items-center gap-sm text-sm">
                 <Muted>
                   Based on handicap index{" "}
                   {scorecard.round.existingHandicapIndex}
@@ -194,8 +194,8 @@ const ScoreDifferentialStep = () => {
             </div>
 
             {/* Combined */}
-            <div className="border-t pt-3 mt-3">
-              <div className="flex flex-wrap items-center gap-2">
+            <div className="border-t pt-sm mt-sm">
+              <div className="flex flex-wrap items-center gap-sm">
                 <span className="font-medium">18-Hole Equivalent =</span>
                 <Muted>
                   {playedDifferential.toFixed(2)} +{" "}
@@ -209,12 +209,12 @@ const ScoreDifferentialStep = () => {
             </div>
           </div>
         ) : (
-          <div className="bg-muted/50 rounded-lg p-4 space-y-2">
+          <div className="surface-muted p-md space-y-sm">
             <Muted>
               Score Differential = (Adjusted Gross Score − Course Rating) × 113
               ÷ Slope Rating
             </Muted>
-            <div className="flex flex-wrap items-center gap-2">
+            <div className="flex flex-wrap items-center gap-sm">
               <span className="font-medium">Score Differential =</span>
               <Muted>
                 ({adjustedGrossScoreCalculation} − {rating}) × 113 ÷ {slope}
@@ -229,7 +229,7 @@ const ScoreDifferentialStep = () => {
 
         {/* 9-hole info note */}
         {isNineHoles && (
-          <div className="bg-info/10 border border-info/30 rounded-lg p-4">
+          <div className="tint-info p-md">
             <P className="text-info text-sm">
               <strong>Note:</strong> Per USGA Rule 5.1b, 9-hole rounds are
               converted to 18-hole equivalents by combining your actual played

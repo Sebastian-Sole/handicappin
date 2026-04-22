@@ -56,14 +56,14 @@ export function PlayingHandicapCalculator() {
   );
 
   const explanation = (
-    <div className="space-y-3">
+    <div className="space-y-sm">
       <Muted>Playing Handicap = Course Handicap x Handicap Allowance %</Muted>
       {playingHandicap !== null && selectedFormat && (
-        <div className="bg-muted/50 rounded-lg p-3 font-mono text-sm">
+        <div className="surface-muted p-sm font-mono text-sm">
           <P className="text-muted-foreground">
             {values.courseHandicap} x {selectedFormat.allowance}%
           </P>
-          <P className="font-bold mt-1">= {playingHandicap}</P>
+          <P className="font-bold mt-xs">= {playingHandicap}</P>
         </div>
       )}
       <Muted className="text-xs">
@@ -75,8 +75,8 @@ export function PlayingHandicapCalculator() {
 
   return (
     <CalculatorCard meta={meta} result={result} explanation={explanation}>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <div className="space-y-2">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-md">
+        <div className="space-y-sm">
           <Label htmlFor="courseHandicap-play">Course Handicap</Label>
           <Input
             id="courseHandicap-play"
@@ -91,7 +91,7 @@ export function PlayingHandicapCalculator() {
             }
           />
         </div>
-        <div className="space-y-2">
+        <div className="space-y-sm">
           <Label htmlFor="format">Format of Play</Label>
           <Select value={format} onValueChange={setFormat}>
             <SelectTrigger id="format">

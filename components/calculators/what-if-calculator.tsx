@@ -11,7 +11,8 @@ import {
   calculateScoreDifferential,
   calculateHandicapIndex,
 } from "@handicappin/handicap-core";
-import { ArrowRight, TrendingDown, TrendingUp, Minus } from "lucide-react";
+import { ArrowRight } from "lucide-react";
+import { StatDelta } from "@/components/ui/stat-delta";
 
 const meta = getCalculatorByIdOrThrow("what-if-scenario");
 
@@ -59,7 +60,7 @@ export function WhatIfCalculator() {
   }, [projectedHandicap, values.handicapIndex]);
 
   const result = (
-    <div className="space-y-4">
+    <div className="space-y-md">
       {hypotheticalDifferential !== null && (
         <div className="flex items-center justify-between">
           <P className="font-medium">Hypothetical Differential:</P>
@@ -69,7 +70,7 @@ export function WhatIfCalculator() {
         </div>
       )}
       {projectedHandicap !== null && values.handicapIndex !== null && (
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-md">
           <div className="text-center">
             <Small className="text-muted-foreground">Current</Small>
             <P className="text-xl font-bold">{values.handicapIndex.toFixed(1)}</P>
@@ -82,27 +83,11 @@ export function WhatIfCalculator() {
             </P>
           </div>
           {handicapChange !== null && (
-            <div
-              className={`flex items-center gap-1 ${
-                handicapChange < 0
-                  ? "text-success"
-                  : handicapChange > 0
-                    ? "text-destructive"
-                    : "text-muted-foreground"
-              }`}
-            >
-              {handicapChange < 0 ? (
-                <TrendingDown className="h-4 w-4" />
-              ) : handicapChange > 0 ? (
-                <TrendingUp className="h-4 w-4" />
-              ) : (
-                <Minus className="h-4 w-4" />
-              )}
-              <span className="font-medium">
-                {handicapChange > 0 ? "+" : ""}
-                {handicapChange.toFixed(1)}
-              </span>
-            </div>
+            <StatDelta
+              value={handicapChange}
+              invert
+              className="font-medium"
+            />
           )}
         </div>
       )}
@@ -110,7 +95,7 @@ export function WhatIfCalculator() {
   );
 
   const explanation = (
-    <div className="space-y-3">
+    <div className="space-y-sm">
       <Muted>
         This calculator shows how a hypothetical round would affect your
         handicap index. It calculates the score differential and projects your
@@ -125,8 +110,8 @@ export function WhatIfCalculator() {
 
   return (
     <CalculatorCard meta={meta} result={result} explanation={explanation}>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="space-y-2">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-md">
+        <div className="space-y-sm">
           <Label htmlFor="hypotheticalScore">Hypothetical Score</Label>
           <Input
             id="hypotheticalScore"
@@ -140,7 +125,7 @@ export function WhatIfCalculator() {
             }
           />
         </div>
-        <div className="space-y-2">
+        <div className="space-y-sm">
           <Label htmlFor="courseRating-whatif">Course Rating</Label>
           <Input
             id="courseRating-whatif"
@@ -152,7 +137,7 @@ export function WhatIfCalculator() {
             className="bg-muted"
           />
         </div>
-        <div className="space-y-2">
+        <div className="space-y-sm">
           <Label htmlFor="slopeRating-whatif">Slope Rating</Label>
           <Input
             id="slopeRating-whatif"
@@ -163,7 +148,7 @@ export function WhatIfCalculator() {
             className="bg-muted"
           />
         </div>
-        <div className="space-y-2">
+        <div className="space-y-sm">
           <Label htmlFor="currentHandicap">Current Handicap</Label>
           <Input
             id="currentHandicap"

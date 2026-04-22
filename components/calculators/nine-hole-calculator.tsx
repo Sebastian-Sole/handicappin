@@ -76,9 +76,9 @@ export function NineHoleCalculator() {
   ]);
 
   const result = calculation && (
-    <div className="space-y-4">
-      <div className="grid grid-cols-3 gap-4 text-center">
-        <div className="p-3 bg-muted/50 rounded-lg">
+    <div className="space-y-md">
+      <div className="grid grid-cols-3 gap-md text-center">
+        <div className="p-sm surface-muted">
           <Small className="text-muted-foreground">Played 9</Small>
           <P className="text-xl font-bold">
             {calculation.playedDifferential.toFixed(1)}
@@ -86,10 +86,10 @@ export function NineHoleCalculator() {
         </div>
         <div className="flex items-center justify-center">
           <ArrowRight className="h-5 w-5 text-muted-foreground" />
-          <span className="mx-1 text-muted-foreground">+</span>
+          <span className="mx-xs text-muted-foreground">+</span>
           <ArrowRight className="h-5 w-5 text-muted-foreground" />
         </div>
-        <div className="p-3 bg-muted/50 rounded-lg">
+        <div className="p-sm surface-muted">
           <Small className="text-muted-foreground">Expected 9</Small>
           <P className="text-xl font-bold">
             {calculation.expectedDifferential.toFixed(1)}
@@ -97,7 +97,7 @@ export function NineHoleCalculator() {
         </div>
       </div>
 
-      <div className="flex items-center justify-between p-4 bg-primary/10 rounded-lg">
+      <div className="flex items-center justify-between tint-primary p-md">
         <P className="font-medium">18-Hole Equivalent:</P>
         <span className="text-3xl font-bold text-primary">
           {calculation.equivalentDifferential.toFixed(1)}
@@ -107,9 +107,9 @@ export function NineHoleCalculator() {
   );
 
   const explanation = (
-    <div className="space-y-3">
+    <div className="space-y-sm">
       <Muted>9-hole rounds are converted to 18-hole equivalents by adding:</Muted>
-      <ol className="list-decimal pl-4 space-y-2 text-sm text-muted-foreground">
+      <ol className="list-decimal pl-md space-y-sm text-sm text-muted-foreground">
         <li>
           <strong>Played 9-hole differential:</strong> Calculated from your
           actual score using the 9-hole course rating and slope
@@ -128,8 +128,8 @@ export function NineHoleCalculator() {
 
   return (
     <CalculatorCard meta={meta} result={result} explanation={explanation}>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <div className="space-y-2">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-md">
+        <div className="space-y-sm">
           <Label htmlFor="nineHoleScore">9-Hole Score</Label>
           <Input
             id="nineHoleScore"
@@ -141,7 +141,7 @@ export function NineHoleCalculator() {
             }
           />
         </div>
-        <div className="space-y-2">
+        <div className="space-y-sm">
           <Label htmlFor="handicapIndex-9hole">Handicap Index</Label>
           <Input
             id="handicapIndex-9hole"
@@ -157,7 +157,7 @@ export function NineHoleCalculator() {
             }
           />
         </div>
-        <div className="space-y-2">
+        <div className="space-y-sm">
           <Label htmlFor="courseRating-9hole">9-Hole Course Rating</Label>
           <Input
             id="courseRating-9hole"
@@ -172,7 +172,7 @@ export function NineHoleCalculator() {
             }
           />
         </div>
-        <div className="space-y-2">
+        <div className="space-y-sm">
           <Label htmlFor="slopeRating-9hole">9-Hole Slope Rating</Label>
           <Input
             id="slopeRating-9hole"

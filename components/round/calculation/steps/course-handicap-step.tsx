@@ -80,7 +80,7 @@ const CourseHandicapStep = () => {
       title="Course Handicap"
       description="How many handicap strokes you received for this round"
       learnMoreContent={
-        <div className="space-y-3">
+        <div className="space-y-sm">
           <Blockquote>
             Your Course Handicap represents the number of strokes you receive on
             this specific course and set of tees. It adjusts your Handicap Index
@@ -102,14 +102,14 @@ const CourseHandicapStep = () => {
         </div>
       }
     >
-      <div className="space-y-4">
+      <div className="space-y-md">
         {/* Reset button */}
         {hasChanges && (
           <Button
             variant="outline"
             size="sm"
             onClick={resetToOriginal}
-            className="gap-2"
+            className="gap-sm"
           >
             <RotateCcw className="w-4 h-4" />
             Reset to original values
@@ -117,7 +117,7 @@ const CourseHandicapStep = () => {
         )}
 
         {/* Input grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-md">
           <div>
             <Label>Handicap Index</Label>
             <Input
@@ -173,7 +173,7 @@ const CourseHandicapStep = () => {
               )}
             />
           </div>
-          <div className="flex items-end gap-2 pb-2">
+          <div className="flex items-end gap-sm pb-sm">
             <Label className="text-xs">18 holes</Label>
             <Switch
               checked={isNineHoles}
@@ -187,13 +187,13 @@ const CourseHandicapStep = () => {
         </div>
 
         {/* Formula */}
-        <div className="bg-muted/50 rounded-lg p-4 space-y-2">
+        <div className="surface-muted p-md space-y-sm">
           <Muted>
             {isNineHoles
               ? "Course Handicap (9 holes) = (Handicap Index ÷ 2) × (Slope ÷ 113) + (Course Rating − Par)"
               : "Course Handicap (18 holes) = Handicap Index × (Slope ÷ 113) + (Course Rating − Par)"}
           </Muted>
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex flex-wrap items-center gap-sm">
             <span className="font-medium">Course Handicap =</span>
             <Muted>
               {isNineHoles ? `(${handicapIndex} ÷ 2)` : handicapIndex} × (

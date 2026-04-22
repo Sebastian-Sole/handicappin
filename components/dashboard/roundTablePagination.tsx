@@ -20,7 +20,7 @@ const RoundTablePagination = ({
   scorecards,
 }: RoundTablePaginationProps) => {
   return (
-    <div className="flex justify-between mt-4">
+    <div className="flex justify-between mt-md">
       <Pagination>
         <PaginationContent>
           {page > 0 && (
