@@ -1,4 +1,4 @@
-import { Check, Loader2 } from "lucide-react";
+import { Check, Loader2, type LucideIcon } from "lucide-react";
 import { Button, type ButtonProps } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -10,6 +10,9 @@ type SaveStateButtonProps = Omit<ButtonProps, "children"> & {
   savingLabel?: string;
   savedLabel?: string;
   errorLabel?: string;
+  /** Optional leading icon for the idle/error states (not rendered while
+   *  saving or saved — those have their own spinner / check). */
+  idleIcon?: LucideIcon;
 };
 
 /**
@@ -25,12 +28,14 @@ export function SaveStateButton({
   savingLabel = "Saving...",
   savedLabel = "Saved!",
   errorLabel = "Try again",
+  idleIcon: IdleIcon,
   className,
   disabled,
   ...rest
 }: SaveStateButtonProps) {
   const isSaved = state === "saved";
   const isBusy = state === "saving";
+  const isIdleOrError = !isSaved && !isBusy;
 
   return (
     <Button
@@ -42,8 +47,11 @@ export function SaveStateButton({
       )}
       aria-live="polite"
     >
-      {isBusy && <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden />}
-      {isSaved && <Check className="mr-2 h-4 w-4" aria-hidden />}
+      {isBusy && <Loader2 className="mr-sm h-4 w-4 animate-spin" aria-hidden />}
+      {isSaved && <Check className="mr-sm h-4 w-4" aria-hidden />}
+      {isIdleOrError && IdleIcon && (
+        <IdleIcon className="mr-sm h-4 w-4" aria-hidden />
+      )}
       {isBusy
         ? savingLabel
         : isSaved
