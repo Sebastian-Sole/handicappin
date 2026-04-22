@@ -59,7 +59,7 @@ export function PlayingHandicapCalculator() {
     <div className="space-y-sm">
       <Muted>Playing Handicap = Course Handicap x Handicap Allowance %</Muted>
       {playingHandicap !== null && selectedFormat && (
-        <div className="surface-muted p-sm font-mono text-sm">
+        <div className="formula-box">
           <P className="text-muted-foreground">
             {values.courseHandicap} x {selectedFormat.allowance}%
           </P>

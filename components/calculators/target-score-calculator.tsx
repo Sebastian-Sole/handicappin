@@ -96,7 +96,7 @@ export function TargetScoreCalculator() {
         what score you need to shoot. The formula rearranges the score
         differential calculation:
       </Muted>
-      <div className="surface-muted p-sm font-mono text-sm">
+      <div className="formula-box">
         <P className="text-muted-foreground">
           Target Score = (Target Diff × Slope / 113) + Course Rating
         </P>

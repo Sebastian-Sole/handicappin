@@ -2,6 +2,7 @@
 
 import { useRoundCalculationContext } from "@/contexts/roundCalculationContext";
 import { Muted } from "@/components/ui/typography";
+import { StatTile } from "@/components/ui/stat-tile";
 import { cn } from "@/lib/utils";
 import { useState, useEffect, useRef } from "react";
 
@@ -100,30 +101,25 @@ const ScoreDistributionSidebar = ({ layout = "vertical", compact = false }: Scor
     <div className="surface-muted p-md h-full">
       <Muted className="text-xs uppercase tracking-wide mb-sm">Round Summary</Muted>
       <div className="grid grid-cols-2 gap-sm">
-        <div className="text-center">
-          <div className="text-2xl font-bold">{totalStrokes}</div>
-          <Muted className="text-xs">Gross Score</Muted>
-        </div>
-        <div className="text-center">
-          <div className={cn(
-            "text-2xl font-bold",
-            toPar < 0 && "text-success",
-            toPar > 0 && "text-destructive"
-          )}>
-            {toPar === 0 ? "E" : toPar > 0 ? `+${toPar}` : toPar}
-          </div>
-          <Muted className="text-xs">To Par</Muted>
-        </div>
-        <div className="text-center">
-          <div className="text-2xl font-bold">{apsStat}</div>
-          <Muted className="text-xs">Adjusted</Muted>
-        </div>
-        <div className="text-center">
-          <div className="text-2xl font-bold">
-            {Number(scorecard.round.scoreDifferential).toFixed(1)}
-          </div>
-          <Muted className="text-xs">Differential</Muted>
-        </div>
+        <StatTile value={totalStrokes} label="Gross Score" />
+        <StatTile
+          value={
+            <span
+              className={cn(
+                toPar < 0 && "text-success",
+                toPar > 0 && "text-destructive"
+              )}
+            >
+              {toPar === 0 ? "E" : toPar > 0 ? `+${toPar}` : toPar}
+            </span>
+          }
+          label="To Par"
+        />
+        <StatTile value={apsStat} label="Adjusted" />
+        <StatTile
+          value={Number(scorecard.round.scoreDifferential).toFixed(1)}
+          label="Differential"
+        />
       </div>
     </div>
   );
@@ -259,31 +255,28 @@ const ScoreDistributionSidebar = ({ layout = "vertical", compact = false }: Scor
         {/* Combined Summary & Stats */}
         <div className="surface-muted p-md">
           <Muted className="text-xs uppercase tracking-wide mb-sm">Round Summary</Muted>
-          <div className="grid grid-cols-4 gap-sm text-center">
-            <div>
-              <div className="text-xl font-bold">{totalStrokes}</div>
-              <Muted className="text-xs">Gross</Muted>
-            </div>
-            <div>
-              <div className={cn(
-                "text-xl font-bold",
-                toPar < 0 && "text-success",
-                toPar > 0 && "text-destructive"
-              )}>
-                {toPar === 0 ? "E" : toPar > 0 ? `+${toPar}` : toPar}
-              </div>
-              <Muted className="text-xs">To Par</Muted>
-            </div>
-            <div>
-              <div className="text-xl font-bold">{apsStat}</div>
-              <Muted className="text-xs">Adj.</Muted>
-            </div>
-            <div>
-              <div className="text-xl font-bold">
-                {Number(scorecard.round.scoreDifferential).toFixed(1)}
-              </div>
-              <Muted className="text-xs">Diff.</Muted>
-            </div>
+          <div className="grid grid-cols-4 gap-sm">
+            <StatTile size="sm" value={totalStrokes} label="Gross" />
+            <StatTile
+              size="sm"
+              value={
+                <span
+                  className={cn(
+                    toPar < 0 && "text-success",
+                    toPar > 0 && "text-destructive"
+                  )}
+                >
+                  {toPar === 0 ? "E" : toPar > 0 ? `+${toPar}` : toPar}
+                </span>
+              }
+              label="To Par"
+            />
+            <StatTile size="sm" value={apsStat} label="Adj." />
+            <StatTile
+              size="sm"
+              value={Number(scorecard.round.scoreDifferential).toFixed(1)}
+              label="Diff."
+            />
           </div>
         </div>
 

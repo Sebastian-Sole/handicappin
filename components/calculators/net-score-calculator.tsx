@@ -36,7 +36,7 @@ export function NetScoreCalculator() {
     <div className="space-y-sm">
       <Muted>Net Score = Gross Score - Course Handicap</Muted>
       {netScore !== null && (
-        <div className="surface-muted p-sm font-mono text-sm">
+        <div className="formula-box">
           <P className="text-muted-foreground">
             {values.adjustedGrossScore} - {values.courseHandicap}
           </P>

@@ -1,6 +1,7 @@
 "use client";
 
 import { Muted, P, Blockquote } from "@/components/ui/typography";
+import { StatTile } from "@/components/ui/stat-tile";
 import { CalculationStep } from "../calculation-step";
 import { useRoundCalculationContext } from "@/contexts/roundCalculationContext";
 import { calculateHoleAdjustedScore } from "@handicappin/handicap-core";
@@ -69,25 +70,33 @@ const AdjustedScoresStep = () => {
       <div className="space-y-md">
         {/* Summary stats */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-md">
-          <div className="surface-muted p-md text-center">
-            <div className="text-2xl font-bold">{totalStrokes}</div>
-            <Muted>Total Strokes</Muted>
+          <div className="surface-muted p-md">
+            <StatTile value={totalStrokes} label="Total Strokes" />
           </div>
-          <div className="surface-muted p-md text-center">
-            <div className="text-2xl font-bold">{apsStat}</div>
-            <Muted>Adjusted Score</Muted>
+          <div className="surface-muted p-md">
+            <StatTile value={apsStat} label="Adjusted Score" />
           </div>
-          <div className="surface-muted p-md text-center">
-            <div className="text-2xl font-bold text-warning">
-              {cappedHoles?.length || 0}
-            </div>
-            <Muted>Holes Capped</Muted>
+          <div className="surface-muted p-md">
+            <StatTile
+              value={
+                <span className="text-warning">
+                  {cappedHoles?.length || 0}
+                </span>
+              }
+              label="Holes Capped"
+            />
           </div>
-          <div className="surface-muted p-md text-center">
-            <div className="text-2xl font-bold text-success">
-              {adjustmentAmount > 0 ? `-${adjustmentAmount}` : adjustmentAmount}
-            </div>
-            <Muted>Strokes Saved</Muted>
+          <div className="surface-muted p-md">
+            <StatTile
+              value={
+                <span className="text-success">
+                  {adjustmentAmount > 0
+                    ? `-${adjustmentAmount}`
+                    : adjustmentAmount}
+                </span>
+              }
+              label="Strokes Saved"
+            />
           </div>
         </div>
 

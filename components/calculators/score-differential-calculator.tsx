@@ -55,7 +55,7 @@ export function ScoreDifferentialCalculator() {
         Slope Rating)
       </Muted>
       {scoreDifferential !== null && (
-        <div className="surface-muted p-sm font-mono text-sm">
+        <div className="formula-box">
           <P className="text-muted-foreground">
             ({values.adjustedGrossScore} - {values.courseRating}) x (113 /{" "}
             {values.slopeRating})

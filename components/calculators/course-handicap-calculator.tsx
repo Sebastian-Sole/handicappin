@@ -69,7 +69,7 @@ export function CourseHandicapCalculator() {
         )}
       </Muted>
       {courseHandicap !== null && values.handicapIndex !== null && (
-        <div className="surface-muted p-sm font-mono text-sm">
+        <div className="formula-box">
           <P className="text-muted-foreground">
             {values.holesPlayed === 9 ? (
               <>
