@@ -50,3 +50,6 @@ handicappin.code-workspace
 .env.sentry-build-plugin
 
 .playwright-mcp
+
+# Claude Code agent worktrees (ephemeral)
+.claude/worktrees/
