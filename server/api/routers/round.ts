@@ -150,6 +150,12 @@ export const roundRouter = createTRPCRouter({
   getAllByUserId: authedProcedure
     .input(getAllByUserIdInputSchema)
     .query(async ({ ctx, input }) => {
+      if (input.userId !== ctx.user.id) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "Cannot access another user's data",
+        });
+      }
       const { data: rounds, error } = await ctx.supabase
         .from("round")
         .select(`*`)
@@ -171,6 +177,12 @@ export const roundRouter = createTRPCRouter({
   getCountByUserId: authedProcedure
     .input(getCountByUserIdInputSchema)
     .query(async ({ ctx, input }) => {
+      if (input.userId !== ctx.user.id) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "Cannot access another user's data",
+        });
+      }
       const { count, error } = await ctx.supabase
         .from("round")
         .select("*", { count: "exact", head: true })
@@ -208,6 +220,12 @@ export const roundRouter = createTRPCRouter({
   getBestRound: authedProcedure
     .input(getBestRoundInputSchema)
     .query(async ({ ctx, input }) => {
+      if (input.userId !== ctx.user.id) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "Cannot access another user's data",
+        });
+      }
       const { data: round, error } = await ctx.supabase
         .from("round")
         .select("*")

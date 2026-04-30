@@ -379,11 +379,10 @@ export function addHcpStrokesToScores(
     if (!hole) {
       throw new Error(`Hole not found for score with holeId ${score.holeId}`);
     }
-    score.hcpStrokes = fullDivision;
-    if (index < remainder) {
-      score.hcpStrokes += 1;
-    }
-    return score;
+    return {
+      ...score,
+      hcpStrokes: fullDivision + (index < remainder ? 1 : 0),
+    };
   });
 }
 

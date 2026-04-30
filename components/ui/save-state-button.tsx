@@ -40,25 +40,26 @@ export function SaveStateButton({
   return (
     <Button
       {...rest}
-      disabled={disabled || isBusy}
+      disabled={disabled || isBusy || isSaved}
       className={cn(
         isSaved && "bg-success text-success-foreground hover:bg-success",
         className
       )}
-      aria-live="polite"
     >
       {isBusy && <Loader2 className="mr-sm h-4 w-4 animate-spin" aria-hidden />}
       {isSaved && <Check className="mr-sm h-4 w-4" aria-hidden />}
       {isIdleOrError && IdleIcon && (
         <IdleIcon className="mr-sm h-4 w-4" aria-hidden />
       )}
-      {isBusy
-        ? savingLabel
-        : isSaved
-          ? savedLabel
-          : state === "error"
-            ? errorLabel
-            : idleLabel}
+      <span aria-live="polite">
+        {isBusy
+          ? savingLabel
+          : isSaved
+            ? savedLabel
+            : state === "error"
+              ? errorLabel
+              : idleLabel}
+      </span>
     </Button>
   );
 }

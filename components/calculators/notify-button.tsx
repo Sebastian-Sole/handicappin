@@ -53,7 +53,6 @@ const NotifyButton = ({ user }: NotifyButtonProps) => {
         state={saveState}
         variant="secondary"
         onClick={onClick}
-        className="transition-all duration-300"
         idleLabel="Notify me when they are ready"
         savingLabel="Saving..."
         savedLabel="Subscribed!"

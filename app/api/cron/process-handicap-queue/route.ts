@@ -216,16 +216,16 @@ async function processUserHandicap(
         .map((r) => r.finalDifferential);
       const calculatedIndex = calculateHandicapIndex(relevantDifferentials);
 
-      // Apply soft/hard caps if 20+ rounds
-      if (processedRounds.length >= 20) {
-        const lowHandicapIndex = calculateLowHandicapIndex(processedRounds, i);
-        pr.updatedHandicapIndex = applyHandicapCaps(
-          calculatedIndex,
-          lowHandicapIndex,
-        );
-      } else {
-        pr.updatedHandicapIndex = calculatedIndex;
-      }
+      // Apply soft/hard caps per USGA Rule 5.7.
+      // calculateLowHandicapIndex returns null when no rounds exist in the
+      // 365-day window, and applyHandicapCaps short-circuits on null — so the
+      // null-check inside applyHandicapCaps is the correct gate (not a 20-round
+      // threshold, which Rule 5.7 does not require).
+      const lowHandicapIndex = calculateLowHandicapIndex(processedRounds, i);
+      pr.updatedHandicapIndex = applyHandicapCaps(
+        calculatedIndex,
+        lowHandicapIndex,
+      );
 
       // Cap at maximum
       pr.updatedHandicapIndex = Math.min(

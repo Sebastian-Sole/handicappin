@@ -12,7 +12,7 @@ import {
   calculateAdjustedPlayedScore,
   calculateAdjustedGrossScore,
 } from "@handicappin/handicap-core";
-import { Hole, Score, Tee } from "@/types/scorecard-input";
+import type { Hole, Score, Tee } from "@handicappin/handicap-core";
 
 describe("Score Differential Calculation", () => {
   describe("calculateScoreDifferential", () => {
