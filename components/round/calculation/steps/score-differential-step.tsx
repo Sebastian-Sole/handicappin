@@ -25,12 +25,21 @@ const ScoreDifferentialStep = () => {
     scorecard,
   } = useRoundCalculationContext();
 
+  // Section is on the round row for new submissions; legacy rows fall back to "front".
+  const nineHoleSection: "front" | "back" =
+    (scorecard.round.nine_hole_section as "front" | "back" | null) ?? "front";
+  const isBackNine = isNineHoles && nineHoleSection === "back";
+
   // Original values
   const originalSlope = isNineHoles
-    ? scorecard.teePlayed.slopeRatingFront9
+    ? isBackNine
+      ? scorecard.teePlayed.slopeRatingBack9
+      : scorecard.teePlayed.slopeRatingFront9
     : scorecard.teePlayed.slopeRating18;
   const originalRating = isNineHoles
-    ? scorecard.teePlayed.courseRatingFront9
+    ? isBackNine
+      ? scorecard.teePlayed.courseRatingBack9
+      : scorecard.teePlayed.courseRatingFront9
     : scorecard.teePlayed.courseRating18;
 
   const hasChanges = slope !== originalSlope || rating !== originalRating;
@@ -114,7 +123,10 @@ const ScoreDifferentialStep = () => {
             />
           </div>
           <div>
-            <Label>Course Rating {isNineHoles && "(Front 9)"}</Label>
+            <Label>
+              Course Rating{" "}
+              {isNineHoles && (isBackNine ? "(Back 9)" : "(Front 9)")}
+            </Label>
             <Input
               type="number"
               step="0.1"
@@ -129,7 +141,10 @@ const ScoreDifferentialStep = () => {
             />
           </div>
           <div>
-            <Label>Slope Rating {isNineHoles && "(Front 9)"}</Label>
+            <Label>
+              Slope Rating{" "}
+              {isNineHoles && (isBackNine ? "(Back 9)" : "(Front 9)")}
+            </Label>
             <Input
               type="number"
               min="1"
@@ -163,7 +178,7 @@ const ScoreDifferentialStep = () => {
             {/* Played Differential */}
             <div className="space-y-xs">
               <div className="text-sm font-medium">
-                Played Differential (Front 9):
+                Played Differential ({isBackNine ? "Back 9" : "Front 9"}):
               </div>
               <div className="flex flex-wrap items-center gap-sm text-sm">
                 <Muted>

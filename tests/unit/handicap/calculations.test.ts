@@ -11,6 +11,7 @@ import {
   roundToHandicapPrecision,
   calculateAdjustedPlayedScore,
   calculateAdjustedGrossScore,
+  addHcpStrokesToScores,
 } from "@handicappin/handicap-core";
 import type { Hole, Score, Tee } from "@handicappin/handicap-core";
 
@@ -236,6 +237,45 @@ describe("Course Handicap Calculation", () => {
       expect(result).toBe(8);
     });
 
+    it("defaults to front-9 ratings when section is omitted", () => {
+      // Default arg should use front9 (slope 128). With explicit "front" the
+      // result must match exactly.
+      const omitted = calculateCourseHandicap(15.0, mockTee, 9);
+      const explicitFront = calculateCourseHandicap(15.0, mockTee, 9, "front");
+      expect(omitted).toBe(explicitFront);
+    });
+
+    it("uses back-9 ratings when section is 'back'", () => {
+      // back9 slope is 132 (vs front9 128) so the back-9 course handicap differs.
+      // (15.0/2) × (132/113) + (36.0 - 36) = 7.5 × 1.168... = 8.76 → 9
+      const back = calculateCourseHandicap(15.0, mockTee, 9, "back");
+      expect(back).toBe(9);
+      const front = calculateCourseHandicap(15.0, mockTee, 9, "front");
+      // Sanity: back result differs from front when slopes differ.
+      expect(back).not.toBe(front);
+    });
+
+    it("respects asymmetric back-9 ratings/par", () => {
+      // Build a tee where back-9 has a different rating and par than front-9
+      // to confirm the back-9 branch reads inPar / courseRatingBack9 / slopeRatingBack9.
+      const asymmetricTee: Tee = {
+        ...mockTee,
+        courseRatingFront9: 35.0,
+        slopeRatingFront9: 120,
+        outPar: 35,
+        courseRatingBack9: 38.0,
+        slopeRatingBack9: 140,
+        inPar: 37,
+        totalPar: 72,
+      };
+      // back: (10/2) × (140/113) + (38.0 - 37) = 5 × 1.239 + 1 = 7.19 → 7
+      const back = calculateCourseHandicap(10.0, asymmetricTee, 9, "back");
+      expect(back).toBe(7);
+      // front: (10/2) × (120/113) + (35.0 - 35) = 5 × 1.062 + 0 = 5.31 → 5
+      const front = calculateCourseHandicap(10.0, asymmetricTee, 9, "front");
+      expect(front).toBe(5);
+    });
+
     it("handles zero handicap", () => {
       const result = calculateCourseHandicap(0, mockTee, 18);
       expect(result).toBe(0);
@@ -401,6 +441,165 @@ describe("Score Adjustment (USGA Rule 3.1)", () => {
       const result = calculateAdjustedPlayedScore(holes, scores, true);
       expect(result).toBe(5);
     });
+
+    it("matches scores to holes by holeId, not by array position (9-hole back nine on full 18-hole tee)", () => {
+      // 18-hole tee array — holes 1..18.
+      const holes: Hole[] = Array.from({ length: 18 }, (_, i) => ({
+        id: i + 1,
+        holeNumber: i + 1,
+        par: 4,
+        hcp: i + 1,
+        distance: 400,
+        teeId: 1,
+      }));
+      // Player only played holes 10..18 (back nine). scores[0].holeId === 10,
+      // which is NOT equal to holes[0].id === 1. Positional indexing would
+      // pair score(holeId=10) with hole id=1 — wrong.
+      const scoresInOrder: Score[] = Array.from({ length: 9 }, (_, i) => ({
+        holeId: i + 10,
+        strokes: 5,
+        hcpStrokes: 1,
+      }));
+      // Each played hole: par 4, hcpStrokes 1 → max = min(9, 7) = 7; strokes 5 ≤ 7 → 5.
+      // Total = 9 × 5 = 45.
+      const expected = 45;
+      const inOrderResult = calculateAdjustedPlayedScore(
+        holes,
+        scoresInOrder,
+        true
+      );
+      expect(inOrderResult).toBe(expected);
+
+      // Reversing the scores array must produce the same total — the function
+      // must not depend on score ordering relative to the holes array.
+      const scoresReversed = [...scoresInOrder].reverse();
+      const reversedResult = calculateAdjustedPlayedScore(
+        holes,
+        scoresReversed,
+        true
+      );
+      expect(reversedResult).toBe(expected);
+    });
+
+    // Regression test for runtime bug introduced by the m2 holeId-matching
+    // change: `golf-scorecard.tsx` submits scores with `holeId: undefined`,
+    // and the new `calculateAdjustedPlayedScore` throws on missing holeIds.
+    // The fix lives in `server/api/routers/round.ts#getRoundCalculations`
+    // — it section-aware-pairs the form scores to `teePlayed.holes` and
+    // populates holeIds before invoking the calc. This test reproduces
+    // both halves: it confirms the calc throws on raw form scores, then
+    // verifies the router-style mapping yields a correct sum.
+    it("throws on form-shaped scores with undefined holeIds, but works after section-aware population (router fix)", () => {
+      const holes: Hole[] = Array.from({ length: 18 }, (_, i) => ({
+        id: i + 1,
+        holeNumber: i + 1,
+        par: 4,
+        hcp: i + 1,
+        distance: 400,
+        teeId: 1,
+      }));
+
+      // Form-shaped scores for a 9-hole "back" round: holeId is undefined.
+      const formScores: Score[] = Array.from({ length: 9 }, () => ({
+        holeId: undefined as unknown as number,
+        strokes: 5,
+        hcpStrokes: 1,
+      }));
+
+      // Without router-side population the calc throws, mirroring the
+      // production runtime error: "Hole not found for score with holeId
+      // undefined".
+      expect(() =>
+        calculateAdjustedPlayedScore(holes, formScores, true)
+      ).toThrow(/Hole not found/);
+
+      // Apply the same section-aware mapping the router does for a
+      // `nineHoleSection: "back"` submission.
+      const holesForSection = holes.slice(9, 18);
+      const populated: Score[] = formScores.map((s, i) => ({
+        ...s,
+        holeId: s.holeId ?? holesForSection[i]?.id,
+      }));
+      // Each played hole: par 4, hcpStrokes 1 → max = min(9, 7) = 7;
+      // strokes 5 ≤ 7 → 5. Total = 9 × 5 = 45.
+      expect(calculateAdjustedPlayedScore(holes, populated, true)).toBe(45);
+    });
+  });
+});
+
+describe("addHcpStrokesToScores", () => {
+  it("distributes remainder strokes by hole.hcp ranking, not by roundScores array index", () => {
+    // 18-hole round, courseHandicap = 19 → fullDivision = 1, remainder = 1.
+    // Construct holes where hole.hcp values are NOT in array order: the
+    // hardest hole (hcp = 1) is in the *middle* of the array.
+    const holes: Hole[] = Array.from({ length: 18 }, (_, i) => {
+      // Place hcp=1 at array index 9 (holeNumber 10). Otherwise spread hcp
+      // 2..18 across the remaining positions.
+      const id = i + 1;
+      let hcp: number;
+      if (i === 9) hcp = 1;
+      else if (i < 9) hcp = i + 2; // indexes 0..8 → hcp 2..10
+      else hcp = i + 1; // indexes 10..17 → hcp 11..18
+      return { id, holeNumber: id, par: 4, hcp, distance: 400, teeId: 1 };
+    });
+
+    // roundScores in holeId order 1..18.
+    const roundScores: Score[] = holes.map((h) => ({
+      holeId: h.id,
+      strokes: 4,
+      hcpStrokes: 0,
+    }));
+    const inputSnapshot = JSON.parse(JSON.stringify(roundScores));
+
+    const result = addHcpStrokesToScores(holes, roundScores, 19, 18);
+
+    // The hole with hcp=1 (holeId=10) must receive 2 hcpStrokes.
+    // All others must receive exactly 1.
+    for (const score of result) {
+      if (score.holeId === 10) {
+        expect(score.hcpStrokes).toBe(2);
+      } else {
+        expect(score.hcpStrokes).toBe(1);
+      }
+    }
+
+    // Output must preserve the input ordering of roundScores.
+    expect(result.map((s) => s.holeId)).toEqual(
+      roundScores.map((s) => s.holeId)
+    );
+
+    // Input must not be mutated.
+    expect(roundScores).toEqual(inputSnapshot);
+  });
+
+  it("clamps negative courseHandicap to zero", () => {
+    const holes: Hole[] = Array.from({ length: 18 }, (_, i) => ({
+      id: i + 1,
+      holeNumber: i + 1,
+      par: 4,
+      hcp: i + 1,
+      distance: 400,
+      teeId: 1,
+    }));
+    const roundScores: Score[] = holes.map((h) => ({
+      holeId: h.id,
+      strokes: 4,
+      hcpStrokes: 0,
+    }));
+    const result = addHcpStrokesToScores(holes, roundScores, -5, 18);
+    expect(result.every((s) => s.hcpStrokes === 0)).toBe(true);
+  });
+
+  it("throws when a score references a holeId not in holes", () => {
+    const holes: Hole[] = [
+      { id: 1, holeNumber: 1, par: 4, hcp: 1, distance: 400, teeId: 1 },
+    ];
+    const roundScores: Score[] = [
+      { holeId: 999, strokes: 5, hcpStrokes: 0 },
+    ];
+    expect(() => addHcpStrokesToScores(holes, roundScores, 1, 18)).toThrow(
+      /Hole not found/
+    );
   });
 });
 

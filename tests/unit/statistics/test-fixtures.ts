@@ -67,6 +67,7 @@ export function createMockScorecard(
     course_rating_used: 72.0,
     slope_rating_used: 113,
     holes_played: 18,
+    nine_hole_section: null,
   };
 
   return {

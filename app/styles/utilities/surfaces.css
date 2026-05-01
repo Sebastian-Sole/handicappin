@@ -135,14 +135,14 @@
     color-mix(in oklab, var(--color-primary) 5%, transparent),
     color-mix(in oklab, var(--color-primary) 20%, transparent)
   );
-}
 
-.dark .hero-gradient {
-  background-image: linear-gradient(
-    to bottom right,
-    color-mix(in oklab, var(--color-primary) 5%, transparent),
-    color-mix(in oklab, var(--color-primary) 35%, transparent)
-  );
+  @variant dark {
+    background-image: linear-gradient(
+      to bottom right,
+      color-mix(in oklab, var(--color-primary) 5%, transparent),
+      color-mix(in oklab, var(--color-primary) 35%, transparent)
+    );
+  }
 }
 
 /* Formula box — de-emphasized mono-typeset tile used to render a

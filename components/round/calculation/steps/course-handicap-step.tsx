@@ -29,34 +29,51 @@ const CourseHandicapStep = () => {
     scorecard,
   } = useRoundCalculationContext();
 
+  // Section is on the round row for new submissions; legacy rows fall back to "front".
+  const nineHoleSection: "front" | "back" =
+    (scorecard.round.nine_hole_section as "front" | "back" | null) ?? "front";
+  const isBackNine = isNineHoles && nineHoleSection === "back";
+
   // Original values for comparison
   const originalHandicapIndex = scorecard.round.existingHandicapIndex;
   const originalSlope = isNineHoles
-    ? scorecard.teePlayed.slopeRatingFront9
+    ? isBackNine
+      ? scorecard.teePlayed.slopeRatingBack9
+      : scorecard.teePlayed.slopeRatingFront9
     : scorecard.teePlayed.slopeRating18;
   const originalRating = isNineHoles
-    ? scorecard.teePlayed.courseRatingFront9
+    ? isBackNine
+      ? scorecard.teePlayed.courseRatingBack9
+      : scorecard.teePlayed.courseRatingFront9
     : scorecard.teePlayed.courseRating18;
   const originalPar = isNineHoles
-    ? scorecard.teePlayed.outPar
+    ? isBackNine
+      ? scorecard.teePlayed.inPar
+      : scorecard.teePlayed.outPar
     : scorecard.teePlayed.totalPar;
 
   // Sync slope, rating, and par when isNineHoles changes
   useEffect(() => {
     const newSlope = isNineHoles
-      ? scorecard.teePlayed.slopeRatingFront9
+      ? isBackNine
+        ? scorecard.teePlayed.slopeRatingBack9
+        : scorecard.teePlayed.slopeRatingFront9
       : scorecard.teePlayed.slopeRating18;
     const newRating = isNineHoles
-      ? scorecard.teePlayed.courseRatingFront9
+      ? isBackNine
+        ? scorecard.teePlayed.courseRatingBack9
+        : scorecard.teePlayed.courseRatingFront9
       : scorecard.teePlayed.courseRating18;
     const newPar = isNineHoles
-      ? scorecard.teePlayed.outPar
+      ? isBackNine
+        ? scorecard.teePlayed.inPar
+        : scorecard.teePlayed.outPar
       : scorecard.teePlayed.totalPar;
 
     setSlope(newSlope);
     setRating(newRating);
     setPar(newPar);
-  }, [isNineHoles, scorecard.teePlayed, setSlope, setRating, setPar]);
+  }, [isNineHoles, isBackNine, scorecard.teePlayed, setSlope, setRating, setPar]);
 
   const hasChanges =
     handicapIndex !== originalHandicapIndex ||

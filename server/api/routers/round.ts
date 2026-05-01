@@ -44,23 +44,52 @@ const getRoundCalculations = (
   handicapIndex: number,
   hasEstablishedHandicap: boolean = true
 ): RoundCalculations => {
-  const { teePlayed, scores } = scorecard;
+  const { teePlayed, scores, nineHoleSection } = scorecard;
 
   if (!teePlayed.holes) {
     throw new Error("Tee played has no holes");
   }
 
   const numberOfHolesPlayed = scores.length;
+  // Default to "front" when not provided so legacy behavior is preserved.
+  const section: "front" | "back" = nineHoleSection ?? "front";
 
   const courseHandicap = calculateCourseHandicap(
     handicapIndex,
     teePlayed,
-    numberOfHolesPlayed
+    numberOfHolesPlayed,
+    section
   );
+
+  // The form (`golf-scorecard.tsx`) submits scores with `holeId: undefined`.
+  // The canonical calc functions (`calculateAdjustedPlayedScore` and
+  // `calculateAdjustedGrossScore` in `@handicappin/handicap-core`) match
+  // scores to holes by `score.holeId === hole.id` and throw on a miss, so
+  // we must populate holeIds here using section-aware positional pairing
+  // against `teePlayed.holes` before invoking either calc. The round-insert
+  // path (~line 757) does its own equivalent slice against persisted db
+  // holes for the score insert; that logic is independent of this mapping.
+  let holesForSection: typeof teePlayed.holes;
+  if (numberOfHolesPlayed === 18) {
+    holesForSection = teePlayed.holes.slice(0, 18);
+  } else if (numberOfHolesPlayed === 9 && section === "back") {
+    holesForSection = teePlayed.holes.slice(9, 18);
+  } else {
+    holesForSection = teePlayed.holes.slice(0, 9);
+  }
+  if (holesForSection.length !== numberOfHolesPlayed) {
+    throw new Error(
+      `Tee played has ${holesForSection.length} holes for the played section but ${numberOfHolesPlayed} scores were submitted (section=${nineHoleSection ?? "n/a"})`
+    );
+  }
+  const scoresWithHoleIds = scores.map((s, i) => ({
+    ...s,
+    holeId: s.holeId ?? holesForSection[i]?.id,
+  }));
 
   const adjustedPlayedScore = calculateAdjustedPlayedScore(
     teePlayed.holes,
-    scores,
+    scoresWithHoleIds,
     hasEstablishedHandicap
   );
 
@@ -69,7 +98,7 @@ const getRoundCalculations = (
     courseHandicap,
     numberOfHolesPlayed,
     teePlayed.holes,
-    scores
+    scoresWithHoleIds
   );
 
   // Calculate score differential and determine ratings based on holes played
@@ -79,23 +108,29 @@ const getRoundCalculations = (
   let slopeRatingUsed: number;
 
   if (numberOfHolesPlayed === 9) {
-    // Use 9-hole (front9) ratings per USGA Rule 5.1b
-    courseRatingUsed = teePlayed.courseRatingFront9;
-    slopeRatingUsed = teePlayed.slopeRatingFront9;
+    // Pick front-9 or back-9 ratings/par per USGA Rule 5.1b based on section played
+    const isBack = section === "back";
+    courseRatingUsed = isBack
+      ? teePlayed.courseRatingBack9
+      : teePlayed.courseRatingFront9;
+    slopeRatingUsed = isBack
+      ? teePlayed.slopeRatingBack9
+      : teePlayed.slopeRatingFront9;
+    const nineHolePar = isBack ? teePlayed.inPar : teePlayed.outPar;
 
     // Calculate expected differential for unplayed 9 holes
     const expectedDifferential = calculateExpected9HoleDifferential(
       handicapIndex,
-      teePlayed.courseRatingFront9,
-      teePlayed.slopeRatingFront9,
-      teePlayed.outPar
+      courseRatingUsed,
+      slopeRatingUsed,
+      nineHolePar
     );
 
     // Calculate 18-hole equivalent differential
     scoreDifferential = calculate9HoleScoreDifferential(
       adjustedPlayedScore,
-      teePlayed.courseRatingFront9,
-      teePlayed.slopeRatingFront9,
+      courseRatingUsed,
+      slopeRatingUsed,
       expectedDifferential
     );
 
@@ -254,6 +289,7 @@ export const roundRouter = createTRPCRouter({
         course: coursePlayed,
         teeTime,
         userId,
+        nineHoleSection,
       } = input;
 
       if (!teePlayed.holes) {
@@ -650,7 +686,8 @@ export const roundRouter = createTRPCRouter({
           }
         }
 
-        // Match scores with holes to calculate the par played
+        // Match scores with holes to calculate the par played.
+        // For 9-hole back rounds, the played holes are 10..18 (not 1..9).
         let parPlayed = 0;
         if (teePlayed.holes && Array.isArray(scores)) {
           const holeParMap = new Map<number, number>();
@@ -658,8 +695,11 @@ export const roundRouter = createTRPCRouter({
             holeParMap.set(h.holeNumber, h.par);
           });
 
-          parPlayed = scores.reduce((sum, score, idx) => {
-            const holeNumber = idx + 1;
+          const startingHoleNumber =
+            scores.length === 9 && nineHoleSection === "back" ? 10 : 1;
+
+          parPlayed = scores.reduce((sum, _score, idx) => {
+            const holeNumber = startingHoleNumber + idx;
             const par = holeParMap.get(holeNumber) ?? 0;
             return sum + par;
           }, 0);
@@ -712,6 +752,8 @@ export const roundRouter = createTRPCRouter({
           courseRatingUsed: tempCourseRatingUsed,
           slopeRatingUsed: tempSlopeRatingUsed,
           holesPlayed: tempHolesPlayed,
+          nineHoleSection:
+            scores.length === 9 ? (nineHoleSection ?? null) : null,
         };
 
         // 5. Insert round
@@ -734,7 +776,23 @@ export const roundRouter = createTRPCRouter({
           );
         }
 
-        const holesToUse = dbHoles.slice(0, scores.length);
+        // Section-aware slice of the 18 db holes for 9-hole rounds:
+        // - 18-hole          -> holes 0..17
+        // - 9-hole front     -> holes 0..8
+        // - 9-hole back      -> holes 9..17
+        let holesToUse;
+        if (scores.length === 18) {
+          holesToUse = dbHoles.slice(0, 18);
+        } else if (scores.length === 9 && nineHoleSection === "back") {
+          holesToUse = dbHoles.slice(9, 18);
+        } else {
+          holesToUse = dbHoles.slice(0, 9);
+        }
+        if (holesToUse.length !== scores.length) {
+          throw new Error(
+            `Selected ${holesToUse.length} holes for ${scores.length} scores (section=${nineHoleSection ?? "n/a"})`
+          );
+        }
 
         const scoreInserts = scores.map((score, index) => ({
           userId,

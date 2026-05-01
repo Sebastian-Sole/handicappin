@@ -18,20 +18,34 @@ export type ProcessedRound = {
 const SOFT_CAP_THRESHOLD = 3.0;
 const HARD_CAP_THRESHOLD = 5.0;
 const LOW_HANDICAP_WINDOW_DAYS = 365;
+
+/**
+ * Rounds a value to 1 decimal place per USGA handicap precision requirements.
+ * Handicap indices and score differentials are always displayed to one decimal place.
+ */
+export function roundToHandicapPrecision(value: number): number {
+  return Math.round(value * 10) / 10;
+}
+
 /**
  * Calculates the course handicap based on the handicap index, slope rating, course rating, and par.
  */
 export function calculateCourseHandicap(
   handicapIndex: number,
   teePlayed: Tee,
-  numberOfHolesPlayed: number
+  numberOfHolesPlayed: number,
+  nineHoleSection: "front" | "back" = "front"
 ): number {
   if (numberOfHolesPlayed === 9) {
     // Use half the handicap index for 9-hole rounds (no pre-rounding per USGA)
-    // Only the final course handicap result is rounded to nearest integer
+    // Only the final course handicap result is rounded to nearest integer.
+    // Pick the front-9 or back-9 ratings/par based on the section played.
+    const isBack = nineHoleSection === "back";
+    const slope = isBack ? teePlayed.slopeRatingBack9 : teePlayed.slopeRatingFront9;
+    const rating = isBack ? teePlayed.courseRatingBack9 : teePlayed.courseRatingFront9;
+    const par = isBack ? teePlayed.inPar : teePlayed.outPar;
     return Math.round(
-      (handicapIndex / 2) * (teePlayed.slopeRatingFront9 / 113) +
-        (teePlayed.courseRatingFront9 - teePlayed.outPar)
+      (handicapIndex / 2) * (slope / 113) + (rating - par)
     );
   } else {
     return Math.round(
@@ -162,13 +176,11 @@ export function getRelevantDifferentials(
  * Calculates the handicap index based on the given score differentials.
  */
 export function calculateHandicapIndex(scoreDifferentials: number[]): number {
-  const sortedDifferentials = scoreDifferentials.sort((a, b) => a - b);
+  const sortedDifferentials = [...scoreDifferentials].sort((a, b) => a - b);
   const relevantDiffs = getRelevantDifferentials(sortedDifferentials);
-  const handicapCalculation =
-    Math.round(
-      (relevantDiffs.reduce((acc, cur) => acc + cur) / relevantDiffs.length) *
-        10
-    ) / 10;
+  const averageDifferential =
+    relevantDiffs.reduce((acc, cur) => acc + cur) / relevantDiffs.length;
+  const handicapCalculation = roundToHandicapPrecision(averageDifferential);
 
   if (scoreDifferentials.length < 3) {
     return 54;
@@ -207,10 +219,11 @@ export function calculateLowHandicapIndex(
   const previousRounds = rounds.slice(0, currentRoundIndex);
 
   // Filter to approved rounds within the 365-day window preceding the current round
+  // Convert teeTime to Date to ensure proper comparison (may be string from database)
   const relevantRounds = previousRounds.filter(
     (r) =>
-      r.teeTime >= oneYearAgo &&
-      r.teeTime <= currentRoundDate &&
+      new Date(r.teeTime) >= oneYearAgo &&
+      new Date(r.teeTime) <= currentRoundDate &&
       r.approvalStatus === "approved"
   );
 
@@ -253,16 +266,16 @@ export function applyHandicapCaps(
     return newIndex;
   }
 
-  let cappedIndex = lowHandicapIndex;
+  let cappedIndex = newIndex;
   if (difference > SOFT_CAP_THRESHOLD) {
     const softCapIncrease =
       SOFT_CAP_THRESHOLD + (difference - SOFT_CAP_THRESHOLD) * 0.5;
     cappedIndex = lowHandicapIndex + softCapIncrease;
-  } else {
-    cappedIndex = newIndex;
   }
 
-  return Math.min(cappedIndex, lowHandicapIndex + HARD_CAP_THRESHOLD);
+  return roundToHandicapPrecision(
+    Math.min(cappedIndex, lowHandicapIndex + HARD_CAP_THRESHOLD)
+  );
 }
 
 export const calculateAdjustedPlayedScore = (
@@ -270,15 +283,22 @@ export const calculateAdjustedPlayedScore = (
   scores: Score[],
   hasEstablishedHandicap: boolean = true
 ): number => {
-  const adjustedScores = holes.map((hole, index) => {
-    const score = scores[index];
-    // If no score exists for this hole, return 0 (hole not played)
-    if (!score) {
-      return 0;
+  // Iterate over the played scores and look up the matching hole by holeId.
+  // This supports cases where `holes` is the full 18-hole tee array but
+  // `scores` only contains the holes actually played (e.g., 9-hole rounds,
+  // or non-sequential play). Positional indexing would double-count
+  // unplayed holes as 0 and silently produce wrong sums when the arrays
+  // are not aligned.
+  if (scores.length === 0) {
+    return 0;
+  }
+  return scores.reduce((acc, score) => {
+    const hole = holes.find((h) => h.id === score.holeId);
+    if (!hole) {
+      throw new Error(`Hole not found for score with holeId ${score.holeId}`);
     }
-    return calculateHoleAdjustedScore(hole, score, hasEstablishedHandicap);
-  });
-  return adjustedScores.reduce((acc, cur) => acc + cur);
+    return acc + calculateHoleAdjustedScore(hole, score, hasEstablishedHandicap);
+  }, 0);
 };
 
 /**
@@ -346,16 +366,32 @@ export function addHcpStrokesToScores(
   const fullDivision = Math.floor(safeCourseHandicap / numberOfHolesPlayed);
   const remainder = safeCourseHandicap % numberOfHolesPlayed;
 
-  // Get only the holes that were played, in the order of roundScores
-  return roundScores.map((score, index) => {
-    const hole = holes.find((hole) => hole.id === score.holeId);
+  // Per USGA Rule 6.1, extra (remainder) strokes go to the holes with the
+  // lowest stroke index — `hole.hcp = 1` is the hardest hole and receives
+  // the first extra stroke. We must rank the *played* holes by `hole.hcp`
+  // ascending and assign the remainder accordingly, regardless of the
+  // ordering of `roundScores`.
+  const playedHoles = roundScores.map((score) => {
+    const hole = holes.find((h) => h.id === score.holeId);
     if (!hole) {
       throw new Error(`Hole not found for score with holeId ${score.holeId}`);
     }
-    score.hcpStrokes = fullDivision;
-    if (index < remainder) {
-      score.hcpStrokes += 1;
-    }
-    return score;
+    return hole;
   });
+
+  // Sort a copy by hcp ascending; tie-break on hole id for deterministic
+  // ordering when two holes share the same stroke index. Don't mutate
+  // `holes` or `roundScores`.
+  const holesByHcp = [...playedHoles].sort((a, b) => {
+    if (a.hcp !== b.hcp) return a.hcp - b.hcp;
+    return (a.id ?? 0) - (b.id ?? 0);
+  });
+  const extraStrokeHoleIds = new Set(
+    holesByHcp.slice(0, remainder).map((h) => h.id)
+  );
+
+  return roundScores.map((score) => ({
+    ...score,
+    hcpStrokes: fullDivision + (extraStrokeHoleIds.has(score.holeId) ? 1 : 0),
+  }));
 }

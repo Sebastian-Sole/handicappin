@@ -12,6 +12,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Tables } from "@/types/supabase";
 import { Button } from "../ui/button";
 import { SaveStateButton, type SaveState } from "@/components/ui/save-state-button";
@@ -95,6 +96,11 @@ export default function GolfScorecard({ profile, access }: GolfScorecardProps) {
   const [debouncedSearchTerm] = useDebounce(searchTerm, 600);
   const [openCourseSelect, setOpenCourseSelect] = useState(false);
   const [holeCount, setHoleCount] = useState<number>(18);
+  // For 9-hole rounds: which section was played. Defaults to "front" so existing
+  // 9-hole flows behave unchanged.
+  const [nineHoleSection, setNineHoleSection] = useState<"front" | "back">(
+    "front"
+  );
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [addCourseDialogOpen, setAddCourseDialogOpen] = useState(false);
 
@@ -281,8 +287,8 @@ export default function GolfScorecard({ profile, access }: GolfScorecardProps) {
   };
 
   const displayedHoles = useMemo(() => {
-    return getDisplayedHoles(selectedTee, holeCount);
-  }, [selectedTee, holeCount]);
+    return getDisplayedHoles(selectedTee, holeCount, nineHoleSection);
+  }, [selectedTee, holeCount, nineHoleSection]);
 
   const submitScorecardMutation = api.round.submitScorecard.useMutation();
 
@@ -296,13 +302,18 @@ export default function GolfScorecard({ profile, access }: GolfScorecardProps) {
         data.course.approvalStatus === "approved" &&
         data.teePlayed.approvalStatus === "approved";
 
-      // Determine parPlayed based on holeCount
+      // Determine parPlayed based on holeCount and (for 9-hole) section played
       let parPlayed = 0;
       if (holeCount === 18) {
         parPlayed = selectedTee?.totalPar ?? 0;
       } else if (holeCount === 9) {
-        parPlayed = selectedTee?.outPar ?? 0;
+        parPlayed =
+          nineHoleSection === "back"
+            ? selectedTee?.inPar ?? 0
+            : selectedTee?.outPar ?? 0;
       }
+      // parPlayed is computed server-side too; this local value is informational.
+      void parPlayed;
 
       const submissionData: Scorecard = {
         ...data,
@@ -313,16 +324,21 @@ export default function GolfScorecard({ profile, access }: GolfScorecardProps) {
           ...data.teePlayed,
         },
         scores: data.scores.slice(0, holeCount),
+        // Only attach the 9-hole section for 9-hole rounds; 18-hole rounds must omit it.
+        nineHoleSection: holeCount === 9 ? nineHoleSection : undefined,
       };
 
-      // Check if first 9 scores are all 0
-      const first9Scores = submissionData.scores.slice(0, 9);
-      const anyZeros = first9Scores.some((score) => score.strokes === 0);
+      // Inspect the played slice (always indices 0..holeCount) for missing scores.
+      const playedScores = submissionData.scores;
+      const anyZeros = playedScores.some((score) => score.strokes === 0);
 
       if (anyZeros) {
         setFeedback({
           type: "error",
-          message: "Please enter scores for the first 9 holes, or select 18 holes",
+          message:
+            holeCount === 9
+              ? "Please enter scores for all 9 holes"
+              : "Please enter scores for all 18 holes",
         });
         setSubmitState("idle");
         return;
@@ -727,9 +743,15 @@ export default function GolfScorecard({ profile, access }: GolfScorecardProps) {
                       {isMounted ? (
                         <Select
                           value={holeCount.toString()}
-                          onValueChange={(value) =>
-                            setHoleCount(parseInt(value))
-                          }
+                          onValueChange={(value) => {
+                            const next = parseInt(value);
+                            setHoleCount(next);
+                            // Reset section to "front" when leaving 9-hole mode so
+                            // the form state never reflects an inapplicable selection.
+                            if (next !== 9) {
+                              setNineHoleSection("front");
+                            }
+                          }}
                         >
                           <SelectTrigger id="holes">
                             <SelectValue placeholder="Select Holes" />
@@ -743,6 +765,43 @@ export default function GolfScorecard({ profile, access }: GolfScorecardProps) {
                         <Skeleton className="h-10 w-full" />
                       )}
                     </div>
+                    {holeCount === 9 && (
+                      <div className="space-y-sm">
+                        <Label htmlFor="nine-hole-section">9-hole section</Label>
+                        {isMounted ? (
+                          <RadioGroup
+                            id="nine-hole-section"
+                            value={nineHoleSection}
+                            onValueChange={(value) =>
+                              setNineHoleSection(value as "front" | "back")
+                            }
+                            className="flex flex-row gap-md"
+                            aria-label="Which 9-hole section was played"
+                          >
+                            <div className="flex items-center gap-sm">
+                              <RadioGroupItem
+                                value="front"
+                                id="nine-hole-section-front"
+                              />
+                              <Label htmlFor="nine-hole-section-front">
+                                Front 9
+                              </Label>
+                            </div>
+                            <div className="flex items-center gap-sm">
+                              <RadioGroupItem
+                                value="back"
+                                id="nine-hole-section-back"
+                              />
+                              <Label htmlFor="nine-hole-section-back">
+                                Back 9
+                              </Label>
+                            </div>
+                          </RadioGroup>
+                        ) : (
+                          <Skeleton className="h-10 w-full" />
+                        )}
+                      </div>
+                    )}
                     <div className="space-y-sm">
                       <Label htmlFor="notes">Notes</Label>
                       {isMounted ? (

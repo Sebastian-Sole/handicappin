@@ -165,15 +165,34 @@ export const scoreSchema = z.object({
   hcpStrokes: z.number().min(0).max(99),
 });
 
-export const scorecardSchema = z.object({
-  userId: z.string().uuid(),
-  course: courseSchema,
-  teePlayed: teeSchema,
-  scores: z.array(scoreSchema),
-  teeTime: z.string().datetime(),
-  approvalStatus: z.literal("pending").or(z.literal("approved")),
-  notes: z.string().optional(),
-});
+export const scorecardSchema = z
+  .object({
+    userId: z.string().uuid(),
+    course: courseSchema,
+    teePlayed: teeSchema,
+    scores: z.array(scoreSchema),
+    teeTime: z.string().datetime(),
+    approvalStatus: z.literal("pending").or(z.literal("approved")),
+    notes: z.string().optional(),
+    // Which 9-hole section was played (USGA Rule 5.1b). Required for 9-hole rounds.
+    nineHoleSection: z.enum(["front", "back"]).optional(),
+  })
+  .superRefine((v, ctx) => {
+    if (v.scores.length === 9 && v.nineHoleSection === undefined) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["nineHoleSection"],
+        message: "nineHoleSection is required for 9-hole rounds",
+      });
+    }
+    if (v.scores.length !== 9 && v.nineHoleSection !== undefined) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["nineHoleSection"],
+        message: "nineHoleSection is only allowed for 9-hole rounds",
+      });
+    }
+  });
 
 export type Hole = z.infer<typeof holeSchema>;
 export type Scorecard = z.infer<typeof scorecardSchema>;

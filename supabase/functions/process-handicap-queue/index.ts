@@ -272,11 +272,17 @@ async function processUserHandicap(
       if (!holes) throw new Error(`Holes not found for tee ${pr.teeId}`);
 
       const numberOfHolesPlayed = roundScores.length;
+      // Use the round's recorded section (front/back) so back-9 rounds
+      // pick the right ratings/par. Null/undefined falls back to "front".
+      const roundForCourseHandicap = userRounds[roundIndex];
+      const sectionForCourseHandicap: "front" | "back" =
+        roundForCourseHandicap.nineHoleSection ?? "front";
 
       const courseHandicap = calculateCourseHandicap(
         pr.existingHandicapIndex,
         teePlayed,
-        numberOfHolesPlayed
+        numberOfHolesPlayed,
+        sectionForCourseHandicap
       );
 
       const scoresWithHcpStrokes = addHcpStrokesToScores(
@@ -326,19 +332,30 @@ async function processUserHandicap(
 
       // Calculate differential based on holes played (USGA Rule 5.1b for 9-hole)
       if (numberOfHolesPlayed === 9) {
-        // Use 9-hole (front9) ratings per USGA Rule 5.1b
+        // Pick front-9 or back-9 ratings/par per USGA Rule 5.1b based on section.
+        const section: "front" | "back" =
+          userRounds[i].nineHoleSection ?? "front";
+        const isBack = section === "back";
+        const nineHoleCourseRating = isBack
+          ? teePlayed.courseRatingBack9
+          : teePlayed.courseRatingFront9;
+        const nineHoleSlopeRating = isBack
+          ? teePlayed.slopeRatingBack9
+          : teePlayed.slopeRatingFront9;
+        const nineHolePar = isBack ? teePlayed.inPar : teePlayed.outPar;
+
         const expectedDifferential = calculateExpected9HoleDifferential(
           pr.existingHandicapIndex,
-          teePlayed.courseRatingFront9,
-          teePlayed.slopeRatingFront9,
-          teePlayed.outPar
+          nineHoleCourseRating,
+          nineHoleSlopeRating,
+          nineHolePar
         );
 
         // Calculate 18-hole equivalent differential
         pr.rawDifferential = calculate9HoleScoreDifferential(
           pr.adjustedPlayedScore, // Use adjustedPlayedScore for 9-hole, not adjustedGrossScore
-          teePlayed.courseRatingFront9,
-          teePlayed.slopeRatingFront9,
+          nineHoleCourseRating,
+          nineHoleSlopeRating,
           expectedDifferential
         );
       } else {

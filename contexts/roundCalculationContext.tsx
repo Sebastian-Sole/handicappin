@@ -61,16 +61,31 @@ export const RoundCalculationProvider = ({
   // Determine if 9-hole round based on actual scores submitted
   const actualHolesPlayed = scorecard.scores.length;
   const isNineHoleRound = actualHolesPlayed === 9;
+  // Section is on the round row for new submissions; legacy rows fall back to "front".
+  // Supabase row type is snake_case (nine_hole_section).
+  const nineHoleSection: "front" | "back" =
+    (scorecard.round.nine_hole_section as "front" | "back" | null) ?? "front";
+  const isBackNine = isNineHoleRound && nineHoleSection === "back";
 
-  const [par, setPar] = useState(isNineHoleRound ? scorecard.teePlayed.outPar : scorecard.teePlayed.totalPar);
+  const initialNinePar = isBackNine
+    ? scorecard.teePlayed.inPar
+    : scorecard.teePlayed.outPar;
+  const initialNineSlope = isBackNine
+    ? scorecard.teePlayed.slopeRatingBack9
+    : scorecard.teePlayed.slopeRatingFront9;
+  const initialNineRating = isBackNine
+    ? scorecard.teePlayed.courseRatingBack9
+    : scorecard.teePlayed.courseRatingFront9;
+
+  const [par, setPar] = useState(isNineHoleRound ? initialNinePar : scorecard.teePlayed.totalPar);
   const [holesPlayed, setHolesPlayed] = useState(actualHolesPlayed);
   const [handicapIndex, setHandicapIndex] = useState(
     scorecard.round.existingHandicapIndex
   );
 
   const [isNineHoles, setIsNineHoles] = useState(isNineHoleRound);
-  const [slope, setSlope] = useState(isNineHoleRound ? scorecard.teePlayed.slopeRatingFront9 : scorecard.teePlayed.slopeRating18);
-  const [rating, setRating] = useState(isNineHoleRound ? scorecard.teePlayed.courseRatingFront9 : scorecard.teePlayed.courseRating18);
+  const [slope, setSlope] = useState(isNineHoleRound ? initialNineSlope : scorecard.teePlayed.slopeRating18);
+  const [rating, setRating] = useState(isNineHoleRound ? initialNineRating : scorecard.teePlayed.courseRating18);
   // Determine if player has an established handicap (USGA requires 3+ rounds)
   // Use the count of rounds played before this round's tee time
   const hasEstablishedHandicap = (scorecard.roundsBeforeTeeTime ?? 0) >= 3;
@@ -146,7 +161,8 @@ export const RoundCalculationProvider = ({
   const courseHcpStat = calculateCourseHandicap(
     handicapIndex,
     scorecard.teePlayed,
-    holesPlayed
+    holesPlayed,
+    nineHoleSection
   );
 
   const apsStat = calculateAdjustedPlayedScore(holes, scorecard.scores, hasEstablishedHandicap);

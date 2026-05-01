@@ -30,6 +30,7 @@ export const roundSchema = z.object({
     .or(z.literal("approved"))
     .or(z.literal("rejected")),
   notes: z.string().nullable().optional(),
+  nineHoleSection: z.enum(["front", "back"]).nullable().optional(),
   createdAt: z.string(),
 });
 

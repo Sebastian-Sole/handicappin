@@ -73,6 +73,12 @@ export const scorecardRouter = createTRPCRouter({
       // 8. Assemble the Scorecard object
       const scorecard: ScorecardWithRound = {
         userId: roundData.userId,
+        nineHoleSection:
+          roundData.holesPlayed === 9
+            ? roundData.nineHoleSection === "back"
+              ? "back"
+              : "front"
+            : undefined,
         course: {
           id: courseData.id,
           name: courseData.name,
@@ -106,6 +112,7 @@ export const scorecardRouter = createTRPCRouter({
           course_rating_used: roundData.courseRatingUsed,
           slope_rating_used: roundData.slopeRatingUsed,
           holes_played: roundData.holesPlayed,
+          nine_hole_section: roundData.nineHoleSection ?? null,
         },
         roundsBeforeTeeTime,
       };
@@ -171,6 +178,12 @@ export const scorecardRouter = createTRPCRouter({
           const scores = allScores.filter((s) => s.roundId === roundData.id);
           return {
             userId: roundData.userId,
+            nineHoleSection:
+              roundData.holesPlayed === 9
+                ? roundData.nineHoleSection === "back"
+                  ? "back"
+                  : "front"
+                : undefined,
             course: {
               id: courseData.id,
               name: courseData.name,
@@ -228,6 +241,7 @@ export const scorecardRouter = createTRPCRouter({
               course_rating_used: Number(roundData.courseRatingUsed ?? 0),
               slope_rating_used: roundData.slopeRatingUsed ?? 0,
               holes_played: roundData.holesPlayed ?? 0,
+              nine_hole_section: roundData.nineHoleSection ?? null,
             },
           };
         })
