@@ -185,6 +185,13 @@ export const scorecardSchema = z
     nineHoleSection: z.enum(["front", "back"]).optional(),
   })
   .superRefine((v, ctx) => {
+    if (v.scores.length !== 9 && v.scores.length !== 18) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["scores"],
+        message: "Scorecard must have exactly 9 or 18 scores",
+      });
+    }
     if (v.scores.length === 9 && v.nineHoleSection === undefined) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,

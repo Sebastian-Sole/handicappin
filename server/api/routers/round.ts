@@ -292,6 +292,16 @@ export const roundRouter = createTRPCRouter({
         nineHoleSection,
       } = input;
 
+      // Prevent submitting on behalf of another user — input.userId must match
+      // the authenticated session. Mirrors the pattern in getAllByUserId,
+      // getCountByUserId, and getBestRound.
+      if (userId !== ctx.user.id) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "Cannot submit a scorecard on behalf of another user",
+        });
+      }
+
       if (!teePlayed.holes) {
         throw new Error("Tee played has no holes");
       }

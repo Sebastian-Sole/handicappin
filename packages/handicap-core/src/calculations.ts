@@ -189,15 +189,18 @@ export function getRelevantDifferentials(
  * Calculates the handicap index based on the given score differentials.
  */
 export function calculateHandicapIndex(scoreDifferentials: number[]): number {
-  const sortedDifferentials = [...scoreDifferentials].sort((a, b) => a - b);
-  const relevantDiffs = getRelevantDifferentials(sortedDifferentials);
-  const averageDifferential =
-    relevantDiffs.reduce((acc, cur) => acc + cur) / relevantDiffs.length;
-  const handicapCalculation = roundToHandicapPrecision(averageDifferential);
-
+  // Per USGA: fewer than 3 differentials -> no established index (return max).
+  // This guard MUST run before sort/reduce — `[].reduce((a,c) => a+c)` with
+  // no seed throws TypeError.
   if (scoreDifferentials.length < 3) {
     return 54;
   }
+
+  const sortedDifferentials = [...scoreDifferentials].sort((a, b) => a - b);
+  const relevantDiffs = getRelevantDifferentials(sortedDifferentials);
+  const averageDifferential =
+    relevantDiffs.reduce((acc, cur) => acc + cur, 0) / relevantDiffs.length;
+  const handicapCalculation = roundToHandicapPrecision(averageDifferential);
 
   // Apply handicap adjustment based on number of differentials
   if (scoreDifferentials.length === 3) {

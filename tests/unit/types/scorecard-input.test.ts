@@ -17,6 +17,7 @@ import type { Hole, Score } from "@/types/scorecard-input";
 const REQUIRED_MESSAGE = "nineHoleSection is required for 9-hole rounds";
 const FORBIDDEN_MESSAGE =
   "nineHoleSection is only allowed for 9-hole rounds";
+const SCORES_LENGTH_MESSAGE = "Scorecard must have exactly 9 or 18 scores";
 
 const PAR_SEQUENCE = [4, 3, 5, 4, 4, 3, 4, 5, 4, 4, 3, 5, 4, 4, 3, 4, 5, 4];
 const DISTANCE_SEQUENCE = [
@@ -47,6 +48,16 @@ function build18Scores(): Score[] {
 
 function build9Scores(): Score[] {
   return Array.from({ length: 9 }, (_, index) => ({
+    id: index + 1,
+    roundId: 1,
+    holeId: index + 1,
+    strokes: 5,
+    hcpStrokes: 0,
+  }));
+}
+
+function buildScores(count: number): Score[] {
+  return Array.from({ length: count }, (_, index) => ({
     id: index + 1,
     roundId: 1,
     holeId: index + 1,
@@ -163,6 +174,38 @@ describe("scorecardSchema — nineHoleSection cross-field validation", () => {
         i.path.length === 1 &&
         i.path[0] === "nineHoleSection" &&
         i.message === FORBIDDEN_MESSAGE
+    );
+    expect(issue).toBeDefined();
+  });
+
+  it("rejects a 7-score scorecard with the exactly-9-or-18 message", () => {
+    const result = scorecardSchema.safeParse({
+      ...validBaseScorecard,
+      scores: buildScores(7),
+    });
+    expect(result.success).toBe(false);
+    if (result.success) return;
+    const issue = result.error.issues.find(
+      (i) =>
+        i.path.length === 1 &&
+        i.path[0] === "scores" &&
+        i.message === SCORES_LENGTH_MESSAGE
+    );
+    expect(issue).toBeDefined();
+  });
+
+  it("rejects an 11-score scorecard with the exactly-9-or-18 message", () => {
+    const result = scorecardSchema.safeParse({
+      ...validBaseScorecard,
+      scores: buildScores(11),
+    });
+    expect(result.success).toBe(false);
+    if (result.success) return;
+    const issue = result.error.issues.find(
+      (i) =>
+        i.path.length === 1 &&
+        i.path[0] === "scores" &&
+        i.message === SCORES_LENGTH_MESSAGE
     );
     expect(issue).toBeDefined();
   });

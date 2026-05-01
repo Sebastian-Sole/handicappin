@@ -101,6 +101,21 @@ describe("Handicap Index Calculation", () => {
   });
 
   describe("calculateHandicapIndex", () => {
+    it("returns 54 for an empty differentials array (no throw)", () => {
+      // Regression: previously sort/reduce ran before the length<3 guard,
+      // and `[].reduce((a,c) => a+c)` with no seed threw TypeError.
+      expect(() => calculateHandicapIndex([])).not.toThrow();
+      expect(calculateHandicapIndex([])).toBe(54);
+    });
+
+    it("returns 54 for a single differential", () => {
+      expect(calculateHandicapIndex([5.2])).toBe(54);
+    });
+
+    it("returns 54 for two differentials", () => {
+      expect(calculateHandicapIndex([5.2, 4.0])).toBe(54);
+    });
+
     it("returns 54 for less than 3 rounds", () => {
       expect(calculateHandicapIndex([10.0, 12.0])).toBe(54);
     });

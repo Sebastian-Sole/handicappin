@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
-import { createTRPCRouter, publicProcedure, authedProcedure } from "../trpc";
+import { createTRPCRouter, authedProcedure } from "../trpc";
 import { eq, inArray, asc, lt, count, and } from "drizzle-orm";
 import { db } from "@/db";
 import { course, round, teeInfo, hole, score } from "@/db/schema";
@@ -9,7 +9,7 @@ import { getBillingFromJWT } from "@/utils/supabase/jwt";
 import { hasUnlimitedAccess } from "@/utils/billing/access";
 
 export const scorecardRouter = createTRPCRouter({
-  getScorecardByRoundId: publicProcedure
+  getScorecardByRoundId: authedProcedure
     .input(z.object({ id: z.string() }))
     .query(async ({ ctx, input }) => {
       const { id } = input;
@@ -27,6 +27,14 @@ export const scorecardRouter = createTRPCRouter({
         .where(eq(round.id, numericId));
       const roundData = roundResult[0];
       if (!roundData) return null;
+
+      // Ownership check: prevent IDOR — only the round's owner may read it.
+      if (roundData.userId !== ctx.user.id) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "Cannot access another user's scorecard",
+        });
+      }
 
       // 2. Fetch the course
       const courseResult = await db

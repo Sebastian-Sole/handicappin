@@ -22,10 +22,11 @@ import {
   teeResponseSchema,
 } from "../handicap-shared/shared-schemas.ts";
 import { roundResponseSchema } from "../handicap-shared/round-schemas.ts";
-
-const EXCEPTIONAL_ROUND_THRESHOLD = 7;
-const MAX_SCORE_DIFFERENTIAL = 54;
-const ESR_WINDOW_SIZE = 20;
+import {
+  EXCEPTIONAL_ROUND_THRESHOLD,
+  MAX_SCORE_DIFFERENTIAL,
+  ESR_WINDOW_SIZE,
+} from "../handicap-shared/constants.ts";
 
 // Configuration from environment variables
 const BATCH_SIZE = parseInt(Deno.env.get("HANDICAP_QUEUE_BATCH_SIZE") || "25");
@@ -42,7 +43,37 @@ Deno.serve(async (req) => {
   console.log("Queue processor invoked");
 
   try {
-    // Security: Verify request comes from cron job
+    // Security: Shared-secret header check.
+    // `config.toml` sets `verify_jwt = false` for this function so the cron job
+    // can call it, which means anyone with the public Functions URL could hit
+    // it. The body-level `{ scheduled: true }` check is forgeable, so we
+    // require a shared secret in the `x-cron-secret` header. The cron SQL
+    // (see supabase/migrations/*_secure_queue_cron_with_secret.sql) injects
+    // this header from `current_setting('app.handicap_cron_secret', true)`.
+    //
+    // Deployment note (manual, not automatable from local code):
+    //   1. Set `HANDICAP_CRON_SECRET` in the Supabase project secrets so the
+    //      edge function runtime sees it.
+    //   2. Run `ALTER DATABASE postgres SET app.handicap_cron_secret = '<secret>'`
+    //      in the Supabase SQL editor (or via a privileged migration) so the
+    //      cron job's `current_setting(...)` resolves to the same value.
+    const expectedCronSecret = Deno.env.get("HANDICAP_CRON_SECRET");
+    const providedCronSecret = req.headers.get("x-cron-secret");
+    if (
+      !expectedCronSecret ||
+      !providedCronSecret ||
+      providedCronSecret !== expectedCronSecret
+    ) {
+      console.warn(
+        "Unauthorized access attempt to process-handicap-queue (missing/mismatched x-cron-secret)"
+      );
+      return new Response(
+        JSON.stringify({ error: "Unauthorized" }),
+        { status: 403, headers: { "Content-Type": "application/json" } }
+      );
+    }
+
+    // Defense-in-depth: also require the legacy body field.
     const body = await req.json();
     if (body.scheduled !== true) {
       console.warn("Unauthorized access attempt to process-handicap-queue");
@@ -403,15 +434,15 @@ async function processUserHandicap(
         .map((r) => r.finalDifferential);
       const calculatedIndex = calculateHandicapIndex(relevantDifferentials);
 
-      if (processedRounds.length >= 20) {
-        const lowHandicapIndex = calculateLowHandicapIndex(processedRounds, i);
-        pr.updatedHandicapIndex = applyHandicapCaps(
-          calculatedIndex,
-          lowHandicapIndex
-        );
-      } else {
-        pr.updatedHandicapIndex = calculatedIndex;
-      }
+      // Apply soft/hard caps per USGA Rule 5.7.
+      // calculateLowHandicapIndex returns null when no rounds exist in the
+      // 365-day window, and applyHandicapCaps short-circuits on null — so the
+      // null-check inside applyHandicapCaps is the correct gate (not a 20-round
+      // threshold, which Rule 5.7 does not require).
+      pr.updatedHandicapIndex = applyHandicapCaps(
+        calculatedIndex,
+        calculateLowHandicapIndex(processedRounds, i)
+      );
 
       pr.updatedHandicapIndex = Math.min(
         pr.updatedHandicapIndex,
