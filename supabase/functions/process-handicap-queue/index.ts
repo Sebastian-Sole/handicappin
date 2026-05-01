@@ -49,14 +49,18 @@ Deno.serve(async (req) => {
     // it. The body-level `{ scheduled: true }` check is forgeable, so we
     // require a shared secret in the `x-cron-secret` header. The cron SQL
     // (see supabase/migrations/*_secure_queue_cron_with_secret.sql) injects
-    // this header from `current_setting('app.handicap_cron_secret', true)`.
+    // this header from Supabase Vault via
+    // `(SELECT decrypted_secret FROM vault.decrypted_secrets WHERE name = 'handicap_cron_secret' LIMIT 1)`.
     //
     // Deployment note (manual, not automatable from local code):
-    //   1. Set `HANDICAP_CRON_SECRET` in the Supabase project secrets so the
-    //      edge function runtime sees it.
-    //   2. Run `ALTER DATABASE postgres SET app.handicap_cron_secret = '<secret>'`
-    //      in the Supabase SQL editor (or via a privileged migration) so the
-    //      cron job's `current_setting(...)` resolves to the same value.
+    //   1. Set `HANDICAP_CRON_SECRET` in Supabase Edge Function secrets
+    //      (Dashboard -> Edge Functions -> Secrets) so this runtime can read
+    //      it via `Deno.env.get(...)`.
+    //   2. Create the matching secret in Supabase Vault as the `postgres` role:
+    //        SELECT vault.create_secret('<same secret>', 'handicap_cron_secret');
+    //      (Or Dashboard -> Settings -> Vault -> New secret.) Both values MUST
+    //      match. Vault is used because Supabase Cloud's `postgres` role
+    //      cannot run `ALTER DATABASE ... SET` for arbitrary GUCs.
     const expectedCronSecret = Deno.env.get("HANDICAP_CRON_SECRET");
     const providedCronSecret = req.headers.get("x-cron-secret");
     if (
