@@ -1,7 +1,7 @@
 import AboutSkeleton from "@/components/loading/about-skeleton";
 import { Badge } from "@/components/ui/badge";
 import { StatTile } from "@/components/ui/stat-tile";
-import { H2, H3, P } from "@/components/ui/typography";
+import { H1, H2, H3, P } from "@/components/ui/typography";
 import { createClient } from "@supabase/supabase-js";
 import { Suspense } from "react";
 import type { Metadata } from "next";
@@ -72,6 +72,7 @@ export default async function AboutPage() {
   return (
     <Suspense fallback={<AboutSkeleton />}>
       <div className="min-h-screen bg-background">
+        <H1 className="sr-only">About Handicappin&apos;</H1>
         {/* Mission Section */}
         <section className="w-full py-2xl md:py-4xl lg:py-5xl hero-gradient">
           <div className="sm:container px-md md:px-lg mx-auto">

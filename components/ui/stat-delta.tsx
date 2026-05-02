@@ -14,9 +14,9 @@ type StatDeltaProps = {
   /** Formatter for the numeric display. Defaults to signed one-decimal. */
   format?: (value: number) => string;
   className?: string;
-  /** Hide the icon and show only the colored number. */
-  iconOnly?: boolean;
   /** Hide the number and show only the colored icon. */
+  iconOnly?: boolean;
+  /** Hide the icon and show only the colored number. */
   numberOnly?: boolean;
 };
 

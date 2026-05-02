@@ -1,3 +1,5 @@
+"use client";
+
 import { InfoIcon } from "lucide-react";
 import {
   Tooltip,

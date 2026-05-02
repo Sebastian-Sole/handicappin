@@ -14,7 +14,7 @@ import {
   WebSiteJsonLd,
 } from "@/components/seo/json-ld";
 
-const inter = Inter({ subsets: ["latin"] });
+const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://handicappin.com"),
@@ -93,7 +93,7 @@ export default function RootLayout({
         <WebSiteJsonLd />
         <SoftwareApplicationJsonLd />
       </head>
-      <body className={inter.className}>
+      <body className={`${inter.variable} ${inter.className}`}>
         <div className="flex flex-col min-h-screen">
           <TRPCReactProvider>
             <ThemeProvider

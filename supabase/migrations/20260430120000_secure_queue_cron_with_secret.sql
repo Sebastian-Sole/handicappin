@@ -37,6 +37,7 @@ CREATE OR REPLACE FUNCTION setup_handicap_queue_cron()
 RETURNS void
 LANGUAGE plpgsql
 SECURITY DEFINER
+SET search_path = ''
 AS $$
 DECLARE
   is_local boolean;

@@ -1,12 +1,4 @@
 @layer base {
-  *,
-  ::after,
-  ::before,
-  ::backdrop,
-  ::file-selector-button {
-    border-color: var(--color-gray-200, currentcolor);
-  }
-
   * {
     @apply border-border;
   }
@@ -20,7 +12,7 @@
 
   body {
     @apply bg-background text-foreground;
-    font-family: var(--font-sans);
+    font-family: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
     letter-spacing: var(--tracking-normal);
     margin: 0;
   }

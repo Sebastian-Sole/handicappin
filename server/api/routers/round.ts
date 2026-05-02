@@ -250,6 +250,13 @@ export const roundRouter = createTRPCRouter({
         throw new Error(`Error getting round: ${error.message}`);
       }
 
+      if (round.userId !== ctx.user.id) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "Cannot access another user's round",
+        });
+      }
+
       return round;
     }),
   getBestRound: authedProcedure

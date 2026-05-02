@@ -176,7 +176,9 @@ async function processUserHandicap(
   job: QueueJob
 ): Promise<void> {
   try {
-    console.log(`Processing user ${job.user_id}, attempt ${job.attempts + 1}`);
+    console.log(
+      `Processing job ${job.id}, attempt ${job.attempts + 1}`
+    );
 
     const userId = job.user_id;
 
@@ -231,7 +233,9 @@ async function processUserHandicap(
         throw rpcError;
       }
 
-      console.log(`No approved rounds for user ${userId}, handicap set to max`);
+      console.log(
+        `No approved rounds for job ${job.id}, handicap set to max`
+      );
       return;
     }
 
@@ -310,24 +314,38 @@ async function processUserHandicap(
       approvalStatus: r.approvalStatus,
     }));
 
-    // Pass 1: Calculate adjusted gross scores
-    for (let roundIndex = 0; roundIndex < processedRounds.length; roundIndex++) {
-      const pr = processedRounds[roundIndex];
+    // Pass 1+2 (merged): Compute AGS/APS/courseHandicap using a rolling
+    // handicap index (USGA correctness), then derive raw differentials and
+    // detect ESR. Previously Pass 1 used a fixed `MAX_SCORE_DIFFERENTIAL`
+    // (54) for every round which inflated AGS for established players
+    // because the per-hole NDB caps (`addHcpStrokesToScores` ->
+    // `calculateAdjustedPlayedScore`) were computed against far too many
+    // strokes. Each round's data only depends on its own rolling index
+    // and prior rounds' rawDifferentials (for ESR window), so merging the
+    // two passes is functionally equivalent to the old order plus the
+    // rolling-index correction.
+    let rollingIndex = initialHandicapIndex;
+    for (let i = 0; i < processedRounds.length; i++) {
+      const pr = processedRounds[i];
+      // IMPORTANT: assign rolling index BEFORE any AGS/APS/courseHandicap
+      // computation so they use the correct index for this round.
+      pr.existingHandicapIndex = rollingIndex;
+
       const teePlayed = teeMap.get(pr.teeId);
       if (!teePlayed) throw new Error(`Tee not found for round ${pr.id}`);
 
       const roundScores = roundScoresMap.get(pr.id);
       if (!roundScores) throw new Error(`Scores not found for round ${pr.id}`);
 
-      const holes = holesMap.get(pr.teeId);
-      if (!holes) throw new Error(`Holes not found for tee ${pr.teeId}`);
+      const holesForRound = holesMap.get(pr.teeId);
+      if (!holesForRound)
+        throw new Error(`Holes not found for tee ${pr.teeId}`);
 
       const numberOfHolesPlayed = roundScores.length;
       // Use the round's recorded section (front/back) so back-9 rounds
       // pick the right ratings/par. Null/undefined falls back to "front".
-      const roundForCourseHandicap = userRounds[roundIndex];
       const sectionForCourseHandicap: "front" | "back" =
-        roundForCourseHandicap.nineHoleSection ?? "front";
+        userRounds[i].nineHoleSection ?? "front";
 
       const courseHandicap = calculateCourseHandicap(
         pr.existingHandicapIndex,
@@ -337,7 +355,7 @@ async function processUserHandicap(
       );
 
       const scoresWithHcpStrokes = addHcpStrokesToScores(
-        holes,
+        holesForRound,
         roundScores,
         courseHandicap,
         numberOfHolesPlayed
@@ -346,10 +364,10 @@ async function processUserHandicap(
       // Determine if player has an established handicap (USGA requires 3+ rounds)
       // For rounds 0, 1, 2 (first 3 rounds): player does not have established handicap
       // For rounds 3+ : player has established handicap
-      const hasEstablishedHandicap = roundIndex >= 3;
+      const hasEstablishedHandicap = i >= 3;
 
       const adjustedPlayedScore = calculateAdjustedPlayedScore(
-        holes,
+        holesForRound,
         scoresWithHcpStrokes,
         hasEstablishedHandicap
       );
@@ -358,28 +376,13 @@ async function processUserHandicap(
         adjustedPlayedScore,
         courseHandicap,
         numberOfHolesPlayed,
-        holes,
+        holesForRound,
         roundScores
       );
 
       pr.adjustedGrossScore = adjustedGrossScore;
       pr.adjustedPlayedScore = adjustedPlayedScore;
       pr.courseHandicap = courseHandicap;
-    }
-
-    // Pass 2: Calculate raw differentials and detect ESR
-    let rollingIndex = initialHandicapIndex;
-    for (let i = 0; i < processedRounds.length; i++) {
-      const pr = processedRounds[i];
-      pr.existingHandicapIndex = rollingIndex;
-
-      const teePlayed = teeMap.get(pr.teeId);
-      if (!teePlayed) throw new Error(`Tee not found for round ${pr.id}`);
-
-      const roundScores = roundScoresMap.get(pr.id);
-      if (!roundScores) throw new Error(`Scores not found for round ${pr.id}`);
-
-      const numberOfHolesPlayed = roundScores.length;
 
       // Calculate differential based on holes played (USGA Rule 5.1b for 9-hole)
       if (numberOfHolesPlayed === 9) {
@@ -439,7 +442,7 @@ async function processUserHandicap(
       rollingIndex = pr.updatedHandicapIndex;
     }
 
-    // Pass 3: Apply ESR offsets and calculate final differentials
+    // Pass 2: Apply ESR offsets and calculate final differentials
     for (let i = 0; i < processedRounds.length; i++) {
       const pr = processedRounds[i];
       pr.existingHandicapIndex =
@@ -497,7 +500,7 @@ async function processUserHandicap(
       throw rpcError;
     }
 
-    console.log(`Successfully processed handicap for user ${userId}`);
+    console.log(`Successfully processed handicap for job ${job.id}`);
   } catch (error: unknown) {
     // Handle failure: update queue entry with error
     console.error(`Failed to process user ${job.user_id}:`, error);
