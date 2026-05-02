@@ -61,13 +61,23 @@ function base64urlDecode(str: string): string {
   }
 }
 
-export function getBillingFromJWT(session: SessionWithToken): BillingClaims | null {
-  if (!session?.access_token) {
+export function getBillingFromJWT(
+  sessionOrToken: SessionWithToken | string,
+): BillingClaims | null {
+  // Accept either a Supabase Session (cookie/web path) or a raw access-token
+  // string (bearer path — mobile/RN clients where `getSession()` returns null
+  // because the bearer-scoped client is created with `persistSession: false`).
+  const accessToken =
+    typeof sessionOrToken === 'string'
+      ? sessionOrToken
+      : sessionOrToken?.access_token;
+
+  if (!accessToken) {
     return null;
   }
 
   try {
-    const parts = session.access_token.split('.');
+    const parts = accessToken.split('.');
     if (parts.length === 3) {
       const payload = JSON.parse(base64urlDecode(parts[1]));
       return payload.app_metadata?.billing || null;

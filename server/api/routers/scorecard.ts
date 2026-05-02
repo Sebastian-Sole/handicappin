@@ -53,10 +53,14 @@ export const scorecardRouter = createTRPCRouter({
       if (!teePlayed) return null;
 
       // 5. Fetch holes for the tee played
+      // Order by hole number — downstream consumers (e.g. back-9 walkthrough)
+      // rely on position-based slicing such as `holes.slice(9, 18)`, which is
+      // only correct when Postgres returns rows in hole-number order.
       const holes = await db
         .select()
         .from(hole)
-        .where(eq(hole.teeId, teePlayed.id));
+        .where(eq(hole.teeId, teePlayed.id))
+        .orderBy(asc(hole.holeNumber));
 
       // 6. Fetch scores for the round
       const scores = await db
@@ -144,9 +148,24 @@ export const scorecardRouter = createTRPCRouter({
 
       // Defense-in-depth: Verify user has unlimited/lifetime plan
       // This endpoint powers /statistics and /dashboard which require unlimited access
-      // Middleware handles page-level protection, but API calls could bypass it
+      // Middleware handles page-level protection, but API calls could bypass it.
+      //
+      // Two auth paths feed this router (see server/api/trpc.ts):
+      //   - Cookie/web: `ctx.supabase.auth.getSession()` returns a Session, and
+      //     the JWT lives on `session.access_token`.
+      //   - Bearer/RN: `ctx.supabase` is built with `persistSession: false`, so
+      //     `getSession()` returns null. The JWT is on the request itself.
+      // We try the Session first, then fall back to the raw bearer token from
+      // the Authorization header so both paths get the same billing claims.
       const { data: sessionData } = await ctx.supabase.auth.getSession();
-      const billing = getBillingFromJWT(sessionData.session);
+      const bearerHeader = ctx.headers.get("authorization");
+      const bearerToken =
+        bearerHeader && bearerHeader.toLowerCase().startsWith("bearer ")
+          ? bearerHeader.slice("bearer ".length).trim()
+          : null;
+      const billing = getBillingFromJWT(
+        sessionData.session ?? bearerToken ?? null,
+      );
       if (!hasUnlimitedAccess(billing)) {
         throw new TRPCError({
           code: "FORBIDDEN",
@@ -172,7 +191,13 @@ export const scorecardRouter = createTRPCRouter({
       const [courses, tees, allHoles, allScores] = await Promise.all([
         db.select().from(course).where(inArray(course.id, courseIds)),
         db.select().from(teeInfo).where(inArray(teeInfo.id, teeIds)),
-        db.select().from(hole).where(inArray(hole.teeId, teeIds)),
+        // Order by hole number so per-tee position-based slicing (e.g.
+        // `holes.slice(9, 18)` for back-9) lines up with the actual holes.
+        db
+          .select()
+          .from(hole)
+          .where(inArray(hole.teeId, teeIds))
+          .orderBy(asc(hole.holeNumber)),
         db.select().from(score).where(inArray(score.roundId, roundIds)),
       ]);
 

@@ -68,7 +68,7 @@ const ProgressDots: React.FC<{ total: number; current: number }> = ({
         key={i}
         className={cn(
           "w-2 h-2 rounded-full transition-colors duration-300",
-          i === current ? "bg-primary" : "bg-gray-300"
+          i === current ? "bg-primary" : "bg-muted"
         )}
       />
     ))}

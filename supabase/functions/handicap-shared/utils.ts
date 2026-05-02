@@ -1,3 +1,8 @@
+import {
+  HARD_CAP_THRESHOLD,
+  LOW_HANDICAP_WINDOW_DAYS,
+  SOFT_CAP_THRESHOLD,
+} from "./constants.ts";
 import { Hole, Score, Tee } from "./shared-schemas.ts";
 
 export type ProcessedRound = {
@@ -14,10 +19,6 @@ export type ProcessedRound = {
   courseHandicap: number;
   approvalStatus: string;
 };
-
-const SOFT_CAP_THRESHOLD = 3.0;
-const HARD_CAP_THRESHOLD = 5.0;
-const LOW_HANDICAP_WINDOW_DAYS = 365;
 
 /**
  * Rounds a value to 1 decimal place per USGA handicap precision requirements.
