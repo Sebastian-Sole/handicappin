@@ -32,6 +32,8 @@ import {
 const BATCH_SIZE = parseInt(Deno.env.get("HANDICAP_QUEUE_BATCH_SIZE") || "25");
 const MAX_RETRIES = parseInt(Deno.env.get("HANDICAP_MAX_RETRIES") || "3");
 
+type SupabaseClient = ReturnType<typeof createClient>;
+
 interface QueueJob {
   id: number;
   user_id: string;
@@ -39,10 +41,34 @@ interface QueueJob {
   attempts: number;
 }
 
+/**
+ * Constant-time string comparison to mitigate timing attacks against the
+ * shared cron secret. Deno's runtime has no `node:crypto.timingSafeEqual`,
+ * so we hand-roll it: compare lengths first (length leakage is acceptable
+ * for fixed-length secrets), then XOR every byte and OR the results.
+ */
+function timingSafeStringEqual(a: string, b: string): boolean {
+  if (a.length !== b.length) return false;
+  const aBytes = new TextEncoder().encode(a);
+  const bBytes = new TextEncoder().encode(b);
+  let result = 0;
+  for (let i = 0; i < aBytes.length; i++) result |= aBytes[i] ^ bBytes[i];
+  return result === 0;
+}
+
 Deno.serve(async (req) => {
   console.log("Queue processor invoked");
 
   try {
+    // Cheap method check first — fails fast on malformed probes without
+    // trying to parse a body.
+    if (req.method !== "POST") {
+      return new Response(JSON.stringify({ error: "Method not allowed" }), {
+        status: 405,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+
     // Security: Shared-secret header check.
     // `config.toml` sets `verify_jwt = false` for this function so the cron job
     // can call it, which means anyone with the public Functions URL could hit
@@ -66,23 +92,13 @@ Deno.serve(async (req) => {
     if (
       !expectedCronSecret ||
       !providedCronSecret ||
-      providedCronSecret !== expectedCronSecret
+      !timingSafeStringEqual(providedCronSecret, expectedCronSecret)
     ) {
       console.warn(
         "Unauthorized access attempt to process-handicap-queue (missing/mismatched x-cron-secret)"
       );
       return new Response(
         JSON.stringify({ error: "Unauthorized" }),
-        { status: 403, headers: { "Content-Type": "application/json" } }
-      );
-    }
-
-    // Defense-in-depth: also require the legacy body field.
-    const body = await req.json();
-    if (body.scheduled !== true) {
-      console.warn("Unauthorized access attempt to process-handicap-queue");
-      return new Response(
-        JSON.stringify({ error: "Unauthorized - this endpoint is for scheduled jobs only" }),
         { status: 403, headers: { "Content-Type": "application/json" } }
       );
     }
@@ -156,7 +172,7 @@ Deno.serve(async (req) => {
  * Uses shared utilities from handicap-shared/utils.ts
  */
 async function processUserHandicap(
-  supabase: any,
+  supabase: SupabaseClient,
   job: QueueJob
 ): Promise<void> {
   try {

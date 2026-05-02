@@ -1,4 +1,4 @@
-import { calculateHoleAdjustedScore } from "@handicappin/handicap-core";
+import { calculateHoleAdjustedScore, type Score } from "@handicappin/handicap-core";
 import { InfoIcon } from "lucide-react";
 import {
   Table,
@@ -42,7 +42,28 @@ const HolesTable = () => {
   }, []);
 
   const allHoles = scorecard.teePlayed.holes ?? [];
-  const playedHoles = allHoles.slice(0, scorecard.scores.length);
+
+  // Build a holeId -> score lookup so back-9 rounds (holeNumber 10..18) work the
+  // same as front-9. Indexing scorecard.scores by holeNumber is broken: scores is
+  // length 9 with indices 0..8, so back-9 lookups always returned undefined.
+  const scoresByHoleId = new Map<number, Score>();
+  for (const s of scorecard.scores) {
+    if (s.holeId !== undefined) scoresByHoleId.set(s.holeId, s);
+  }
+
+  // Played holes are the ones with a matching score, regardless of which 9 was played.
+  const playedHoles = allHoles.filter(
+    (h) => h.id !== undefined && scoresByHoleId.has(h.id)
+  );
+
+  // Section is on the round row for new submissions; legacy rows fall back to "front".
+  const nineHoleSection: "front" | "back" =
+    (scorecard.round.nine_hole_section as "front" | "back" | null) ?? "front";
+  const totalsLabel = isNineHoles
+    ? nineHoleSection === "back"
+      ? "Back 9"
+      : "Front 9"
+    : "Total";
 
   return (
     <div
@@ -76,7 +97,7 @@ const HolesTable = () => {
         </TableHeader>
         <TableBody>
           {allHoles.map((hole) => {
-            const score = scorecard.scores[hole.holeNumber - 1];
+            const score = hole.id !== undefined ? scoresByHoleId.get(hole.id) : undefined;
             const isPlayed = !!score;
 
             return (
@@ -91,20 +112,26 @@ const HolesTable = () => {
           })}
           <TableRow key={"total"} className="bg-secondary dark:bg-secondary font-medium">
             <TableCell className="py-sm px-md first:rounded-l-lg rounded-tl-none! last:rounded-r-lg">
-              {isNineHoles ? "Front 9" : "Total"}
+              {totalsLabel}
             </TableCell>
             <TableCell className="py-sm px-md">
               {playedHoles.reduce((acc, hole) => acc + hole.par, 0)}
             </TableCell>
             <TableCell className="py-sm px-md">
-              {playedHoles.reduce((acc, hole) => acc + (scorecard.scores[hole.holeNumber - 1]?.strokes ?? 0), 0)}
+              {playedHoles.reduce((acc, hole) => {
+                const score = hole.id !== undefined ? scoresByHoleId.get(hole.id) : undefined;
+                return acc + (score?.strokes ?? 0);
+              }, 0)}
             </TableCell>
             <TableCell className="py-sm px-md">
-              {playedHoles.reduce((acc, hole) => acc + (scorecard.scores[hole.holeNumber - 1]?.hcpStrokes ?? 0), 0)}
+              {playedHoles.reduce((acc, hole) => {
+                const score = hole.id !== undefined ? scoresByHoleId.get(hole.id) : undefined;
+                return acc + (score?.hcpStrokes ?? 0);
+              }, 0)}
             </TableCell>
             <TableCell className="py-sm px-md first:rounded-l-lg last:rounded-r-lg rounded-tr-none!">
               {playedHoles.reduce((acc, hole) => {
-                const score = scorecard.scores[hole.holeNumber - 1];
+                const score = hole.id !== undefined ? scoresByHoleId.get(hole.id) : undefined;
                 return acc + (score ? calculateHoleAdjustedScore(hole, score, hasEstablishedHandicap) : 0);
               }, 0)}
             </TableCell>
