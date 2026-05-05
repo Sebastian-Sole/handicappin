@@ -61,10 +61,8 @@ export const RoundCalculationProvider = ({
   // Determine if 9-hole round based on actual scores submitted
   const actualHolesPlayed = scorecard.scores.length;
   const isNineHoleRound = actualHolesPlayed === 9;
-  // Section is on the round row for new submissions; legacy rows fall back to "front".
-  // Supabase row type is snake_case (nine_hole_section).
-  const nineHoleSection: "front" | "back" =
-    (scorecard.round.nine_hole_section as "front" | "back" | null) ?? "front";
+  // Section is on the scorecard for new submissions; legacy rows fall back to "front".
+  const nineHoleSection: "front" | "back" = scorecard.nineHoleSection ?? "front";
   const isBackNine = isNineHoleRound && nineHoleSection === "back";
 
   const initialNinePar = isBackNine

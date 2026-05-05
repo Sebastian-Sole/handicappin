@@ -1,12 +1,12 @@
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
+import * as Sentry from "@sentry/nextjs";
 import { createTRPCRouter, authedProcedure } from "../trpc";
 import { eq, inArray, asc, lt, count, and } from "drizzle-orm";
 import { db } from "@/db";
 import { course, round, teeInfo, hole, score } from "@/db/schema";
 import { scorecardSchema, ScorecardWithRound } from "@/types/scorecard-input";
-import { getBillingFromJWT } from "@/utils/supabase/jwt";
-import { hasUnlimitedAccess } from "@/utils/billing/access";
+import { getComprehensiveUserAccess } from "@/utils/billing/access-control";
 
 export const scorecardRouter = createTRPCRouter({
   getScorecardByRoundId: authedProcedure
@@ -129,8 +129,22 @@ export const scorecardRouter = createTRPCRouter({
         roundsBeforeTeeTime,
       };
 
-      // Validate with zod
-      scorecardSchema.parse(scorecard);
+      // Validate with zod — surface a clean tRPC error rather than letting a
+      // raw ZodError bubble up as a 500 to the client.
+      const validated = scorecardSchema.safeParse(scorecard);
+      if (!validated.success) {
+        Sentry.captureException(validated.error, {
+          extra: {
+            roundId: roundData.id,
+            issues: validated.error.issues,
+          },
+          tags: { router: "scorecard", procedure: "getScorecardByRoundId" },
+        });
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to assemble scorecard",
+        });
+      }
       return scorecard;
     }),
   getAllScorecardsByUserId: authedProcedure
@@ -147,26 +161,17 @@ export const scorecardRouter = createTRPCRouter({
       }
 
       // Defense-in-depth: Verify user has unlimited/lifetime plan
-      // This endpoint powers /statistics and /dashboard which require unlimited access
+      // This endpoint powers /statistics and /dashboard which require unlimited access.
       // Middleware handles page-level protection, but API calls could bypass it.
       //
-      // Two auth paths feed this router (see server/api/trpc.ts):
-      //   - Cookie/web: `ctx.supabase.auth.getSession()` returns a Session, and
-      //     the JWT lives on `session.access_token`.
-      //   - Bearer/RN: `ctx.supabase` is built with `persistSession: false`, so
-      //     `getSession()` returns null. The JWT is on the request itself.
-      // We try the Session first, then fall back to the raw bearer token from
-      // the Authorization header so both paths get the same billing claims.
-      const { data: sessionData } = await ctx.supabase.auth.getSession();
-      const bearerHeader = ctx.headers.get("authorization");
-      const bearerToken =
-        bearerHeader && bearerHeader.toLowerCase().startsWith("bearer ")
-          ? bearerHeader.slice("bearer ".length).trim()
-          : null;
-      const billing = getBillingFromJWT(
-        sessionData.session ?? bearerToken ?? null,
-      );
-      if (!hasUnlimitedAccess(billing)) {
+      // Use the database-backed `getComprehensiveUserAccess` (not JWT claims) so
+      // a user who upgraded inside the JWT's 1h TTL isn't locked out by a stale
+      // `plan: "free"` claim. Mirrors the canonical pattern used in round.ts.
+      const access = await getComprehensiveUserAccess(userId);
+      if (
+        !access.hasAccess ||
+        (access.plan !== "unlimited" && access.plan !== "lifetime")
+      ) {
         throw new TRPCError({
           code: "FORBIDDEN",
           message:
@@ -280,8 +285,27 @@ export const scorecardRouter = createTRPCRouter({
         })
         .filter(Boolean) as ScorecardWithRound[];
 
-      // Validate all with zod
-      scorecards.forEach((scorecard) => scorecardSchema.parse(scorecard));
-      return scorecards;
+      // Validate all with zod — filter out malformed rows instead of crashing
+      // the entire statistics/dashboard page when a single round has an
+      // unexpected shape. Surface the issue to Sentry for follow-up.
+      const validatedScorecards = scorecards.filter((scorecard) => {
+        const result = scorecardSchema.safeParse(scorecard);
+        if (!result.success) {
+          Sentry.captureException(result.error, {
+            extra: {
+              roundId: scorecard.round?.id,
+              userId,
+              issues: result.error.issues,
+            },
+            tags: {
+              router: "scorecard",
+              procedure: "getAllScorecardsByUserId",
+            },
+          });
+          return false;
+        }
+        return true;
+      });
+      return validatedScorecards;
     }),
 });

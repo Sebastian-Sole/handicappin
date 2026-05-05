@@ -56,9 +56,8 @@ const HolesTable = () => {
     (h) => h.id !== undefined && scoresByHoleId.has(h.id)
   );
 
-  // Section is on the round row for new submissions; legacy rows fall back to "front".
-  const nineHoleSection: "front" | "back" =
-    (scorecard.round.nine_hole_section as "front" | "back" | null) ?? "front";
+  // Section is on the scorecard for new submissions; legacy rows fall back to "front".
+  const nineHoleSection: "front" | "back" = scorecard.nineHoleSection ?? "front";
   const totalsLabel = isNineHoles
     ? nineHoleSection === "back"
       ? "Back 9"

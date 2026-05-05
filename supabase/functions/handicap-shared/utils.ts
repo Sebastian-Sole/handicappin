@@ -334,7 +334,6 @@ export const calculateHoleAdjustedScore = (
   return Math.min(score.strokes, maxScore);
 };
 
-// Todo: Update so that we filter out specific holes that have been played already, like if they played 1-9, and then 11 and 13.
 export function calculateAdjustedGrossScore(
   adjustedPlayedScore: number,
   courseHandicap: number,
@@ -342,21 +341,28 @@ export function calculateAdjustedGrossScore(
   holes: Hole[],
   roundScores: Score[]
 ): number {
-  let adjustedGrossScore;
-  if (numberOfHolesPlayed === 18) {
-    adjustedGrossScore = adjustedPlayedScore;
-  } else {
-    const holesLeft = 18 - numberOfHolesPlayed;
-    const predictedStrokes = Math.round((courseHandicap / 18) * holesLeft);
-    // Get the holes for which there isn't a registered score, and sum the par of these holes
-    const parForRemainingHoles = holes
-      .filter((hole) => !roundScores.some((score) => score.holeId === hole.id))
-      .reduce((acc, cur) => acc + cur.par, 0);
-    adjustedGrossScore =
-      adjustedPlayedScore + predictedStrokes + parForRemainingHoles;
+  // For full 18-hole and 9-hole rounds, AGS equals the played adjusted score —
+  // there are no "missing holes" to predict. The predicted-strokes formula
+  // below is for genuinely partial rounds (e.g., a 14-hole round abandoned
+  // due to weather) where USGA Rule 3.2 prescribes filling in the unplayed
+  // holes with par + predicted handicap strokes for a complete-round
+  // submission.
+  //
+  // 9-hole rounds use `calculate9HoleScoreDifferential` for their differential
+  // calculation; the AGS stored on a 9-hole round is just `adjustedPlayedScore`
+  // for display/audit purposes.
+  if (numberOfHolesPlayed === 18 || numberOfHolesPlayed === 9) {
+    return adjustedPlayedScore;
   }
 
-  return adjustedGrossScore;
+  // Genuinely partial rounds (not 9, not 18): predict the remainder.
+  const holesLeft = 18 - numberOfHolesPlayed;
+  const predictedStrokes = Math.round((courseHandicap / 18) * holesLeft);
+  // Get the holes for which there isn't a registered score, and sum the par of these holes
+  const parForRemainingHoles = holes
+    .filter((hole) => !roundScores.some((score) => score.holeId === hole.id))
+    .reduce((acc, cur) => acc + cur.par, 0);
+  return adjustedPlayedScore + predictedStrokes + parForRemainingHoles;
 }
 
 export function addHcpStrokesToScores(

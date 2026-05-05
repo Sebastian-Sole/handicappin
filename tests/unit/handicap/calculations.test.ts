@@ -627,23 +627,39 @@ describe("Adjusted Gross Score Calculation", () => {
       expect(result).toBe(85);
     });
 
-    it("adds predicted strokes for partial rounds", () => {
+    it("returns adjusted played score for 9-hole rounds (no remainder prediction)", () => {
+      // 9-hole rounds: AGS == adjustedPlayedScore. The differential is computed
+      // separately via calculate9HoleScoreDifferential, so we don't predict the
+      // unplayed back-9 here. Predicting would double-halve handicap strokes
+      // (the courseHandicap passed in is already the 9-hole course handicap).
       const holes: Hole[] = [
         { id: 10, holeNumber: 10, par: 4, hcp: 1, distance: 400, teeId: 1 },
         { id: 11, holeNumber: 11, par: 4, hcp: 2, distance: 400, teeId: 1 },
       ];
       const scores: Score[] = [{ holeId: 1, strokes: 5, hcpStrokes: 1 }];
-      // Played 9 holes with score 42
-      // Remaining 9 holes: par = 4+4 = 8 (only 2 holes in test data)
-      // Predicted strokes = round(18 / 18 * 9) = 9 (but formula uses holesLeft)
-      // Since only 2 unplayed holes in test: par = 8
-      // Holes left = 18 - 9 = 9
-      // Predicted = round(18 / 18 * 9) = 9
-      // AGS = 42 + 9 + 8 = 59 (with simplified test data)
-      const result = calculateAdjustedGrossScore(42, 18, 9, holes, scores);
-      // holesLeft = 9, predictedStrokes = round(18/18 * 9) = 9
-      // parForRemaining = 4 + 4 = 8 (holes 10, 11 not in scores)
-      expect(result).toBe(42 + 9 + 8);
+      // 9-hole course handicap of 9 must NOT be doubled into predicted strokes.
+      const result = calculateAdjustedGrossScore(42, 9, 9, holes, scores);
+      expect(result).toBe(42);
+    });
+
+    it("adds predicted strokes for genuinely partial rounds (e.g., 14 holes)", () => {
+      // Player abandoned after 14 holes (weather, etc). USGA Rule 3.2 fills in
+      // the missing 4 holes with par + predicted handicap strokes.
+      const holes: Hole[] = [
+        // Only the 4 unplayed holes are present in the test fixture; the played
+        // holes are matched out via `roundScores` (none of these holeIds appear there).
+        { id: 15, holeNumber: 15, par: 4, hcp: 5, distance: 400, teeId: 1 },
+        { id: 16, holeNumber: 16, par: 3, hcp: 15, distance: 180, teeId: 1 },
+        { id: 17, holeNumber: 17, par: 5, hcp: 9, distance: 520, teeId: 1 },
+        { id: 18, holeNumber: 18, par: 4, hcp: 1, distance: 410, teeId: 1 },
+      ];
+      const scores: Score[] = [{ holeId: 1, strokes: 5, hcpStrokes: 1 }];
+      // courseHandicap = 18, holesLeft = 4
+      // predictedStrokes = round(18/18 * 4) = 4
+      // parForRemaining = 4 + 3 + 5 + 4 = 16
+      // AGS = 65 + 4 + 16 = 85
+      const result = calculateAdjustedGrossScore(65, 18, 14, holes, scores);
+      expect(result).toBe(65 + 4 + 16);
     });
   });
 });

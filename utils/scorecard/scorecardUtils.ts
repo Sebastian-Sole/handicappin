@@ -31,12 +31,16 @@ export const normalizeHcpForNineHoles = (
 ): Hole[] => {
   if (!holes) return [];
 
+  // Defensive sort: positional slicing below assumes holeNumber order. API queries
+  // already order by holeNumber, but enforce here so callers can't pass unsorted holes.
+  const sortedHoles = [...holes].sort((a, b) => a.holeNumber - b.holeNumber);
+
   // Only normalize if we're playing 9 holes
-  if (holeCount === 18) return holes;
+  if (holeCount === 18) return sortedHoles;
 
   // Pick the played 9 holes based on section
   const nineHoles =
-    section === "back" ? holes.slice(9, 18) : holes.slice(0, 9);
+    section === "back" ? sortedHoles.slice(9, 18) : sortedHoles.slice(0, 9);
 
   // Extract and sort the handicaps from just those 9 holes
   const uniqueHcps = nineHoles.map((hole) => hole.hcp);
