@@ -18,14 +18,15 @@ const HandicapImpactStep = () => {
 
   const getTrendIcon = () => {
     if (change < -0.05)
-      return <TrendingDown className="w-6 h-6 text-green-600" />;
-    if (change > 0.05) return <TrendingUp className="w-6 h-6 text-red-600" />;
+      return <TrendingDown className="w-6 h-6 text-success" />;
+    if (change > 0.05)
+      return <TrendingUp className="w-6 h-6 text-destructive" />;
     return <Minus className="w-6 h-6 text-muted-foreground" />;
   };
 
   const getChangeColor = () => {
-    if (change < -0.05) return "text-green-600";
-    if (change > 0.05) return "text-red-600";
+    if (change < -0.05) return "text-success";
+    if (change > 0.05) return "text-destructive";
     return "text-muted-foreground";
   };
 
@@ -35,7 +36,7 @@ const HandicapImpactStep = () => {
       title="Handicap Impact"
       description="How this round affected your Handicap Index"
       learnMoreContent={
-        <div className="space-y-3">
+        <div className="space-y-sm">
           <Blockquote>
             Your Handicap Index is calculated from your best Score Differentials
             out of your most recent 20 rounds. The number of differentials used
@@ -46,8 +47,8 @@ const HandicapImpactStep = () => {
             smaller number of your best differentials with an adjustment factor.
           </P>
           {esrAdjustment !== 0 && (
-            <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-lg p-3">
-              <P className="text-amber-800 dark:text-amber-200 text-sm">
+            <div className="tint-warning p-sm">
+              <P className="text-warning text-sm">
                 <strong>Exceptional Score Reduction (ESR):</strong> When you
                 post a Score Differential significantly better than your
                 Handicap Index (7+ strokes), an ESR adjustment is applied to
@@ -66,28 +67,28 @@ const HandicapImpactStep = () => {
         </div>
       }
     >
-      <div className="space-y-4">
+      <div className="space-y-md">
         {/* Before/After comparison */}
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-8 py-4">
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-md sm:gap-xl py-md">
           <div className="text-center">
             <Muted>Before this round</Muted>
-            <div className="text-3xl font-bold">
+            <div className="text-figure-lg">
               {handicapBefore.toFixed(1)}
             </div>
           </div>
           <ArrowRight className="w-8 h-8 text-muted-foreground hidden sm:block" />
           <div className="text-center">
             <Muted>After this round</Muted>
-            <div className="text-3xl font-bold">{handicapAfter.toFixed(1)}</div>
+            <div className="text-figure-lg">{handicapAfter.toFixed(1)}</div>
           </div>
         </div>
 
         {/* Change indicator */}
         <div
           className={cn(
-            "flex items-center justify-center gap-3 p-4 rounded-lg",
-            change < -0.05 && "bg-green-50 dark:bg-green-950/20",
-            change > 0.05 && "bg-red-50 dark:bg-red-950/20",
+            "flex items-center justify-center gap-sm p-md rounded-lg",
+            change < -0.05 && "bg-success/10",
+            change > 0.05 && "bg-destructive/10",
             Math.abs(change) <= 0.05 && "bg-muted/50"
           )}
         >
@@ -110,11 +111,11 @@ const HandicapImpactStep = () => {
 
         {/* Exceptional Score Adjustment */}
         {esrAdjustment !== 0 && (
-          <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-lg p-4">
-            <P className="font-medium text-amber-800 dark:text-amber-200">
+          <div className="tint-warning p-md">
+            <P className="font-medium text-warning">
               Exceptional Score Reduction Applied
             </P>
-            <Muted className="text-amber-700 dark:text-amber-300">
+            <Muted className="text-warning">
               This round was {Math.abs(esrAdjustment)} stroke
               {Math.abs(esrAdjustment) > 1 ? "s" : ""} better than expected. An
               ESR adjustment of {esrAdjustment} was applied to your recent
@@ -124,17 +125,17 @@ const HandicapImpactStep = () => {
         )}
 
         {/* Score differential reminder */}
-        <div className="bg-muted/50 rounded-lg p-4">
+        <div className="surface-muted p-md">
           <div className="flex items-center justify-between">
             <div>
               <Muted>This round&apos;s Score Differential</Muted>
-              <P className="text-2xl font-bold">
+              <P className="text-figure">
                 {Math.round(scoreDifferentialCalculation * 10) / 10}
               </P>
             </div>
             <div className="text-right">
               <Muted>Differential used in calculation</Muted>
-              <P className="text-2xl font-bold">
+              <P className="text-figure">
                 {(
                   Math.round(scoreDifferentialCalculation * 10) / 10 +
                   esrAdjustment

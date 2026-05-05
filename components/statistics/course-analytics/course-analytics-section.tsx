@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/table";
 import type { CoursePerformance } from "@/types/statistics";
 import { getFlagEmoji } from "@/utils/frivolities/headerGenerator";
+import { H2 } from "@/components/ui/typography";
 
 interface CourseAnalyticsSectionProps {
   courses: CoursePerformance[];
@@ -19,10 +20,10 @@ interface CourseAnalyticsSectionProps {
 export function CourseAnalyticsSection({ courses }: CourseAnalyticsSectionProps) {
   if (courses.length === 0) {
     return (
-      <section className="mb-8">
-        <h2 className="text-xl font-semibold mb-4">Course Analytics</h2>
+      <section className="mb-xl">
+        <H2 className="text-xl font-semibold mb-md">Course Analytics</H2>
         <Card>
-          <CardContent className="p-8 text-center text-muted-foreground">
+          <CardContent className="p-xl text-center text-muted-foreground">
             Play more rounds to see course analytics
           </CardContent>
         </Card>
@@ -41,13 +42,13 @@ export function CourseAnalyticsSection({ courses }: CourseAnalyticsSectionProps)
   );
 
   return (
-    <section className="mb-8">
-      <h2 className="text-xl font-semibold mb-4">Course Analytics</h2>
+    <section className="mb-xl">
+      <H2 className="text-xl font-semibold mb-md">Course Analytics</H2>
 
       {/* Highlight Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-md mb-lg">
         <Card>
-          <CardHeader className="pb-2">
+          <CardHeader className="pb-sm">
             <CardTitle className="text-sm text-muted-foreground">
               Most Played
             </CardTitle>
@@ -62,7 +63,7 @@ export function CourseAnalyticsSection({ courses }: CourseAnalyticsSectionProps)
           </CardContent>
         </Card>
         <Card>
-          <CardHeader className="pb-2">
+          <CardHeader className="pb-sm">
             <CardTitle className="text-sm text-muted-foreground">
               Best Performance
             </CardTitle>
@@ -77,7 +78,7 @@ export function CourseAnalyticsSection({ courses }: CourseAnalyticsSectionProps)
           </CardContent>
         </Card>
         <Card>
-          <CardHeader className="pb-2">
+          <CardHeader className="pb-sm">
             <CardTitle className="text-sm text-muted-foreground">
               Challenging Course
             </CardTitle>
@@ -115,9 +116,9 @@ export function CourseAnalyticsSection({ courses }: CourseAnalyticsSectionProps)
               {courses.map((course) => (
                 <TableRow key={course.courseId}>
                   <TableCell>
-                    <span className="mr-2">{getFlagEmoji(course.country)}</span>
+                    <span className="mr-sm">{getFlagEmoji(course.country)}</span>
                     {course.courseName}
-                    <span className="text-muted-foreground text-xs ml-2 hidden sm:inline">
+                    <span className="text-muted-foreground text-xs ml-sm hidden sm:inline">
                       {course.city}
                     </span>
                   </TableCell>

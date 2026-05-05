@@ -3,7 +3,7 @@ import {
   calculateExpected9HoleDifferential,
   calculate9HoleScoreDifferential,
   calculateScoreDifferential,
-} from "@/lib/handicap/calculations";
+} from "@handicappin/handicap-core";
 
 describe("9-Hole Score Differential Calculations (USGA Rule 5.1b)", () => {
   describe("calculateExpected9HoleDifferential", () => {
@@ -194,6 +194,58 @@ describe("9-Hole Score Differential Calculations (USGA Rule 5.1b)", () => {
       // Played diff = (42 - 36) * (113/130) = 6 * 0.869 = 5.22
       // Combined = 5.22 + 5.65 = 10.87
       expect(diff9).toBeCloseTo(10.9, 1);
+    });
+  });
+
+  describe("back-9 inputs (USGA Rule 5.1b)", () => {
+    test("calculates expected differential using back-9 ratings/par", () => {
+      // The functions take ratings as parameters, so back-9 is just supplying
+      // the back-9 numbers. Confirm the math with asymmetric back-9 values.
+      const handicapIndex = 12.0;
+      const back9CourseRating = 36.5;
+      const back9SlopeRating = 135;
+      const back9Par = 36;
+
+      const expectedDiff = calculateExpected9HoleDifferential(
+        handicapIndex,
+        back9CourseRating,
+        back9SlopeRating,
+        back9Par
+      );
+
+      // 9-hole CH = round((12/2) × (135/113) + (36.5 - 36))
+      //           = round(6 × 1.1947 + 0.5) = round(7.668) = 8
+      // Expected score = 36 + 8 = 44
+      // Expected diff (unrounded) = (44 - 36.5) × (113/135) = 7.5 × 0.837 = 6.278
+      expect(expectedDiff).toBeCloseTo(6.28, 1);
+    });
+
+    test("calculates 18-hole equivalent for a back-9 round", () => {
+      // Player shoots 44 on the back 9 (CR 36.5, Slope 135)
+      const adjustedPlayedScore = 44;
+      const back9CourseRating = 36.5;
+      const back9SlopeRating = 135;
+      const expectedDifferential = 9.0;
+
+      const scoreDiff = calculate9HoleScoreDifferential(
+        adjustedPlayedScore,
+        back9CourseRating,
+        back9SlopeRating,
+        expectedDifferential
+      );
+
+      // Played diff = (44 - 36.5) × (113/135) = 7.5 × 0.837 = 6.278
+      // Combined = 6.278 + 9 = 15.278 -> rounds to 15.3
+      expect(scoreDiff).toBeCloseTo(15.3, 1);
+    });
+
+    test("front-9 vs back-9 ratings produce different results", () => {
+      // Same played score, different 9-hole ratings -> different differentials.
+      const score = 42;
+      const expectedDiff = 7.0;
+      const front = calculate9HoleScoreDifferential(score, 35.5, 125, expectedDiff);
+      const back = calculate9HoleScoreDifferential(score, 36.5, 135, expectedDiff);
+      expect(front).not.toBeCloseTo(back, 1);
     });
   });
 

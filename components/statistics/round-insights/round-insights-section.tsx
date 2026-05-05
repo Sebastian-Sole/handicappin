@@ -1,6 +1,7 @@
 "use client";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { H2 } from "@/components/ui/typography";
 import { DayOfWeekChart } from "./day-of-week-chart";
 import { TimeDistributionChart } from "./time-distribution-chart";
 import { RoundsPerMonthChart } from "./rounds-per-month-chart";
@@ -28,10 +29,10 @@ export function RoundInsightsSection({
   const eighteenHole = holesPlayedStats.find((stats) => stats.type === "18-hole");
 
   return (
-    <section className="mb-8">
-      <h2 className="text-xl font-semibold mb-4">Round Insights</h2>
+    <section className="mb-xl">
+      <H2 className="text-xl font-semibold mb-md">Round Insights</H2>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-lg">
         {/* Day of Week Chart */}
         <Card>
           <CardHeader>
@@ -67,9 +68,9 @@ export function RoundInsightsSection({
           <CardHeader>
             <CardTitle className="text-base">9-Hole vs 18-Hole</CardTitle>
           </CardHeader>
-          <CardContent className="flex items-center justify-center gap-8 py-8">
+          <CardContent className="flex items-center justify-center gap-xl py-xl">
             <div className="text-center">
-              <p className="text-4xl font-bold">{nineHole?.count || 0}</p>
+              <p className="text-figure-xl">{nineHole?.count || 0}</p>
               <p className="text-sm text-muted-foreground">9-Hole Rounds</p>
               {nineHole && nineHole.count > 0 && (
                 <p className="text-xs text-muted-foreground">
@@ -79,7 +80,7 @@ export function RoundInsightsSection({
             </div>
             <div className="text-4xl text-muted-foreground">vs</div>
             <div className="text-center">
-              <p className="text-4xl font-bold">{eighteenHole?.count || 0}</p>
+              <p className="text-figure-xl">{eighteenHole?.count || 0}</p>
               <p className="text-sm text-muted-foreground">18-Hole Rounds</p>
               {eighteenHole && eighteenHole.count > 0 && (
                 <p className="text-xs text-muted-foreground">

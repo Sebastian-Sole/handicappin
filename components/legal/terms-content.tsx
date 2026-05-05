@@ -1,20 +1,20 @@
-import { P } from "@/components/ui/typography";
+import { H2, P } from "@/components/ui/typography";
 import Link from "next/link";
 
 const EFFECTIVE_DATE = "February 11, 2026";
 
 export function TermsContent() {
   return (
-    <div className="space-y-8">
+    <div className="space-y-xl">
       <p className="text-sm text-muted-foreground">
         Effective Date: {EFFECTIVE_DATE}
       </p>
 
       {/* 1. Acceptance of Terms */}
-      <div className="space-y-3">
-        <h2 className="text-xl font-semibold tracking-tight">
+      <div className="space-y-sm">
+        <H2>
           1. Acceptance of Terms
-        </h2>
+        </H2>
         <P className="text-foreground/80">
           By accessing or using Handicappin&apos; (&quot;the Service&quot;),
           operated by SoleInnovations (&quot;we,&quot; &quot;us,&quot; or
@@ -31,10 +31,10 @@ export function TermsContent() {
       </div>
 
       {/* 2. Description of Service */}
-      <div className="space-y-3">
-        <h2 className="text-xl font-semibold tracking-tight">
+      <div className="space-y-sm">
+        <H2>
           2. Description of Service
-        </h2>
+        </H2>
         <P className="text-foreground/80">
           Handicappin&apos; is a web-based golf handicap tracking application
           that provides USGA-compliant handicap calculations, round management,
@@ -52,10 +52,10 @@ export function TermsContent() {
       </div>
 
       {/* 3. Account Registration */}
-      <div className="space-y-3">
-        <h2 className="text-xl font-semibold tracking-tight">
+      <div className="space-y-sm">
+        <H2>
           3. Account Registration and Security
-        </h2>
+        </H2>
         <P className="text-foreground/80">
           To use the Service, you must create an account with a valid email
           address. You are responsible for maintaining the confidentiality of
@@ -71,14 +71,14 @@ export function TermsContent() {
       </div>
 
       {/* 4. Subscription Plans and Pricing */}
-      <div className="space-y-3">
-        <h2 className="text-xl font-semibold tracking-tight">
+      <div className="space-y-sm">
+        <H2>
           4. Subscription Plans and Pricing
-        </h2>
+        </H2>
         <P className="text-foreground/80">
           Handicappin&apos; offers the following subscription plans:
         </P>
-        <ul className="list-disc pl-6 space-y-2 text-foreground/80">
+        <ul className="list-disc pl-lg space-y-sm text-foreground/80">
           <li>
             <strong>Free</strong> &mdash; $0, limited to 25 rounds with basic
             handicap calculation.
@@ -104,10 +104,10 @@ export function TermsContent() {
       </div>
 
       {/* 5. Lifetime Plan */}
-      <div className="space-y-3">
-        <h2 className="text-xl font-semibold tracking-tight">
+      <div className="space-y-sm">
+        <H2>
           5. Lifetime Plan
-        </h2>
+        </H2>
         <P className="text-foreground/80">
           The &quot;Lifetime&quot; plan grants access to all Service features
           for the <strong>lifetime of the Service</strong>, not the lifetime of
@@ -131,10 +131,10 @@ export function TermsContent() {
       </div>
 
       {/* 6. Payment and Billing */}
-      <div className="space-y-3">
-        <h2 className="text-xl font-semibold tracking-tight">
+      <div className="space-y-sm">
+        <H2>
           6. Payment and Billing
-        </h2>
+        </H2>
         <P className="text-foreground/80">
           All payments are processed securely through Stripe. We do not store
           your credit card information on our servers. By providing payment
@@ -156,10 +156,10 @@ export function TermsContent() {
       </div>
 
       {/* 7. Refund Policy */}
-      <div className="space-y-3">
-        <h2 className="text-xl font-semibold tracking-tight">
+      <div className="space-y-sm">
+        <H2>
           7. Refund Policy
-        </h2>
+        </H2>
         <P className="text-foreground/80">
           We offer a <strong>30-day money-back guarantee</strong> on all paid
           plans. If you are unsatisfied with the Service for any reason, you may
@@ -174,7 +174,7 @@ export function TermsContent() {
           .
         </P>
         <P className="text-foreground/80">After the 30-day window:</P>
-        <ul className="list-disc pl-6 space-y-2 text-foreground/80">
+        <ul className="list-disc pl-lg space-y-sm text-foreground/80">
           <li>
             <strong>Annual plans (Premium, Unlimited):</strong> No refunds for
             the current billing period. You may cancel auto-renewal at any time
@@ -193,10 +193,10 @@ export function TermsContent() {
       </div>
 
       {/* 8. Service Modifications and Discontinuation */}
-      <div className="space-y-3">
-        <h2 className="text-xl font-semibold tracking-tight">
+      <div className="space-y-sm">
+        <H2>
           8. Service Modifications and Discontinuation
-        </h2>
+        </H2>
         <P className="text-foreground/80">
           We reserve the right to modify, suspend, or discontinue the Service
           (or any part of it) at any time, with or without notice. We will make
@@ -206,7 +206,7 @@ export function TermsContent() {
         <P className="text-foreground/80">
           In the event of permanent discontinuation of the Service:
         </P>
-        <ul className="list-disc pl-6 space-y-2 text-foreground/80">
+        <ul className="list-disc pl-lg space-y-sm text-foreground/80">
           <li>
             We will provide at least 90 days&apos; advance notice to all users.
           </li>
@@ -225,10 +225,10 @@ export function TermsContent() {
       </div>
 
       {/* 9. Assignment and Transfer */}
-      <div className="space-y-3">
-        <h2 className="text-xl font-semibold tracking-tight">
+      <div className="space-y-sm">
+        <H2>
           9. Assignment and Transfer
-        </h2>
+        </H2>
         <P className="text-foreground/80">
           We may assign or transfer these Terms, and any rights and obligations
           hereunder, to a successor entity in connection with a merger,
@@ -244,10 +244,10 @@ export function TermsContent() {
       </div>
 
       {/* 10. User Content and Data */}
-      <div className="space-y-3">
-        <h2 className="text-xl font-semibold tracking-tight">
+      <div className="space-y-sm">
+        <H2>
           10. User Content and Data
-        </h2>
+        </H2>
         <P className="text-foreground/80">
           You retain ownership of all data you submit to the Service, including
           round scores, course information, and profile details. By using the
@@ -268,12 +268,12 @@ export function TermsContent() {
       </div>
 
       {/* 11. Acceptable Use */}
-      <div className="space-y-3">
-        <h2 className="text-xl font-semibold tracking-tight">
+      <div className="space-y-sm">
+        <H2>
           11. Acceptable Use
-        </h2>
+        </H2>
         <P className="text-foreground/80">You agree not to:</P>
-        <ul className="list-disc pl-6 space-y-2 text-foreground/80">
+        <ul className="list-disc pl-lg space-y-sm text-foreground/80">
           <li>
             Use the Service for any unlawful purpose or in violation of any
             applicable laws.
@@ -300,10 +300,10 @@ export function TermsContent() {
       </div>
 
       {/* 12. Intellectual Property */}
-      <div className="space-y-3">
-        <h2 className="text-xl font-semibold tracking-tight">
+      <div className="space-y-sm">
+        <H2>
           12. Intellectual Property
-        </h2>
+        </H2>
         <P className="text-foreground/80">
           The Service, including its design, features, code, and content
           (excluding user-submitted data), is the intellectual property of
@@ -320,10 +320,10 @@ export function TermsContent() {
       </div>
 
       {/* 13. Disclaimer of Warranties */}
-      <div className="space-y-3">
-        <h2 className="text-xl font-semibold tracking-tight">
+      <div className="space-y-sm">
+        <H2>
           13. Disclaimer of Warranties
-        </h2>
+        </H2>
         <P className="text-foreground/80 uppercase font-semibold text-sm">
           The Service is provided &quot;as is&quot; and &quot;as
           available&quot; without warranties of any kind, whether express or
@@ -340,10 +340,10 @@ export function TermsContent() {
       </div>
 
       {/* 14. Limitation of Liability */}
-      <div className="space-y-3">
-        <h2 className="text-xl font-semibold tracking-tight">
+      <div className="space-y-sm">
+        <H2>
           14. Limitation of Liability
-        </h2>
+        </H2>
         <P className="text-foreground/80 uppercase font-semibold text-sm">
           To the maximum extent permitted by applicable law, SoleInnovations and
           its officers, employees, and affiliates shall not be liable for any
@@ -359,8 +359,8 @@ export function TermsContent() {
       </div>
 
       {/* 15. Privacy */}
-      <div className="space-y-3">
-        <h2 className="text-xl font-semibold tracking-tight">15. Privacy</h2>
+      <div className="space-y-sm">
+        <H2>15. Privacy</H2>
         <P className="text-foreground/80">
           Your use of the Service is also governed by our{" "}
           <Link
@@ -377,10 +377,10 @@ export function TermsContent() {
       </div>
 
       {/* 16. Termination */}
-      <div className="space-y-3">
-        <h2 className="text-xl font-semibold tracking-tight">
+      <div className="space-y-sm">
+        <H2>
           16. Termination
-        </h2>
+        </H2>
         <P className="text-foreground/80">
           You may close your account at any time by contacting us at{" "}
           <Link
@@ -401,10 +401,10 @@ export function TermsContent() {
       </div>
 
       {/* 17. Governing Law and Dispute Resolution */}
-      <div className="space-y-3">
-        <h2 className="text-xl font-semibold tracking-tight">
+      <div className="space-y-sm">
+        <H2>
           17. Governing Law and Dispute Resolution
-        </h2>
+        </H2>
         <P className="text-foreground/80">
           These Terms are governed by and construed in accordance with the laws
           of the United States and the state in which SoleInnovations is
@@ -421,10 +421,10 @@ export function TermsContent() {
       </div>
 
       {/* 18. Indemnification */}
-      <div className="space-y-3">
-        <h2 className="text-xl font-semibold tracking-tight">
+      <div className="space-y-sm">
+        <H2>
           18. Indemnification
-        </h2>
+        </H2>
         <P className="text-foreground/80">
           You agree to indemnify and hold harmless SoleInnovations, its
           officers, employees, and affiliates from any claims, damages, losses,
@@ -435,10 +435,10 @@ export function TermsContent() {
       </div>
 
       {/* 19. Severability */}
-      <div className="space-y-3">
-        <h2 className="text-xl font-semibold tracking-tight">
+      <div className="space-y-sm">
+        <H2>
           19. Severability
-        </h2>
+        </H2>
         <P className="text-foreground/80">
           If any provision of these Terms is found to be unenforceable or
           invalid by a court of competent jurisdiction, that provision will be
@@ -448,10 +448,10 @@ export function TermsContent() {
       </div>
 
       {/* 20. Entire Agreement */}
-      <div className="space-y-3">
-        <h2 className="text-xl font-semibold tracking-tight">
+      <div className="space-y-sm">
+        <H2>
           20. Entire Agreement
-        </h2>
+        </H2>
         <P className="text-foreground/80">
           These Terms, together with our Privacy Policy, constitute the entire
           agreement between you and SoleInnovations regarding your use of the
@@ -460,10 +460,10 @@ export function TermsContent() {
       </div>
 
       {/* 21. Contact */}
-      <div className="space-y-3">
-        <h2 className="text-xl font-semibold tracking-tight">
+      <div className="space-y-sm">
+        <H2>
           21. Contact Us
-        </h2>
+        </H2>
         <P className="text-foreground/80">
           If you have questions about these Terms, please contact us at{" "}
           <Link

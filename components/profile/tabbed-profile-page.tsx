@@ -10,6 +10,7 @@ import { BillingTab } from "./tabs/billing-tab";
 import { SettingsTab } from "./tabs/settings-tab";
 import { User as UserIcon, CreditCard, Settings } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { H1 } from "@/components/ui/typography";
 
 type TabId = "personal" | "billing" | "settings";
 
@@ -71,20 +72,20 @@ export function TabbedProfilePage({
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="container mx-auto py-8 px-4 max-w-7xl">
+      <div className="container mx-auto py-xl px-md max-w-7xl">
         {/* Header */}
-        <div className="mb-12">
-          <h1 className="text-4xl font-bold mb-2">Profile</h1>
+        <div className="mb-2xl">
+          <H1 className="text-figure-xl mb-sm">Profile</H1>
           <p className="text-muted-foreground text-lg">
             Manage your account settings
           </p>
         </div>
 
         {/* Tabbed Layout */}
-        <div className="flex flex-col md:flex-row gap-8">
+        <div className="flex flex-col md:flex-row gap-xl">
           {/* Sidebar Navigation */}
           <aside className="w-full md:w-56 flex-shrink-0">
-            <nav className="space-y-2">
+            <nav className="space-y-sm">
               {tabs.map((tab) => {
                 const Icon = tab.icon;
                 const isActive = activeTab === tab.id;
@@ -94,7 +95,7 @@ export function TabbedProfilePage({
                     key={tab.id}
                     onClick={() => handleTabChange(tab.id)}
                     className={cn(
-                      "w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left transition-colors",
+                      "w-full flex items-center gap-sm px-md py-sm rounded-lg text-left transition-colors",
                       isActive
                         ? "bg-primary text-primary-foreground"
                         : "hover:bg-muted text-muted-foreground hover:text-foreground"

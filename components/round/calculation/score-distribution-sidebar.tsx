@@ -2,6 +2,7 @@
 
 import { useRoundCalculationContext } from "@/contexts/roundCalculationContext";
 import { Muted } from "@/components/ui/typography";
+import { StatTile } from "@/components/ui/stat-tile";
 import { cn } from "@/lib/utils";
 import { useState, useEffect, useRef } from "react";
 
@@ -50,12 +51,12 @@ const ScoreDistributionSidebar = ({ layout = "vertical", compact = false }: Scor
 
   // Calculate distribution relative to par
   const distribution: Record<string, { count: number; label: string; color: string }> = {
-    "-2": { count: 0, label: "Eagle-", color: "bg-yellow-500" },
-    "-1": { count: 0, label: "Birdie", color: "bg-green-500" },
-    "0": { count: 0, label: "Par", color: "bg-blue-500" },
-    "1": { count: 0, label: "Bogey", color: "bg-orange-500" },
-    "2": { count: 0, label: "Double", color: "bg-red-500" },
-    "3+": { count: 0, label: "Triple+", color: "bg-red-700" },
+    "-2": { count: 0, label: "Eagle-", color: "bg-score-eagle" },
+    "-1": { count: 0, label: "Birdie", color: "bg-score-birdie" },
+    "0": { count: 0, label: "Par", color: "bg-score-par" },
+    "1": { count: 0, label: "Bogey", color: "bg-score-bogey" },
+    "2": { count: 0, label: "Double", color: "bg-score-double" },
+    "3+": { count: 0, label: "Triple+", color: "bg-score-triple" },
   };
 
   playedHoles.forEach((hole, index) => {
@@ -86,54 +87,49 @@ const ScoreDistributionSidebar = ({ layout = "vertical", compact = false }: Scor
       return { hole: hole.holeNumber, diff: null, color: "bg-muted/50 border border-dashed border-muted-foreground/30" };
     }
     const diff = score.strokes - hole.par;
-    let color = "bg-blue-500"; // par
-    if (diff <= -2) color = "bg-yellow-500";
-    else if (diff === -1) color = "bg-green-500";
-    else if (diff === 1) color = "bg-orange-500";
-    else if (diff === 2) color = "bg-red-500";
-    else if (diff >= 3) color = "bg-red-700";
+    let color = "bg-score-par";
+    if (diff <= -2) color = "bg-score-eagle";
+    else if (diff === -1) color = "bg-score-birdie";
+    else if (diff === 1) color = "bg-score-bogey";
+    else if (diff === 2) color = "bg-score-double";
+    else if (diff >= 3) color = "bg-score-triple";
     return { hole: hole.holeNumber, diff, color };
   });
 
   // Shared section components
   const roundSummarySection = (
-    <div className="bg-muted/50 rounded-lg p-4 h-full">
-      <Muted className="text-xs uppercase tracking-wide mb-3">Round Summary</Muted>
-      <div className="grid grid-cols-2 gap-3">
-        <div className="text-center">
-          <div className="text-2xl font-bold">{totalStrokes}</div>
-          <Muted className="text-xs">Gross Score</Muted>
-        </div>
-        <div className="text-center">
-          <div className={cn(
-            "text-2xl font-bold",
-            toPar < 0 && "text-green-600",
-            toPar > 0 && "text-red-600"
-          )}>
-            {toPar === 0 ? "E" : toPar > 0 ? `+${toPar}` : toPar}
-          </div>
-          <Muted className="text-xs">To Par</Muted>
-        </div>
-        <div className="text-center">
-          <div className="text-2xl font-bold">{apsStat}</div>
-          <Muted className="text-xs">Adjusted</Muted>
-        </div>
-        <div className="text-center">
-          <div className="text-2xl font-bold">
-            {Number(scorecard.round.scoreDifferential).toFixed(1)}
-          </div>
-          <Muted className="text-xs">Differential</Muted>
-        </div>
+    <div className="surface-muted p-md h-full">
+      <Muted className="text-xs uppercase tracking-wide mb-sm">Round Summary</Muted>
+      <div className="grid grid-cols-2 gap-sm">
+        <StatTile value={totalStrokes} label="Gross Score" />
+        <StatTile
+          value={
+            <span
+              className={cn(
+                toPar < 0 && "text-success",
+                toPar > 0 && "text-destructive"
+              )}
+            >
+              {toPar === 0 ? "E" : toPar > 0 ? `+${toPar}` : toPar}
+            </span>
+          }
+          label="To Par"
+        />
+        <StatTile value={apsStat} label="Adjusted" />
+        <StatTile
+          value={Number(scorecard.round.scoreDifferential).toFixed(1)}
+          label="Differential"
+        />
       </div>
     </div>
   );
 
   const scoreDistributionSection = (
-    <div className="bg-muted/50 rounded-lg p-4 h-full">
-      <Muted className="text-xs uppercase tracking-wide mb-3">Score Distribution</Muted>
-      <div className="space-y-2">
+    <div className="surface-muted p-md h-full">
+      <Muted className="text-xs uppercase tracking-wide mb-sm">Score Distribution</Muted>
+      <div className="space-y-sm">
         {Object.entries(distribution).map(([key, { count, label, color }]) => (
-          <div key={key} className="flex items-center gap-2 text-sm">
+          <div key={key} className="flex items-center gap-sm text-sm">
             <span className="w-14 text-right text-muted-foreground">{label}</span>
             <div className="flex-1 h-5 bg-muted rounded overflow-hidden">
               <div
@@ -149,9 +145,9 @@ const ScoreDistributionSidebar = ({ layout = "vertical", compact = false }: Scor
   );
 
   const holeByHoleSection = (
-    <div className="bg-muted/50 rounded-lg p-4 h-full">
-      <Muted className="text-xs uppercase tracking-wide mb-3">Hole-by-Hole</Muted>
-      <div className="grid grid-cols-9 gap-1">
+    <div className="surface-muted p-md h-full">
+      <Muted className="text-xs uppercase tracking-wide mb-sm">Hole-by-Hole</Muted>
+      <div className="grid grid-cols-9 gap-xs">
         {holeScores.map(({ hole, diff, color }) => (
           <div
             key={hole}
@@ -166,29 +162,29 @@ const ScoreDistributionSidebar = ({ layout = "vertical", compact = false }: Scor
           </div>
         ))}
       </div>
-      <div className="flex flex-wrap gap-2 mt-3 text-xs">
-        <div className="flex items-center gap-1">
-          <div className="w-3 h-3 rounded bg-yellow-500" />
+      <div className="flex flex-wrap gap-sm mt-sm text-xs">
+        <div className="flex items-center gap-xs">
+          <div className="w-3 h-3 rounded bg-score-eagle" />
           <span>Eagle-</span>
         </div>
-        <div className="flex items-center gap-1">
-          <div className="w-3 h-3 rounded bg-green-500" />
+        <div className="flex items-center gap-xs">
+          <div className="w-3 h-3 rounded bg-score-birdie" />
           <span>Birdie</span>
         </div>
-        <div className="flex items-center gap-1">
-          <div className="w-3 h-3 rounded bg-blue-500" />
+        <div className="flex items-center gap-xs">
+          <div className="w-3 h-3 rounded bg-score-par" />
           <span>Par</span>
         </div>
-        <div className="flex items-center gap-1">
-          <div className="w-3 h-3 rounded bg-orange-500" />
+        <div className="flex items-center gap-xs">
+          <div className="w-3 h-3 rounded bg-score-bogey" />
           <span>Bogey</span>
         </div>
-        <div className="flex items-center gap-1">
-          <div className="w-3 h-3 rounded bg-red-500" />
+        <div className="flex items-center gap-xs">
+          <div className="w-3 h-3 rounded bg-score-double" />
           <span>Double+</span>
         </div>
         {isNineHoles && (
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-xs">
             <div className="w-3 h-3 rounded bg-muted/50 border border-dashed border-muted-foreground/30" />
             <span>Not played</span>
           </div>
@@ -198,9 +194,9 @@ const ScoreDistributionSidebar = ({ layout = "vertical", compact = false }: Scor
   );
 
   const quickStatsSection = (
-    <div className="bg-muted/50 rounded-lg p-4 h-full">
-      <Muted className="text-xs uppercase tracking-wide mb-3">Quick Stats</Muted>
-      <div className="grid grid-cols-2 gap-3 text-sm">
+    <div className="surface-muted p-md h-full">
+      <Muted className="text-xs uppercase tracking-wide mb-sm">Quick Stats</Muted>
+      <div className="grid grid-cols-2 gap-sm text-sm">
         <div>
           <div className="font-semibold">
             {((distribution["0"].count + distribution["-1"].count + distribution["-2"].count) / totalPlayedHoles * 100).toFixed(0)}%
@@ -234,7 +230,7 @@ const ScoreDistributionSidebar = ({ layout = "vertical", compact = false }: Scor
       <div
         ref={ref}
         className={cn(
-          "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 transition-all duration-500",
+          "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-md transition-all duration-500",
           isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
         )}
       >
@@ -252,47 +248,44 @@ const ScoreDistributionSidebar = ({ layout = "vertical", compact = false }: Scor
       <div
         ref={ref}
         className={cn(
-          "space-y-4 transition-all duration-500",
+          "space-y-md transition-all duration-500",
           isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
         )}
       >
         {/* Combined Summary & Stats */}
-        <div className="bg-muted/50 rounded-lg p-4">
-          <Muted className="text-xs uppercase tracking-wide mb-3">Round Summary</Muted>
-          <div className="grid grid-cols-4 gap-2 text-center">
-            <div>
-              <div className="text-xl font-bold">{totalStrokes}</div>
-              <Muted className="text-xs">Gross</Muted>
-            </div>
-            <div>
-              <div className={cn(
-                "text-xl font-bold",
-                toPar < 0 && "text-green-600",
-                toPar > 0 && "text-red-600"
-              )}>
-                {toPar === 0 ? "E" : toPar > 0 ? `+${toPar}` : toPar}
-              </div>
-              <Muted className="text-xs">To Par</Muted>
-            </div>
-            <div>
-              <div className="text-xl font-bold">{apsStat}</div>
-              <Muted className="text-xs">Adj.</Muted>
-            </div>
-            <div>
-              <div className="text-xl font-bold">
-                {Number(scorecard.round.scoreDifferential).toFixed(1)}
-              </div>
-              <Muted className="text-xs">Diff.</Muted>
-            </div>
+        <div className="surface-muted p-md">
+          <Muted className="text-xs uppercase tracking-wide mb-sm">Round Summary</Muted>
+          <div className="grid grid-cols-4 gap-sm">
+            <StatTile size="sm" value={totalStrokes} label="Gross" />
+            <StatTile
+              size="sm"
+              value={
+                <span
+                  className={cn(
+                    toPar < 0 && "text-success",
+                    toPar > 0 && "text-destructive"
+                  )}
+                >
+                  {toPar === 0 ? "E" : toPar > 0 ? `+${toPar}` : toPar}
+                </span>
+              }
+              label="To Par"
+            />
+            <StatTile size="sm" value={apsStat} label="Adj." />
+            <StatTile
+              size="sm"
+              value={Number(scorecard.round.scoreDifferential).toFixed(1)}
+              label="Diff."
+            />
           </div>
         </div>
 
         {/* Score Distribution - compact */}
-        <div className="bg-muted/50 rounded-lg p-4">
-          <Muted className="text-xs uppercase tracking-wide mb-2">Score Distribution</Muted>
-          <div className="space-y-1.5">
+        <div className="surface-muted p-md">
+          <Muted className="text-xs uppercase tracking-wide mb-sm">Score Distribution</Muted>
+          <div className="space-y-xs">
             {Object.entries(distribution).map(([key, { count, label, color }]) => (
-              <div key={key} className="flex items-center gap-2 text-xs">
+              <div key={key} className="flex items-center gap-sm text-xs">
                 <span className="w-12 text-right text-muted-foreground">{label}</span>
                 <div className="flex-1 h-4 bg-muted rounded overflow-hidden">
                   <div
@@ -307,8 +300,8 @@ const ScoreDistributionSidebar = ({ layout = "vertical", compact = false }: Scor
         </div>
 
         {/* Quick Stats - inline */}
-        <div className="bg-muted/50 rounded-lg p-4">
-          <div className="grid grid-cols-4 gap-2 text-center text-sm">
+        <div className="surface-muted p-md">
+          <div className="grid grid-cols-4 gap-sm text-center text-sm">
             <div>
               <div className="font-semibold">
                 {((distribution["0"].count + distribution["-1"].count + distribution["-2"].count) / totalPlayedHoles * 100).toFixed(0)}%
@@ -343,7 +336,7 @@ const ScoreDistributionSidebar = ({ layout = "vertical", compact = false }: Scor
     <div
       ref={ref}
       className={cn(
-        "space-y-4 transition-all duration-500",
+        "space-y-md transition-all duration-500",
         isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
       )}
     >

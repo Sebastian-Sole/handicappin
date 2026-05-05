@@ -9,7 +9,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { CalculatorCard } from "./calculator-card";
 import { useCalculatorContext } from "@/contexts/calculatorContext";
 import { getCalculatorByIdOrThrow } from "@/lib/calculator-registry";
-import { EXCEPTIONAL_ROUND_THRESHOLD } from "@/lib/handicap/constants";
+import { EXCEPTIONAL_ROUND_THRESHOLD } from "@handicappin/handicap-core";
 import { AlertTriangle, CheckCircle } from "lucide-react";
 
 const meta = getCalculatorByIdOrThrow("exceptional-score");
@@ -47,7 +47,7 @@ export function ExceptionalScoreCalculator() {
   }, [values.handicapIndex, values.scoreDifferential]);
 
   const result = analysis && (
-    <div className="space-y-4">
+    <div className="space-y-md">
       <Alert variant={analysis.isExceptional ? "destructive" : "default"}>
         {analysis.isExceptional ? (
           <>
@@ -73,7 +73,7 @@ export function ExceptionalScoreCalculator() {
         )}
       </Alert>
 
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-sm">
         <Badge variant={analysis.isExceptional ? "destructive" : "secondary"}>
           {analysis.isExceptional ? "ESR Applies" : "No ESR"}
         </Badge>
@@ -85,15 +85,15 @@ export function ExceptionalScoreCalculator() {
   );
 
   const explanation = (
-    <div className="space-y-3">
+    <div className="space-y-sm">
       <Muted>
         An Exceptional Score is a round with a score differential at least{" "}
         {EXCEPTIONAL_ROUND_THRESHOLD} strokes better than your Handicap Index.
         When this happens, ESR reduces your handicap immediately.
       </Muted>
-      <div className="bg-muted/50 rounded-lg p-3 text-sm space-y-2">
+      <div className="surface-muted p-sm text-sm space-y-sm">
         <P className="font-medium">ESR Adjustments:</P>
-        <ul className="list-disc pl-4 space-y-1 text-muted-foreground">
+        <ul className="list-disc pl-md space-y-xs text-muted-foreground">
           <li>7.0 to 9.9 strokes better: -1.0 adjustment</li>
           <li>10.0+ strokes better: -2.0 adjustment</li>
         </ul>
@@ -103,8 +103,8 @@ export function ExceptionalScoreCalculator() {
 
   return (
     <CalculatorCard meta={meta} result={result} explanation={explanation}>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <div className="space-y-2">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-md">
+        <div className="space-y-sm">
           <Label htmlFor="handicapIndex-esr">Handicap Index</Label>
           <Input
             id="handicapIndex-esr"
@@ -120,7 +120,7 @@ export function ExceptionalScoreCalculator() {
             }
           />
         </div>
-        <div className="space-y-2">
+        <div className="space-y-sm">
           <Label htmlFor="scoreDifferential-esr">Score Differential</Label>
           <Input
             id="scoreDifferential-esr"

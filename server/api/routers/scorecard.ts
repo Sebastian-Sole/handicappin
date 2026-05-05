@@ -1,15 +1,15 @@
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
-import { createTRPCRouter, publicProcedure, authedProcedure } from "../trpc";
+import * as Sentry from "@sentry/nextjs";
+import { createTRPCRouter, authedProcedure } from "../trpc";
 import { eq, inArray, asc, lt, count, and } from "drizzle-orm";
 import { db } from "@/db";
 import { course, round, teeInfo, hole, score } from "@/db/schema";
 import { scorecardSchema, ScorecardWithRound } from "@/types/scorecard-input";
-import { getBillingFromJWT } from "@/utils/supabase/jwt";
-import { hasUnlimitedAccess } from "@/utils/billing/access";
+import { getComprehensiveUserAccess } from "@/utils/billing/access-control";
 
 export const scorecardRouter = createTRPCRouter({
-  getScorecardByRoundId: publicProcedure
+  getScorecardByRoundId: authedProcedure
     .input(z.object({ id: z.string() }))
     .query(async ({ ctx, input }) => {
       const { id } = input;
@@ -28,6 +28,14 @@ export const scorecardRouter = createTRPCRouter({
       const roundData = roundResult[0];
       if (!roundData) return null;
 
+      // Ownership check: prevent IDOR — only the round's owner may read it.
+      if (roundData.userId !== ctx.user.id) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "Cannot access another user's scorecard",
+        });
+      }
+
       // 2. Fetch the course
       const courseResult = await db
         .select()
@@ -45,10 +53,14 @@ export const scorecardRouter = createTRPCRouter({
       if (!teePlayed) return null;
 
       // 5. Fetch holes for the tee played
+      // Order by hole number — downstream consumers (e.g. back-9 walkthrough)
+      // rely on position-based slicing such as `holes.slice(9, 18)`, which is
+      // only correct when Postgres returns rows in hole-number order.
       const holes = await db
         .select()
         .from(hole)
-        .where(eq(hole.teeId, teePlayed.id));
+        .where(eq(hole.teeId, teePlayed.id))
+        .orderBy(asc(hole.holeNumber));
 
       // 6. Fetch scores for the round
       const scores = await db
@@ -73,6 +85,12 @@ export const scorecardRouter = createTRPCRouter({
       // 8. Assemble the Scorecard object
       const scorecard: ScorecardWithRound = {
         userId: roundData.userId,
+        nineHoleSection:
+          roundData.holesPlayed === 9
+            ? roundData.nineHoleSection === "back"
+              ? "back"
+              : "front"
+            : undefined,
         course: {
           id: courseData.id,
           name: courseData.name,
@@ -106,12 +124,27 @@ export const scorecardRouter = createTRPCRouter({
           course_rating_used: roundData.courseRatingUsed,
           slope_rating_used: roundData.slopeRatingUsed,
           holes_played: roundData.holesPlayed,
+          nine_hole_section: roundData.nineHoleSection ?? null,
         },
         roundsBeforeTeeTime,
       };
 
-      // Validate with zod
-      scorecardSchema.parse(scorecard);
+      // Validate with zod — surface a clean tRPC error rather than letting a
+      // raw ZodError bubble up as a 500 to the client.
+      const validated = scorecardSchema.safeParse(scorecard);
+      if (!validated.success) {
+        Sentry.captureException(validated.error, {
+          extra: {
+            roundId: roundData.id,
+            issues: validated.error.issues,
+          },
+          tags: { router: "scorecard", procedure: "getScorecardByRoundId" },
+        });
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to assemble scorecard",
+        });
+      }
       return scorecard;
     }),
   getAllScorecardsByUserId: authedProcedure
@@ -128,11 +161,17 @@ export const scorecardRouter = createTRPCRouter({
       }
 
       // Defense-in-depth: Verify user has unlimited/lifetime plan
-      // This endpoint powers /statistics and /dashboard which require unlimited access
-      // Middleware handles page-level protection, but API calls could bypass it
-      const { data: sessionData } = await ctx.supabase.auth.getSession();
-      const billing = getBillingFromJWT(sessionData.session);
-      if (!hasUnlimitedAccess(billing)) {
+      // This endpoint powers /statistics and /dashboard which require unlimited access.
+      // Middleware handles page-level protection, but API calls could bypass it.
+      //
+      // Use the database-backed `getComprehensiveUserAccess` (not JWT claims) so
+      // a user who upgraded inside the JWT's 1h TTL isn't locked out by a stale
+      // `plan: "free"` claim. Mirrors the canonical pattern used in round.ts.
+      const access = await getComprehensiveUserAccess(userId);
+      if (
+        !access.hasAccess ||
+        (access.plan !== "unlimited" && access.plan !== "lifetime")
+      ) {
         throw new TRPCError({
           code: "FORBIDDEN",
           message:
@@ -157,7 +196,13 @@ export const scorecardRouter = createTRPCRouter({
       const [courses, tees, allHoles, allScores] = await Promise.all([
         db.select().from(course).where(inArray(course.id, courseIds)),
         db.select().from(teeInfo).where(inArray(teeInfo.id, teeIds)),
-        db.select().from(hole).where(inArray(hole.teeId, teeIds)),
+        // Order by hole number so per-tee position-based slicing (e.g.
+        // `holes.slice(9, 18)` for back-9) lines up with the actual holes.
+        db
+          .select()
+          .from(hole)
+          .where(inArray(hole.teeId, teeIds))
+          .orderBy(asc(hole.holeNumber)),
         db.select().from(score).where(inArray(score.roundId, roundIds)),
       ]);
 
@@ -171,6 +216,12 @@ export const scorecardRouter = createTRPCRouter({
           const scores = allScores.filter((s) => s.roundId === roundData.id);
           return {
             userId: roundData.userId,
+            nineHoleSection:
+              roundData.holesPlayed === 9
+                ? roundData.nineHoleSection === "back"
+                  ? "back"
+                  : "front"
+                : undefined,
             course: {
               id: courseData.id,
               name: courseData.name,
@@ -228,13 +279,33 @@ export const scorecardRouter = createTRPCRouter({
               course_rating_used: Number(roundData.courseRatingUsed ?? 0),
               slope_rating_used: roundData.slopeRatingUsed ?? 0,
               holes_played: roundData.holesPlayed ?? 0,
+              nine_hole_section: roundData.nineHoleSection ?? null,
             },
           };
         })
         .filter(Boolean) as ScorecardWithRound[];
 
-      // Validate all with zod
-      scorecards.forEach((scorecard) => scorecardSchema.parse(scorecard));
-      return scorecards;
+      // Validate all with zod — filter out malformed rows instead of crashing
+      // the entire statistics/dashboard page when a single round has an
+      // unexpected shape. Surface the issue to Sentry for follow-up.
+      const validatedScorecards = scorecards.filter((scorecard) => {
+        const result = scorecardSchema.safeParse(scorecard);
+        if (!result.success) {
+          Sentry.captureException(result.error, {
+            extra: {
+              roundId: scorecard.round?.id,
+              userId,
+              issues: result.error.issues,
+            },
+            tags: {
+              router: "scorecard",
+              procedure: "getAllScorecardsByUserId",
+            },
+          });
+          return false;
+        }
+        return true;
+      });
+      return validatedScorecards;
     }),
 });

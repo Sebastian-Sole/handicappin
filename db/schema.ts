@@ -245,6 +245,9 @@ export const round = pgTable(
     slopeRatingUsed: integer("slope_rating_used").notNull(),
     // Number of holes played (9 or 18) - determines which ratings and calculation formula to use
     holesPlayed: integer("holes_played").notNull(),
+    // For 9-hole rounds, which section was played: "front" or "back".
+    // Null for 18-hole rounds and legacy 9-hole rows (app code treats null as "front" for back-compat).
+    nineHoleSection: text("nine_hole_section").$type<"front" | "back" | null>(),
     createdAt: timestamp()
       .default(sql`CURRENT_TIMESTAMP`)
       .notNull(),

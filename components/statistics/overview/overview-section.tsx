@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import { StatDelta } from "@/components/ui/stat-delta";
 import { cn } from "@/lib/utils";
 import { StatisticsSection } from "../shared/statistics-section";
 import { getFlagEmoji } from "@/utils/frivolities/headerGenerator";
@@ -77,32 +78,32 @@ export function PerformanceSection({
 
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-xl">
       {/* Highlights Section */}
       <StatisticsSection
         icon="🏆"
         title="Highlights"
         description="Your standout performance metrics"
       >
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-md">
           {/* Best Round */}
-          <Card className="bg-gradient-to-br from-yellow-500/10 to-amber-500/10 border-yellow-500/20">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm text-muted-foreground flex items-center gap-2">
+          <Card className="tint-score-eagle">
+            <CardHeader className="pb-sm">
+              <CardTitle className="text-sm text-muted-foreground flex items-center gap-sm">
                 <span>🏆</span> Best Round
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-3xl font-bold">
+              <p className="text-figure-lg">
                 {formatDifferential(stats.bestDifferential)}
               </p>
               <p className="text-sm text-muted-foreground">differential</p>
               {bestCourse && (
-                <p className="text-xs text-muted-foreground mt-1">
+                <p className="text-xs text-muted-foreground mt-xs">
                   at {bestCourse.courseName}
                 </p>
               )}
-              <p className="text-xs text-green-600 font-medium mt-2">
+              <p className="text-xs text-success font-medium mt-sm">
                 Your career best!
               </p>
             </CardContent>
@@ -110,23 +111,23 @@ export function PerformanceSection({
 
           {/* Score Range */}
           <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm text-muted-foreground flex items-center gap-2">
+            <CardHeader className="pb-sm">
+              <CardTitle className="text-sm text-muted-foreground flex items-center gap-sm">
                 <span>📊</span> Score Range
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="flex items-baseline gap-2">
-                <span className="text-3xl font-bold text-green-600">
+              <div className="flex items-baseline gap-sm">
+                <span className="text-figure-lg text-success">
                   {formatDifferential(stats.bestDifferential)}
                 </span>
                 <span className="text-muted-foreground">to</span>
-                <span className="text-3xl font-bold text-red-500">
+                <span className="text-figure-lg text-destructive">
                   {formatDifferential(stats.worstDifferential)}
                 </span>
               </div>
               <p className="text-sm text-muted-foreground">differential range</p>
-              <p className="text-xs text-muted-foreground mt-2">
+              <p className="text-xs text-muted-foreground mt-sm">
                 {getStrokeSpread()} stroke spread
               </p>
             </CardContent>
@@ -137,11 +138,11 @@ export function PerformanceSection({
             className={cn(
               isValidNumber(stats.improvementRate) &&
               stats.improvementRate > 0 &&
-              "bg-gradient-to-br from-green-500/10 to-emerald-500/10 border-green-500/20"
+              "tint-success"
             )}
           >
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm text-muted-foreground flex items-center gap-2">
+            <CardHeader className="pb-sm">
+              <CardTitle className="text-sm text-muted-foreground flex items-center gap-sm">
                 <span>
                   {!isValidNumber(stats.improvementRate) || stats.improvementRate === 0
                     ? "📊"
@@ -153,12 +154,12 @@ export function PerformanceSection({
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="flex items-baseline gap-2">
+              <div className="flex items-baseline gap-sm">
                 <p
                   className={cn(
-                    "text-3xl font-bold",
+                    "text-figure-lg",
                     isValidNumber(stats.improvementRate) && stats.improvementRate > 0
-                      ? "text-green-600"
+                      ? "text-success"
                       : "text-muted-foreground"
                   )}
                 >
@@ -170,9 +171,9 @@ export function PerformanceSection({
               <p className="text-sm text-muted-foreground">since starting</p>
               <p
                 className={cn(
-                  "text-xs mt-2",
+                  "text-xs mt-sm",
                   isValidNumber(stats.improvementRate) && stats.improvementRate > 0
-                    ? "text-green-600 font-medium"
+                    ? "text-success font-medium"
                     : "text-muted-foreground"
                 )}
               >
@@ -191,30 +192,28 @@ export function PerformanceSection({
         title="Overview Stats"
         description="Key metrics at a glance"
       >
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-md">
           <Card>
-            <CardContent className="p-4">
+            <CardContent className="p-md">
               <p className="text-sm text-muted-foreground">Average Score</p>
-              <p className="text-2xl font-bold">{formatScore(stats.avgScore)}</p>
+              <p className="text-figure">{formatScore(stats.avgScore)}</p>
               <p className="text-xs text-muted-foreground">{getAvgScoreContext()}</p>
             </CardContent>
           </Card>
           <Card>
-            <CardContent className="p-4">
+            <CardContent className="p-md">
               <p className="text-sm text-muted-foreground">Handicap Change</p>
-              <div className="flex items-baseline gap-2">
-                <p className="text-2xl font-bold">
+              <div className="flex items-baseline gap-sm">
+                <p className="text-figure">
                   {formatWithSign(stats.handicapChange)}
                 </p>
                 {isValidNumber(stats.handicapChange) && stats.handicapChange !== 0 && (
-                  <span
-                    className={cn(
-                      "text-sm",
-                      stats.handicapChange < 0 ? "text-green-600" : "text-red-500"
-                    )}
-                  >
-                    {stats.handicapChange < 0 ? "↓" : "↑"}
-                  </span>
+                  <StatDelta
+                    value={stats.handicapChange}
+                    invert
+                    iconOnly
+                    className="text-sm"
+                  />
                 )}
               </div>
               <p className="text-xs text-muted-foreground">
@@ -223,9 +222,9 @@ export function PerformanceSection({
             </CardContent>
           </Card>
           <Card>
-            <CardContent className="p-4">
+            <CardContent className="p-md">
               <p className="text-sm text-muted-foreground">Consistency</p>
-              <p className="text-2xl font-bold">
+              <p className="text-figure">
                 {extendedStats.consistencyRating > 0
                   ? `${extendedStats.consistencyRating}%`
                   : "--"}
@@ -238,9 +237,9 @@ export function PerformanceSection({
             </CardContent>
           </Card>
           <Card>
-            <CardContent className="p-4">
+            <CardContent className="p-md">
               <p className="text-sm text-muted-foreground">Courses Played</p>
-              <p className="text-2xl font-bold">{extendedStats.uniqueCourses}</p>
+              <p className="text-figure">{extendedStats.uniqueCourses}</p>
               <p className="text-xs text-muted-foreground">
                 unique course{extendedStats.uniqueCourses !== 1 ? "s" : ""}
               </p>
@@ -258,11 +257,11 @@ export function PerformanceSection({
             title="Best Month"
             description="Your peak performance period"
           >
-            <Card className="bg-gradient-to-br from-primary/10 to-primary/20 border-primary/20">
-              <CardContent className="p-6">
+            <Card className="tint-primary">
+              <CardContent className="p-lg">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-2xl font-bold">
+                    <p className="text-figure">
                       {extendedStats.bestMonth.month} {extendedStats.bestMonth.year}
                     </p>
                     <p className="text-sm text-muted-foreground">
@@ -270,7 +269,7 @@ export function PerformanceSection({
                     </p>
                   </div>
                   <div className="text-right">
-                    <p className="text-3xl font-bold text-green-600">
+                    <p className="text-figure-lg text-success">
                       {formatDifferential(extendedStats.bestMonth.avgDifferential)}
                     </p>
                     <p className="text-sm text-muted-foreground">avg differential</p>
@@ -300,17 +299,17 @@ export function PerformanceSection({
               </p>
             }
           >
-            <div className="space-y-3">
+            <div className="space-y-sm">
               {extendedStats.exceptionalRounds.map((round) => (
                 <Link
                   key={round.roundId}
                   href={`/rounds/${round.roundId}/calculation`}
                   className="block"
                 >
-                  <Card className="bg-gradient-to-r from-yellow-500/10 to-orange-500/10 border-yellow-500/20 hover:border-yellow-500/40 transition-colors cursor-pointer">
-                    <CardContent className="p-4">
+                  <Card className="tint-score-eagle hover:border-score-eagle/40 transition-colors cursor-pointer">
+                    <CardContent className="p-md">
                       <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-sm">
                           <div className="text-2xl">🏆</div>
                           <div>
                             <p className="font-semibold">
@@ -326,7 +325,7 @@ export function PerformanceSection({
                           </div>
                         </div>
                         <div className="text-right">
-                          <p className="text-2xl font-bold text-green-600">
+                          <p className="text-figure text-success">
                             {formatDifferential(round.differential)}
                           </p>
                           <p className="text-xs text-muted-foreground">

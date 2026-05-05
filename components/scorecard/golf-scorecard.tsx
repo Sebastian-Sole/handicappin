@@ -12,8 +12,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Tables } from "@/types/supabase";
 import { Button } from "../ui/button";
+import { SaveStateButton, type SaveState } from "@/components/ui/save-state-button";
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 import {
   Command,
@@ -64,6 +66,9 @@ interface GolfScorecardProps {
 
 type SubmitState = "idle" | "loading" | "success" | "error";
 
+const toSaveState = (state: SubmitState): SaveState =>
+  state === "loading" ? "saving" : state === "success" ? "saved" : state;
+
 export default function GolfScorecard({ profile, access }: GolfScorecardProps) {
   const isMounted = useMounted();
   const router = useRouter();
@@ -91,6 +96,11 @@ export default function GolfScorecard({ profile, access }: GolfScorecardProps) {
   const [debouncedSearchTerm] = useDebounce(searchTerm, 600);
   const [openCourseSelect, setOpenCourseSelect] = useState(false);
   const [holeCount, setHoleCount] = useState<number>(18);
+  // For 9-hole rounds: which section was played. Defaults to "front" so existing
+  // 9-hole flows behave unchanged.
+  const [nineHoleSection, setNineHoleSection] = useState<"front" | "back">(
+    "front"
+  );
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [addCourseDialogOpen, setAddCourseDialogOpen] = useState(false);
 
@@ -277,8 +287,8 @@ export default function GolfScorecard({ profile, access }: GolfScorecardProps) {
   };
 
   const displayedHoles = useMemo(() => {
-    return getDisplayedHoles(selectedTee, holeCount);
-  }, [selectedTee, holeCount]);
+    return getDisplayedHoles(selectedTee, holeCount, nineHoleSection);
+  }, [selectedTee, holeCount, nineHoleSection]);
 
   const submitScorecardMutation = api.round.submitScorecard.useMutation();
 
@@ -292,13 +302,18 @@ export default function GolfScorecard({ profile, access }: GolfScorecardProps) {
         data.course.approvalStatus === "approved" &&
         data.teePlayed.approvalStatus === "approved";
 
-      // Determine parPlayed based on holeCount
+      // Determine parPlayed based on holeCount and (for 9-hole) section played
       let parPlayed = 0;
       if (holeCount === 18) {
         parPlayed = selectedTee?.totalPar ?? 0;
       } else if (holeCount === 9) {
-        parPlayed = selectedTee?.outPar ?? 0;
+        parPlayed =
+          nineHoleSection === "back"
+            ? selectedTee?.inPar ?? 0
+            : selectedTee?.outPar ?? 0;
       }
+      // parPlayed is computed server-side too; this local value is informational.
+      void parPlayed;
 
       const submissionData: Scorecard = {
         ...data,
@@ -309,16 +324,21 @@ export default function GolfScorecard({ profile, access }: GolfScorecardProps) {
           ...data.teePlayed,
         },
         scores: data.scores.slice(0, holeCount),
+        // Only attach the 9-hole section for 9-hole rounds; 18-hole rounds must omit it.
+        nineHoleSection: holeCount === 9 ? nineHoleSection : undefined,
       };
 
-      // Check if first 9 scores are all 0
-      const first9Scores = submissionData.scores.slice(0, 9);
-      const anyZeros = first9Scores.some((score) => score.strokes === 0);
+      // Inspect the played slice (always indices 0..holeCount) for missing scores.
+      const playedScores = submissionData.scores;
+      const anyZeros = playedScores.some((score) => score.strokes === 0);
 
       if (anyZeros) {
         setFeedback({
           type: "error",
-          message: "Please enter scores for the first 9 holes, or select 18 holes",
+          message:
+            holeCount === 9
+              ? "Please enter scores for all 9 holes"
+              : "Please enter scores for all 18 holes",
         });
         setSubmitState("idle");
         return;
@@ -405,12 +425,12 @@ export default function GolfScorecard({ profile, access }: GolfScorecardProps) {
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit, onError)} role="form">
         <Card className="w-full mx-auto bg-background border-none shadow-none">
-          <CardContent className="p-6 sm:w-[1325px] max-w-[450px] sm:max-w-[450px] md:max-w-[600px] lg:max-w-[725px] xl:max-w-[975px] 2xl:max-w-[1225px] 3xl:max-w-[1325px] mx-auto">
-            <div className="mb-6 grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-8">
+          <CardContent className="p-lg sm:w-[1325px] max-w-[450px] sm:max-w-[450px] md:max-w-[600px] lg:max-w-[725px] xl:max-w-[975px] 2xl:max-w-[1225px] 3xl:max-w-[1325px] mx-auto">
+            <div className="mb-lg grid grid-cols-1 lg:grid-cols-2 gap-md lg:gap-xl">
               <Card>
-                <CardContent className="p-4">
+                <CardContent className="p-md">
                   {/* Left-align all labels */}
-                  <div className="space-y-2 text-left">
+                  <div className="space-y-sm text-left">
                     <FormField
                       control={form.control}
                       name="course.name"
@@ -418,9 +438,9 @@ export default function GolfScorecard({ profile, access }: GolfScorecardProps) {
                       render={() => (
                         <FormItem>
                           <FormControl>
-                            <div className="space-y-2">
+                            <div className="space-y-sm">
                               <Label htmlFor="course">Course</Label>
-                              <div className="flex flex-col md:flex-row gap-2">
+                              <div className="flex flex-col md:flex-row gap-sm">
                                 <div className="flex-1 overflow-hidden">
                                   <Popover
                                     open={openCourseSelect}
@@ -439,7 +459,7 @@ export default function GolfScorecard({ profile, access }: GolfScorecardProps) {
                                         className="w-full justify-between"
                                       >
                                         {getSelectedCourseName()}
-                                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                        <ChevronsUpDown className="ml-sm h-4 w-4 shrink-0 opacity-50" />
                                       </Button>
                                     </PopoverTrigger>
                                     <PopoverContent className="w-[var(--radix-popover-trigger-width)] max-w-none p-0">
@@ -449,7 +469,7 @@ export default function GolfScorecard({ profile, access }: GolfScorecardProps) {
                                           onValueChange={handleCourseSearch}
                                         />
                                         <CommandList>
-                                          <CommandGroup className="py-6">
+                                          <CommandGroup className="py-lg">
                                             {effectiveCourses.length > 0 &&
                                               !isLoading &&
                                               effectiveCourses.map((course) => (
@@ -497,10 +517,10 @@ export default function GolfScorecard({ profile, access }: GolfScorecardProps) {
                                                 debouncedSearchTerm)) && (
                                             <CommandEmpty>
                                               <div
-                                                className="flex items-center justify-center py-4"
+                                                className="flex items-center justify-center py-md"
                                                 aria-live="polite"
                                               >
-                                                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                                                <Loader2 className="h-4 w-4 animate-spin mr-sm" />
                                                 <P className="!mt-0">
                                                   Loading courses...
                                                 </P>
@@ -514,7 +534,7 @@ export default function GolfScorecard({ profile, access }: GolfScorecardProps) {
                                             searchTerm ===
                                               debouncedSearchTerm && (
                                               <CommandEmpty>
-                                                <div className="flex flex-col items-center gap-2 py-2">
+                                                <div className="flex flex-col items-center gap-sm py-sm">
                                                   <P>No courses found</P>
                                                   <Button
                                                     variant="outline"
@@ -535,7 +555,7 @@ export default function GolfScorecard({ profile, access }: GolfScorecardProps) {
                                     </PopoverContent>
                                   </Popover>
                                 </div>
-                                <div className="flex gap-2 justify-between lg:justify-start w-full md:w-auto sm:flex-row flex-col">
+                                <div className="flex gap-sm justify-between lg:justify-start w-full md:w-auto sm:flex-row flex-col">
                                   <AddCourseDialog
                                     onAdd={handleAddCourse}
                                     aria-label="Add new course"
@@ -559,10 +579,10 @@ export default function GolfScorecard({ profile, access }: GolfScorecardProps) {
                       render={() => (
                         <FormItem>
                           <FormControl>
-                            <div className="space-y-4 mt-4">
-                              <div className="space-y-2">
+                            <div className="space-y-md mt-md">
+                              <div className="space-y-sm">
                                 <Label htmlFor="tee">Tee</Label>
-                                <div className="flex flex-col md:flex-row gap-2">
+                                <div className="flex flex-col md:flex-row gap-sm">
                                   <div className="flex-1">
                                     <Select
                                       value={selectedTeeKey}
@@ -594,7 +614,7 @@ export default function GolfScorecard({ profile, access }: GolfScorecardProps) {
                                       >
                                         {isTeesLoading ? (
                                           <div className="flex items-center">
-                                            <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                                            <Loader2 className="h-4 w-4 animate-spin mr-sm" />
                                             <span>Loading tees...</span>
                                           </div>
                                         ) : (
@@ -630,7 +650,7 @@ export default function GolfScorecard({ profile, access }: GolfScorecardProps) {
                                       </SelectContent>
                                     </Select>
                                   </div>
-                                  <div className="flex gap-2 justify-between lg:justify-start w-full md:w-auto sm:flex-row flex-col">
+                                  <div className="flex gap-sm justify-between lg:justify-start w-full md:w-auto sm:flex-row flex-col">
                                     <TeeDialog
                                       mode="edit"
                                       key={`${selectedCourseId}-${selectedTeeKey}`}
@@ -668,7 +688,7 @@ export default function GolfScorecard({ profile, access }: GolfScorecardProps) {
                                 </div>
                               </div>
                               {selectedTeeKey && (
-                                <div className="flex gap-2 justify-between w-full flex-wrap sm:flex-row flex-col">
+                                <div className="flex gap-sm justify-between w-full flex-wrap sm:flex-row flex-col">
                                   <Badge className="flex justify-center ">
                                     Course Rating: {selectedTee?.courseRating18}
                                   </Badge>
@@ -687,9 +707,9 @@ export default function GolfScorecard({ profile, access }: GolfScorecardProps) {
                 </CardContent>
               </Card>
               <Card>
-                <CardContent className="p-4">
-                  <div className="space-y-4 text-left">
-                    <div className="space-y-2">
+                <CardContent className="p-md">
+                  <div className="space-y-md text-left">
+                    <div className="space-y-sm">
                       <FormLabel>Tee Time</FormLabel>
                       <FormField
                         control={form.control}
@@ -718,14 +738,20 @@ export default function GolfScorecard({ profile, access }: GolfScorecardProps) {
                         )}
                       />
                     </div>
-                    <div className="space-y-2">
+                    <div className="space-y-sm">
                       <Label htmlFor="holes">Holes</Label>
                       {isMounted ? (
                         <Select
                           value={holeCount.toString()}
-                          onValueChange={(value) =>
-                            setHoleCount(parseInt(value))
-                          }
+                          onValueChange={(value) => {
+                            const next = parseInt(value);
+                            setHoleCount(next);
+                            // Reset section to "front" when leaving 9-hole mode so
+                            // the form state never reflects an inapplicable selection.
+                            if (next !== 9) {
+                              setNineHoleSection("front");
+                            }
+                          }}
                         >
                           <SelectTrigger id="holes">
                             <SelectValue placeholder="Select Holes" />
@@ -739,7 +765,44 @@ export default function GolfScorecard({ profile, access }: GolfScorecardProps) {
                         <Skeleton className="h-10 w-full" />
                       )}
                     </div>
-                    <div className="space-y-2">
+                    {holeCount === 9 && (
+                      <div className="space-y-sm">
+                        <Label htmlFor="nine-hole-section">9-hole section</Label>
+                        {isMounted ? (
+                          <RadioGroup
+                            id="nine-hole-section"
+                            value={nineHoleSection}
+                            onValueChange={(value) =>
+                              setNineHoleSection(value as "front" | "back")
+                            }
+                            className="flex flex-row gap-md"
+                            aria-label="Which 9-hole section was played"
+                          >
+                            <div className="flex items-center gap-sm">
+                              <RadioGroupItem
+                                value="front"
+                                id="nine-hole-section-front"
+                              />
+                              <Label htmlFor="nine-hole-section-front">
+                                Front 9
+                              </Label>
+                            </div>
+                            <div className="flex items-center gap-sm">
+                              <RadioGroupItem
+                                value="back"
+                                id="nine-hole-section-back"
+                              />
+                              <Label htmlFor="nine-hole-section-back">
+                                Back 9
+                              </Label>
+                            </div>
+                          </RadioGroup>
+                        ) : (
+                          <Skeleton className="h-10 w-full" />
+                        )}
+                      </div>
+                    )}
+                    <div className="space-y-sm">
                       <Label htmlFor="notes">Notes</Label>
                       {isMounted ? (
                         <FormField
@@ -789,7 +852,7 @@ export default function GolfScorecard({ profile, access }: GolfScorecardProps) {
             )}
             {/* Feedback display */}
             {feedback && (
-              <div className="mt-4">
+              <div className="mt-md">
                 <FormFeedback
                   type={feedback.type}
                   message={feedback.message}
@@ -798,19 +861,16 @@ export default function GolfScorecard({ profile, access }: GolfScorecardProps) {
             )}
             {/* Submit button */}
             {selectedTeeKey && (
-              <div className="mt-4 justify-end flex">
-                <Button
+              <div className="mt-md justify-end flex">
+                <SaveStateButton
                   type="submit"
-                  disabled={submitState === "loading" || submitState === "success"}
-                  className={`transition-all duration-300 ${
-                    submitState === "success" ? "bg-green-600 hover:bg-green-600" : ""
-                  }`}
-                >
-                  {submitState === "loading" && "Submitting..."}
-                  {submitState === "success" && "✓ Submitted!"}
-                  {submitState === "error" && "Submit Scorecard"}
-                  {submitState === "idle" && "Submit Scorecard"}
-                </Button>
+                  state={toSaveState(submitState)}
+                  idleLabel="Submit Scorecard"
+                  savingLabel="Submitting..."
+                  savedLabel="Submitted!"
+                  errorLabel="Submit Scorecard"
+                  className="transition-all duration-300"
+                />
               </div>
             )}
           </CardContent>

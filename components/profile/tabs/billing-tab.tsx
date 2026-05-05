@@ -2,6 +2,7 @@
 
 import { ManageSubscriptionButton } from "@/components/billing/manage-subscription-button";
 import { Button } from "@/components/ui/button";
+import { H2, H3 } from "@/components/ui/typography";
 import { FeatureAccess } from "@/types/billing";
 import Link from "next/link";
 
@@ -20,21 +21,21 @@ function formatDate(date: Date): string {
 
 export function BillingTab({ access }: BillingTabProps) {
   return (
-    <div className="space-y-6">
+    <div className="space-y-lg">
       {/* Header */}
       <div>
-        <h2 className="text-2xl font-semibold mb-2">Billing & Subscription</h2>
+        <H2 className="mb-sm pb-0">Billing & Subscription</H2>
         <p className="text-muted-foreground">
           Manage your subscription and view plan details
         </p>
       </div>
 
       {/* Current Plan Card */}
-      <div className="bg-card rounded-lg border p-6">
-        <h3 className="text-xl font-semibold mb-4">Current Plan</h3>
-        <div className="flex items-start justify-between flex-col sm:flex-row gap-4">
+      <div className="surface p-lg">
+        <H3 className="mb-md">Current Plan</H3>
+        <div className="flex items-start justify-between flex-col sm:flex-row gap-md">
           <div className="flex-1">
-            <p className="text-lg font-medium capitalize mb-2">
+            <p className="text-lg font-medium capitalize mb-sm">
               {access.plan} Plan
             </p>
 
@@ -53,15 +54,15 @@ export function BillingTab({ access }: BillingTabProps) {
             )}
 
             {access.isLifetime && (
-              <p className="text-green-600 font-medium">✓ Lifetime Access</p>
+              <p className="text-success font-medium">✓ Lifetime Access</p>
             )}
           </div>
 
-          <div className="flex gap-3 flex-wrap">
+          <div className="flex gap-sm flex-wrap">
             {/* Always show "Change Plan" for non-lifetime users */}
             {!access.isLifetime && (
               <Link href="/upgrade">
-                <Button className="bg-primary text-primary-foreground px-6 py-2 rounded-lg hover:bg-primary/90 transition">
+                <Button className="bg-primary text-primary-foreground px-lg py-sm rounded-lg hover:bg-primary/90 transition">
                   {access.plan === "free" ? "Upgrade Plan" : "Change Plan"}
                 </Button>
               </Link>
@@ -83,9 +84,9 @@ export function BillingTab({ access }: BillingTabProps) {
       </div>
 
       {/* Plan Features Card */}
-      <div className="bg-card rounded-lg border p-6">
-        <h3 className="text-xl font-semibold mb-4">Plan Features</h3>
-        <div className="space-y-4">
+      <div className="surface p-lg">
+        <H3 className="mb-md">Plan Features</H3>
+        <div className="space-y-md">
           {access.plan === "free" ? (
             <>
               <Feature
@@ -192,8 +193,8 @@ function Feature({
   description: string;
 }) {
   return (
-    <div className="flex items-start gap-3">
-      <span className={included ? "text-green-500" : "text-muted-foreground"}>
+    <div className="flex items-start gap-sm">
+      <span className={included ? "text-success" : "text-muted-foreground"}>
         {included ? "✓" : "✗"}
       </span>
       <div className="flex-1">

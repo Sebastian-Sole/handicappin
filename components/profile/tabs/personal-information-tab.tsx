@@ -22,6 +22,7 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Check, AlertCircle } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { SaveStateButton } from "@/components/ui/save-state-button";
 import { useSearchParams, useRouter } from "next/navigation";
 import {
   InputOTP,
@@ -31,6 +32,7 @@ import {
 import { REGEXP_ONLY_DIGITS } from "input-otp";
 import { verifyEmailChangeOtp } from "@/app/actions/email-change";
 import { FormFeedback } from "@/components/ui/form-feedback";
+import { H2 } from "@/components/ui/typography";
 import type { FeedbackState } from "@/types/feedback";
 
 interface PersonalInformationTabProps {
@@ -340,9 +342,9 @@ export function PersonalInformationTab({
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-lg">
       <div>
-        <h2 className="text-2xl font-semibold mb-2">Personal Information</h2>
+        <H2 className="text-2xl font-semibold mb-sm">Personal Information</H2>
         <p className="text-muted-foreground">
           Manage your account details and preferences
         </p>
@@ -358,9 +360,9 @@ export function PersonalInformationTab({
 
       {/* Success alert for cancelled email change */}
       {showCancelSuccess && (
-        <Alert className="bg-green-50 border-green-200 dark:bg-green-950 dark:border-green-800">
-          <Check className="h-4 w-4 text-green-600 dark:text-green-400" />
-          <AlertDescription className="text-green-800 dark:text-green-200">
+        <Alert className="tint-success">
+          <Check className="h-4 w-4 text-success" />
+          <AlertDescription className="text-success">
             Email change cancelled successfully. Your email address remains
             unchanged.
           </AlertDescription>
@@ -369,16 +371,16 @@ export function PersonalInformationTab({
 
       {/* Success alert for verified email change */}
       {showVerifySuccess && (
-        <Alert className="bg-green-50 border-green-200 dark:bg-green-950 dark:border-green-800">
-          <Check className="h-4 w-4 text-green-600 dark:text-green-400" />
-          <AlertDescription className="text-green-800 dark:text-green-200">
+        <Alert className="tint-success">
+          <Check className="h-4 w-4 text-success" />
+          <AlertDescription className="text-success">
             Email address updated successfully!
           </AlertDescription>
         </Alert>
       )}
 
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
+        <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-lg">
           <FormField
             control={form.control}
             name="name"
@@ -394,9 +396,9 @@ export function PersonalInformationTab({
           />
 
           {/* Email section - managed separately */}
-          <div className="space-y-3">
+          <div className="space-y-sm">
             <FormLabel>Email</FormLabel>
-            <div className="flex gap-2">
+            <div className="flex gap-sm">
               <Input
                 type="email"
                 value={newEmail}
@@ -425,10 +427,10 @@ export function PersonalInformationTab({
 
             {/* OTP Input Section */}
             {showOtpInput && !isVerified && (
-              <Alert className="mt-2">
+              <Alert className="mt-sm">
                 <AlertCircle className="h-4 w-4" />
                 <AlertDescription>
-                  <div className="space-y-4">
+                  <div className="space-y-md">
                     <div>
                       <strong>Verification code sent to:</strong> {pendingEmail}
                     </div>
@@ -437,7 +439,7 @@ export function PersonalInformationTab({
                       code is valid for 15 minutes.
                     </div>
 
-                    <div className="space-y-2">
+                    <div className="space-y-sm">
                       <FormLabel
                         id="inline-email-otp-label"
                         htmlFor="inline-email-otp-input"
@@ -498,12 +500,12 @@ export function PersonalInformationTab({
 
                       {/* Visual error message */}
                       {otpError && (
-                        <p className="text-sm text-red-600" role="alert">
+                        <p className="text-sm text-destructive" role="alert">
                           {otpError}
                         </p>
                       )}
 
-                      <div className="flex gap-2">
+                      <div className="flex gap-sm">
                         <Button
                           type="button"
                           onClick={handleVerifyOtp}
@@ -558,10 +560,10 @@ export function PersonalInformationTab({
 
             {/* Pending email info when OTP input is not shown */}
             {pendingEmail && !showOtpInput && !isVerified && (
-              <Alert className="mt-2">
+              <Alert className="mt-sm">
                 <AlertCircle className="h-4 w-4" />
                 <AlertDescription>
-                  <div className="space-y-2">
+                  <div className="space-y-sm">
                     <div>
                       <strong>Pending verification:</strong> {pendingEmail}
                     </div>
@@ -595,37 +597,19 @@ export function PersonalInformationTab({
             )}
           </div>
 
-          <div className="flex items-center justify-between pt-4">
+          <div className="flex items-center justify-between pt-md">
             <Link href="/forgot-password">
               <Button variant="link" className="px-0">
                 Change password?
               </Button>
             </Link>
-            <Button
+            <SaveStateButton
               type="submit"
-              disabled={saveState === "saving" || saveState === "saved"}
-              className={`transition-all duration-300 ${
-                saveState === "saved"
-                  ? "bg-green-600 hover:bg-green-600"
-                  : saveState === "saving"
-                  ? "bg-muted text-muted-foreground hover:bg-muted"
-                  : ""
-              }`}
-            >
-              {saveState === "saving" && (
-                <span className="flex items-center gap-2">
-                  <span className="animate-spin">⏳</span>
-                  Saving...
-                </span>
-              )}
-              {saveState === "saved" && (
-                <span className="flex items-center gap-2">
-                  <Check className="h-4 w-4" />
-                  Saved!
-                </span>
-              )}
-              {saveState === "idle" && "Save Changes"}
-            </Button>
+              state={saveState}
+              idleLabel="Save Changes"
+              savedLabel="Saved!"
+              className="transition-all duration-300"
+            />
           </div>
         </form>
       </Form>

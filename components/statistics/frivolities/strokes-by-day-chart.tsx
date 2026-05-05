@@ -36,7 +36,7 @@ export function StrokesByDayChart({ data }: StrokesByDayChartProps) {
     .sort((a, b) => b.totalStrokes - a.totalStrokes)[0];
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-md">
       <ChartContainer
         className="h-48 w-full"
         config={{

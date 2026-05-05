@@ -23,6 +23,7 @@ import { Trash2, Loader2, AlertTriangle } from "lucide-react";
 import { api } from "@/trpc/react";
 import { useRouter } from "next/navigation";
 import { FormFeedback } from "@/components/ui/form-feedback";
+import { H3 } from "@/components/ui/typography";
 import type { FeedbackState } from "@/types/feedback";
 
 type DeletionStep = "initial" | "verify-otp";
@@ -120,12 +121,12 @@ export function AccountDeletionSection() {
   };
 
   return (
-    <div className="bg-card rounded-lg border border-destructive/20 p-6">
-      <div className="flex items-start gap-3 mb-4">
+    <div className="bg-card rounded-lg border border-destructive/20 p-lg">
+      <div className="flex items-start gap-sm mb-md">
         <AlertTriangle className="h-6 w-6 text-destructive flex-shrink-0 mt-0.5" />
         <div>
-          <h3 className="text-xl font-semibold text-destructive">Delete Account</h3>
-          <p className="text-muted-foreground mt-1">
+          <H3 className="text-xl font-semibold text-destructive">Delete Account</H3>
+          <p className="text-muted-foreground mt-xs">
             Permanently delete your account and all associated data. This action cannot be undone.
           </p>
         </div>
@@ -134,7 +135,7 @@ export function AccountDeletionSection() {
       <Dialog open={dialogOpen} onOpenChange={handleDialogOpenChange}>
         <DialogTrigger asChild>
           <Button variant="destructive">
-            <Trash2 className="mr-2 h-4 w-4" />
+            <Trash2 className="mr-sm h-4 w-4" />
             Delete Account
           </Button>
         </DialogTrigger>
@@ -144,7 +145,7 @@ export function AccountDeletionSection() {
             <FormFeedback
               type={feedback.type}
               message={feedback.message}
-              className="mb-2"
+              className="mb-sm"
             />
           )}
           {step === "initial" && (
@@ -155,9 +156,9 @@ export function AccountDeletionSection() {
                   This will permanently delete your account and all associated data.
                 </DialogDescription>
               </DialogHeader>
-              <div className="space-y-3 text-sm text-muted-foreground">
+              <div className="space-y-sm text-sm text-muted-foreground">
                 <p>This includes:</p>
-                <ul className="list-disc list-inside space-y-1">
+                <ul className="list-disc list-inside space-y-xs">
                   <li>Your profile and handicap history</li>
                   <li>All your rounds and scores</li>
                   <li>Your notification preferences</li>
@@ -167,7 +168,7 @@ export function AccountDeletionSection() {
                   This action cannot be undone.
                 </p>
               </div>
-              <DialogFooter className="gap-2 sm:gap-0">
+              <DialogFooter className="gap-sm sm:gap-0">
                 <DialogClose asChild>
                   <Button variant="outline">Cancel</Button>
                 </DialogClose>
@@ -178,7 +179,7 @@ export function AccountDeletionSection() {
                 >
                   {isLoading ? (
                     <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      <Loader2 className="mr-sm h-4 w-4 animate-spin" />
                       Sending code...
                     </>
                   ) : (
@@ -197,8 +198,8 @@ export function AccountDeletionSection() {
                   We sent a 6-digit code to your email. Enter it below to confirm deletion.
                 </DialogDescription>
               </DialogHeader>
-              <div className="space-y-4 py-4">
-                <div className="space-y-2">
+              <div className="space-y-md py-md">
+                <div className="space-y-sm">
                   <Label
                     id="deletion-otp-label"
                     htmlFor="deletion-otp-input"
@@ -239,7 +240,7 @@ export function AccountDeletionSection() {
                   )}
                 </div>
               </div>
-              <DialogFooter className="gap-2 sm:gap-0">
+              <DialogFooter className="gap-sm sm:gap-0">
                 <Button
                   variant="outline"
                   onClick={handleCancel}
@@ -254,7 +255,7 @@ export function AccountDeletionSection() {
                 >
                   {isLoading ? (
                     <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      <Loader2 className="mr-sm h-4 w-4 animate-spin" />
                       Deleting...
                     </>
                   ) : (

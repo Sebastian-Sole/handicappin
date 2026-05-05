@@ -1,0 +1,124 @@
+@utility text-display {
+  font-family: var(--font-sans);
+  font-weight: 800;
+  font-size: 3rem;
+  line-height: 1;
+  letter-spacing: -0.02em;
+}
+
+@utility text-heading-1 {
+  font-family: var(--font-sans);
+  font-weight: 800;
+  font-size: 2.25rem;
+  line-height: 2.5rem;
+  letter-spacing: -0.02em;
+}
+
+@utility text-heading-2 {
+  font-family: var(--font-sans);
+  font-weight: 600;
+  font-size: 1.875rem;
+  line-height: 2.25rem;
+  letter-spacing: -0.01em;
+}
+
+@utility text-heading-3 {
+  font-family: var(--font-sans);
+  font-weight: 600;
+  font-size: 1.5rem;
+  line-height: 2rem;
+  letter-spacing: -0.01em;
+}
+
+@utility text-heading-4 {
+  font-family: var(--font-sans);
+  font-weight: 600;
+  font-size: 1.25rem;
+  line-height: 1.75rem;
+  letter-spacing: -0.005em;
+}
+
+@utility text-body {
+  font-family: var(--font-sans);
+  font-weight: 400;
+  font-size: 1rem;
+  line-height: 1.75rem;
+  letter-spacing: 0;
+}
+
+@utility text-body-sm {
+  font-family: var(--font-sans);
+  font-weight: 400;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  letter-spacing: 0;
+}
+
+@utility text-caption {
+  font-family: var(--font-sans);
+  font-weight: 500;
+  font-size: 0.75rem;
+  line-height: 1rem;
+  letter-spacing: 0.01em;
+}
+
+/* Figure scale — bold numeric display (stat values, metric tiles,
+   percentage readouts, etc.). Distinct from heading utilities: figures
+   are always weight 700, short line-height, no tracking adjustment.
+   Headings are for document hierarchy; figures are for data. */
+
+@utility text-figure-sm {
+  font-family: var(--font-sans);
+  font-weight: 700;
+  font-size: 1.25rem;
+  line-height: 1.75rem;
+}
+
+@utility text-figure {
+  font-family: var(--font-sans);
+  font-weight: 700;
+  font-size: 1.5rem;
+  line-height: 2rem;
+}
+
+@utility text-figure-lg {
+  font-family: var(--font-sans);
+  font-weight: 700;
+  font-size: 1.875rem;
+  line-height: 2.25rem;
+}
+
+@utility text-figure-xl {
+  font-family: var(--font-sans);
+  font-weight: 700;
+  font-size: 2.25rem;
+  line-height: 2.5rem;
+}
+
+@utility text-figure-2xl {
+  font-family: var(--font-sans);
+  font-weight: 700;
+  font-size: 3rem;
+  line-height: 1;
+}
+
+@utility text-figure-3xl {
+  font-family: var(--font-sans);
+  font-weight: 700;
+  font-size: 3.75rem;
+  line-height: 1;
+}
+
+@utility text-figure-4xl {
+  font-family: var(--font-sans);
+  font-weight: 700;
+  font-size: 4.5rem;
+  line-height: 1;
+}
+
+@utility text-figure-5xl {
+  font-family: var(--font-sans);
+  font-weight: 700;
+  font-size: 6rem;
+  line-height: 1;
+}

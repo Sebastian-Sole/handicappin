@@ -7,7 +7,7 @@ import { Muted, P } from "@/components/ui/typography";
 import { CalculatorCard } from "./calculator-card";
 import { useCalculatorContext } from "@/contexts/calculatorContext";
 import { getCalculatorByIdOrThrow } from "@/lib/calculator-registry";
-import { calculateScoreDifferential } from "@/lib/handicap";
+import { calculateScoreDifferential } from "@handicappin/handicap-core";
 
 const meta = getCalculatorByIdOrThrow("score-differential");
 
@@ -42,25 +42,25 @@ export function ScoreDifferentialCalculator() {
   const result = (
     <div className="flex items-center justify-between">
       <P className="font-medium">Score Differential:</P>
-      <span className="text-3xl font-bold text-primary">
+      <span className="text-figure-lg text-primary">
         {scoreDifferential !== null ? scoreDifferential.toFixed(1) : "—"}
       </span>
     </div>
   );
 
   const explanation = (
-    <div className="space-y-3">
+    <div className="space-y-sm">
       <Muted>
         Score Differential = (Adjusted Gross Score - Course Rating) x (113 /
         Slope Rating)
       </Muted>
       {scoreDifferential !== null && (
-        <div className="bg-muted/50 rounded-lg p-3 font-mono text-sm">
+        <div className="formula-box">
           <P className="text-muted-foreground">
             ({values.adjustedGrossScore} - {values.courseRating}) x (113 /{" "}
             {values.slopeRating})
           </P>
-          <P className="font-bold mt-1">= {scoreDifferential.toFixed(1)}</P>
+          <P className="font-bold mt-xs">= {scoreDifferential.toFixed(1)}</P>
         </div>
       )}
       <Muted className="text-xs">
@@ -71,8 +71,8 @@ export function ScoreDifferentialCalculator() {
 
   return (
     <CalculatorCard meta={meta} result={result} explanation={explanation}>
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="space-y-2">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-md">
+        <div className="space-y-sm">
           <Label htmlFor="adjustedGrossScore">Adjusted Gross Score</Label>
           <Input
             id="adjustedGrossScore"
@@ -87,7 +87,7 @@ export function ScoreDifferentialCalculator() {
             }
           />
         </div>
-        <div className="space-y-2">
+        <div className="space-y-sm">
           <Label htmlFor="courseRating-diff">Course Rating</Label>
           <Input
             id="courseRating-diff"
@@ -103,7 +103,7 @@ export function ScoreDifferentialCalculator() {
             }
           />
         </div>
-        <div className="space-y-2">
+        <div className="space-y-sm">
           <Label htmlFor="slopeRating-diff">Slope Rating</Label>
           <Input
             id="slopeRating-diff"

@@ -29,34 +29,50 @@ const CourseHandicapStep = () => {
     scorecard,
   } = useRoundCalculationContext();
 
+  // Section is on the scorecard for new submissions; legacy rows fall back to "front".
+  const nineHoleSection: "front" | "back" = scorecard.nineHoleSection ?? "front";
+  const isBackNine = isNineHoles && nineHoleSection === "back";
+
   // Original values for comparison
   const originalHandicapIndex = scorecard.round.existingHandicapIndex;
   const originalSlope = isNineHoles
-    ? scorecard.teePlayed.slopeRatingFront9
+    ? isBackNine
+      ? scorecard.teePlayed.slopeRatingBack9
+      : scorecard.teePlayed.slopeRatingFront9
     : scorecard.teePlayed.slopeRating18;
   const originalRating = isNineHoles
-    ? scorecard.teePlayed.courseRatingFront9
+    ? isBackNine
+      ? scorecard.teePlayed.courseRatingBack9
+      : scorecard.teePlayed.courseRatingFront9
     : scorecard.teePlayed.courseRating18;
   const originalPar = isNineHoles
-    ? scorecard.teePlayed.outPar
+    ? isBackNine
+      ? scorecard.teePlayed.inPar
+      : scorecard.teePlayed.outPar
     : scorecard.teePlayed.totalPar;
 
   // Sync slope, rating, and par when isNineHoles changes
   useEffect(() => {
     const newSlope = isNineHoles
-      ? scorecard.teePlayed.slopeRatingFront9
+      ? isBackNine
+        ? scorecard.teePlayed.slopeRatingBack9
+        : scorecard.teePlayed.slopeRatingFront9
       : scorecard.teePlayed.slopeRating18;
     const newRating = isNineHoles
-      ? scorecard.teePlayed.courseRatingFront9
+      ? isBackNine
+        ? scorecard.teePlayed.courseRatingBack9
+        : scorecard.teePlayed.courseRatingFront9
       : scorecard.teePlayed.courseRating18;
     const newPar = isNineHoles
-      ? scorecard.teePlayed.outPar
+      ? isBackNine
+        ? scorecard.teePlayed.inPar
+        : scorecard.teePlayed.outPar
       : scorecard.teePlayed.totalPar;
 
     setSlope(newSlope);
     setRating(newRating);
     setPar(newPar);
-  }, [isNineHoles, scorecard.teePlayed, setSlope, setRating, setPar]);
+  }, [isNineHoles, isBackNine, scorecard.teePlayed, setSlope, setRating, setPar]);
 
   const hasChanges =
     handicapIndex !== originalHandicapIndex ||
@@ -80,7 +96,7 @@ const CourseHandicapStep = () => {
       title="Course Handicap"
       description="How many handicap strokes you received for this round"
       learnMoreContent={
-        <div className="space-y-3">
+        <div className="space-y-sm">
           <Blockquote>
             Your Course Handicap represents the number of strokes you receive on
             this specific course and set of tees. It adjusts your Handicap Index
@@ -102,14 +118,14 @@ const CourseHandicapStep = () => {
         </div>
       }
     >
-      <div className="space-y-4">
+      <div className="space-y-md">
         {/* Reset button */}
         {hasChanges && (
           <Button
             variant="outline"
             size="sm"
             onClick={resetToOriginal}
-            className="gap-2"
+            className="gap-sm"
           >
             <RotateCcw className="w-4 h-4" />
             Reset to original values
@@ -117,7 +133,7 @@ const CourseHandicapStep = () => {
         )}
 
         {/* Input grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-md">
           <div>
             <Label>Handicap Index</Label>
             <Input
@@ -130,7 +146,7 @@ const CourseHandicapStep = () => {
               }
               className={cn(
                 isModified(handicapIndex, originalHandicapIndex) &&
-                  "border-amber-500 bg-amber-50 dark:bg-amber-950/20"
+                  "border-warning bg-warning/10"
               )}
             />
           </div>
@@ -142,7 +158,7 @@ const CourseHandicapStep = () => {
               onChange={(e) => setSlope(Number.parseFloat(e.target.value) || 0)}
               className={cn(
                 isModified(slope, originalSlope) &&
-                  "border-amber-500 bg-amber-50 dark:bg-amber-950/20"
+                  "border-warning bg-warning/10"
               )}
             />
           </div>
@@ -157,7 +173,7 @@ const CourseHandicapStep = () => {
               }
               className={cn(
                 isModified(rating, originalRating) &&
-                  "border-amber-500 bg-amber-50 dark:bg-amber-950/20"
+                  "border-warning bg-warning/10"
               )}
             />
           </div>
@@ -169,11 +185,11 @@ const CourseHandicapStep = () => {
               onChange={(e) => setPar(Number(e.target.value) || 0)}
               className={cn(
                 isModified(par, originalPar) &&
-                  "border-amber-500 bg-amber-50 dark:bg-amber-950/20"
+                  "border-warning bg-warning/10"
               )}
             />
           </div>
-          <div className="flex items-end gap-2 pb-2">
+          <div className="flex items-end gap-sm pb-sm">
             <Label className="text-xs">18 holes</Label>
             <Switch
               checked={isNineHoles}
@@ -187,20 +203,20 @@ const CourseHandicapStep = () => {
         </div>
 
         {/* Formula */}
-        <div className="bg-muted/50 rounded-lg p-4 space-y-2">
+        <div className="surface-muted p-md space-y-sm">
           <Muted>
             {isNineHoles
               ? "Course Handicap (9 holes) = (Handicap Index ÷ 2) × (Slope ÷ 113) + (Course Rating − Par)"
               : "Course Handicap (18 holes) = Handicap Index × (Slope ÷ 113) + (Course Rating − Par)"}
           </Muted>
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex flex-wrap items-center gap-sm">
             <span className="font-medium">Course Handicap =</span>
             <Muted>
               {isNineHoles ? `(${handicapIndex} ÷ 2)` : handicapIndex} × (
               {slope} ÷ 113) + ({rating} − {par})
             </Muted>
             <span className="font-medium">=</span>
-            <span className="text-xl font-bold text-primary">
+            <span className="text-figure-sm text-primary">
               {Math.round(courseHandicapCalculation)}
             </span>
             <Muted>strokes</Muted>

@@ -61,7 +61,9 @@ function base64urlDecode(str: string): string {
   }
 }
 
-export function getBillingFromJWT(session: SessionWithToken): BillingClaims | null {
+export function getBillingFromJWT(
+  session: SessionWithToken,
+): BillingClaims | null {
   if (!session?.access_token) {
     return null;
   }

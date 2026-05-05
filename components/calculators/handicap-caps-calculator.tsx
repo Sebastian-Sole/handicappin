@@ -8,11 +8,11 @@ import { Progress } from "@/components/ui/progress";
 import { CalculatorCard } from "./calculator-card";
 import { useCalculatorContext } from "@/contexts/calculatorContext";
 import { getCalculatorByIdOrThrow } from "@/lib/calculator-registry";
-import { applyHandicapCaps } from "@/lib/handicap";
 import {
+  applyHandicapCaps,
   SOFT_CAP_THRESHOLD,
   HARD_CAP_THRESHOLD,
-} from "@/lib/handicap/constants";
+} from "@handicappin/handicap-core";
 
 const meta = getCalculatorByIdOrThrow("handicap-caps");
 
@@ -60,23 +60,23 @@ export function HandicapCapsCalculator() {
   }, [values.handicapIndex, values.lowHandicapIndex]);
 
   const result = analysis && (
-    <div className="space-y-4">
+    <div className="space-y-md">
       <div className="flex items-center justify-between">
         <div>
           <P className="font-medium">Capped Handicap Index:</P>
           {analysis.wasReduced && (
-            <Small className="text-amber-600">
+            <Small className="text-warning">
               Reduced from {analysis.uncappedIndex.toFixed(1)}
             </Small>
           )}
         </div>
-        <span className="text-3xl font-bold text-primary">
+        <span className="text-figure-lg text-primary">
           {analysis.cappedIndex.toFixed(1)}
         </span>
       </div>
 
       {/* Visual cap progress bar */}
-      <div className="space-y-2">
+      <div className="space-y-sm">
         <div className="flex justify-between text-xs text-muted-foreground">
           <span>Low HI: {values.lowHandicapIndex?.toFixed(1)}</span>
           <span>
@@ -90,7 +90,7 @@ export function HandicapCapsCalculator() {
           <Progress value={analysis.progressPercent} className="h-3" />
           {/* Soft cap marker */}
           <div
-            className="absolute top-0 h-3 w-0.5 bg-amber-500"
+            className="absolute top-0 h-3 w-0.5 bg-warning"
             style={{
               left: `${(SOFT_CAP_THRESHOLD / HARD_CAP_THRESHOLD) * 100}%`,
             }}
@@ -100,10 +100,10 @@ export function HandicapCapsCalculator() {
           <span
             className={`text-sm font-medium ${
               analysis.status === "below"
-                ? "text-green-600"
+                ? "text-success"
                 : analysis.status === "soft"
-                  ? "text-amber-600"
-                  : "text-red-600"
+                  ? "text-warning"
+                  : "text-destructive"
             }`}
           >
             {analysis.status === "below" && "Below soft cap - no reduction"}
@@ -118,14 +118,14 @@ export function HandicapCapsCalculator() {
   );
 
   const explanation = (
-    <div className="space-y-3">
+    <div className="space-y-sm">
       <Muted>
         The cap procedure limits how much your Handicap Index can increase above
         your Low Handicap Index (your lowest index in the past 365 days).
       </Muted>
-      <div className="bg-muted/50 rounded-lg p-3 text-sm space-y-2">
+      <div className="surface-muted p-sm text-sm space-y-sm">
         <P className="font-medium">Cap Rules:</P>
-        <ul className="list-disc pl-4 space-y-1 text-muted-foreground">
+        <ul className="list-disc pl-md space-y-xs text-muted-foreground">
           <li>
             <strong>Soft Cap (+3.0):</strong> Increases above 3.0 are reduced by
             50%
@@ -137,8 +137,8 @@ export function HandicapCapsCalculator() {
         </ul>
       </div>
       {analysis?.wasReduced && (
-        <div className="bg-amber-50 dark:bg-amber-950 rounded-lg p-3 text-sm">
-          <P className="font-medium text-amber-800 dark:text-amber-200">
+        <div className="tint-warning p-sm text-sm">
+          <P className="font-medium text-warning">
             Your handicap was reduced by{" "}
             {(analysis.uncappedIndex - analysis.cappedIndex).toFixed(1)} strokes
             due to the {analysis.status} cap.
@@ -150,8 +150,8 @@ export function HandicapCapsCalculator() {
 
   return (
     <CalculatorCard meta={meta} result={result} explanation={explanation}>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <div className="space-y-2">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-md">
+        <div className="space-y-sm">
           <Label htmlFor="handicapIndex-caps">Current Handicap Index</Label>
           <Input
             id="handicapIndex-caps"
@@ -167,7 +167,7 @@ export function HandicapCapsCalculator() {
             }
           />
         </div>
-        <div className="space-y-2">
+        <div className="space-y-sm">
           <Label htmlFor="lowHandicapIndex">Low Handicap Index (365 days)</Label>
           <Input
             id="lowHandicapIndex"

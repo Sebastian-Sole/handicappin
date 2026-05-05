@@ -22,14 +22,17 @@ import {
   teeResponseSchema,
 } from "../handicap-shared/shared-schemas.ts";
 import { roundResponseSchema } from "../handicap-shared/round-schemas.ts";
-
-const EXCEPTIONAL_ROUND_THRESHOLD = 7;
-const MAX_SCORE_DIFFERENTIAL = 54;
-const ESR_WINDOW_SIZE = 20;
+import {
+  EXCEPTIONAL_ROUND_THRESHOLD,
+  MAX_SCORE_DIFFERENTIAL,
+  ESR_WINDOW_SIZE,
+} from "../handicap-shared/constants.ts";
 
 // Configuration from environment variables
 const BATCH_SIZE = parseInt(Deno.env.get("HANDICAP_QUEUE_BATCH_SIZE") || "25");
 const MAX_RETRIES = parseInt(Deno.env.get("HANDICAP_MAX_RETRIES") || "3");
+
+type SupabaseClient = ReturnType<typeof createClient>;
 
 interface QueueJob {
   id: number;
@@ -38,16 +41,64 @@ interface QueueJob {
   attempts: number;
 }
 
+/**
+ * Constant-time string comparison to mitigate timing attacks against the
+ * shared cron secret. Deno's runtime has no `node:crypto.timingSafeEqual`,
+ * so we hand-roll it: compare lengths first (length leakage is acceptable
+ * for fixed-length secrets), then XOR every byte and OR the results.
+ */
+function timingSafeStringEqual(a: string, b: string): boolean {
+  if (a.length !== b.length) return false;
+  const aBytes = new TextEncoder().encode(a);
+  const bBytes = new TextEncoder().encode(b);
+  let result = 0;
+  for (let i = 0; i < aBytes.length; i++) result |= aBytes[i] ^ bBytes[i];
+  return result === 0;
+}
+
 Deno.serve(async (req) => {
   console.log("Queue processor invoked");
 
   try {
-    // Security: Verify request comes from cron job
-    const body = await req.json();
-    if (body.scheduled !== true) {
-      console.warn("Unauthorized access attempt to process-handicap-queue");
+    // Cheap method check first — fails fast on malformed probes without
+    // trying to parse a body.
+    if (req.method !== "POST") {
+      return new Response(JSON.stringify({ error: "Method not allowed" }), {
+        status: 405,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+
+    // Security: Shared-secret header check.
+    // `config.toml` sets `verify_jwt = false` for this function so the cron job
+    // can call it, which means anyone with the public Functions URL could hit
+    // it. The body-level `{ scheduled: true }` check is forgeable, so we
+    // require a shared secret in the `x-cron-secret` header. The cron SQL
+    // (see supabase/migrations/*_secure_queue_cron_with_secret.sql) injects
+    // this header from Supabase Vault via
+    // `(SELECT decrypted_secret FROM vault.decrypted_secrets WHERE name = 'handicap_cron_secret' LIMIT 1)`.
+    //
+    // Deployment note (manual, not automatable from local code):
+    //   1. Set `HANDICAP_CRON_SECRET` in Supabase Edge Function secrets
+    //      (Dashboard -> Edge Functions -> Secrets) so this runtime can read
+    //      it via `Deno.env.get(...)`.
+    //   2. Create the matching secret in Supabase Vault as the `postgres` role:
+    //        SELECT vault.create_secret('<same secret>', 'handicap_cron_secret');
+    //      (Or Dashboard -> Settings -> Vault -> New secret.) Both values MUST
+    //      match. Vault is used because Supabase Cloud's `postgres` role
+    //      cannot run `ALTER DATABASE ... SET` for arbitrary GUCs.
+    const expectedCronSecret = Deno.env.get("HANDICAP_CRON_SECRET");
+    const providedCronSecret = req.headers.get("x-cron-secret");
+    if (
+      !expectedCronSecret ||
+      !providedCronSecret ||
+      !timingSafeStringEqual(providedCronSecret, expectedCronSecret)
+    ) {
+      console.warn(
+        "Unauthorized access attempt to process-handicap-queue (missing/mismatched x-cron-secret)"
+      );
       return new Response(
-        JSON.stringify({ error: "Unauthorized - this endpoint is for scheduled jobs only" }),
+        JSON.stringify({ error: "Unauthorized" }),
         { status: 403, headers: { "Content-Type": "application/json" } }
       );
     }
@@ -121,11 +172,13 @@ Deno.serve(async (req) => {
  * Uses shared utilities from handicap-shared/utils.ts
  */
 async function processUserHandicap(
-  supabase: any,
+  supabase: SupabaseClient,
   job: QueueJob
 ): Promise<void> {
   try {
-    console.log(`Processing user ${job.user_id}, attempt ${job.attempts + 1}`);
+    console.log(
+      `Processing job ${job.id}, attempt ${job.attempts + 1}`
+    );
 
     const userId = job.user_id;
 
@@ -180,7 +233,9 @@ async function processUserHandicap(
         throw rpcError;
       }
 
-      console.log(`No approved rounds for user ${userId}, handicap set to max`);
+      console.log(
+        `No approved rounds for job ${job.id}, handicap set to max`
+      );
       return;
     }
 
@@ -259,61 +314,21 @@ async function processUserHandicap(
       approvalStatus: r.approvalStatus,
     }));
 
-    // Pass 1: Calculate adjusted gross scores
-    for (let roundIndex = 0; roundIndex < processedRounds.length; roundIndex++) {
-      const pr = processedRounds[roundIndex];
-      const teePlayed = teeMap.get(pr.teeId);
-      if (!teePlayed) throw new Error(`Tee not found for round ${pr.id}`);
-
-      const roundScores = roundScoresMap.get(pr.id);
-      if (!roundScores) throw new Error(`Scores not found for round ${pr.id}`);
-
-      const holes = holesMap.get(pr.teeId);
-      if (!holes) throw new Error(`Holes not found for tee ${pr.teeId}`);
-
-      const numberOfHolesPlayed = roundScores.length;
-
-      const courseHandicap = calculateCourseHandicap(
-        pr.existingHandicapIndex,
-        teePlayed,
-        numberOfHolesPlayed
-      );
-
-      const scoresWithHcpStrokes = addHcpStrokesToScores(
-        holes,
-        roundScores,
-        courseHandicap,
-        numberOfHolesPlayed
-      );
-
-      // Determine if player has an established handicap (USGA requires 3+ rounds)
-      // For rounds 0, 1, 2 (first 3 rounds): player does not have established handicap
-      // For rounds 3+ : player has established handicap
-      const hasEstablishedHandicap = roundIndex >= 3;
-
-      const adjustedPlayedScore = calculateAdjustedPlayedScore(
-        holes,
-        scoresWithHcpStrokes,
-        hasEstablishedHandicap
-      );
-
-      const adjustedGrossScore = calculateAdjustedGrossScore(
-        adjustedPlayedScore,
-        courseHandicap,
-        numberOfHolesPlayed,
-        holes,
-        roundScores
-      );
-
-      pr.adjustedGrossScore = adjustedGrossScore;
-      pr.adjustedPlayedScore = adjustedPlayedScore;
-      pr.courseHandicap = courseHandicap;
-    }
-
-    // Pass 2: Calculate raw differentials and detect ESR
+    // Pass 1+2 (merged): Compute AGS/APS/courseHandicap using a rolling
+    // handicap index (USGA correctness), then derive raw differentials and
+    // detect ESR. Previously Pass 1 used a fixed `MAX_SCORE_DIFFERENTIAL`
+    // (54) for every round which inflated AGS for established players
+    // because the per-hole NDB caps (`addHcpStrokesToScores` ->
+    // `calculateAdjustedPlayedScore`) were computed against far too many
+    // strokes. Each round's data only depends on its own rolling index
+    // and prior rounds' rawDifferentials (for ESR window), so merging the
+    // two passes is functionally equivalent to the old order plus the
+    // rolling-index correction.
     let rollingIndex = initialHandicapIndex;
     for (let i = 0; i < processedRounds.length; i++) {
       const pr = processedRounds[i];
+      // IMPORTANT: assign rolling index BEFORE any AGS/APS/courseHandicap
+      // computation so they use the correct index for this round.
       pr.existingHandicapIndex = rollingIndex;
 
       const teePlayed = teeMap.get(pr.teeId);
@@ -322,23 +337,79 @@ async function processUserHandicap(
       const roundScores = roundScoresMap.get(pr.id);
       if (!roundScores) throw new Error(`Scores not found for round ${pr.id}`);
 
+      const holesForRound = holesMap.get(pr.teeId);
+      if (!holesForRound)
+        throw new Error(`Holes not found for tee ${pr.teeId}`);
+
       const numberOfHolesPlayed = roundScores.length;
+      // Use the round's recorded section (front/back) so back-9 rounds
+      // pick the right ratings/par. Null/undefined falls back to "front".
+      const sectionForCourseHandicap: "front" | "back" =
+        userRounds[i].nineHoleSection ?? "front";
+
+      const courseHandicap = calculateCourseHandicap(
+        pr.existingHandicapIndex,
+        teePlayed,
+        numberOfHolesPlayed,
+        sectionForCourseHandicap
+      );
+
+      const scoresWithHcpStrokes = addHcpStrokesToScores(
+        holesForRound,
+        roundScores,
+        courseHandicap,
+        numberOfHolesPlayed
+      );
+
+      // Determine if player has an established handicap (USGA requires 3+ rounds)
+      // For rounds 0, 1, 2 (first 3 rounds): player does not have established handicap
+      // For rounds 3+ : player has established handicap
+      const hasEstablishedHandicap = i >= 3;
+
+      const adjustedPlayedScore = calculateAdjustedPlayedScore(
+        holesForRound,
+        scoresWithHcpStrokes,
+        hasEstablishedHandicap
+      );
+
+      const adjustedGrossScore = calculateAdjustedGrossScore(
+        adjustedPlayedScore,
+        courseHandicap,
+        numberOfHolesPlayed,
+        holesForRound,
+        roundScores
+      );
+
+      pr.adjustedGrossScore = adjustedGrossScore;
+      pr.adjustedPlayedScore = adjustedPlayedScore;
+      pr.courseHandicap = courseHandicap;
 
       // Calculate differential based on holes played (USGA Rule 5.1b for 9-hole)
       if (numberOfHolesPlayed === 9) {
-        // Use 9-hole (front9) ratings per USGA Rule 5.1b
+        // Pick front-9 or back-9 ratings/par per USGA Rule 5.1b based on section.
+        const section: "front" | "back" =
+          userRounds[i].nineHoleSection ?? "front";
+        const isBack = section === "back";
+        const nineHoleCourseRating = isBack
+          ? teePlayed.courseRatingBack9
+          : teePlayed.courseRatingFront9;
+        const nineHoleSlopeRating = isBack
+          ? teePlayed.slopeRatingBack9
+          : teePlayed.slopeRatingFront9;
+        const nineHolePar = isBack ? teePlayed.inPar : teePlayed.outPar;
+
         const expectedDifferential = calculateExpected9HoleDifferential(
           pr.existingHandicapIndex,
-          teePlayed.courseRatingFront9,
-          teePlayed.slopeRatingFront9,
-          teePlayed.outPar
+          nineHoleCourseRating,
+          nineHoleSlopeRating,
+          nineHolePar
         );
 
         // Calculate 18-hole equivalent differential
         pr.rawDifferential = calculate9HoleScoreDifferential(
           pr.adjustedPlayedScore, // Use adjustedPlayedScore for 9-hole, not adjustedGrossScore
-          teePlayed.courseRatingFront9,
-          teePlayed.slopeRatingFront9,
+          nineHoleCourseRating,
+          nineHoleSlopeRating,
           expectedDifferential
         );
       } else {
@@ -371,7 +442,7 @@ async function processUserHandicap(
       rollingIndex = pr.updatedHandicapIndex;
     }
 
-    // Pass 3: Apply ESR offsets and calculate final differentials
+    // Pass 2: Apply ESR offsets and calculate final differentials
     for (let i = 0; i < processedRounds.length; i++) {
       const pr = processedRounds[i];
       pr.existingHandicapIndex =
@@ -386,15 +457,15 @@ async function processUserHandicap(
         .map((r) => r.finalDifferential);
       const calculatedIndex = calculateHandicapIndex(relevantDifferentials);
 
-      if (processedRounds.length >= 20) {
-        const lowHandicapIndex = calculateLowHandicapIndex(processedRounds, i);
-        pr.updatedHandicapIndex = applyHandicapCaps(
-          calculatedIndex,
-          lowHandicapIndex
-        );
-      } else {
-        pr.updatedHandicapIndex = calculatedIndex;
-      }
+      // Apply soft/hard caps per USGA Rule 5.7.
+      // calculateLowHandicapIndex returns null when no rounds exist in the
+      // 365-day window, and applyHandicapCaps short-circuits on null — so the
+      // null-check inside applyHandicapCaps is the correct gate (not a 20-round
+      // threshold, which Rule 5.7 does not require).
+      pr.updatedHandicapIndex = applyHandicapCaps(
+        calculatedIndex,
+        calculateLowHandicapIndex(processedRounds, i)
+      );
 
       pr.updatedHandicapIndex = Math.min(
         pr.updatedHandicapIndex,
@@ -429,7 +500,7 @@ async function processUserHandicap(
       throw rpcError;
     }
 
-    console.log(`Successfully processed handicap for user ${userId}`);
+    console.log(`Successfully processed handicap for job ${job.id}`);
   } catch (error: unknown) {
     // Handle failure: update queue entry with error
     console.error(`Failed to process user ${job.user_id}:`, error);

@@ -16,9 +16,9 @@ const ScoreDiffCalculationDisplay = () => {
     scorecard,
   } = useRoundCalculationContext();
   return (
-    <section className="space-y-4">
+    <section className="space-y-md">
       <H3>Score Differential</H3>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-md">
         <div>
           <Label>Adjusted Gross Score:</Label>
           <Input
@@ -52,14 +52,14 @@ const ScoreDiffCalculationDisplay = () => {
         &#247; Slope
       </Muted>
 
-      <div className="flex flex-row items-center mt-4">
+      <div className="flex flex-row items-center mt-md">
         <P>Score Differential =</P>
-        <Muted className="mx-2">
+        <Muted className="mx-sm">
           ({adjustedGrossScoreCalculation} - {rating}) &times; (113 &#247;{" "}
           {slope})
         </Muted>
         <P className="mt-0!">=</P>
-        <u className="ml-2 text-primary font-bold">
+        <u className="ml-sm text-primary font-bold">
           {Math.round(scoreDifferentialCalculation * 10) / 10}
         </u>
       </div>
@@ -73,7 +73,7 @@ const ScoreDiffCalculationDisplay = () => {
         Your handicap index after this round:{" "}
         {scorecard.round.updatedHandicapIndex}
       </p>
-      <Blockquote className="not-italic border-r-2 pr-2">
+      <Blockquote className="not-italic border-r-2 pr-sm">
         Your handicap index adjusts if the round registered is one of your 8
         best rounds in your last 20 played. If you&apos;ve played less than 20
         rounds, there is a different calculation which can be viewed here:{" "}

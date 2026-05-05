@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClientComponentClient } from "@/utils/supabase/client";
 import { clientLogger } from "@/lib/client-logger";
+import { H1 } from "@/components/ui/typography";
 
 const MAX_RETRY_ATTEMPTS = 3;
 const RETRY_DELAY_MS = 2000; // 2 seconds between retries
@@ -185,21 +186,21 @@ export function VerifySessionContent({
   };
 
   return (
-    <div className="max-w-md w-full bg-white rounded-lg shadow-lg p-8">
+    <div className="max-w-md w-full surface shadow-lg p-xl">
       <div className="text-center">
         {/* Verifying State */}
         {state === "verifying" && (
           <>
-            <div className="text-6xl mb-4 animate-spin">⏳</div>
-            <h1 className="text-2xl font-bold mb-2">Verifying Your Session</h1>
-            <p className="text-gray-600 mb-6">
+            <div className="text-6xl mb-md animate-spin">⏳</div>
+            <H1 className="text-2xl mb-sm">Verifying Your Session</H1>
+            <p className="text-muted-foreground mb-lg">
               Please wait while we verify your account...
             </p>
             <div className="flex justify-center">
-              <div className="animate-pulse flex space-x-2">
-                <div className="w-3 h-3 bg-blue-600 rounded-full"></div>
-                <div className="w-3 h-3 bg-blue-600 rounded-full"></div>
-                <div className="w-3 h-3 bg-blue-600 rounded-full"></div>
+              <div className="animate-pulse flex space-x-sm">
+                <div className="w-3 h-3 bg-info rounded-full"></div>
+                <div className="w-3 h-3 bg-info rounded-full"></div>
+                <div className="w-3 h-3 bg-info rounded-full"></div>
               </div>
             </div>
           </>
@@ -208,19 +209,19 @@ export function VerifySessionContent({
         {/* Retrying State */}
         {state === "retrying" && (
           <>
-            <div className="text-6xl mb-4 animate-pulse">🔄</div>
-            <h1 className="text-2xl font-bold mb-2">Retrying...</h1>
-            <p className="text-gray-600 mb-2">
+            <div className="text-6xl mb-md animate-pulse">🔄</div>
+            <H1 className="text-2xl mb-sm">Retrying...</H1>
+            <p className="text-muted-foreground mb-sm">
               Attempt {attemptCount + 1} of {MAX_RETRY_ATTEMPTS}
             </p>
-            <p className="text-sm text-gray-500 mb-6">
+            <p className="text-sm text-muted-foreground mb-lg">
               Having trouble verifying your session. Trying again...
             </p>
             <div className="flex justify-center">
-              <div className="animate-pulse flex space-x-2">
-                <div className="w-3 h-3 bg-yellow-600 rounded-full"></div>
-                <div className="w-3 h-3 bg-yellow-600 rounded-full"></div>
-                <div className="w-3 h-3 bg-yellow-600 rounded-full"></div>
+              <div className="animate-pulse flex space-x-sm">
+                <div className="w-3 h-3 bg-warning rounded-full"></div>
+                <div className="w-3 h-3 bg-warning rounded-full"></div>
+                <div className="w-3 h-3 bg-warning rounded-full"></div>
               </div>
             </div>
           </>
@@ -229,19 +230,19 @@ export function VerifySessionContent({
         {/* Failed State (Max Retries) */}
         {state === "failed" && (
           <>
-            <div className="text-6xl mb-4">❌</div>
-            <h1 className="text-2xl font-bold mb-2">Verification Failed</h1>
-            <p className="text-gray-600 mb-6">{errorMessage}</p>
-            <div className="space-y-3">
+            <div className="text-6xl mb-md">❌</div>
+            <H1 className="text-2xl mb-sm">Verification Failed</H1>
+            <p className="text-muted-foreground mb-lg">{errorMessage}</p>
+            <div className="space-y-sm">
               <button
                 onClick={handleLogout}
-                className="w-full bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition"
+                className="w-full bg-primary text-primary-foreground px-lg py-sm rounded-lg hover:bg-primary/90 transition"
               >
                 Sign In Again
               </button>
               <a
                 href="mailto:sebastiansole@handicappin.com"
-                className="block w-full border border-gray-300 px-6 py-3 rounded-lg hover:bg-gray-50 transition"
+                className="block w-full border border-border px-lg py-sm rounded-lg hover:bg-muted/50 transition"
               >
                 Contact Support
               </a>
@@ -252,25 +253,25 @@ export function VerifySessionContent({
         {/* Error State (Unexpected) */}
         {state === "error" && (
           <>
-            <div className="text-6xl mb-4">⚠️</div>
-            <h1 className="text-2xl font-bold mb-2">Something Went Wrong</h1>
-            <p className="text-gray-600 mb-2">
+            <div className="text-6xl mb-md">⚠️</div>
+            <H1 className="text-2xl mb-sm">Something Went Wrong</H1>
+            <p className="text-muted-foreground mb-sm">
               We encountered an error while verifying your session.
             </p>
-            <p className="text-sm text-red-600 mb-6">{errorMessage}</p>
-            <div className="space-y-3">
+            <p className="text-sm text-destructive mb-lg">{errorMessage}</p>
+            <div className="space-y-sm">
               <button
                 onClick={() => {
                   setAttemptCount(0);
                   setState("verifying");
                 }}
-                className="w-full bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition"
+                className="w-full bg-primary text-primary-foreground px-lg py-sm rounded-lg hover:bg-primary/90 transition"
               >
                 Try Again
               </button>
               <button
                 onClick={handleLogout}
-                className="w-full border border-gray-300 px-6 py-3 rounded-lg hover:bg-gray-50 transition"
+                className="w-full border border-border px-lg py-sm rounded-lg hover:bg-muted/50 transition"
               >
                 Sign In Again
               </button>
@@ -281,8 +282,8 @@ export function VerifySessionContent({
 
       {/* Debug Info (only in development) */}
       {process.env.NODE_ENV === "development" && (
-        <div className="mt-8 p-4 bg-gray-100 rounded text-xs text-left">
-          <p className="font-mono mb-1">
+        <div className="mt-xl p-md bg-muted rounded text-xs text-left">
+          <p className="font-mono mb-xs">
             <strong>Debug Info:</strong>
           </p>
           <p className="font-mono">State: {state}</p>
@@ -292,7 +293,7 @@ export function VerifySessionContent({
           <p className="font-mono">Return To: {returnTo}</p>
           <p className="font-mono">User ID: {userId}</p>
           {initialError && (
-            <p className="font-mono text-red-600">
+            <p className="font-mono text-destructive">
               Initial Error: {initialError}
             </p>
           )}

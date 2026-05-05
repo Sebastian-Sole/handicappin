@@ -1,4 +1,4 @@
-import { calculateHoleAdjustedScore } from "@/lib/handicap";
+import { calculateHoleAdjustedScore, type Score } from "@handicappin/handicap-core";
 import { InfoIcon } from "lucide-react";
 import {
   Table,
@@ -42,7 +42,27 @@ const HolesTable = () => {
   }, []);
 
   const allHoles = scorecard.teePlayed.holes ?? [];
-  const playedHoles = allHoles.slice(0, scorecard.scores.length);
+
+  // Build a holeId -> score lookup so back-9 rounds (holeNumber 10..18) work the
+  // same as front-9. Indexing scorecard.scores by holeNumber is broken: scores is
+  // length 9 with indices 0..8, so back-9 lookups always returned undefined.
+  const scoresByHoleId = new Map<number, Score>();
+  for (const s of scorecard.scores) {
+    if (s.holeId !== undefined) scoresByHoleId.set(s.holeId, s);
+  }
+
+  // Played holes are the ones with a matching score, regardless of which 9 was played.
+  const playedHoles = allHoles.filter(
+    (h) => h.id !== undefined && scoresByHoleId.has(h.id)
+  );
+
+  // Section is on the scorecard for new submissions; legacy rows fall back to "front".
+  const nineHoleSection: "front" | "back" = scorecard.nineHoleSection ?? "front";
+  const totalsLabel = isNineHoles
+    ? nineHoleSection === "back"
+      ? "Back 9"
+      : "Front 9"
+    : "Total";
 
   return (
     <div
@@ -55,16 +75,16 @@ const HolesTable = () => {
       <Table className="text-sm w-full">
         <TableHeader>
           <TableRow className="hover:bg-inherit">
-            <TableHead className="py-2 px-4">Hole</TableHead>
-            <TableHead className="py-2 px-4">Par</TableHead>
-            <TableHead className="py-2 px-4">Strokes</TableHead>
-            <TableHead className="py-2 px-4">HCP</TableHead>
-            <TableHead className="py-2 px-4 flex flex-row items-center">
+            <TableHead className="py-sm px-md">Hole</TableHead>
+            <TableHead className="py-sm px-md">Par</TableHead>
+            <TableHead className="py-sm px-md">Strokes</TableHead>
+            <TableHead className="py-sm px-md">HCP</TableHead>
+            <TableHead className="py-sm px-md flex flex-row items-center">
               Adj.{" "}
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger>
-                    <InfoIcon className="h-4 w-4 text-muted-foreground ml-1" />
+                    <InfoIcon className="h-4 w-4 text-muted-foreground ml-xs" />
                   </TooltipTrigger>
                   <TooltipContent>
                     <p>Max: par + net double bogey (incl. handicap strokes)</p>
@@ -76,35 +96,41 @@ const HolesTable = () => {
         </TableHeader>
         <TableBody>
           {allHoles.map((hole) => {
-            const score = scorecard.scores[hole.holeNumber - 1];
+            const score = hole.id !== undefined ? scoresByHoleId.get(hole.id) : undefined;
             const isPlayed = !!score;
 
             return (
               <TableRow key={hole.id} className={!isPlayed ? "text-muted-foreground" : ""}>
-                <TableCell className="py-2 px-4">{hole.holeNumber}</TableCell>
-                <TableCell className="py-2 px-4">{isPlayed ? hole.par : "-"}</TableCell>
-                <TableCell className="py-2 px-4">{isPlayed ? score.strokes : "-"}</TableCell>
-                <TableCell className="py-2 px-4">{isPlayed ? score.hcpStrokes : "-"}</TableCell>
-                <TableCell className="py-2 px-4">{isPlayed ? calculateHoleAdjustedScore(hole, score, hasEstablishedHandicap) : "-"}</TableCell>
+                <TableCell className="py-sm px-md">{hole.holeNumber}</TableCell>
+                <TableCell className="py-sm px-md">{isPlayed ? hole.par : "-"}</TableCell>
+                <TableCell className="py-sm px-md">{isPlayed ? score.strokes : "-"}</TableCell>
+                <TableCell className="py-sm px-md">{isPlayed ? score.hcpStrokes : "-"}</TableCell>
+                <TableCell className="py-sm px-md">{isPlayed ? calculateHoleAdjustedScore(hole, score, hasEstablishedHandicap) : "-"}</TableCell>
               </TableRow>
             );
           })}
           <TableRow key={"total"} className="bg-secondary dark:bg-secondary font-medium">
-            <TableCell className="py-2 px-4 first:rounded-l-lg rounded-tl-none! last:rounded-r-lg">
-              {isNineHoles ? "Front 9" : "Total"}
+            <TableCell className="py-sm px-md first:rounded-l-lg rounded-tl-none! last:rounded-r-lg">
+              {totalsLabel}
             </TableCell>
-            <TableCell className="py-2 px-4">
+            <TableCell className="py-sm px-md">
               {playedHoles.reduce((acc, hole) => acc + hole.par, 0)}
             </TableCell>
-            <TableCell className="py-2 px-4">
-              {playedHoles.reduce((acc, hole) => acc + (scorecard.scores[hole.holeNumber - 1]?.strokes ?? 0), 0)}
-            </TableCell>
-            <TableCell className="py-2 px-4">
-              {playedHoles.reduce((acc, hole) => acc + (scorecard.scores[hole.holeNumber - 1]?.hcpStrokes ?? 0), 0)}
-            </TableCell>
-            <TableCell className="py-2 px-4 first:rounded-l-lg last:rounded-r-lg rounded-tr-none!">
+            <TableCell className="py-sm px-md">
               {playedHoles.reduce((acc, hole) => {
-                const score = scorecard.scores[hole.holeNumber - 1];
+                const score = hole.id !== undefined ? scoresByHoleId.get(hole.id) : undefined;
+                return acc + (score?.strokes ?? 0);
+              }, 0)}
+            </TableCell>
+            <TableCell className="py-sm px-md">
+              {playedHoles.reduce((acc, hole) => {
+                const score = hole.id !== undefined ? scoresByHoleId.get(hole.id) : undefined;
+                return acc + (score?.hcpStrokes ?? 0);
+              }, 0)}
+            </TableCell>
+            <TableCell className="py-sm px-md first:rounded-l-lg last:rounded-r-lg rounded-tr-none!">
+              {playedHoles.reduce((acc, hole) => {
+                const score = hole.id !== undefined ? scoresByHoleId.get(hole.id) : undefined;
                 return acc + (score ? calculateHoleAdjustedScore(hole, score, hasEstablishedHandicap) : 0);
               }, 0)}
             </TableCell>

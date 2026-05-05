@@ -1,6 +1,7 @@
 "use client";
 
 import { Card, CardContent } from "@/components/ui/card";
+import { H3 } from "@/components/ui/typography";
 import { formatDifferential, isValidNumber } from "@/lib/statistics/format-utils";
 import type { DayOfWeekStats, TimeOfDayStats } from "@/types/statistics";
 
@@ -71,14 +72,14 @@ export function BestTimeInsight({
   const insightMessage = dayInsight + timeInsight;
 
   return (
-    <Card className="bg-gradient-to-r from-green-500/10 to-emerald-500/10 border-green-500/20">
-      <CardContent className="p-6">
-        <div className="flex items-center gap-4">
+    <Card className="tint-success">
+      <CardContent className="p-lg">
+        <div className="flex items-center gap-md">
           <div className="text-4xl">🎯</div>
           <div>
-            <h3 className="font-semibold text-lg">When You Play Best</h3>
+            <H3 className="font-semibold text-lg">When You Play Best</H3>
             <p className="text-muted-foreground">{insightMessage}</p>
-            <p className="text-xs text-muted-foreground mt-1">
+            <p className="text-xs text-muted-foreground mt-xs">
               {bestDay.day}: {formatDifferential(bestDay.avgDifferential)} avg
               differential ({bestDay.roundCount} rounds)
             </p>

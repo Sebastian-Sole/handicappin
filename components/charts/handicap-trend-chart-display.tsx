@@ -1,4 +1,3 @@
-import { ArrowDown, ArrowUp } from "lucide-react";
 import React from "react";
 import {
   Card,
@@ -10,6 +9,7 @@ import {
 import HandicapTrendChart from "./handicap-trend-chart";
 import { Tables } from "@/types/supabase";
 import { Button } from "../ui/button";
+import { StatDelta } from "@/components/ui/stat-delta";
 import Link from "next/link";
 
 interface HandicapTrendChartDisplayProps {
@@ -32,7 +32,7 @@ const HandicapTrendChartDisplay = ({
 }: HandicapTrendChartDisplayProps) => {
   return (
     <Card>
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-sm">
         <React.Fragment>
           <CardTitle className="sm:text-2xl text-xl min-[400px]:hidden">
             HCP Trend
@@ -41,26 +41,16 @@ const HandicapTrendChartDisplay = ({
             Handicap Trend
           </CardTitle>
         </React.Fragment>
-        <div className="flex items-center space-x-2">
-          <span className="sm:text-2xl text-xl font-bold">{handicapIndex}</span>
+        <div className="flex items-center space-x-sm">
+          <span className="sm:text-2xl text-figure-sm">{handicapIndex}</span>
           {/* TODO: Conditionally render only if more than 5 rounds */}
           <div className="min-[340px]:block hidden">
-            {percentageChange < 0 && (
-              <span className="flex items-center text-sm text-green-500">
-                <ArrowDown className="h-4 w-4 mr-1" />
-                {percentageChange}%
-              </span>
-            )}
-            {percentageChange > 0 && (
-              <span className="flex items-center text-sm text-red-500">
-                <ArrowUp className="h-4 w-4 mr-1" />+{percentageChange}%
-              </span>
-            )}
-            {percentageChange === 0 && (
-              <span className="flex items-center text-sm text-gray-500">
-                +{percentageChange}%
-              </span>
-            )}
+            <StatDelta
+              value={percentageChange}
+              invert
+              format={(v) => `${v > 0 ? "+" : ""}${v}%`}
+              className="text-sm"
+            />
           </div>
         </div>
       </CardHeader>
@@ -73,7 +63,7 @@ const HandicapTrendChartDisplay = ({
           </div>
         )}
         {previousHandicaps.length >= 5 && (
-          <div className="w-full h-full pt-8 pr-8">
+          <div className="w-full h-full pt-xl pr-xl">
             <HandicapTrendChart
               previousHandicaps={previousHandicaps}
               isPositive={percentageChange > 0}
@@ -81,7 +71,7 @@ const HandicapTrendChartDisplay = ({
           </div>
         )}
       </CardContent>
-      <CardFooter className="pt-4 flex justify-center">
+      <CardFooter className="pt-md flex justify-center">
         <Link href={`/dashboard/${profile.id}`}>
           <Button variant={"link"}>View stats</Button>
         </Link>

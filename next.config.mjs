@@ -31,6 +31,7 @@ const contentSecurityPolicy = cspDirectives.join('; ');
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  transpilePackages: ['@handicappin/handicap-core'],
   async headers() {
     return [
       {

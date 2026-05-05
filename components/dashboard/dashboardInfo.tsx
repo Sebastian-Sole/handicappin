@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Button } from "../ui/button";
-import { H4, P } from "../ui/typography";
+import { H2, H4, P } from "../ui/typography";
 
 interface DashboardIndexProps {
   handicapIndex: number;
@@ -9,19 +9,19 @@ interface DashboardIndexProps {
 
 const DashboardIndex = ({ handicapIndex, header }: DashboardIndexProps) => {
   return (
-    <div className="bg-card rounded-lg p-6 rounded-r-none	">
-      <h2 className="text-2xl font-bold mb-4">Handicap</h2>
-      <div className="text-6xl font-bold text-primary">{handicapIndex}</div>
+    <div className="surface p-lg rounded-r-none	">
+      <H2 className="mb-md">Handicap</H2>
+      <div className="text-figure-3xl text-primary">{handicapIndex}</div>
       <p className="text-muted-foreground">Current Handicap</p>
       <div className="mt-0">
         <Link href={"/calculators"}>
-          <Button variant="link" className="text-primary underline px-0 mb-10">
+          <Button variant="link" className="text-primary underline px-0 mb-2xl">
             How is my handicap calculated?{" "}
           </Button>
         </Link>
 
-        <H4 className="mb-2!">{header}</H4>
-        <P className="mt-4!">
+        <H4 className="mb-sm!">{header}</H4>
+        <P className="mt-md!">
           Handicappin&apos; believes in transparency and making golf accessible.
           It can be difficult to find accurate and consistent information on the
           calculations of scores, handicaps and the rules of golf online. We aim
@@ -34,7 +34,7 @@ const DashboardIndex = ({ handicapIndex, header }: DashboardIndexProps) => {
           by viewing a specific round&apos;s calculation.
         </P>
         <Link href={"/calculators"}>
-          <Button variant="link" className="text-primary underline px-0 mb-6">
+          <Button variant="link" className="text-primary underline px-0 mb-lg">
             Click here to learn more
           </Button>
         </Link>

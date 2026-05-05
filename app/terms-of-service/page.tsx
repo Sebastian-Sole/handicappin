@@ -1,5 +1,5 @@
 import { Badge } from "@/components/ui/badge";
-import { P } from "@/components/ui/typography";
+import { H1, P } from "@/components/ui/typography";
 import { TermsContent } from "@/components/legal/terms-content";
 import type { Metadata } from "next";
 
@@ -22,13 +22,13 @@ export default function TermsOfServicePage() {
   return (
     <div className="min-h-screen bg-background">
       {/* Hero Section */}
-      <section className="w-full py-12 md:py-24 lg:py-32 bg-gradient-to-br from-primary/5 to-primary/20 dark:from-primary/5 dark:to-primary/35">
-        <div className="sm:container px-4 md:px-6 mx-auto">
-          <div className="mx-auto max-w-3xl space-y-4 text-center">
+      <section className="w-full py-2xl md:py-4xl lg:py-5xl hero-gradient">
+        <div className="sm:container px-md md:px-lg mx-auto">
+          <div className="mx-auto max-w-3xl space-y-md text-center">
             <Badge>Legal</Badge>
-            <h1 className="lg:leading-tighter text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl">
+            <H1 className="lg:leading-tighter sm:text-4xl md:text-5xl">
               Terms of Service
-            </h1>
+            </H1>
             <P className="text-foreground/80 md:text-xl/relaxed">
               Please read these terms carefully before using Handicappin&apos;.
             </P>
@@ -37,8 +37,8 @@ export default function TermsOfServicePage() {
       </section>
 
       {/* Terms Content */}
-      <section className="w-full py-12 md:py-24">
-        <div className="sm:container px-4 md:px-6 mx-auto">
+      <section className="w-full py-2xl md:py-4xl">
+        <div className="sm:container px-md md:px-lg mx-auto">
           <div className="mx-auto max-w-3xl">
             <TermsContent />
           </div>

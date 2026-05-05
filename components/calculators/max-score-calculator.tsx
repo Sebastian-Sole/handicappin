@@ -48,17 +48,17 @@ export function MaxScoreCalculator() {
   }, [values.courseHandicap, holePar, holeHcp]);
 
   const result = calculation && (
-    <div className="space-y-4">
+    <div className="space-y-md">
       {/* Main result */}
       <div className="text-center">
-        <div className="text-5xl font-bold text-primary">
+        <div className="text-figure-2xl text-primary">
           {calculation.maxScore}
         </div>
-        <Muted className="mt-1">Maximum Score</Muted>
+        <Muted className="mt-xs">Maximum Score</Muted>
       </div>
 
       {/* Breakdown */}
-      <div className="bg-muted/50 rounded-lg p-3 text-sm space-y-2">
+      <div className="surface-muted p-sm text-sm space-y-sm">
         <div className="flex justify-between">
           <span className="text-muted-foreground">Par</span>
           <span>{holePar}</span>
@@ -69,14 +69,14 @@ export function MaxScoreCalculator() {
         </div>
         <div className="flex justify-between">
           <span className="text-muted-foreground">Handicap Strokes</span>
-          <span className="text-green-600">+{calculation.strokesReceived}</span>
+          <span className="text-success">+{calculation.strokesReceived}</span>
         </div>
-        <div className="border-t pt-2 flex justify-between font-medium">
+        <div className="border-t pt-sm flex justify-between font-medium">
           <span>Net Double Bogey</span>
           <span>
             {calculation.wasCapped ? (
               <>
-                <span className="line-through text-muted-foreground mr-2">
+                <span className="line-through text-muted-foreground mr-sm">
                   {calculation.netDoubleBogey}
                 </span>
                 {calculation.maxScore}
@@ -96,13 +96,13 @@ export function MaxScoreCalculator() {
   );
 
   const explanation = (
-    <div className="space-y-3">
+    <div className="space-y-sm">
       <Muted>
         The maximum score you can post on any hole for handicap purposes is
         called <strong>Net Double Bogey</strong>. This prevents one bad hole
         from disproportionately affecting your handicap.
       </Muted>
-      <div className="bg-muted/50 rounded-lg p-3 text-sm space-y-2">
+      <div className="surface-muted p-sm text-sm space-y-sm">
         <P className="font-medium">Net Double Bogey Formula:</P>
         <P className="font-mono text-muted-foreground">
           Max = Par + 2 + Handicap Strokes
@@ -111,9 +111,9 @@ export function MaxScoreCalculator() {
           (Capped at Par + 5, even with many handicap strokes)
         </P>
       </div>
-      <div className="text-sm space-y-1">
+      <div className="text-sm space-y-xs">
         <P className="font-medium">Examples:</P>
-        <ul className="list-disc pl-4 space-y-1 text-muted-foreground">
+        <ul className="list-disc pl-md space-y-xs text-muted-foreground">
           <li>Par 4, 0 strokes → Max = 6</li>
           <li>Par 5, 1 stroke → Max = 8</li>
           <li>Par 4, 4 strokes → Max = 9 (capped from 10)</li>
@@ -124,8 +124,8 @@ export function MaxScoreCalculator() {
 
   return (
     <CalculatorCard meta={meta} result={result} explanation={explanation}>
-      <div className="space-y-4">
-        <div className="space-y-2">
+      <div className="space-y-md">
+        <div className="space-y-sm">
           <Label htmlFor="courseHandicap-max">Course Handicap</Label>
           <Input
             id="courseHandicap-max"
@@ -141,8 +141,8 @@ export function MaxScoreCalculator() {
           />
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-2">
+        <div className="grid grid-cols-2 gap-md">
+          <div className="space-y-sm">
             <Label htmlFor="holePar">Hole Par</Label>
             <Select
               value={holePar.toString()}
@@ -159,7 +159,7 @@ export function MaxScoreCalculator() {
             </Select>
           </div>
 
-          <div className="space-y-2">
+          <div className="space-y-sm">
             <Label htmlFor="holeHcp">Hole Handicap</Label>
             <Select
               value={holeHcp.toString()}

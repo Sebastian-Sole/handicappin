@@ -367,7 +367,7 @@ const FILE_STATUS_CONFIG: Record<
   pending: { icon: Circle, label: "Waiting", className: "text-muted-foreground" },
   uploading: { icon: Loader2, label: "Uploading", className: "text-primary animate-spin" },
   analyzing: { icon: Sparkles, label: "Analyzing", className: "text-primary animate-pulse" },
-  done: { icon: Check, label: "Complete", className: "text-green-600" },
+  done: { icon: Check, label: "Complete", className: "text-success" },
   error: { icon: AlertCircle, label: "Failed", className: "text-destructive" },
 };
 
@@ -598,14 +598,14 @@ export function ScorecardImageUpload({
     : "Add with AI";
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-sm">
       {/* Primary "Add with AI" button */}
       <Button
         type="button"
         variant="default"
         onClick={handleButtonClick}
         disabled={isExtracting}
-        className="w-full gap-2"
+        className="w-full gap-sm"
       >
         {isExtracting ? (
           <Loader2 className="h-4 w-4 animate-spin" />
@@ -617,7 +617,7 @@ export function ScorecardImageUpload({
 
       {/* Extraction summary (shown outside dialog after it closes) */}
       {summary && !isExtracting && !dialogOpen && (
-        <div className="rounded-lg border bg-muted/50 p-3 space-y-3">
+        <div className="surface-muted border p-sm space-y-sm">
           <div className="flex items-center justify-between">
             <p className="text-sm font-medium">
               Extraction results
@@ -640,11 +640,11 @@ export function ScorecardImageUpload({
             </Button>
           </div>
 
-          <div className="grid grid-cols-2 gap-x-4 gap-y-1">
+          <div className="grid grid-cols-2 gap-x-md gap-y-xs">
             {SUMMARY_ITEMS.map(({ key, label }) => (
-              <div key={key} className="flex items-center gap-1.5 text-sm">
+              <div key={key} className="flex items-center gap-xs.5 text-sm">
                 {summary[key] ? (
-                  <Check className="h-3.5 w-3.5 text-green-600 shrink-0" />
+                  <Check className="h-3.5 w-3.5 text-success shrink-0" />
                 ) : (
                   <Circle className="h-3.5 w-3.5 text-muted-foreground/50 shrink-0" />
                 )}
@@ -659,7 +659,7 @@ export function ScorecardImageUpload({
             ))}
           </div>
 
-          <div className="flex items-start gap-1.5 pt-1">
+          <div className="flex items-start gap-xs.5 pt-xs">
             <AlertCircle className="h-3.5 w-3.5 text-muted-foreground shrink-0 mt-0.5" />
             <p className="text-xs text-muted-foreground">
               AI extraction may be inaccurate. Please review all values before saving.
@@ -667,7 +667,7 @@ export function ScorecardImageUpload({
           </div>
 
           {hasRatingGap && (
-            <div className="pt-1">
+            <div className="pt-xs">
               <Button
                 type="button"
                 variant="outline"
@@ -676,12 +676,12 @@ export function ScorecardImageUpload({
                   setTrackedFiles([]);
                   setDialogOpen(true);
                 }}
-                className="w-full gap-2"
+                className="w-full gap-sm"
               >
                 <ImagePlus className="h-4 w-4" />
                 Upload rating card for missing ratings
               </Button>
-              <p className="text-xs text-muted-foreground mt-1.5">
+              <p className="text-xs text-muted-foreground mt-xs.5">
                 For accurate ratings, use a screenshot from the{" "}
                 <a
                   href="https://ncrdb.usga.org/NCRListing"
@@ -702,7 +702,7 @@ export function ScorecardImageUpload({
       <Dialog open={dialogOpen} onOpenChange={handleDialogClose}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
+            <DialogTitle className="flex items-center gap-sm">
               <Sparkles className="h-5 w-5 text-primary" />
               {summary !== null && !someSucceeded
                 ? "Upload Rating Card"
@@ -713,7 +713,7 @@ export function ScorecardImageUpload({
                 ? "Upload a photo of the slope/rating card to fill in the missing course and slope ratings."
                 : "Upload photos of your scorecard and rating card. You can add multiple files at once."}
             </DialogDescription>
-            <p className="text-xs text-muted-foreground pt-1">
+            <p className="text-xs text-muted-foreground pt-xs">
               For accurate course and slope ratings, we recommend using a screenshot from the{" "}
               <a
                 href="https://ncrdb.usga.org/NCRListing"
@@ -727,13 +727,13 @@ export function ScorecardImageUpload({
             </p>
           </DialogHeader>
 
-          <div className="space-y-4">
+          <div className="space-y-md">
             {/* Dropzone — hidden during extraction */}
             {!isExtracting && !allDone && (
               <div
                 {...getRootProps()}
                 className={cn(
-                  "flex flex-col items-center justify-center gap-3 rounded-lg border-2 border-dashed p-8 transition-colors cursor-pointer",
+                  "flex flex-col items-center justify-center gap-sm rounded-lg border-2 border-dashed p-xl transition-colors cursor-pointer",
                   isDragActive
                     ? "border-primary bg-primary/5"
                     : "border-muted-foreground/25 hover:border-primary/50 hover:bg-muted/50"
@@ -756,7 +756,7 @@ export function ScorecardImageUpload({
                       <p className="text-sm font-medium">
                         Drag & drop files here
                       </p>
-                      <p className="text-xs text-muted-foreground mt-1">
+                      <p className="text-xs text-muted-foreground mt-xs">
                         or click to browse
                       </p>
                     </div>
@@ -770,7 +770,7 @@ export function ScorecardImageUpload({
 
             {/* File list with per-file status */}
             {hasFiles && (
-              <div className="space-y-2">
+              <div className="space-y-sm">
                 {isExtracting && (
                   <div className="flex items-center justify-between">
                     <p className="text-sm font-medium">
@@ -780,7 +780,7 @@ export function ScorecardImageUpload({
                   </div>
                 )}
                 {allDone && someSucceeded && (
-                  <p className="text-sm font-medium text-green-600 flex items-center gap-1.5">
+                  <p className="text-sm font-medium text-success flex items-center gap-xs.5">
                     <Check className="h-4 w-4" />
                     Extraction complete
                   </p>
@@ -790,14 +790,14 @@ export function ScorecardImageUpload({
                   {trackedFiles.map((trackedFile, index) => (
                     <div
                       key={`${trackedFile.file.name}-${index}`}
-                      className="flex items-center gap-3 p-2.5 bg-background"
+                      className="flex items-center gap-sm p-sm.5 bg-background"
                     >
                       <FileIcon mimeType={trackedFile.file.type} />
                       <div className="w-0 flex-1">
                         <p className="text-sm truncate">
                           {trackedFile.file.name}
                         </p>
-                        <p className="text-xs text-muted-foreground flex items-center gap-1">
+                        <p className="text-xs text-muted-foreground flex items-center gap-xs">
                           {trackedFile.status === "error" && trackedFile.error ? (
                             <span className="text-destructive">
                               {trackedFile.error}
@@ -813,7 +813,7 @@ export function ScorecardImageUpload({
                                   <span
                                     className={
                                       trackedFile.status === "done"
-                                        ? "text-green-600"
+                                        ? "text-success"
                                         : "text-muted-foreground"
                                     }
                                   >
@@ -852,7 +852,7 @@ export function ScorecardImageUpload({
 
             {/* Extraction summary inside dialog */}
             {summary && allDone && someSucceeded && (
-              <div className="rounded-lg border bg-muted/50 p-3 space-y-2">
+              <div className="surface-muted border p-sm space-y-sm">
                 <p className="text-sm font-medium">
                   Extracted
                   {summary.totalTeesFound > 1 && (
@@ -862,14 +862,14 @@ export function ScorecardImageUpload({
                     </span>
                   )}
                 </p>
-                <div className="grid grid-cols-2 gap-x-4 gap-y-1">
+                <div className="grid grid-cols-2 gap-x-md gap-y-xs">
                   {SUMMARY_ITEMS.map(({ key, label }) => (
                     <div
                       key={key}
-                      className="flex items-center gap-1.5 text-sm"
+                      className="flex items-center gap-xs.5 text-sm"
                     >
                       {summary[key] ? (
-                        <Check className="h-3.5 w-3.5 text-green-600 shrink-0" />
+                        <Check className="h-3.5 w-3.5 text-success shrink-0" />
                       ) : (
                         <Circle className="h-3.5 w-3.5 text-muted-foreground/50 shrink-0" />
                       )}
@@ -886,7 +886,7 @@ export function ScorecardImageUpload({
                   ))}
                 </div>
                 {hasRatingGap && (
-                  <p className="text-xs text-muted-foreground pt-1">
+                  <p className="text-xs text-muted-foreground pt-xs">
                     Missing ratings? Close this dialog and click &ldquo;Upload
                     rating card&rdquo; to add them.
                   </p>
@@ -895,12 +895,12 @@ export function ScorecardImageUpload({
             )}
 
             {/* Actions */}
-            <div className="flex gap-2">
+            <div className="flex gap-sm">
               {hasFiles && !isExtracting && !allDone && (
                 <Button
                   type="button"
                   onClick={handleExtract}
-                  className="flex-1 gap-2"
+                  className="flex-1 gap-sm"
                 >
                   <Sparkles className="h-4 w-4" />
                   Extract from {totalCount} file{totalCount > 1 ? "s" : ""}

@@ -1,7 +1,7 @@
 // app/contact/page.tsx
 import type { Metadata } from "next";
 import { Badge } from "@/components/ui/badge";
-import { P } from "@/components/ui/typography";
+import { H1, H2, H3, P } from "@/components/ui/typography";
 import { ContactForm } from "@/components/contact/contact-form";
 import { ContactPageJsonLd, FAQJsonLd } from "@/components/seo/json-ld";
 import { Mail, Clock, MessageSquare, HelpCircle } from "lucide-react";
@@ -67,12 +67,12 @@ export default function ContactPage() {
       <FAQJsonLd faqs={faqs} />
 
       {/* Hero Section */}
-      <section className="w-full py-12 md:py-24 lg:py-32 bg-gradient-to-br from-primary/5 to-primary/20 dark:from-primary/5 dark:to-primary/35">
-        <div className="mx-auto max-w-3xl px-4 md:px-6 text-center">
-          <Badge className="mb-4">Contact Us</Badge>
-          <h1 className="lg:leading-tighter text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl xl:text-[3.4rem] 2xl:text-[3.75rem] mb-4">
+      <section className="w-full py-2xl md:py-4xl lg:py-5xl hero-gradient">
+        <div className="mx-auto max-w-3xl px-md md:px-lg text-center">
+          <Badge className="mb-md">Contact Us</Badge>
+          <H1 className="lg:leading-tighter sm:text-4xl md:text-5xl xl:text-[3.4rem] 2xl:text-[3.75rem] mb-md">
             We&apos;re Here to Help
-          </h1>
+          </H1>
           <P className="text-foreground/80 md:text-xl/relaxed max-w-2xl mx-auto">
             Have questions about your handicap, need help with the app, or
             want to request a feature? We&apos;d love to hear from you.
@@ -81,15 +81,15 @@ export default function ContactPage() {
       </section>
 
       {/* Contact Form Section */}
-      <section id="contact-form" className="w-full py-12 md:py-24">
-        <div className="mx-auto max-w-5xl px-4 md:px-6">
-          <div className="grid gap-12 lg:grid-cols-2">
+      <section id="contact-form" className="w-full py-2xl md:py-4xl">
+        <div className="mx-auto max-w-5xl px-md md:px-lg">
+          <div className="grid gap-2xl lg:grid-cols-2">
             {/* Form */}
             <div className="min-w-0">
-              <div className="mb-6">
-                <h2 className="text-2xl font-bold tracking-tight mb-2">
+              <div className="mb-lg">
+                <H2 className="mb-sm">
                   Send us a Message
-                </h2>
+                </H2>
                 <P className="text-muted-foreground">
                   Fill out the form below and we&apos;ll get back to you as soon
                   as possible.
@@ -99,22 +99,22 @@ export default function ContactPage() {
             </div>
 
             {/* Contact Info */}
-            <div className="space-y-6 min-w-0">
+            <div className="space-y-lg min-w-0">
               <div>
-                <h2 className="text-2xl font-bold tracking-tight mb-6">
+                <H2 className="mb-lg">
                   Other Ways to Reach Us
-                </h2>
+                </H2>
               </div>
 
               {/* Email Card */}
-              <div className="rounded-lg border bg-card p-4 sm:p-6">
-                <div className="flex items-start gap-3 sm:gap-4">
-                  <div className="flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-lg bg-primary/10 flex-shrink-0">
-                    <Mail className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
+              <div className="surface p-md sm:p-lg">
+                <div className="flex items-start gap-sm sm:gap-md">
+                  <div className="icon-chip-primary">
+                    <Mail className="h-5 w-5 sm:h-6 sm:w-6" />
                   </div>
                   <div className="min-w-0">
-                    <h3 className="text-lg font-semibold mb-1">Email Us</h3>
-                    <P className="text-muted-foreground mb-2">
+                    <H3 className="mb-xs">Email Us</H3>
+                    <P className="text-muted-foreground mb-sm">
                       For direct inquiries or detailed questions
                     </P>
                     <a
@@ -128,13 +128,13 @@ export default function ContactPage() {
               </div>
 
               {/* Response Time Card */}
-              <div className="rounded-lg border bg-card p-4 sm:p-6">
-                <div className="flex items-start gap-3 sm:gap-4">
-                  <div className="flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-lg bg-primary/10 flex-shrink-0">
-                    <Clock className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
+              <div className="surface p-md sm:p-lg">
+                <div className="flex items-start gap-sm sm:gap-md">
+                  <div className="icon-chip-primary">
+                    <Clock className="h-5 w-5 sm:h-6 sm:w-6" />
                   </div>
                   <div className="min-w-0">
-                    <h3 className="text-lg font-semibold mb-1">Response Time</h3>
+                    <H3 className="mb-xs">Response Time</H3>
                     <P className="text-muted-foreground">
                       We typically respond within{" "}
                       <span className="font-semibold text-foreground">
@@ -147,15 +147,15 @@ export default function ContactPage() {
               </div>
 
               {/* Feature Requests Card */}
-              <div className="rounded-lg border bg-card p-4 sm:p-6">
-                <div className="flex items-start gap-3 sm:gap-4">
-                  <div className="flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-lg bg-primary/10 flex-shrink-0">
-                    <MessageSquare className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
+              <div className="surface p-md sm:p-lg">
+                <div className="flex items-start gap-sm sm:gap-md">
+                  <div className="icon-chip-primary">
+                    <MessageSquare className="h-5 w-5 sm:h-6 sm:w-6" />
                   </div>
                   <div className="min-w-0">
-                    <h3 className="text-lg font-semibold mb-1">
+                    <H3 className="mb-xs">
                       Feature Requests
-                    </h3>
+                    </H3>
                     <P className="text-muted-foreground">
                       Have an idea to make Handicappin&apos; better? We love
                       hearing from our users and prioritize features based on
@@ -170,38 +170,38 @@ export default function ContactPage() {
       </section>
 
       {/* FAQ Section */}
-      <section id="faq" className="w-full py-12 md:py-24 bg-muted/50">
-        <div className="mx-auto max-w-4xl px-4 md:px-6">
-          <div className="text-center mb-12">
-            <Badge className="mb-4">FAQ</Badge>
-            <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl mb-4">
+      <section id="faq" className="w-full py-2xl md:py-4xl bg-muted/50">
+        <div className="mx-auto max-w-4xl px-md md:px-lg">
+          <div className="text-center mb-2xl">
+            <Badge className="mb-md">FAQ</Badge>
+            <H2 className="sm:text-4xl mb-md">
               Frequently Asked Questions
-            </h2>
+            </H2>
             <P className="text-muted-foreground md:text-lg">
               Find quick answers to common questions about Handicappin&apos;
             </P>
           </div>
 
-          <div className="grid gap-6 md:grid-cols-2">
+          <div className="grid gap-lg md:grid-cols-2">
             {faqs.map((faq, faqIndex) => (
               <div
                 key={faqIndex}
-                className="rounded-lg border bg-card p-4 sm:p-6 h-fit"
+                className="surface p-md sm:p-lg h-fit"
               >
-                <div className="flex items-start gap-3 mb-3">
+                <div className="flex items-start gap-sm mb-sm">
                   <HelpCircle className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
-                  <h3 className="font-semibold text-foreground">
+                  <H3 className="font-semibold text-foreground">
                     {faq.question}
-                  </h3>
+                  </H3>
                 </div>
-                <P className="text-muted-foreground text-sm pl-8">
+                <P className="text-muted-foreground text-sm pl-xl">
                   {faq.answer}
                 </P>
               </div>
             ))}
           </div>
 
-          <div className="mt-12 text-center">
+          <div className="mt-2xl text-center">
             <P className="text-muted-foreground">
               Still have questions?{" "}
               <a

@@ -189,7 +189,7 @@ export function AddCourseDialog({
                 }}
                 type="button"
               >
-                <Plus className="h-4 w-4 mr-2" />
+                <Plus className="h-4 w-4 mr-sm" />
                 Add New Course
               </Button>
             </div>
@@ -211,8 +211,8 @@ export function AddCourseDialog({
               : false;
 
             return (
-              <div className="flex items-center justify-between gap-2 pt-2 border-t">
-                <div className="flex items-center gap-2">
+              <div className="flex items-center justify-between gap-sm pt-sm border-t">
+                <div className="flex items-center gap-sm">
                   {fields.length > 1 && (
                     <Button
                       type="button"
@@ -220,7 +220,7 @@ export function AddCourseDialog({
                       size="sm"
                       onClick={() => handleRemoveTee(teeIndex)}
                     >
-                      <Trash2 className="h-4 w-4 mr-1" />
+                      <Trash2 className="h-4 w-4 mr-xs" />
                       Remove Tee
                     </Button>
                   )}
@@ -232,7 +232,7 @@ export function AddCourseDialog({
                   onClick={handleAddTee}
                   disabled={!isTeeValid}
                 >
-                  <Plus className="h-4 w-4 mr-1" />
+                  <Plus className="h-4 w-4 mr-xs" />
                   Add Another Tee
                 </Button>
               </div>
@@ -244,7 +244,7 @@ export function AddCourseDialog({
               control={control}
               name="name"
               render={({ field }) => (
-                <div className="space-y-2 py-4">
+                <div className="space-y-sm py-md">
                   <FormLabel htmlFor="courseName">Course Name</FormLabel>
                   <FormItem>
                     <FormControl>
@@ -259,7 +259,7 @@ export function AddCourseDialog({
               control={control}
               name="country"
               render={({ field }) => (
-                <div className="space-y-2 py-4">
+                <div className="space-y-sm py-md">
                   <FormLabel htmlFor="country">Country</FormLabel>
                   <FormItem>
                     <FormControl>
@@ -278,7 +278,7 @@ export function AddCourseDialog({
               control={control}
               name="city"
               render={({ field }) => (
-                <div className="space-y-2 py-4">
+                <div className="space-y-sm py-md">
                   <FormLabel htmlFor="city">City</FormLabel>
                   <FormItem>
                     <FormControl>
@@ -293,7 +293,7 @@ export function AddCourseDialog({
               control={control}
               name="website"
               render={({ field }) => (
-                <div className="space-y-2 py-4">
+                <div className="space-y-sm py-md">
                   <FormLabel htmlFor="website">Website (optional)</FormLabel>
                   <FormItem>
                     <FormControl>
@@ -316,7 +316,7 @@ export function AddCourseDialog({
                 <FormFeedback
                   type="error"
                   message={errorMessage}
-                  className="mb-4"
+                  className="mb-md"
                 />
               )}
               <FormField

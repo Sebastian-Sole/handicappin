@@ -25,7 +25,7 @@ import { getUserIdFromCookies } from "@/utils/supabase/auth-cookies";
 
 function LogoBrand() {
   return (
-    <Link href="/" className="flex items-center gap-2 shrink-0" prefetch={true}>
+    <Link href="/" className="flex items-center gap-sm shrink-0" prefetch={true}>
       <Image
         src="/images/logo.png"
         alt="Handicappin Golf Handicap Tracker Logo"
@@ -42,9 +42,9 @@ function LogoBrand() {
 function UnauthenticatedNavbar() {
   return (
     <header className="fixed top-0 z-50 w-full bg-background shadow-xs">
-      <div className="container relative flex h-16 items-center justify-between px-4 sm:px-6 m-0 max-w-full">
+      <div className="container relative flex h-16 items-center justify-between px-md sm:px-lg m-0 max-w-full">
         <LogoBrand />
-        <nav className="absolute left-1/2 top-1/2 hidden -translate-x-1/2 -translate-y-1/2 items-center gap-6 text-sm font-medium md:flex">
+        <nav className="absolute left-1/2 top-1/2 hidden -translate-x-1/2 -translate-y-1/2 items-center gap-lg text-sm font-medium md:flex">
           <Link
             href="/"
             className="hover:underline hover:underline-offset-4 whitespace-nowrap"
@@ -67,7 +67,7 @@ function UnauthenticatedNavbar() {
             Calculators
           </Link>
         </nav>
-        <div className="flex items-center gap-4 justify-end flex-shrink-0">
+        <div className="flex items-center gap-md justify-end flex-shrink-0">
           <Link href={"/signup"} className="lg:block hidden">
             <Button>Sign Up</Button>
           </Link>
@@ -86,7 +86,7 @@ function UnauthenticatedNavbar() {
           >
             <div className="flex flex-col">
               <Link href="/signup">
-                <Button className="w-full mb-4">Sign Up</Button>
+                <Button className="w-full mb-md">Sign Up</Button>
               </Link>
               <Link href="/login">
                 <Button className="w-full">Login</Button>
@@ -108,9 +108,9 @@ export async function Navbar() {
 
   return (
     <header className="fixed top-0 z-50 w-full bg-background shadow-xs">
-      <div className="container flex h-16 items-center justify-between px-4 sm:px-6 m-0 max-w-full">
+      <div className="container flex h-16 items-center justify-between px-md sm:px-lg m-0 max-w-full">
         <LogoBrand />
-        <nav className="hidden flex-1 items-center justify-center gap-6 text-sm font-medium lg:flex">
+        <nav className="hidden flex-1 items-center justify-center gap-lg text-sm font-medium lg:flex">
           <Link
             href="/"
             className="hover:underline hover:underline-offset-4 whitespace-nowrap"
@@ -147,7 +147,7 @@ export async function Navbar() {
             Statistics
           </Link>
         </nav>
-        <div className="flex items-center gap-4 justify-end flex-shrink-0">
+        <div className="flex items-center gap-md justify-end flex-shrink-0">
           <Link href={"/rounds/add"} className="xl:block hidden">
             <Button variant={"default"}>Add Round</Button>
           </Link>
@@ -161,7 +161,7 @@ export async function Navbar() {
             <DropdownMenuTrigger asChild>
               <button
                 type="button"
-                className="rounded-full bg-primary p-1 hover:bg-primary/80"
+                className="rounded-full bg-primary p-xs hover:bg-primary/80"
                 aria-label="User menu"
               >
                 <Avatar className="h-8 w-8 flex items-center justify-center">
@@ -175,32 +175,32 @@ export async function Navbar() {
             <DropdownMenuContent align="end">
               <Link href={`/profile/${userId}`}>
                 <DropdownMenuItem>
-                  <UserIcon className="h-4 w-4 mr-2" />
+                  <UserIcon className="h-4 w-4 mr-sm" />
                   Profile
                 </DropdownMenuItem>
               </Link>
               <Link href={`/profile/${userId}?tab=settings`}>
                 <DropdownMenuItem>
-                  <SettingsIcon className="h-4 w-4 mr-2" />
+                  <SettingsIcon className="h-4 w-4 mr-sm" />
                   Settings
                 </DropdownMenuItem>
               </Link>
               <Link href={`/dashboard/${userId}`}>
                 <DropdownMenuItem>
-                  <LayoutDashboardIcon className="h-4 w-4 mr-2" />
+                  <LayoutDashboardIcon className="h-4 w-4 mr-sm" />
                   Dashboard
                 </DropdownMenuItem>
               </Link>
               <Link href="/statistics">
                 <DropdownMenuItem>
-                  <BarChart3 className="h-4 w-4 mr-2" />
+                  <BarChart3 className="h-4 w-4 mr-sm" />
                   Statistics
                 </DropdownMenuItem>
               </Link>
               <DropdownMenuSeparator />
               <Link href={"/rounds/add"}>
                 <DropdownMenuItem>
-                  <CirclePlus className="h-4 w-4 mr-2" />
+                  <CirclePlus className="h-4 w-4 mr-sm" />
                   Add Round
                 </DropdownMenuItem>
               </Link>
@@ -222,7 +222,7 @@ export async function Navbar() {
             headerContent={
               <Link href="/rounds/add">
                 <Button className="w-full">
-                  <CirclePlus className="h-4 w-4 mr-2" />
+                  <CirclePlus className="h-4 w-4 mr-sm" />
                   Add Round
                 </Button>
               </Link>

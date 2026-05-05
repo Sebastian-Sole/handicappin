@@ -338,7 +338,7 @@ function GoogleSignInButtonContent({
       >
         {/* Google "G" Logo SVG */}
         <svg
-          className="mr-2 h-4 w-4"
+          className="mr-sm h-4 w-4"
           viewBox="0 0 24 24"
           xmlns="http://www.w3.org/2000/svg"
         >
@@ -371,7 +371,7 @@ function GoogleSignInButtonContent({
               Please review and accept our legal terms to create your account.
             </DialogDescription>
           </DialogHeader>
-          <div className="flex items-start space-x-3 py-4">
+          <div className="flex items-start space-x-sm py-md">
             <Checkbox
               id="google-legal-consent"
               checked={consentChecked}

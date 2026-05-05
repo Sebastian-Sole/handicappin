@@ -111,8 +111,8 @@ const HandicapTrendChart = ({
                     formatter={(value, _name, props) => {
                       const color = props.color || strokeColor;
                       return (
-                        <div className="flex w-full items-center justify-between gap-2">
-                          <div className="flex items-center gap-2">
+                        <div className="flex w-full items-center justify-between gap-sm">
+                          <div className="flex items-center gap-sm">
                             <div
                               className="h-2.5 w-2.5 shrink-0 rounded-[2px]"
                               style={{ backgroundColor: color }}
@@ -142,11 +142,11 @@ const HandicapTrendChart = ({
         </div>
       )}
       {previousHandicaps.length === 0 && (
-        <div className="flex items-center justify-center h-64 xl:h-[90%] border border-gray-100 flex-col">
+        <div className="flex items-center justify-center h-64 xl:h-[90%] border border-muted flex-col">
           <H4>No rounds found</H4>
           <Link
             href={`/rounds/add`}
-            className="text-primary underline mt-4"
+            className="text-primary underline mt-md"
             prefetch={false}
           >
             <Button variant={"secondary"}>Add a round here</Button>

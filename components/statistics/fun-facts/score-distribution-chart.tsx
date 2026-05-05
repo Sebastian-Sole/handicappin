@@ -7,12 +7,12 @@ interface ScoreDistributionChartProps {
 }
 
 const SCORE_TYPES = [
-  { key: "eagle", label: "Eagle or better", emoji: "🦅", color: "bg-yellow-500" },
-  { key: "birdie", label: "Birdie", emoji: "🐦", color: "bg-green-500" },
-  { key: "par", label: "Par", emoji: "✓", color: "bg-blue-500" },
-  { key: "bogey", label: "Bogey", emoji: "😅", color: "bg-orange-500" },
-  { key: "doubleBogey", label: "Double Bogey", emoji: "😰", color: "bg-red-400" },
-  { key: "triplePlus", label: "Triple+", emoji: "💀", color: "bg-red-600" },
+  { key: "eagle", label: "Eagle or better", emoji: "🦅", color: "bg-score-eagle" },
+  { key: "birdie", label: "Birdie", emoji: "🐦", color: "bg-score-birdie" },
+  { key: "par", label: "Par", emoji: "✓", color: "bg-score-par" },
+  { key: "bogey", label: "Bogey", emoji: "😅", color: "bg-score-bogey" },
+  { key: "doubleBogey", label: "Double Bogey", emoji: "😰", color: "bg-score-double" },
+  { key: "triplePlus", label: "Triple+", emoji: "💀", color: "bg-score-triple" },
 ] as const;
 
 export function ScoreDistributionChart({ data }: ScoreDistributionChartProps) {
@@ -27,11 +27,11 @@ export function ScoreDistributionChart({ data }: ScoreDistributionChartProps) {
   }
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-sm">
       {SCORE_TYPES.map(({ key, label, emoji, color }) => {
         const item = data[key];
         return (
-          <div key={key} className="space-y-1">
+          <div key={key} className="space-y-xs">
             <div className="flex justify-between text-sm">
               <span>
                 {emoji} {label}

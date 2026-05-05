@@ -7,10 +7,30 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instantiate createClient with right options
-  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
-  __InternalSupabase: {
-    PostgrestVersion: "12.2.3 (519615d)"
+  graphql_public: {
+    Tables: {
+      [_ in never]: never
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      graphql: {
+        Args: {
+          extensions?: Json
+          operationName?: string
+          query?: string
+          variables?: Json
+        }
+        Returns: Json
+      }
+    }
+    Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
   }
   public: {
     Tables: {
@@ -21,6 +41,7 @@ export type Database = {
           country: string
           id: number
           name: string
+          submittedBy: string | null
           website: string | null
         }
         Insert: {
@@ -29,6 +50,7 @@ export type Database = {
           country?: string
           id?: number
           name: string
+          submittedBy?: string | null
           website?: string | null
         }
         Update: {
@@ -37,9 +59,18 @@ export type Database = {
           country?: string
           id?: number
           name?: string
+          submittedBy?: string | null
           website?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "course_submittedBy_fkey"
+            columns: ["submittedBy"]
+            isOneToOne: false
+            referencedRelation: "profile"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       email_preferences: {
         Row: {
@@ -390,6 +421,7 @@ export type Database = {
           existingHandicapIndex: number
           holes_played: number
           id: number
+          nine_hole_section: string | null
           notes: string | null
           parPlayed: number
           scoreDifferential: number
@@ -410,8 +442,9 @@ export type Database = {
           createdAt?: string
           exceptionalScoreAdjustment?: number
           existingHandicapIndex: number
-          holes_played: number
+          holes_played?: number
           id?: number
+          nine_hole_section?: string | null
           notes?: string | null
           parPlayed: number
           scoreDifferential: number
@@ -434,6 +467,7 @@ export type Database = {
           existingHandicapIndex?: number
           holes_played?: number
           id?: number
+          nine_hole_section?: string | null
           notes?: string | null
           parPlayed?: number
           scoreDifferential?: number
@@ -535,6 +569,75 @@ export type Database = {
         }
         Relationships: []
       }
+      submissions: {
+        Row: {
+          courseId: number | null
+          createdAt: string
+          id: number
+          parentTeeId: number | null
+          roundId: number | null
+          submissionType: string
+          submittedBy: string | null
+          teeId: number | null
+        }
+        Insert: {
+          courseId?: number | null
+          createdAt?: string
+          id?: never
+          parentTeeId?: number | null
+          roundId?: number | null
+          submissionType: string
+          submittedBy?: string | null
+          teeId?: number | null
+        }
+        Update: {
+          courseId?: number | null
+          createdAt?: string
+          id?: never
+          parentTeeId?: number | null
+          roundId?: number | null
+          submissionType?: string
+          submittedBy?: string | null
+          teeId?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "submissions_courseId_fkey"
+            columns: ["courseId"]
+            isOneToOne: false
+            referencedRelation: "course"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "submissions_parentTeeId_fkey"
+            columns: ["parentTeeId"]
+            isOneToOne: false
+            referencedRelation: "teeInfo"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "submissions_roundId_fkey"
+            columns: ["roundId"]
+            isOneToOne: false
+            referencedRelation: "round"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "submissions_submittedBy_profile_id_fk"
+            columns: ["submittedBy"]
+            isOneToOne: false
+            referencedRelation: "profile"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "submissions_teeId_fkey"
+            columns: ["teeId"]
+            isOneToOne: false
+            referencedRelation: "teeInfo"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       teeInfo: {
         Row: {
           approvalStatus: string
@@ -551,9 +654,11 @@ export type Database = {
           name: string
           outDistance: number
           outPar: number
+          parentTeeId: number | null
           slopeRating18: number
           slopeRatingBack9: number
           slopeRatingFront9: number
+          submittedBy: string | null
           totalDistance: number
           totalPar: number
           version: number
@@ -573,9 +678,11 @@ export type Database = {
           name: string
           outDistance: number
           outPar: number
+          parentTeeId?: number | null
           slopeRating18: number
           slopeRatingBack9: number
           slopeRatingFront9: number
+          submittedBy?: string | null
           totalDistance: number
           totalPar: number
           version?: number
@@ -595,9 +702,11 @@ export type Database = {
           name?: string
           outDistance?: number
           outPar?: number
+          parentTeeId?: number | null
           slopeRating18?: number
           slopeRatingBack9?: number
           slopeRatingFront9?: number
+          submittedBy?: string | null
           totalDistance?: number
           totalPar?: number
           version?: number
@@ -608,6 +717,20 @@ export type Database = {
             columns: ["courseId"]
             isOneToOne: false
             referencedRelation: "course"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "teeInfo_parentTeeId_fkey"
+            columns: ["parentTeeId"]
+            isOneToOne: false
+            referencedRelation: "teeInfo"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "teeInfo_submittedBy_fkey"
+            columns: ["submittedBy"]
+            isOneToOne: false
+            referencedRelation: "profile"
             referencedColumns: ["id"]
           },
         ]
@@ -655,11 +778,27 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      cleanup_expired_otps: { Args: never; Returns: undefined }
+      approve_submission: {
+        Args: { p_submission_id: number }
+        Returns: undefined
+      }
+      convert_tee_to_edit: {
+        Args: { p_parent_tee_id: number; p_tee_id: number }
+        Returns: undefined
+      }
       custom_access_token_hook: { Args: { event: Json }; Returns: Json }
+      delete_empty_course: { Args: { p_course_id: number }; Returns: undefined }
       get_public_course_count: { Args: never; Returns: number }
       get_public_round_count: { Args: never; Returns: number }
       get_public_user_count: { Args: never; Returns: number }
+      merge_tees: {
+        Args: { p_from_tee_id: number; p_to_tee_id: number }
+        Returns: undefined
+      }
+      move_tee_to_course: {
+        Args: { p_tee_id: number; p_to_course_id: number }
+        Returns: undefined
+      }
       process_handicap_no_rounds: {
         Args: { max_handicap: number; queue_job_id: number; user_id: string }
         Returns: Json
@@ -672,6 +811,19 @@ export type Database = {
           user_id: string
         }
         Returns: Json
+      }
+      reject_submission: {
+        Args: { p_submission_id: number }
+        Returns: undefined
+      }
+      remap_round_to_tee: {
+        Args: {
+          p_from_tee_id: number
+          p_new_course_id?: number
+          p_round_id: number
+          p_to_tee_id: number
+        }
+        Returns: undefined
       }
       setup_handicap_queue_cron: { Args: never; Returns: undefined }
     }
@@ -802,7 +954,11 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
+  graphql_public: {
+    Enums: {},
+  },
   public: {
     Enums: {},
   },
 } as const
+

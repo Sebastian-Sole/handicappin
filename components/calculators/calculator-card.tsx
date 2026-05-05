@@ -63,7 +63,7 @@ export function CalculatorCard({
         <div className="flex items-center justify-between">
           <div>
             <CardTitle className="text-lg sm:text-xl">{meta.name}</CardTitle>
-            <CardDescription className="mt-1">
+            <CardDescription className="mt-xs">
               {meta.description}
             </CardDescription>
           </div>
@@ -82,7 +82,7 @@ export function CalculatorCard({
       <CardContent
         id={`calculator-content-${meta.id}`}
         className={cn(
-          "space-y-4",
+          "space-y-md",
           "md:block", // Always show on desktop
           isExpanded ? "block" : "hidden md:block" // Accordion on mobile
         )}
@@ -91,7 +91,7 @@ export function CalculatorCard({
         {children}
 
         {/* Result Display */}
-        {result && <div className="pt-4 border-t">{result}</div>}
+        {result && <div className="pt-md border-t">{result}</div>}
 
         {/* Collapsible Explanation */}
         {explanation && (
@@ -110,14 +110,14 @@ export function CalculatorCard({
                 )}
               </Button>
             </CollapsibleTrigger>
-            <CollapsibleContent className="pt-4 space-y-4">
+            <CollapsibleContent className="pt-md space-y-md">
               {explanation}
               {meta.usgaLink && (
                 <a
                   href={meta.usgaLink}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1 text-sm text-primary hover:underline"
+                  className="inline-flex items-center gap-xs text-sm text-primary hover:underline"
                 >
                   Learn more at USGA.org
                   <ExternalLink className="h-3 w-3" />

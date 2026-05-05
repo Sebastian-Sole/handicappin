@@ -1,6 +1,7 @@
 import AboutSkeleton from "@/components/loading/about-skeleton";
 import { Badge } from "@/components/ui/badge";
-import { P } from "@/components/ui/typography";
+import { StatTile } from "@/components/ui/stat-tile";
+import { H1, H2, H3, P } from "@/components/ui/typography";
 import { createClient } from "@supabase/supabase-js";
 import { Suspense } from "react";
 import type { Metadata } from "next";
@@ -71,16 +72,17 @@ export default async function AboutPage() {
   return (
     <Suspense fallback={<AboutSkeleton />}>
       <div className="min-h-screen bg-background">
+        <H1 className="sr-only">About Handicappin&apos;</H1>
         {/* Mission Section */}
-        <section className="w-full py-12 md:py-24 lg:py-32 bg-gradient-to-br from-primary/5 to-primary/20 dark:from-primary/5 dark:to-primary/35">
-          <div className="sm:container px-4 md:px-6 mx-auto">
-            <div className="mx-auto grid max-w-5xl items-start gap-6 py-12 xl:grid-cols-2 lg:gap-12">
-              <div className="flex flex-col justify-start space-y-4">
-                <div className="space-y-2">
+        <section className="w-full py-2xl md:py-4xl lg:py-5xl hero-gradient">
+          <div className="sm:container px-md md:px-lg mx-auto">
+            <div className="mx-auto grid max-w-5xl items-start gap-lg py-2xl xl:grid-cols-2 lg:gap-2xl">
+              <div className="flex flex-col justify-start space-y-md">
+                <div className="space-y-sm">
                   <Badge>Our Mission</Badge>
-                  <h2 className="lg:leading-tighter text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl xl:text-[3.4rem] 2xl:text-[3.75rem]">
+                  <H2 className="lg:leading-tighter text-3xl tracking-tighter sm:text-4xl md:text-5xl xl:text-[3.4rem] 2xl:text-[3.75rem] pb-0">
                     Why Does Handicappin&apos; Even Exist?
-                  </h2>
+                  </H2>
                   <P className="text-foreground/80 md:text-xl/relaxed">
                     We found that other golf services overcomplicated golfing,
                     whether it be keeping scores, or hiding the calculations
@@ -91,29 +93,29 @@ export default async function AboutPage() {
                   </P>
                 </div>
               </div>
-              <div className="grid gap-6 sm:grid-cols-2 h-fit">
-                <div className="flex items-start space-x-4">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 flex-shrink-0">
-                    <Logs className="h-7 w-7 text-primary" />
+              <div className="grid gap-lg sm:grid-cols-2 h-fit">
+                <div className="flex items-start space-x-md">
+                  <div className="icon-chip-primary">
+                    <Logs className="h-7 w-7" />
                   </div>
                   <div>
-                    <h3 className="text-lg font-semibold">
+                    <H3 className="text-lg">
                       Detailed Round Tracking
-                    </h3>
+                    </H3>
                     <P className="text-foreground/80">
                       Log your rounds and get detailed insights into how you
                       played and see your progression in real-time.
                     </P>
                   </div>
                 </div>
-                <div className="flex items-start space-x-4">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 flex-shrink-0">
-                    <LineChart className="h-7 w-7 text-primary" />
+                <div className="flex items-start space-x-md">
+                  <div className="icon-chip-primary">
+                    <LineChart className="h-7 w-7" />
                   </div>
                   <div>
-                    <h3 className="text-lg font-semibold">
+                    <H3 className="text-lg">
                       Interactive Statistics
-                    </h3>
+                    </H3>
                     <P className="text-foreground/80">
                       We provide a wide range of ways to view statistics, from
                       high-level round summaries to detailed hole-by-hole
@@ -121,14 +123,14 @@ export default async function AboutPage() {
                     </P>
                   </div>
                 </div>
-                <div className="flex items-start space-x-4">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 flex-shrink-0">
-                    <BookOpenText className="h-7 w-7 text-primary" />
+                <div className="flex items-start space-x-md">
+                  <div className="icon-chip-primary">
+                    <BookOpenText className="h-7 w-7" />
                   </div>
                   <div>
-                    <h3 className="text-lg font-semibold">
+                    <H3 className="text-lg">
                       Detailed explanations
-                    </h3>
+                    </H3>
                     <P className="text-foreground/80">
                       Understand how your played rounds affected your handicap
                       and get detailed explanations of the calculations behind
@@ -136,12 +138,12 @@ export default async function AboutPage() {
                     </P>
                   </div>
                 </div>
-                <div className="flex items-start space-x-4">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 flex-shrink-0">
-                    <Calculator className="h-7 w-7 text-primary" />
+                <div className="flex items-start space-x-md">
+                  <div className="icon-chip-primary">
+                    <Calculator className="h-7 w-7" />
                   </div>
                   <div>
-                    <h3 className="text-lg font-semibold">Calculators</h3>
+                    <H3 className="text-lg">Calculators</H3>
                     <P className="text-foreground/80">
                       Our interactive calculators let you know how stats are
                       calculated step-by-step. See the calculations behind your
@@ -155,14 +157,14 @@ export default async function AboutPage() {
         </section>
 
         {/* Why Choose Us Section */}
-        <section className="w-full py-12 md:py-24 lg:py-32">
-          <div className="sm:container px-4 md:px-6 mx-auto">
-            <div className="flex flex-col items-center justify-center space-y-4 text-center">
-              <div className="space-y-2">
+        <section className="w-full py-2xl md:py-4xl lg:py-5xl">
+          <div className="sm:container px-md md:px-lg mx-auto">
+            <div className="flex flex-col items-center justify-center space-y-md text-center">
+              <div className="space-y-sm">
                 <Badge>Why Choose Us</Badge>
-                <h2 className="lg:leading-tighter text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl xl:text-[3.4rem] 2xl:text-[3.75rem]">
+                <H2 className="lg:leading-tighter text-3xl tracking-tighter sm:text-4xl md:text-5xl xl:text-[3.4rem] 2xl:text-[3.75rem] pb-0">
                   What Makes Us Different?
-                </h2>
+                </H2>
                 <p className="mx-auto max-w-[900px] text-muted-foreground md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed">
                   We value your time. We know that golf statistics and round
                   calculations are complicated, and that other services
@@ -176,17 +178,17 @@ export default async function AboutPage() {
               </div>
             </div>
 
-            <div className="mx-auto grid max-w-5xl items-center gap-6 py-12 lg:gap-12">
-              <div className="flex flex-col justify-center space-y-6">
-                <div className="grid gap-6 xl:grid-cols-2">
-                  <div className="flex items-start space-x-4">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 flex-shrink-0">
-                      <Scale className="h-6 w-6 text-primary" />
+            <div className="mx-auto grid max-w-5xl items-center gap-lg py-2xl lg:gap-2xl">
+              <div className="flex flex-col justify-center space-y-lg">
+                <div className="grid gap-lg xl:grid-cols-2">
+                  <div className="flex items-start space-x-md">
+                    <div className="icon-chip-primary">
+                      <Scale className="h-6 w-6" />
                     </div>
-                    <div className="space-y-1">
-                      <h3 className="text-xl font-semibold">
+                    <div className="space-y-xs">
+                      <H3 className="text-xl">
                         USGA Compliant Calculations
-                      </h3>
+                      </H3>
                       <p className="text-muted-foreground">
                         Our app provides real-time, accurate handicap index
                         updates according to the latest USGA rules. And we
@@ -195,14 +197,14 @@ export default async function AboutPage() {
                     </div>
                   </div>
 
-                  <div className="flex items-start space-x-4">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 flex-shrink-0">
-                      <Earth className="h-6 w-6 text-primary" />
+                  <div className="flex items-start space-x-md">
+                    <div className="icon-chip-primary">
+                      <Earth className="h-6 w-6" />
                     </div>
-                    <div className="space-y-1">
-                      <h3 className="text-xl font-semibold">
+                    <div className="space-y-xs">
+                      <H3 className="text-xl">
                         International Flexibility
-                      </h3>
+                      </H3>
                       <p className="text-muted-foreground">
                         Log rounds from any USGA compliant course in the world.
                         Handicappin&apos; is designed to work with any course,
@@ -211,12 +213,12 @@ export default async function AboutPage() {
                     </div>
                   </div>
 
-                  <div className="flex items-start space-x-4">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 flex-shrink-0">
-                      <Gauge className="h-6 w-6 text-primary" />
+                  <div className="flex items-start space-x-md">
+                    <div className="icon-chip-primary">
+                      <Gauge className="h-6 w-6" />
                     </div>
-                    <div className="space-y-1">
-                      <h3 className="text-xl font-semibold">Dashboard</h3>
+                    <div className="space-y-xs">
+                      <H3 className="text-xl">Dashboard</H3>
                       <p className="text-muted-foreground">
                         We provide a dashboard that gives you a high-level view
                         of your rounds and statistics. See your progress at a
@@ -225,14 +227,14 @@ export default async function AboutPage() {
                     </div>
                   </div>
 
-                  <div className="flex items-start space-x-4">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 flex-shrink-0">
-                      <Trophy className="h-6 w-6 text-primary" />
+                  <div className="flex items-start space-x-md">
+                    <div className="icon-chip-primary">
+                      <Trophy className="h-6 w-6" />
                     </div>
-                    <div className="space-y-1">
-                      <h3 className="text-xl font-semibold">
+                    <div className="space-y-xs">
+                      <H3 className="text-xl">
                         Detailed Insights
-                      </h3>
+                      </H3>
                       <p className="text-muted-foreground">
                         We are working on providing detailed insights into your
                         game, such as course breakdowns, club usage, and more.
@@ -243,32 +245,30 @@ export default async function AboutPage() {
               </div>
             </div>
             <div className="mx-auto max-w-5xl flex flex-col items-center justify-center">
-              <div className="flex flex-col gap-4 w-full sm:grid xl:grid-cols-4 sm:grid-cols-2 xl:gap-4">
-                <div className="flex flex-col items-center space-y-2 rounded-lg border bg-card p-6 text-center w-full">
-                  <div className="text-2xl font-bold text-primary">
-                    {totalRounds}
-                  </div>
-                  <div className="text-sm text-muted-foreground">
-                    Total Rounds Logged
-                  </div>
+              <div className="flex flex-col gap-md w-full sm:grid xl:grid-cols-4 sm:grid-cols-2 xl:gap-md">
+                <div className="surface p-lg w-full">
+                  <StatTile
+                    value={<span className="text-primary">{totalRounds}</span>}
+                    label="Total Rounds Logged"
+                  />
                 </div>
-                <div className="flex flex-col items-center space-y-2 rounded-lg border bg-card p-6 text-center w-full">
-                  <div className="text-2xl font-bold text-primary">USGA</div>
-                  <div className="text-sm text-muted-foreground">
-                    Ruling Compliant
-                  </div>
+                <div className="surface p-lg w-full">
+                  <StatTile
+                    value={<span className="text-primary">USGA</span>}
+                    label="Ruling Compliant"
+                  />
                 </div>
-                <div className="flex flex-col items-center space-y-2 rounded-lg border bg-card p-6 text-center w-full">
-                  <div className="text-2xl font-bold text-primary">
-                    {totalCourses}
-                  </div>
-                  <div className="text-sm text-muted-foreground">
-                    Courses Supported
-                  </div>
+                <div className="surface p-lg w-full">
+                  <StatTile
+                    value={<span className="text-primary">{totalCourses}</span>}
+                    label="Courses Supported"
+                  />
                 </div>
-                <div className="flex flex-col items-center space-y-2 rounded-lg border bg-card p-6 text-center w-full">
-                  <div className="text-2xl font-bold text-primary">GDPR</div>
-                  <div className="text-sm text-muted-foreground">Compliant</div>
+                <div className="surface p-lg w-full">
+                  <StatTile
+                    value={<span className="text-primary">GDPR</span>}
+                    label="Compliant"
+                  />
                 </div>
               </div>
             </div>

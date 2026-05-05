@@ -2,6 +2,7 @@
 
 # dependencies
 /node_modules
+packages/*/node_modules
 /.pnp
 .pnp.js
 .yarn/install-state.gz
@@ -49,3 +50,6 @@ handicappin.code-workspace
 .env.sentry-build-plugin
 
 .playwright-mcp
+
+# Claude Code agent worktrees (ephemeral)
+.claude/worktrees/

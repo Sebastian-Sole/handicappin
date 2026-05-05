@@ -1,15 +1,16 @@
 "use client";
 
 import { useState, useSyncExternalStore } from "react";
-import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { useTheme } from "next-themes";
-import { Moon, Sun, Monitor, Check } from "lucide-react";
+import { Moon, Sun, Monitor } from "lucide-react";
 import { api } from "@/trpc/react";
 import { DataExportSection } from "../data-export-section";
 import { AccountDeletionSection } from "../account-deletion-section";
 import { FormFeedback } from "@/components/ui/form-feedback";
+import { SaveStateButton } from "@/components/ui/save-state-button";
+import { H2, H3 } from "@/components/ui/typography";
 import type { FeedbackState } from "@/types/feedback";
 
 const subscribe = () => () => {};
@@ -65,10 +66,10 @@ export function SettingsTab() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-lg">
       {/* Header */}
       <div>
-        <h2 className="text-2xl font-semibold mb-2">Settings</h2>
+        <H2 className="text-2xl font-semibold mb-sm">Settings</H2>
         <p className="text-muted-foreground">
           Manage your notifications and appearance preferences
         </p>
@@ -83,12 +84,12 @@ export function SettingsTab() {
       )}
 
       {/* Notifications Section */}
-      <div className="bg-card rounded-lg border p-6">
-        <h3 className="text-xl font-semibold mb-4">Notifications</h3>
+      <div className="surface p-lg">
+        <H3 className="text-xl font-semibold mb-md">Notifications</H3>
         {isLoading ? (
-          <div className="space-y-4">
+          <div className="space-y-md">
             <div className="flex items-center justify-between animate-pulse">
-              <div className="space-y-2">
+              <div className="space-y-sm">
                 <div className="h-5 w-32 bg-muted rounded" />
                 <div className="h-4 w-64 bg-muted rounded" />
               </div>
@@ -96,7 +97,7 @@ export function SettingsTab() {
             </div>
           </div>
         ) : (
-          <div className="space-y-4">
+          <div className="space-y-md">
             <div className="flex items-center justify-between">
               <div className="space-y-0.5">
                 <Label htmlFor="feature-updates">Feature Updates</Label>
@@ -116,33 +117,33 @@ export function SettingsTab() {
       </div>
 
       {/* Theme Section */}
-      <div className="bg-card rounded-lg border p-6">
-        <h3 className="text-xl font-semibold mb-4">Appearance</h3>
-        <div className="space-y-4">
-          <div className="space-y-3">
+      <div className="surface p-lg">
+        <H3 className="text-xl font-semibold mb-md">Appearance</H3>
+        <div className="space-y-md">
+          <div className="space-y-sm">
             <Label>Theme</Label>
             {!mounted ? (
               // Show skeleton loader while mounting to prevent hydration mismatch
-              <div className="grid grid-cols-3 gap-3">
-                <div className="flex flex-col items-center gap-2 p-4 rounded-lg border-2 border-muted animate-pulse">
+              <div className="grid grid-cols-3 gap-sm">
+                <div className="flex flex-col items-center gap-sm p-md rounded-lg border-2 border-muted animate-pulse">
                   <div className="h-6 w-6 bg-muted rounded" />
                   <div className="h-4 w-12 bg-muted rounded" />
                 </div>
-                <div className="flex flex-col items-center gap-2 p-4 rounded-lg border-2 border-muted animate-pulse">
+                <div className="flex flex-col items-center gap-sm p-md rounded-lg border-2 border-muted animate-pulse">
                   <div className="h-6 w-6 bg-muted rounded" />
                   <div className="h-4 w-12 bg-muted rounded" />
                 </div>
-                <div className="flex flex-col items-center gap-2 p-4 rounded-lg border-2 border-muted animate-pulse">
+                <div className="flex flex-col items-center gap-sm p-md rounded-lg border-2 border-muted animate-pulse">
                   <div className="h-6 w-6 bg-muted rounded" />
                   <div className="h-4 w-12 bg-muted rounded" />
                 </div>
               </div>
             ) : (
-              <div className="grid grid-cols-3 gap-3">
+              <div className="grid grid-cols-3 gap-sm">
                 {/* Light Theme Button */}
                 <button
                   onClick={() => setTheme("light")}
-                  className={`flex flex-col items-center gap-2 p-4 rounded-lg border-2 transition-all hover:bg-muted/50 ${
+                  className={`flex flex-col items-center gap-sm p-md rounded-lg border-2 transition-all hover:bg-muted/50 ${
                     theme === "light"
                       ? "border-primary bg-primary/5"
                       : "border-muted"
@@ -155,7 +156,7 @@ export function SettingsTab() {
                 {/* Dark Theme Button */}
                 <button
                   onClick={() => setTheme("dark")}
-                  className={`flex flex-col items-center gap-2 p-4 rounded-lg border-2 transition-all hover:bg-muted/50 ${
+                  className={`flex flex-col items-center gap-sm p-md rounded-lg border-2 transition-all hover:bg-muted/50 ${
                     theme === "dark"
                       ? "border-primary bg-primary/5"
                       : "border-muted"
@@ -168,7 +169,7 @@ export function SettingsTab() {
                 {/* System Theme Button */}
                 <button
                   onClick={() => setTheme("system")}
-                  className={`flex flex-col items-center gap-2 p-4 rounded-lg border-2 transition-all hover:bg-muted/50 ${
+                  className={`flex flex-col items-center gap-sm p-md rounded-lg border-2 transition-all hover:bg-muted/50 ${
                     theme === "system"
                       ? "border-primary bg-primary/5"
                       : "border-muted"
@@ -193,32 +194,15 @@ export function SettingsTab() {
       <AccountDeletionSection />
 
       {/* Save Button */}
-      <div className="flex justify-end pt-4">
-        <Button
+      <div className="flex justify-end pt-md">
+        <SaveStateButton
           onClick={handleSaveSettings}
-          disabled={saveState === "saving" || saveState === "saved" || isLoading}
-          className={`transition-all duration-300 ${
-            saveState === "saved"
-              ? "bg-green-600 hover:bg-green-600"
-              : saveState === "saving"
-              ? "bg-muted text-muted-foreground hover:bg-muted"
-              : ""
-          }`}
-        >
-          {saveState === "saving" && (
-            <span className="flex items-center gap-2">
-              <span className="animate-spin">⏳</span>
-              Saving...
-            </span>
-          )}
-          {saveState === "saved" && (
-            <span className="flex items-center gap-2">
-              <Check className="h-4 w-4" />
-              Saved!
-            </span>
-          )}
-          {saveState === "idle" && "Save Changes"}
-        </Button>
+          state={saveState}
+          idleLabel="Save Changes"
+          savedLabel="Saved!"
+          disabled={isLoading}
+          className="transition-all duration-300"
+        />
       </div>
     </div>
   );

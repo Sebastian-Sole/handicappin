@@ -5,7 +5,7 @@ import DashboardGraphDisplay from "./dashboardGraphDisplay";
 import useMounted from "@/hooks/useMounted";
 import { Tables } from "@/types/supabase";
 import DashboardSkeleton from "./dashboardSkeleton";
-import { getRelevantRounds } from "@/lib/handicap";
+import { getRelevantRounds } from "@handicappin/handicap-core";
 import { ScorecardWithRound } from "@/types/scorecard-input";
 import { RoundsTable } from "./roundsTable";
 
@@ -59,13 +59,13 @@ export function Dashboard({ profile, scorecards, header }: DashboardProps) {
   if (!isMounted) return <DashboardSkeleton />;
 
   return (
-    <div className="bg-background text-foreground p-8 rounded-lg h-full">
+    <div className="bg-background text-foreground p-xl rounded-lg h-full">
       <div className="grid grid-cols-1 2xl:grid-cols-3">
         <DashboardInfo handicapIndex={profile.handicapIndex} header={header} />
         <DashboardGraphDisplay graphData={graphData} />
       </div>
 
-      <div className="mt-8">
+      <div className="mt-xl">
         <RoundsTable scorecards={scorecards} />
       </div>
     </div>

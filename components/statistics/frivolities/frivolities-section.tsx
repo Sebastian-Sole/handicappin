@@ -37,8 +37,8 @@ export function FrivolitiesSection({ stats }: FrivolitiesSectionProps) {
   if (hasNoData) {
     return (
       <Card>
-        <CardContent className="p-12 text-center text-muted-foreground">
-          <div className="text-4xl mb-4">🎮</div>
+        <CardContent className="p-2xl text-center text-muted-foreground">
+          <div className="text-4xl mb-md">🎮</div>
           <p className="text-lg font-medium">No stroke data yet</p>
           <p className="text-sm">Play some rounds to unlock fun statistics</p>
         </CardContent>
@@ -71,7 +71,7 @@ export function FrivolitiesSection({ stats }: FrivolitiesSectionProps) {
   const { frontBackComparison, streakStats } = holeByHoleStats;
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-xl">
       {/* Golf Odyssey Section */}
       <StatisticsSection
         icon="🎮"
@@ -86,7 +86,7 @@ export function FrivolitiesSection({ stats }: FrivolitiesSectionProps) {
           </p>
         }
       >
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-md">
           <FunStatCard
             title="Total Strokes"
             value={formatNumber(stats.totalStrokes)}
@@ -116,41 +116,41 @@ export function FrivolitiesSection({ stats }: FrivolitiesSectionProps) {
         title="Achievements"
         description="Your notable golfing accomplishments"
       >
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <Card className="bg-gradient-to-br from-yellow-500/10 to-amber-500/10 border-yellow-500/20">
-            <CardContent className="p-4 text-center">
-              <div className="text-2xl mb-1">🦅</div>
-              <p className="text-2xl font-bold">{stats.perfectHoles.eagles}</p>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-md">
+          <Card className="tint-score-eagle">
+            <CardContent className="p-md text-center">
+              <div className="text-2xl mb-xs">🦅</div>
+              <p className="text-figure">{stats.perfectHoles.eagles}</p>
               <p className="text-sm text-muted-foreground">Eagles</p>
             </CardContent>
           </Card>
-          <Card className="bg-gradient-to-br from-green-500/10 to-emerald-500/10 border-green-500/20">
-            <CardContent className="p-4 text-center">
-              <div className="text-2xl mb-1">🐦</div>
-              <p className="text-2xl font-bold">{stats.perfectHoles.birdies}</p>
+          <Card className="tint-score-birdie">
+            <CardContent className="p-md text-center">
+              <div className="text-2xl mb-xs">🐦</div>
+              <p className="text-figure">{stats.perfectHoles.birdies}</p>
               <p className="text-sm text-muted-foreground">Birdies</p>
             </CardContent>
           </Card>
           <Card>
-            <CardContent className="p-4 text-center">
-              <div className="text-2xl mb-1">✓</div>
-              <p className="text-2xl font-bold">{stats.perfectHoles.pars}</p>
+            <CardContent className="p-md text-center">
+              <div className="text-2xl mb-xs">✓</div>
+              <p className="text-figure">{stats.perfectHoles.pars}</p>
               <p className="text-sm text-muted-foreground">Pars</p>
             </CardContent>
           </Card>
           <Card>
-            <CardContent className="p-4 text-center">
-              <div className="text-2xl mb-1">🎯</div>
-              <p className="text-2xl font-bold">{perfectHolesPercentage}%</p>
+            <CardContent className="p-md text-center">
+              <div className="text-2xl mb-xs">🎯</div>
+              <p className="text-figure">{perfectHolesPercentage}%</p>
               <p className="text-sm text-muted-foreground">Par or Better</p>
             </CardContent>
           </Card>
         </div>
 
         {stats.bogeyFreeRounds > 0 && (
-          <Card className="mt-4 bg-gradient-to-r from-purple-500/10 to-pink-500/10 border-purple-500/20">
-            <CardContent className="p-4">
-              <div className="flex items-center gap-4">
+          <Card className="mt-md tint-primary">
+            <CardContent className="p-md">
+              <div className="flex items-center gap-md">
                 <div className="text-3xl">🌟</div>
                 <div>
                   <p className="font-semibold">
@@ -182,16 +182,16 @@ export function FrivolitiesSection({ stats }: FrivolitiesSectionProps) {
           </p>
         }
       >
-        <div className="space-y-4">
+        <div className="space-y-md">
           {/* Best and Worst Phase Highlight */}
           {lunarPerformance.bestPhase && lunarPerformance.worstPhase && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Card className="bg-gradient-to-br from-indigo-500/10 to-purple-500/10 border-indigo-500/20">
-                <CardContent className="p-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-md">
+              <Card className="tint-info">
+                <CardContent className="p-md">
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-sm text-muted-foreground">Best Phase</p>
-                      <p className="text-xl font-bold flex items-center gap-2">
+                      <p className="text-figure-sm flex items-center gap-sm">
                         <span className="text-2xl">
                           {lunarPerformance.bestPhase.emoji}
                         </span>
@@ -203,7 +203,7 @@ export function FrivolitiesSection({ stats }: FrivolitiesSectionProps) {
                       </p>
                     </div>
                     <div className="text-right">
-                      <p className="text-2xl font-bold text-green-600">
+                      <p className="text-figure text-success">
                         {formatDifferential(lunarPerformance.bestPhase.avgDifferential)}
                       </p>
                       <p className="text-xs text-muted-foreground">avg diff</p>
@@ -211,14 +211,14 @@ export function FrivolitiesSection({ stats }: FrivolitiesSectionProps) {
                   </div>
                 </CardContent>
               </Card>
-              <Card className="bg-gradient-to-br from-orange-500/10 to-red-500/10 border-orange-500/20">
-                <CardContent className="p-4">
+              <Card className="tint-score-bogey">
+                <CardContent className="p-md">
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-sm text-muted-foreground">
                         Challenging Phase
                       </p>
-                      <p className="text-xl font-bold flex items-center gap-2">
+                      <p className="text-figure-sm flex items-center gap-sm">
                         <span className="text-2xl">
                           {lunarPerformance.worstPhase.emoji}
                         </span>
@@ -230,7 +230,7 @@ export function FrivolitiesSection({ stats }: FrivolitiesSectionProps) {
                       </p>
                     </div>
                     <div className="text-right">
-                      <p className="text-2xl font-bold text-orange-600">
+                      <p className="text-figure text-warning">
                         {formatDifferential(lunarPerformance.worstPhase.avgDifferential)}
                       </p>
                       <p className="text-xs text-muted-foreground">avg diff</p>
@@ -243,16 +243,16 @@ export function FrivolitiesSection({ stats }: FrivolitiesSectionProps) {
 
           {/* All Phases Grid */}
           <Card>
-            <CardHeader className="pb-2">
+            <CardHeader className="pb-sm">
               <CardTitle className="text-base">All Lunar Phases</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-4 md:grid-cols-8 gap-2">
+              <div className="grid grid-cols-4 md:grid-cols-8 gap-sm">
                 {lunarPerformance.phaseStats.map((phase) => (
                   <div
                     key={phase.phase}
                     className={cn(
-                      "text-center p-2 rounded-lg",
+                      "text-center p-sm rounded-lg",
                       phase.roundCount > 0 ? "bg-muted/50" : "opacity-40"
                     )}
                   >
@@ -282,20 +282,20 @@ export function FrivolitiesSection({ stats }: FrivolitiesSectionProps) {
         title="Fun Numbers"
         description="Quirky stats about your game"
       >
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-lg">
           {/* Front 9 vs Back 9 */}
           <Card>
-            <CardHeader className="pb-2">
+            <CardHeader className="pb-sm">
               <CardTitle className="text-base">Front 9 vs Back 9</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="flex items-center justify-center gap-8 py-4">
+              <div className="flex items-center justify-center gap-xl py-md">
                 <div className="text-center">
                   <p className="text-sm text-muted-foreground">Front 9</p>
                   <p
                     className={cn(
-                      "text-3xl font-bold",
-                      frontBackComparison.betterHalf === "front" && "text-green-600"
+                      "text-figure-lg",
+                      frontBackComparison.betterHalf === "front" && "text-success"
                     )}
                   >
                     {frontBackComparison.front9.avgOverPar >= 0 ? "+" : ""}
@@ -308,8 +308,8 @@ export function FrivolitiesSection({ stats }: FrivolitiesSectionProps) {
                   <p className="text-sm text-muted-foreground">Back 9</p>
                   <p
                     className={cn(
-                      "text-3xl font-bold",
-                      frontBackComparison.betterHalf === "back" && "text-green-600"
+                      "text-figure-lg",
+                      frontBackComparison.betterHalf === "back" && "text-success"
                     )}
                   >
                     {frontBackComparison.back9.avgOverPar >= 0 ? "+" : ""}
@@ -332,23 +332,23 @@ export function FrivolitiesSection({ stats }: FrivolitiesSectionProps) {
 
           {/* Lucky Numbers */}
           <Card>
-            <CardHeader className="pb-2">
+            <CardHeader className="pb-sm">
               <CardTitle className="text-base">Your Lucky Numbers</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-2 gap-4 py-2">
-                <div className="text-center p-3 bg-muted/50 rounded-lg">
+              <div className="grid grid-cols-2 gap-md py-sm">
+                <div className="text-center surface-muted p-sm">
                   <p className="text-sm text-muted-foreground">Lucky Number</p>
-                  <p className="text-4xl font-bold text-primary">
+                  <p className="text-figure-xl text-primary">
                     {holeByHoleStats.luckyNumber ?? "--"}
                   </p>
                   <p className="text-xs text-muted-foreground">
                     most common hole score
                   </p>
                 </div>
-                <div className="text-center p-3 bg-muted/50 rounded-lg">
+                <div className="text-center surface-muted p-sm">
                   <p className="text-sm text-muted-foreground">Signature Score</p>
-                  <p className="text-4xl font-bold text-primary">
+                  <p className="text-figure-xl text-primary">
                     {holeByHoleStats.signatureScore ?? "--"}
                   </p>
                   <p className="text-xs text-muted-foreground">
@@ -361,37 +361,37 @@ export function FrivolitiesSection({ stats }: FrivolitiesSectionProps) {
         </div>
 
         {/* Streak Records */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
-          <Card className="bg-gradient-to-br from-green-500/10 to-emerald-500/10 border-green-500/20">
-            <CardContent className="p-4 text-center">
-              <div className="text-2xl mb-1">🔥</div>
-              <p className="text-2xl font-bold">{streakStats.longestParStreak}</p>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-md mt-md">
+          <Card className="tint-score-birdie">
+            <CardContent className="p-md text-center">
+              <div className="text-2xl mb-xs">🔥</div>
+              <p className="text-figure">{streakStats.longestParStreak}</p>
               <p className="text-sm text-muted-foreground">Longest Par Streak</p>
               <p className="text-xs text-muted-foreground">holes at par or better</p>
             </CardContent>
           </Card>
           <Card>
-            <CardContent className="p-4 text-center">
-              <div className="text-2xl mb-1">📊</div>
-              <p className="text-2xl font-bold">
+            <CardContent className="p-md text-center">
+              <div className="text-2xl mb-xs">📊</div>
+              <p className="text-figure">
                 {streakStats.averageParStreak.toFixed(1)}
               </p>
               <p className="text-sm text-muted-foreground">Avg Par Streak</p>
               <p className="text-xs text-muted-foreground">consecutive holes</p>
             </CardContent>
           </Card>
-          <Card className="bg-gradient-to-br from-orange-500/10 to-red-500/10 border-orange-500/20">
-            <CardContent className="p-4 text-center">
-              <div className="text-2xl mb-1">💀</div>
-              <p className="text-2xl font-bold">{streakStats.longestBogeyStreak}</p>
+          <Card className="tint-score-bogey">
+            <CardContent className="p-md text-center">
+              <div className="text-2xl mb-xs">💀</div>
+              <p className="text-figure">{streakStats.longestBogeyStreak}</p>
               <p className="text-sm text-muted-foreground">Longest Bogey Streak</p>
               <p className="text-xs text-muted-foreground">holes at bogey+</p>
             </CardContent>
           </Card>
           <Card>
-            <CardContent className="p-4 text-center">
-              <div className="text-2xl mb-1">🎯</div>
-              <p className="text-2xl font-bold">{stats.uniqueHolesPlayed}</p>
+            <CardContent className="p-md text-center">
+              <div className="text-2xl mb-xs">🎯</div>
+              <p className="text-figure">{stats.uniqueHolesPlayed}</p>
               <p className="text-sm text-muted-foreground">Unique Holes</p>
               <p className="text-xs text-muted-foreground">holes you&apos;ve played</p>
             </CardContent>
@@ -407,37 +407,37 @@ export function FrivolitiesSection({ stats }: FrivolitiesSectionProps) {
         title="Global Golf"
         description="Your worldwide golfing footprint"
       >
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <Card className="bg-gradient-to-br from-blue-500/10 to-cyan-500/10 border-blue-500/20">
-            <CardContent className="p-4 text-center">
-              <div className="text-3xl mb-2">🏌️</div>
-              <p className="text-3xl font-bold">{stats.uniqueCoursesPlayed}</p>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-md">
+          <Card className="tint-info">
+            <CardContent className="p-md text-center">
+              <div className="text-3xl mb-sm">🏌️</div>
+              <p className="text-figure-lg">{stats.uniqueCoursesPlayed}</p>
               <p className="text-sm text-muted-foreground">Courses Played</p>
-              <p className="text-xs text-muted-foreground mt-1">
+              <p className="text-xs text-muted-foreground mt-xs">
                 {worldCoursesPercentage}% of world&apos;s ~{formatNumber(WORLD_GOLF_COURSES)}{" "}
                 courses
               </p>
             </CardContent>
           </Card>
-          <Card className="bg-gradient-to-br from-green-500/10 to-teal-500/10 border-green-500/20">
-            <CardContent className="p-4 text-center">
-              <div className="text-3xl mb-2">🌐</div>
-              <p className="text-3xl font-bold">{stats.countriesPlayed}</p>
+          <Card className="tint-success">
+            <CardContent className="p-md text-center">
+              <div className="text-3xl mb-sm">🌐</div>
+              <p className="text-figure-lg">{stats.countriesPlayed}</p>
               <p className="text-sm text-muted-foreground">Countries Visited</p>
-              <p className="text-xs text-muted-foreground mt-1">
+              <p className="text-xs text-muted-foreground mt-xs">
                 {((stats.countriesPlayed / 195) * 100).toFixed(1)}% of world&apos;s
                 nations
               </p>
             </CardContent>
           </Card>
-          <Card className="bg-gradient-to-br from-purple-500/10 to-pink-500/10 border-purple-500/20">
-            <CardContent className="p-4 text-center">
-              <div className="text-3xl mb-2">📏</div>
-              <p className="text-3xl font-bold">
+          <Card className="tint-primary">
+            <CardContent className="p-md text-center">
+              <div className="text-3xl mb-sm">📏</div>
+              <p className="text-figure-lg">
                 {formatDistance(holeByHoleStats.totalDistancePlayed)}
               </p>
               <p className="text-sm text-muted-foreground">Total Distance</p>
-              <p className="text-xs text-muted-foreground mt-1">
+              <p className="text-xs text-muted-foreground mt-xs">
                 walked to every shot
               </p>
             </CardContent>
@@ -453,10 +453,10 @@ export function FrivolitiesSection({ stats }: FrivolitiesSectionProps) {
         title="Stroke Census"
         description="How your strokes break down by score type"
       >
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-lg">
           {/* Score Distribution */}
           <Card>
-            <CardHeader className="pb-2">
+            <CardHeader className="pb-sm">
               <CardTitle className="text-base">Score Distribution</CardTitle>
             </CardHeader>
             <CardContent>
@@ -466,11 +466,11 @@ export function FrivolitiesSection({ stats }: FrivolitiesSectionProps) {
 
           {/* Strokes by Par Type */}
           <Card>
-            <CardHeader className="pb-2">
+            <CardHeader className="pb-sm">
               <CardTitle className="text-base">Strokes by Par Type</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4 py-2">
+              <div className="space-y-md py-sm">
                 {stats.strokesByParType.map((parType) => {
                   const overPar = parType.avgStrokes - parType.parType;
                   const total = stats.strokesByParType.reduce(
@@ -481,11 +481,11 @@ export function FrivolitiesSection({ stats }: FrivolitiesSectionProps) {
                     total > 0 ? (parType.totalStrokes / total) * 100 : 0;
 
                   return (
-                    <div key={parType.parType} className="space-y-2">
+                    <div key={parType.parType} className="space-y-sm">
                       <div className="flex justify-between items-center">
                         <div>
                           <span className="font-medium">Par {parType.parType}</span>
-                          <span className="text-muted-foreground text-sm ml-2">
+                          <span className="text-muted-foreground text-sm ml-sm">
                             ({parType.holeCount} holes)
                           </span>
                         </div>
@@ -493,7 +493,7 @@ export function FrivolitiesSection({ stats }: FrivolitiesSectionProps) {
                           <span className="font-bold">
                             {parType.avgStrokes.toFixed(2)}
                           </span>
-                          <span className="text-muted-foreground text-sm ml-1">
+                          <span className="text-muted-foreground text-sm ml-xs">
                             avg ({overPar > 0 ? "+" : ""}
                             {overPar.toFixed(1)})
                           </span>
@@ -523,7 +523,7 @@ export function FrivolitiesSection({ stats }: FrivolitiesSectionProps) {
         description="Which day do you hit the most strokes?"
       >
         <Card>
-          <CardContent className="pt-6">
+          <CardContent className="pt-lg">
             <StrokesByDayChart data={stats.strokesByDayOfWeek} />
           </CardContent>
         </Card>

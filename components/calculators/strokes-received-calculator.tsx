@@ -36,20 +36,20 @@ export function StrokesReceivedCalculator() {
   const totalStrokes = strokesPerHole.reduce((sum, s) => sum + s, 0);
 
   const result = values.courseHandicap !== null && (
-    <div className="space-y-4">
+    <div className="space-y-md">
       <div className="flex items-center justify-between">
         <P className="font-medium">Total Strokes:</P>
-        <span className="text-2xl font-bold text-primary">{totalStrokes}</span>
+        <span className="text-figure text-primary">{totalStrokes}</span>
       </div>
 
       {/* Visual hole grid */}
-      <div className="grid grid-cols-9 gap-1 sm:gap-2">
+      <div className="grid grid-cols-9 gap-xs sm:gap-sm">
         {/* Front 9 */}
         {strokesPerHole.slice(0, 9).map((strokes, idx) => (
           <div key={idx} className="text-center">
             <Small className="text-muted-foreground">{idx + 1}</Small>
             <div
-              className={`p-1 sm:p-2 rounded ${
+              className={`p-xs sm:p-sm rounded ${
                 strokes > 0 ? "bg-primary/20" : "bg-muted/50"
               }`}
             >
@@ -58,13 +58,13 @@ export function StrokesReceivedCalculator() {
           </div>
         ))}
       </div>
-      <div className="grid grid-cols-9 gap-1 sm:gap-2">
+      <div className="grid grid-cols-9 gap-xs sm:gap-sm">
         {/* Back 9 */}
         {strokesPerHole.slice(9).map((strokes, idx) => (
           <div key={idx + 9} className="text-center">
             <Small className="text-muted-foreground">{idx + 10}</Small>
             <div
-              className={`p-1 sm:p-2 rounded ${
+              className={`p-xs sm:p-sm rounded ${
                 strokes > 0 ? "bg-primary/20" : "bg-muted/50"
               }`}
             >
@@ -75,7 +75,7 @@ export function StrokesReceivedCalculator() {
       </div>
 
       {/* Summary badges */}
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-wrap gap-sm">
         {strokesPerHole.filter((s) => s > 0).length > 0 && (
           <Badge variant="secondary">
             {strokesPerHole.filter((s) => s > 0).length} holes with strokes
@@ -91,15 +91,15 @@ export function StrokesReceivedCalculator() {
   );
 
   const explanation = (
-    <div className="space-y-3">
+    <div className="space-y-sm">
       <Muted>
         Handicap strokes are distributed across holes based on their difficulty
         rating (Hole Handicap). Lower hole handicap = harder hole = receives
         strokes first.
       </Muted>
-      <div className="bg-muted/50 rounded-lg p-3 text-sm space-y-2">
+      <div className="surface-muted p-sm text-sm space-y-sm">
         <P className="font-medium">Distribution Rules:</P>
-        <ul className="list-disc pl-4 space-y-1 text-muted-foreground">
+        <ul className="list-disc pl-md space-y-xs text-muted-foreground">
           <li>
             Strokes are distributed one per hole, starting with the hardest (HCP
             1)
@@ -119,8 +119,8 @@ export function StrokesReceivedCalculator() {
 
   return (
     <CalculatorCard meta={meta} result={result} explanation={explanation}>
-      <div className="space-y-4">
-        <div className="space-y-2">
+      <div className="space-y-md">
+        <div className="space-y-sm">
           <Label htmlFor="courseHandicap-strokes">Course Handicap</Label>
           <Input
             id="courseHandicap-strokes"

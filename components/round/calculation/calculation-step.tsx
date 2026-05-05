@@ -53,26 +53,26 @@ export function CalculationStep({
     <section
       ref={ref}
       className={cn(
-        "space-y-4 transition-all duration-500",
+        "space-y-md transition-all duration-500",
         isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4",
         className
       )}
     >
-      <div className="flex items-start gap-4">
+      <div className="flex items-start gap-md">
         <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-semibold">
           {stepNumber}
         </div>
         <div className="flex-1">
           <H3 className="mt-0">{title}</H3>
-          {description && <Muted className="mt-1">{description}</Muted>}
+          {description && <Muted className="mt-xs">{description}</Muted>}
         </div>
       </div>
 
-      <div className="ml-12">{children}</div>
+      <div className="ml-2xl">{children}</div>
 
       {learnMoreContent && (
-        <Collapsible open={isOpen} onOpenChange={setIsOpen} className="ml-12">
-          <CollapsibleTrigger className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors">
+        <Collapsible open={isOpen} onOpenChange={setIsOpen} className="ml-2xl">
+          <CollapsibleTrigger className="flex items-center gap-sm text-sm text-muted-foreground hover:text-foreground transition-colors">
             <ChevronDown
               className={cn(
                 "w-4 h-4 transition-transform duration-200",
@@ -81,7 +81,7 @@ export function CalculationStep({
             />
             {isOpen ? "Hide" : "Learn more about"} this calculation
           </CollapsibleTrigger>
-          <CollapsibleContent className="mt-4 space-y-2 animate-in slide-in-from-top-2 duration-200">
+          <CollapsibleContent className="mt-md space-y-sm animate-in slide-in-from-top-2 duration-200">
             {learnMoreContent}
           </CollapsibleContent>
         </Collapsible>

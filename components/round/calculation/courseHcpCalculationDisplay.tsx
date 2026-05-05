@@ -20,12 +20,12 @@ const CourseHandicapCalculationDisplay = () => {
     courseHandicapCalculation,
   } = useRoundCalculationContext();
   return (
-    <section className="space-y-4">
+    <section className="space-y-md">
       <div className="flex flex-row items-center">
         <H3>Course Handicap</H3>
       </div>
       <Muted>Enter 18 hole values</Muted>
-      <div className="grid grid-cols-1 md:grid-cols-5 gap-4 md:flex items-end">
+      <div className="grid grid-cols-1 md:grid-cols-5 gap-md md:flex items-end">
         <div>
           <Label>Handicap Index</Label>
           <Input
@@ -70,7 +70,7 @@ const CourseHandicapCalculationDisplay = () => {
             }}
           />
         </div>
-        <div className="flex items-center space-x-2">
+        <div className="flex items-center space-x-sm">
           <Label>18 hole hcp</Label>
           <Switch
             id="holes"
@@ -83,7 +83,7 @@ const CourseHandicapCalculationDisplay = () => {
           <Label>9 hole hcp</Label>
         </div>
       </div>
-      <Muted className="mb-2">
+      <Muted className="mb-sm">
         {isNineHoles ? (
           <span>
             Course Handicap 9 holes = handicap index &#247; 2 &times; (slope
@@ -96,13 +96,13 @@ const CourseHandicapCalculationDisplay = () => {
           </span>
         )}
       </Muted>
-      <div className="flex flex-row items-center mt-4">
+      <div className="flex flex-row items-center mt-md">
         <P>Course Handicap =</P>
-        <Muted className="mx-2">
+        <Muted className="mx-sm">
           {handicapIndex} + ({slope} &#247; 113) + ({rating} - {par})
         </Muted>
         <P className="mt-0!">=</P>
-        <u className="ml-2 text-primary font-bold">
+        <u className="ml-sm text-primary font-bold">
           {Math.round(courseHandicapCalculation)}
         </u>
       </div>

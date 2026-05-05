@@ -27,6 +27,7 @@ import { FAQJsonLd } from "@/components/seo/json-ld";
 import { unstable_cache } from "next/cache";
 import { env } from "@/env";
 import type { Database } from "@/types/supabase";
+import { H1, H2, H3 } from "@/components/ui/typography";
 
 // Create a simple Supabase client for public data that doesn't use cookies
 // This is safe for unstable_cache since it doesn't depend on dynamic request data
@@ -106,29 +107,29 @@ export default async function Landing() {
   return (
     <div className="min-h-screen bg-background">
       {/* Hero Section */}
-      <section className="relative py-10 lg:py-16">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+      <section className="relative py-2xl lg:py-3xl">
+        <div className="container mx-auto px-md sm:px-lg lg:px-xl">
           <div className="text-center max-w-4xl mx-auto">
             <Badge
               variant="secondary"
-              className="mb-6 dark:bg-primary dark:text-primary-foreground"
+              className="mb-lg dark:bg-primary dark:text-primary-foreground"
             >
               Trusted by golfers worldwide
             </Badge>
-            <h1 className="text-4xl md:text-6xl font-bold text-balance mb-6">
+            <H1 className="text-figure-xl md:text-figure-3xl text-balance mb-lg">
               Track Your <span className="text-primary">Golf Handicap</span>{" "}
               with Data-Driven Insights
-            </h1>
-            <p className="text-xl text-muted-foreground text-pretty mb-8 max-w-2xl mx-auto">
+            </H1>
+            <p className="text-xl text-muted-foreground text-pretty mb-xl max-w-2xl mx-auto">
               Log every golf round, calculate your USGA handicap index
               automatically, and understand the score differential calculations
               behind the scenes.
             </p>
-            <div className="flex flex-col md:flex-row gap-4 justify-center">
+            <div className="flex flex-col md:flex-row gap-md justify-center">
               <Link href="/signup">
-                <Button size="lg" className="text-lg px-8">
+                <Button size="lg" className="text-lg px-xl">
                   Start Free Forever
-                  <ArrowRight className="ml-2 h-5 w-5" />
+                  <ArrowRight className="ml-sm h-5 w-5" />
                 </Button>
               </Link>
 
@@ -136,13 +137,13 @@ export default async function Landing() {
                 <Button
                   variant="outline"
                   size="lg"
-                  className="text-lg px-8 bg-transparent"
+                  className="text-lg px-xl bg-transparent"
                 >
                   Why Handicappin&apos;?
                 </Button>
               </Link>
             </div>
-            <p className="text-sm text-muted-foreground mt-4">
+            <p className="text-sm text-muted-foreground mt-md">
               No credit card required • free <strong>forever</strong> for first
               100 users
             </p>
@@ -150,29 +151,29 @@ export default async function Landing() {
         </div>
 
         {/* Hero Image Placeholder */}
-        <div className="mt-16 container mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="mt-3xl container mx-auto px-md sm:px-lg lg:px-xl">
           <div className="relative max-w-5xl mx-auto">
             <ThemeImage />
           </div>
         </div>
       </section>
       {/* Features Section */}
-      <section id="features" className="py-20 bg-muted/30">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">
+      <section id="features" className="py-4xl bg-muted/30">
+        <div className="container mx-auto px-md sm:px-lg lg:px-xl">
+          <div className="text-center mb-3xl">
+            <H2 className="text-3xl md:text-figure-xl mb-md pb-0">
               Professional-Grade Tools Made Accessible
-            </h2>
+            </H2>
             <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
               Everything you need to improve your game, all in one place.
             </p>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-8">
+          <div className="grid md:grid-cols-3 gap-xl">
             <Card className="border-0 shadow-lg dark:bg-primary/10">
               <CardHeader>
-                <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mb-4">
-                  <BarChart3 className="h-6 w-6 text-primary" />
+                <div className="icon-chip-primary mb-md">
+                  <BarChart3 className="h-6 w-6" />
                 </div>
                 <CardTitle>Round Logging</CardTitle>
                 <CardDescription>
@@ -182,16 +183,16 @@ export default async function Landing() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <ul className="space-y-2 text-sm text-muted-foreground">
-                  <li className="flex items-center gap-2">
+                <ul className="space-y-sm text-sm text-muted-foreground">
+                  <li className="flex items-center gap-sm">
                     <CheckCircle className="h-4 w-4 min-h-4 min-w-4 flex-shrink-0 text-primary" />
                     Verified course data
                   </li>
-                  <li className="flex items-center gap-2">
+                  <li className="flex items-center gap-sm">
                     <CheckCircle className="h-4 w-4 min-h-4 min-w-4 flex-shrink-0 text-primary" />
                     Scorecard created with user experience in mind
                   </li>
-                  <li className="flex items-center gap-2">
+                  <li className="flex items-center gap-sm">
                     <CheckCircle className="h-4 w-4 min-h-4 min-w-4 flex-shrink-0 text-primary" />
                     Contribute to the community with updated course data
                   </li>
@@ -201,8 +202,8 @@ export default async function Landing() {
 
             <Card className="border-0 shadow-lg dark:bg-primary/10">
               <CardHeader>
-                <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mb-4">
-                  <Target className="h-6 w-6 text-primary" />
+                <div className="icon-chip-primary mb-md">
+                  <Target className="h-6 w-6" />
                 </div>
                 <CardTitle>Handicap Calculation</CardTitle>
                 <CardDescription>
@@ -211,16 +212,16 @@ export default async function Landing() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <ul className="space-y-2 text-sm text-muted-foreground">
-                  <li className="flex items-center gap-2">
+                <ul className="space-y-sm text-sm text-muted-foreground">
+                  <li className="flex items-center gap-sm">
                     <CheckCircle className="h-4 w-4 min-h-4 min-w-4 flex-shrink-0 text-primary" />
                     USGA compliance
                   </li>
-                  <li className="flex items-center gap-2">
+                  <li className="flex items-center gap-sm">
                     <CheckCircle className="h-4 w-4 min-h-4 min-w-4 flex-shrink-0 text-primary" />
                     Automatic updates
                   </li>
-                  <li className="flex items-center gap-2">
+                  <li className="flex items-center gap-sm">
                     <CheckCircle className="h-4 w-4 min-h-4 min-w-4 flex-shrink-0 text-primary" />
                     Historical tracking
                   </li>
@@ -230,8 +231,8 @@ export default async function Landing() {
 
             <Card className="border-0 shadow-lg dark:bg-primary/10">
               <CardHeader>
-                <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mb-4">
-                  <TrendingUp className="h-6 w-6 text-primary" />
+                <div className="icon-chip-primary mb-md">
+                  <TrendingUp className="h-6 w-6" />
                 </div>
                 <CardTitle>Calculators</CardTitle>
                 <CardDescription>
@@ -241,16 +242,16 @@ export default async function Landing() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <ul className="space-y-2 text-sm text-muted-foreground">
-                  <li className="flex items-center gap-2">
+                <ul className="space-y-sm text-sm text-muted-foreground">
+                  <li className="flex items-center gap-sm">
                     <CheckCircle className="h-4 w-4 min-h-4 min-w-4 flex-shrink-0 text-primary" />
                     Handicap calculation
                   </li>
-                  <li className="flex items-center gap-2">
+                  <li className="flex items-center gap-sm">
                     <CheckCircle className="h-4 w-4 min-h-4 min-w-4 flex-shrink-0 text-primary" />
                     Course rating and slope rating
                   </li>
-                  <li className="flex items-center gap-2">
+                  <li className="flex items-center gap-sm">
                     <CheckCircle className="h-4 w-4 min-h-4 min-w-4 flex-shrink-0 text-primary" />
                     Round scores
                   </li>
@@ -261,23 +262,23 @@ export default async function Landing() {
         </div>
       </section>
       {/* Stats Section */}
-      <section className="py-20">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid md:grid-cols-3 gap-8 text-center">
+      <section className="py-4xl">
+        <div className="container mx-auto px-md sm:px-lg lg:px-xl">
+          <div className="grid md:grid-cols-3 gap-xl text-center">
             <div>
-              <div className="text-4xl font-bold text-primary mb-2">
+              <div className="text-figure-xl text-primary mb-sm">
                 {usersCount > 0 ? usersCount : "10"}+
               </div>
               <div className="text-muted-foreground">Active Users</div>
             </div>
             <div>
-              <div className="text-4xl font-bold text-primary mb-2">
+              <div className="text-figure-xl text-primary mb-sm">
                 {roundsCount}+
               </div>
               <div className="text-muted-foreground">Rounds Logged</div>
             </div>
             <div>
-              <div className="text-4xl font-bold text-primary mb-2">
+              <div className="text-figure-xl text-primary mb-sm">
                 {coursesCount}+
               </div>
               <div className="text-muted-foreground">Courses supported</div>
@@ -287,19 +288,19 @@ export default async function Landing() {
       </section>
 
       {/* Pricing */}
-      <section id="pricing" className="py-20 bg-muted/30">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">
+      <section id="pricing" className="py-4xl bg-muted/30">
+        <div className="container mx-auto px-md sm:px-lg lg:px-xl">
+          <div className="text-center mb-3xl">
+            <H2 className="text-3xl md:text-figure-xl mb-md pb-0">
               Simple, transparent pricing
-            </h2>
+            </H2>
             <p className="text-xl text-muted-foreground">
               Choose the plan that fits your golfing needs. First 100 users get
               a lifetime free base-plan subscription.
             </p>
           </div>
 
-          <div className="grid md:grid-cols-2 xl:grid-cols-4 gap-8 max-w-7xl mx-auto">
+          <div className="grid md:grid-cols-2 xl:grid-cols-4 gap-xl max-w-7xl mx-auto">
             <Link href="/signup" className="block">
               <PricingCard
                 plan="free"
@@ -391,15 +392,15 @@ export default async function Landing() {
       </section>
 
       {/* FAQ Section */}
-      <section className="py-20">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="text-3xl md:text-4xl font-bold mb-8 text-center">
+      <section className="py-4xl">
+        <div className="container mx-auto px-md sm:px-lg lg:px-xl">
+          <H2 className="text-3xl md:text-figure-xl mb-xl pb-0 text-center">
             Frequently Asked Questions
-          </h2>
-          <div className="max-w-3xl mx-auto space-y-6">
+          </H2>
+          <div className="max-w-3xl mx-auto space-y-lg">
             {faqs.map((faq, faqIndex) => (
-              <div key={faqIndex} className="border-b pb-6">
-                <h3 className="text-xl font-semibold mb-2">{faq.question}</h3>
+              <div key={faqIndex} className="border-b pb-lg">
+                <H3 className="text-xl font-semibold mb-sm">{faq.question}</H3>
                 <p className="text-muted-foreground">{faq.answer}</p>
               </div>
             ))}
@@ -409,22 +410,22 @@ export default async function Landing() {
       </section>
 
       {/* Final CTA Section */}
-      <section className="py-20 bg-gradient-to-r from-primary/5 to-primary/20">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-3xl md:text-4xl font-bold mb-4">
+      <section className="py-4xl bg-gradient-to-r from-primary/5 to-primary/20">
+        <div className="container mx-auto px-md sm:px-lg lg:px-xl text-center">
+          <H2 className="text-3xl md:text-figure-xl mb-md pb-0">
             Ready to improve your golf game?
-          </h2>
-          <p className="text-xl mb-8 opacity-90 max-w-2xl mx-auto">
+          </H2>
+          <p className="text-xl mb-xl opacity-90 max-w-2xl mx-auto">
             Join a community of golfers who are already using data to lower
             their scores and improve their game.
           </p>
           <Link href="/signup">
-            <Button size="lg" variant="default" className="text-lg px-8">
+            <Button size="lg" variant="default" className="text-lg px-xl">
               Start Your Free Trial
-              <ArrowRight className="ml-2 h-5 w-5" />
+              <ArrowRight className="ml-sm h-5 w-5" />
             </Button>
           </Link>
-          <p className="text-sm mt-4 opacity-75">
+          <p className="text-sm mt-md opacity-75">
             Free <strong>forever</strong> for first 100 users • No credit card
             required • Cancel anytime
           </p>

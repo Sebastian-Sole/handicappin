@@ -9,14 +9,8 @@ import {
 } from "../ui/card";
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
-import { calculateScoreDifferential } from "@/lib/handicap";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "../ui/tooltip";
-import { InfoIcon } from "lucide-react";
+import { calculateScoreDifferential } from "@handicappin/handicap-core";
+import { WhatsThis } from "../ui/whats-this";
 
 const ScoreDifferentialCalculator = () => {
   const [adjustedGrossScore, setAdjustedGrossScore] = useState(0);
@@ -28,38 +22,26 @@ const ScoreDifferentialCalculator = () => {
   }, [adjustedGrossScore, slopeRating, courseRating]);
 
   return (
-    <div className="container px-4 lg:px-6">
+    <div className="container px-md lg:px-lg">
       <Card className="mx-auto max-w-[600px]">
         <CardHeader>
           <span className="flex flex-row justify-between items-center">
-            <CardTitle className="sm:text-2xl text-lg font-bold">
+            <CardTitle className="text-heading-4 sm:text-heading-3">
               Score Differential
             </CardTitle>
 
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger className="flex flex-row text-gray-500 items-center">
-                  <InfoIcon
-                    className={`h-6 w-6 text-gray-500 dark:text-gray-400 mr-2`}
-                  />{" "}
-                  <span className="sm:block hidden">Whats this?</span>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p className="max-w-[15em]">
-                    A <b>Score Differential</b> measures the performance of a
-                    round in relation to the relative difficulty of the course
-                    that was played and their handicap index. It is used to
-                    calculate a player&apos;s handicap index.
-                  </p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
+            <WhatsThis>
+              A <b>Score Differential</b> measures the performance of a round
+              in relation to the relative difficulty of the course that was
+              played and their handicap index. It is used to calculate a
+              player&apos;s handicap index.
+            </WhatsThis>
           </span>
 
           <CardDescription>Enter the 18 hole score you shot</CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
+        <CardContent className="space-y-md">
+          <div className="space-y-sm">
             <Label>Adjusted Gross Score</Label>
             <Input
               id="ags"
@@ -70,7 +52,7 @@ const ScoreDifferentialCalculator = () => {
               onChange={(e) => setAdjustedGrossScore(Number(e.target.value))}
             />
           </div>
-          <div className="space-y-2">
+          <div className="space-y-sm">
             <Label>Slope Rating</Label>
             <Input
               id="slopeRating"
@@ -80,7 +62,7 @@ const ScoreDifferentialCalculator = () => {
               onChange={(e) => setSlopeRating(Number(e.target.value))}
             />
           </div>
-          <div className="space-y-2">
+          <div className="space-y-sm">
             <Label>Course Rating</Label>
             <Input
               id="courseRating"
@@ -90,7 +72,7 @@ const ScoreDifferentialCalculator = () => {
               onChange={(e) => setCourseRating(Number(e.target.value))}
             />
           </div>
-          <div className="space-y-2">
+          <div className="space-y-sm">
             <Label htmlFor="score">Score Differential</Label>
             <Input type="number" disabled value={scoreDifferential} />
           </div>

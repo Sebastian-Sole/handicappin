@@ -105,8 +105,8 @@ const ScoreBarChart = ({ scores, className }: ScoreBarChartProps) => {
                     formatter={(value, _name, props) => {
                       const color = props.payload.fill || colors.barActive;
                       return (
-                        <div className="flex w-full items-center justify-between gap-2">
-                          <div className="flex items-center gap-2">
+                        <div className="flex w-full items-center justify-between gap-sm">
+                          <div className="flex items-center gap-sm">
                             <div
                               className="h-2.5 w-2.5 shrink-0 rounded-[2px]"
                               style={{ backgroundColor: color }}
@@ -151,20 +151,20 @@ const ScoreBarChart = ({ scores, className }: ScoreBarChartProps) => {
         </div>
       )}
       {className === "hidden sm:block" && scores.length !== 0 && (
-        <div className={`flex justify-center mt-4 sm:hidden p-8`}>
+        <div className={`flex justify-center mt-md sm:hidden p-xl`}>
           <Muted className="flex items-center">
-            <RefreshCcw className="mr-2" />
+            <RefreshCcw className="mr-sm" />
             Rotate your device to view the chart
           </Muted>
         </div>
       )}
 
       {scores.length === 0 && (
-        <div className="flex items-center justify-center h-64 xl:h-[90%] border border-gray-100 flex-col">
+        <div className="flex items-center justify-center h-64 xl:h-[90%] border border-muted flex-col">
           <H4>No rounds found</H4>
           <Link
             href={`/rounds/add`}
-            className="text-primary underline mt-4"
+            className="text-primary underline mt-md"
             prefetch={false}
           >
             <Button variant={"secondary"}>Add a round here</Button>
