@@ -81,7 +81,7 @@ export function Lead({ children, className }: TypographyProps) {
 
 export function Large({ children, className }: TypographyProps) {
   return (
-    <span className={cn("text-body text-lg font-semibold", className)}>
+    <span className={cn("inline-block text-body text-lg font-semibold", className)}>
       {children}
     </span>
   );
