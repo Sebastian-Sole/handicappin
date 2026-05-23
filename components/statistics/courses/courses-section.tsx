@@ -1,5 +1,7 @@
 "use client";
 
+import Link from "next/link";
+import { ChevronRight } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import {
@@ -278,13 +280,23 @@ export function CoursesSection({
               </TableHeader>
               <TableBody>
                 {courses.map((course) => (
-                  <TableRow key={course.courseId}>
+                  <TableRow
+                    key={course.courseId}
+                    className="hover:bg-muted/50 transition-colors"
+                  >
                     <TableCell>
-                      <span className="mr-sm">{getFlagEmoji(course.country)}</span>
-                      {course.courseName}
-                      <span className="text-muted-foreground text-xs ml-sm hidden sm:inline">
-                        {course.city}
-                      </span>
+                      <Link
+                        href={`/statistics/courses/${course.courseId}`}
+                        className="inline-flex items-center gap-xs hover:underline underline-offset-2"
+                        aria-label={`View detail for ${course.courseName}`}
+                      >
+                        <span>{getFlagEmoji(course.country)}</span>
+                        <span className="font-medium">{course.courseName}</span>
+                        <span className="text-muted-foreground text-xs hidden sm:inline">
+                          {course.city}
+                        </span>
+                        <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                      </Link>
                     </TableCell>
                     <TableCell className="text-right">{course.roundCount}</TableCell>
                     <TableCell className="text-right">
