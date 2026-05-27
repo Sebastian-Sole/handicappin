@@ -67,7 +67,7 @@ export function UsageLimitAlert({
       <div className="flex flex-col gap-md md:flex-row md:items-center md:justify-between">
         <div className="flex-1 space-y-sm">
           <div className="flex items-start gap-sm">
-            <div className={cn("mt-0.5", styles.icon)}>
+            <div className={cn("mt-xs", styles.icon)}>
               {variant === "critical" ? (
                 <AlertCircle className="h-5 w-5" />
               ) : variant === "warning" ? (
@@ -84,7 +84,7 @@ export function UsageLimitAlert({
                   ? "Approaching your limit"
                   : "Usage Limit"}
               </H3>
-              <p className="text-pretty text-sm text-muted-foreground">
+              <p className="text-pretty text-body-sm text-muted-foreground">
                 You have{" "}
                 <span className="font-semibold text-foreground">
                   {remaining} out of {total}
@@ -96,7 +96,7 @@ export function UsageLimitAlert({
 
           <div className="space-y-sm">
             <Progress value={percentage} className="h-2" />
-            <p className="text-xs text-muted-foreground">
+            <p className="text-meta text-muted-foreground">
               {percentage.toFixed(0)}% used
             </p>
           </div>
@@ -126,7 +126,7 @@ export function UsageLimitReachedView() {
         <H1 className="text-4xl md:text-figure-2xl mb-md text-balance">
           You&apos;ve reached your round limit
         </H1>
-        <p className="text-lg text-muted-foreground mb-xl text-pretty">
+        <p className="text-lead text-muted-foreground mb-xl text-pretty">
           You&apos;ve used all of your available rounds. Upgrade to continue
           tracking your golf game!
         </p>

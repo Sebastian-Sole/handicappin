@@ -69,7 +69,7 @@ export function SettingsTab() {
     <div className="space-y-lg">
       {/* Header */}
       <div>
-        <H2 className="text-2xl font-semibold mb-sm">Settings</H2>
+        <H2 className="text-heading-3 mb-sm">Settings</H2>
         <p className="text-muted-foreground">
           Manage your notifications and appearance preferences
         </p>
@@ -85,7 +85,7 @@ export function SettingsTab() {
 
       {/* Notifications Section */}
       <div className="surface p-lg">
-        <H3 className="text-xl font-semibold mb-md">Notifications</H3>
+        <H3 className="text-heading-4 mb-md">Notifications</H3>
         {isLoading ? (
           <div className="space-y-md">
             <div className="flex items-center justify-between animate-pulse">
@@ -99,9 +99,9 @@ export function SettingsTab() {
         ) : (
           <div className="space-y-md">
             <div className="flex items-center justify-between">
-              <div className="space-y-0.5">
+              <div className="space-y-xs">
                 <Label htmlFor="feature-updates">Feature Updates</Label>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-body-sm text-muted-foreground">
                   Receive emails about new features and improvements
                 </p>
               </div>
@@ -118,7 +118,7 @@ export function SettingsTab() {
 
       {/* Theme Section */}
       <div className="surface p-lg">
-        <H3 className="text-xl font-semibold mb-md">Appearance</H3>
+        <H3 className="text-heading-4 mb-md">Appearance</H3>
         <div className="space-y-md">
           <div className="space-y-sm">
             <Label>Theme</Label>
@@ -150,7 +150,7 @@ export function SettingsTab() {
                   }`}
                 >
                   <Sun className="h-6 w-6" />
-                  <span className="text-sm font-medium">Light</span>
+                  <span className="text-label-sm">Light</span>
                 </button>
 
                 {/* Dark Theme Button */}
@@ -163,7 +163,7 @@ export function SettingsTab() {
                   }`}
                 >
                   <Moon className="h-6 w-6" />
-                  <span className="text-sm font-medium">Dark</span>
+                  <span className="text-label-sm">Dark</span>
                 </button>
 
                 {/* System Theme Button */}
@@ -176,11 +176,11 @@ export function SettingsTab() {
                   }`}
                 >
                   <Monitor className="h-6 w-6" />
-                  <span className="text-sm font-medium">System</span>
+                  <span className="text-label-sm">System</span>
                 </button>
               </div>
             )}
-            <p className="text-sm text-muted-foreground">
+            <p className="text-body-sm text-muted-foreground">
               Choose how the app looks to you
             </p>
           </div>

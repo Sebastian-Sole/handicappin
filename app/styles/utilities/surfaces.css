@@ -35,6 +35,22 @@
 @utility max-w-4xl { max-width: var(--container-4xl) !important; }
 @utility max-w-5xl { max-width: var(--container-5xl) !important; }
 
+/* Mirror for `min-w-<t-shirt>` utilities. Same rationale as the
+ * `max-w-*` block above — registering named `--spacing-*` tokens makes
+ * Tailwind v4 resolve `min-w-<t-shirt>` against spacing instead of the
+ * intended `--container-*` scale, so we restore the container widths
+ * explicitly. Range mirrors `max-w-*` (xs..5xl) for parity.
+ */
+@utility min-w-xs { min-width: var(--container-xs) !important; }
+@utility min-w-sm { min-width: var(--container-sm) !important; }
+@utility min-w-md { min-width: var(--container-md) !important; }
+@utility min-w-lg { min-width: var(--container-lg) !important; }
+@utility min-w-xl { min-width: var(--container-xl) !important; }
+@utility min-w-2xl { min-width: var(--container-2xl) !important; }
+@utility min-w-3xl { min-width: var(--container-3xl) !important; }
+@utility min-w-4xl { min-width: var(--container-4xl) !important; }
+@utility min-w-5xl { min-width: var(--container-5xl) !important; }
+
 /* Base surface — card background with border and rounded corners. */
 @utility surface {
   background-color: var(--color-card);

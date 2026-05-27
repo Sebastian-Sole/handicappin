@@ -75,7 +75,7 @@ export function BillingTab({ access }: BillingTabProps) {
 
             {/* Lifetime users: no action needed */}
             {access.isLifetime && (
-              <div className="text-muted-foreground text-sm">
+              <div className="text-muted-foreground text-body-sm">
                 No subscription management needed
               </div>
             )}
@@ -202,7 +202,7 @@ function Feature({
           {title}
         </p>
         <p
-          className={`text-sm ${
+          className={`text-body-sm ${
             included ? "text-muted-foreground" : "text-muted-foreground/60"
           }`}
         >

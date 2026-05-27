@@ -1,5 +1,6 @@
 "use client";
 
+// Spacing skipped (no token equivalent): h-4/w-4 sizing.
 import { CheckCircle, AlertCircle, X, CircleAlert } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -48,15 +49,15 @@ export function FormFeedback({
       aria-live={type === "error" ? "assertive" : "polite"}
       aria-atomic="true"
       className={cn(
-        "relative w-full rounded-lg border p-4",
+        "relative w-full rounded-lg border p-md",
         containerStyles[type],
         className
       )}
     >
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-md">
         {icons[type]}
-        <div className={cn("flex-1 text-sm", textStyles[type])}>
-          {title && <strong className="block mb-1">{title}</strong>}
+        <div className={cn("flex-1 text-body-sm", textStyles[type])}>
+          {title && <strong className="block mb-xs">{title}</strong>}
           {message}
         </div>
         {onClose && (

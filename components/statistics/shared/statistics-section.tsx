@@ -1,5 +1,9 @@
 "use client";
 
+// Spacing skipped (no exact token equivalent): ml-14 (3.5rem) is a calculated
+// indentation matching w-10 (icon) + gap-md (1rem) = 3.5rem. Rounding to
+// ml-3xl (4rem) would misalign children with the icon column.
+
 import { cn } from "@/lib/utils";
 import { H3, Muted } from "@/components/ui/typography";
 import {
@@ -72,7 +76,7 @@ export function StatisticsSection({
 
       {learnMoreContent && (
         <Collapsible open={isOpen} onOpenChange={setIsOpen} className="ml-14">
-          <CollapsibleTrigger className="flex items-center gap-sm text-sm text-muted-foreground hover:text-foreground transition-colors">
+          <CollapsibleTrigger className="flex items-center gap-sm text-body-sm text-muted-foreground hover:text-foreground transition-colors">
             <ChevronDown
               className={cn(
                 "w-4 h-4 transition-transform duration-200",
@@ -82,7 +86,7 @@ export function StatisticsSection({
             {isOpen ? "Hide" : "Learn more"}
           </CollapsibleTrigger>
           <CollapsibleContent className="mt-md space-y-sm animate-in slide-in-from-top-2 duration-200">
-            <div className="text-sm text-muted-foreground surface-muted p-md">
+            <div className="text-body-sm text-muted-foreground surface-muted p-md">
               {learnMoreContent}
             </div>
           </CollapsibleContent>

@@ -310,7 +310,7 @@ export function AddCourseDialog({
             <DialogPage
               key={field.id}
               title={`Tee ${teeIndex + 1} of ${fields.length}${watchTees?.[teeIndex]?.name ? ` — ${watchTees[teeIndex].name}` : ""}`}
-              className="sm:max-w-[350px] md:max-w-[550px]"
+              className="sm:max-w-xs md:max-w-xl"
             >
               {errorMessage && teeIndex === fields.length - 1 && (
                 <FormFeedback

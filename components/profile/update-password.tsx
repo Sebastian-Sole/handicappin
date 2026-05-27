@@ -25,6 +25,7 @@ import { Alert, AlertDescription } from "../ui/alert";
 import { useRouter } from "next/navigation";
 import { FormFeedback } from "../ui/form-feedback";
 import { H1 } from "@/components/ui/typography";
+import { AuthFormShell } from "@/components/auth/auth-form-shell";
 import type { FeedbackState } from "@/types/feedback";
 
 interface UpdatePasswordProps {
@@ -105,7 +106,7 @@ const UpdatePassword = ({ email: initialEmail }: UpdatePasswordProps) => {
   };
 
   return (
-    <div className="mx-auto max-w-sm space-y-lg py-xl sm:min-w-[40%] min-h-full w-[90%]">
+    <AuthFormShell className="py-xl">
       <div className="space-y-sm text-left">
         <H1 className="text-figure-lg">Reset Password</H1>
         <CardDescription>
@@ -280,13 +281,13 @@ const UpdatePassword = ({ email: initialEmail }: UpdatePasswordProps) => {
         </Form>
 
         <Alert className="mt-md">
-          <AlertDescription className="text-xs">
+          <AlertDescription className="text-meta">
             <strong>Tip:</strong> Check your email for the 6-digit verification
             code. The code expires in 15 minutes.
           </AlertDescription>
         </Alert>
       </div>
-    </div>
+    </AuthFormShell>
   );
 };
 

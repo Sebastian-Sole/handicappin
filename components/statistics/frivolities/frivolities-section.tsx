@@ -40,7 +40,7 @@ export function FrivolitiesSection({ stats }: FrivolitiesSectionProps) {
         <CardContent className="p-2xl text-center text-muted-foreground">
           <div className="text-4xl mb-md">🎮</div>
           <p className="text-lg font-medium">No stroke data yet</p>
-          <p className="text-sm">Play some rounds to unlock fun statistics</p>
+          <p className="text-body-sm">Play some rounds to unlock fun statistics</p>
         </CardContent>
       </Card>
     );
@@ -121,28 +121,28 @@ export function FrivolitiesSection({ stats }: FrivolitiesSectionProps) {
             <CardContent className="p-md text-center">
               <div className="text-2xl mb-xs">🦅</div>
               <p className="text-figure">{stats.perfectHoles.eagles}</p>
-              <p className="text-sm text-muted-foreground">Eagles</p>
+              <p className="text-body-sm text-muted-foreground">Eagles</p>
             </CardContent>
           </Card>
           <Card className="tint-score-birdie">
             <CardContent className="p-md text-center">
               <div className="text-2xl mb-xs">🐦</div>
               <p className="text-figure">{stats.perfectHoles.birdies}</p>
-              <p className="text-sm text-muted-foreground">Birdies</p>
+              <p className="text-body-sm text-muted-foreground">Birdies</p>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="p-md text-center">
               <div className="text-2xl mb-xs">✓</div>
               <p className="text-figure">{stats.perfectHoles.pars}</p>
-              <p className="text-sm text-muted-foreground">Pars</p>
+              <p className="text-body-sm text-muted-foreground">Pars</p>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="p-md text-center">
               <div className="text-2xl mb-xs">🎯</div>
               <p className="text-figure">{perfectHolesPercentage}%</p>
-              <p className="text-sm text-muted-foreground">Par or Better</p>
+              <p className="text-body-sm text-muted-foreground">Par or Better</p>
             </CardContent>
           </Card>
         </div>
@@ -157,7 +157,7 @@ export function FrivolitiesSection({ stats }: FrivolitiesSectionProps) {
                     {stats.bogeyFreeRounds} Bogey-Free Round
                     {stats.bogeyFreeRounds !== 1 ? "s" : ""}
                   </p>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-body-sm text-muted-foreground">
                     Rounds where you scored par or better on every hole
                   </p>
                 </div>
@@ -190,14 +190,14 @@ export function FrivolitiesSection({ stats }: FrivolitiesSectionProps) {
                 <CardContent className="p-md">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm text-muted-foreground">Best Phase</p>
+                      <p className="text-body-sm text-muted-foreground">Best Phase</p>
                       <p className="text-figure-sm flex items-center gap-sm">
                         <span className="text-2xl">
                           {lunarPerformance.bestPhase.emoji}
                         </span>
                         {lunarPerformance.bestPhase.phaseName}
                       </p>
-                      <p className="text-xs text-muted-foreground">
+                      <p className="text-meta text-muted-foreground">
                         {lunarPerformance.bestPhase.roundCount} round
                         {lunarPerformance.bestPhase.roundCount !== 1 ? "s" : ""}
                       </p>
@@ -206,7 +206,7 @@ export function FrivolitiesSection({ stats }: FrivolitiesSectionProps) {
                       <p className="text-figure text-success">
                         {formatDifferential(lunarPerformance.bestPhase.avgDifferential)}
                       </p>
-                      <p className="text-xs text-muted-foreground">avg diff</p>
+                      <p className="text-meta text-muted-foreground">avg diff</p>
                     </div>
                   </div>
                 </CardContent>
@@ -215,7 +215,7 @@ export function FrivolitiesSection({ stats }: FrivolitiesSectionProps) {
                 <CardContent className="p-md">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm text-muted-foreground">
+                      <p className="text-body-sm text-muted-foreground">
                         Challenging Phase
                       </p>
                       <p className="text-figure-sm flex items-center gap-sm">
@@ -224,7 +224,7 @@ export function FrivolitiesSection({ stats }: FrivolitiesSectionProps) {
                         </span>
                         {lunarPerformance.worstPhase.phaseName}
                       </p>
-                      <p className="text-xs text-muted-foreground">
+                      <p className="text-meta text-muted-foreground">
                         {lunarPerformance.worstPhase.roundCount} round
                         {lunarPerformance.worstPhase.roundCount !== 1 ? "s" : ""}
                       </p>
@@ -233,7 +233,7 @@ export function FrivolitiesSection({ stats }: FrivolitiesSectionProps) {
                       <p className="text-figure text-warning">
                         {formatDifferential(lunarPerformance.worstPhase.avgDifferential)}
                       </p>
-                      <p className="text-xs text-muted-foreground">avg diff</p>
+                      <p className="text-meta text-muted-foreground">avg diff</p>
                     </div>
                   </div>
                 </CardContent>
@@ -257,13 +257,13 @@ export function FrivolitiesSection({ stats }: FrivolitiesSectionProps) {
                     )}
                   >
                     <div className="text-2xl">{phase.emoji}</div>
-                    <p className="text-xs font-medium truncate">{phase.phaseName}</p>
-                    <p className="text-xs text-muted-foreground">
+                    <p className="text-meta-strong truncate">{phase.phaseName}</p>
+                    <p className="text-meta text-muted-foreground">
                       {phase.roundCount > 0
                         ? formatDifferential(phase.avgDifferential)
                         : "--"}
                     </p>
-                    <p className="text-[10px] text-muted-foreground">
+                    <p className="text-meta text-muted-foreground">
                       {phase.roundCount} rnd{phase.roundCount !== 1 ? "s" : ""}
                     </p>
                   </div>
@@ -291,7 +291,7 @@ export function FrivolitiesSection({ stats }: FrivolitiesSectionProps) {
             <CardContent>
               <div className="flex items-center justify-center gap-xl py-md">
                 <div className="text-center">
-                  <p className="text-sm text-muted-foreground">Front 9</p>
+                  <p className="text-body-sm text-muted-foreground">Front 9</p>
                   <p
                     className={cn(
                       "text-figure-lg",
@@ -301,11 +301,11 @@ export function FrivolitiesSection({ stats }: FrivolitiesSectionProps) {
                     {frontBackComparison.front9.avgOverPar >= 0 ? "+" : ""}
                     {frontBackComparison.front9.avgOverPar.toFixed(2)}
                   </p>
-                  <p className="text-xs text-muted-foreground">avg over par</p>
+                  <p className="text-meta text-muted-foreground">avg over par</p>
                 </div>
                 <div className="text-2xl text-muted-foreground">vs</div>
                 <div className="text-center">
-                  <p className="text-sm text-muted-foreground">Back 9</p>
+                  <p className="text-body-sm text-muted-foreground">Back 9</p>
                   <p
                     className={cn(
                       "text-figure-lg",
@@ -315,11 +315,11 @@ export function FrivolitiesSection({ stats }: FrivolitiesSectionProps) {
                     {frontBackComparison.back9.avgOverPar >= 0 ? "+" : ""}
                     {frontBackComparison.back9.avgOverPar.toFixed(2)}
                   </p>
-                  <p className="text-xs text-muted-foreground">avg over par</p>
+                  <p className="text-meta text-muted-foreground">avg over par</p>
                 </div>
               </div>
               {frontBackComparison.betterHalf !== "even" && (
-                <p className="text-center text-sm text-muted-foreground">
+                <p className="text-center text-body-sm text-muted-foreground">
                   You play the{" "}
                   <span className="font-medium text-foreground">
                     {frontBackComparison.betterHalf === "front" ? "front" : "back"} 9
@@ -338,20 +338,20 @@ export function FrivolitiesSection({ stats }: FrivolitiesSectionProps) {
             <CardContent>
               <div className="grid grid-cols-2 gap-md py-sm">
                 <div className="text-center surface-muted p-sm">
-                  <p className="text-sm text-muted-foreground">Lucky Number</p>
+                  <p className="text-body-sm text-muted-foreground">Lucky Number</p>
                   <p className="text-figure-xl text-primary">
                     {holeByHoleStats.luckyNumber ?? "--"}
                   </p>
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-meta text-muted-foreground">
                     most common hole score
                   </p>
                 </div>
                 <div className="text-center surface-muted p-sm">
-                  <p className="text-sm text-muted-foreground">Signature Score</p>
+                  <p className="text-body-sm text-muted-foreground">Signature Score</p>
                   <p className="text-figure-xl text-primary">
                     {holeByHoleStats.signatureScore ?? "--"}
                   </p>
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-meta text-muted-foreground">
                     most common round total
                   </p>
                 </div>
@@ -366,8 +366,8 @@ export function FrivolitiesSection({ stats }: FrivolitiesSectionProps) {
             <CardContent className="p-md text-center">
               <div className="text-2xl mb-xs">🔥</div>
               <p className="text-figure">{streakStats.longestParStreak}</p>
-              <p className="text-sm text-muted-foreground">Longest Par Streak</p>
-              <p className="text-xs text-muted-foreground">holes at par or better</p>
+              <p className="text-body-sm text-muted-foreground">Longest Par Streak</p>
+              <p className="text-meta text-muted-foreground">holes at par or better</p>
             </CardContent>
           </Card>
           <Card>
@@ -376,24 +376,24 @@ export function FrivolitiesSection({ stats }: FrivolitiesSectionProps) {
               <p className="text-figure">
                 {streakStats.averageParStreak.toFixed(1)}
               </p>
-              <p className="text-sm text-muted-foreground">Avg Par Streak</p>
-              <p className="text-xs text-muted-foreground">consecutive holes</p>
+              <p className="text-body-sm text-muted-foreground">Avg Par Streak</p>
+              <p className="text-meta text-muted-foreground">consecutive holes</p>
             </CardContent>
           </Card>
           <Card className="tint-score-bogey">
             <CardContent className="p-md text-center">
               <div className="text-2xl mb-xs">💀</div>
               <p className="text-figure">{streakStats.longestBogeyStreak}</p>
-              <p className="text-sm text-muted-foreground">Longest Bogey Streak</p>
-              <p className="text-xs text-muted-foreground">holes at bogey+</p>
+              <p className="text-body-sm text-muted-foreground">Longest Bogey Streak</p>
+              <p className="text-meta text-muted-foreground">holes at bogey+</p>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="p-md text-center">
               <div className="text-2xl mb-xs">🎯</div>
               <p className="text-figure">{stats.uniqueHolesPlayed}</p>
-              <p className="text-sm text-muted-foreground">Unique Holes</p>
-              <p className="text-xs text-muted-foreground">holes you&apos;ve played</p>
+              <p className="text-body-sm text-muted-foreground">Unique Holes</p>
+              <p className="text-meta text-muted-foreground">holes you&apos;ve played</p>
             </CardContent>
           </Card>
         </div>
@@ -412,8 +412,8 @@ export function FrivolitiesSection({ stats }: FrivolitiesSectionProps) {
             <CardContent className="p-md text-center">
               <div className="text-3xl mb-sm">🏌️</div>
               <p className="text-figure-lg">{stats.uniqueCoursesPlayed}</p>
-              <p className="text-sm text-muted-foreground">Courses Played</p>
-              <p className="text-xs text-muted-foreground mt-xs">
+              <p className="text-body-sm text-muted-foreground">Courses Played</p>
+              <p className="text-meta text-muted-foreground mt-xs">
                 {worldCoursesPercentage}% of world&apos;s ~{formatNumber(WORLD_GOLF_COURSES)}{" "}
                 courses
               </p>
@@ -423,8 +423,8 @@ export function FrivolitiesSection({ stats }: FrivolitiesSectionProps) {
             <CardContent className="p-md text-center">
               <div className="text-3xl mb-sm">🌐</div>
               <p className="text-figure-lg">{stats.countriesPlayed}</p>
-              <p className="text-sm text-muted-foreground">Countries Visited</p>
-              <p className="text-xs text-muted-foreground mt-xs">
+              <p className="text-body-sm text-muted-foreground">Countries Visited</p>
+              <p className="text-meta text-muted-foreground mt-xs">
                 {((stats.countriesPlayed / 195) * 100).toFixed(1)}% of world&apos;s
                 nations
               </p>
@@ -436,8 +436,8 @@ export function FrivolitiesSection({ stats }: FrivolitiesSectionProps) {
               <p className="text-figure-lg">
                 {formatDistance(holeByHoleStats.totalDistancePlayed)}
               </p>
-              <p className="text-sm text-muted-foreground">Total Distance</p>
-              <p className="text-xs text-muted-foreground mt-xs">
+              <p className="text-body-sm text-muted-foreground">Total Distance</p>
+              <p className="text-meta text-muted-foreground mt-xs">
                 walked to every shot
               </p>
             </CardContent>
@@ -485,7 +485,7 @@ export function FrivolitiesSection({ stats }: FrivolitiesSectionProps) {
                       <div className="flex justify-between items-center">
                         <div>
                           <span className="font-medium">Par {parType.parType}</span>
-                          <span className="text-muted-foreground text-sm ml-sm">
+                          <span className="text-muted-foreground text-body-sm ml-sm">
                             ({parType.holeCount} holes)
                           </span>
                         </div>
@@ -493,7 +493,7 @@ export function FrivolitiesSection({ stats }: FrivolitiesSectionProps) {
                           <span className="font-bold">
                             {parType.avgStrokes.toFixed(2)}
                           </span>
-                          <span className="text-muted-foreground text-sm ml-xs">
+                          <span className="text-muted-foreground text-body-sm ml-xs">
                             avg ({overPar > 0 ? "+" : ""}
                             {overPar.toFixed(1)})
                           </span>

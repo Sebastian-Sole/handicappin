@@ -114,7 +114,7 @@ export function PricingCard({
           <Badge
             className={`${
               badge.variant ? badgeColors[badge.variant] : "bg-muted-foreground"
-            } text-primary-foreground px-md py-xs rounded-full text-sm font-semibold whitespace-nowrap min-h-6 flex items-center`}
+            } text-primary-foreground px-md py-xs rounded-full text-badge whitespace-nowrap min-h-6 flex items-center`}
           >
             {badge.text}
           </Badge>
@@ -130,7 +130,7 @@ export function PricingCard({
         )} */}
         <p className="text-muted-foreground mt-sm mb-md">{description}</p>
         {slotsRemaining !== undefined && slotsRemaining !== null && (
-          <p className="text-sm font-semibold text-destructive mb-sm">
+          <p className="text-badge text-destructive mb-sm">
             {slotsRemaining > 0
               ? `${slotsRemaining} slot${slotsRemaining !== 1 ? "s" : ""} left!`
               : "All slots claimed"}
@@ -156,7 +156,7 @@ export function PricingCard({
             </span>
           </div>
           {costComparison && (
-            <p className="text-xs text-muted-foreground mt-xs italic">
+            <p className="text-meta text-muted-foreground mt-xs italic">
               {costComparison}
             </p>
           )}

@@ -214,7 +214,7 @@ export function VerifySessionContent({
             <p className="text-muted-foreground mb-sm">
               Attempt {attemptCount + 1} of {MAX_RETRY_ATTEMPTS}
             </p>
-            <p className="text-sm text-muted-foreground mb-lg">
+            <p className="text-body-sm text-muted-foreground mb-lg">
               Having trouble verifying your session. Trying again...
             </p>
             <div className="flex justify-center">
@@ -258,7 +258,7 @@ export function VerifySessionContent({
             <p className="text-muted-foreground mb-sm">
               We encountered an error while verifying your session.
             </p>
-            <p className="text-sm text-destructive mb-lg">{errorMessage}</p>
+            <p className="text-body-sm text-destructive mb-lg">{errorMessage}</p>
             <div className="space-y-sm">
               <button
                 onClick={() => {
@@ -282,7 +282,7 @@ export function VerifySessionContent({
 
       {/* Debug Info (only in development) */}
       {process.env.NODE_ENV === "development" && (
-        <div className="mt-xl p-md bg-muted rounded text-xs text-left">
+        <div className="mt-xl p-md bg-muted rounded text-meta text-left">
           <p className="font-mono mb-xs">
             <strong>Debug Info:</strong>
           </p>

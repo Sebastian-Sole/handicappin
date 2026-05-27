@@ -61,7 +61,7 @@ export default async function CourseDetailPage({ params }: PageProps) {
       <div>
         <Link
           href="/statistics"
-          className="inline-flex items-center gap-xs text-sm text-muted-foreground hover:text-foreground transition-colors"
+          className="inline-flex items-center gap-xs text-body-sm text-muted-foreground hover:text-foreground transition-colors"
         >
           <ChevronLeft className="w-4 h-4" />
           Back to statistics
@@ -69,7 +69,7 @@ export default async function CourseDetailPage({ params }: PageProps) {
       </div>
 
       <header className="space-y-xs">
-        <Muted className="uppercase tracking-wide text-xs">Course</Muted>
+        <Muted className="text-eyebrow">Course</Muted>
         <H1>
           <span className="mr-sm">{getFlagEmoji(course.country)}</span>
           {course.name}
@@ -84,7 +84,7 @@ export default async function CourseDetailPage({ params }: PageProps) {
           <CardContent className="p-2xl text-center text-muted-foreground">
             <div className="text-4xl mb-md">⛳</div>
             <p className="text-lg font-medium">No rounds at this course yet</p>
-            <p className="text-sm">Log a round here to start building stats.</p>
+            <p className="text-body-sm">Log a round here to start building stats.</p>
           </CardContent>
         </Card>
       ) : (
@@ -92,16 +92,16 @@ export default async function CourseDetailPage({ params }: PageProps) {
           <section className="grid grid-cols-2 md:grid-cols-4 gap-md">
             <Card>
               <CardContent className="p-md text-center">
-                <p className="text-sm text-muted-foreground">Rounds</p>
+                <p className="text-body-sm text-muted-foreground">Rounds</p>
                 <p className="text-figure-lg">{summary.roundCount}</p>
-                <p className="text-xs text-muted-foreground">played here</p>
+                <p className="text-meta text-muted-foreground">played here</p>
               </CardContent>
             </Card>
             <Card>
               <CardContent className="p-md text-center">
-                <p className="text-sm text-muted-foreground">Avg Score</p>
+                <p className="text-body-sm text-muted-foreground">Avg Score</p>
                 <p className="text-figure-lg">{formatScore(summary.avgScore)}</p>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-meta text-muted-foreground">
                   across {summary.roundCount} round
                   {summary.roundCount !== 1 ? "s" : ""}
                 </p>
@@ -109,22 +109,22 @@ export default async function CourseDetailPage({ params }: PageProps) {
             </Card>
             <Card>
               <CardContent className="p-md text-center">
-                <p className="text-sm text-muted-foreground">Avg Differential</p>
+                <p className="text-body-sm text-muted-foreground">Avg Differential</p>
                 <p className="text-figure-lg">
                   {formatDifferential(summary.avgDifferential)}
                 </p>
-                <p className="text-xs text-muted-foreground">lower is better</p>
+                <p className="text-meta text-muted-foreground">lower is better</p>
               </CardContent>
             </Card>
             <Card>
               <CardContent className="p-md text-center">
-                <p className="text-sm text-muted-foreground">Best / Worst Diff</p>
+                <p className="text-body-sm text-muted-foreground">Best / Worst Diff</p>
                 <p className="text-figure-lg">
                   {formatDifferential(summary.bestDifferential)}
                   <span className="text-muted-foreground mx-xs">/</span>
                   {formatDifferential(summary.worstDifferential)}
                 </p>
-                <p className="text-xs text-muted-foreground">spread</p>
+                <p className="text-meta text-muted-foreground">spread</p>
               </CardContent>
             </Card>
           </section>
@@ -154,7 +154,7 @@ export default async function CourseDetailPage({ params }: PageProps) {
             </div>
             <Card>
               <CardContent className="p-0 overflow-x-auto">
-                <Table className="min-w-[560px]">
+                <Table className="min-w-xl">
                   <TableHeader>
                     <TableRow>
                       <TableHead>Date</TableHead>

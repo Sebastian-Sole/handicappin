@@ -73,7 +73,7 @@ export function CourseHoleTabs({ holes }: CourseHoleTabsProps) {
     return (
       <Card>
         <CardContent className="p-2xl text-center text-muted-foreground">
-          <p className="text-sm">No hole-level data yet.</p>
+          <p className="text-body-sm">No hole-level data yet.</p>
         </CardContent>
       </Card>
     );
@@ -114,7 +114,7 @@ export function CourseHoleTabs({ holes }: CourseHoleTabsProps) {
       <TabsContent value="table">
         <Card>
           <CardContent className="p-0 overflow-x-auto">
-            <Table className="min-w-[640px]">
+            <Table className="min-w-2xl">
               <TableHeader>
                 <TableRow>
                   <TableHead>Hole</TableHead>
@@ -157,7 +157,7 @@ export function CourseHoleTabs({ holes }: CourseHoleTabsProps) {
                       <TableCell className="text-right hidden md:table-cell">
                         {h.worst}
                       </TableCell>
-                      <TableCell className="text-right hidden lg:table-cell text-xs text-muted-foreground">
+                      <TableCell className="text-right hidden lg:table-cell text-meta text-muted-foreground">
                         {total === 0
                           ? "—"
                           : `${h.distribution.eagleOrBetter} / ${h.distribution.birdie} / ${h.distribution.par} / ${h.distribution.bogey} / ${h.distribution.doubleOrWorse}`}
@@ -174,7 +174,7 @@ export function CourseHoleTabs({ holes }: CourseHoleTabsProps) {
       <TabsContent value="avg">
         <Card>
           <CardContent className="p-md">
-            <p className="text-sm text-muted-foreground mb-md">
+            <p className="text-body-sm text-muted-foreground mb-md">
               Average strokes per hole. Bars are color-coded by performance vs
               par; the dashed line is the average par across holes you&apos;ve
               played here.
@@ -243,7 +243,7 @@ export function CourseHoleTabs({ holes }: CourseHoleTabsProps) {
                 </Bar>
               </BarChart>
             </ChartContainer>
-            <div className="flex flex-wrap gap-md justify-center mt-md text-xs text-muted-foreground">
+            <div className="flex flex-wrap gap-md justify-center mt-md text-meta text-muted-foreground">
               <LegendSwatch color="var(--success)" label="Under par" />
               <LegendSwatch color="var(--primary)" label="Near par" />
               <LegendSwatch color="var(--warning)" label="Bogey territory" />
@@ -256,7 +256,7 @@ export function CourseHoleTabs({ holes }: CourseHoleTabsProps) {
       <TabsContent value="distribution">
         <Card>
           <CardContent className="p-md">
-            <p className="text-sm text-muted-foreground mb-md">
+            <p className="text-body-sm text-muted-foreground mb-md">
               Scoring mix per hole as a share of rounds you&apos;ve played here.
               Hover to see exact percentages.
             </p>

@@ -60,7 +60,7 @@ export default async function UpgradePage({ searchParams }: UpgradePageProps) {
 
         <div className="text-center mb-2xl">
           <H1 className="mb-md">Change Your Plan</H1>
-          <p className="text-lg text-muted-foreground">
+          <p className="text-lead text-muted-foreground">
             Currently on: <span className="font-semibold capitalize">{currentPlan}</span> Plan
           </p>
         </div>

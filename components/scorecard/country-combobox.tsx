@@ -384,7 +384,7 @@ export function CountryCombobox({
                 key={country.value}
                 type="button"
                 className={cn(
-                  "w-full text-left px-sm py-sm hover:bg-accent hover:text-accent-foreground text-sm border-b last:border-b-0 focus:bg-accent focus:text-accent-foreground focus:outline-none",
+                  "w-full text-left px-sm py-sm hover:bg-accent hover:text-accent-foreground text-body-sm border-b last:border-b-0 focus:bg-accent focus:text-accent-foreground focus:outline-none",
                   value === country.value && "bg-accent text-accent-foreground",
                   highlightedIndex === index && "bg-muted"
                 )}
@@ -401,7 +401,7 @@ export function CountryCombobox({
               </button>
             ))
           ) : (
-            <div className="px-sm py-sm text-sm text-muted-foreground">
+            <div className="px-sm py-sm text-body-sm text-muted-foreground">
               No countries found
             </div>
           )}

@@ -253,7 +253,7 @@ export function PlanSelector({
       {/* Context-specific messaging for upgrade mode */}
       {mode === "upgrade" && currentPlan && (
         <div className="mb-xl text-center">
-          <p className="text-muted-foreground text-lg">
+          <p className="text-muted-foreground text-lead">
             {availablePlans.length === 0 ? (
               <>You&apos;re on the best plan! No changes available.</>
             ) : (
@@ -261,7 +261,7 @@ export function PlanSelector({
             )}
           </p>
           {availablePlans.length > 0 && currentPlan && isPaidPlan(currentPlan) && (
-            <div className="mt-md space-y-sm text-sm text-muted-foreground">
+            <div className="mt-md space-y-sm text-body-sm text-muted-foreground">
               <p>You&apos;ll be redirected to Stripe to complete your plan change</p>
               <p>✓ Upgrades take effect immediately (prorated charge)</p>
               <p>✓ Downgrades take effect at the end of your billing cycle</p>

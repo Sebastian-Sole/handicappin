@@ -31,10 +31,10 @@ export function TimeDistributionChart({ data }: TimeDistributionChartProps) {
 
         return (
           <div key={period.period} className="space-y-sm">
-            <div className="flex justify-between text-sm">
+            <div className="flex justify-between text-body-sm">
               <span>
                 {info.emoji} {info.label}
-                <span className="text-muted-foreground ml-sm text-xs">
+                <span className="text-muted-foreground ml-sm text-meta">
                   ({info.range})
                 </span>
               </span>

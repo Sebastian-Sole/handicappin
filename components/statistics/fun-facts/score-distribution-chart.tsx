@@ -32,7 +32,7 @@ export function ScoreDistributionChart({ data }: ScoreDistributionChartProps) {
         const item = data[key];
         return (
           <div key={key} className="space-y-xs">
-            <div className="flex justify-between text-sm">
+            <div className="flex justify-between text-body-sm">
               <span>
                 {emoji} {label}
               </span>

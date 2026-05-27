@@ -77,9 +77,9 @@ export function BestTimeInsight({
         <div className="flex items-center gap-md">
           <div className="text-4xl">🎯</div>
           <div>
-            <H3 className="font-semibold text-lg">When You Play Best</H3>
+            <H3 className="text-heading-4">When You Play Best</H3>
             <p className="text-muted-foreground">{insightMessage}</p>
-            <p className="text-xs text-muted-foreground mt-xs">
+            <p className="text-meta text-muted-foreground mt-xs">
               {bestDay.day}: {formatDifferential(bestDay.avgDifferential)} avg
               differential ({bestDay.roundCount} rounds)
             </p>

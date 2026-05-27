@@ -80,7 +80,7 @@ export default async function AboutPage() {
               <div className="flex flex-col justify-start space-y-md">
                 <div className="space-y-sm">
                   <Badge>Our Mission</Badge>
-                  <H2 className="lg:leading-tighter text-3xl tracking-tighter sm:text-4xl md:text-5xl xl:text-[3.4rem] 2xl:text-[3.75rem] pb-0">
+                  <H2 className="lg:leading-tighter text-3xl tracking-tighter sm:text-4xl md:text-5xl xl:text-hero-xl 2xl:text-hero-2xl pb-0">
                     Why Does Handicappin&apos; Even Exist?
                   </H2>
                   <P className="text-foreground/80 md:text-xl/relaxed">
@@ -162,10 +162,10 @@ export default async function AboutPage() {
             <div className="flex flex-col items-center justify-center space-y-md text-center">
               <div className="space-y-sm">
                 <Badge>Why Choose Us</Badge>
-                <H2 className="lg:leading-tighter text-3xl tracking-tighter sm:text-4xl md:text-5xl xl:text-[3.4rem] 2xl:text-[3.75rem] pb-0">
+                <H2 className="lg:leading-tighter text-3xl tracking-tighter sm:text-4xl md:text-5xl xl:text-hero-xl 2xl:text-hero-2xl pb-0">
                   What Makes Us Different?
                 </H2>
-                <p className="mx-auto max-w-[900px] text-muted-foreground md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed">
+                <p className="mx-auto max-w-4xl text-muted-foreground md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed">
                   We value your time. We know that golf statistics and round
                   calculations are complicated, and that other services
                   don&apos;t show you everything. That&apos;s why we made

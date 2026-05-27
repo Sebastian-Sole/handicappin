@@ -344,7 +344,7 @@ export function PersonalInformationTab({
   return (
     <div className="space-y-lg">
       <div>
-        <H2 className="text-2xl font-semibold mb-sm">Personal Information</H2>
+        <H2 className="text-heading-3 mb-sm">Personal Information</H2>
         <p className="text-muted-foreground">
           Manage your account details and preferences
         </p>
@@ -434,7 +434,7 @@ export function PersonalInformationTab({
                     <div>
                       <strong>Verification code sent to:</strong> {pendingEmail}
                     </div>
-                    <div className="text-sm text-muted-foreground">
+                    <div className="text-body-sm text-muted-foreground">
                       Check your email for the 6-digit verification code. The
                       code is valid for 15 minutes.
                     </div>
@@ -443,7 +443,7 @@ export function PersonalInformationTab({
                       <FormLabel
                         id="inline-email-otp-label"
                         htmlFor="inline-email-otp-input"
-                        className="text-sm"
+                        className="text-body-sm"
                       >
                         Enter Verification Code
                       </FormLabel>
@@ -500,7 +500,7 @@ export function PersonalInformationTab({
 
                       {/* Visual error message */}
                       {otpError && (
-                        <p className="text-sm text-destructive" role="alert">
+                        <p className="text-body-sm text-destructive" role="alert">
                           {otpError}
                         </p>
                       )}
@@ -567,14 +567,14 @@ export function PersonalInformationTab({
                     <div>
                       <strong>Pending verification:</strong> {pendingEmail}
                     </div>
-                    <div className="text-sm text-muted-foreground">
+                    <div className="text-body-sm text-muted-foreground">
                       Check your email to verify this change. The code is valid
                       for 15 minutes.
                     </div>
                     <Button
                       variant="link"
                       size="sm"
-                      className="px-0 h-auto text-sm"
+                      className="px-0 h-auto text-body-sm"
                       onClick={() => {
                         setShowOtpInput(true);
                         setOtp("");
@@ -590,7 +590,7 @@ export function PersonalInformationTab({
             )}
 
             {!pendingEmail && !showOtpInput && !isVerified && (
-              <p className="text-sm text-muted-foreground">
+              <p className="text-body-sm text-muted-foreground">
                 A verification code will be sent to your new address. The code
                 will be valid for 15 minutes.
               </p>

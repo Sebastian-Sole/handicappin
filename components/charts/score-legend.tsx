@@ -12,7 +12,7 @@ const ScoreLegend = ({ showLegend }: ScoreLegendProps) => {
   if (!showLegend) return null;
 
   return (
-    <div className="hidden md:flex text-sm flex-col items-start lg:flex-row lg:items-center lg:gap-sm xl:flex-col xl:items-start xl:gap-0 2xl:flex-row 2xl:items-center 2xl:gap-sm">
+    <div className="hidden md:flex text-body-sm flex-col items-start lg:flex-row lg:items-center lg:gap-sm xl:flex-col xl:items-start xl:gap-0 2xl:flex-row 2xl:items-center 2xl:gap-sm">
       <div className="flex items-center gap-xs">
         <div
           className="w-3 h-3 rounded-sm"

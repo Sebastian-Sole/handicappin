@@ -55,7 +55,7 @@ const AddRoundPage = async () => {
         <Large className="text-4xl text-primary mb-sm md:mb-md lg:mb-xl">
           Add Round
         </Large>
-        <P className="text-sm text-muted-foreground !mt-0 mb-sm">
+        <P className="text-body-sm text-muted-foreground !mt-0 mb-sm">
           Fill out the scorecard to register your round.
         </P>
 

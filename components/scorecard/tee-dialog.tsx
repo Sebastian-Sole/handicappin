@@ -151,13 +151,13 @@ export function TeeDialog({
       ) : (
         renderTeeButtons()
       )}
-      <DialogContent className="max-w-[calc(100vw-2rem)] sm:max-w-[400px] md:max-w-[600px] max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-[calc(100vw-2rem)] sm:max-w-sm md:max-w-xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
             {mode === "edit" ? "Edit Tee Information" : "Add New Tee"}
           </DialogTitle>
         </DialogHeader>
-        <div className="sm:max-w-[350px] md:max-w-[550px]">
+        <div className="sm:max-w-xs md:max-w-xl">
           <Form {...form}>
             <form onSubmit={handleSubmit}>
               <TeeFormContent

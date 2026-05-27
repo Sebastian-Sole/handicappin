@@ -57,7 +57,7 @@ export function PlayerIdentityCard({
             {playerType.description}
           </p>
           <div className="mt-sm">
-            <span className="inline-block px-sm py-xs bg-primary/10 rounded-full text-xs text-muted-foreground">
+            <span className="inline-block px-sm py-xs bg-primary/10 rounded-full text-meta text-muted-foreground">
               {Math.round(playerType.confidence * 100)}% match
             </span>
           </div>
@@ -80,15 +80,15 @@ export function PlayerIdentityCard({
                 />
               )}
             </div>
-            <p className="text-sm text-muted-foreground mt-xs">Handicap Index</p>
-            <p className="text-xs text-muted-foreground">{getHandicapChangeText()}</p>
+            <p className="text-body-sm text-muted-foreground mt-xs">Handicap Index</p>
+            <p className="text-meta text-muted-foreground">{getHandicapChangeText()}</p>
           </div>
 
           {/* Rounds & Golf Age */}
           <div className="text-center p-md bg-background/50 rounded-lg border">
             <div className="text-4xl md:text-figure-2xl">{totalRounds}</div>
-            <p className="text-sm text-muted-foreground mt-xs">Total Rounds</p>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-body-sm text-muted-foreground mt-xs">Total Rounds</p>
+            <p className="text-meta text-muted-foreground">
               over {formatGolfAge(golfAgeDays)}
             </p>
           </div>
@@ -103,7 +103,7 @@ export function PlayerIdentityCard({
             >
               {daysSinceLastRound > 0 ? daysSinceLastRound : "0"}
             </div>
-            <p className="text-sm text-muted-foreground mt-xs">Days Since Round</p>
+            <p className="text-body-sm text-muted-foreground mt-xs">Days Since Round</p>
             <p
               className={cn(
                 "text-xs",

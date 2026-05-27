@@ -48,7 +48,7 @@ const HandicapImpactStep = () => {
           </P>
           {esrAdjustment !== 0 && (
             <div className="tint-warning p-sm">
-              <P className="text-warning text-sm">
+              <P className="text-warning text-body-sm">
                 <strong>Exceptional Score Reduction (ESR):</strong> When you
                 post a Score Differential significantly better than your
                 Handicap Index (7+ strokes), an ESR adjustment is applied to
@@ -59,7 +59,7 @@ const HandicapImpactStep = () => {
           <Link
             href="https://www.usga.org/handicapping/roh/Content/rules/5%201a%20Calculation%20of%20a%20Score%20Differential18Hole.htm"
             target="_blank"
-            className="text-primary hover:underline text-sm"
+            className="text-primary hover:underline text-body-sm"
             rel="noopener noreferrer"
           >
             Read more about Handicap Index calculation (USGA)

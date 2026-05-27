@@ -63,7 +63,7 @@ export function ScoreDifferentialCalculator() {
           <P className="font-bold mt-xs">= {scoreDifferential.toFixed(1)}</P>
         </div>
       )}
-      <Muted className="text-xs">
+      <Muted className="text-meta">
         Note: Negative differentials are rounded toward zero (ceiling).
       </Muted>
     </div>

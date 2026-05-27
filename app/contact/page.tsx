@@ -70,7 +70,7 @@ export default function ContactPage() {
       <section className="w-full py-2xl md:py-4xl lg:py-5xl hero-gradient">
         <div className="mx-auto max-w-3xl px-md md:px-lg text-center">
           <Badge className="mb-md">Contact Us</Badge>
-          <H1 className="lg:leading-tighter sm:text-4xl md:text-5xl xl:text-[3.4rem] 2xl:text-[3.75rem] mb-md">
+          <H1 className="lg:leading-tighter sm:text-4xl md:text-5xl xl:text-hero-xl 2xl:text-hero-2xl mb-md">
             We&apos;re Here to Help
           </H1>
           <P className="text-foreground/80 md:text-xl/relaxed max-w-2xl mx-auto">
@@ -177,7 +177,7 @@ export default function ContactPage() {
             <H2 className="sm:text-4xl mb-md">
               Frequently Asked Questions
             </H2>
-            <P className="text-muted-foreground md:text-lg">
+            <P className="text-muted-foreground md:text-lead">
               Find quick answers to common questions about Handicappin&apos;
             </P>
           </div>
@@ -189,12 +189,12 @@ export default function ContactPage() {
                 className="surface p-md sm:p-lg h-fit"
               >
                 <div className="flex items-start gap-sm mb-sm">
-                  <HelpCircle className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
+                  <HelpCircle className="h-5 w-5 text-primary flex-shrink-0 mt-xs" />
                   <H3 className="font-semibold text-foreground">
                     {faq.question}
                   </H3>
                 </div>
-                <P className="text-muted-foreground text-sm pl-xl">
+                <P className="text-muted-foreground text-body-sm pl-xl">
                   {faq.answer}
                 </P>
               </div>

@@ -76,7 +76,7 @@ export function TabbedProfilePage({
         {/* Header */}
         <div className="mb-2xl">
           <H1 className="text-figure-xl mb-sm">Profile</H1>
-          <p className="text-muted-foreground text-lg">
+          <p className="text-muted-foreground text-lead">
             Manage your account settings
           </p>
         </div>

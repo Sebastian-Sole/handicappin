@@ -30,7 +30,7 @@ export function RoundInsightsSection({
 
   return (
     <section className="mb-xl">
-      <H2 className="text-xl font-semibold mb-md">Round Insights</H2>
+      <H2 className="text-heading-4 mb-md">Round Insights</H2>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-lg">
         {/* Day of Week Chart */}
@@ -71,9 +71,9 @@ export function RoundInsightsSection({
           <CardContent className="flex items-center justify-center gap-xl py-xl">
             <div className="text-center">
               <p className="text-figure-xl">{nineHole?.count || 0}</p>
-              <p className="text-sm text-muted-foreground">9-Hole Rounds</p>
+              <p className="text-body-sm text-muted-foreground">9-Hole Rounds</p>
               {nineHole && nineHole.count > 0 && (
-                <p className="text-xs text-muted-foreground">
+                <p className="text-meta text-muted-foreground">
                   Avg diff: {nineHole.avgDifferential.toFixed(1)}
                 </p>
               )}
@@ -81,9 +81,9 @@ export function RoundInsightsSection({
             <div className="text-4xl text-muted-foreground">vs</div>
             <div className="text-center">
               <p className="text-figure-xl">{eighteenHole?.count || 0}</p>
-              <p className="text-sm text-muted-foreground">18-Hole Rounds</p>
+              <p className="text-body-sm text-muted-foreground">18-Hole Rounds</p>
               {eighteenHole && eighteenHole.count > 0 && (
-                <p className="text-xs text-muted-foreground">
+                <p className="text-meta text-muted-foreground">
                   Avg diff: {eighteenHole.avgDifferential.toFixed(1)}
                 </p>
               )}

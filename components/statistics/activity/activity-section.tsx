@@ -44,7 +44,7 @@ export function ActivitySection({
         <CardContent className="p-2xl text-center text-muted-foreground">
           <div className="text-4xl mb-md">📊</div>
           <p className="text-lg font-medium">No activity data yet</p>
-          <p className="text-sm">Play some rounds to see your activity patterns</p>
+          <p className="text-body-sm">Play some rounds to see your activity patterns</p>
         </CardContent>
       </Card>
     );
@@ -80,7 +80,7 @@ export function ActivitySection({
           <div className="grid grid-cols-2 md:grid-cols-4 gap-md">
             <Card>
               <CardContent className="p-md text-center">
-                <p className="text-sm text-muted-foreground">Avg Rounds/Month</p>
+                <p className="text-body-sm text-muted-foreground">Avg Rounds/Month</p>
                 <p className="text-figure">
                   {formatDecimal(activityStats.avgRoundsPerMonth, 1)}
                 </p>
@@ -88,13 +88,13 @@ export function ActivitySection({
             </Card>
             <Card>
               <CardContent className="p-md text-center">
-                <p className="text-sm text-muted-foreground">Current Streak</p>
+                <p className="text-body-sm text-muted-foreground">Current Streak</p>
                 <p className="text-figure">
                   {activityStats.currentStreak > 0
                     ? `${activityStats.currentStreak} week${activityStats.currentStreak !== 1 ? "s" : ""}`
                     : "--"}
                 </p>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-meta text-muted-foreground">
                   {activityStats.currentStreak > 0
                     ? "consecutive weeks playing"
                     : "play weekly to start a streak"}
@@ -103,7 +103,7 @@ export function ActivitySection({
             </Card>
             <Card>
               <CardContent className="p-md text-center">
-                <p className="text-sm text-muted-foreground">Longest Gap</p>
+                <p className="text-body-sm text-muted-foreground">Longest Gap</p>
                 <p className="text-figure">
                   {activityStats.longestGap > 0
                     ? formatGap(activityStats.longestGap)
@@ -114,12 +114,12 @@ export function ActivitySection({
             {activityStats.mostActiveMonth && (
               <Card className="tint-info">
                 <CardContent className="p-md text-center">
-                  <p className="text-sm text-muted-foreground">Most Active</p>
+                  <p className="text-body-sm text-muted-foreground">Most Active</p>
                   <p className="text-lg font-bold">
                     {activityStats.mostActiveMonth.month.substring(0, 3)}{" "}
                     {activityStats.mostActiveMonth.year}
                   </p>
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-meta text-muted-foreground">
                     {activityStats.mostActiveMonth.count} rounds
                   </p>
                 </CardContent>
@@ -171,11 +171,11 @@ export function ActivitySection({
                     className={isBest ? "tint-success" : ""}
                   >
                     <CardContent className="p-md text-center flex flex-col justify-center min-h-[130px]">
-                      <p className="text-sm font-medium">{season.season}</p>
+                      <p className="text-label-sm">{season.season}</p>
                       <p className="text-figure">{season.roundCount}</p>
-                      <p className="text-xs text-muted-foreground">rounds</p>
+                      <p className="text-meta text-muted-foreground">rounds</p>
                       {season.roundCount > 0 && (
-                        <p className="text-xs text-muted-foreground mt-xs">
+                        <p className="text-meta text-muted-foreground mt-xs">
                           {formatDifferential(season.avgDifferential)} avg diff
                         </p>
                       )}
@@ -228,9 +228,9 @@ export function ActivitySection({
                     <div className="text-4xl md:text-figure-2xl">
                       {nineHole?.count ?? 0}
                     </div>
-                    <p className="text-sm text-muted-foreground mt-xs">9-Hole</p>
+                    <p className="text-body-sm text-muted-foreground mt-xs">9-Hole</p>
                     {nineHole && nineHole.count > 0 && (
-                      <p className="text-xs text-muted-foreground">
+                      <p className="text-meta text-muted-foreground">
                         {formatDifferential(nineHole.avgDifferential)} avg
                       </p>
                     )}
@@ -240,9 +240,9 @@ export function ActivitySection({
                     <div className="text-4xl md:text-figure-2xl">
                       {eighteenHole?.count ?? 0}
                     </div>
-                    <p className="text-sm text-muted-foreground mt-xs">18-Hole</p>
+                    <p className="text-body-sm text-muted-foreground mt-xs">18-Hole</p>
                     {eighteenHole && eighteenHole.count > 0 && (
-                      <p className="text-xs text-muted-foreground">
+                      <p className="text-meta text-muted-foreground">
                         {formatDifferential(eighteenHole.avgDifferential)} avg
                       </p>
                     )}

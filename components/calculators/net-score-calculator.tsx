@@ -43,7 +43,7 @@ export function NetScoreCalculator() {
           <P className="font-bold mt-xs">= {netScore}</P>
         </div>
       )}
-      <Muted className="text-xs">
+      <Muted className="text-meta">
         Your net score is used to determine your performance relative to par
         after accounting for your handicap. A net score equal to par means you
         played to your handicap.

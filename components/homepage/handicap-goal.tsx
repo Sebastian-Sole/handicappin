@@ -41,7 +41,7 @@ export function HandicapGoal({
       <CardContent>
         <div className="space-y-sm">
           <Progress value={progress} className="h-2" />
-          <div className="flex justify-between text-xs text-muted-foreground">
+          <div className="flex justify-between text-meta text-muted-foreground">
             <span>Start: {startingHandicap.toFixed(1)}</span>
             <span
               className={cn(

@@ -8,6 +8,10 @@ import { Search } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 
+// Spacing skipped (no token equivalent): -mx-1 (negative). Size utilities
+// (h-4, w-4, h-5, w-5, h-11, h-12, size-4) and max-h-[300px] are out of
+// scope for this pass.
+
 const Command = React.forwardRef<
   React.ElementRef<typeof CommandPrimitive>,
   React.ComponentPropsWithoutRef<typeof CommandPrimitive>
@@ -27,7 +31,7 @@ const CommandDialog = ({ children, ...props }: DialogProps) => {
   return (
     <Dialog {...props}>
       <DialogContent className="overflow-hidden p-0 shadow-lg">
-        <Command className="[&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:font-medium [&_[cmdk-group-heading]]:text-muted-foreground [&_[cmdk-group]:not([hidden])_~[cmdk-group]]:pt-0 [&_[cmdk-group]]:px-2 [&_[cmdk-input-wrapper]_svg]:h-5 [&_[cmdk-input-wrapper]_svg]:w-5 [&_[cmdk-input]]:h-12 [&_[cmdk-item]]:px-2 [&_[cmdk-item]]:py-3 [&_[cmdk-item]_svg]:h-5 [&_[cmdk-item]_svg]:w-5">
+        <Command className="[&_[cmdk-group-heading]]:px-sm [&_[cmdk-group-heading]]:font-medium [&_[cmdk-group-heading]]:text-muted-foreground [&_[cmdk-group]:not([hidden])_~[cmdk-group]]:pt-0 [&_[cmdk-group]]:px-sm [&_[cmdk-input-wrapper]_svg]:h-5 [&_[cmdk-input-wrapper]_svg]:w-5 [&_[cmdk-input]]:h-12 [&_[cmdk-item]]:px-sm [&_[cmdk-item]]:py-md [&_[cmdk-item]_svg]:h-5 [&_[cmdk-item]_svg]:w-5">
           {children}
         </Command>
       </DialogContent>
@@ -39,12 +43,12 @@ const CommandInput = React.forwardRef<
   React.ElementRef<typeof CommandPrimitive.Input>,
   React.ComponentPropsWithoutRef<typeof CommandPrimitive.Input>
 >(({ className, ...props }, ref) => (
-  <div className="flex items-center border-b px-3" cmdk-input-wrapper="">
-    <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
+  <div className="flex items-center border-b px-md" cmdk-input-wrapper="">
+    <Search className="mr-sm h-4 w-4 shrink-0 opacity-50" />
     <CommandPrimitive.Input
       ref={ref}
       className={cn(
-        "flex h-11 w-full rounded-md bg-transparent py-3 text-sm outline-hidden placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50",
+        "flex h-11 w-full rounded-md bg-transparent py-md text-body-sm outline-hidden placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50",
         className
       )}
       {...props}
@@ -73,7 +77,7 @@ const CommandEmpty = React.forwardRef<
 >((props, ref) => (
   <CommandPrimitive.Empty
     ref={ref}
-    className="py-6 text-center text-sm"
+    className="py-lg text-center text-body-sm"
     {...props}
   />
 ));
@@ -87,7 +91,7 @@ const CommandGroup = React.forwardRef<
   <CommandPrimitive.Group
     ref={ref}
     className={cn(
-      "overflow-hidden p-1 text-foreground [&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:py-1.5 [&_[cmdk-group-heading]]:text-xs [&_[cmdk-group-heading]]:font-medium [&_[cmdk-group-heading]]:text-muted-foreground",
+      "overflow-hidden p-xs text-foreground [&_[cmdk-group-heading]]:px-sm [&_[cmdk-group-heading]]:py-xs [&_[cmdk-group-heading]]:text-xs [&_[cmdk-group-heading]]:font-medium [&_[cmdk-group-heading]]:text-muted-foreground",
       className
     )}
     {...props}
@@ -115,7 +119,7 @@ const CommandItem = React.forwardRef<
   <CommandPrimitive.Item
     ref={ref}
     className={cn(
-      "relative flex cursor-default gap-2 select-none items-center rounded-sm px-2 py-1.5 text-sm outline-hidden data-[disabled=true]:pointer-events-none data-[selected='true']:bg-accent data-[selected=true]:text-accent-foreground data-[disabled=true]:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
+      "relative flex cursor-default gap-sm select-none items-center rounded-sm px-sm py-xs text-body-sm outline-hidden data-[disabled=true]:pointer-events-none data-[selected='true']:bg-accent data-[selected=true]:text-accent-foreground data-[disabled=true]:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
       className
     )}
     {...props}

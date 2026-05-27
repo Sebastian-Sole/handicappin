@@ -233,10 +233,10 @@ export function ScorecardTable({
       <div className="block xl:hidden w-full space-y-sm">
         {/* Tee Info - Above table */}
         <div className="rounded-lg bg-accent dark:bg-muted p-sm border">
-          <div className="text-sm font-medium text-secondary-foreground dark:text-primary-foreground mb-sm">
+          <div className="text-label-sm text-secondary-foreground dark:text-primary-foreground mb-sm">
             {selectedTee?.name.toUpperCase()} TEE
           </div>
-          <div className="flex w-full md:justify-start md:gap-xl justify-between gap-sm text-sm">
+          <div className="flex w-full md:justify-start md:gap-xl justify-between gap-sm text-body-sm">
             <div className="flex justify-start gap-sm">
               <span className="text-secondary-foreground dark:text-primary-foreground">
                 Total Distance:
@@ -318,20 +318,20 @@ export function ScorecardTable({
 
         {/* Score Summary - Below table */}
         <div className="rounded-lg border bg-background p-sm">
-          <div className="text-sm font-medium mb-sm">Score Summary</div>
+          <div className="text-label-sm mb-sm">Score Summary</div>
           {holeCount === CONSTANTS.EIGHTEEN_HOLES ? (
             <div className="grid grid-cols-3 gap-sm text-center">
               <div className="rounded bg-background-alternate p-sm">
-                <div className="text-xs text-muted-foreground mb-xs">OUT</div>
+                <div className="text-meta text-muted-foreground mb-xs">OUT</div>
                 <div className="text-lg font-bold">
                   {calculateTotal(scores, 0, CONSTANTS.NINE_HOLES)}
                 </div>
-                <div className="text-xs text-muted-foreground">
+                <div className="text-meta text-muted-foreground">
                   Par {selectedTee?.outPar}
                 </div>
               </div>
               <div className="rounded bg-background-alternate p-sm">
-                <div className="text-xs text-muted-foreground mb-xs">IN</div>
+                <div className="text-meta text-muted-foreground mb-xs">IN</div>
                 <div className="text-lg font-bold">
                   {calculateTotal(
                     scores,
@@ -339,16 +339,16 @@ export function ScorecardTable({
                     CONSTANTS.EIGHTEEN_HOLES
                   )}
                 </div>
-                <div className="text-xs text-muted-foreground">
+                <div className="text-meta text-muted-foreground">
                   Par {selectedTee?.inPar}
                 </div>
               </div>
               <div className="tint-primary p-sm">
-                <div className="text-xs text-muted-foreground mb-xs">TOTAL</div>
+                <div className="text-meta text-muted-foreground mb-xs">TOTAL</div>
                 <div className="text-lg font-bold text-primary">
                   {calculateTotal(scores, 0, holeCount)}
                 </div>
-                <div className="text-xs text-muted-foreground">
+                <div className="text-meta text-muted-foreground">
                   Par {selectedTee?.totalPar}
                 </div>
               </div>
@@ -356,11 +356,11 @@ export function ScorecardTable({
           ) : (
             <div className="flex justify-center">
               <div className="tint-primary p-sm min-w-[120px] text-center">
-                <div className="text-xs text-muted-foreground mb-xs">TOTAL</div>
+                <div className="text-meta text-muted-foreground mb-xs">TOTAL</div>
                 <div className="text-figure text-primary">
                   {calculateTotal(scores, 0, holeCount)}
                 </div>
-                <div className="text-xs text-muted-foreground">
+                <div className="text-meta text-muted-foreground">
                   Par {selectedTee?.outPar}
                 </div>
               </div>
@@ -375,7 +375,7 @@ export function ScorecardTable({
 export const TableSkeleton = ({ holeCount }: { holeCount: number }) => {
   return (
     <Skeleton
-      className={`rounded-lg border min-w-[270px] sm:min-w-[350px] md:min-w-[600px] lg:min-w-[725px] xl:min-w-[975px] 2xl:min-w-[1225px] 3xl:min-w-[1600px]`}
+      className={`rounded-lg border min-w-xs sm:min-w-sm md:min-w-xl lg:min-w-3xl xl:min-w-5xl 2xl:min-w-[1225px] 3xl:min-w-[1600px]`}
     >
       <div className="overflow-x-auto max-w-full">
         <table className="w-full border-collapse">

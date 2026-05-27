@@ -52,7 +52,7 @@ export function QuickActions({ userId, className }: QuickActionsProps) {
             />
             <span
               className={cn(
-                "text-sm font-medium",
+                "text-label-sm",
                 action.primary ? "text-primary" : "text-foreground"
               )}
             >

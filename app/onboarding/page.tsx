@@ -41,7 +41,7 @@ export default async function OnboardingPage() {
       <div className="max-w-6xl mx-auto">
         <div className="text-center mb-2xl">
           <H1 className="mb-md">Welcome to Handicappin!</H1>
-          <p className="text-lg text-muted-foreground">
+          <p className="text-lead text-muted-foreground">
             Choose the plan that&apos;s right for you and start tracking your
             golf rounds
           </p>

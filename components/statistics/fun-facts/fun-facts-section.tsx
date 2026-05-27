@@ -79,7 +79,7 @@ export function ScoringBreakdownSection({ stats }: ScoringBreakdownSectionProps)
                       <span className="text-lg font-bold">
                         {parType.avgStrokes.toFixed(2)}
                       </span>
-                      <span className="text-muted-foreground text-sm ml-sm">
+                      <span className="text-muted-foreground text-body-sm ml-sm">
                         avg ({overPar > 0 ? "+" : ""}
                         {overPar.toFixed(1)})
                       </span>

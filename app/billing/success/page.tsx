@@ -223,7 +223,7 @@ export default function BillingSuccessPage() {
             <>
               <div className="text-6xl mb-md">⏳</div>
               <H1 className="text-4xl mb-md">Just a moment...</H1>
-              <p className="text-lg text-muted-foreground">
+              <p className="text-lead text-muted-foreground">
                 Checking your subscription status...
               </p>
             </>
@@ -236,10 +236,10 @@ export default function BillingSuccessPage() {
               <H1 className="text-4xl mb-md">
                 Activating Your Subscription
               </H1>
-              <p className="text-lg text-muted-foreground mb-xl">
+              <p className="text-lead text-muted-foreground mb-xl">
                 We&apos;re setting up your premium access...
               </p>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-body-sm text-muted-foreground">
                 This usually takes just a few seconds. (Attempt {attemptCount}
                 /10)
               </p>
@@ -253,11 +253,11 @@ export default function BillingSuccessPage() {
               <H1 className="text-4xl mb-md text-success">
                 Welcome to Premium!
               </H1>
-              <p className="text-lg text-muted-foreground mb-xl">
+              <p className="text-lead text-muted-foreground mb-xl">
                 Your subscription is now active. You have access to all premium
                 features.
               </p>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-body-sm text-muted-foreground">
                 Redirecting to homepage...
               </p>
             </>
@@ -270,7 +270,7 @@ export default function BillingSuccessPage() {
               <H1 className="text-4xl mb-md text-warning">
                 Almost There
               </H1>
-              <p className="text-lg text-muted-foreground mb-md">
+              <p className="text-lead text-muted-foreground mb-md">
                 Your payment was successful! Activation is taking longer than
                 usual.
               </p>
@@ -294,7 +294,7 @@ export default function BillingSuccessPage() {
               </div>
 
               <div className="mt-xl pt-xl border-t">
-                <p className="text-sm text-muted-foreground">
+                <p className="text-body-sm text-muted-foreground">
                   Still waiting after 5 minutes?{" "}
                   <a
                     href={`mailto:sebastiansole@handicappin.com?subject=Subscription Activation Delayed&body=Session ID: ${sessionId || "unknown"
@@ -315,12 +315,12 @@ export default function BillingSuccessPage() {
               <H1 className="text-4xl mb-md text-destructive">
                 Activation Issue
               </H1>
-              <p className="text-lg text-foreground mb-md">
+              <p className="text-lead text-foreground mb-md">
                 We encountered an issue activating your subscription.
               </p>
 
               <div className="tint-info p-md mb-lg">
-                <p className="text-sm text-info">
+                <p className="text-body-sm text-info">
                   <strong>✓ Your payment was successful</strong>
                   <br />
                   Our team has been automatically notified and will resolve this
@@ -334,10 +334,10 @@ export default function BillingSuccessPage() {
 
               {sessionId && (
                 <div className="surface-muted border p-md mb-lg">
-                  <p className="text-xs text-muted-foreground mb-xs">
+                  <p className="text-meta text-muted-foreground mb-xs">
                     Session ID (for support):
                   </p>
-                  <p className="font-mono text-sm break-all">{sessionId}</p>
+                  <p className="font-mono text-body-sm break-all">{sessionId}</p>
                 </div>
               )}
 
@@ -367,15 +367,15 @@ export default function BillingSuccessPage() {
               </div>
 
               <div className="mt-xl pt-xl border-t">
-                <p className="text-xs text-muted-foreground">
+                <p className="text-meta text-muted-foreground">
                   Support: sebastiansole@handicappin.com
                 </p>
                 {webhookData?.debug && (
                   <details className="mt-md text-left">
-                    <summary className="text-xs text-muted-foreground/70 cursor-pointer hover:text-muted-foreground">
+                    <summary className="text-meta text-muted-foreground/70 cursor-pointer hover:text-muted-foreground">
                       Debug Info (for support)
                     </summary>
-                    <pre className="mt-sm text-xs bg-muted p-sm rounded overflow-auto">
+                    <pre className="mt-sm text-meta bg-muted p-sm rounded overflow-auto">
                       {JSON.stringify(webhookData.debug, null, 2)}
                     </pre>
                   </details>

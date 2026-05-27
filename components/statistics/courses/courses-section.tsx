@@ -1,5 +1,9 @@
 "use client";
 
+// TODO(design-system): components/statistics/courses/courses-section.tsx —
+// `text-xs <color> font-medium` instances (no `tracking-wide`) and
+// `text-lg font-medium` / `text-4xl` (emoji) instances intentionally left raw;
+// none match a semantic typography utility's recipe exactly.
 import Link from "next/link";
 import { ChevronRight } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -34,7 +38,7 @@ export function CoursesSection({
         <CardContent className="p-2xl text-center text-muted-foreground">
           <div className="text-4xl mb-md">🏌️</div>
           <p className="text-lg font-medium">No course data yet</p>
-          <p className="text-sm">Play more rounds to see course analytics</p>
+          <p className="text-body-sm">Play more rounds to see course analytics</p>
         </CardContent>
       </Card>
     );
@@ -95,41 +99,41 @@ export function CoursesSection({
         <div className="grid grid-cols-2 md:grid-cols-4 gap-md">
           <Card>
             <CardContent className="p-md text-center">
-              <p className="text-sm text-muted-foreground">Courses Played</p>
+              <p className="text-body-sm text-muted-foreground">Courses Played</p>
               <p className="text-figure-lg">{uniqueCourses}</p>
-              <p className="text-xs text-muted-foreground">unique courses</p>
+              <p className="text-meta text-muted-foreground">unique courses</p>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="p-md text-center">
-              <p className="text-sm text-muted-foreground">Countries</p>
+              <p className="text-body-sm text-muted-foreground">Countries</p>
               <p className="text-figure-lg">{uniqueCountries}</p>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-meta text-muted-foreground">
                 countr{uniqueCountries !== 1 ? "ies" : "y"} visited
               </p>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="p-md text-center">
-              <p className="text-sm text-muted-foreground">Variety Score</p>
+              <p className="text-body-sm text-muted-foreground">Variety Score</p>
               <p className="text-figure-lg">{varietyScore}%</p>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-meta text-muted-foreground">
                 {getVarietyLabel(varietyScore)}
               </p>
-              <p className="text-[10px] text-muted-foreground/70 mt-xs">
+              <p className="text-meta text-muted-foreground/70 mt-xs">
                 unique courses ÷ total rounds
               </p>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="p-md text-center">
-              <p className="text-sm text-muted-foreground">Avg Rounds/Course</p>
+              <p className="text-body-sm text-muted-foreground">Avg Rounds/Course</p>
               <p className="text-figure-lg">
                 {uniqueCourses > 0
                   ? formatDecimal(totalRounds / uniqueCourses, 1)
                   : "—"}
               </p>
-              <p className="text-xs text-muted-foreground">rounds per course</p>
+              <p className="text-meta text-muted-foreground">rounds per course</p>
             </CardContent>
           </Card>
         </div>
@@ -147,7 +151,7 @@ export function CoursesSection({
           {homeCourse && (
             <Card className="tint-info">
               <CardHeader className="pb-sm">
-                <CardTitle className="text-sm text-muted-foreground">
+                <CardTitle className="text-body-sm text-muted-foreground">
                   🏠 Home Course
                 </CardTitle>
               </CardHeader>
@@ -155,10 +159,10 @@ export function CoursesSection({
                 <p className="font-semibold">
                   {getFlagEmoji(homeCourse.country)} {homeCourse.courseName}
                 </p>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-body-sm text-muted-foreground">
                   {homeCourse.roundCount} rounds
                 </p>
-                <p className="text-xs text-muted-foreground mt-xs">
+                <p className="text-meta text-muted-foreground mt-xs">
                   Avg diff: {formatDifferential(homeCourse.avgDifferential)}
                 </p>
               </CardContent>
@@ -166,7 +170,7 @@ export function CoursesSection({
           )}
           <Card className="tint-success">
             <CardHeader className="pb-sm">
-              <CardTitle className="text-sm text-muted-foreground">
+              <CardTitle className="text-body-sm text-muted-foreground">
                 ✅ Best Performance
               </CardTitle>
             </CardHeader>
@@ -174,7 +178,7 @@ export function CoursesSection({
               <p className="font-semibold">
                 {getFlagEmoji(bestCourse.country)} {bestCourse.courseName}
               </p>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-body-sm text-muted-foreground">
                 {bestCourse.roundCount} round{bestCourse.roundCount !== 1 ? "s" : ""}
               </p>
               <p className="text-xs text-success font-medium mt-xs">
@@ -184,7 +188,7 @@ export function CoursesSection({
           </Card>
           <Card className="tint-warning">
             <CardHeader className="pb-sm">
-              <CardTitle className="text-sm text-muted-foreground">
+              <CardTitle className="text-body-sm text-muted-foreground">
                 💪 Challenging Course
               </CardTitle>
             </CardHeader>
@@ -192,7 +196,7 @@ export function CoursesSection({
               <p className="font-semibold">
                 {getFlagEmoji(worstCourse.country)} {worstCourse.courseName}
               </p>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-body-sm text-muted-foreground">
                 {worstCourse.roundCount} round{worstCourse.roundCount !== 1 ? "s" : ""}
               </p>
               <p className="text-xs text-warning font-medium mt-xs">
@@ -203,7 +207,7 @@ export function CoursesSection({
           {mostConsistentCourse && (
             <Card className="tint-primary">
               <CardHeader className="pb-sm">
-                <CardTitle className="text-sm text-muted-foreground">
+                <CardTitle className="text-body-sm text-muted-foreground">
                   🎯 Most Consistent
                 </CardTitle>
               </CardHeader>
@@ -212,7 +216,7 @@ export function CoursesSection({
                   {getFlagEmoji(mostConsistentCourse.country)}{" "}
                   {mostConsistentCourse.courseName}
                 </p>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-body-sm text-muted-foreground">
                   {mostConsistentCourse.roundCount} rounds
                 </p>
                 <p className="text-xs text-primary font-medium mt-xs">
@@ -228,7 +232,7 @@ export function CoursesSection({
           {!mostConsistentCourse && singlePlayHighlight && (
             <Card className="tint-info">
               <CardHeader className="pb-sm">
-                <CardTitle className="text-sm text-muted-foreground">
+                <CardTitle className="text-body-sm text-muted-foreground">
                   ⛳ Single-Play Course
                 </CardTitle>
               </CardHeader>
@@ -236,7 +240,7 @@ export function CoursesSection({
                 <p className="font-semibold">
                   {getFlagEmoji(singlePlayHighlight.country)} {singlePlayHighlight.courseName}
                 </p>
-                <p className="text-sm text-muted-foreground">Played once</p>
+                <p className="text-body-sm text-muted-foreground">Played once</p>
                 <p className="text-xs text-info font-medium mt-xs">
                   {formatDifferential(singlePlayHighlight.avgDifferential)} diff
                 </p>
@@ -265,7 +269,7 @@ export function CoursesSection({
       >
         <Card>
           <CardContent className="p-0 overflow-x-auto">
-            <Table className="min-w-[500px]">
+            <Table className="min-w-lg">
               <TableHeader>
                 <TableRow>
                   <TableHead>Course</TableHead>
@@ -292,7 +296,7 @@ export function CoursesSection({
                       >
                         <span>{getFlagEmoji(course.country)}</span>
                         <span className="font-medium">{course.courseName}</span>
-                        <span className="text-muted-foreground text-xs hidden sm:inline">
+                        <span className="text-muted-foreground text-meta hidden sm:inline">
                           {course.city}
                         </span>
                         <ChevronRight className="w-4 h-4 text-muted-foreground" />

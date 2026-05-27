@@ -20,7 +20,7 @@ export function StatCard({
   return (
     <Card className={cn("", className)}>
       <CardContent className="p-md">
-        <p className="text-sm text-muted-foreground">{title}</p>
+        <p className="text-body-sm text-muted-foreground">{title}</p>
         <div className="flex items-baseline gap-sm">
           <p className="text-figure">{value}</p>
           {trend && trend !== "neutral" && (
@@ -28,11 +28,11 @@ export function StatCard({
               value={trend === "down" ? -1 : 1}
               invert
               iconOnly
-              className="text-sm"
+              className="text-body-sm"
             />
           )}
         </div>
-        {subtitle && <p className="text-xs text-muted-foreground">{subtitle}</p>}
+        {subtitle && <p className="text-meta text-muted-foreground">{subtitle}</p>}
       </CardContent>
     </Card>
   );

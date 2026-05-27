@@ -39,7 +39,7 @@ export function LinkedValuesBar() {
       <div className="container mx-auto px-md py-sm">
         <div className="flex items-center justify-between gap-md">
           <div className="flex items-center gap-sm overflow-x-auto pb-xs sm:pb-0">
-            <span className="text-sm text-muted-foreground whitespace-nowrap">
+            <span className="text-body-sm text-muted-foreground whitespace-nowrap">
               Linked:
             </span>
             {activeValues.map((item, idx) => (

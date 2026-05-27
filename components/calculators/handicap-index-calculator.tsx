@@ -101,7 +101,7 @@ export function HandicapIndexCalculator() {
         Your Handicap Index is calculated by averaging your best score
         differentials, based on how many rounds you have:
       </Muted>
-      <div className="grid grid-cols-2 gap-sm text-sm">
+      <div className="grid grid-cols-2 gap-sm text-body-sm">
         <div>3 rounds: Best 1 (-2.0)</div>
         <div>4 rounds: Best 1 (-1.0)</div>
         <div>5 rounds: Best 1</div>
@@ -116,7 +116,7 @@ export function HandicapIndexCalculator() {
       </div>
       {handicapIndex !== null && (
         <div className="surface-muted p-sm">
-          <P className="text-sm text-muted-foreground">
+          <P className="text-body-sm text-muted-foreground">
             Using {relevantDifferentials.length} of {differentials.length}{" "}
             differentials:
           </P>
@@ -165,7 +165,7 @@ export function HandicapIndexCalculator() {
                 {diff.toFixed(1)}
                 <button
                   onClick={() => removeDifferential(index)}
-                  className="hover:bg-white/20 rounded-full p-xs"
+                  className="hover:bg-foreground/10 rounded-full p-xs"
                   aria-label={`Remove differential ${diff.toFixed(1)}`}
                 >
                   <X className="h-3 w-3" />
@@ -176,7 +176,7 @@ export function HandicapIndexCalculator() {
         )}
 
         {differentials.length > 0 && differentials.length < 3 && (
-          <Muted className="text-sm">
+          <Muted className="text-body-sm">
             Add at least 3 differentials to calculate your handicap index.
           </Muted>
         )}

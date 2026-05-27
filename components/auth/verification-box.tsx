@@ -12,7 +12,7 @@ const VerificationBox = () => {
             />
           </div>
           <div className="ml-sm">
-            <p className="text-sm font-medium text-success">
+            <p className="text-label-sm text-success">
               Account Verified
             </p>
             <p className="mt-xs text-xs text-success/80">

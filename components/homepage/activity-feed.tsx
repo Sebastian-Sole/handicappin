@@ -52,7 +52,7 @@ export function ActivityFeed({
         <CardTitle className="text-lg">Recent Activity</CardTitle>
         <Link
           href={`/dashboard/${profileId}`}
-          className="text-sm text-primary hover:underline"
+          className="text-body-sm text-primary hover:underline"
         >
           View All
         </Link>
@@ -136,26 +136,26 @@ function ActivityItemRow({
           {/* Course name and date row */}
           <div className="flex items-center justify-between gap-xs sm:gap-sm">
             <div className="flex items-center gap-xs sm:gap-sm min-w-0 flex-1">
-              <span className="font-medium text-sm truncate max-w-[120px] sm:max-w-none">
+              <span className="text-label-sm truncate max-w-32 sm:max-w-none">
                 {activity.courseName}
               </span>
               {activity.isPersonalBest && (
                 <Badge
                   variant="secondary"
-                  className="bg-warning/20 text-warning text-xs shrink-0 px-xs.5 sm:px-sm"
+                  className="bg-warning/20 text-warning text-meta shrink-0 px-xs.5 sm:px-sm"
                 >
                   <Trophy className="h-3 w-3 sm:mr-xs" />
                   <span className="hidden sm:inline">Best</span>
                 </Badge>
               )}
             </div>
-            <span className="text-xs text-muted-foreground whitespace-nowrap shrink-0">
+            <span className="text-meta text-muted-foreground whitespace-nowrap shrink-0">
               {formattedDate}
             </span>
           </div>
 
           {/* Stats row - wraps on very small screens */}
-          <div className="flex flex-wrap items-center gap-sm sm:gap-md mt-xs text-sm">
+          <div className="flex flex-wrap items-center gap-sm sm:gap-md mt-xs text-body-sm">
             <span className="text-muted-foreground">
               Score:{" "}
               <span className="text-foreground font-medium">
@@ -172,13 +172,13 @@ function ActivityItemRow({
               <StatDelta
                 value={activity.handicapChange}
                 invert
-                className="text-xs font-medium [&>svg]:h-3 [&>svg]:w-3"
+                className="text-meta-strong [&>svg]:h-3 [&>svg]:w-3"
               />
             )}
           </div>
 
           {activity.isMilestone && (
-            <Badge variant="outline" className="mt-sm text-xs">
+            <Badge variant="outline" className="mt-sm text-meta">
               {activity.isMilestone}
             </Badge>
           )}

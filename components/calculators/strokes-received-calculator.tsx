@@ -97,7 +97,7 @@ export function StrokesReceivedCalculator() {
         rating (Hole Handicap). Lower hole handicap = harder hole = receives
         strokes first.
       </Muted>
-      <div className="surface-muted p-sm text-sm space-y-sm">
+      <div className="surface-muted p-sm text-body-sm space-y-sm">
         <P className="font-medium">Distribution Rules:</P>
         <ul className="list-disc pl-md space-y-xs text-muted-foreground">
           <li>
@@ -135,7 +135,7 @@ export function StrokesReceivedCalculator() {
             }
           />
         </div>
-        <Muted className="text-xs">
+        <Muted className="text-meta">
           Using standard hole handicap allocation. Your course may have a
           different allocation.
         </Muted>

@@ -1,5 +1,6 @@
 "use client";
 
+// Spacing skipped (no token equivalent): h-4/w-4 sizing.
 import * as React from "react";
 import { ChevronDown } from "lucide-react";
 import { format } from "date-fns";
@@ -97,7 +98,7 @@ export default function DatePicker({ value, onChange }: Calendar24Props) {
           }}
         />
         <Separator />
-        <div className="bg-background p-3 space-y-3">
+        <div className="bg-background p-md space-y-md">
           <Input
             type="time"
             id="time-picker"

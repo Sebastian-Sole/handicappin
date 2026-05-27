@@ -1,3 +1,4 @@
+// Spacing skipped (no token equivalent): h-12 (3rem sizing); pr-0 is zero, unchanged.
 import * as React from "react";
 
 import { cn } from "@/lib/utils";
@@ -9,7 +10,7 @@ const Table = React.forwardRef<
   <div className="relative w-full overflow-auto">
     <table
       ref={ref}
-      className={cn("w-full caption-bottom text-sm", className)}
+      className={cn("w-full caption-bottom text-body-sm", className)}
       {...props}
     />
   </div>
@@ -73,7 +74,7 @@ const TableHead = React.forwardRef<
   <th
     ref={ref}
     className={cn(
-      "h-12 px-4 text-left align-middle font-medium text-muted-foreground [&:has([role=checkbox])]:pr-0",
+      "h-12 px-md text-left align-middle font-medium text-muted-foreground [&:has([role=checkbox])]:pr-0",
       className
     )}
     {...props}
@@ -87,7 +88,7 @@ const TableCell = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <td
     ref={ref}
-    className={cn("p-4 align-middle [&:has([role=checkbox])]:pr-0", className)}
+    className={cn("p-md align-middle [&:has([role=checkbox])]:pr-0", className)}
     {...props}
   />
 ));
@@ -99,7 +100,7 @@ const TableCaption = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <caption
     ref={ref}
-    className={cn("mt-4 text-sm text-muted-foreground", className)}
+    className={cn("mt-md text-body-sm text-muted-foreground", className)}
     {...props}
   />
 ));

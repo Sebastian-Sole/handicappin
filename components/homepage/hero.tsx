@@ -81,7 +81,7 @@ const Hero = ({
           <H1 className="text-heading-4 md:text-heading-3 text-foreground">
             Welcome back, {profile.name?.split(" ")[0] || "Golfer"}
           </H1>
-          <p className="text-sm text-muted-foreground mt-xs">
+          <p className="text-body-sm text-muted-foreground mt-xs">
             Member since {new Date(profile.createdAt).getFullYear()}
           </p>
         </div>

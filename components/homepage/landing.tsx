@@ -143,7 +143,7 @@ export default async function Landing() {
                 </Button>
               </Link>
             </div>
-            <p className="text-sm text-muted-foreground mt-md">
+            <p className="text-body-sm text-muted-foreground mt-md">
               No credit card required • free <strong>forever</strong> for first
               100 users
             </p>
@@ -183,7 +183,7 @@ export default async function Landing() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <ul className="space-y-sm text-sm text-muted-foreground">
+                <ul className="space-y-sm text-body-sm text-muted-foreground">
                   <li className="flex items-center gap-sm">
                     <CheckCircle className="h-4 w-4 min-h-4 min-w-4 flex-shrink-0 text-primary" />
                     Verified course data
@@ -212,7 +212,7 @@ export default async function Landing() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <ul className="space-y-sm text-sm text-muted-foreground">
+                <ul className="space-y-sm text-body-sm text-muted-foreground">
                   <li className="flex items-center gap-sm">
                     <CheckCircle className="h-4 w-4 min-h-4 min-w-4 flex-shrink-0 text-primary" />
                     USGA compliance
@@ -242,7 +242,7 @@ export default async function Landing() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <ul className="space-y-sm text-sm text-muted-foreground">
+                <ul className="space-y-sm text-body-sm text-muted-foreground">
                   <li className="flex items-center gap-sm">
                     <CheckCircle className="h-4 w-4 min-h-4 min-w-4 flex-shrink-0 text-primary" />
                     Handicap calculation
@@ -400,7 +400,7 @@ export default async function Landing() {
           <div className="max-w-3xl mx-auto space-y-lg">
             {faqs.map((faq, faqIndex) => (
               <div key={faqIndex} className="border-b pb-lg">
-                <H3 className="text-xl font-semibold mb-sm">{faq.question}</H3>
+                <H3 className="text-heading-4 mb-sm">{faq.question}</H3>
                 <p className="text-muted-foreground">{faq.answer}</p>
               </div>
             ))}
@@ -425,7 +425,7 @@ export default async function Landing() {
               <ArrowRight className="ml-sm h-5 w-5" />
             </Button>
           </Link>
-          <p className="text-sm mt-md opacity-75">
+          <p className="text-body-sm mt-md opacity-75">
             Free <strong>forever</strong> for first 100 users • No credit card
             required • Cancel anytime
           </p>

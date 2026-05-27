@@ -77,7 +77,7 @@ export function HandicapCapsCalculator() {
 
       {/* Visual cap progress bar */}
       <div className="space-y-sm">
-        <div className="flex justify-between text-xs text-muted-foreground">
+        <div className="flex justify-between text-meta text-muted-foreground">
           <span>Low HI: {values.lowHandicapIndex?.toFixed(1)}</span>
           <span>
             Soft Cap (+{SOFT_CAP_THRESHOLD}): {analysis.softCapLimit.toFixed(1)}
@@ -98,7 +98,7 @@ export function HandicapCapsCalculator() {
         </div>
         <div className="flex justify-center">
           <span
-            className={`text-sm font-medium ${
+            className={`text-label-sm ${
               analysis.status === "below"
                 ? "text-success"
                 : analysis.status === "soft"
@@ -123,7 +123,7 @@ export function HandicapCapsCalculator() {
         The cap procedure limits how much your Handicap Index can increase above
         your Low Handicap Index (your lowest index in the past 365 days).
       </Muted>
-      <div className="surface-muted p-sm text-sm space-y-sm">
+      <div className="surface-muted p-sm text-body-sm space-y-sm">
         <P className="font-medium">Cap Rules:</P>
         <ul className="list-disc pl-md space-y-xs text-muted-foreground">
           <li>
@@ -137,7 +137,7 @@ export function HandicapCapsCalculator() {
         </ul>
       </div>
       {analysis?.wasReduced && (
-        <div className="tint-warning p-sm text-sm">
+        <div className="tint-warning p-sm text-body-sm">
           <P className="font-medium text-warning">
             Your handicap was reduced by{" "}
             {(analysis.uncappedIndex - analysis.cappedIndex).toFixed(1)} strokes

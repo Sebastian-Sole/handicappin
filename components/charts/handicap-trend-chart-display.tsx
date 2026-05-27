@@ -49,7 +49,7 @@ const HandicapTrendChartDisplay = ({
               value={percentageChange}
               invert
               format={(v) => `${v > 0 ? "+" : ""}${v}%`}
-              className="text-sm"
+              className="text-body-sm"
             />
           </div>
         </div>

@@ -246,7 +246,7 @@ function VerifySignupContent() {
             <div className="space-y-sm">
               <label
                 htmlFor="email"
-                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                className="text-label-sm leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
               >
                 Email Address
               </label>
@@ -265,7 +265,7 @@ function VerifySignupContent() {
               <label
                 id="otp-label"
                 htmlFor="otp-input"
-                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 block text-center"
+                className="text-label-sm leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 block text-center"
               >
                 Verification Code
               </label>
@@ -309,7 +309,7 @@ function VerifySignupContent() {
               </p>
 
               {/* Hint text (visible to all) */}
-              <p id="otp-hint" className="text-xs text-muted-foreground text-center mt-xs">
+              <p id="otp-hint" className="text-meta text-muted-foreground text-center mt-xs">
                 Check your spam folder if you don&apos;t see the email
               </p>
             </div>
@@ -335,7 +335,7 @@ function VerifySignupContent() {
                   {remainingAttempts !== null &&
                     remainingAttempts > 0 &&
                     status === "error" && (
-                      <div className="mt-sm text-sm">
+                      <div className="mt-sm text-body-sm">
                         {remainingAttempts}{" "}
                         {remainingAttempts === 1 ? "attempt" : "attempts"}{" "}
                         remaining
@@ -398,7 +398,7 @@ function VerifySignupContent() {
             </div>
 
             <Alert>
-              <AlertDescription className="text-xs">
+              <AlertDescription className="text-meta">
                 <strong>Tip:</strong> Check your spam folder if you don&apos;t
                 see the email. The code expires in 15 minutes.
               </AlertDescription>

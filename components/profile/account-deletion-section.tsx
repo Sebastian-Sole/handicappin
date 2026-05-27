@@ -123,9 +123,9 @@ export function AccountDeletionSection() {
   return (
     <div className="bg-card rounded-lg border border-destructive/20 p-lg">
       <div className="flex items-start gap-sm mb-md">
-        <AlertTriangle className="h-6 w-6 text-destructive flex-shrink-0 mt-0.5" />
+        <AlertTriangle className="h-6 w-6 text-destructive flex-shrink-0 mt-xs" />
         <div>
-          <H3 className="text-xl font-semibold text-destructive">Delete Account</H3>
+          <H3 className="text-heading-4 text-destructive">Delete Account</H3>
           <p className="text-muted-foreground mt-xs">
             Permanently delete your account and all associated data. This action cannot be undone.
           </p>
@@ -156,7 +156,7 @@ export function AccountDeletionSection() {
                   This will permanently delete your account and all associated data.
                 </DialogDescription>
               </DialogHeader>
-              <div className="space-y-sm text-sm text-muted-foreground">
+              <div className="space-y-sm text-body-sm text-muted-foreground">
                 <p>This includes:</p>
                 <ul className="list-disc list-inside space-y-xs">
                   <li>Your profile and handicap history</li>
@@ -234,7 +234,7 @@ export function AccountDeletionSection() {
                     </InputOTP>
                   </div>
                   {expiresAt && (
-                    <p className="text-xs text-muted-foreground text-center">
+                    <p className="text-meta text-muted-foreground text-center">
                       Code expires at {new Date(expiresAt).toLocaleTimeString()}
                     </p>
                   )}

@@ -25,6 +25,7 @@ import type { FeedbackState } from "@/types/feedback";
 import { GoogleSignInButton } from "./google-sign-in-button";
 import { getOAuthErrorMessage } from "@/lib/oauth-errors";
 import { H1 } from "@/components/ui/typography";
+import { AuthFormShell } from "@/components/auth/auth-form-shell";
 
 export function Login() {
   const isMounted = useMounted();
@@ -162,7 +163,7 @@ export function Login() {
   }
 
   return (
-    <div className="mx-auto max-w-sm space-y-lg py-md md:py-md lg:py-md xl:py-md sm:min-w-[40%] min-h-full w-[90%]">
+    <AuthFormShell className="py-md md:py-md lg:py-md xl:py-md">
       {isVerified && <VerificationBox />}
       {oauthError && (
         <FormFeedback
@@ -240,7 +241,7 @@ export function Login() {
           <div className="absolute inset-0 flex items-center">
             <span className="w-full border-t" />
           </div>
-          <div className="relative flex justify-center text-xs uppercase">
+          <div className="relative flex justify-center text-meta uppercase">
             <span className="bg-background px-sm text-muted-foreground">
               Or continue with
             </span>
@@ -259,6 +260,6 @@ export function Login() {
           </Link>
         </div>
       </div>
-    </div>
+    </AuthFormShell>
   );
 }

@@ -69,7 +69,7 @@ const ScoreDifferentialStep = () => {
           </P>
           {isNineHoles && (
             <div className="tint-info p-sm mt-md">
-              <P className="text-info text-sm">
+              <P className="text-info text-body-sm">
                 <strong>9-Hole Round Note:</strong> Since you played 9 holes,
                 your Score Differential is calculated as an 18-hole equivalent.
                 This combines your actual 9-hole performance with an
@@ -81,7 +81,7 @@ const ScoreDifferentialStep = () => {
           <Link
             href="https://www.usga.org/handicapping/roh/rules-of-handicapping.html#cshid=rule51a"
             target="_blank"
-            className="text-primary hover:underline text-sm"
+            className="text-primary hover:underline text-body-sm"
             rel="noopener noreferrer"
           >
             Read more about Score Differential calculation (USGA)
@@ -176,10 +176,10 @@ const ScoreDifferentialStep = () => {
 
             {/* Played Differential */}
             <div className="space-y-xs">
-              <div className="text-sm font-medium">
+              <div className="text-label-sm">
                 Played Differential ({isBackNine ? "Back 9" : "Front 9"}):
               </div>
-              <div className="flex flex-wrap items-center gap-sm text-sm">
+              <div className="flex flex-wrap items-center gap-sm text-body-sm">
                 <Muted>
                   ({adjustedPlayedScore} − {rating}) × 113 ÷ {slope}
                 </Muted>
@@ -192,10 +192,10 @@ const ScoreDifferentialStep = () => {
 
             {/* Expected Differential */}
             <div className="space-y-xs">
-              <div className="text-sm font-medium">
+              <div className="text-label-sm">
                 Expected Differential (Unplayed 9):
               </div>
-              <div className="flex flex-wrap items-center gap-sm text-sm">
+              <div className="flex flex-wrap items-center gap-sm text-body-sm">
                 <Muted>
                   Based on handicap index{" "}
                   {scorecard.round.existingHandicapIndex}
@@ -244,7 +244,7 @@ const ScoreDifferentialStep = () => {
         {/* 9-hole info note */}
         {isNineHoles && (
           <div className="tint-info p-md">
-            <P className="text-info text-sm">
+            <P className="text-info text-body-sm">
               <strong>Note:</strong> Per USGA Rule 5.1b, 9-hole rounds are
               converted to 18-hole equivalents by combining your actual played
               differential with an expected differential for the unplayed holes.
