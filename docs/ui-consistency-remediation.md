@@ -13,7 +13,7 @@
 | Audit | ✅ Complete | 28 findings + 1 gap finding; tokens graded A, structure C+, perception B |
 | Storybook | ✅ Committed | branch `feat/storybook` (commit `27423b7`) — 142 stories + config |
 | Blocking decisions | ✅ Resolved (6/6) | Locked 2026-05-28 — see Layer 1 |
-| Wave A — mechanical/global | ⬜ Not started (0/13) | No decisions needed — can begin immediately |
+| Wave A — mechanical/global | ✅ Complete (13/13) | Committed `2667cef` 2026-05-28; tsc/build green; CardTitle + rounds/add spot-checked visually |
 | Wave B — structural | ⬜ Not started (0/5) | Needs Decisions #1, #2 |
 | Wave C — correctness + a11y | ⬜ Not started (0/7) | Includes a real route-gating bug |
 | Wave D — perceptual + storybook quality | ⬜ Not started (0/6) | Some items need a logged-out re-capture |
@@ -68,7 +68,7 @@
 > Objective deviations with an obvious canonical target. Safe, fast, no decision dependencies. Recommended starting point. Gate: `tsc`/`lint`/`build` green after each batch.
 
 ### A1 — `border-l-4` → `border-l-2` on verification box
-- **Status:** ⬜ | **Priority:** P3 | **Confidence:** CODE-ONLY
+- **Status:** ✅ done (2026-05-28) | **Priority:** P3 | **Confidence:** CODE-ONLY
 - **What:** Change the left border width to match the `border-2` emphasis scale.
 - **Why:** `border-l-4` is the only `-4` border in the app; off the emphasis scale.
 - **Where:** `components/auth/verification-box.tsx:6`
@@ -77,7 +77,7 @@
 - **Verify:** grep `border-l-4`; eyeball in Storybook `auth-verificationbox`.
 
 ### A2 — Label disabled `opacity-70` → `opacity-50`
-- **Status:** ⬜ | **Priority:** P3 | **Confidence:** CODE-ONLY
+- **Status:** ✅ done (2026-05-28) | **Priority:** P3 | **Confidence:** CODE-ONLY
 - **What:** Align disabled opacity to canon.
 - **Why:** Canon disabled = `opacity-50`; `opacity-70` is a one-off (also a known shadcn debt — if intentional, document instead).
 - **Where:** `components/ui/label.tsx:10` (+ 2 usages)
@@ -86,7 +86,7 @@
 - **Verify:** grep `opacity-70`; compare disabled Label vs Input in Storybook.
 
 ### A3 — Dropdown content/sub-content same elevation
-- **Status:** ⬜ | **Priority:** P3 | **Confidence:** CODE-ONLY
+- **Status:** ✅ done (2026-05-28) | **Priority:** P3 | **Confidence:** CODE-ONLY
 - **What:** Make `DropdownMenuContent` and `DropdownMenuSubContent` share one shadow tier.
 - **Why:** Sub-content is `shadow-lg` while parent content is `shadow-md` — the sub-menu reads as floating *above* its parent (inverted stacking).
 - **Where:** `components/ui/dropdown-menu.tsx:53,71`
@@ -95,7 +95,7 @@
 - **Verify:** Storybook `ui-dropdownmenu` open state.
 
 ### A4 — Chart legend swatches → `rounded-sm`
-- **Status:** ⬜ | **Priority:** P3 | **Confidence:** UNVERIFIED (story blank)
+- **Status:** ✅ done (2026-05-28) | **Priority:** P3 | **Confidence:** UNVERIFIED (story blank)
 - **What:** Replace arbitrary `rounded-[2px]` with the token radius used by the other swatches.
 - **Why:** Same swatch element uses `rounded-sm` in `score-legend.tsx`/`course-hole-tabs.tsx` but `rounded-[2px]` in 4 chart spots — two ways for one thing.
 - **Where:** `components/charts/score-bar-chart.tsx:111`, `components/charts/handicap-trend-chart.tsx:117`, `components/ui/chart.tsx:222,315`
@@ -104,7 +104,7 @@
 - **Verify:** grep; eyeball charts in app.
 
 ### A5 — `statBox` achievement figure → token color
-- **Status:** ⬜ | **Priority:** P3 | **Confidence:** VISUAL-ONLY
+- **Status:** ✅ done — already correct (`text-foreground`); stale pre-migration finding | **Priority:** P3 | **Confidence:** VISUAL-ONLY
 - **What:** Resolve the figure color to a token that keeps contrast in dark mode.
 - **Why:** The "82" achievement figure washes out against the green tint in dark mode.
 - **Where:** `components/homepage/statBox.tsx` (figure render)
@@ -113,7 +113,7 @@
 - **Verify:** Storybook `homepage-statbox--achievement` dark.
 
 ### A6 — Card-tier surfaces over-elevated → `shadow-xs`
-- **Status:** ⬜ | **Priority:** P2 | **Confidence:** CODE-ONLY
+- **Status:** ✅ done (2026-05-28) | **Priority:** P2 | **Confidence:** CODE-ONLY
 - **What:** Bring resting card surfaces to the canonical card shadow tier.
 - **Why:** `usage-limit-alert.tsx` uses `shadow-sm` and `dashboardSkeleton.tsx` uses `shadow-lg` where resting cards want `shadow-xs`; the skeleton doesn't even match live `dashboard.tsx` (no shadow).
 - **Where:** `components/scorecard/usage-limit-alert.tsx:63`, `components/dashboard/dashboardSkeleton.tsx:5`
@@ -122,7 +122,7 @@
 - **Verify:** compare skeleton vs live dashboard in app.
 
 ### A7 — Numeric stats → `text-figure-*`
-- **Status:** ⬜ | **Priority:** P2 | **Confidence:** CODE-ONLY
+- **Status:** ✅ done (2026-05-28) — partial: 5 `text-lg font-bold` (1.125rem) stat values left as TODO (no 1.125rem figure rung exists — see token-gap note) | **Priority:** P2 | **Confidence:** CODE-ONLY
 - **What:** Render metric values with the figure type ramp instead of raw sizes.
 - **Why:** ~8 stat values use raw `text-{size} font-bold` instead of `text-figure-*` (the dedicated number ramp).
 - **Where:** `components/scorecard/scorecard-table.tsx`, `components/statistics/activity/activity-section.tsx`, `components/charts/handicap-trend-chart-display.tsx` (per finding 01)
@@ -131,7 +131,7 @@
 - **Verify:** grep raw sizes near `{value}`/`toFixed`; eyeball.
 
 ### A8 — Hand-rolled skeletons → `<Skeleton>`
-- **Status:** ⬜ | **Priority:** P2 | **Confidence:** CODE-ONLY
+- **Status:** ✅ done (2026-05-28) — settings-tab migrated; decorative status pulses (billing-success emoji, verify-session dots) correctly left | **Priority:** P2 | **Confidence:** CODE-ONLY
 - **What:** Replace bespoke `animate-pulse` blocks with the `<Skeleton>` primitive.
 - **Why:** 6 hand-rolled loaders bypass `<Skeleton>` → inconsistent shape/size for similar content.
 - **Where:** `components/profile/tabs/settings-tab.tsx`, `app/billing/success/page.tsx`, `components/auth/verify-session/verify-session-content.tsx`
@@ -140,7 +140,7 @@
 - **Verify:** grep `animate-pulse`; loading states in app.
 
 ### A9 — Raw error text → `<FormFeedback>`
-- **Status:** ⬜ | **Priority:** P2 | **Confidence:** CODE-ONLY
+- **Status:** ✅ done (2026-05-28) — scorecard-image-upload, personal-info, verify-session migrated; status-icon/inline uses left | **Priority:** P2 | **Confidence:** CODE-ONLY
 - **What:** Route user-facing errors through the `<FormFeedback>` primitive.
 - **Why:** 4 files render raw `text-destructive` for errors while 14 use `<FormFeedback>`.
 - **Where:** `components/scorecard/scorecard-image-upload.tsx`, `components/auth/verify-session/verify-session-content.tsx`, `components/profile/tabs/personal-information-tab.tsx`
@@ -149,7 +149,7 @@
 - **Verify:** trigger error states; check markup.
 
 ### A10 — Raw `text-{size} font-{weight}` compounds → utilities
-- **Status:** ⬜ | **Priority:** P1 | **Confidence:** CODE-ONLY
+- **Status:** ✅ done (2026-05-28) — clean matches migrated (→ text-meta-strong, text-figure, etc.); no-clean-match sites carry `// TODO(ui-consistency A10)` (token gaps) | **Priority:** P1 | **Confidence:** CODE-ONLY
 - **What:** Map ~30 compound type lines to the semantic typography utilities.
 - **Why:** Roles that map directly to `text-body/lead/label-sm/figure/meta-strong/eyebrow` are spelled as raw compounds (a `courses-section.tsx` TODO admits they were "left raw").
 - **Where:** ~39 files; concentrated in `components/statistics/**`, `components/scorecard/**`, marketing pages. Start at `components/statistics/courses/courses-section.tsx` (has the TODO).
@@ -158,7 +158,7 @@
 - **Verify:** grep `text-(lg|base|xl|2xl) font-`; spot-check rendered text.
 
 ### A11 — Re-map `CardTitle` → `text-heading-4`; delete overrides
-- **Status:** ⬜ | **Priority:** P1 | **Confidence:** CODE-ONLY (story blank — verify visually)
+- **Status:** ✅ done (2026-05-28) — primitive changed; 22 overrides removed across 12 files; 4 responsive cases kept; visually spot-checked on statistics page | **Priority:** P1 | **Confidence:** CODE-ONLY (story blank — verify visually)
 - **What:** Change the `CardTitle` primitive to the correct title role, then remove the 20 inline `text-base` shrink-overrides callers add.
 - **Why:** `CardTitle` ships `text-2xl font-semibold tracking-tight` — too large, so 20 call-sites across 8 files re-shrink it. Title size is decided per-call.
 - **Where:** primitive `components/ui/card.tsx` (CardTitle); overrides across 8 files (grep `CardTitle className="text-base`).
@@ -167,7 +167,7 @@
 - **Verify:** **CRITICAL — visually check several cards** (statistics, billing, dashboard) since the supporting stories captured blank.
 
 ### A12 — Replace bare `text-2xl/4xl` H1 overrides with heading utilities
-- **Status:** ⬜ | **Priority:** P1 | **Confidence:** CONFIRMED (via billing-success)
+- **Status:** ✅ done (2026-05-28) — billing-success, contact, verify-session, scorecard cleaned; hero ladders + intentional compact card H3s kept | **Priority:** P1 | **Confidence:** CONFIRMED (via billing-success)
 - **What:** Use `text-heading-*` (or the sanctioned hero ladder) instead of raw size overrides on `<H1>`/`<H2>`.
 - **Why:** `<H1>`/`<H2>` already apply heading utilities; bare `text-2xl`/`text-4xl` overrides re-decide the title scale per page (billing-success hero sits off the in-app scale).
 - **Where:** ~9 files; `app/billing/success/page.tsx`, `components/auth/verify-session/...`, about/contact.
@@ -176,7 +176,7 @@
 - **Verify:** grep; compare page titles.
 
 ### A13 — Remove brand-green from `rounds/add` H1
-- **Status:** ⬜ | **Priority:** P1 | **Confidence:** VISUAL-ONLY
+- **Status:** ✅ done (2026-05-28) — now `<H1>` foreground; verified in before/after screenshots | **Priority:** P1 | **Confidence:** VISUAL-ONLY
 - **What:** Render the "Add Round" page title in foreground, not primary green.
 - **Why:** Only page whose title uses the action color; competes with the green Add-Round button, feels like a different design.
 - **Where:** `app/rounds/add/page.tsx`
@@ -366,6 +366,16 @@
 - **Figure vs heading size collisions:** `text-figure-xl` (2.25rem/700) == `text-heading-1` size; `text-figure-2xl` (3rem) == `text-display`. Intentional (data vs hierarchy, distinguished by weight) but a misuse vector — reinforces A7 (use the figure ramp for numbers).
 - **`tint-*` border opacity** is 20% but `form-feedback.tsx` hand-rolls 30% — root of B5.
 
+### Token gaps discovered during Wave A (candidate additions for a future token wave)
+Wave A left `// TODO(ui-consistency A7/A10)` markers wherever a raw compound had **no matching utility**. The gaps, by frequency:
+- **`text-lg` (1.125rem) figure rung is missing** — blocks ~5 stat values (`scorecard-table` OUT/IN/TOTAL, `activity-section`, `fun-facts-section`) from A7. Highest-value addition: a `text-figure-xs` at 1.125rem/700.
+- **`text-lg`/500 and `text-lg`/600** — no utility (`text-lead` is 1.125rem/400). Affects `billing-tab`, `typography.tsx` `Large`, and the 3 statistics empty-state messages.
+- **`text-xs`/600** (`badge.tsx`) — `text-meta-strong` is /500, `text-badge` is 0.875rem.
+- **`text-xs`/400 explicit** (`signup` consent) — `text-meta` is inherited-weight.
+- **`text-sm`/500 uppercase+tracking eyebrow** (`handicap-display`) — `text-eyebrow` is `text-xs`.
+- **Responsive figure** (`strokes-received-calculator`) — no responsive figure utility.
+Recommend a small token-addition decision (like the `min-w-*` additions in the design-system work) before or alongside Wave C's typography items.
+
 ### Evidence Index (for re-verification)
 - **Audit + findings (scratch, may be deleted):** `.claude/tmp/ui-consistency-audit.md`, `.claude/tmp/consistency-rubric.md`, `.claude/tmp/audit-findings/01..07-*.md`.
 - **Screenshots:** `.claude/tmp/audit-screens/stories/` (component stories, light/dark), `.claude/tmp/audit-screens/pages/` (authenticated, light/dark/mobile), `.claude/tmp/audit-screens/pages-public/` (logged-out).
@@ -388,3 +398,4 @@
 _Append one line per completed item/session: date — item ID(s) — what landed — branch/commit._
 
 - 2026-05-28 — D1–D6 — all six blocking decisions resolved (D1: max-w-6xl uniform; D2: compact Card variant; D3: transition-colors; D4: /80·/90; D5: EmptyState; D6: text-meta-strong). Waves B/C/D now unblocked.
+- 2026-05-28 — Wave A (A1–A13) — all 13 mechanical items landed (`2667cef`, 37 files). tsc + build green; CardTitle/rounds-add visually spot-checked. A5 was already correct. Residual TODOs are token gaps (see appendix). A11 also committed earlier with the primitive change.
