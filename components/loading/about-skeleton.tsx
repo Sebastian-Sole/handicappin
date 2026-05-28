@@ -98,7 +98,12 @@ export default function AboutSkeleton() {
                 <div key={i} className="surface p-lg w-full">
                   <StatTile
                     value={<Skeleton className="h-8 w-1/2 mx-auto" />}
-                    label={<Skeleton className="h-4 w-2/3 mx-auto" />}
+                    // `StatTile` wraps `label` in a <p>, so we render the
+                    // skeleton as a <span> here to avoid the
+                    // <div>-inside-<p> hydration warning.
+                    label={
+                      <span className="animate-pulse rounded-md bg-muted h-4 w-2/3 mx-auto block" />
+                    }
                   />
                 </div>
               ))}

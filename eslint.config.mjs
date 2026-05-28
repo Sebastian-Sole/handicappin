@@ -1,3 +1,6 @@
+// For more info, see https://github.com/storybookjs/eslint-plugin-storybook#configuration-flat-config-format
+import storybook from "eslint-plugin-storybook";
+
 import nextConfig from "eslint-config-next";
 
 /**
@@ -45,34 +48,29 @@ const BASELINE_IGNORES = [
   "eslint.config.mjs",
 ];
 
-const eslintConfig = [
-  {
-    // Global ignores. `.claude/**` is tooling/harness code with a
-    // pre-existing parsing error in `scripts/run-review.js`; out of
-    // scope for the design-system refactor.
-    ignores: [".claude/**", ".next/**", "node_modules/**"],
+const eslintConfig = [{
+  // Global ignores. `.claude/**` is tooling/harness code with a
+  // pre-existing parsing error in `scripts/run-review.js`; out of
+  // scope for the design-system refactor.
+  ignores: [".claude/**", ".next/**", "node_modules/**"],
+}, ...nextConfig, {
+  // React Email templates need raw apostrophes for email client compatibility
+  files: ["emails/**/*.tsx", "supabase/functions/**/*.tsx"],
+  rules: {
+    "react/no-unescaped-entities": "off",
   },
-  ...nextConfig,
-  {
-    // React Email templates need raw apostrophes for email client compatibility
-    files: ["emails/**/*.tsx", "supabase/functions/**/*.tsx"],
-    rules: {
-      "react/no-unescaped-entities": "off",
-    },
+}, {
+  // Design-system guardrail: both color + heading rules apply to every
+  // source file outside the baseline-ignored primitives / email templates.
+  files: ["**/*.{ts,tsx,js,jsx,mjs,cjs}"],
+  ignores: BASELINE_IGNORES,
+  rules: {
+    "no-restricted-syntax": [
+      "error",
+      ...colorSelectors,
+      ...headingSelectors,
+    ],
   },
-  {
-    // Design-system guardrail: both color + heading rules apply to every
-    // source file outside the baseline-ignored primitives / email templates.
-    files: ["**/*.{ts,tsx,js,jsx,mjs,cjs}"],
-    ignores: BASELINE_IGNORES,
-    rules: {
-      "no-restricted-syntax": [
-        "error",
-        ...colorSelectors,
-        ...headingSelectors,
-      ],
-    },
-  },
-];
+}, ...storybook.configs["flat/recommended"]];
 
 export default eslintConfig;
