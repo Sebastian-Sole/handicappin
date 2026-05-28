@@ -52,6 +52,7 @@ export function PlayerIdentityCard({
         {/* Player Type Hero */}
         <div className="text-center mb-lg">
           <div className="text-6xl md:text-7xl mb-sm">{playerType.emoji}</div>
+          {/* TODO(ui-consistency A12): responsive size ladder on H2 (text-2xl base / md:text-figure-lg) — base override intentional for mobile hero scaling, not a bare raw size; leaving until a sanctioned hero ladder covers this */}
           <H2 className="text-2xl md:text-figure-lg mb-sm">{playerType.name}</H2>
           <p className="text-muted-foreground max-w-md mx-auto">
             {playerType.description}
@@ -106,7 +107,7 @@ export function PlayerIdentityCard({
             <p className="text-body-sm text-muted-foreground mt-xs">Days Since Round</p>
             <p
               className={cn(
-                "text-xs",
+                "text-meta",
                 playNudge.urgent ? "text-warning font-medium" : "text-muted-foreground"
               )}
             >

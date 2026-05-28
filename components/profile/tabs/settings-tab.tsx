@@ -10,6 +10,7 @@ import { DataExportSection } from "../data-export-section";
 import { AccountDeletionSection } from "../account-deletion-section";
 import { FormFeedback } from "@/components/ui/form-feedback";
 import { SaveStateButton } from "@/components/ui/save-state-button";
+import { Skeleton } from "@/components/ui/skeleton";
 import { H2, H3 } from "@/components/ui/typography";
 import type { FeedbackState } from "@/types/feedback";
 
@@ -88,12 +89,12 @@ export function SettingsTab() {
         <H3 className="text-heading-4 mb-md">Notifications</H3>
         {isLoading ? (
           <div className="space-y-md">
-            <div className="flex items-center justify-between animate-pulse">
+            <div className="flex items-center justify-between">
               <div className="space-y-sm">
-                <div className="h-5 w-32 bg-muted rounded" />
-                <div className="h-4 w-64 bg-muted rounded" />
+                <Skeleton className="h-5 w-32 rounded" />
+                <Skeleton className="h-4 w-64 rounded" />
               </div>
-              <div className="h-6 w-11 bg-muted rounded-full" />
+              <Skeleton className="h-6 w-11 rounded-full" />
             </div>
           </div>
         ) : (
@@ -125,17 +126,17 @@ export function SettingsTab() {
             {!mounted ? (
               // Show skeleton loader while mounting to prevent hydration mismatch
               <div className="grid grid-cols-3 gap-sm">
-                <div className="flex flex-col items-center gap-sm p-md rounded-lg border-2 border-muted animate-pulse">
-                  <div className="h-6 w-6 bg-muted rounded" />
-                  <div className="h-4 w-12 bg-muted rounded" />
+                <div className="flex flex-col items-center gap-sm p-md rounded-lg border-2 border-muted">
+                  <Skeleton className="h-6 w-6 rounded" />
+                  <Skeleton className="h-4 w-12 rounded" />
                 </div>
-                <div className="flex flex-col items-center gap-sm p-md rounded-lg border-2 border-muted animate-pulse">
-                  <div className="h-6 w-6 bg-muted rounded" />
-                  <div className="h-4 w-12 bg-muted rounded" />
+                <div className="flex flex-col items-center gap-sm p-md rounded-lg border-2 border-muted">
+                  <Skeleton className="h-6 w-6 rounded" />
+                  <Skeleton className="h-4 w-12 rounded" />
                 </div>
-                <div className="flex flex-col items-center gap-sm p-md rounded-lg border-2 border-muted animate-pulse">
-                  <div className="h-6 w-6 bg-muted rounded" />
-                  <div className="h-4 w-12 bg-muted rounded" />
+                <div className="flex flex-col items-center gap-sm p-md rounded-lg border-2 border-muted">
+                  <Skeleton className="h-6 w-6 rounded" />
+                  <Skeleton className="h-4 w-12 rounded" />
                 </div>
               </div>
             ) : (

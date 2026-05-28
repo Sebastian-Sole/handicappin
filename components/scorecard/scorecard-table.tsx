@@ -323,6 +323,7 @@ export function ScorecardTable({
             <div className="grid grid-cols-3 gap-sm text-center">
               <div className="rounded bg-background-alternate p-sm">
                 <div className="text-meta text-muted-foreground mb-xs">OUT</div>
+                {/* TODO(ui-consistency A7): stat value; text-lg (1.125rem) has no exact figure-ramp match (nearest figure-sm=1.25rem would alter size) */}
                 <div className="text-lg font-bold">
                   {calculateTotal(scores, 0, CONSTANTS.NINE_HOLES)}
                 </div>
@@ -332,6 +333,7 @@ export function ScorecardTable({
               </div>
               <div className="rounded bg-background-alternate p-sm">
                 <div className="text-meta text-muted-foreground mb-xs">IN</div>
+                {/* TODO(ui-consistency A7): stat value; text-lg (1.125rem) has no exact figure-ramp match (nearest figure-sm=1.25rem would alter size) */}
                 <div className="text-lg font-bold">
                   {calculateTotal(
                     scores,
@@ -345,6 +347,7 @@ export function ScorecardTable({
               </div>
               <div className="tint-primary p-sm">
                 <div className="text-meta text-muted-foreground mb-xs">TOTAL</div>
+                {/* TODO(ui-consistency A7): stat value; text-lg (1.125rem) has no exact figure-ramp match (nearest figure-sm=1.25rem would alter size) */}
                 <div className="text-lg font-bold text-primary">
                   {calculateTotal(scores, 0, holeCount)}
                 </div>

@@ -57,6 +57,7 @@ export function HandicapDisplay({
 
   return (
     <div className={cn("flex flex-col items-center lg:items-start", className)}>
+      {/* TODO(ui-consistency A10): text-sm font-medium uppercase tracking-wider has no clean utility match (text-eyebrow is text-xs) */}
       <p className="text-sm font-medium text-muted-foreground uppercase tracking-wider mb-sm">
         Handicap Index
       </p>

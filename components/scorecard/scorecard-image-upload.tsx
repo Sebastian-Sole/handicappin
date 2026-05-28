@@ -22,6 +22,7 @@ import {
   X,
   FileText,
 } from "lucide-react";
+import { FormFeedback } from "@/components/ui/form-feedback";
 import { cn } from "@/lib/utils";
 import { Tee } from "@/types/scorecard-input";
 import type { ExtractedTee, ExtractionResponse } from "@/lib/scorecard-extraction";
@@ -846,9 +847,7 @@ export function ScorecardImageUpload({
             )}
 
             {/* Error */}
-            {error && (
-              <p className="text-body-sm text-destructive text-center">{error}</p>
-            )}
+            {error && <FormFeedback type="error" message={error} />}
 
             {/* Extraction summary inside dialog */}
             {summary && allDone && someSucceeded && (

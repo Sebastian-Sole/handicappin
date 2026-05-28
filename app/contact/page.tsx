@@ -174,7 +174,7 @@ export default function ContactPage() {
         <div className="mx-auto max-w-4xl px-md md:px-lg">
           <div className="text-center mb-2xl">
             <Badge className="mb-md">FAQ</Badge>
-            <H2 className="sm:text-4xl mb-md">
+            <H2 className="mb-md">
               Frequently Asked Questions
             </H2>
             <P className="text-muted-foreground md:text-lead">

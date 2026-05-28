@@ -3,6 +3,8 @@ import { cva, type VariantProps } from "class-variance-authority"
 
 import { cn } from "@/lib/utils"
 
+// TODO(ui-consistency A10): text-xs font-semibold (0.75rem/600) has no exact
+// semantic utility (text-meta-strong is 500, text-badge is 0.875rem). Leaving raw.
 const badgeVariants = cva(
   "inline-flex items-center rounded-full border px-sm py-xs text-xs font-semibold transition-colors focus:outline-hidden focus:ring-2 focus:ring-ring focus:ring-offset-2",
   {

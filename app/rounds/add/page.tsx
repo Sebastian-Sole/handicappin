@@ -1,8 +1,7 @@
 import GolfScorecard from "@/components/scorecard/golf-scorecard";
-import { Large } from "@/components/ui/typography";
 import { api } from "@/trpc/server";
 import { createServerComponentClient } from "@/utils/supabase/server";
-import { P } from "@/components/ui/typography";
+import { H1, P } from "@/components/ui/typography";
 import { Suspense } from "react";
 import AddRoundSkeleton from "@/components/loading/add-round-skeleton";
 import { getComprehensiveUserAccess } from "@/utils/billing/access-control";
@@ -52,9 +51,9 @@ const AddRoundPage = async () => {
   return (
     <Suspense fallback={<AddRoundSkeleton />}>
       <div className="flex justify-center items-center flex-col h-full py-sm md:py-md lg:py-xl">
-        <Large className="text-4xl text-primary mb-sm md:mb-md lg:mb-xl">
+        <H1 className="text-heading-1 mb-sm md:mb-md lg:mb-xl">
           Add Round
-        </Large>
+        </H1>
         <P className="text-body-sm text-muted-foreground !mt-0 mb-sm">
           Fill out the scorecard to register your round.
         </P>

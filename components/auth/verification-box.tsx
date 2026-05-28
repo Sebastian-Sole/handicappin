@@ -3,7 +3,7 @@ import { CheckCircle } from "lucide-react";
 const VerificationBox = () => {
   return (
     <div className="max-w-sm mx-auto">
-      <div className="bg-success/10 dark:bg-success/20 border-l-4 border-success p-md rounded-md shadow-xs">
+      <div className="bg-success/10 dark:bg-success/20 border-l-2 border-success p-md rounded-md shadow-xs">
         <div className="flex items-center">
           <div className="shrink-0">
             <CheckCircle

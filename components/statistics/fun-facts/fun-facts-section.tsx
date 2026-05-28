@@ -63,7 +63,7 @@ export function ScoringBreakdownSection({ stats }: ScoringBreakdownSectionProps)
         {/* Strokes by Par Type */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Strokes by Par Type</CardTitle>
+            <CardTitle>Strokes by Par Type</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-md">
@@ -76,6 +76,7 @@ export function ScoringBreakdownSection({ stats }: ScoringBreakdownSectionProps)
                   >
                     <span className="font-medium">Par {parType.parType}</span>
                     <div className="text-right">
+                      {/* TODO(ui-consistency A7): stat value `text-lg font-bold` — no figure utility at 1.125rem; figure ramp starts at figure-sm=1.25rem */}
                       <span className="text-lg font-bold">
                         {parType.avgStrokes.toFixed(2)}
                       </span>
@@ -94,7 +95,7 @@ export function ScoringBreakdownSection({ stats }: ScoringBreakdownSectionProps)
         {/* Score Distribution */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Score Distribution</CardTitle>
+            <CardTitle>Score Distribution</CardTitle>
           </CardHeader>
           <CardContent>
             <ScoreDistributionChart data={stats.scoreDistribution} />

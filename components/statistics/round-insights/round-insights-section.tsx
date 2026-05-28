@@ -36,7 +36,7 @@ export function RoundInsightsSection({
         {/* Day of Week Chart */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Rounds by Day of Week</CardTitle>
+            <CardTitle>Rounds by Day of Week</CardTitle>
           </CardHeader>
           <CardContent>
             <DayOfWeekChart data={dayOfWeekStats} />
@@ -46,7 +46,7 @@ export function RoundInsightsSection({
         {/* Time of Day Distribution */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Time of Day</CardTitle>
+            <CardTitle>Time of Day</CardTitle>
           </CardHeader>
           <CardContent>
             <TimeDistributionChart data={timeOfDayStats} />
@@ -56,7 +56,7 @@ export function RoundInsightsSection({
         {/* Rounds Per Month */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Rounds Per Month</CardTitle>
+            <CardTitle>Rounds Per Month</CardTitle>
           </CardHeader>
           <CardContent>
             <RoundsPerMonthChart data={roundsPerMonth} />
@@ -66,7 +66,7 @@ export function RoundInsightsSection({
         {/* 9 vs 18 Hole */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">9-Hole vs 18-Hole</CardTitle>
+            <CardTitle>9-Hole vs 18-Hole</CardTitle>
           </CardHeader>
           <CardContent className="flex items-center justify-center gap-xl py-xl">
             <div className="text-center">

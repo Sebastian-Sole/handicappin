@@ -60,7 +60,7 @@ export function UsageLimitAlert({
   return (
     <div
       className={cn(
-        "p-lg shadow-sm transition-all",
+        "p-lg shadow-xs transition-all",
         styles.container
       )}
     >
@@ -123,7 +123,7 @@ export function UsageLimitReachedView() {
         <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-muted mb-lg">
           <Zap className="w-8 h-8 text-muted-foreground" />
         </div>
-        <H1 className="text-4xl md:text-figure-2xl mb-md text-balance">
+        <H1 className="md:text-figure-2xl mb-md text-balance">
           You&apos;ve reached your round limit
         </H1>
         <p className="text-lead text-muted-foreground mb-xl text-pretty">

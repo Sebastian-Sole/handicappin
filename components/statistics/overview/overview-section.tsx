@@ -103,7 +103,7 @@ export function PerformanceSection({
                   at {bestCourse.courseName}
                 </p>
               )}
-              <p className="text-xs text-success font-medium mt-sm">
+              <p className="text-meta-strong text-success mt-sm">
                 Your career best!
               </p>
             </CardContent>
@@ -171,7 +171,7 @@ export function PerformanceSection({
               <p className="text-body-sm text-muted-foreground">since starting</p>
               <p
                 className={cn(
-                  "text-xs mt-sm",
+                  "text-meta mt-sm",
                   isValidNumber(stats.improvementRate) && stats.improvementRate > 0
                     ? "text-success font-medium"
                     : "text-muted-foreground"

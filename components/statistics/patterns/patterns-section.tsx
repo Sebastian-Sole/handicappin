@@ -28,7 +28,7 @@ export function PatternsSection({
         {/* Day of Week Chart */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Rounds by Day of Week</CardTitle>
+            <CardTitle>Rounds by Day of Week</CardTitle>
           </CardHeader>
           <CardContent>
             <DayOfWeekChart data={dayOfWeekStats} />
@@ -38,7 +38,7 @@ export function PatternsSection({
         {/* Time of Day Distribution */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Time of Day</CardTitle>
+            <CardTitle>Time of Day</CardTitle>
           </CardHeader>
           <CardContent>
             <TimeDistributionChart data={timeOfDayStats} />

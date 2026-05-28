@@ -222,7 +222,7 @@ export default function BillingSuccessPage() {
           {status === "loading" && (
             <>
               <div className="text-6xl mb-md">⏳</div>
-              <H1 className="text-4xl mb-md">Just a moment...</H1>
+              <H1 className="mb-md">Just a moment...</H1>
               <p className="text-lead text-muted-foreground">
                 Checking your subscription status...
               </p>
@@ -233,7 +233,7 @@ export default function BillingSuccessPage() {
           {status === "processing" && (
             <>
               <div className="text-6xl mb-md animate-pulse">⏳</div>
-              <H1 className="text-4xl mb-md">
+              <H1 className="mb-md">
                 Activating Your Subscription
               </H1>
               <p className="text-lead text-muted-foreground mb-xl">
@@ -250,7 +250,7 @@ export default function BillingSuccessPage() {
           {status === "success" && (
             <>
               <div className="text-6xl mb-md">✅</div>
-              <H1 className="text-4xl mb-md text-success">
+              <H1 className="mb-md text-success">
                 Welcome to Premium!
               </H1>
               <p className="text-lead text-muted-foreground mb-xl">
@@ -267,7 +267,7 @@ export default function BillingSuccessPage() {
           {status === "delayed" && (
             <>
               <div className="text-6xl mb-md">⚠️</div>
-              <H1 className="text-4xl mb-md text-warning">
+              <H1 className="mb-md text-warning">
                 Almost There
               </H1>
               <p className="text-lead text-muted-foreground mb-md">
@@ -312,7 +312,7 @@ export default function BillingSuccessPage() {
           {status === "failed" && (
             <>
               <div className="text-6xl mb-md">❌</div>
-              <H1 className="text-4xl mb-md text-destructive">
+              <H1 className="mb-md text-destructive">
                 Activation Issue
               </H1>
               <p className="text-lead text-foreground mb-md">

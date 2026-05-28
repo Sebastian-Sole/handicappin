@@ -500,9 +500,7 @@ export function PersonalInformationTab({
 
                       {/* Visual error message */}
                       {otpError && (
-                        <p className="text-body-sm text-destructive" role="alert">
-                          {otpError}
-                        </p>
+                        <FormFeedback type="error" message={otpError} />
                       )}
 
                       <div className="flex gap-sm">

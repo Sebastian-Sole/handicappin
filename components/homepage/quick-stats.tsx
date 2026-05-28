@@ -54,7 +54,7 @@ export function QuickStats({
   return (
     <Card className={cn("", className)}>
       <CardHeader className="pb-sm">
-        <CardTitle className="text-base">At a Glance</CardTitle>
+        <CardTitle>At a Glance</CardTitle>
       </CardHeader>
       <CardContent className="space-y-md">
         {/* Lowest Differential */}

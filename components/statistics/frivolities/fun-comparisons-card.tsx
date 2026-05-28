@@ -303,7 +303,7 @@ export function FunComparisonsCard({
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-base flex items-center gap-sm">
+        <CardTitle className="flex items-center gap-sm">
           <span>🎪</span> Fun Facts About Your Game
         </CardTitle>
       </CardHeader>

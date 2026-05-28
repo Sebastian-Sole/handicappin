@@ -1,9 +1,5 @@
 "use client";
 
-// TODO(design-system): components/statistics/courses/courses-section.tsx —
-// `text-xs <color> font-medium` instances (no `tracking-wide`) and
-// `text-lg font-medium` / `text-4xl` (emoji) instances intentionally left raw;
-// none match a semantic typography utility's recipe exactly.
 import Link from "next/link";
 import { ChevronRight } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -37,6 +33,7 @@ export function CoursesSection({
       <Card>
         <CardContent className="p-2xl text-center text-muted-foreground">
           <div className="text-4xl mb-md">🏌️</div>
+          {/* TODO(ui-consistency A10): text-lg/500 has no utility — needs a text-lg figure/lead rung */}
           <p className="text-lg font-medium">No course data yet</p>
           <p className="text-body-sm">Play more rounds to see course analytics</p>
         </CardContent>
@@ -181,7 +178,7 @@ export function CoursesSection({
               <p className="text-body-sm text-muted-foreground">
                 {bestCourse.roundCount} round{bestCourse.roundCount !== 1 ? "s" : ""}
               </p>
-              <p className="text-xs text-success font-medium mt-xs">
+              <p className="text-meta-strong text-success mt-xs">
                 {formatDifferential(bestCourse.avgDifferential)} avg diff
               </p>
             </CardContent>
@@ -199,7 +196,7 @@ export function CoursesSection({
               <p className="text-body-sm text-muted-foreground">
                 {worstCourse.roundCount} round{worstCourse.roundCount !== 1 ? "s" : ""}
               </p>
-              <p className="text-xs text-warning font-medium mt-xs">
+              <p className="text-meta-strong text-warning mt-xs">
                 {formatDifferential(worstCourse.avgDifferential)} avg diff
               </p>
             </CardContent>
@@ -219,7 +216,7 @@ export function CoursesSection({
                 <p className="text-body-sm text-muted-foreground">
                   {mostConsistentCourse.roundCount} rounds
                 </p>
-                <p className="text-xs text-primary font-medium mt-xs">
+                <p className="text-meta-strong text-primary mt-xs">
                   {(
                     mostConsistentCourse.worstDifferential -
                     mostConsistentCourse.bestDifferential
@@ -241,7 +238,7 @@ export function CoursesSection({
                   {getFlagEmoji(singlePlayHighlight.country)} {singlePlayHighlight.courseName}
                 </p>
                 <p className="text-body-sm text-muted-foreground">Played once</p>
-                <p className="text-xs text-info font-medium mt-xs">
+                <p className="text-meta-strong text-info mt-xs">
                   {formatDifferential(singlePlayHighlight.avgDifferential)} diff
                 </p>
               </CardContent>

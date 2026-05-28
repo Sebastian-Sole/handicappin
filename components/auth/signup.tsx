@@ -262,6 +262,7 @@ export function Signup({
                     />
                   </FormControl>
                   <div className="space-y-xs leading-none">
+                    {/* TODO(ui-consistency A10): no utility maps to text-xs/400 (text-meta is size-only/inherited weight, text-meta-strong is 500) */}
                     <FormLabel className="text-xs font-normal text-muted-foreground">
                       I agree to the{" "}
                       <LegalDialog type="terms">Terms of Service</LegalDialog>{" "}

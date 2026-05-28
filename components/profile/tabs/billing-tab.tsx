@@ -35,6 +35,7 @@ export function BillingTab({ access }: BillingTabProps) {
         <H3 className="mb-md">Current Plan</H3>
         <div className="flex items-start justify-between flex-col sm:flex-row gap-md">
           <div className="flex-1">
+            {/* TODO(ui-consistency A10): no utility maps to text-lg/500 (text-lead is text-lg/400) */}
             <p className="text-lg font-medium capitalize mb-sm">
               {access.plan} Plan
             </p>

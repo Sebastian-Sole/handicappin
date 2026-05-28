@@ -43,6 +43,7 @@ export function ActivitySection({
       <Card>
         <CardContent className="p-2xl text-center text-muted-foreground">
           <div className="text-4xl mb-md">📊</div>
+          {/* TODO(ui-consistency A10): text-lg/500 has no utility — needs a text-lg figure/lead rung */}
           <p className="text-lg font-medium">No activity data yet</p>
           <p className="text-body-sm">Play some rounds to see your activity patterns</p>
         </CardContent>
@@ -115,6 +116,7 @@ export function ActivitySection({
               <Card className="tint-info">
                 <CardContent className="p-md text-center">
                   <p className="text-body-sm text-muted-foreground">Most Active</p>
+                  {/* TODO(ui-consistency A7): stat value `text-lg font-bold` — no figure utility at 1.125rem; figure ramp starts at figure-sm=1.25rem */}
                   <p className="text-lg font-bold">
                     {activityStats.mostActiveMonth.month.substring(0, 3)}{" "}
                     {activityStats.mostActiveMonth.year}
@@ -132,7 +134,7 @@ export function ActivitySection({
             {/* Rounds Per Month Chart */}
             <Card>
               <CardHeader className="pb-sm">
-                <CardTitle className="text-base">Rounds Per Month</CardTitle>
+                <CardTitle>Rounds Per Month</CardTitle>
               </CardHeader>
               <CardContent>
                 <RoundsPerMonthChart data={roundsPerMonth} />
@@ -142,7 +144,7 @@ export function ActivitySection({
             {/* Day of Week Chart */}
             <Card>
               <CardHeader className="pb-sm">
-                <CardTitle className="text-base">Rounds by Day of Week</CardTitle>
+                <CardTitle>Rounds by Day of Week</CardTitle>
               </CardHeader>
               <CardContent>
                 <DayOfWeekChart data={dayOfWeekStats} />
@@ -180,7 +182,7 @@ export function ActivitySection({
                         </p>
                       )}
                       {isBest && (
-                        <p className="text-xs text-success font-medium mt-xs">
+                        <p className="text-meta-strong text-success mt-xs">
                           Best season!
                         </p>
                       )}
@@ -220,7 +222,7 @@ export function ActivitySection({
             {/* 9 vs 18 Hole Comparison */}
             <Card>
               <CardHeader className="pb-sm">
-                <CardTitle className="text-base">Round Types</CardTitle>
+                <CardTitle>Round Types</CardTitle>
               </CardHeader>
               <CardContent className="flex items-center justify-center min-h-[140px]">
                 <div className="flex items-center justify-center gap-xl md:gap-2xl">
@@ -254,7 +256,7 @@ export function ActivitySection({
             {/* Time of Day Distribution */}
             <Card>
               <CardHeader className="pb-sm">
-                <CardTitle className="text-base">Time of Day</CardTitle>
+                <CardTitle>Time of Day</CardTitle>
               </CardHeader>
               <CardContent>
                 <TimeDistributionChart data={timeOfDayStats} />

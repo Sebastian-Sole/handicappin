@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { createClientComponentClient } from "@/utils/supabase/client";
 import { clientLogger } from "@/lib/client-logger";
 import { H1 } from "@/components/ui/typography";
+import { FormFeedback } from "@/components/ui/form-feedback";
 
 const MAX_RETRY_ATTEMPTS = 3;
 const RETRY_DELAY_MS = 2000; // 2 seconds between retries
@@ -192,7 +193,7 @@ export function VerifySessionContent({
         {state === "verifying" && (
           <>
             <div className="text-6xl mb-md animate-spin">⏳</div>
-            <H1 className="text-2xl mb-sm">Verifying Your Session</H1>
+            <H1 className="mb-sm">Verifying Your Session</H1>
             <p className="text-muted-foreground mb-lg">
               Please wait while we verify your account...
             </p>
@@ -210,7 +211,7 @@ export function VerifySessionContent({
         {state === "retrying" && (
           <>
             <div className="text-6xl mb-md animate-pulse">🔄</div>
-            <H1 className="text-2xl mb-sm">Retrying...</H1>
+            <H1 className="mb-sm">Retrying...</H1>
             <p className="text-muted-foreground mb-sm">
               Attempt {attemptCount + 1} of {MAX_RETRY_ATTEMPTS}
             </p>
@@ -231,7 +232,7 @@ export function VerifySessionContent({
         {state === "failed" && (
           <>
             <div className="text-6xl mb-md">❌</div>
-            <H1 className="text-2xl mb-sm">Verification Failed</H1>
+            <H1 className="mb-sm">Verification Failed</H1>
             <p className="text-muted-foreground mb-lg">{errorMessage}</p>
             <div className="space-y-sm">
               <button
@@ -254,11 +255,17 @@ export function VerifySessionContent({
         {state === "error" && (
           <>
             <div className="text-6xl mb-md">⚠️</div>
-            <H1 className="text-2xl mb-sm">Something Went Wrong</H1>
+            <H1 className="mb-sm">Something Went Wrong</H1>
             <p className="text-muted-foreground mb-sm">
               We encountered an error while verifying your session.
             </p>
-            <p className="text-body-sm text-destructive mb-lg">{errorMessage}</p>
+            {errorMessage && (
+              <FormFeedback
+                type="error"
+                message={errorMessage}
+                className="mb-lg"
+              />
+            )}
             <div className="space-y-sm">
               <button
                 onClick={() => {

@@ -53,6 +53,7 @@ export function StrokesReceivedCalculator() {
                 strokes > 0 ? "bg-primary/20" : "bg-muted/50"
               }`}
             >
+              {/* TODO(ui-consistency A10): responsive font-bold text-sm/base number has no clean text-figure-* match */}
               <span className="font-bold text-sm sm:text-base">{strokes}</span>
             </div>
           </div>
@@ -68,6 +69,7 @@ export function StrokesReceivedCalculator() {
                 strokes > 0 ? "bg-primary/20" : "bg-muted/50"
               }`}
             >
+              {/* TODO(ui-consistency A10): responsive font-bold text-sm/base number has no clean text-figure-* match */}
               <span className="font-bold text-sm sm:text-base">{strokes}</span>
             </div>
           </div>

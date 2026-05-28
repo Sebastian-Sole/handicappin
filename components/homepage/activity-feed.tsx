@@ -30,7 +30,7 @@ export function ActivityFeed({
     return (
       <Card className={cn("", className)}>
         <CardHeader>
-          <CardTitle className="text-lg">Recent Activity</CardTitle>
+          <CardTitle>Recent Activity</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="text-center justify-center items-center flex flex-col py-xl">
@@ -49,7 +49,7 @@ export function ActivityFeed({
   return (
     <Card className={cn("", className)}>
       <CardHeader className="flex flex-row items-center justify-between pb-sm">
-        <CardTitle className="text-lg">Recent Activity</CardTitle>
+        <CardTitle>Recent Activity</CardTitle>
         <Link
           href={`/dashboard/${profileId}`}
           className="text-body-sm text-primary hover:underline"

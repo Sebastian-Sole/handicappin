@@ -39,6 +39,7 @@ export function FrivolitiesSection({ stats }: FrivolitiesSectionProps) {
       <Card>
         <CardContent className="p-2xl text-center text-muted-foreground">
           <div className="text-4xl mb-md">🎮</div>
+          {/* TODO(ui-consistency A10): text-lg/500 has no utility — needs a text-lg figure/lead rung */}
           <p className="text-lg font-medium">No stroke data yet</p>
           <p className="text-body-sm">Play some rounds to unlock fun statistics</p>
         </CardContent>
@@ -244,7 +245,7 @@ export function FrivolitiesSection({ stats }: FrivolitiesSectionProps) {
           {/* All Phases Grid */}
           <Card>
             <CardHeader className="pb-sm">
-              <CardTitle className="text-base">All Lunar Phases</CardTitle>
+              <CardTitle>All Lunar Phases</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-4 md:grid-cols-8 gap-sm">
@@ -286,7 +287,7 @@ export function FrivolitiesSection({ stats }: FrivolitiesSectionProps) {
           {/* Front 9 vs Back 9 */}
           <Card>
             <CardHeader className="pb-sm">
-              <CardTitle className="text-base">Front 9 vs Back 9</CardTitle>
+              <CardTitle>Front 9 vs Back 9</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="flex items-center justify-center gap-xl py-md">
@@ -333,7 +334,7 @@ export function FrivolitiesSection({ stats }: FrivolitiesSectionProps) {
           {/* Lucky Numbers */}
           <Card>
             <CardHeader className="pb-sm">
-              <CardTitle className="text-base">Your Lucky Numbers</CardTitle>
+              <CardTitle>Your Lucky Numbers</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-2 gap-md py-sm">
@@ -457,7 +458,7 @@ export function FrivolitiesSection({ stats }: FrivolitiesSectionProps) {
           {/* Score Distribution */}
           <Card>
             <CardHeader className="pb-sm">
-              <CardTitle className="text-base">Score Distribution</CardTitle>
+              <CardTitle>Score Distribution</CardTitle>
             </CardHeader>
             <CardContent>
               <ScoreDistributionChart data={stats.scoreDistribution} />
@@ -467,7 +468,7 @@ export function FrivolitiesSection({ stats }: FrivolitiesSectionProps) {
           {/* Strokes by Par Type */}
           <Card>
             <CardHeader className="pb-sm">
-              <CardTitle className="text-base">Strokes by Par Type</CardTitle>
+              <CardTitle>Strokes by Par Type</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-md py-sm">
