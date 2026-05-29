@@ -71,9 +71,8 @@ function createStoryQueryClient(): QueryClient {
  * QueryClientProvider context plus an `api.Provider`. We provide both with
  * a no-op trpc client so calls return pending state instead of throwing.
  */
-export const withTrpc: Decorator = (Story) => {
+function TrpcDecorator({ children }: { children: React.ReactNode }) {
   // Lazily require to avoid pulling tRPC chunks into stories that don't need it.
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
   const { api } = require("@/trpc/react") as typeof import("@/trpc/react");
 
   const [queryClient] = React.useState(createStoryQueryClient);
@@ -96,11 +95,18 @@ export const withTrpc: Decorator = (Story) => {
   return (
     <QueryClientProvider client={queryClient}>
       <api.Provider client={trpcClient} queryClient={queryClient}>
-        <Story />
+        {children}
       </api.Provider>
     </QueryClientProvider>
   );
-};
+}
+TrpcDecorator.displayName = "TrpcDecorator";
+
+export const withTrpc: Decorator = (Story) => (
+  <TrpcDecorator>
+    <Story />
+  </TrpcDecorator>
+);
 
 // ---------------------------------------------------------------------------
 // Supabase Auth
@@ -127,20 +133,36 @@ const DEFAULT_FAKE_USER: FakeUser = {
  * inside effects/handlers will still attempt to hit the network — they'll
  * fail silently because `retry: false` is set on the QueryClient.
  */
+function SupabaseAuthDecorator({
+  user,
+  children,
+}: {
+  user: FakeUser;
+  children: React.ReactNode;
+}) {
+  React.useEffect(() => {
+    // Ensure env vars used by createBrowserClient are at least defined.
+    // Next.js inlines NEXT_PUBLIC_* at build time; if Storybook env isn't
+    // set, createBrowserClient will throw on `!` non-null assertions.
+    const g = globalThis as Record<string, unknown>;
+    g.__STORYBOOK_SUPABASE_USER__ = user;
+  }, [user]);
+
+  return <>{children}</>;
+}
+SupabaseAuthDecorator.displayName = "SupabaseAuthDecorator";
+
 export function withSupabaseAuth(userOverride?: Partial<FakeUser>): Decorator {
   const user: FakeUser = { ...DEFAULT_FAKE_USER, ...userOverride };
 
-  return (Story) => {
-    React.useEffect(() => {
-      // Ensure env vars used by createBrowserClient are at least defined.
-      // Next.js inlines NEXT_PUBLIC_* at build time; if Storybook env isn't
-      // set, createBrowserClient will throw on `!` non-null assertions.
-      const g = globalThis as Record<string, unknown>;
-      g.__STORYBOOK_SUPABASE_USER__ = user;
-    }, []);
-
-    return <Story />;
+  const SupabaseAuthStory: Decorator = function SupabaseAuthStory(Story) {
+    return (
+      <SupabaseAuthDecorator user={user}>
+        <Story />
+      </SupabaseAuthDecorator>
+    );
   };
+  return SupabaseAuthStory;
 }
 
 // ---------------------------------------------------------------------------
@@ -153,7 +175,7 @@ export function withSupabaseAuth(userOverride?: Partial<FakeUser>): Decorator {
  * the package is not currently a project dependency, so this decorator is
  * defensive.
  */
-export const withToaster: Decorator = (Story) => {
+function ToasterDecorator({ children }: { children: React.ReactNode }) {
   // Use lazy state so the import only runs in the browser at story render.
   const [Toaster, setToaster] = React.useState<React.ComponentType | null>(
     null
@@ -182,11 +204,18 @@ export const withToaster: Decorator = (Story) => {
 
   return (
     <>
-      <Story />
+      {children}
       {Toaster ? <Toaster /> : null}
     </>
   );
-};
+}
+ToasterDecorator.displayName = "ToasterDecorator";
+
+export const withToaster: Decorator = (Story) => (
+  <ToasterDecorator>
+    <Story />
+  </ToasterDecorator>
+);
 
 // ---------------------------------------------------------------------------
 // next-themes
@@ -222,19 +251,31 @@ export const withNextThemes: Decorator = (Story) => (
  *
  * Pass `defaultValues` via the factory to seed the form.
  */
+function ReactHookFormDecorator<TValues extends Record<string, unknown>>({
+  defaultValues,
+  children,
+}: {
+  defaultValues?: TValues;
+  children: React.ReactNode;
+}) {
+  const methods = useForm<TValues>({
+    defaultValues: defaultValues as never,
+  }) as UseFormReturn<TValues>;
+  return <FormProvider {...methods}>{children}</FormProvider>;
+}
+ReactHookFormDecorator.displayName = "ReactHookFormDecorator";
+
 export function withReactHookForm<TValues extends Record<string, unknown>>(
   defaultValues?: TValues
 ): Decorator {
-  return (Story) => {
-    const methods = useForm<TValues>({
-      defaultValues: defaultValues as never,
-    }) as UseFormReturn<TValues>;
+  const ReactHookFormStory: Decorator = function ReactHookFormStory(Story) {
     return (
-      <FormProvider {...methods}>
+      <ReactHookFormDecorator<TValues> defaultValues={defaultValues}>
         <Story />
-      </FormProvider>
+      </ReactHookFormDecorator>
     );
   };
+  return ReactHookFormStory;
 }
 
 // ---------------------------------------------------------------------------
@@ -247,7 +288,6 @@ export function withReactHookForm<TValues extends Record<string, unknown>>(
  * via this context (handicap index, course rating, slope, etc.).
  */
 export const withCalculatorContext: Decorator = (Story) => {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
   const { CalculatorProvider } =
     require("@/contexts/calculatorContext") as typeof import("@/contexts/calculatorContext");
   return (

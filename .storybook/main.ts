@@ -102,7 +102,6 @@ const config: StorybookConfig = {
     const storybookRequire = createRequire(
       require.resolve("@storybook/nextjs/package.json")
     );
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
     const webpack = storybookRequire("webpack");
     const publicEnv: Record<string, string> = {};
     for (const [key, value] of Object.entries(process.env)) {
