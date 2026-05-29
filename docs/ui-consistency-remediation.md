@@ -14,7 +14,7 @@
 | Storybook | ✅ Committed | branch `feat/storybook` (commit `27423b7`) — 142 stories + config |
 | Blocking decisions | ✅ Resolved (6/6) | Locked 2026-05-28 — see Layer 1 |
 | Wave A — mechanical/global | ✅ Complete (13/13) | Committed `2667cef` 2026-05-28; tsc/build green; CardTitle + rounds/add spot-checked visually |
-| Wave B — structural | ⬜ Not started (0/5) | Needs Decisions #1, #2 |
+| Wave B — structural | ✅ Complete (5/5) | Committed `62f9686` 2026-05-29; reviewer APPROVE; tsc/lint/build green. **Follow-up:** 3 pages still need width unification (see B1 note) |
 | Wave C — correctness + a11y | ✅ Complete (7/7) | Committed `c376920` 2026-05-29; legal-page fix verified logged-out; reviewer approved |
 | Wave D — perceptual + storybook quality | ⬜ Not started (0/6) | Some items need a logged-out re-capture |
 
@@ -191,7 +191,7 @@
 > The highest-leverage cohesion work. Establishes the page-level grammar.
 
 ### B1 — Shared `PageContainer` + container-width standardization
-- **Status:** ⬜ | **Priority:** P0 | **Confidence:** CONFIRMED | **Depends on:** **D1**
+- **Status:** 🟡 mostly done (2026-05-29) — `PageContainer` (max-w-6xl) applied to 7 authenticated pages. **GAP / FOLLOW-UP (B1b):** `profile/[id]`, `rounds/[id]/calculation`, `calculators` are NOT yet unified — their width wrapper lives inside client components (`TabbedProfilePage`, `RoundCalculation`, `CalculatorsPageClient`); strip those internal `max-w-*`/container wrappers and wrap the pages in `<PageContainer>` to finish width parity. | **Priority:** P0 | **Confidence:** CONFIRMED | **Depends on:** **D1**
 - **What:** Create a `PageContainer` component (width + horizontal padding + page-level `py-3xl`) and route authenticated app pages through it; constrain or remove per-route `max-w-*`.
 - **Why:** The single biggest visual break. `app/layout.tsx:109` sets no max-width, so every route hand-rolls one → **9 distinct widths across ~23 routes** (statistics full-bleed, profile/billing `7xl`, upgrade narrow, calculators mid). The frame resizes on every navigation. Also folds in the section-rhythm split (`py-xl` vs `py-2xl` vs `py-3xl`).
 - **Where:** new `components/layout/page-container.tsx`; `app/layout.tsx:109`; every `app/**/page.tsx` that sets `max-w-*`.
@@ -200,7 +200,7 @@
 - **Verify:** re-capture pages logged-in; compare container widths across routes (should be uniform).
 
 ### B2 — Statistics card density resolution
-- **Status:** ⬜ | **Priority:** P1 | **Confidence:** CONFIRMED | **Depends on:** **D2**
+- **Status:** ✅ done (2026-05-29) — `density: default|compact` CVA on Card sub-parts; ~32 statistics sites → `density="compact"`; default unchanged | **Priority:** P1 | **Confidence:** CONFIRMED | **Depends on:** **D2**
 - **What:** Either add a named `compact` Card variant (and apply it intentionally) or migrate the 38 `p-md` overrides to `p-lg`.
 - **Why:** Statistics runs its own card density (`p-md`, 64×) vs canonical `p-lg` — a silent density step against every other domain's cards.
 - **Where:** `components/ui/card.tsx` (if adding variant); `components/statistics/**` (38 `CardContent` overrides); consider `components/ui/stat-tile.tsx`.
@@ -209,7 +209,7 @@
 - **Verify:** Storybook card variants; statistics pages.
 
 ### B3 — `pricing-card.tsx` elevation + padding normalization
-- **Status:** ⬜ | **Priority:** P2 | **Confidence:** CODE-ONLY (story blank — verify visually)
+- **Status:** ✅ done (2026-05-29) — resting shadow-xs / hover shadow-md; padding via CardContent; redundant rounded-lg dropped; featured emphasis via border | **Priority:** P2 | **Confidence:** CODE-ONLY (story blank — verify visually)
 - **What:** Resting `shadow-xs`, a single hover-elevation tier, move `p-xl` into `CardContent p-lg`, drop redundant `rounded-lg`.
 - **Why:** Pricing cards force `shadow-md`/`shadow-lg` + `hover:shadow-xl` on top of `<Card>`, floating them into the dialog tier; also a third card padding (`p-xl` directly on `<Card>`).
 - **Where:** `components/billing/pricing-card.tsx:46,104-110,197`
@@ -218,7 +218,7 @@
 - **Verify:** **visually** (story blank) — `/upgrade` or pricing surface in app.
 
 ### B4 — Adopt `surface`/`surface-raised` utilities
-- **Status:** ⬜ | **Priority:** P2 | **Confidence:** CONFIRMED (dark consequence)
+- **Status:** ✅ done (2026-05-29) — player-identity-card tiles → surface-raised (fixes dark-mode vanish); account-deletion-section → surface | **Priority:** P2 | **Confidence:** CONFIRMED (dark consequence)
 - **What:** Replace hand-rolled `bg-card`/`bg-background/50 rounded-lg border` recipes with the `surface`/`surface-raised` utilities.
 - **Why:** ~8 sites hand-roll the surface recipe; `bg-background/50` tiles nearly vanish in dark mode (only a hairline border remains).
 - **Where:** `components/statistics/hero/player-identity-card.tsx:69,88,97` + ~5 others (grep `bg-background/50`, `bg-card rounded-lg border`).
@@ -227,7 +227,7 @@
 - **Verify:** dark-mode statistics hero in app.
 
 ### B5 — Normalize status surfaces
-- **Status:** ⬜ | **Priority:** P1 | **Confidence:** CONFIRMED
+- **Status:** ✅ done (2026-05-29) — form-feedback/statBox/quick-actions/alert → tint-* at uniform 20% border; Alert aligned to filled tint | **Priority:** P1 | **Confidence:** CONFIRMED
 - **What:** Route all status/callouts through `FormFeedback`/`tint-*` at a single 20% border opacity; align or retire the outline-only `Alert`.
 - **Why:** Status surfaces done multiple ways (tint vs hand-rolled `bg-{tone}/N border-{tone}/N`); border opacity inconsistent (`/30` success vs `/20` error — visible weight difference); `FormFeedback` (filled) vs `Alert` (outline) are two status languages.
 - **Where:** `components/ui/form-feedback.tsx:28-32`, `components/homepage/statBox.tsx`, `components/homepage/quick-actions.tsx`, `components/ui/alert.tsx`.
@@ -405,3 +405,5 @@ _Append one line per completed item/session: date — item ID(s) — what landed
 - 2026-05-28 — D1–D6 — all six blocking decisions resolved (D1: max-w-6xl uniform; D2: compact Card variant; D3: transition-colors; D4: /80·/90; D5: EmptyState; D6: text-meta-strong). Waves B/C/D now unblocked.
 - 2026-05-28 — Wave A (A1–A13) — all 13 mechanical items landed (`2667cef`, 37 files). tsc + build green; CardTitle/rounds-add visually spot-checked. A5 was already correct. Residual TODOs are token gaps (see appendix). A11 also committed earlier with the primitive change.
 - 2026-05-29 — Wave C (C1–C7) — correctness + a11y landed (`c376920`, 21 files). Legal-page route-gating BUG fixed + verified via logged-out capture (privacy-policy renders real content). New `<EmptyState>` primitive (default+compact). tsc + build green; reviewer APPROVE. NOTE: pre-existing lint errors remain in `.storybook/` (see follow-up below) — not Wave C.
+- 2026-05-29 — `.storybook` lint — fixed rules-of-hooks in decorators (`1ef17ef`); `pnpm lint` exits 0.
+- 2026-05-29 — Wave B (B1–B5) — structural cohesion landed (`62f9686`, 24 files). PageContainer (max-w-6xl) on 7 pages; compact Card density; pricing-card elevation; surface utilities; status-surface tint normalization. tsc/lint/build green; reviewer APPROVE. **Follow-up B1b:** 3 pages (profile, round-calculation, calculators) still need width unification (wrappers in client components). **Incident:** two B-agents ran `git stash` on the shared tree (collision + a leftover `stash@{0}`); integrity audit confirmed NO Wave-B work lost and no committed file reverted. `stash@{0}` holds only an OLD autofill `globals.css` snapshot that is already superseded by the committed, more-complete autofill rules in `app/styles/base.css` — redundant, safe to drop (left in place pending user OK). **Lesson:** future agent briefs must forbid `git stash`/branch ops on the shared working tree.
