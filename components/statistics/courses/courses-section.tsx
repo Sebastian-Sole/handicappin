@@ -95,14 +95,14 @@ export function CoursesSection({
       >
         <div className="grid grid-cols-2 md:grid-cols-4 gap-md">
           <Card>
-            <CardContent className="p-md text-center">
+            <CardContent density="compact" className="text-center">
               <p className="text-body-sm text-muted-foreground">Courses Played</p>
               <p className="text-figure-lg">{uniqueCourses}</p>
               <p className="text-meta text-muted-foreground">unique courses</p>
             </CardContent>
           </Card>
           <Card>
-            <CardContent className="p-md text-center">
+            <CardContent density="compact" className="text-center">
               <p className="text-body-sm text-muted-foreground">Countries</p>
               <p className="text-figure-lg">{uniqueCountries}</p>
               <p className="text-meta text-muted-foreground">
@@ -111,7 +111,7 @@ export function CoursesSection({
             </CardContent>
           </Card>
           <Card>
-            <CardContent className="p-md text-center">
+            <CardContent density="compact" className="text-center">
               <p className="text-body-sm text-muted-foreground">Variety Score</p>
               <p className="text-figure-lg">{varietyScore}%</p>
               <p className="text-meta text-muted-foreground">
@@ -123,7 +123,7 @@ export function CoursesSection({
             </CardContent>
           </Card>
           <Card>
-            <CardContent className="p-md text-center">
+            <CardContent density="compact" className="text-center">
               <p className="text-body-sm text-muted-foreground">Avg Rounds/Course</p>
               <p className="text-figure-lg">
                 {uniqueCourses > 0

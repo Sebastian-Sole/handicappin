@@ -4,6 +4,7 @@ import { Suspense } from "react";
 import StatisticsSkeleton from "@/components/statistics/statistics-skeleton";
 import { createServerComponentClient } from "@/utils/supabase/server";
 import { redirect } from "next/navigation";
+import { PageContainer } from "@/components/layout/page-container";
 
 const StatisticsPage = async () => {
   const supabase = await createServerComponentClient();
@@ -33,7 +34,9 @@ const StatisticsPage = async () => {
 
   return (
     <Suspense fallback={<StatisticsSkeleton />}>
-      <Statistics profile={profile} scorecards={scorecards} />
+      <PageContainer>
+        <Statistics profile={profile} scorecards={scorecards} />
+      </PageContainer>
     </Suspense>
   );
 };

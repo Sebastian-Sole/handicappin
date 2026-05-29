@@ -6,6 +6,7 @@ import { createClientComponentClient } from "@/utils/supabase/client";
 import { clientLogger } from "@/lib/client-logger";
 import { Button } from "@/components/ui/button";
 import { H1 } from "@/components/ui/typography";
+import { PageContainer } from "@/components/layout/page-container";
 
 type WebhookStatus = {
   status: "processing" | "success" | "delayed" | "failed";
@@ -215,7 +216,7 @@ export default function BillingSuccessPage() {
   };
 
   return (
-    <div className="sm:container mx-auto px-md py-3xl">
+    <PageContainer>
       <div className="max-w-2xl mx-auto text-center">
         <div className="mb-xl">
           {/* Loading State */}
@@ -399,6 +400,6 @@ export default function BillingSuccessPage() {
             </div>
           )}
       </div>
-    </div>
+    </PageContainer>
   );
 }

@@ -6,6 +6,7 @@ import DashboardSkeleton from "@/components/dashboard/dashboardSkeleton";
 
 import { createServerComponentClient } from "@/utils/supabase/server";
 import { redirect } from "next/navigation";
+import { PageContainer } from "@/components/layout/page-container";
 
 const DashboardPage = async (props: { params: Promise<{ id: string }> }) => {
   const params = await props.params;
@@ -46,13 +47,13 @@ const DashboardPage = async (props: { params: Promise<{ id: string }> }) => {
 
   return (
     <Suspense fallback={<DashboardSkeleton />}>
-      <div>
+      <PageContainer>
         <Dashboard
           profile={profile}
           scorecards={scorecards}
           header={header}
         />
-      </div>
+      </PageContainer>
     </Suspense>
   );
 };

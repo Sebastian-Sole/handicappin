@@ -80,7 +80,7 @@ export function ActivitySection({
           {/* Quick Stats Row */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-md">
             <Card>
-              <CardContent className="p-md text-center">
+              <CardContent density="compact" className="text-center">
                 <p className="text-body-sm text-muted-foreground">Avg Rounds/Month</p>
                 <p className="text-figure">
                   {formatDecimal(activityStats.avgRoundsPerMonth, 1)}
@@ -88,7 +88,7 @@ export function ActivitySection({
               </CardContent>
             </Card>
             <Card>
-              <CardContent className="p-md text-center">
+              <CardContent density="compact" className="text-center">
                 <p className="text-body-sm text-muted-foreground">Current Streak</p>
                 <p className="text-figure">
                   {activityStats.currentStreak > 0
@@ -103,7 +103,7 @@ export function ActivitySection({
               </CardContent>
             </Card>
             <Card>
-              <CardContent className="p-md text-center">
+              <CardContent density="compact" className="text-center">
                 <p className="text-body-sm text-muted-foreground">Longest Gap</p>
                 <p className="text-figure">
                   {activityStats.longestGap > 0
@@ -114,7 +114,7 @@ export function ActivitySection({
             </Card>
             {activityStats.mostActiveMonth && (
               <Card className="tint-info">
-                <CardContent className="p-md text-center">
+                <CardContent density="compact" className="text-center">
                   <p className="text-body-sm text-muted-foreground">Most Active</p>
                   {/* TODO(ui-consistency A7): stat value `text-lg font-bold` — no figure utility at 1.125rem; figure ramp starts at figure-sm=1.25rem */}
                   <p className="text-lg font-bold">
@@ -172,7 +172,7 @@ export function ActivitySection({
                     key={season.season}
                     className={isBest ? "tint-success" : ""}
                   >
-                    <CardContent className="p-md text-center flex flex-col justify-center min-h-[130px]">
+                    <CardContent density="compact" className="text-center flex flex-col justify-center min-h-[130px]">
                       <p className="text-label-sm">{season.season}</p>
                       <p className="text-figure">{season.roundCount}</p>
                       <p className="text-meta text-muted-foreground">rounds</p>

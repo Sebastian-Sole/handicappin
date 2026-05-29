@@ -14,6 +14,7 @@ import {
   UsageLimitAlert,
   UsageLimitReachedView,
 } from "@/components/scorecard/usage-limit-alert";
+import { PageContainer } from "@/components/layout/page-container";
 
 const AddRoundPage = async () => {
   const supabase = await createServerComponentClient();
@@ -41,16 +42,16 @@ const AddRoundPage = async () => {
   if (access.plan === "free" && access.remainingRounds <= 0) {
     return (
       <Suspense fallback={<AddRoundSkeleton />}>
-        <div className="flex justify-center items-center flex-col">
+        <PageContainer className="flex justify-center items-center flex-col">
           <UsageLimitReachedView />
-        </div>
+        </PageContainer>
       </Suspense>
     );
   }
 
   return (
     <Suspense fallback={<AddRoundSkeleton />}>
-      <div className="flex justify-center items-center flex-col h-full py-sm md:py-md lg:py-xl">
+      <PageContainer className="flex justify-center items-center flex-col">
         <H1 className="text-heading-1 mb-sm md:mb-md lg:mb-xl">
           Add Round
         </H1>
@@ -73,7 +74,7 @@ const AddRoundPage = async () => {
           profile={profile}
           access={access}
         />
-      </div>
+      </PageContainer>
     </Suspense>
   );
 };

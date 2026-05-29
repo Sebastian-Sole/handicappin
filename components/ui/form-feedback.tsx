@@ -26,9 +26,9 @@ export function FormFeedback({
   };
 
   const containerStyles = {
-    success: "bg-success/10 border-success/30",
-    error: "bg-destructive/10 border-destructive/20",
-    info: "bg-info/10 border-info/30",
+    success: "tint-success",
+    error: "tint-destructive",
+    info: "tint-info",
   };
 
   const textStyles = {

@@ -41,7 +41,7 @@ export function QuickActions({ userId, className }: QuickActionsProps) {
             className={cn(
               "p-md flex flex-col items-center justify-center gap-sm h-full",
               "hover:bg-accent/50 transition-colors cursor-pointer",
-              action.primary && "bg-primary/5 border-primary/20"
+              action.primary && "tint-primary"
             )}
           >
             <action.icon

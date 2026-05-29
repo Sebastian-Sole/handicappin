@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { H2 } from "@/components/ui/typography";
@@ -101,13 +101,14 @@ export function PricingCard({
     badge?.variant
   );
 
-  const shadowClass = highlighted
-    ? "shadow-lg hover:shadow-xl"
-    : "shadow-md hover:shadow-lg";
+  // Canonical card elevation: resting shadow-xs with a single subtle hover tier.
+  // Featured/recommended emphasis is carried by the border/ring accent applied
+  // via `borderClass` (border-2 border-primary) rather than a dialog-tier shadow.
+  const shadowClass = "shadow-xs hover:shadow-md";
 
   return (
     <Card
-      className={`${borderClass} rounded-lg p-xl ${shadowClass} transition relative dark:bg-primary/10 ${className} flex flex-col h-full`}
+      className={`${borderClass} ${shadowClass} transition relative dark:bg-primary/10 ${className} flex flex-col h-full`}
     >
       {badge && (
         <div className="absolute -top-md left-1/2 transform -translate-x-1/2">
@@ -121,6 +122,7 @@ export function PricingCard({
         </div>
       )}
 
+      <CardContent className="pt-lg flex flex-col flex-grow">
       <div className="mb-md">
         <H2 className="text-2xl mb-sm pb-0">{title}</H2>
         {/* {badge && plan === "free" && (
@@ -188,18 +190,20 @@ export function PricingCard({
           {buttonText}
         </Button>
       </div>
+      </CardContent>
     </Card>
   );
 }
 
 export function PricingCardSkeleton() {
   return (
-    <Card className="rounded-lg p-xl shadow-md flex flex-col h-full">
+    <Card className="shadow-xs relative flex flex-col h-full">
       {/* Badge skeleton */}
       <div className="absolute -top-md left-1/2 transform -translate-x-1/2">
         <Skeleton className="h-6 w-24 rounded-full" />
       </div>
 
+      <CardContent className="pt-lg flex flex-col flex-grow">
       <div className="mb-md">
         {/* Title */}
         <Skeleton className="h-8 w-32 mb-sm" />
@@ -228,6 +232,7 @@ export function PricingCardSkeleton() {
         {/* Button */}
         <Skeleton className="h-10 w-full rounded-md" />
       </div>
+      </CardContent>
     </Card>
   );
 }

@@ -19,7 +19,7 @@ export function StatCard({
 }: StatCardProps) {
   return (
     <Card className={cn("", className)}>
-      <CardContent className="p-md">
+      <CardContent density="compact">
         <p className="text-body-sm text-muted-foreground">{title}</p>
         <div className="flex items-baseline gap-sm">
           <p className="text-figure">{value}</p>

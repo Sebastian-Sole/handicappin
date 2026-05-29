@@ -7,6 +7,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
 import { logger } from "@/lib/logging";
 import { H1 } from "@/components/ui/typography";
+import { PageContainer } from "@/components/layout/page-container";
 
 interface UpgradePageProps {
   searchParams: Promise<{ expired?: string }>;
@@ -46,39 +47,37 @@ export default async function UpgradePage({ searchParams }: UpgradePageProps) {
     : "free";
 
   return (
-    <div className="sm:container mx-auto px-md py-3xl">
-      <div className="max-w-6xl mx-auto">
-        {/* Expired subscription alert */}
-        {isExpired && (
-          <Alert className="mb-xl tint-warning">
-            <AlertCircle className="h-4 w-4 text-warning" />
-            <AlertDescription className="text-warning">
-              Your premium subscription has ended. Upgrade to continue accessing premium features.
-            </AlertDescription>
-          </Alert>
-        )}
+    <PageContainer>
+      {/* Expired subscription alert */}
+      {isExpired && (
+        <Alert className="mb-xl tint-warning">
+          <AlertCircle className="h-4 w-4 text-warning" />
+          <AlertDescription className="text-warning">
+            Your premium subscription has ended. Upgrade to continue accessing premium features.
+          </AlertDescription>
+        </Alert>
+      )}
 
-        <div className="text-center mb-2xl">
-          <H1 className="mb-md">Change Your Plan</H1>
-          <p className="text-lead text-muted-foreground">
-            Currently on: <span className="font-semibold capitalize">{currentPlan}</span> Plan
-          </p>
-        </div>
-
-        {/* Context-aware plan selector */}
-        <PlanSelector
-          userId={user.id}
-          currentPlan={currentPlan}
-          mode="upgrade"
-        />
-
-        {/* Back to billing link */}
-        <div className="text-center mt-2xl">
-          <Link href="/billing" className="text-muted-foreground hover:text-foreground">
-            ← Back to Billing
-          </Link>
-        </div>
+      <div className="text-center mb-2xl">
+        <H1 className="mb-md">Change Your Plan</H1>
+        <p className="text-lead text-muted-foreground">
+          Currently on: <span className="font-semibold capitalize">{currentPlan}</span> Plan
+        </p>
       </div>
-    </div>
+
+      {/* Context-aware plan selector */}
+      <PlanSelector
+        userId={user.id}
+        currentPlan={currentPlan}
+        mode="upgrade"
+      />
+
+      {/* Back to billing link */}
+      <div className="text-center mt-2xl">
+        <Link href="/billing" className="text-muted-foreground hover:text-foreground">
+          ← Back to Billing
+        </Link>
+      </div>
+    </PageContainer>
   );
 }

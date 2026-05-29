@@ -67,7 +67,7 @@ export function PlayerIdentityCard({
         {/* Stats Row */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-md md:gap-lg mt-xl">
           {/* Handicap Index */}
-          <div className="text-center p-md bg-background/50 rounded-lg border">
+          <div className="text-center p-md surface-raised">
             <div className="flex items-center justify-center gap-sm">
               <span className="text-4xl md:text-figure-2xl">
                 {formatHandicap(currentHandicap)}
@@ -86,7 +86,7 @@ export function PlayerIdentityCard({
           </div>
 
           {/* Rounds & Golf Age */}
-          <div className="text-center p-md bg-background/50 rounded-lg border">
+          <div className="text-center p-md surface-raised">
             <div className="text-4xl md:text-figure-2xl">{totalRounds}</div>
             <p className="text-body-sm text-muted-foreground mt-xs">Total Rounds</p>
             <p className="text-meta text-muted-foreground">
@@ -95,7 +95,7 @@ export function PlayerIdentityCard({
           </div>
 
           {/* Last Played */}
-          <div className="text-center p-md bg-background/50 rounded-lg border">
+          <div className="text-center p-md surface-raised">
             <div
               className={cn(
                 "text-4xl md:text-figure-2xl",

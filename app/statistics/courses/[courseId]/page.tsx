@@ -21,6 +21,7 @@ import {
 import { api } from "@/trpc/server";
 import { createServerComponentClient } from "@/utils/supabase/server";
 import { getFlagEmoji } from "@/utils/frivolities/headerGenerator";
+import { PageContainer } from "@/components/layout/page-container";
 
 interface PageProps {
   params: Promise<{ courseId: string }>;
@@ -57,7 +58,7 @@ export default async function CourseDetailPage({ params }: PageProps) {
   const hasData = summary.roundCount > 0;
 
   return (
-    <main className="container mx-auto max-w-6xl px-md py-xl space-y-xl">
+    <PageContainer className="space-y-xl">
       <div>
         <Link
           href="/statistics"
@@ -200,6 +201,6 @@ export default async function CourseDetailPage({ params }: PageProps) {
           </section>
         </>
       )}
-    </main>
+    </PageContainer>
   );
 }

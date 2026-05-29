@@ -194,14 +194,14 @@ export function PerformanceSection({
       >
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-md">
           <Card>
-            <CardContent className="p-md">
+            <CardContent density="compact">
               <p className="text-body-sm text-muted-foreground">Average Score</p>
               <p className="text-figure">{formatScore(stats.avgScore)}</p>
               <p className="text-meta text-muted-foreground">{getAvgScoreContext()}</p>
             </CardContent>
           </Card>
           <Card>
-            <CardContent className="p-md">
+            <CardContent density="compact">
               <p className="text-body-sm text-muted-foreground">Handicap Change</p>
               <div className="flex items-baseline gap-sm">
                 <p className="text-figure">
@@ -222,7 +222,7 @@ export function PerformanceSection({
             </CardContent>
           </Card>
           <Card>
-            <CardContent className="p-md">
+            <CardContent density="compact">
               <p className="text-body-sm text-muted-foreground">Consistency</p>
               <p className="text-figure">
                 {extendedStats.consistencyRating > 0
@@ -237,7 +237,7 @@ export function PerformanceSection({
             </CardContent>
           </Card>
           <Card>
-            <CardContent className="p-md">
+            <CardContent density="compact">
               <p className="text-body-sm text-muted-foreground">Courses Played</p>
               <p className="text-figure">{extendedStats.uniqueCourses}</p>
               <p className="text-meta text-muted-foreground">
@@ -307,7 +307,7 @@ export function PerformanceSection({
                   className="block"
                 >
                   <Card className="tint-score-eagle hover:border-score-eagle/40 transition-colors cursor-pointer">
-                    <CardContent className="p-md">
+                    <CardContent density="compact">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-sm">
                           <div className="text-2xl">🏆</div>

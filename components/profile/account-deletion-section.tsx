@@ -121,7 +121,7 @@ export function AccountDeletionSection() {
   };
 
   return (
-    <div className="bg-card rounded-lg border border-destructive/20 p-lg">
+    <div className="surface border-destructive/20 p-lg">
       <div className="flex items-start gap-sm mb-md">
         <AlertTriangle className="h-6 w-6 text-destructive flex-shrink-0 mt-xs" />
         <div>

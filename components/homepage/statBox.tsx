@@ -26,11 +26,11 @@ const StatBox = ({ title, value, change, description, icon }: StatBoxProps) => {
           <Badge
             className={`text-meta transition-colors duration-300 ${
               change === "improvement"
-                ? "bg-success/20 text-success border-success/30 hover:bg-success/20 hover:text-success"
+                ? "tint-success text-success hover:text-success"
                 : change === "achievement"
-                ? "bg-warning/20 text-warning border-warning/30 hover:bg-warning/20 hover:text-warning"
+                ? "tint-warning text-warning hover:text-warning"
                 : change === "increase"
-                ? "bg-info/20 text-info border-info/30 hover:bg-info/20 hover:text-info"
+                ? "tint-info text-info hover:text-info"
                 : "bg-muted text-muted-foreground border-muted hover:bg-muted hover:text-muted-foreground"
             }
              `}

@@ -173,7 +173,7 @@ export function CourseHoleTabs({ holes }: CourseHoleTabsProps) {
 
       <TabsContent value="avg">
         <Card>
-          <CardContent className="p-md">
+          <CardContent density="compact">
             <p className="text-body-sm text-muted-foreground mb-md">
               Average strokes per hole. Bars are color-coded by performance vs
               par; the dashed line is the average par across holes you&apos;ve
@@ -255,7 +255,7 @@ export function CourseHoleTabs({ holes }: CourseHoleTabsProps) {
 
       <TabsContent value="distribution">
         <Card>
-          <CardContent className="p-md">
+          <CardContent density="compact">
             <p className="text-body-sm text-muted-foreground mb-md">
               Scoring mix per hole as a share of rounds you&apos;ve played here.
               Hover to see exact percentages.
