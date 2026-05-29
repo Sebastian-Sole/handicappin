@@ -377,7 +377,7 @@ Wave A left `// TODO(ui-consistency A7/A10)` markers wherever a raw compound had
 Recommend a small token-addition decision (like the `min-w-*` additions in the design-system work) before or alongside Wave C's typography items.
 
 ### Known issues / follow-ups (surfaced during Waves A & C)
-- **`.storybook/` lint errors (6, pre-existing — from the Storybook commit `27423b7`, NOT a remediation wave):** `pnpm lint` fails on `.storybook/decorators.tsx` — `withToaster` calls `React.useState`/`useEffect` in a plain function (`react-hooks/rules-of-hooks`) + a missing display name, plus 2 stale `eslint-disable` directives (`decorators.tsx`, `main.ts`). Fix: move the toaster hooks into a real `<ToasterDecorator>` component the decorator renders; drop the unused disables. Low risk; makes the lint gate green again.
+- **~~`.storybook/` lint errors (6)~~ ✅ FIXED 2026-05-29:** decorators that called hooks in the decorator body were refactored into named wrapper components (TrpcDecorator/ToasterDecorator/SupabaseAuthDecorator/ReactHookFormDecorator); stale `eslint-disable` directives removed. `pnpm lint` now exits 0. (1 unrelated pre-existing warning remains: `add-course-dialog.tsx:48` exhaustive-deps — left as a warning, behavioral risk to "fix".)
 - **Latent `Button` type default:** the `Button` primitive doesn't default `type="button"` (native `<button>` defaults to `submit`). Safe today (the verify-session buttons converted in C2 aren't inside a `<form>`), but a footgun — consider defaulting `type="button"` on the primitive.
 - **Empty-state public/legal re-capture:** logged-out capture of public + legal pages completed 2026-05-28/29 (`pages-public/`, `pages-legalcheck/`); legal pages confirmed rendering real content after C1.
 
