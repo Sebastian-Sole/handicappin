@@ -54,14 +54,6 @@
   letter-spacing: 0;
 }
 
-@utility text-caption {
-  font-family: var(--font-sans);
-  font-weight: 500;
-  font-size: 0.75rem;
-  line-height: 1rem;
-  letter-spacing: 0.01em;
-}
-
 /* Figure scale — bold numeric display (stat values, metric tiles,
    percentage readouts, etc.). Distinct from heading utilities: figures
    are always weight 700, short line-height, no tracking adjustment.

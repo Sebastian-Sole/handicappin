@@ -869,7 +869,7 @@ export default function GolfScorecard({ profile, access }: GolfScorecardProps) {
                   savingLabel="Submitting..."
                   savedLabel="Submitted!"
                   errorLabel="Submit Scorecard"
-                  className="transition-all duration-300"
+                  className="transition-colors duration-300"
                 />
               </div>
             )}

@@ -6,6 +6,8 @@ import { createClientComponentClient } from "@/utils/supabase/client";
 import { clientLogger } from "@/lib/client-logger";
 import { H1 } from "@/components/ui/typography";
 import { FormFeedback } from "@/components/ui/form-feedback";
+import { Button } from "@/components/ui/button";
+import { env } from "@/env";
 
 const MAX_RETRY_ATTEMPTS = 3;
 const RETRY_DELAY_MS = 2000; // 2 seconds between retries
@@ -235,18 +237,14 @@ export function VerifySessionContent({
             <H1 className="mb-sm">Verification Failed</H1>
             <p className="text-muted-foreground mb-lg">{errorMessage}</p>
             <div className="space-y-sm">
-              <button
-                onClick={handleLogout}
-                className="w-full bg-primary text-primary-foreground px-lg py-sm rounded-lg hover:bg-primary/90 transition"
-              >
+              <Button onClick={handleLogout} className="w-full">
                 Sign In Again
-              </button>
-              <a
-                href="mailto:sebastiansole@handicappin.com"
-                className="block w-full border border-border px-lg py-sm rounded-lg hover:bg-muted/50 transition"
-              >
-                Contact Support
-              </a>
+              </Button>
+              <Button asChild variant="outline" className="w-full">
+                <a href="mailto:sebastiansole@handicappin.com">
+                  Contact Support
+                </a>
+              </Button>
             </div>
           </>
         )}
@@ -267,28 +265,29 @@ export function VerifySessionContent({
               />
             )}
             <div className="space-y-sm">
-              <button
+              <Button
                 onClick={() => {
                   setAttemptCount(0);
                   setState("verifying");
                 }}
-                className="w-full bg-primary text-primary-foreground px-lg py-sm rounded-lg hover:bg-primary/90 transition"
+                className="w-full"
               >
                 Try Again
-              </button>
-              <button
+              </Button>
+              <Button
                 onClick={handleLogout}
-                className="w-full border border-border px-lg py-sm rounded-lg hover:bg-muted/50 transition"
+                variant="outline"
+                className="w-full"
               >
                 Sign In Again
-              </button>
+              </Button>
             </div>
           </>
         )}
       </div>
 
-      {/* Debug Info (only in development) */}
-      {process.env.NODE_ENV === "development" && (
+      {/* Debug Info (non-production only) */}
+      {env.NODE_ENV !== "production" && (
         <div className="mt-xl p-md bg-muted rounded text-meta text-left">
           <p className="font-mono mb-xs">
             <strong>Debug Info:</strong>

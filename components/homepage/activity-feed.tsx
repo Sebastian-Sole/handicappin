@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { StatDelta } from "@/components/ui/stat-delta";
+import { EmptyState } from "@/components/ui/empty-state";
 import {
   Tooltip,
   TooltipContent,
@@ -33,14 +34,15 @@ export function ActivityFeed({
           <CardTitle>Recent Activity</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="text-center justify-center items-center flex flex-col py-xl">
-            <p className="text-muted-foreground mb-md">
-              No rounds logged yet. Start your golf journey!
-            </p>
-            <Link href="/rounds/add">
-              <Button>Log Your First Round</Button>
-            </Link>
-          </div>
+          <EmptyState
+            title="No rounds logged yet"
+            description="Start your golf journey!"
+            action={
+              <Link href="/rounds/add">
+                <Button>Log Your First Round</Button>
+              </Link>
+            }
+          />
         </CardContent>
       </Card>
     );

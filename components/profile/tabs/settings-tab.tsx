@@ -144,7 +144,7 @@ export function SettingsTab() {
                 {/* Light Theme Button */}
                 <button
                   onClick={() => setTheme("light")}
-                  className={`flex flex-col items-center gap-sm p-md rounded-lg border-2 transition-all hover:bg-muted/50 ${
+                  className={`flex flex-col items-center gap-sm p-md rounded-lg border-2 transition-colors hover:bg-muted/50 ${
                     theme === "light"
                       ? "border-primary bg-primary/5"
                       : "border-muted"
@@ -157,7 +157,7 @@ export function SettingsTab() {
                 {/* Dark Theme Button */}
                 <button
                   onClick={() => setTheme("dark")}
-                  className={`flex flex-col items-center gap-sm p-md rounded-lg border-2 transition-all hover:bg-muted/50 ${
+                  className={`flex flex-col items-center gap-sm p-md rounded-lg border-2 transition-colors hover:bg-muted/50 ${
                     theme === "dark"
                       ? "border-primary bg-primary/5"
                       : "border-muted"
@@ -170,7 +170,7 @@ export function SettingsTab() {
                 {/* System Theme Button */}
                 <button
                   onClick={() => setTheme("system")}
-                  className={`flex flex-col items-center gap-sm p-md rounded-lg border-2 transition-all hover:bg-muted/50 ${
+                  className={`flex flex-col items-center gap-sm p-md rounded-lg border-2 transition-colors hover:bg-muted/50 ${
                     theme === "system"
                       ? "border-primary bg-primary/5"
                       : "border-muted"
@@ -202,7 +202,7 @@ export function SettingsTab() {
           idleLabel="Save Changes"
           savedLabel="Saved!"
           disabled={isLoading}
-          className="transition-all duration-300"
+          className="transition-colors duration-300"
         />
       </div>
     </div>

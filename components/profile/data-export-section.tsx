@@ -95,7 +95,7 @@ export function DataExportSection() {
         savingLabel="Exporting..."
         savedLabel="Downloaded!"
         errorLabel="Export Data"
-        className="transition-all duration-300"
+        className="transition-colors duration-300"
       />
     </div>
   );

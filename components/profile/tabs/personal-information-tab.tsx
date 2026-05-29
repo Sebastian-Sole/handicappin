@@ -606,7 +606,7 @@ export function PersonalInformationTab({
               state={saveState}
               idleLabel="Save Changes"
               savedLabel="Saved!"
-              className="transition-all duration-300"
+              className="transition-colors duration-300"
             />
           </div>
         </form>

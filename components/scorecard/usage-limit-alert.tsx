@@ -37,14 +37,14 @@ export function UsageLimitAlert({
       container: "surface",
       icon: "text-primary",
       progress: "bg-primary",
-      button: "bg-primary text-primary-foreground hover:bg-primary/90",
+      button: "bg-primary text-primary-foreground hover:bg-primary/80",
     },
     warning: {
       container: "tint-warning",
       icon: "text-warning",
       progress: "bg-warning",
       button:
-        "bg-warning text-warning-foreground hover:bg-warning/90",
+        "bg-warning text-warning-foreground hover:bg-warning/80",
     },
     critical: {
       container: "tint-destructive",
@@ -60,7 +60,7 @@ export function UsageLimitAlert({
   return (
     <div
       className={cn(
-        "p-lg shadow-xs transition-all",
+        "p-lg shadow-xs transition-colors",
         styles.container
       )}
     >

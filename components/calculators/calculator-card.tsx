@@ -45,7 +45,7 @@ export function CalculatorCard({
   };
 
   return (
-    <Card className={cn("transition-all", className)}>
+    <Card className={cn("transition-colors", className)}>
       <CardHeader
         className="cursor-pointer md:cursor-default"
         onClick={handleToggle}

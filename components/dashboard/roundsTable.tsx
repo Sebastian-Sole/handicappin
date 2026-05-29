@@ -15,6 +15,8 @@ import { Button } from "../ui/button";
 import RoundTablePagination from "./roundTablePagination";
 import { ScorecardWithRound } from "@/types/scorecard-input";
 import { H2 } from "../ui/typography";
+import { EmptyState } from "@/components/ui/empty-state";
+import { ListChecks } from "lucide-react";
 
 interface RoundsTableProps {
   scorecards: ScorecardWithRound[];
@@ -97,6 +99,13 @@ export function RoundsTable({
     }
   };
 
+  const ariaSortFor = (
+    column: typeof sortColumn
+  ): "ascending" | "descending" | "none" => {
+    if (sortColumn !== column) return "none";
+    return sortDirection === "asc" ? "ascending" : "descending";
+  };
+
   return (
     <div className="surface p-lg">
       <H2 className="mb-md">{title}</H2>
@@ -120,85 +129,40 @@ export function RoundsTable({
         <Table>
           <TableHeader>
             <TableRow className="hover:bg-inherit">
-              <TableHead
-                className="cursor-pointer whitespace-nowrap font-bold text-primary"
-                onClick={() => handleSort("teeTime")}
-              >
-                Date{" "}
-                <span
-                  className="ml-xs opacity-0 transition-opacity"
-                  style={{ opacity: sortColumn === "teeTime" ? 1 : 0 }}
+              {(
+                [
+                  { column: "teeTime", label: "Date" },
+                  { column: "course.name", label: "Course" },
+                  { column: "round.adjustedGrossScore", label: "Score" },
+                  { column: "round.parPlayed", label: "Par" },
+                  { column: "round.scoreDifferential", label: "Differential" },
+                  {
+                    column: "round.exceptionalScoreAdjustment",
+                    label: "Adjustment",
+                  },
+                ] as const
+              ).map(({ column, label }) => (
+                <TableHead
+                  key={column}
+                  aria-sort={ariaSortFor(column)}
+                  className="whitespace-nowrap p-0"
                 >
-                  {sortDirection === "asc" ? "\u2191" : "\u2193"}
-                </span>
-              </TableHead>
-              <TableHead
-                className="cursor-pointer whitespace-nowrap font-bold text-primary"
-                onClick={() => handleSort("course.name")}
-              >
-                Course{" "}
-                <span
-                  className="ml-xs opacity-0 transition-opacity"
-                  style={{ opacity: sortColumn === "course.name" ? 1 : 0 }}
-                >
-                  {sortDirection === "asc" ? "\u2191" : "\u2193"}
-                </span>
-              </TableHead>
-              <TableHead
-                className="cursor-pointer whitespace-nowrap font-bold text-primary"
-                onClick={() => handleSort("round.adjustedGrossScore")}
-              >
-                Score{" "}
-                <span
-                  className="ml-xs opacity-0 transition-opacity"
-                  style={{
-                    opacity: sortColumn === "round.adjustedGrossScore" ? 1 : 0,
-                  }}
-                >
-                  {sortDirection === "asc" ? "\u2191" : "\u2193"}
-                </span>
-              </TableHead>
-              <TableHead
-                className="cursor-pointer whitespace-nowrap font-bold text-primary"
-                onClick={() => handleSort("round.parPlayed")}
-              >
-                Par{" "}
-                <span
-                  className="ml-xs opacity-0 transition-opacity"
-                  style={{ opacity: sortColumn === "round.parPlayed" ? 1 : 0 }}
-                >
-                  {sortDirection === "asc" ? "\u2191" : "\u2193"}
-                </span>
-              </TableHead>
-              <TableHead
-                className="cursor-pointer whitespace-nowrap font-bold text-primary"
-                onClick={() => handleSort("round.scoreDifferential")}
-              >
-                Differential{" "}
-                <span
-                  className="ml-xs opacity-0 transition-opacity"
-                  style={{
-                    opacity: sortColumn === "round.scoreDifferential" ? 1 : 0,
-                  }}
-                >
-                  {sortDirection === "asc" ? "\u2191" : "\u2193"}
-                </span>
-              </TableHead>
-              <TableHead
-                className="cursor-pointer whitespace-nowrap font-bold text-primary"
-                onClick={() => handleSort("round.exceptionalScoreAdjustment")}
-              >
-                Adjustment{" "}
-                <span
-                  className="ml-xs opacity-0 transition-opacity"
-                  style={{
-                    opacity:
-                      sortColumn === "round.exceptionalScoreAdjustment" ? 1 : 0,
-                  }}
-                >
-                  {sortDirection === "asc" ? "\u2191" : "\u2193"}
-                </span>
-              </TableHead>
+                  <button
+                    type="button"
+                    onClick={() => handleSort(column)}
+                    className="flex w-full items-center gap-xs whitespace-nowrap rounded-md px-md py-sm font-bold text-primary transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ring-offset-background cursor-pointer"
+                  >
+                    {label}
+                    <span
+                      aria-hidden="true"
+                      className="opacity-0 transition-opacity"
+                      style={{ opacity: sortColumn === column ? 1 : 0 }}
+                    >
+                      {sortDirection === "asc" ? "\u2191" : "\u2193"}
+                    </span>
+                  </button>
+                </TableHead>
+              ))}
               <TableHead className="font-bold text-primary">Actions</TableHead>
             </TableRow>
           </TableHeader>
@@ -237,15 +201,16 @@ export function RoundsTable({
           </TableBody>
         </Table>
       ) : scorecards.length === 0 ? (
-        <div className="mt-xl text-center py-2xl">
-          <p className="text-muted-foreground mb-md">
-            You haven&apos;t logged any rounds yet. Start tracking your handicap
-            by adding your first round.
-          </p>
-          <Link href="/rounds/add">
-            <Button>Add Your First Round</Button>
-          </Link>
-        </div>
+        <EmptyState
+          icon={<ListChecks className="h-5 w-5" />}
+          title="No rounds logged yet"
+          description="Start tracking your handicap by adding your first round."
+          action={
+            <Link href="/rounds/add">
+              <Button>Add Your First Round</Button>
+            </Link>
+          }
+        />
       ) : (
         <div className="mt-md text-center">
           <p className="text-muted-foreground">

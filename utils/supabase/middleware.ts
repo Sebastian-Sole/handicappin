@@ -72,6 +72,8 @@ export async function updateSession(request: NextRequest) {
     "/login",
     "/signup",
     "/about",
+    "/privacy-policy", // Public legal page (linked from footer + signup consent)
+    "/terms-of-service", // Public legal page (linked from footer + signup consent)
     "/api",
     "/verify-email",
     "/forgot-password",

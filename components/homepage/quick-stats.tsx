@@ -1,4 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { EmptyState } from "@/components/ui/empty-state";
 import { TrendingDown, TrendingUp, Minus, Trophy, Calendar } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ActivityItem } from "@/utils/activity-transform";
@@ -130,9 +131,11 @@ export function QuickStats({
 
         {/* Empty state */}
         {activities.length === 0 && (
-          <p className="text-body-sm text-muted-foreground text-center py-sm">
-            Log rounds to see your stats
-          </p>
+          <EmptyState
+            size="compact"
+            title="Log rounds to see your stats"
+            className="py-sm"
+          />
         )}
       </CardContent>
     </Card>
