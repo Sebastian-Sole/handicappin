@@ -15,7 +15,7 @@
 | Blocking decisions | ✅ Resolved (6/6) | Locked 2026-05-28 — see Layer 1 |
 | Wave A — mechanical/global | ✅ Complete (13/13) | Committed `2667cef` 2026-05-28; tsc/build green; CardTitle + rounds/add spot-checked visually |
 | Wave B — structural | ⬜ Not started (0/5) | Needs Decisions #1, #2 |
-| Wave C — correctness + a11y | ⬜ Not started (0/7) | Includes a real route-gating bug |
+| Wave C — correctness + a11y | ✅ Complete (7/7) | Committed `c376920` 2026-05-29; legal-page fix verified logged-out; reviewer approved |
 | Wave D — perceptual + storybook quality | ⬜ Not started (0/6) | Some items need a logged-out re-capture |
 
 **Overall: remediation NOT STARTED. Audit + Storybook scaffolding complete.**
@@ -242,7 +242,7 @@
 > Includes a real bug and WCAG 2.1 AA failures against the project's own a11y rules.
 
 ### C1 — Legal pages auth-gated (BUG)
-- **Status:** ⬜ | **Priority:** P0 (correctness) | **Confidence:** CONFIRMED
+- **Status:** ✅ done (2026-05-29) — added both paths to `publicPaths` in `utils/supabase/middleware.ts`; verified logged-out render via capture; protected routes unaffected | **Priority:** P0 (correctness) | **Confidence:** CONFIRMED
 - **What:** Make `/privacy-policy` and `/terms-of-service` publicly accessible.
 - **Why:** Logged-out visitors hitting these routes are redirected to `/login`. The footer (every page) **and the signup consent checkbox** link to them — so users **cannot read the terms they're agreeing to**. Almost certainly an unintended route-group/middleware gating mistake.
 - **Where:** investigate the route group for `app/privacy-policy/` and `app/terms-of-service/` (a misplaced `(protected)` group?) and the middleware matcher (`proxy.ts`/middleware). Compare with `app/about/` which is correctly public.
@@ -251,7 +251,7 @@
 - **Verify:** logged-out capture of `/privacy-policy` + `/terms-of-service` shows real content; signup consent links resolve.
 
 ### C2 — Focus rings + keyboard operability on interactive elements
-- **Status:** ⬜ | **Priority:** P1 (a11y) | **Confidence:** CODE-ONLY
+- **Status:** ✅ done (2026-05-29) — roundsTable headers → real buttons + aria-sort; logoutButton div→button; verify-session → Button primitive | **Priority:** P1 (a11y) | **Confidence:** CODE-ONLY
 - **What:** Make ~13 interactive elements keyboard-operable with visible focus.
 - **Why:** WCAG 2.1 AA failures: 6 sortable `<TableHead onClick>` (mouse-only, no role, SR-invisible), a `<div onClick>` that logs the user out (destructive, unreachable), 4 hand-rolled `<button>`/`<a>` with no focus ring.
 - **Where:** `components/dashboard/roundsTable.tsx` (sortable headers), `components/auth/logoutButton.tsx:19`, `components/auth/verify-session/verify-session-content.tsx` (4 elements).
@@ -260,7 +260,7 @@
 - **Verify:** keyboard-tab through dashboard + auth flows; run a11y check.
 
 ### C3 — `transition-colors` default
-- **Status:** ⬜ | **Priority:** P2 | **Confidence:** CODE-ONLY | **Depends on:** **D3**
+- **Status:** ✅ done (2026-05-29) — 8 color-only sites → transition-colors; 16 transform/shadow/size animations kept | **Priority:** P2 | **Confidence:** CODE-ONLY | **Depends on:** **D3**
 - **What:** Make `transition-colors` the interactive default; demote non-essential `transition-all`.
 - **Why:** `transition-all` (28) vs `transition-colors` (26) split; `transition-all` can animate unintended properties.
 - **Where:** grep `transition-all`; keep it only where size/shadow/transform animates.
@@ -269,7 +269,7 @@
 - **Verify:** hover behavior unchanged; card-lift hovers still smooth.
 
 ### C4 — Fix hover-opacity strays
-- **Status:** ⬜ | **Priority:** P2 | **Confidence:** CODE-ONLY | **Depends on:** **D4**
+- **Status:** ✅ done (2026-05-29) — billing-tab, usage-limit-alert (primary + warning) → /80; destructive/90 preserved | **Priority:** P2 | **Confidence:** CODE-ONLY | **Depends on:** **D4**
 - **What:** Change the 4 primary `/90` hover strays to `/80`.
 - **Why:** Canon non-destructive hover is `/80`; 4 sites use `/90`.
 - **Where:** `components/profile/tabs/billing-tab.tsx:65`, `components/scorecard/usage-limit-alert.tsx:40`, `components/auth/verify-session/verify-session-content.tsx:239,268`.
@@ -278,7 +278,7 @@
 - **Verify:** grep `/90`; hover in app.
 
 ### C5 — `<EmptyState>` primitive + migration
-- **Status:** ⬜ | **Priority:** P2 | **Confidence:** CODE-ONLY | **Depends on:** **D5**
+- **Status:** ✅ done (2026-05-29) — primitive built with `default`+`compact` sizes; migrated roundsTable, activity-feed, quick-stats + 4 chart empties; overview-section left (inline captions) | **Priority:** P2 | **Confidence:** CODE-ONLY | **Depends on:** **D5**
 - **What:** Build `<EmptyState icon title description action>`; migrate the 6 ad-hoc empties.
 - **Why:** No shared empty-state primitive → divergent phrasing/markup across data components.
 - **Where:** new `components/ui/empty-state.tsx`; migrate `roundsTable.tsx`, `activity-feed.tsx`, `quick-stats.tsx`, two charts, `overview-section.tsx`.
@@ -287,7 +287,7 @@
 - **Verify:** Storybook `ui-emptystate`; empty data states in app.
 
 ### C6 — Consolidate 12px utilities
-- **Status:** ⬜ | **Priority:** P2 | **Confidence:** CODE-ONLY | **Depends on:** **D6**
+- **Status:** ✅ done (2026-05-29) — dead `text-caption` removed from typography.css (0 call sites); `text-meta`/`text-meta-strong` retained | **Priority:** P2 | **Confidence:** CODE-ONLY | **Depends on:** **D6**
 - **What:** Standardize on `text-meta-strong` for 12px-with-weight; retire/merge dead `text-caption`.
 - **Why:** Three overlapping 12px utilities; `text-caption` has 0 uses, `text-meta` 123.
 - **Where:** `app/styles/utilities/typography.css`; call sites using `text-meta` where weight is intended.
@@ -296,7 +296,7 @@
 - **Verify:** grep; build.
 
 ### C7 — Gate the dev Debug panel (security)
-- **Status:** ⬜ | **Priority:** P1 (security) | **Confidence:** CONFIRMED
+- **Status:** ✅ done (2026-05-29) — verify-session Debug panel gated `env.NODE_ENV !== "production"` | **Priority:** P1 (security) | **Confidence:** CONFIRMED
 - **What:** Ensure the `verify-session` "Debug Info" panel (State / Attempts / Return To / **User ID**) never renders in production.
 - **Why:** It leaks a user UUID in the captured UI.
 - **Where:** `components/auth/verify-session/verify-session-content.tsx`
@@ -376,6 +376,11 @@ Wave A left `// TODO(ui-consistency A7/A10)` markers wherever a raw compound had
 - **Responsive figure** (`strokes-received-calculator`) — no responsive figure utility.
 Recommend a small token-addition decision (like the `min-w-*` additions in the design-system work) before or alongside Wave C's typography items.
 
+### Known issues / follow-ups (surfaced during Waves A & C)
+- **`.storybook/` lint errors (6, pre-existing — from the Storybook commit `27423b7`, NOT a remediation wave):** `pnpm lint` fails on `.storybook/decorators.tsx` — `withToaster` calls `React.useState`/`useEffect` in a plain function (`react-hooks/rules-of-hooks`) + a missing display name, plus 2 stale `eslint-disable` directives (`decorators.tsx`, `main.ts`). Fix: move the toaster hooks into a real `<ToasterDecorator>` component the decorator renders; drop the unused disables. Low risk; makes the lint gate green again.
+- **Latent `Button` type default:** the `Button` primitive doesn't default `type="button"` (native `<button>` defaults to `submit`). Safe today (the verify-session buttons converted in C2 aren't inside a `<form>`), but a footgun — consider defaulting `type="button"` on the primitive.
+- **Empty-state public/legal re-capture:** logged-out capture of public + legal pages completed 2026-05-28/29 (`pages-public/`, `pages-legalcheck/`); legal pages confirmed rendering real content after C1.
+
 ### Evidence Index (for re-verification)
 - **Audit + findings (scratch, may be deleted):** `.claude/tmp/ui-consistency-audit.md`, `.claude/tmp/consistency-rubric.md`, `.claude/tmp/audit-findings/01..07-*.md`.
 - **Screenshots:** `.claude/tmp/audit-screens/stories/` (component stories, light/dark), `.claude/tmp/audit-screens/pages/` (authenticated, light/dark/mobile), `.claude/tmp/audit-screens/pages-public/` (logged-out).
@@ -399,3 +404,4 @@ _Append one line per completed item/session: date — item ID(s) — what landed
 
 - 2026-05-28 — D1–D6 — all six blocking decisions resolved (D1: max-w-6xl uniform; D2: compact Card variant; D3: transition-colors; D4: /80·/90; D5: EmptyState; D6: text-meta-strong). Waves B/C/D now unblocked.
 - 2026-05-28 — Wave A (A1–A13) — all 13 mechanical items landed (`2667cef`, 37 files). tsc + build green; CardTitle/rounds-add visually spot-checked. A5 was already correct. Residual TODOs are token gaps (see appendix). A11 also committed earlier with the primitive change.
+- 2026-05-29 — Wave C (C1–C7) — correctness + a11y landed (`c376920`, 21 files). Legal-page route-gating BUG fixed + verified via logged-out capture (privacy-policy renders real content). New `<EmptyState>` primitive (default+compact). tsc + build green; reviewer APPROVE. NOTE: pre-existing lint errors remain in `.storybook/` (see follow-up below) — not Wave C.
