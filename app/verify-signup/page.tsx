@@ -11,14 +11,8 @@ import {
   InputOTPSlot,
 } from "@/components/ui/input-otp";
 import { REGEXP_ONLY_DIGITS } from "input-otp";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { AuthFormShell } from "@/components/auth/auth-form-shell";
 import { Check, Loader2 } from "lucide-react";
 import * as Sentry from "@sentry/nextjs";
 
@@ -233,16 +227,13 @@ function VerifySignupContent() {
   }, [email]);
 
   return (
-    <div className="flex-1 flex justify-center items-center flex-col py-sm md:py-md lg:py-xl">
-      <Card className="w-[90%] max-w-md">
-        <CardHeader className="text-center">
-          <CardTitle>Verify Your Email</CardTitle>
-          <CardDescription>
-            Enter the 6-digit code we sent to your email
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-lg">
+    <div className="flex justify-center items-center h-full">
+      <AuthFormShell
+        className="py-xl"
+        title="Verify Your Email"
+        description="Enter the 6-digit code we sent to your email"
+      >
+        <form onSubmit={handleSubmit} className="space-y-lg">
             <div className="space-y-sm">
               <label
                 htmlFor="email"
@@ -404,8 +395,7 @@ function VerifySignupContent() {
               </AlertDescription>
             </Alert>
           </form>
-        </CardContent>
-      </Card>
+      </AuthFormShell>
     </div>
   );
 }

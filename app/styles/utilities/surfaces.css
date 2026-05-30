@@ -143,6 +143,16 @@
   border-radius: var(--radius-lg);
 }
 
+/* Marketing-elevated — heavy drop-shadow treatment reserved for hero
+   marketing imagery (landing-page theme screenshots, feature mockups).
+   Resolves to the `--shadow-2xl` token so the elevation tier is named
+   once and used by reference, not spelled inline at the call site.
+   Do NOT use on in-app surfaces — pick `shadow-md`/`shadow-lg` for
+   product UI tiers. */
+@utility marketing-elevated {
+  box-shadow: var(--shadow-2xl);
+}
+
 /* Marketing / page hero gradient. Single source of truth for the
    primary-tinted angled wash used on about / contact / privacy / terms. */
 @utility hero-gradient {

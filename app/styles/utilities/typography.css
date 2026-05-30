@@ -66,6 +66,14 @@
   line-height: 1.75rem;
 }
 
+/* 1.125rem figure rung — added 2026-05-30 to close A7 token gap. */
+@utility text-figure-xs {
+  font-family: var(--font-sans);
+  font-weight: 700;
+  font-size: 1.125rem;
+  line-height: 1.75rem;
+}
+
 @utility text-figure {
   font-family: var(--font-sans);
   font-weight: 700;

@@ -7,6 +7,7 @@ import { clientLogger } from "@/lib/client-logger";
 import { H1 } from "@/components/ui/typography";
 import { FormFeedback } from "@/components/ui/form-feedback";
 import { Button } from "@/components/ui/button";
+import { AuthFormShell } from "@/components/auth/auth-form-shell";
 import { env } from "@/env";
 
 const MAX_RETRY_ATTEMPTS = 3;
@@ -189,7 +190,7 @@ export function VerifySessionContent({
   };
 
   return (
-    <div className="max-w-md w-full surface shadow-lg p-xl">
+    <AuthFormShell className="py-xl">
       <div className="text-center">
         {/* Verifying State */}
         {state === "verifying" && (
@@ -305,6 +306,6 @@ export function VerifySessionContent({
           )}
         </div>
       )}
-    </div>
+    </AuthFormShell>
   );
 }

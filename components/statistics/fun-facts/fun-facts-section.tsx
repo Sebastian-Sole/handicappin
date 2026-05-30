@@ -76,8 +76,7 @@ export function ScoringBreakdownSection({ stats }: ScoringBreakdownSectionProps)
                   >
                     <span className="font-medium">Par {parType.parType}</span>
                     <div className="text-right">
-                      {/* TODO(ui-consistency A7): stat value `text-lg font-bold` — no figure utility at 1.125rem; figure ramp starts at figure-sm=1.25rem */}
-                      <span className="text-lg font-bold">
+                      <span className="text-figure-xs">
                         {parType.avgStrokes.toFixed(2)}
                       </span>
                       <span className="text-muted-foreground text-body-sm ml-sm">

@@ -15,6 +15,8 @@ const meta = {
   },
   args: {
     placeholder: "Type your message here.",
+    defaultValue:
+      "Tough wind on the back nine — missed two short putts on 16 and 17.",
   },
   decorators: [
     (Story) => (

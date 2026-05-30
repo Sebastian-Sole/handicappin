@@ -26,7 +26,6 @@ import { GoogleSignInButton } from "./google-sign-in-button";
 import { getOAuthErrorMessage } from "@/lib/oauth-errors";
 import { LegalDialog } from "@/components/legal/legal-dialog";
 import { Checkbox } from "@/components/ui/checkbox";
-import { H1 } from "@/components/ui/typography";
 import { AuthFormShell } from "@/components/auth/auth-form-shell";
 
 interface SignupProps {
@@ -169,7 +168,11 @@ export function Signup({
   };
 
   return (
-    <AuthFormShell className="py-md md:py-md lg:py-md xl:py-md">
+    <AuthFormShell
+      className="py-md md:py-md lg:py-md xl:py-md"
+      title="Sign Up"
+      description={description}
+    >
       {feedback && (
         <FormFeedback
           type={feedback.type}
@@ -178,10 +181,6 @@ export function Signup({
           onClose={clearFeedback}
         />
       )}
-      <div className="space-y-sm text-center">
-        <H1>Sign Up</H1>
-        <p className="text-muted-foreground">{description}</p>
-      </div>
       <div className="space-y-md">
         <Form {...form}>
           <form onSubmit={(e) => form.handleSubmit(onSubmit)(e)} className="space-y-xl">

@@ -4,7 +4,6 @@ import { z } from "zod";
 import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { resetPasswordSchema } from "@/types/auth";
-import { CardDescription } from "../ui/card";
 import {
   Form,
   FormControl,
@@ -24,7 +23,6 @@ import { REGEXP_ONLY_DIGITS } from "input-otp";
 import { Alert, AlertDescription } from "../ui/alert";
 import { useRouter } from "next/navigation";
 import { FormFeedback } from "../ui/form-feedback";
-import { H1 } from "@/components/ui/typography";
 import { AuthFormShell } from "@/components/auth/auth-form-shell";
 import type { FeedbackState } from "@/types/feedback";
 
@@ -106,13 +104,11 @@ const UpdatePassword = ({ email: initialEmail }: UpdatePasswordProps) => {
   };
 
   return (
-    <AuthFormShell className="py-xl">
-      <div className="space-y-sm text-left">
-        <H1 className="text-figure-lg">Reset Password</H1>
-        <CardDescription>
-          Enter the verification code from your email and your new password
-        </CardDescription>
-      </div>
+    <AuthFormShell
+      className="py-xl"
+      title="Reset Password"
+      description="Enter the verification code from your email and your new password"
+    >
       {feedback && (
         <FormFeedback
           type={feedback.type}

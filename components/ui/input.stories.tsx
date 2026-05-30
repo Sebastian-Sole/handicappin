@@ -20,7 +20,8 @@ const meta = {
   },
   args: {
     type: "text",
-    placeholder: "Enter text...",
+    placeholder: "Course name",
+    defaultValue: "Pine Ridge GC",
   },
   decorators: [
     (Story) => (
@@ -46,11 +47,11 @@ export const WithLabel: Story = {
 };
 
 export const Password: Story = {
-  args: { type: "password", placeholder: "Enter password" },
+  args: { type: "password", placeholder: "Enter password", defaultValue: "hunter2-demo" },
 };
 
 export const Number: Story = {
-  args: { type: "number", placeholder: "0" },
+  args: { type: "number", placeholder: "0", defaultValue: 82 },
 };
 
 export const Disabled: Story = {
@@ -76,13 +77,19 @@ export const Invalid: Story = {
 
 export const Controlled: Story = {
   render: function ControlledRender(args) {
-    const [value, setValue] = React.useState("");
+    const [value, setValue] = React.useState("82");
     return (
-      <Input
-        {...args}
-        value={value}
-        onChange={(e) => setValue(e.target.value)}
-      />
+      <div className="grid w-full gap-2">
+        <Label htmlFor="controlled-score">Score</Label>
+        <Input
+          id="controlled-score"
+          {...args}
+          type="number"
+          placeholder="Enter score"
+          value={value}
+          onChange={(e) => setValue(e.target.value)}
+        />
+      </div>
     );
   },
 };

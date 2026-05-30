@@ -18,18 +18,47 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-export const Default: Story = {};
+export const Default: Story = {
+  render: (args) => (
+    <div className="flex items-center gap-2">
+      <Switch id="default-switch" defaultChecked {...args} />
+      <Label htmlFor="default-switch">Post score automatically</Label>
+    </div>
+  ),
+};
 
 export const Checked: Story = {
   args: { defaultChecked: true },
+  render: (args) => (
+    <div className="flex items-center gap-2">
+      <Switch id="checked-switch" {...args} />
+      <Label htmlFor="checked-switch">Notifications on</Label>
+    </div>
+  ),
 };
 
 export const Disabled: Story = {
   args: { disabled: true },
+  render: (args) => (
+    <div className="flex items-center gap-2">
+      <Switch id="disabled-switch" {...args} />
+      <Label htmlFor="disabled-switch" className="text-muted-foreground">
+        Private rounds (locked)
+      </Label>
+    </div>
+  ),
 };
 
 export const DisabledChecked: Story = {
   args: { disabled: true, defaultChecked: true },
+  render: (args) => (
+    <div className="flex items-center gap-2">
+      <Switch id="disabled-checked-switch" {...args} />
+      <Label htmlFor="disabled-checked-switch" className="text-muted-foreground">
+        Pro membership (locked on)
+      </Label>
+    </div>
+  ),
 };
 
 export const WithLabel: Story = {

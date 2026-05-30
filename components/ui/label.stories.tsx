@@ -20,7 +20,16 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-export const Default: Story = {};
+export const Default: Story = {
+  render: (args) => (
+    <div className="grid w-72 gap-2">
+      <Label htmlFor="default-email" {...args}>
+        {args.children}
+      </Label>
+      <Input id="default-email" type="email" placeholder="name@example.com" />
+    </div>
+  ),
+};
 
 export const WithInput: Story = {
   render: (args) => (

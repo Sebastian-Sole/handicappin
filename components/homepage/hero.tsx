@@ -121,7 +121,7 @@ const Hero = ({
               icon={<BarChart2 className="h-8 w-8 text-primary" />}
             />
             <StatBox
-              title="Avg. Score (Last 10)"
+              title="Avg. Last 10"
               value={calculateAverageScore(previousScores)}
               change={averageScoreChangeType}
               description={averageScoreChangeDescription}

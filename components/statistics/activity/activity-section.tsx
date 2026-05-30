@@ -116,8 +116,7 @@ export function ActivitySection({
               <Card className="tint-info">
                 <CardContent density="compact" className="text-center">
                   <p className="text-body-sm text-muted-foreground">Most Active</p>
-                  {/* TODO(ui-consistency A7): stat value `text-lg font-bold` — no figure utility at 1.125rem; figure ramp starts at figure-sm=1.25rem */}
-                  <p className="text-lg font-bold">
+                  <p className="text-figure-xs">
                     {activityStats.mostActiveMonth.month.substring(0, 3)}{" "}
                     {activityStats.mostActiveMonth.year}
                   </p>

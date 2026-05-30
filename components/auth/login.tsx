@@ -24,7 +24,6 @@ import { FormFeedback } from "../ui/form-feedback";
 import type { FeedbackState } from "@/types/feedback";
 import { GoogleSignInButton } from "./google-sign-in-button";
 import { getOAuthErrorMessage } from "@/lib/oauth-errors";
-import { H1 } from "@/components/ui/typography";
 import { AuthFormShell } from "@/components/auth/auth-form-shell";
 
 export function Login() {
@@ -163,7 +162,11 @@ export function Login() {
   }
 
   return (
-    <AuthFormShell className="py-md md:py-md lg:py-md xl:py-md">
+    <AuthFormShell
+      className="py-md md:py-md lg:py-md xl:py-md"
+      title="Welcome Back"
+      description="Sign in to your account to continue"
+    >
       {isVerified && <VerificationBox />}
       {oauthError && (
         <FormFeedback
@@ -181,12 +184,6 @@ export function Login() {
           onClose={clearFeedback}
         />
       )}
-      <div className="space-y-sm text-center">
-        <H1>Welcome Back</H1>
-        <p className="text-muted-foreground">
-          Sign in to your account to continue
-        </p>
-      </div>
       <div className="space-y-md">
         <Form {...form}>
           <form onSubmit={(e) => form.handleSubmit(onSubmit)(e)} className="space-y-xl">
