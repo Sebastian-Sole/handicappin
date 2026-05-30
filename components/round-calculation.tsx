@@ -39,7 +39,7 @@ const RoundCalculationContent = () => {
   });
 
   return (
-    <div className="container mx-auto px-md sm:px-lg md:px-xl py-xl space-y-xl">
+    <div className="space-y-xl">
       {/* Round Overview Card */}
       <Card>
         <CardHeader className="pb-md">

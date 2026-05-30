@@ -15,55 +15,53 @@ export function CalculatorsPageClient() {
 
   return (
     <CalculatorProvider>
-      <div className="min-h-screen">
-        <LinkedValuesBar />
+      <LinkedValuesBar />
 
-        <div className="sm:container mx-auto px-md py-xl space-y-xl">
-          {/* Header */}
-          <div className="text-center space-y-md">
-            <H1>Golf Calculators</H1>
-            <Muted className="max-w-2xl mx-auto">
-              WHS-compliant calculators to help you understand your handicap.
-              Values automatically link between calculators for seamless
-              calculations.
-            </Muted>
-          </div>
-
-          {/* Category Tabs */}
-          <Tabs
-            value={activeTab}
-            onValueChange={(v) =>
-              setActiveTab(v as "core" | "advanced" | "educational")
-            }
-          >
-            <TabsList className="grid w-full max-w-md mx-auto grid-cols-3">
-              <TabsTrigger value="core" className="gap-sm">
-                <Calculator className="h-4 w-4 hidden sm:block" />
-                Core
-              </TabsTrigger>
-              <TabsTrigger value="advanced" className="gap-sm">
-                <Lightbulb className="h-4 w-4 hidden sm:block" />
-                Advanced
-              </TabsTrigger>
-              <TabsTrigger value="educational" className="gap-sm">
-                <GraduationCap className="h-4 w-4 hidden sm:block" />
-                Educational
-              </TabsTrigger>
-            </TabsList>
-
-            <div className="mt-xl">
-              <TabsContent value="core">
-                <CalculatorGrid category="core" />
-              </TabsContent>
-              <TabsContent value="advanced">
-                <CalculatorGrid category="advanced" />
-              </TabsContent>
-              <TabsContent value="educational">
-                <CalculatorGrid category="educational" />
-              </TabsContent>
-            </div>
-          </Tabs>
+      <div className="space-y-xl">
+        {/* Header */}
+        <div className="text-center space-y-md">
+          <H1>Golf Calculators</H1>
+          <Muted className="max-w-2xl mx-auto">
+            WHS-compliant calculators to help you understand your handicap.
+            Values automatically link between calculators for seamless
+            calculations.
+          </Muted>
         </div>
+
+        {/* Category Tabs */}
+        <Tabs
+          value={activeTab}
+          onValueChange={(v) =>
+            setActiveTab(v as "core" | "advanced" | "educational")
+          }
+        >
+          <TabsList className="grid w-full max-w-md mx-auto grid-cols-3">
+            <TabsTrigger value="core" className="gap-sm">
+              <Calculator className="h-4 w-4 hidden sm:block" />
+              Core
+            </TabsTrigger>
+            <TabsTrigger value="advanced" className="gap-sm">
+              <Lightbulb className="h-4 w-4 hidden sm:block" />
+              Advanced
+            </TabsTrigger>
+            <TabsTrigger value="educational" className="gap-sm">
+              <GraduationCap className="h-4 w-4 hidden sm:block" />
+              Educational
+            </TabsTrigger>
+          </TabsList>
+
+          <div className="mt-xl">
+            <TabsContent value="core">
+              <CalculatorGrid category="core" />
+            </TabsContent>
+            <TabsContent value="advanced">
+              <CalculatorGrid category="advanced" />
+            </TabsContent>
+            <TabsContent value="educational">
+              <CalculatorGrid category="educational" />
+            </TabsContent>
+          </div>
+        </Tabs>
       </div>
     </CalculatorProvider>
   );

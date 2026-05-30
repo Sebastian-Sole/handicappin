@@ -5,6 +5,7 @@ import { Suspense } from "react";
 import ProfileSkeleton from "@/components/loading/profile-skeleton";
 import { getComprehensiveUserAccess } from "@/utils/billing/access-control";
 import { TabbedProfilePage } from "@/components/profile/tabbed-profile-page";
+import { PageContainer } from "@/components/layout/page-container";
 
 const ProfilePage = async (props: { params: Promise<{ id: string }> }) => {
   const params = await props.params;
@@ -36,13 +37,15 @@ const ProfilePage = async (props: { params: Promise<{ id: string }> }) => {
   const access = await getComprehensiveUserAccess(data.user.id);
 
   return (
-    <Suspense fallback={<ProfileSkeleton />}>
-      <TabbedProfilePage
-        authUser={data.user}
-        profile={profile}
-        access={access}
-      />
-    </Suspense>
+    <PageContainer>
+      <Suspense fallback={<ProfileSkeleton />}>
+        <TabbedProfilePage
+          authUser={data.user}
+          profile={profile}
+          access={access}
+        />
+      </Suspense>
+    </PageContainer>
   );
 };
 

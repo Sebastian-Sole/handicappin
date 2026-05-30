@@ -1,4 +1,5 @@
 import { RoundCalculation } from "@/components/round-calculation";
+import { PageContainer } from "@/components/layout/page-container";
 import { api } from "@/trpc/server";
 import { createServerComponentClient } from "@/utils/supabase/server";
 import { notFound, redirect } from "next/navigation";
@@ -27,7 +28,11 @@ const RoundCalculationPage = async (props: {
     notFound();
   }
 
-  return <RoundCalculation scorecard={scorecard} />;
+  return (
+    <PageContainer>
+      <RoundCalculation scorecard={scorecard} />
+    </PageContainer>
+  );
 };
 
 export default RoundCalculationPage;
