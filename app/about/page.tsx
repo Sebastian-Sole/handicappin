@@ -76,7 +76,7 @@ export default async function AboutPage() {
         {/* Mission Section */}
         <section className="w-full py-2xl md:py-4xl lg:py-5xl hero-gradient">
           <div className="sm:container px-md md:px-lg mx-auto">
-            <div className="mx-auto grid max-w-5xl items-start gap-lg py-2xl xl:grid-cols-2 lg:gap-2xl">
+            <div className="mx-auto grid items-start gap-lg py-2xl xl:grid-cols-2 lg:gap-2xl">
               <div className="flex flex-col justify-start space-y-md">
                 <div className="space-y-sm">
                   <Badge>Our Mission</Badge>
@@ -178,7 +178,7 @@ export default async function AboutPage() {
               </div>
             </div>
 
-            <div className="mx-auto grid max-w-5xl items-center gap-lg py-2xl lg:gap-2xl">
+            <div className="mx-auto grid items-center gap-lg py-2xl lg:gap-2xl">
               <div className="flex flex-col justify-center space-y-lg">
                 <div className="grid gap-lg xl:grid-cols-2">
                   <div className="flex items-start space-x-md">
@@ -244,7 +244,7 @@ export default async function AboutPage() {
                 </div>
               </div>
             </div>
-            <div className="mx-auto max-w-5xl flex flex-col items-center justify-center">
+            <div className="mx-auto flex flex-col items-center justify-center">
               <div className="flex flex-col gap-md w-full sm:grid xl:grid-cols-4 sm:grid-cols-2 xl:gap-md">
                 <div className="surface p-lg w-full">
                   <StatTile

@@ -2,7 +2,7 @@ import { Skeleton } from "../ui/skeleton";
 
 const DashboardSkeleton = () => {
   return (
-    <div className="bg-background text-foreground p-xl rounded-lg shadow-xs min-h-screen">
+    <>
       {/* <Skeleton className="h-10 w-1/3 mb-md" /> */}
       <div className="grid grid-cols-1 2xl:grid-cols-3 2xl:gap-lg">
         <div className="surface p-lg">
@@ -73,7 +73,7 @@ const DashboardSkeleton = () => {
         <Skeleton className="h-8 w-full mb-md" />
         <Skeleton className="h-8 w-full mb-md" />
       </div>
-    </div>
+    </>
   );
 };
 

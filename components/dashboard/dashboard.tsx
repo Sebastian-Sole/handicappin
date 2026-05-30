@@ -59,7 +59,7 @@ export function Dashboard({ profile, scorecards, header }: DashboardProps) {
   if (!isMounted) return <DashboardSkeleton />;
 
   return (
-    <div className="bg-background text-foreground p-xl rounded-lg h-full">
+    <>
       <div className="grid grid-cols-1 2xl:grid-cols-3">
         <DashboardInfo handicapIndex={profile.handicapIndex} header={header} />
         <DashboardGraphDisplay graphData={graphData} />
@@ -68,6 +68,6 @@ export function Dashboard({ profile, scorecards, header }: DashboardProps) {
       <div className="mt-xl">
         <RoundsTable scorecards={scorecards} />
       </div>
-    </div>
+    </>
   );
 }

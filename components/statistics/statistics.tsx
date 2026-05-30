@@ -154,7 +154,7 @@ export function Statistics({ profile, scorecards }: StatisticsProps) {
   // Empty state for users with no rounds
   if (scorecards.length === 0) {
     return (
-      <div className="bg-background text-foreground p-md md:p-xl rounded-lg min-h-screen flex flex-col items-center justify-center">
+      <div className="flex flex-col items-center justify-center">
         <div className="text-center max-w-md">
           <H1 className="text-figure-lg mb-md">No Statistics Yet</H1>
           <p className="text-muted-foreground text-lead mb-lg">
@@ -178,7 +178,7 @@ export function Statistics({ profile, scorecards }: StatisticsProps) {
   }
 
   return (
-    <div className="bg-background text-foreground p-md md:p-xl rounded-lg min-h-screen">
+    <>
       {/* Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-lg gap-md">
         <div>
@@ -243,6 +243,6 @@ export function Statistics({ profile, scorecards }: StatisticsProps) {
           <FrivolitiesSection stats={funStats} />
         </TabsContent>
       </Tabs>
-    </div>
+    </>
   );
 }
