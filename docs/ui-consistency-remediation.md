@@ -14,7 +14,7 @@
 | Storybook | ✅ Committed | branch `feat/storybook` (commit `27423b7`) — 142 stories + config |
 | Blocking decisions | ✅ Resolved (6/6) | Locked 2026-05-28 — see Layer 1 |
 | Wave A — mechanical/global | ✅ Complete (13/13) | Committed `2667cef` 2026-05-28; tsc/build green; CardTitle + rounds/add spot-checked visually |
-| Wave B — structural | ✅ Complete (5/5) | Committed `62f9686` 2026-05-29; reviewer APPROVE; tsc/lint/build green. **Follow-up:** 3 pages still need width unification (see B1 note) |
+| Wave B — structural | ✅ Complete (5/5 + B1b) | `62f9686` + B1b follow-up; all 10 authenticated pages unified to max-w-6xl |
 | Wave C — correctness + a11y | ✅ Complete (7/7) | Committed `c376920` 2026-05-29; legal-page fix verified logged-out; reviewer approved |
 | Wave D — perceptual + storybook quality | ⬜ Not started (0/6) | Some items need a logged-out re-capture |
 
@@ -191,7 +191,7 @@
 > The highest-leverage cohesion work. Establishes the page-level grammar.
 
 ### B1 — Shared `PageContainer` + container-width standardization
-- **Status:** 🟡 mostly done (2026-05-29) — `PageContainer` (max-w-6xl) applied to 7 authenticated pages. **GAP / FOLLOW-UP (B1b):** `profile/[id]`, `rounds/[id]/calculation`, `calculators` are NOT yet unified — their width wrapper lives inside client components (`TabbedProfilePage`, `RoundCalculation`, `CalculatorsPageClient`); strip those internal `max-w-*`/container wrappers and wrap the pages in `<PageContainer>` to finish width parity. | **Priority:** P0 | **Confidence:** CONFIRMED | **Depends on:** **D1**
+- **Status:** ✅ done (2026-05-29 + B1b 2026-05-30) — `PageContainer` (max-w-6xl) on all 10 authenticated app pages. Initial 7 in `62f9686`; the remaining 3 (profile, round-calculation, calculators) needed client-component edits to strip internal wrappers, completed in B1b. | **Priority:** P0 | **Confidence:** CONFIRMED | **Depends on:** **D1**
 - **What:** Create a `PageContainer` component (width + horizontal padding + page-level `py-3xl`) and route authenticated app pages through it; constrain or remove per-route `max-w-*`.
 - **Why:** The single biggest visual break. `app/layout.tsx:109` sets no max-width, so every route hand-rolls one → **9 distinct widths across ~23 routes** (statistics full-bleed, profile/billing `7xl`, upgrade narrow, calculators mid). The frame resizes on every navigation. Also folds in the section-rhythm split (`py-xl` vs `py-2xl` vs `py-3xl`).
 - **Where:** new `components/layout/page-container.tsx`; `app/layout.tsx:109`; every `app/**/page.tsx` that sets `max-w-*`.
@@ -406,4 +406,5 @@ _Append one line per completed item/session: date — item ID(s) — what landed
 - 2026-05-28 — Wave A (A1–A13) — all 13 mechanical items landed (`2667cef`, 37 files). tsc + build green; CardTitle/rounds-add visually spot-checked. A5 was already correct. Residual TODOs are token gaps (see appendix). A11 also committed earlier with the primitive change.
 - 2026-05-29 — Wave C (C1–C7) — correctness + a11y landed (`c376920`, 21 files). Legal-page route-gating BUG fixed + verified via logged-out capture (privacy-policy renders real content). New `<EmptyState>` primitive (default+compact). tsc + build green; reviewer APPROVE. NOTE: pre-existing lint errors remain in `.storybook/` (see follow-up below) — not Wave C.
 - 2026-05-29 — `.storybook` lint — fixed rules-of-hooks in decorators (`1ef17ef`); `pnpm lint` exits 0.
+- 2026-05-30 — B1b — width unification completed for the 3 client-component pages (profile, round-calculation, calculators) — `d87dfc4`. All 10 authenticated app pages now route through one `<PageContainer>`.
 - 2026-05-29 — Wave B (B1–B5) — structural cohesion landed (`62f9686`, 24 files). PageContainer (max-w-6xl) on 7 pages; compact Card density; pricing-card elevation; surface utilities; status-surface tint normalization. tsc/lint/build green; reviewer APPROVE. **Follow-up B1b:** 3 pages (profile, round-calculation, calculators) still need width unification (wrappers in client components). **Incident:** two B-agents ran `git stash` on the shared tree (collision + a leftover `stash@{0}`); integrity audit confirmed NO Wave-B work lost and no committed file reverted. `stash@{0}` holds only an OLD autofill `globals.css` snapshot that is already superseded by the committed, more-complete autofill rules in `app/styles/base.css` — redundant, safe to drop (left in place pending user OK). **Lesson:** future agent briefs must forbid `git stash`/branch ops on the shared working tree.
