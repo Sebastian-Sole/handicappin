@@ -33,7 +33,7 @@ export function CoursesSection({
       <Card>
         <CardContent className="p-2xl text-center text-muted-foreground">
           <div className="text-4xl mb-md">🏌️</div>
-          {/* TODO(ui-consistency A10): text-lg/500 has no utility — needs a text-lg figure/lead rung */}
+          {/* Intentional compose: text-lg + font-medium emphasis (no text-lead-medium token by design) */}
           <p className="text-lg font-medium">No course data yet</p>
           <p className="text-body-sm">Play more rounds to see course analytics</p>
         </CardContent>

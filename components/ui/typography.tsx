@@ -80,8 +80,7 @@ export function Lead({ children, className }: TypographyProps) {
 }
 
 export function Large({ children, className }: TypographyProps) {
-  // TODO(ui-consistency A10): text-lg font-semibold (1.125rem/600) has no exact
-  // semantic utility (text-lead is 1.125rem/400). Leaving raw.
+  // Intentional compose: the Large primitive is itself a compose (text-body + text-lg + font-semibold) by design.
   return (
     <span className={cn("inline-block text-body text-lg font-semibold", className)}>
       {children}

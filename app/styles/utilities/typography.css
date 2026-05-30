@@ -183,6 +183,18 @@
   text-transform: uppercase;
 }
 
+/* Eyebrow at small size — one rung up from text-eyebrow (text-xs → text-sm).
+   Replaces `text-sm font-medium uppercase tracking-wider`. Added 2026-05-30
+   to close A10 token gap. */
+
+@utility text-eyebrow-sm {
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  font-weight: 500;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
 /* Strong meta — small labels/badges with emphasis. Replaces
    `text-xs font-medium`. Companion to size-only `text-meta`. */
 
