@@ -30,7 +30,7 @@ export default function AuthLayout({
           <ThemeButton size="icon" />
         </div>
       </header>
-      <div className="flex grow flex-col">{children}</div>
+      <main className="flex grow flex-col bg-background">{children}</main>
     </div>
   );
 }

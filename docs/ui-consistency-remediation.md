@@ -19,7 +19,7 @@
 | Wave D — perceptual + storybook quality | ✅ Complete (6/6) | Committed `6926899` 2026-05-30; reviewer APPROVE; tsc/lint/build green. D6w regression check confirms deviation signals at-or-near zero. |
 | Final gaps | ✅ Complete | `54f75ff` 2026-05-30: PageContainer widened to `container` (matches homepage); auth chrome-bleed closed via `(auth)` route group + `ChromeGate`; all A10 TODOs resolved; `text-eyebrow-sm` added |
 
-**Overall: remediation NOT STARTED. Audit + Storybook scaffolding complete.**
+**Overall: remediation COMPLETE.** All waves (A–D) and final gaps committed; tsc/lint/build green; reviewer approved.
 
 ---
 

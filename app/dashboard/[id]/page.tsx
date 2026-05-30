@@ -46,15 +46,15 @@ const DashboardPage = async (props: { params: Promise<{ id: string }> }) => {
   const header = getRandomHeader();
 
   return (
-    <Suspense fallback={<DashboardSkeleton />}>
-      <PageContainer>
+    <PageContainer>
+      <Suspense fallback={<DashboardSkeleton />}>
         <Dashboard
           profile={profile}
           scorecards={scorecards}
           header={header}
         />
-      </PageContainer>
-    </Suspense>
+      </Suspense>
+    </PageContainer>
   );
 };
 

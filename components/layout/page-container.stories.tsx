@@ -1,5 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/nextjs";
 
+import { H1 } from "@/components/ui/typography";
 import { PageContainer } from "./page-container";
 
 const meta = {
@@ -16,11 +17,11 @@ export const Default: Story = {
   args: {
     children: (
       <div className="space-y-md">
-        <h1 className="text-heading-1">Page title</h1>
+        <H1>Page title</H1>
         <p className="text-body text-muted-foreground">
-          PageContainer constrains authenticated app pages to a single
-          <code className="mx-xs">max-w-6xl</code> width with consistent
-          horizontal padding and page-level vertical rhythm.
+          PageContainer wraps authenticated app pages in Tailwind&apos;s
+          <code className="mx-xs">container</code> (matches the homepage),
+          with consistent horizontal padding and page-level vertical rhythm.
         </p>
         <div className="rounded-lg border bg-card p-lg">
           Sample card content sits inside the shared container.

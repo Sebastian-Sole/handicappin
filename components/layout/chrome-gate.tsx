@@ -1,22 +1,11 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-
-const AUTH_PATH_PREFIXES = [
-  "/login",
-  "/signup",
-  "/forgot-password",
-  "/update-password",
-  "/verify-signup",
-  "/verify-email",
-  "/auth/verify-session",
-];
+import { isAuthRoutePath } from "@/lib/auth-routes";
 
 export function useIsAuthRoute() {
   const pathname = usePathname() ?? "";
-  return AUTH_PATH_PREFIXES.some(
-    (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`),
-  );
+  return isAuthRoutePath(pathname);
 }
 
 export function ChromeGate({ children }: { children: React.ReactNode }) {
@@ -25,15 +14,19 @@ export function ChromeGate({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
+/**
+ * Wraps non-auth route children in a single `<main>` element with the global
+ * page padding. On auth routes the wrapper is suppressed entirely so the
+ * `(auth)/layout.tsx` route-group layout can own its own `<header>` + `<main>`
+ * structure (otherwise the auth header would render inside the root `<main>`,
+ * which is semantically incorrect and a11y-hostile).
+ */
 export function MainShell({ children }: { children: React.ReactNode }) {
   const isAuthRoute = useIsAuthRoute();
+  if (isAuthRoute) {
+    return <>{children}</>;
+  }
   return (
-    <main
-      className={`grow bg-background flex flex-col ${
-        isAuthRoute ? "" : "pt-3xl"
-      }`}
-    >
-      {children}
-    </main>
+    <main className="grow bg-background flex flex-col pt-3xl">{children}</main>
   );
 }

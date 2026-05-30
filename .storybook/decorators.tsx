@@ -74,20 +74,29 @@ function createStoryQueryClient(): QueryClient {
 function TrpcDecorator({ children }: { children: React.ReactNode }) {
   // Lazily require to avoid pulling tRPC chunks into stories that don't need it.
   const { api } = require("@/trpc/react") as typeof import("@/trpc/react");
+  const { observable } =
+    require("@trpc/server/observable") as typeof import("@trpc/server/observable");
 
   const [queryClient] = React.useState(createStoryQueryClient);
   const [trpcClient] = React.useState(() =>
     api.createClient({
       links: [
-        // A link that resolves with an empty observable; queries stay pending.
-        () => () => {
-          // Return an observable that never emits — keeps queries in loading state.
-          return {
-            subscribe() {
-              return { unsubscribe() {} };
-            },
-          } as never;
-        },
+        // No-op tRPC link: returns a proper observable that never emits. Queries
+        // stay in `isLoading` forever — which is what we want for visual stories.
+        // The previous implementation returned `{ subscribe() { ... } }` cast to
+        // `never`, which is NOT a valid tRPC link shape and crashed any story
+        // that actually awaited a query (`.subscribe` was called with an
+        // observer + the link tried to read other observable members).
+        () =>
+          ({ op: _op }) =>
+            observable(() => {
+              // Never emit `next` / `error` / `complete`. React Query treats this
+              // as a pending query indefinitely. Returning an unsubscribe cleans
+              // up when the story unmounts.
+              return () => {
+                /* no-op teardown */
+              };
+            }),
       ],
     })
   );

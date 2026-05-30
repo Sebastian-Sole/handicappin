@@ -234,167 +234,167 @@ function VerifySignupContent() {
         description="Enter the 6-digit code we sent to your email"
       >
         <form onSubmit={handleSubmit} className="space-y-lg">
-            <div className="space-y-sm">
-              <label
-                htmlFor="email"
-                className="text-label-sm leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-              >
-                Email Address
-              </label>
-              <Input
-                id="email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="your@email.com"
-                disabled={status === "loading" || status === "success"}
-                required
-              />
-            </div>
+          <div className="space-y-sm">
+            <label
+              htmlFor="email"
+              className="text-label-sm leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+            >
+              Email Address
+            </label>
+            <Input
+              id="email"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="your@email.com"
+              disabled={status === "loading" || status === "success"}
+              required
+            />
+          </div>
 
-            <div className="space-y-sm">
-              <label
-                id="otp-label"
-                htmlFor="otp-input"
-                className="text-label-sm leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 block text-center"
-              >
-                Verification Code
-              </label>
-              <div
-                className="flex justify-center"
-                role="group"
-                aria-labelledby="otp-label"
-                aria-describedby="otp-description otp-hint"
-              >
-                <InputOTP
-                  id="otp-input"
-                  maxLength={6}
-                  pattern={REGEXP_ONLY_DIGITS}
-                  inputMode="numeric"
-                  value={otp}
-                  onChange={(value) => setOtp(value)}
-                  disabled={status === "loading" || status === "success"}
-                  aria-label="Enter 6-digit verification code"
-                  aria-required="true"
-                  aria-invalid={status === "error" ? "true" : "false"}
-                  aria-describedby="otp-description"
-                >
-                  <InputOTPGroup>
-                    <InputOTPSlot index={0} aria-label="Digit 1 of 6" />
-                    <InputOTPSlot index={1} aria-label="Digit 2 of 6" />
-                    <InputOTPSlot index={2} aria-label="Digit 3 of 6" />
-                  </InputOTPGroup>
-                  <InputOTPSeparator aria-hidden="true" />
-                  <InputOTPGroup>
-                    <InputOTPSlot index={3} aria-label="Digit 4 of 6" />
-                    <InputOTPSlot index={4} aria-label="Digit 5 of 6" />
-                    <InputOTPSlot index={5} aria-label="Digit 6 of 6" />
-                  </InputOTPGroup>
-                </InputOTP>
-              </div>
-
-              {/* Screen reader description */}
-              <p id="otp-description" className="sr-only">
-                Enter the 6-digit verification code sent to your email address.
-                Each box represents one digit.
-              </p>
-
-              {/* Hint text (visible to all) */}
-              <p id="otp-hint" className="text-meta text-muted-foreground text-center mt-xs">
-                Check your spam folder if you don&apos;t see the email
-              </p>
-            </div>
-
-            {/* Status updates for screen readers */}
+          <div className="space-y-sm">
+            <label
+              id="otp-label"
+              htmlFor="otp-input"
+              className="text-label-sm leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 block text-center"
+            >
+              Verification Code
+            </label>
             <div
-              role="status"
-              aria-live="polite"
-              aria-atomic="true"
-              className="sr-only"
+              className="flex justify-center"
+              role="group"
+              aria-labelledby="otp-label"
+              aria-describedby="otp-description otp-hint"
             >
-              {status === "loading" && "Verifying your code, please wait"}
-              {status === "success" &&
-                "Verification successful! Redirecting you now"}
-              {status === "error" && message}
-            </div>
-
-            {/* Visual error/success message */}
-            {message && (
-              <Alert variant={status === "error" ? "destructive" : "default"}>
-                <AlertDescription>
-                  {message}
-                  {remainingAttempts !== null &&
-                    remainingAttempts > 0 &&
-                    status === "error" && (
-                      <div className="mt-sm text-body-sm">
-                        {remainingAttempts}{" "}
-                        {remainingAttempts === 1 ? "attempt" : "attempts"}{" "}
-                        remaining
-                      </div>
-                    )}
-                </AlertDescription>
-              </Alert>
-            )}
-
-            <Button
-              type="submit"
-              className="w-full"
-              disabled={
-                status === "loading" || status === "success" || otp.length !== 6
-              }
-              aria-label={
-                status === "loading"
-                  ? "Verifying email, please wait"
-                  : status === "success"
-                    ? "Email verified successfully"
-                    : "Verify email"
-              }
-              aria-busy={status === "loading"}
-            >
-              {status === "loading" && (
-                <>
-                  <Loader2 className="mr-sm h-4 w-4 animate-spin" aria-hidden="true" />
-                  <span className="sr-only">Verifying your email, please wait</span>
-                </>
-              )}
-              {status === "success" && (
-                <>
-                  <Check className="mr-sm h-4 w-4" aria-hidden="true" />
-                  <span className="sr-only">Email verified successfully</span>
-                </>
-              )}
-              Verify Email
-            </Button>
-
-            <div className="text-center">
-              <Button
-                type="button"
-                variant="link"
-                onClick={handleResend}
-                disabled={
-                  status === "loading" ||
-                  status === "success" ||
-                  resendCooldown > 0
-                }
-                aria-label={
-                  resendCooldown > 0
-                    ? `Wait ${resendCooldown} seconds before requesting another code`
-                    : "Resend verification code"
-                }
+              <InputOTP
+                id="otp-input"
+                maxLength={6}
+                pattern={REGEXP_ONLY_DIGITS}
+                inputMode="numeric"
+                value={otp}
+                onChange={(value) => setOtp(value)}
+                disabled={status === "loading" || status === "success"}
+                aria-label="Enter 6-digit verification code"
+                aria-required="true"
+                aria-invalid={status === "error" ? "true" : "false"}
+                aria-describedby="otp-description"
               >
-                {resendCooldown > 0
-                  ? `Wait ${resendCooldown}s to resend`
-                  : "Didn't receive a code? Resend"}
-              </Button>
+                <InputOTPGroup>
+                  <InputOTPSlot index={0} aria-label="Digit 1 of 6" />
+                  <InputOTPSlot index={1} aria-label="Digit 2 of 6" />
+                  <InputOTPSlot index={2} aria-label="Digit 3 of 6" />
+                </InputOTPGroup>
+                <InputOTPSeparator aria-hidden="true" />
+                <InputOTPGroup>
+                  <InputOTPSlot index={3} aria-label="Digit 4 of 6" />
+                  <InputOTPSlot index={4} aria-label="Digit 5 of 6" />
+                  <InputOTPSlot index={5} aria-label="Digit 6 of 6" />
+                </InputOTPGroup>
+              </InputOTP>
             </div>
 
-            <Alert>
-              <AlertDescription className="text-meta">
-                <strong>Tip:</strong> Check your spam folder if you don&apos;t
-                see the email. The code expires in 15 minutes.
+            {/* Screen reader description */}
+            <p id="otp-description" className="sr-only">
+              Enter the 6-digit verification code sent to your email address.
+              Each box represents one digit.
+            </p>
+
+            {/* Hint text (visible to all) */}
+            <p id="otp-hint" className="text-meta text-muted-foreground text-center mt-xs">
+              Check your spam folder if you don&apos;t see the email
+            </p>
+          </div>
+
+          {/* Status updates for screen readers */}
+          <div
+            role="status"
+            aria-live="polite"
+            aria-atomic="true"
+            className="sr-only"
+          >
+            {status === "loading" && "Verifying your code, please wait"}
+            {status === "success" &&
+              "Verification successful! Redirecting you now"}
+            {status === "error" && message}
+          </div>
+
+          {/* Visual error/success message */}
+          {message && (
+            <Alert variant={status === "error" ? "destructive" : "default"}>
+              <AlertDescription>
+                {message}
+                {remainingAttempts !== null &&
+                  remainingAttempts > 0 &&
+                  status === "error" && (
+                    <div className="mt-sm text-body-sm">
+                      {remainingAttempts}{" "}
+                      {remainingAttempts === 1 ? "attempt" : "attempts"}{" "}
+                      remaining
+                    </div>
+                  )}
               </AlertDescription>
             </Alert>
-          </form>
+          )}
+
+          <Button
+            type="submit"
+            className="w-full"
+            disabled={
+              status === "loading" || status === "success" || otp.length !== 6
+            }
+            aria-label={
+              status === "loading"
+                ? "Verifying email, please wait"
+                : status === "success"
+                  ? "Email verified successfully"
+                  : "Verify email"
+            }
+            aria-busy={status === "loading"}
+          >
+            {status === "loading" && (
+              <>
+                <Loader2 className="mr-sm h-4 w-4 animate-spin" aria-hidden="true" />
+                <span className="sr-only">Verifying your email, please wait</span>
+              </>
+            )}
+            {status === "success" && (
+              <>
+                <Check className="mr-sm h-4 w-4" aria-hidden="true" />
+                <span className="sr-only">Email verified successfully</span>
+              </>
+            )}
+            Verify Email
+          </Button>
+
+          <div className="text-center">
+            <Button
+              type="button"
+              variant="link"
+              onClick={handleResend}
+              disabled={
+                status === "loading" ||
+                status === "success" ||
+                resendCooldown > 0
+              }
+              aria-label={
+                resendCooldown > 0
+                  ? `Wait ${resendCooldown} seconds before requesting another code`
+                  : "Resend verification code"
+              }
+            >
+              {resendCooldown > 0
+                ? `Wait ${resendCooldown}s to resend`
+                : "Didn't receive a code? Resend"}
+            </Button>
+          </div>
+
+          <Alert>
+            <AlertDescription className="text-meta">
+              <strong>Tip:</strong> Check your spam folder if you don&apos;t
+              see the email. The code expires in 15 minutes.
+            </AlertDescription>
+          </Alert>
+        </form>
       </AuthFormShell>
     </div>
   );

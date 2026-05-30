@@ -41,17 +41,17 @@ const AddRoundPage = async () => {
   // If user has no remaining rounds, only show the limit reached view
   if (access.plan === "free" && access.remainingRounds <= 0) {
     return (
-      <Suspense fallback={<AddRoundSkeleton />}>
-        <PageContainer className="flex justify-center items-center flex-col">
+      <PageContainer className="flex justify-center items-center flex-col">
+        <Suspense fallback={<AddRoundSkeleton />}>
           <UsageLimitReachedView />
-        </PageContainer>
-      </Suspense>
+        </Suspense>
+      </PageContainer>
     );
   }
 
   return (
-    <Suspense fallback={<AddRoundSkeleton />}>
-      <PageContainer className="flex justify-center items-center flex-col">
+    <PageContainer className="flex justify-center items-center flex-col">
+      <Suspense fallback={<AddRoundSkeleton />}>
         <H1 className="text-heading-1 mb-sm md:mb-md lg:mb-xl">
           Add Round
         </H1>
@@ -74,8 +74,8 @@ const AddRoundPage = async () => {
           profile={profile}
           access={access}
         />
-      </PageContainer>
-    </Suspense>
+      </Suspense>
+    </PageContainer>
   );
 };
 

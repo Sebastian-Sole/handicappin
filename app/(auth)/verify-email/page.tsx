@@ -1,5 +1,6 @@
 import { createServerComponentClient } from "@/utils/supabase/server";
 import { redirect } from "next/navigation";
+import { logger } from "@/lib/logging";
 
 const VerifyLoginPage = async (props: {
   searchParams: Promise<{ code?: string }>;
@@ -17,12 +18,14 @@ const VerifyLoginPage = async (props: {
   const { data: exchangeData, error: exchangeError } =
     await supabase.auth.exchangeCodeForSession(code);
   if (exchangeError) {
-    console.error("Error exchanging code for session:", exchangeError.message);
+    logger.error("Error exchanging code for session", {
+      error: exchangeError.message,
+    });
     redirect("/login");
   }
 
   if (!exchangeData) {
-    console.error("No data returned from exchangeCodeForSession");
+    logger.error("No data returned from exchangeCodeForSession");
     redirect("/login");
   }
 
@@ -40,7 +43,7 @@ const VerifyLoginPage = async (props: {
       .maybeSingle();
 
     if (profileError) {
-      console.error("Error fetching profile:", profileError.message);
+      logger.error("Error fetching profile", { error: profileError.message });
       redirect("/login");
     }
 
@@ -52,7 +55,9 @@ const VerifyLoginPage = async (props: {
       .eq("id", user.id);
 
     if (updateProfileError) {
-      console.error("Error updating profile:", updateProfileError.message);
+      logger.error("Error updating profile", {
+        error: updateProfileError.message,
+      });
       redirect("/login");
     }
 

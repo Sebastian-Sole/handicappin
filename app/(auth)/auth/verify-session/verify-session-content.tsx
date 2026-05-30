@@ -8,7 +8,6 @@ import { H1 } from "@/components/ui/typography";
 import { FormFeedback } from "@/components/ui/form-feedback";
 import { Button } from "@/components/ui/button";
 import { AuthFormShell } from "@/components/auth/auth-form-shell";
-import { env } from "@/env";
 
 const MAX_RETRY_ATTEMPTS = 3;
 const RETRY_DELAY_MS = 2000; // 2 seconds between retries
@@ -288,7 +287,7 @@ export function VerifySessionContent({
       </div>
 
       {/* Debug Info (non-production only) */}
-      {env.NODE_ENV !== "production" && (
+      {process.env.NODE_ENV !== "production" && (
         <div className="mt-xl p-md bg-muted rounded text-meta text-left">
           <p className="font-mono mb-xs">
             <strong>Debug Info:</strong>
