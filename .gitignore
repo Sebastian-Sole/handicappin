@@ -55,3 +55,6 @@ handicappin.code-workspace
 .claude/worktrees/
 *storybook.log
 storybook-static
+
+# Audit/orchestration scratch — never commit (auto-screenshots, findings, etc.)
+.claude/tmp/

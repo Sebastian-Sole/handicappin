@@ -16,7 +16,8 @@
 | Wave A — mechanical/global | ✅ Complete (13/13) | Committed `2667cef` 2026-05-28; tsc/build green; CardTitle + rounds/add spot-checked visually |
 | Wave B — structural | ✅ Complete (5/5 + B1b) | `62f9686` + B1b follow-up; all 10 authenticated pages unified to max-w-6xl |
 | Wave C — correctness + a11y | ✅ Complete (7/7) | Committed `c376920` 2026-05-29; legal-page fix verified logged-out; reviewer approved |
-| Wave D — perceptual + storybook quality | ✅ Complete (6/6) | Committed `6926899` 2026-05-30; reviewer APPROVE; tsc/lint/build green. D6w regression check confirms deviation signals at-or-near zero. **Auth chrome-bleed deferred** as separate follow-up (route-group refactor). |
+| Wave D — perceptual + storybook quality | ✅ Complete (6/6) | Committed `6926899` 2026-05-30; reviewer APPROVE; tsc/lint/build green. D6w regression check confirms deviation signals at-or-near zero. |
+| Final gaps | ✅ Complete | `54f75ff` 2026-05-30: PageContainer widened to `container` (matches homepage); auth chrome-bleed closed via `(auth)` route group + `ChromeGate`; all A10 TODOs resolved; `text-eyebrow-sm` added |
 
 **Overall: remediation NOT STARTED. Audit + Storybook scaffolding complete.**
 
@@ -43,7 +44,7 @@
 
 **D1 — Wide-app container width.** `max-w-5xl` is the nominal plurality but only ~3 routes use it; the rest split full-width / `6xl` / `7xl`, and public marketing/auth add yet more widths. Recommended: **a shared `<PageContainer>` at `max-w-6xl`** (onboarding/upgrade/course-detail already cluster there), with `2xl/3xl` reserved for prose/legal and `sm/md` for auth/forms.
 - Options: (a) `max-w-6xl` everywhere via `PageContainer` — *recommended*; (b) keep dashboard/statistics deliberately full-width, `6xl` for the rest.
-- **Blocks:** B1. **DECISION: ✅ Option (a) — single `max-w-6xl` for ALL authenticated app pages via a shared `PageContainer` (no full-width exception; uniform width prioritized over per-page horizontal room).**
+- **Blocks:** B1. **DECISION: ✅ Option (a) — single shared `PageContainer` for ALL authenticated app pages.** Width updated 2026-05-30: started at `max-w-6xl`, widened to Tailwind's `container` class (matches the homepage section width) after the D1 watch-point — data pages felt cramped — triggered. PageContainer is now `container mx-auto px-md py-3xl sm:px-lg lg:px-xl`.
 
 **D2 — Statistics card density.** Statistics overrides `CardContent` to `p-md` (38×) vs canonical `p-lg`. Is this a deliberate compact tile or drift?
 - Options: (a) formalize a named `compact` Card variant (or route through `stat-tile.tsx`) — *recommended*; (b) migrate all to `p-lg`.
@@ -311,7 +312,7 @@
 > Some items need a logged-out re-capture to fully confirm.
 
 ### D1w — Unify auth/recovery shell
-- **Status:** ✅ done (2026-05-30) — `<AuthFormShell>` API extended with `title`/`description` slots; login, signup, forgot-password, update-password, verify-session, verify-signup all now use one centered-card shell at one width. **Follow-up (out of D1w scope):** chrome-bleed (logged-in app nav on auth pages) needs a route-group + layout refactor — flagged separately. | **Priority:** P1 | **Confidence:** VISUAL-ONLY
+- **Status:** ✅ done (2026-05-30, fully closed in `54f75ff`) — `<AuthFormShell>` API extended with `title`/`description` slots; login, signup, forgot-password, update-password, verify-session, verify-signup all use one centered-card shell at one width. **Chrome-bleed closed:** routes moved into `app/(auth)/` route group; `app/(auth)/layout.tsx` renders minimal chrome (logo + theme toggle); new `components/layout/chrome-gate.tsx` (path-aware client component) suppresses the root navbar + footer on auth paths. | **Priority:** P1 | **Confidence:** VISUAL-ONLY
 - **What:** One centered-card auth shell at one narrow width, with minimal chrome (logo + theme toggle), for login/signup/forgot-password/update-password/verify-*.
 - **Why:** 3+ presentations across one auth journey (centered cards vs left-aligned bare forms); logged-in chrome (Add Round, avatar, full nav + footer) bleeds onto recovery pages, stranding small forms in a large canvas. `components/auth/auth-form-shell.tsx` exists and is partially used — extend it.
 - **Where:** `components/auth/auth-form-shell.tsx`; login/signup/forgot-password/update-password pages; verify-* ; the auth route-group layout (chrome).
@@ -408,4 +409,5 @@ _Append one line per completed item/session: date — item ID(s) — what landed
 - 2026-05-29 — `.storybook` lint — fixed rules-of-hooks in decorators (`1ef17ef`); `pnpm lint` exits 0.
 - 2026-05-30 — B1b — width unification completed for the 3 client-component pages (profile, round-calculation, calculators) — `d87dfc4`. All 10 authenticated app pages now route through one `<PageContainer>`.
 - 2026-05-30 — Wave D (D1w–D6w + token-gap) — perceptual polish, Storybook quality, and the missing `text-figure-xs` (1.125rem/700) token landed (`6926899`, 22 files). Auth shell unified, marketing shadow named, mobile titles tightened, primitive stories de-blanked, 5 stat values migrated off raw `text-lg font-bold` (all A7 TODOs cleared), last `<div onClick>` removed. Auth chrome-bleed deferred (needs route-group refactor).
+- 2026-05-30 — Final gaps (`54f75ff`, 20 files) — closed every open item: (1) PageContainer width widened from `max-w-6xl` to Tailwind's `container` to match the homepage width (D1 watch-point triggered); (2) auth chrome-bleed closed — moved 5 routes into `app/(auth)/`, added minimal `(auth)/layout.tsx` + `ChromeGate` to suppress root navbar/footer on auth paths; (3) all 10 A10 TODOs resolved — added `text-eyebrow-sm`, migrated 2 sites, removed 7 markers where compose is intentional; (4) redundant `stash@{0}` dropped.
 - 2026-05-29 — Wave B (B1–B5) — structural cohesion landed (`62f9686`, 24 files). PageContainer (max-w-6xl) on 7 pages; compact Card density; pricing-card elevation; surface utilities; status-surface tint normalization. tsc/lint/build green; reviewer APPROVE. **Follow-up B1b:** 3 pages (profile, round-calculation, calculators) still need width unification (wrappers in client components). **Incident:** two B-agents ran `git stash` on the shared tree (collision + a leftover `stash@{0}`); integrity audit confirmed NO Wave-B work lost and no committed file reverted. `stash@{0}` holds only an OLD autofill `globals.css` snapshot that is already superseded by the committed, more-complete autofill rules in `app/styles/base.css` — redundant, safe to drop (left in place pending user OK). **Lesson:** future agent briefs must forbid `git stash`/branch ops on the shared working tree.
