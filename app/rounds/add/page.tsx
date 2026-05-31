@@ -41,7 +41,7 @@ const AddRoundPage = async () => {
   // If user has no remaining rounds, only show the limit reached view
   if (access.plan === "free" && access.remainingRounds <= 0) {
     return (
-      <PageContainer className="flex justify-center items-center flex-col">
+      <PageContainer>
         <Suspense fallback={<AddRoundSkeleton />}>
           <UsageLimitReachedView />
         </Suspense>
@@ -50,7 +50,7 @@ const AddRoundPage = async () => {
   }
 
   return (
-    <PageContainer className="flex justify-center items-center flex-col">
+    <PageContainer>
       <Suspense fallback={<AddRoundSkeleton />}>
         <H1 className="text-heading-1 mb-sm md:mb-md lg:mb-xl">
           Add Round
@@ -61,7 +61,7 @@ const AddRoundPage = async () => {
 
         {/* Show remaining rounds for free tier users */}
         {access.plan === "free" && access.remainingRounds > 0 && (
-          <div className="w-full max-w-4xl mb-md">
+          <div className="mb-md">
             <UsageLimitAlert
               current={FREE_TIER_ROUND_LIMIT - access.remainingRounds}
               total={FREE_TIER_ROUND_LIMIT}
