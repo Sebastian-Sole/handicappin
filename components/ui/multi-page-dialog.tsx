@@ -1,5 +1,6 @@
 "use client";
 
+// Spacing skipped (no token equivalent): w-2/h-2 sizing; arbitrary calc/vh values.
 import React, {
   useState,
   useRef,
@@ -33,7 +34,7 @@ export const DialogPage: React.FC<DialogPageProps> = ({
     <DialogHeader>
       <DialogTitle>{title}</DialogTitle>
     </DialogHeader>
-    <div className={`py-4 ${className}`}>{children}</div>
+    <div className={`py-md ${className}`}>{children}</div>
   </div>
 );
 
@@ -62,7 +63,7 @@ const ProgressDots: React.FC<{ total: number; current: number }> = ({
   total,
   current,
 }) => (
-  <div className="flex justify-center space-x-2 mt-4 mb-2">
+  <div className="flex justify-center space-x-sm mt-md mb-sm">
     {[...Array(total)].map((_, i) => (
       <div
         key={i}
@@ -148,11 +149,11 @@ export const MultiPageDialog: React.FC<MultiPageDialogProps> = ({
       <DialogTrigger asChild>{trigger}</DialogTrigger>
       <DialogContent
         ref={contentRef}
-        className="max-w-[calc(100vw-2rem)] sm:max-w-[400px] md:max-w-[600px] max-h-[90vh] overflow-y-auto"
+        className="max-w-[calc(100vw-2rem)] sm:max-w-sm md:max-w-xl max-h-[90vh] overflow-y-auto"
       >
         {pages[safePage]}
         {extraFooterContent?.(safePage, pages.length)}
-        <div className="flex justify-between mt-4">
+        <div className="flex justify-between mt-md">
           <Button
             variant="outline"
             onClick={handlePrevious}

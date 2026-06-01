@@ -6,7 +6,7 @@ const EFFECTIVE_DATE = "February 11, 2026";
 export function TermsContent() {
   return (
     <div className="space-y-xl">
-      <p className="text-sm text-muted-foreground">
+      <p className="text-body-sm text-muted-foreground">
         Effective Date: {EFFECTIVE_DATE}
       </p>
 
@@ -324,7 +324,7 @@ export function TermsContent() {
         <H2>
           13. Disclaimer of Warranties
         </H2>
-        <P className="text-foreground/80 uppercase font-semibold text-sm">
+        <P className="text-foreground/80 uppercase text-badge">
           The Service is provided &quot;as is&quot; and &quot;as
           available&quot; without warranties of any kind, whether express or
           implied, including but not limited to implied warranties of
@@ -344,7 +344,7 @@ export function TermsContent() {
         <H2>
           14. Limitation of Liability
         </H2>
-        <P className="text-foreground/80 uppercase font-semibold text-sm">
+        <P className="text-foreground/80 uppercase text-badge">
           To the maximum extent permitted by applicable law, SoleInnovations and
           its officers, employees, and affiliates shall not be liable for any
           indirect, incidental, special, consequential, or punitive damages,

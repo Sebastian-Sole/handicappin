@@ -44,7 +44,7 @@ const AdjustedScoresStep = () => {
             handicap. This is called &quot;Net Double Bogey&quot; adjustment.
           </Blockquote>
           <P>The maximum score per hole is the lower of:</P>
-          <ul className="list-disc list-inside space-y-xs text-sm text-muted-foreground">
+          <ul className="list-disc list-inside space-y-xs text-body-sm text-muted-foreground">
             <li>Par + 5 (absolute maximum)</li>
             <li>Par + 2 + your handicap strokes on that hole</li>
           </ul>
@@ -52,7 +52,7 @@ const AdjustedScoresStep = () => {
             For example, on a Par 4 where you receive 1 handicap stroke, your
             maximum adjusted score is the lower of 9 (4+5) or 7 (4+2+1) = 7.
           </P>
-          <P className="text-xs italic">
+          <P className="text-meta italic">
             Note: Players with fewer than 3 approved rounds use a simpler Par +
             5 maximum on all holes.
           </P>
@@ -60,7 +60,7 @@ const AdjustedScoresStep = () => {
             href="https://www.usga.org/handicapping/roh/Content/rules/3%201a%20Before%20a%20Handicap%20Index%20Has%20Been%20Established.htm"
             target="_blank"
             rel="noopener noreferrer"
-            className="text-primary hover:underline text-sm"
+            className="text-primary hover:underline text-body-sm"
           >
             Read more about Acceptable Scores (USGA)
           </Link>

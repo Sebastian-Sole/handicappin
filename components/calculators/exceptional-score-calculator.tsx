@@ -91,7 +91,7 @@ export function ExceptionalScoreCalculator() {
         {EXCEPTIONAL_ROUND_THRESHOLD} strokes better than your Handicap Index.
         When this happens, ESR reduces your handicap immediately.
       </Muted>
-      <div className="surface-muted p-sm text-sm space-y-sm">
+      <div className="surface-muted p-sm text-body-sm space-y-sm">
         <P className="font-medium">ESR Adjustments:</P>
         <ul className="list-disc pl-md space-y-xs text-muted-foreground">
           <li>7.0 to 9.9 strokes better: -1.0 adjustment</li>

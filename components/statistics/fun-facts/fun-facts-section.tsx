@@ -63,7 +63,7 @@ export function ScoringBreakdownSection({ stats }: ScoringBreakdownSectionProps)
         {/* Strokes by Par Type */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Strokes by Par Type</CardTitle>
+            <CardTitle>Strokes by Par Type</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-md">
@@ -76,10 +76,10 @@ export function ScoringBreakdownSection({ stats }: ScoringBreakdownSectionProps)
                   >
                     <span className="font-medium">Par {parType.parType}</span>
                     <div className="text-right">
-                      <span className="text-lg font-bold">
+                      <span className="text-figure-xs">
                         {parType.avgStrokes.toFixed(2)}
                       </span>
-                      <span className="text-muted-foreground text-sm ml-sm">
+                      <span className="text-muted-foreground text-body-sm ml-sm">
                         avg ({overPar > 0 ? "+" : ""}
                         {overPar.toFixed(1)})
                       </span>
@@ -94,7 +94,7 @@ export function ScoringBreakdownSection({ stats }: ScoringBreakdownSectionProps)
         {/* Score Distribution */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Score Distribution</CardTitle>
+            <CardTitle>Score Distribution</CardTitle>
           </CardHeader>
           <CardContent>
             <ScoreDistributionChart data={stats.scoreDistribution} />

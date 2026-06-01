@@ -45,7 +45,7 @@ export function CalculatorCard({
   };
 
   return (
-    <Card className={cn("transition-all", className)}>
+    <Card className={cn("transition-colors", className)}>
       <CardHeader
         className="cursor-pointer md:cursor-default"
         onClick={handleToggle}
@@ -117,7 +117,7 @@ export function CalculatorCard({
                   href={meta.usgaLink}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-xs text-sm text-primary hover:underline"
+                  className="inline-flex items-center gap-xs text-body-sm text-primary hover:underline"
                 >
                   Learn more at USGA.org
                   <ExternalLink className="h-3 w-3" />

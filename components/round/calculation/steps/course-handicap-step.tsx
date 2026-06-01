@@ -110,7 +110,7 @@ const CourseHandicapStep = () => {
           <Link
             href="https://www.usga.org/handicapping/roh/Content/rules/6%201a%2018%20holes.htm"
             target="_blank"
-            className="text-primary hover:underline text-sm"
+            className="text-primary hover:underline text-body-sm"
             rel="noopener noreferrer"
           >
             Read more about Course Handicap calculation (USGA)
@@ -190,7 +190,7 @@ const CourseHandicapStep = () => {
             />
           </div>
           <div className="flex items-end gap-sm pb-sm">
-            <Label className="text-xs">18 holes</Label>
+            <Label className="text-meta">18 holes</Label>
             <Switch
               checked={isNineHoles}
               onCheckedChange={(checked) => {
@@ -198,7 +198,7 @@ const CourseHandicapStep = () => {
                 setHolesPlayed(checked ? 9 : 18);
               }}
             />
-            <Label className="text-xs">9 holes</Label>
+            <Label className="text-meta">9 holes</Label>
           </div>
         </div>
 

@@ -99,7 +99,7 @@ const ScoreDistributionSidebar = ({ layout = "vertical", compact = false }: Scor
   // Shared section components
   const roundSummarySection = (
     <div className="surface-muted p-md h-full">
-      <Muted className="text-xs uppercase tracking-wide mb-sm">Round Summary</Muted>
+      <Muted className="text-eyebrow mb-sm">Round Summary</Muted>
       <div className="grid grid-cols-2 gap-sm">
         <StatTile value={totalStrokes} label="Gross Score" />
         <StatTile
@@ -126,10 +126,10 @@ const ScoreDistributionSidebar = ({ layout = "vertical", compact = false }: Scor
 
   const scoreDistributionSection = (
     <div className="surface-muted p-md h-full">
-      <Muted className="text-xs uppercase tracking-wide mb-sm">Score Distribution</Muted>
+      <Muted className="text-eyebrow mb-sm">Score Distribution</Muted>
       <div className="space-y-sm">
         {Object.entries(distribution).map(([key, { count, label, color }]) => (
-          <div key={key} className="flex items-center gap-sm text-sm">
+          <div key={key} className="flex items-center gap-sm text-body-sm">
             <span className="w-14 text-right text-muted-foreground">{label}</span>
             <div className="flex-1 h-5 bg-muted rounded overflow-hidden">
               <div
@@ -146,14 +146,14 @@ const ScoreDistributionSidebar = ({ layout = "vertical", compact = false }: Scor
 
   const holeByHoleSection = (
     <div className="surface-muted p-md h-full">
-      <Muted className="text-xs uppercase tracking-wide mb-sm">Hole-by-Hole</Muted>
+      <Muted className="text-eyebrow mb-sm">Hole-by-Hole</Muted>
       <div className="grid grid-cols-9 gap-xs">
         {holeScores.map(({ hole, diff, color }) => (
           <div
             key={hole}
             className={cn(
-              "aspect-square rounded flex items-center justify-center text-xs font-medium",
-              diff !== null ? "text-white" : "text-muted-foreground",
+              "aspect-square rounded flex items-center justify-center text-meta-strong",
+              diff !== null ? "text-primary-foreground" : "text-muted-foreground",
               color
             )}
             title={diff !== null ? `Hole ${hole}: ${diff === 0 ? "E" : diff > 0 ? `+${diff}` : diff}` : `Hole ${hole}: Not played`}
@@ -162,7 +162,7 @@ const ScoreDistributionSidebar = ({ layout = "vertical", compact = false }: Scor
           </div>
         ))}
       </div>
-      <div className="flex flex-wrap gap-sm mt-sm text-xs">
+      <div className="flex flex-wrap gap-sm mt-sm text-meta">
         <div className="flex items-center gap-xs">
           <div className="w-3 h-3 rounded bg-score-eagle" />
           <span>Eagle-</span>
@@ -195,31 +195,31 @@ const ScoreDistributionSidebar = ({ layout = "vertical", compact = false }: Scor
 
   const quickStatsSection = (
     <div className="surface-muted p-md h-full">
-      <Muted className="text-xs uppercase tracking-wide mb-sm">Quick Stats</Muted>
-      <div className="grid grid-cols-2 gap-sm text-sm">
+      <Muted className="text-eyebrow mb-sm">Quick Stats</Muted>
+      <div className="grid grid-cols-2 gap-sm text-body-sm">
         <div>
           <div className="font-semibold">
             {((distribution["0"].count + distribution["-1"].count + distribution["-2"].count) / totalPlayedHoles * 100).toFixed(0)}%
           </div>
-          <Muted className="text-xs">Par or better</Muted>
+          <Muted className="text-meta">Par or better</Muted>
         </div>
         <div>
           <div className="font-semibold">
             {((distribution["2"].count + distribution["3+"].count) / totalPlayedHoles * 100).toFixed(0)}%
           </div>
-          <Muted className="text-xs">Double+</Muted>
+          <Muted className="text-meta">Double+</Muted>
         </div>
         <div>
           <div className="font-semibold">
             {(totalStrokes / totalPlayedHoles).toFixed(1)}
           </div>
-          <Muted className="text-xs">Avg per hole</Muted>
+          <Muted className="text-meta">Avg per hole</Muted>
         </div>
         <div>
           <div className="font-semibold">
             {(totalPar / totalPlayedHoles).toFixed(1)}
           </div>
-          <Muted className="text-xs">Avg par</Muted>
+          <Muted className="text-meta">Avg par</Muted>
         </div>
       </div>
     </div>
@@ -254,7 +254,7 @@ const ScoreDistributionSidebar = ({ layout = "vertical", compact = false }: Scor
       >
         {/* Combined Summary & Stats */}
         <div className="surface-muted p-md">
-          <Muted className="text-xs uppercase tracking-wide mb-sm">Round Summary</Muted>
+          <Muted className="text-eyebrow mb-sm">Round Summary</Muted>
           <div className="grid grid-cols-4 gap-sm">
             <StatTile size="sm" value={totalStrokes} label="Gross" />
             <StatTile
@@ -282,10 +282,10 @@ const ScoreDistributionSidebar = ({ layout = "vertical", compact = false }: Scor
 
         {/* Score Distribution - compact */}
         <div className="surface-muted p-md">
-          <Muted className="text-xs uppercase tracking-wide mb-sm">Score Distribution</Muted>
+          <Muted className="text-eyebrow mb-sm">Score Distribution</Muted>
           <div className="space-y-xs">
             {Object.entries(distribution).map(([key, { count, label, color }]) => (
-              <div key={key} className="flex items-center gap-sm text-xs">
+              <div key={key} className="flex items-center gap-sm text-meta">
                 <span className="w-12 text-right text-muted-foreground">{label}</span>
                 <div className="flex-1 h-4 bg-muted rounded overflow-hidden">
                   <div
@@ -301,30 +301,30 @@ const ScoreDistributionSidebar = ({ layout = "vertical", compact = false }: Scor
 
         {/* Quick Stats - inline */}
         <div className="surface-muted p-md">
-          <div className="grid grid-cols-4 gap-sm text-center text-sm">
+          <div className="grid grid-cols-4 gap-sm text-center text-body-sm">
             <div>
               <div className="font-semibold">
                 {((distribution["0"].count + distribution["-1"].count + distribution["-2"].count) / totalPlayedHoles * 100).toFixed(0)}%
               </div>
-              <Muted className="text-xs">Par+</Muted>
+              <Muted className="text-meta">Par+</Muted>
             </div>
             <div>
               <div className="font-semibold">
                 {((distribution["2"].count + distribution["3+"].count) / totalPlayedHoles * 100).toFixed(0)}%
               </div>
-              <Muted className="text-xs">Dbl+</Muted>
+              <Muted className="text-meta">Dbl+</Muted>
             </div>
             <div>
               <div className="font-semibold">
                 {(totalStrokes / totalPlayedHoles).toFixed(1)}
               </div>
-              <Muted className="text-xs">Avg</Muted>
+              <Muted className="text-meta">Avg</Muted>
             </div>
             <div>
               <div className="font-semibold">
                 {(totalPar / totalPlayedHoles).toFixed(1)}
               </div>
-              <Muted className="text-xs">Par</Muted>
+              <Muted className="text-meta">Par</Muted>
             </div>
           </div>
         </div>

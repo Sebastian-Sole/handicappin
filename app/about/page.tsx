@@ -76,11 +76,11 @@ export default async function AboutPage() {
         {/* Mission Section */}
         <section className="w-full py-2xl md:py-4xl lg:py-5xl hero-gradient">
           <div className="sm:container px-md md:px-lg mx-auto">
-            <div className="mx-auto grid max-w-5xl items-start gap-lg py-2xl xl:grid-cols-2 lg:gap-2xl">
+            <div className="mx-auto grid items-start gap-lg py-2xl xl:grid-cols-2 lg:gap-2xl">
               <div className="flex flex-col justify-start space-y-md">
                 <div className="space-y-sm">
                   <Badge>Our Mission</Badge>
-                  <H2 className="lg:leading-tighter text-3xl tracking-tighter sm:text-4xl md:text-5xl xl:text-[3.4rem] 2xl:text-[3.75rem] pb-0">
+                  <H2 className="lg:leading-tighter text-3xl tracking-tighter sm:text-4xl md:text-5xl xl:text-hero-xl 2xl:text-hero-2xl pb-0">
                     Why Does Handicappin&apos; Even Exist?
                   </H2>
                   <P className="text-foreground/80 md:text-xl/relaxed">
@@ -162,10 +162,10 @@ export default async function AboutPage() {
             <div className="flex flex-col items-center justify-center space-y-md text-center">
               <div className="space-y-sm">
                 <Badge>Why Choose Us</Badge>
-                <H2 className="lg:leading-tighter text-3xl tracking-tighter sm:text-4xl md:text-5xl xl:text-[3.4rem] 2xl:text-[3.75rem] pb-0">
+                <H2 className="lg:leading-tighter text-3xl tracking-tighter sm:text-4xl md:text-5xl xl:text-hero-xl 2xl:text-hero-2xl pb-0">
                   What Makes Us Different?
                 </H2>
-                <p className="mx-auto max-w-[900px] text-muted-foreground md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed">
+                <p className="mx-auto max-w-4xl text-muted-foreground md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed">
                   We value your time. We know that golf statistics and round
                   calculations are complicated, and that other services
                   don&apos;t show you everything. That&apos;s why we made
@@ -178,7 +178,7 @@ export default async function AboutPage() {
               </div>
             </div>
 
-            <div className="mx-auto grid max-w-5xl items-center gap-lg py-2xl lg:gap-2xl">
+            <div className="mx-auto grid items-center gap-lg py-2xl lg:gap-2xl">
               <div className="flex flex-col justify-center space-y-lg">
                 <div className="grid gap-lg xl:grid-cols-2">
                   <div className="flex items-start space-x-md">
@@ -244,7 +244,7 @@ export default async function AboutPage() {
                 </div>
               </div>
             </div>
-            <div className="mx-auto max-w-5xl flex flex-col items-center justify-center">
+            <div className="mx-auto flex flex-col items-center justify-center">
               <div className="flex flex-col gap-md w-full sm:grid xl:grid-cols-4 sm:grid-cols-2 xl:gap-md">
                 <div className="surface p-lg w-full">
                   <StatTile

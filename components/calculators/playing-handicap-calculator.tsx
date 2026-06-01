@@ -66,7 +66,7 @@ export function PlayingHandicapCalculator() {
           <P className="font-bold mt-xs">= {playingHandicap}</P>
         </div>
       )}
-      <Muted className="text-xs">
+      <Muted className="text-meta">
         Different formats of play use different handicap allowances to ensure
         fair competition.
       </Muted>

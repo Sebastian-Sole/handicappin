@@ -57,7 +57,7 @@ export function HandicapDisplay({
 
   return (
     <div className={cn("flex flex-col items-center lg:items-start", className)}>
-      <p className="text-sm font-medium text-muted-foreground uppercase tracking-wider mb-sm">
+      <p className="text-eyebrow-sm text-muted-foreground mb-sm">
         Handicap Index
       </p>
       <div className="relative" aria-live="polite" aria-atomic="true">
@@ -71,7 +71,7 @@ export function HandicapDisplay({
       {hasPreviousHandicap && change !== 0 && (
         <div
           className={cn(
-            "flex items-center gap-xs mt-sm px-sm py-xs rounded-full text-sm font-medium",
+            "flex items-center gap-xs mt-sm px-sm py-xs rounded-full text-label-sm",
             change < 0
               ? "bg-success/20 text-success"
               : "bg-destructive/20 text-destructive"

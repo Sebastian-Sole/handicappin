@@ -58,7 +58,7 @@ export function MaxScoreCalculator() {
       </div>
 
       {/* Breakdown */}
-      <div className="surface-muted p-sm text-sm space-y-sm">
+      <div className="surface-muted p-sm text-body-sm space-y-sm">
         <div className="flex justify-between">
           <span className="text-muted-foreground">Par</span>
           <span>{holePar}</span>
@@ -87,7 +87,7 @@ export function MaxScoreCalculator() {
           </span>
         </div>
         {calculation.wasCapped && (
-          <Muted className="text-xs">
+          <Muted className="text-meta">
             Capped at Par + 5 ({holePar + 5})
           </Muted>
         )}
@@ -102,16 +102,16 @@ export function MaxScoreCalculator() {
         called <strong>Net Double Bogey</strong>. This prevents one bad hole
         from disproportionately affecting your handicap.
       </Muted>
-      <div className="surface-muted p-sm text-sm space-y-sm">
+      <div className="surface-muted p-sm text-body-sm space-y-sm">
         <P className="font-medium">Net Double Bogey Formula:</P>
         <P className="font-mono text-muted-foreground">
           Max = Par + 2 + Handicap Strokes
         </P>
-        <P className="text-xs text-muted-foreground">
+        <P className="text-meta text-muted-foreground">
           (Capped at Par + 5, even with many handicap strokes)
         </P>
       </div>
-      <div className="text-sm space-y-xs">
+      <div className="text-body-sm space-y-xs">
         <P className="font-medium">Examples:</P>
         <ul className="list-disc pl-md space-y-xs text-muted-foreground">
           <li>Par 4, 0 strokes → Max = 6</li>
@@ -179,7 +179,7 @@ export function MaxScoreCalculator() {
           </div>
         </div>
 
-        <Muted className="text-xs">
+        <Muted className="text-meta">
           Find hole handicap on your scorecard - it indicates difficulty (1 = hardest).
         </Muted>
       </div>

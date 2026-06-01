@@ -65,7 +65,7 @@ export function TargetScoreCalculator() {
       {/* Score breakdown table */}
       <div className="space-y-sm">
         <Small className="text-muted-foreground">Score breakdown:</Small>
-        <div className="grid grid-cols-5 gap-xs text-center text-sm">
+        <div className="grid grid-cols-5 gap-xs text-center text-body-sm">
           {calculation.scoreBreakdown.map(({ score, differential, meetsTarget }) => (
             <div
               key={score}
@@ -76,7 +76,7 @@ export function TargetScoreCalculator() {
               }`}
             >
               <div className="font-bold">{score}</div>
-              <div className="text-xs text-muted-foreground">
+              <div className="text-meta text-muted-foreground">
                 {differential.toFixed(1)}
               </div>
             </div>
@@ -101,7 +101,7 @@ export function TargetScoreCalculator() {
           Target Score = (Target Diff × Slope / 113) + Course Rating
         </P>
       </div>
-      <Muted className="text-xs">
+      <Muted className="text-meta">
         Note: Your actual handicap index is calculated from your best
         differentials, so one good round may not immediately change your index.
       </Muted>
@@ -163,7 +163,7 @@ export function TargetScoreCalculator() {
         </div>
       </div>
       {(values.courseRating === null || values.slopeRating === null) && (
-        <Muted className="text-sm text-warning">
+        <Muted className="text-body-sm text-warning">
           Enter course and slope rating in the Course Handicap calculator first.
         </Muted>
       )}

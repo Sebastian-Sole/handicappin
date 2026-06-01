@@ -53,3 +53,8 @@ handicappin.code-workspace
 
 # Claude Code agent worktrees (ephemeral)
 .claude/worktrees/
+*storybook.log
+storybook-static
+
+# Audit/orchestration scratch — never commit (auto-screenshots, findings, etc.)
+.claude/tmp/

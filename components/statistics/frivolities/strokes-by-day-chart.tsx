@@ -69,7 +69,7 @@ export function StrokesByDayChart({ data }: StrokesByDayChartProps) {
           </BarChart>
       </ChartContainer>
       {maxStrokesDay && (
-        <p className="text-sm text-center text-muted-foreground">
+        <p className="text-body-sm text-center text-muted-foreground">
           You&apos;ve hit the most strokes on{" "}
           <span className="font-medium text-foreground">{maxStrokesDay.day}s</span> (
           {formatNumber(maxStrokesDay.totalStrokes)} strokes across{" "}

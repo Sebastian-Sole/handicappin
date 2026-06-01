@@ -35,6 +35,7 @@ export function BillingTab({ access }: BillingTabProps) {
         <H3 className="mb-md">Current Plan</H3>
         <div className="flex items-start justify-between flex-col sm:flex-row gap-md">
           <div className="flex-1">
+            {/* Intentional compose: text-lg + font-medium emphasis (no text-lead-medium token by design) */}
             <p className="text-lg font-medium capitalize mb-sm">
               {access.plan} Plan
             </p>
@@ -62,7 +63,7 @@ export function BillingTab({ access }: BillingTabProps) {
             {/* Always show "Change Plan" for non-lifetime users */}
             {!access.isLifetime && (
               <Link href="/upgrade">
-                <Button className="bg-primary text-primary-foreground px-lg py-sm rounded-lg hover:bg-primary/90 transition">
+                <Button className="bg-primary text-primary-foreground px-lg py-sm rounded-lg hover:bg-primary/80 transition-colors">
                   {access.plan === "free" ? "Upgrade Plan" : "Change Plan"}
                 </Button>
               </Link>
@@ -75,7 +76,7 @@ export function BillingTab({ access }: BillingTabProps) {
 
             {/* Lifetime users: no action needed */}
             {access.isLifetime && (
-              <div className="text-muted-foreground text-sm">
+              <div className="text-muted-foreground text-body-sm">
                 No subscription management needed
               </div>
             )}
@@ -202,7 +203,7 @@ function Feature({
           {title}
         </p>
         <p
-          className={`text-sm ${
+          className={`text-body-sm ${
             included ? "text-muted-foreground" : "text-muted-foreground/60"
           }`}
         >

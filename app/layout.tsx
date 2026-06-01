@@ -5,6 +5,7 @@ import { TRPCReactProvider } from "@/trpc/react";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Navbar } from "@/components/layout/navbar";
 import Footer from "@/components/layout/footer";
+import { ChromeGate, MainShell } from "@/components/layout/chrome-gate";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { BillingSync } from "@/components/billing-sync";
@@ -105,11 +106,13 @@ export default function RootLayout({
               {/* BillingSync handles its own auth detection */}
               <BillingSync />
 
-              <Navbar />
-              <main className="pt-3xl grow bg-background flex flex-col">
-                {children}
-              </main>
-              <Footer />
+              <ChromeGate>
+                <Navbar />
+              </ChromeGate>
+              <MainShell>{children}</MainShell>
+              <ChromeGate>
+                <Footer />
+              </ChromeGate>
             </ThemeProvider>
           </TRPCReactProvider>
         </div>

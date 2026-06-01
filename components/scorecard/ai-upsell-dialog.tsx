@@ -84,7 +84,7 @@ export function AiUpsellDialog({ open, onOpenChange }: AiUpsellDialogProps) {
             <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
               <StepIcon className="h-8 w-8 text-primary" />
             </div>
-            <p className="text-sm font-medium">{step.title}</p>
+            <p className="text-label-sm">{step.title}</p>
           </div>
         </div>
 
@@ -108,7 +108,7 @@ export function AiUpsellDialog({ open, onOpenChange }: AiUpsellDialogProps) {
         {/* Step description */}
         <p
           key={`desc-${currentStep}`}
-          className="text-center text-sm text-muted-foreground animate-in fade-in duration-500"
+          className="text-center text-body-sm text-muted-foreground animate-in fade-in duration-500"
         >
           {step.description}
         </p>

@@ -154,16 +154,16 @@ export function Statistics({ profile, scorecards }: StatisticsProps) {
   // Empty state for users with no rounds
   if (scorecards.length === 0) {
     return (
-      <div className="bg-background text-foreground p-md md:p-xl rounded-lg min-h-screen flex flex-col items-center justify-center">
+      <div className="flex flex-col items-center justify-center">
         <div className="text-center max-w-md">
           <H1 className="text-figure-lg mb-md">No Statistics Yet</H1>
-          <p className="text-muted-foreground text-lg mb-lg">
+          <p className="text-muted-foreground text-lead mb-lg">
             Record your first round to start tracking your performance.
           </p>
-          <p className="text-sm text-muted-foreground mb-lg">
+          <p className="text-body-sm text-muted-foreground mb-lg">
             Once you have a few rounds recorded, you&apos;ll see:
           </p>
-          <ul className="text-left text-sm text-muted-foreground space-y-sm mb-xl">
+          <ul className="text-left text-body-sm text-muted-foreground space-y-sm mb-xl">
             <li>- Handicap trends and performance analysis</li>
             <li>- Course-by-course breakdowns</li>
             <li>- Activity patterns and streaks</li>
@@ -178,7 +178,7 @@ export function Statistics({ profile, scorecards }: StatisticsProps) {
   }
 
   return (
-    <div className="bg-background text-foreground p-md md:p-xl rounded-lg min-h-screen">
+    <>
       {/* Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-lg gap-md">
         <div>
@@ -243,6 +243,6 @@ export function Statistics({ profile, scorecards }: StatisticsProps) {
           <FrivolitiesSection stats={funStats} />
         </TabsContent>
       </Tabs>
-    </div>
+    </>
   );
 }

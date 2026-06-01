@@ -1,9 +1,10 @@
+import { AuthFormShell } from "@/components/auth/auth-form-shell";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export default function SignupSkeleton() {
   return (
     <div className="flex justify-center items-center h-full">
-      <div className="mx-auto max-w-sm space-y-lg py-md md:py-md lg:py-md xl:py-md sm:min-w-[40%] min-h-full w-[90%]">
+      <AuthFormShell className="py-md md:py-md lg:py-md xl:py-md">
         {/* Title Skeleton */}
         <div className="space-y-sm text-center">
           <Skeleton className="h-10 w-1/3 mx-auto mb-md" />
@@ -38,7 +39,7 @@ export default function SignupSkeleton() {
             </div>
           </div>
         </div>
-      </div>
+      </AuthFormShell>
     </div>
   );
 }

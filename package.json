@@ -18,7 +18,9 @@
     "build:seed": "./scripts/build-seed.sh",
     "backfill:subscription-periods": "tsx scripts/backfill-subscription-periods.ts",
     "check:schema-sync": "node scripts/check-schema-sync.mjs",
-    "dev:all": "concurrently -n next,stripe,supabase -c blue,magenta,green \"pnpm dev\" \"stripe listen --forward-to localhost:3000/api/stripe/webhook\" \"supabase functions serve --no-verify-jwt --env-file supabase/.env.local\""
+    "dev:all": "concurrently -n next,stripe,supabase -c blue,magenta,green \"pnpm dev\" \"stripe listen --forward-to localhost:3000/api/stripe/webhook\" \"supabase functions serve --no-verify-jwt --env-file supabase/.env.local\"",
+    "storybook": "storybook dev -p 6006",
+    "build-storybook": "storybook build"
   },
   "dependencies": {
     "@handicappin/handicap-core": "workspace:*",
@@ -81,6 +83,12 @@
   },
   "devDependencies": {
     "@react-email/preview-server": "5.2.8",
+    "@storybook/addon-a11y": "^10.4.1",
+    "@storybook/addon-docs": "^10.4.1",
+    "@storybook/addon-onboarding": "^10.4.1",
+    "@storybook/addon-themes": "^10.4.1",
+    "@storybook/addon-vitest": "^10.4.1",
+    "@storybook/nextjs": "^10.4.1",
     "@tailwindcss/postcss": "^4.1.18",
     "@types/node": "^25.2.3",
     "@types/react": "19.2.14",
@@ -90,9 +98,11 @@
     "drizzle-orm": "^0.45.1",
     "eslint": "^9.39.2",
     "eslint-config-next": "16.1.6",
+    "eslint-plugin-storybook": "^10.4.1",
     "postcss": "^8.5.6",
     "prettier": "^3.8.1",
     "react-email": "5.2.8",
+    "storybook": "^10.4.1",
     "tailwindcss": "^4.1.18",
     "tsx": "^4.21.0",
     "typescript": "^5.9.3",

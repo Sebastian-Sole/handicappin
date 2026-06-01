@@ -114,7 +114,7 @@ const HandicapTrendChart = ({
                         <div className="flex w-full items-center justify-between gap-sm">
                           <div className="flex items-center gap-sm">
                             <div
-                              className="h-2.5 w-2.5 shrink-0 rounded-[2px]"
+                              className="h-2.5 w-2.5 shrink-0 rounded-sm"
                               style={{ backgroundColor: color }}
                             />
                             <span className="text-muted-foreground">

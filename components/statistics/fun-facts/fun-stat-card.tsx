@@ -10,11 +10,11 @@ interface FunStatCardProps {
 export function FunStatCard({ title, value, subtitle, emoji }: FunStatCardProps) {
   return (
     <Card className="overflow-hidden">
-      <CardContent className="p-md text-center">
+      <CardContent density="compact" className="text-center">
         {emoji && <div className="text-3xl mb-sm">{emoji}</div>}
         <p className="text-figure-lg">{value}</p>
-        <p className="text-sm font-medium">{title}</p>
-        {subtitle && <p className="text-xs text-muted-foreground">{subtitle}</p>}
+        <p className="text-label-sm">{title}</p>
+        {subtitle && <p className="text-meta text-muted-foreground">{subtitle}</p>}
       </CardContent>
     </Card>
   );

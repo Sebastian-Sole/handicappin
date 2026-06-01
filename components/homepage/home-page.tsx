@@ -153,7 +153,7 @@ export const HomePage = async ({ profile }: HomepageProps) => {
         {/* Charts Section - Desktop only */}
         <section className="hidden md:block w-full py-xl lg:py-2xl bg-muted/30">
           <div className="sm:container px-md lg:px-lg">
-            <H2 className="text-xl font-semibold mb-lg pb-0">Performance Analytics</H2>
+            <H2 className="text-heading-4 mb-lg pb-0">Performance Analytics</H2>
             <div className="grid gap-lg xl:grid-cols-2">
               <HandicapTrendChartDisplay
                 handicapIndex={handicapIndex}

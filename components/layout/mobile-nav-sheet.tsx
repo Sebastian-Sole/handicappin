@@ -44,9 +44,13 @@ export function MobileNavSheet({ links, headerContent, children }: MobileNavShee
           <div className="flex flex-col gap-md p-md">
             {headerContent && (
               <>
-                <div onClick={() => setIsOpen(false)}>
+                <button
+                  type="button"
+                  onClick={() => setIsOpen(false)}
+                  className="text-left focus-visible:ring-2 focus-visible:ring-ring rounded-sm"
+                >
                   {headerContent}
-                </div>
+                </button>
                 <Separator />
               </>
             )}

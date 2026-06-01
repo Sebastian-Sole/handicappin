@@ -6,7 +6,7 @@ const EFFECTIVE_DATE = "February 11, 2026";
 export function PrivacyContent() {
   return (
     <div className="space-y-xl">
-      <p className="text-sm text-muted-foreground">
+      <p className="text-body-sm text-muted-foreground">
         Effective Date: {EFFECTIVE_DATE}
       </p>
 

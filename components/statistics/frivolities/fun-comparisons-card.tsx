@@ -303,7 +303,7 @@ export function FunComparisonsCard({
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-base flex items-center gap-sm">
+        <CardTitle className="flex items-center gap-sm">
           <span>🎪</span> Fun Facts About Your Game
         </CardTitle>
       </CardHeader>
@@ -315,11 +315,11 @@ export function FunComparisonsCard({
               className="flex items-start gap-sm surface-muted p-sm"
             >
               <span className="text-2xl flex-shrink-0">{comparison.emoji}</span>
-              <p className="text-sm">{comparison.text}</p>
+              <p className="text-body-sm">{comparison.text}</p>
             </div>
           ))}
         </div>
-        <p className="text-xs text-center text-muted-foreground mt-md">
+        <p className="text-meta text-center text-muted-foreground mt-md">
           Based on {formatNumber(totalStrokes)} total strokes across{" "}
           {formatNumber(totalHoles)} holes
         </p>

@@ -1,5 +1,6 @@
 "use client";
 
+import { EmptyState } from "@/components/ui/empty-state";
 import type { TimeOfDayStats } from "@/types/statistics";
 
 interface TimeDistributionChartProps {
@@ -17,9 +18,7 @@ export function TimeDistributionChart({ data }: TimeDistributionChartProps) {
 
   if (total === 0) {
     return (
-      <div className="flex items-center justify-center h-48 text-muted-foreground">
-        No data available
-      </div>
+      <EmptyState size="compact" title="No data available" className="h-48 py-0" />
     );
   }
 
@@ -31,10 +30,10 @@ export function TimeDistributionChart({ data }: TimeDistributionChartProps) {
 
         return (
           <div key={period.period} className="space-y-sm">
-            <div className="flex justify-between text-sm">
+            <div className="flex justify-between text-body-sm">
               <span>
                 {info.emoji} {info.label}
-                <span className="text-muted-foreground ml-sm text-xs">
+                <span className="text-muted-foreground ml-sm text-meta">
                   ({info.range})
                 </span>
               </span>

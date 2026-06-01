@@ -35,6 +35,22 @@
 @utility max-w-4xl { max-width: var(--container-4xl) !important; }
 @utility max-w-5xl { max-width: var(--container-5xl) !important; }
 
+/* Mirror for `min-w-<t-shirt>` utilities. Same rationale as the
+ * `max-w-*` block above — registering named `--spacing-*` tokens makes
+ * Tailwind v4 resolve `min-w-<t-shirt>` against spacing instead of the
+ * intended `--container-*` scale, so we restore the container widths
+ * explicitly. Range mirrors `max-w-*` (xs..5xl) for parity.
+ */
+@utility min-w-xs { min-width: var(--container-xs) !important; }
+@utility min-w-sm { min-width: var(--container-sm) !important; }
+@utility min-w-md { min-width: var(--container-md) !important; }
+@utility min-w-lg { min-width: var(--container-lg) !important; }
+@utility min-w-xl { min-width: var(--container-xl) !important; }
+@utility min-w-2xl { min-width: var(--container-2xl) !important; }
+@utility min-w-3xl { min-width: var(--container-3xl) !important; }
+@utility min-w-4xl { min-width: var(--container-4xl) !important; }
+@utility min-w-5xl { min-width: var(--container-5xl) !important; }
+
 /* Base surface — card background with border and rounded corners. */
 @utility surface {
   background-color: var(--color-card);
@@ -125,6 +141,16 @@
   background-color: color-mix(in oklab, var(--color-background) 50%, transparent);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-lg);
+}
+
+/* Marketing-elevated — heavy drop-shadow treatment reserved for hero
+   marketing imagery (landing-page theme screenshots, feature mockups).
+   Resolves to the `--shadow-2xl` token so the elevation tier is named
+   once and used by reference, not spelled inline at the call site.
+   Do NOT use on in-app surfaces — pick `shadow-md`/`shadow-lg` for
+   product UI tiers. */
+@utility marketing-elevated {
+  box-shadow: var(--shadow-2xl);
 }
 
 /* Marketing / page hero gradient. Single source of truth for the

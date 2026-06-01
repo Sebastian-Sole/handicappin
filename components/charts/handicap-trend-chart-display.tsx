@@ -42,14 +42,14 @@ const HandicapTrendChartDisplay = ({
           </CardTitle>
         </React.Fragment>
         <div className="flex items-center space-x-sm">
-          <span className="sm:text-2xl text-figure-sm">{handicapIndex}</span>
+          <span className="sm:text-figure text-figure-sm">{handicapIndex}</span>
           {/* TODO: Conditionally render only if more than 5 rounds */}
           <div className="min-[340px]:block hidden">
             <StatDelta
               value={percentageChange}
               invert
               format={(v) => `${v > 0 ? "+" : ""}${v}%`}
-              className="text-sm"
+              className="text-body-sm"
             />
           </div>
         </div>

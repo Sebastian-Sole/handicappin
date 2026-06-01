@@ -109,7 +109,7 @@ export function NineHoleCalculator() {
   const explanation = (
     <div className="space-y-sm">
       <Muted>9-hole rounds are converted to 18-hole equivalents by adding:</Muted>
-      <ol className="list-decimal pl-md space-y-sm text-sm text-muted-foreground">
+      <ol className="list-decimal pl-md space-y-sm text-body-sm text-muted-foreground">
         <li>
           <strong>Played 9-hole differential:</strong> Calculated from your
           actual score using the 9-hole course rating and slope
@@ -119,7 +119,7 @@ export function NineHoleCalculator() {
           index, estimating what you would score on the unplayed 9 holes
         </li>
       </ol>
-      <Muted className="text-xs">
+      <Muted className="text-meta">
         This ensures 9-hole rounds have appropriate weight in your handicap
         calculation.
       </Muted>

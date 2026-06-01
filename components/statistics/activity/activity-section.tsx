@@ -43,8 +43,9 @@ export function ActivitySection({
       <Card>
         <CardContent className="p-2xl text-center text-muted-foreground">
           <div className="text-4xl mb-md">📊</div>
+          {/* Intentional compose: text-lg + font-medium emphasis (no text-lead-medium token by design) */}
           <p className="text-lg font-medium">No activity data yet</p>
-          <p className="text-sm">Play some rounds to see your activity patterns</p>
+          <p className="text-body-sm">Play some rounds to see your activity patterns</p>
         </CardContent>
       </Card>
     );
@@ -79,22 +80,22 @@ export function ActivitySection({
           {/* Quick Stats Row */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-md">
             <Card>
-              <CardContent className="p-md text-center">
-                <p className="text-sm text-muted-foreground">Avg Rounds/Month</p>
+              <CardContent density="compact" className="text-center">
+                <p className="text-body-sm text-muted-foreground">Avg Rounds/Month</p>
                 <p className="text-figure">
                   {formatDecimal(activityStats.avgRoundsPerMonth, 1)}
                 </p>
               </CardContent>
             </Card>
             <Card>
-              <CardContent className="p-md text-center">
-                <p className="text-sm text-muted-foreground">Current Streak</p>
+              <CardContent density="compact" className="text-center">
+                <p className="text-body-sm text-muted-foreground">Current Streak</p>
                 <p className="text-figure">
                   {activityStats.currentStreak > 0
                     ? `${activityStats.currentStreak} week${activityStats.currentStreak !== 1 ? "s" : ""}`
                     : "--"}
                 </p>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-meta text-muted-foreground">
                   {activityStats.currentStreak > 0
                     ? "consecutive weeks playing"
                     : "play weekly to start a streak"}
@@ -102,8 +103,8 @@ export function ActivitySection({
               </CardContent>
             </Card>
             <Card>
-              <CardContent className="p-md text-center">
-                <p className="text-sm text-muted-foreground">Longest Gap</p>
+              <CardContent density="compact" className="text-center">
+                <p className="text-body-sm text-muted-foreground">Longest Gap</p>
                 <p className="text-figure">
                   {activityStats.longestGap > 0
                     ? formatGap(activityStats.longestGap)
@@ -113,13 +114,13 @@ export function ActivitySection({
             </Card>
             {activityStats.mostActiveMonth && (
               <Card className="tint-info">
-                <CardContent className="p-md text-center">
-                  <p className="text-sm text-muted-foreground">Most Active</p>
-                  <p className="text-lg font-bold">
+                <CardContent density="compact" className="text-center">
+                  <p className="text-body-sm text-muted-foreground">Most Active</p>
+                  <p className="text-figure-xs">
                     {activityStats.mostActiveMonth.month.substring(0, 3)}{" "}
                     {activityStats.mostActiveMonth.year}
                   </p>
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-meta text-muted-foreground">
                     {activityStats.mostActiveMonth.count} rounds
                   </p>
                 </CardContent>
@@ -132,7 +133,7 @@ export function ActivitySection({
             {/* Rounds Per Month Chart */}
             <Card>
               <CardHeader className="pb-sm">
-                <CardTitle className="text-base">Rounds Per Month</CardTitle>
+                <CardTitle>Rounds Per Month</CardTitle>
               </CardHeader>
               <CardContent>
                 <RoundsPerMonthChart data={roundsPerMonth} />
@@ -142,7 +143,7 @@ export function ActivitySection({
             {/* Day of Week Chart */}
             <Card>
               <CardHeader className="pb-sm">
-                <CardTitle className="text-base">Rounds by Day of Week</CardTitle>
+                <CardTitle>Rounds by Day of Week</CardTitle>
               </CardHeader>
               <CardContent>
                 <DayOfWeekChart data={dayOfWeekStats} />
@@ -170,17 +171,17 @@ export function ActivitySection({
                     key={season.season}
                     className={isBest ? "tint-success" : ""}
                   >
-                    <CardContent className="p-md text-center flex flex-col justify-center min-h-[130px]">
-                      <p className="text-sm font-medium">{season.season}</p>
+                    <CardContent density="compact" className="text-center flex flex-col justify-center min-h-[130px]">
+                      <p className="text-label-sm">{season.season}</p>
                       <p className="text-figure">{season.roundCount}</p>
-                      <p className="text-xs text-muted-foreground">rounds</p>
+                      <p className="text-meta text-muted-foreground">rounds</p>
                       {season.roundCount > 0 && (
-                        <p className="text-xs text-muted-foreground mt-xs">
+                        <p className="text-meta text-muted-foreground mt-xs">
                           {formatDifferential(season.avgDifferential)} avg diff
                         </p>
                       )}
                       {isBest && (
-                        <p className="text-xs text-success font-medium mt-xs">
+                        <p className="text-meta-strong text-success mt-xs">
                           Best season!
                         </p>
                       )}
@@ -220,7 +221,7 @@ export function ActivitySection({
             {/* 9 vs 18 Hole Comparison */}
             <Card>
               <CardHeader className="pb-sm">
-                <CardTitle className="text-base">Round Types</CardTitle>
+                <CardTitle>Round Types</CardTitle>
               </CardHeader>
               <CardContent className="flex items-center justify-center min-h-[140px]">
                 <div className="flex items-center justify-center gap-xl md:gap-2xl">
@@ -228,9 +229,9 @@ export function ActivitySection({
                     <div className="text-4xl md:text-figure-2xl">
                       {nineHole?.count ?? 0}
                     </div>
-                    <p className="text-sm text-muted-foreground mt-xs">9-Hole</p>
+                    <p className="text-body-sm text-muted-foreground mt-xs">9-Hole</p>
                     {nineHole && nineHole.count > 0 && (
-                      <p className="text-xs text-muted-foreground">
+                      <p className="text-meta text-muted-foreground">
                         {formatDifferential(nineHole.avgDifferential)} avg
                       </p>
                     )}
@@ -240,9 +241,9 @@ export function ActivitySection({
                     <div className="text-4xl md:text-figure-2xl">
                       {eighteenHole?.count ?? 0}
                     </div>
-                    <p className="text-sm text-muted-foreground mt-xs">18-Hole</p>
+                    <p className="text-body-sm text-muted-foreground mt-xs">18-Hole</p>
                     {eighteenHole && eighteenHole.count > 0 && (
-                      <p className="text-xs text-muted-foreground">
+                      <p className="text-meta text-muted-foreground">
                         {formatDifferential(eighteenHole.avgDifferential)} avg
                       </p>
                     )}
@@ -254,7 +255,7 @@ export function ActivitySection({
             {/* Time of Day Distribution */}
             <Card>
               <CardHeader className="pb-sm">
-                <CardTitle className="text-base">Time of Day</CardTitle>
+                <CardTitle>Time of Day</CardTitle>
               </CardHeader>
               <CardContent>
                 <TimeDistributionChart data={timeOfDayStats} />

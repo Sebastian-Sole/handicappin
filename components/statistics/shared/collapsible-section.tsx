@@ -33,9 +33,9 @@ export function CollapsibleSection({
             <CardHeader className="cursor-pointer hover:bg-muted/50 transition-colors">
               <div className="flex items-center justify-between">
                 <div>
-                  <CardTitle className="text-xl font-semibold">{title}</CardTitle>
+                  <CardTitle className="text-heading-4">{title}</CardTitle>
                   {subtitle && (
-                    <p className="text-sm text-muted-foreground mt-xs">{subtitle}</p>
+                    <p className="text-body-sm text-muted-foreground mt-xs">{subtitle}</p>
                   )}
                 </div>
                 <ChevronDown

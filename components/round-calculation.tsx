@@ -39,14 +39,14 @@ const RoundCalculationContent = () => {
   });
 
   return (
-    <div className="container mx-auto px-md sm:px-lg md:px-xl py-xl space-y-xl">
+    <div className="space-y-xl">
       {/* Round Overview Card */}
       <Card>
         <CardHeader className="pb-md">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-md">
             <div>
               <H2 className="mb-sm">{scorecard.course.name}</H2>
-              <div className="flex flex-wrap items-center gap-md text-sm text-muted-foreground">
+              <div className="flex flex-wrap items-center gap-md text-body-sm text-muted-foreground">
                 <span className="flex items-center gap-xs">
                   <CalendarDays className="w-4 h-4" />
                   {roundDate}

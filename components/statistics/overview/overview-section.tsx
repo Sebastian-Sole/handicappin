@@ -89,7 +89,7 @@ export function PerformanceSection({
           {/* Best Round */}
           <Card className="tint-score-eagle">
             <CardHeader className="pb-sm">
-              <CardTitle className="text-sm text-muted-foreground flex items-center gap-sm">
+              <CardTitle className="text-body-sm text-muted-foreground flex items-center gap-sm">
                 <span>🏆</span> Best Round
               </CardTitle>
             </CardHeader>
@@ -97,13 +97,13 @@ export function PerformanceSection({
               <p className="text-figure-lg">
                 {formatDifferential(stats.bestDifferential)}
               </p>
-              <p className="text-sm text-muted-foreground">differential</p>
+              <p className="text-body-sm text-muted-foreground">differential</p>
               {bestCourse && (
-                <p className="text-xs text-muted-foreground mt-xs">
+                <p className="text-meta text-muted-foreground mt-xs">
                   at {bestCourse.courseName}
                 </p>
               )}
-              <p className="text-xs text-success font-medium mt-sm">
+              <p className="text-meta-strong text-success mt-sm">
                 Your career best!
               </p>
             </CardContent>
@@ -112,7 +112,7 @@ export function PerformanceSection({
           {/* Score Range */}
           <Card>
             <CardHeader className="pb-sm">
-              <CardTitle className="text-sm text-muted-foreground flex items-center gap-sm">
+              <CardTitle className="text-body-sm text-muted-foreground flex items-center gap-sm">
                 <span>📊</span> Score Range
               </CardTitle>
             </CardHeader>
@@ -126,8 +126,8 @@ export function PerformanceSection({
                   {formatDifferential(stats.worstDifferential)}
                 </span>
               </div>
-              <p className="text-sm text-muted-foreground">differential range</p>
-              <p className="text-xs text-muted-foreground mt-sm">
+              <p className="text-body-sm text-muted-foreground">differential range</p>
+              <p className="text-meta text-muted-foreground mt-sm">
                 {getStrokeSpread()} stroke spread
               </p>
             </CardContent>
@@ -142,7 +142,7 @@ export function PerformanceSection({
             )}
           >
             <CardHeader className="pb-sm">
-              <CardTitle className="text-sm text-muted-foreground flex items-center gap-sm">
+              <CardTitle className="text-body-sm text-muted-foreground flex items-center gap-sm">
                 <span>
                   {!isValidNumber(stats.improvementRate) || stats.improvementRate === 0
                     ? "📊"
@@ -168,10 +168,10 @@ export function PerformanceSection({
                     : "--"}
                 </p>
               </div>
-              <p className="text-sm text-muted-foreground">since starting</p>
+              <p className="text-body-sm text-muted-foreground">since starting</p>
               <p
                 className={cn(
-                  "text-xs mt-sm",
+                  "text-meta mt-sm",
                   isValidNumber(stats.improvementRate) && stats.improvementRate > 0
                     ? "text-success font-medium"
                     : "text-muted-foreground"
@@ -194,15 +194,15 @@ export function PerformanceSection({
       >
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-md">
           <Card>
-            <CardContent className="p-md">
-              <p className="text-sm text-muted-foreground">Average Score</p>
+            <CardContent density="compact">
+              <p className="text-body-sm text-muted-foreground">Average Score</p>
               <p className="text-figure">{formatScore(stats.avgScore)}</p>
-              <p className="text-xs text-muted-foreground">{getAvgScoreContext()}</p>
+              <p className="text-meta text-muted-foreground">{getAvgScoreContext()}</p>
             </CardContent>
           </Card>
           <Card>
-            <CardContent className="p-md">
-              <p className="text-sm text-muted-foreground">Handicap Change</p>
+            <CardContent density="compact">
+              <p className="text-body-sm text-muted-foreground">Handicap Change</p>
               <div className="flex items-baseline gap-sm">
                 <p className="text-figure">
                   {formatWithSign(stats.handicapChange)}
@@ -212,24 +212,24 @@ export function PerformanceSection({
                     value={stats.handicapChange}
                     invert
                     iconOnly
-                    className="text-sm"
+                    className="text-body-sm"
                   />
                 )}
               </div>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-meta text-muted-foreground">
                 {getHandicapChangeMessage()}
               </p>
             </CardContent>
           </Card>
           <Card>
-            <CardContent className="p-md">
-              <p className="text-sm text-muted-foreground">Consistency</p>
+            <CardContent density="compact">
+              <p className="text-body-sm text-muted-foreground">Consistency</p>
               <p className="text-figure">
                 {extendedStats.consistencyRating > 0
                   ? `${extendedStats.consistencyRating}%`
                   : "--"}
               </p>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-meta text-muted-foreground">
                 {extendedStats.consistencyRating > 0
                   ? getConsistencyLabel(extendedStats.consistencyRating)
                   : "Need more rounds"}
@@ -237,10 +237,10 @@ export function PerformanceSection({
             </CardContent>
           </Card>
           <Card>
-            <CardContent className="p-md">
-              <p className="text-sm text-muted-foreground">Courses Played</p>
+            <CardContent density="compact">
+              <p className="text-body-sm text-muted-foreground">Courses Played</p>
               <p className="text-figure">{extendedStats.uniqueCourses}</p>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-meta text-muted-foreground">
                 unique course{extendedStats.uniqueCourses !== 1 ? "s" : ""}
               </p>
             </CardContent>
@@ -264,7 +264,7 @@ export function PerformanceSection({
                     <p className="text-figure">
                       {extendedStats.bestMonth.month} {extendedStats.bestMonth.year}
                     </p>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-body-sm text-muted-foreground">
                       {extendedStats.bestMonth.roundCount} rounds played
                     </p>
                   </div>
@@ -272,7 +272,7 @@ export function PerformanceSection({
                     <p className="text-figure-lg text-success">
                       {formatDifferential(extendedStats.bestMonth.avgDifferential)}
                     </p>
-                    <p className="text-sm text-muted-foreground">avg differential</p>
+                    <p className="text-body-sm text-muted-foreground">avg differential</p>
                   </div>
                 </div>
               </CardContent>
@@ -307,7 +307,7 @@ export function PerformanceSection({
                   className="block"
                 >
                   <Card className="tint-score-eagle hover:border-score-eagle/40 transition-colors cursor-pointer">
-                    <CardContent className="p-md">
+                    <CardContent density="compact">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-sm">
                           <div className="text-2xl">🏆</div>
@@ -315,7 +315,7 @@ export function PerformanceSection({
                             <p className="font-semibold">
                               {getFlagEmoji(round.country)} {round.courseName}
                             </p>
-                            <p className="text-sm text-muted-foreground">
+                            <p className="text-body-sm text-muted-foreground">
                               {new Date(round.date).toLocaleDateString("en-US", {
                                 month: "short",
                                 day: "numeric",
@@ -328,7 +328,7 @@ export function PerformanceSection({
                           <p className="text-figure text-success">
                             {formatDifferential(round.differential)}
                           </p>
-                          <p className="text-xs text-muted-foreground">
+                          <p className="text-meta text-muted-foreground">
                             -{round.adjustment.toFixed(1)} ESR applied
                           </p>
                         </div>

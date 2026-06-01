@@ -44,7 +44,7 @@ function UnauthenticatedNavbar() {
     <header className="fixed top-0 z-50 w-full bg-background shadow-xs">
       <div className="container relative flex h-16 items-center justify-between px-md sm:px-lg m-0 max-w-full">
         <LogoBrand />
-        <nav className="absolute left-1/2 top-1/2 hidden -translate-x-1/2 -translate-y-1/2 items-center gap-lg text-sm font-medium md:flex">
+        <nav className="absolute left-1/2 top-1/2 hidden -translate-x-1/2 -translate-y-1/2 items-center gap-lg text-label-sm md:flex">
           <Link
             href="/"
             className="hover:underline hover:underline-offset-4 whitespace-nowrap"
@@ -110,7 +110,7 @@ export async function Navbar() {
     <header className="fixed top-0 z-50 w-full bg-background shadow-xs">
       <div className="container flex h-16 items-center justify-between px-md sm:px-lg m-0 max-w-full">
         <LogoBrand />
-        <nav className="hidden flex-1 items-center justify-center gap-lg text-sm font-medium lg:flex">
+        <nav className="hidden flex-1 items-center justify-center gap-lg text-label-sm lg:flex">
           <Link
             href="/"
             className="hover:underline hover:underline-offset-4 whitespace-nowrap"

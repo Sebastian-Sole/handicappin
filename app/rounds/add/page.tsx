@@ -1,8 +1,7 @@
 import GolfScorecard from "@/components/scorecard/golf-scorecard";
-import { Large } from "@/components/ui/typography";
 import { api } from "@/trpc/server";
 import { createServerComponentClient } from "@/utils/supabase/server";
-import { P } from "@/components/ui/typography";
+import { H1, P } from "@/components/ui/typography";
 import { Suspense } from "react";
 import AddRoundSkeleton from "@/components/loading/add-round-skeleton";
 import { getComprehensiveUserAccess } from "@/utils/billing/access-control";
@@ -15,6 +14,7 @@ import {
   UsageLimitAlert,
   UsageLimitReachedView,
 } from "@/components/scorecard/usage-limit-alert";
+import { PageContainer } from "@/components/layout/page-container";
 
 const AddRoundPage = async () => {
   const supabase = await createServerComponentClient();
@@ -41,27 +41,27 @@ const AddRoundPage = async () => {
   // If user has no remaining rounds, only show the limit reached view
   if (access.plan === "free" && access.remainingRounds <= 0) {
     return (
-      <Suspense fallback={<AddRoundSkeleton />}>
-        <div className="flex justify-center items-center flex-col">
+      <PageContainer>
+        <Suspense fallback={<AddRoundSkeleton />}>
           <UsageLimitReachedView />
-        </div>
-      </Suspense>
+        </Suspense>
+      </PageContainer>
     );
   }
 
   return (
-    <Suspense fallback={<AddRoundSkeleton />}>
-      <div className="flex justify-center items-center flex-col h-full py-sm md:py-md lg:py-xl">
-        <Large className="text-4xl text-primary mb-sm md:mb-md lg:mb-xl">
+    <PageContainer>
+      <Suspense fallback={<AddRoundSkeleton />}>
+        <H1 className="text-heading-1 mb-sm md:mb-md lg:mb-xl">
           Add Round
-        </Large>
-        <P className="text-sm text-muted-foreground !mt-0 mb-sm">
+        </H1>
+        <P className="text-body-sm text-muted-foreground !mt-0 mb-sm">
           Fill out the scorecard to register your round.
         </P>
 
         {/* Show remaining rounds for free tier users */}
         {access.plan === "free" && access.remainingRounds > 0 && (
-          <div className="w-full max-w-4xl mb-md">
+          <div className="mb-md">
             <UsageLimitAlert
               current={FREE_TIER_ROUND_LIMIT - access.remainingRounds}
               total={FREE_TIER_ROUND_LIMIT}
@@ -74,8 +74,8 @@ const AddRoundPage = async () => {
           profile={profile}
           access={access}
         />
-      </div>
-    </Suspense>
+      </Suspense>
+    </PageContainer>
   );
 };
 

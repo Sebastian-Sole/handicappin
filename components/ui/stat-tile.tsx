@@ -41,9 +41,9 @@ export function StatTile({
     <div className={cn("text-center", className)}>
       {leading && <div className="mb-xs">{leading}</div>}
       <div className={valueSize[size]}>{value}</div>
-      <p className="text-sm text-muted-foreground">{label}</p>
+      <p className="text-body-sm text-muted-foreground">{label}</p>
       {hint && (
-        <p className="text-xs text-muted-foreground/70 mt-xs">{hint}</p>
+        <p className="text-meta text-muted-foreground/70 mt-xs">{hint}</p>
       )}
     </div>
   );

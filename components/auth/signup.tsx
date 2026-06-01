@@ -26,7 +26,7 @@ import { GoogleSignInButton } from "./google-sign-in-button";
 import { getOAuthErrorMessage } from "@/lib/oauth-errors";
 import { LegalDialog } from "@/components/legal/legal-dialog";
 import { Checkbox } from "@/components/ui/checkbox";
-import { H1 } from "@/components/ui/typography";
+import { AuthFormShell } from "@/components/auth/auth-form-shell";
 
 interface SignupProps {
   description?: string;
@@ -168,7 +168,11 @@ export function Signup({
   };
 
   return (
-    <div className="mx-auto max-w-sm space-y-lg py-md md:py-md lg:py-md xl:py-md sm:min-w-[40%] min-h-full w-[90%]">
+    <AuthFormShell
+      className="py-md md:py-md lg:py-md xl:py-md"
+      title="Sign Up"
+      description={description}
+    >
       {feedback && (
         <FormFeedback
           type={feedback.type}
@@ -177,10 +181,6 @@ export function Signup({
           onClose={clearFeedback}
         />
       )}
-      <div className="space-y-sm text-center">
-        <H1>Sign Up</H1>
-        <p className="text-muted-foreground">{description}</p>
-      </div>
       <div className="space-y-md">
         <Form {...form}>
           <form onSubmit={(e) => form.handleSubmit(onSubmit)(e)} className="space-y-xl">
@@ -261,7 +261,7 @@ export function Signup({
                     />
                   </FormControl>
                   <div className="space-y-xs leading-none">
-                    <FormLabel className="text-xs font-normal text-muted-foreground">
+                    <FormLabel className="text-meta font-normal text-muted-foreground">
                       I agree to the{" "}
                       <LegalDialog type="terms">Terms of Service</LegalDialog>{" "}
                       and{" "}
@@ -287,7 +287,7 @@ export function Signup({
           <div className="absolute inset-0 flex items-center">
             <span className="w-full border-t" />
           </div>
-          <div className="relative flex justify-center text-xs uppercase">
+          <div className="relative flex justify-center text-meta uppercase">
             <span className="bg-background px-sm text-muted-foreground">
               Or continue with
             </span>
@@ -306,6 +306,6 @@ export function Signup({
           </Link>
         </div>
       </div>
-    </div>
+    </AuthFormShell>
   );
 }

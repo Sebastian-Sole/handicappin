@@ -81,7 +81,7 @@ const Hero = ({
           <H1 className="text-heading-4 md:text-heading-3 text-foreground">
             Welcome back, {profile.name?.split(" ")[0] || "Golfer"}
           </H1>
-          <p className="text-sm text-muted-foreground mt-xs">
+          <p className="text-body-sm text-muted-foreground mt-xs">
             Member since {new Date(profile.createdAt).getFullYear()}
           </p>
         </div>
@@ -121,7 +121,7 @@ const Hero = ({
               icon={<BarChart2 className="h-8 w-8 text-primary" />}
             />
             <StatBox
-              title="Avg. Score (Last 10)"
+              title="Avg. Last 10"
               value={calculateAverageScore(previousScores)}
               change={averageScoreChangeType}
               description={averageScoreChangeDescription}

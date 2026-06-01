@@ -16,9 +16,8 @@ import {
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { CardDescription } from "@/components/ui/card";
 import { FormFeedback } from "@/components/ui/form-feedback";
-import { H1 } from "@/components/ui/typography";
+import { AuthFormShell } from "@/components/auth/auth-form-shell";
 import type { FeedbackState } from "@/types/feedback";
 
 const forgotPasswordSchema = z.object({
@@ -141,14 +140,11 @@ export default function ForgotPasswordForm({
   });
 
   return (
-    <div className="mx-auto max-w-sm space-y-lg py-xl sm:min-w-[40%] min-h-full w-[90%]">
-      <div className="space-y-sm text-left">
-        <H1>Reset Password</H1>
-        <CardDescription>
-          Enter your email to receive a verification code to reset your
-          password.
-        </CardDescription>
-      </div>
+    <AuthFormShell
+      className="py-xl"
+      title="Reset Password"
+      description="Enter your email to receive a verification code to reset your password."
+    >
       {feedback && (
         <FormFeedback
           type={feedback.type}
@@ -183,6 +179,6 @@ export default function ForgotPasswordForm({
           </form>
         </Form>
       </div>
-    </div>
+    </AuthFormShell>
   );
 }

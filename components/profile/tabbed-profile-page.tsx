@@ -71,54 +71,52 @@ export function TabbedProfilePage({
   }, [searchParams]); // Intentionally exclude activeTab to prevent infinite loop
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="container mx-auto py-xl px-md max-w-7xl">
-        {/* Header */}
-        <div className="mb-2xl">
-          <H1 className="text-figure-xl mb-sm">Profile</H1>
-          <p className="text-muted-foreground text-lg">
-            Manage your account settings
-          </p>
-        </div>
+    <>
+      {/* Header */}
+      <div className="mb-2xl">
+        <H1 className="text-figure-xl mb-sm">Profile</H1>
+        <p className="text-muted-foreground text-lead">
+          Manage your account settings
+        </p>
+      </div>
 
-        {/* Tabbed Layout */}
-        <div className="flex flex-col md:flex-row gap-xl">
-          {/* Sidebar Navigation */}
-          <aside className="w-full md:w-56 flex-shrink-0">
-            <nav className="space-y-sm">
-              {tabs.map((tab) => {
-                const Icon = tab.icon;
-                const isActive = activeTab === tab.id;
+      {/* Tabbed Layout */}
+      <div className="flex flex-col md:flex-row gap-xl">
+        {/* Sidebar Navigation */}
+        <aside className="w-full md:w-56 flex-shrink-0">
+          <nav className="space-y-sm">
+            {tabs.map((tab) => {
+              const Icon = tab.icon;
+              const isActive = activeTab === tab.id;
 
-                return (
-                  <button
-                    key={tab.id}
-                    onClick={() => handleTabChange(tab.id)}
-                    className={cn(
-                      "w-full flex items-center gap-sm px-md py-sm rounded-lg text-left transition-colors",
-                      isActive
-                        ? "bg-primary text-primary-foreground"
-                        : "hover:bg-muted text-muted-foreground hover:text-foreground"
-                    )}
-                  >
-                    <Icon className="w-5 h-5" />
-                    <span className="font-medium">{tab.label}</span>
-                  </button>
-                );
-              })}
-            </nav>
-          </aside>
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => handleTabChange(tab.id)}
+                  className={cn(
+                    "w-full flex items-center gap-sm px-md py-sm rounded-lg text-left transition-colors",
+                    isActive
+                      ? "bg-primary text-primary-foreground"
+                      : "hover:bg-muted text-muted-foreground hover:text-foreground"
+                  )}
+                >
+                  <Icon className="w-5 h-5" />
+                  <span className="font-medium">{tab.label}</span>
+                </button>
+              );
+            })}
+          </nav>
+        </aside>
 
-          {/* Content Area */}
-          <div className="flex-1 min-w-0">
-            {activeTab === "personal" && (
-              <PersonalInformationTab authUser={authUser} profile={profile} />
-            )}
-            {activeTab === "billing" && <BillingTab access={access} />}
-            {activeTab === "settings" && <SettingsTab />}
-          </div>
+        {/* Content Area */}
+        <div className="flex-1 min-w-0">
+          {activeTab === "personal" && (
+            <PersonalInformationTab authUser={authUser} profile={profile} />
+          )}
+          {activeTab === "billing" && <BillingTab access={access} />}
+          {activeTab === "settings" && <SettingsTab />}
         </div>
       </div>
-    </div>
+    </>
   );
 }

@@ -54,14 +54,6 @@
   letter-spacing: 0;
 }
 
-@utility text-caption {
-  font-family: var(--font-sans);
-  font-weight: 500;
-  font-size: 0.75rem;
-  line-height: 1rem;
-  letter-spacing: 0.01em;
-}
-
 /* Figure scale — bold numeric display (stat values, metric tiles,
    percentage readouts, etc.). Distinct from heading utilities: figures
    are always weight 700, short line-height, no tracking adjustment.
@@ -71,6 +63,14 @@
   font-family: var(--font-sans);
   font-weight: 700;
   font-size: 1.25rem;
+  line-height: 1.75rem;
+}
+
+/* 1.125rem figure rung — added 2026-05-30 to close A7 token gap. */
+@utility text-figure-xs {
+  font-family: var(--font-sans);
+  font-weight: 700;
+  font-size: 1.125rem;
   line-height: 1.75rem;
 }
 
@@ -121,4 +121,94 @@
   font-weight: 700;
   font-size: 6rem;
   line-height: 1;
+}
+
+/* Meta scale — bare font-size token replacing raw `text-xs` usage for
+   meta labels, helper text, status indicators. Intentionally no
+   weight/tracking so the inherited or sibling-utility values win
+   (e.g. `font-medium`, `tracking-wide`). Matches Tailwind's `text-xs`
+   defaults exactly to avoid leading regressions during migration. */
+
+@utility text-meta {
+  font-size: 0.75rem;
+  line-height: 1rem;
+}
+
+/* Hero scale — large marketing-page headline sizes that previously
+   shipped as arbitrary `text-[3.4rem]` / `text-[3.75rem]` values on
+   the about and contact pages. Size-only utilities: weight and
+   tracking are inherited from the underlying H1/H2 component
+   (text-heading-1 = 800/-0.02em, text-heading-2 = 600/-0.01em) plus
+   any sibling `tracking-tighter` override, exactly as the original
+   arbitrary values behaved. */
+
+@utility text-hero-xl {
+  font-size: 3.4rem;
+  line-height: 1;
+}
+
+@utility text-hero-2xl {
+  font-size: 3.75rem;
+  line-height: 1;
+}
+
+/* Compound utilities — size + weight composed */
+
+/* Form/button/nav label at small size. Replaces `text-sm font-medium`.
+   Used by Label, Button, Tabs cva strings. */
+
+@utility text-label-sm {
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  font-weight: 500;
+}
+
+/* Lead paragraph — intro text after a heading. Replaces `text-lg` on
+   `<p>` elements. */
+
+@utility text-lead {
+  font-size: 1.125rem;
+  line-height: 1.75rem;
+  font-weight: 400;
+}
+
+/* Eyebrow / overline label above headings. Replaces
+   `text-xs tracking-wide uppercase font-medium`. */
+
+@utility text-eyebrow {
+  font-size: 0.75rem;
+  line-height: 1rem;
+  font-weight: 500;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+/* Eyebrow at small size — one rung up from text-eyebrow (text-xs → text-sm).
+   Replaces `text-sm font-medium uppercase tracking-wider`. Added 2026-05-30
+   to close A10 token gap. */
+
+@utility text-eyebrow-sm {
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  font-weight: 500;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+/* Strong meta — small labels/badges with emphasis. Replaces
+   `text-xs font-medium`. Companion to size-only `text-meta`. */
+
+@utility text-meta-strong {
+  font-size: 0.75rem;
+  line-height: 1rem;
+  font-weight: 500;
+}
+
+/* Badge/chip text. Replaces `text-sm font-semibold` on Badge, Pricing,
+   Select/Dropdown labels. */
+
+@utility text-badge {
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  font-weight: 600;
 }

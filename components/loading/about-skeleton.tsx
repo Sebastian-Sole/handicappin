@@ -16,11 +16,11 @@ export default function AboutSkeleton() {
                 <Skeleton className="sm:h-12 h-8 xl:w-3/4 sm:w-5/10 md:w-2/10 w-full mb-xl" />
 
                 <Skeleton className="h-8 w-full mb-sm" />
-                <Skeleton className="h-8 w-[96%] mb-sm" />
-                <Skeleton className="h-8 w-[98%] mb-sm" />
+                <Skeleton className="h-8 w-11/12 mb-sm" />
+                <Skeleton className="h-8 w-full mb-sm" />
 
-                <Skeleton className="xl:block sm:hidden h-8 w-[93%] mb-sm" />
-                <Skeleton className="xl:block sm:hidden h-8 w-[95%] mb-sm" />
+                <Skeleton className="xl:block sm:hidden h-8 w-11/12 mb-sm" />
+                <Skeleton className="xl:block sm:hidden h-8 w-11/12 mb-sm" />
 
                 <Skeleton className="h-8 w-2/3" />
               </div>
@@ -48,12 +48,12 @@ export default function AboutSkeleton() {
                       <Skeleton className="h-6 w-4/10 mb-xs" />
                       <Skeleton className="h-6 w-6/10 mb-xs" />
                     </div>
-                    <Skeleton className="h-6 w-[95%] mb-xs" />
+                    <Skeleton className="h-6 w-11/12 mb-xs" />
                     <div className="flex flex-row gap-xs hidden sm:flex md:hidden xl:flex">
                       <Skeleton className="h-6 w-2/10 mb-xs" />
                       <Skeleton className="h-6 w-8/10 mb-xs" />
                     </div>
-                    <Skeleton className="h-6 w-[50%]" />
+                    <Skeleton className="h-6 w-1/2" />
                   </div>
                 </div>
               ))}
@@ -68,11 +68,11 @@ export default function AboutSkeleton() {
             <div className="space-y-sm w-full">
               <Skeleton className="h-6 w-32 mb-sm mx-auto" />
               <Skeleton className="h-16 w-1/2 mb-md mx-auto" />
-              <Skeleton className="h-6 w-[62%] mb-sm mx-auto" />
-              <Skeleton className="h-6 w-[64%] mb-sm mx-auto" />
-              <Skeleton className="h-6 w-[57%] mb-sm mx-auto" />
-              <Skeleton className="h-6 w-[61%] mb-sm mx-auto" />
-              <Skeleton className="h-6 w-[30%] mb-sm mx-auto" />
+              <Skeleton className="h-6 w-3/5 mb-sm mx-auto" />
+              <Skeleton className="h-6 w-3/5 mb-sm mx-auto" />
+              <Skeleton className="h-6 w-3/5 mb-sm mx-auto" />
+              <Skeleton className="h-6 w-3/5 mb-sm mx-auto" />
+              <Skeleton className="h-6 w-1/3 mb-sm mx-auto" />
             </div>
           </div>
           <div className="mx-auto grid max-w-5xl items-center gap-lg py-2xl lg:gap-2xl">
@@ -98,7 +98,12 @@ export default function AboutSkeleton() {
                 <div key={i} className="surface p-lg w-full">
                   <StatTile
                     value={<Skeleton className="h-8 w-1/2 mx-auto" />}
-                    label={<Skeleton className="h-4 w-2/3 mx-auto" />}
+                    // `StatTile` wraps `label` in a <p>, so we render the
+                    // skeleton as a <span> here to avoid the
+                    // <div>-inside-<p> hydration warning.
+                    label={
+                      <span className="animate-pulse rounded-md bg-muted h-4 w-2/3 mx-auto block" />
+                    }
                   />
                 </div>
               ))}

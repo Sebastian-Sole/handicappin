@@ -1,5 +1,6 @@
 "use client";
 
+import { EmptyState } from "@/components/ui/empty-state";
 import type { ScoreDistribution } from "@/types/statistics";
 
 interface ScoreDistributionChartProps {
@@ -20,9 +21,11 @@ export function ScoreDistributionChart({ data }: ScoreDistributionChartProps) {
 
   if (total === 0) {
     return (
-      <div className="flex items-center justify-center h-48 text-muted-foreground">
-        No hole data available
-      </div>
+      <EmptyState
+        size="compact"
+        title="No hole data available"
+        className="h-48 py-0"
+      />
     );
   }
 
@@ -32,7 +35,7 @@ export function ScoreDistributionChart({ data }: ScoreDistributionChartProps) {
         const item = data[key];
         return (
           <div key={key} className="space-y-xs">
-            <div className="flex justify-between text-sm">
+            <div className="flex justify-between text-body-sm">
               <span>
                 {emoji} {label}
               </span>

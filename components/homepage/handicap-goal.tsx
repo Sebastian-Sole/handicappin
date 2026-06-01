@@ -33,7 +33,7 @@ export function HandicapGoal({
   return (
     <Card className={cn("", className)}>
       <CardHeader className="pb-sm">
-        <CardTitle className="text-base flex items-center gap-sm">
+        <CardTitle className="flex items-center gap-sm">
           <Target className="h-4 w-4 text-primary" />
           Journey to Scratch
         </CardTitle>
@@ -41,7 +41,7 @@ export function HandicapGoal({
       <CardContent>
         <div className="space-y-sm">
           <Progress value={progress} className="h-2" />
-          <div className="flex justify-between text-xs text-muted-foreground">
+          <div className="flex justify-between text-meta text-muted-foreground">
             <span>Start: {startingHandicap.toFixed(1)}</span>
             <span
               className={cn(

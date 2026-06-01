@@ -72,7 +72,7 @@ const HolesTable = () => {
         isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
       )}
     >
-      <Table className="text-sm w-full">
+      <Table className="text-body-sm w-full">
         <TableHeader>
           <TableRow className="hover:bg-inherit">
             <TableHead className="py-sm px-md">Hole</TableHead>

@@ -425,7 +425,7 @@ export default function GolfScorecard({ profile, access }: GolfScorecardProps) {
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit, onError)} role="form">
         <Card className="w-full mx-auto bg-background border-none shadow-none">
-          <CardContent className="p-lg sm:w-[1325px] max-w-[450px] sm:max-w-[450px] md:max-w-[600px] lg:max-w-[725px] xl:max-w-[975px] 2xl:max-w-[1225px] 3xl:max-w-[1325px] mx-auto">
+          <CardContent className="p-lg w-full">
             <div className="mb-lg grid grid-cols-1 lg:grid-cols-2 gap-md lg:gap-xl">
               <Card>
                 <CardContent className="p-md">
@@ -869,7 +869,7 @@ export default function GolfScorecard({ profile, access }: GolfScorecardProps) {
                   savingLabel="Submitting..."
                   savedLabel="Submitted!"
                   errorLabel="Submit Scorecard"
-                  className="transition-all duration-300"
+                  className="transition-colors duration-300"
                 />
               </div>
             )}

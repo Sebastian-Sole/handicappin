@@ -101,7 +101,7 @@ export function WhatIfCalculator() {
         handicap index. It calculates the score differential and projects your
         new handicap.
       </Muted>
-      <Muted className="text-xs">
+      <Muted className="text-meta">
         Note: Actual results may vary based on soft/hard caps, ESR, and other
         factors.
       </Muted>
@@ -161,7 +161,7 @@ export function WhatIfCalculator() {
         </div>
       </div>
       {values.scoreDifferentials.length < 2 && (
-        <Muted className="text-sm text-warning">
+        <Muted className="text-body-sm text-warning">
           Add at least 2 differentials in the Handicap Index calculator to see
           projections.
         </Muted>

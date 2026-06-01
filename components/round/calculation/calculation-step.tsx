@@ -59,7 +59,7 @@ export function CalculationStep({
       )}
     >
       <div className="flex items-start gap-md">
-        <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-semibold">
+        <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-badge">
           {stepNumber}
         </div>
         <div className="flex-1">
@@ -72,7 +72,7 @@ export function CalculationStep({
 
       {learnMoreContent && (
         <Collapsible open={isOpen} onOpenChange={setIsOpen} className="ml-2xl">
-          <CollapsibleTrigger className="flex items-center gap-sm text-sm text-muted-foreground hover:text-foreground transition-colors">
+          <CollapsibleTrigger className="flex items-center gap-sm text-body-sm text-muted-foreground hover:text-foreground transition-colors">
             <ChevronDown
               className={cn(
                 "w-4 h-4 transition-transform duration-200",

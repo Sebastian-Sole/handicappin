@@ -2,7 +2,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 const StatisticsSkeleton = () => {
   return (
-    <div className="bg-background text-foreground p-md md:p-xl rounded-lg min-h-screen">
+    <>
       {/* Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-xl gap-md">
         <div>
@@ -57,7 +57,7 @@ const StatisticsSkeleton = () => {
           <Skeleton className="h-48 rounded-lg" />
         </div>
       </div>
-    </div>
+    </>
   );
 };
 

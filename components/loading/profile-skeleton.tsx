@@ -1,8 +1,9 @@
+import { AuthFormShell } from "@/components/auth/auth-form-shell";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export default function ProfileSkeleton() {
   return (
-    <div className="mx-auto max-w-sm space-y-lg py-xl sm:min-w-[40%] min-h-full w-[90%]">
+    <AuthFormShell className="py-xl">
       <div className="space-y-sm text-center">
         <Skeleton className="h-10 w-1/2 mx-auto mb-md" />
       </div>
@@ -26,6 +27,6 @@ export default function ProfileSkeleton() {
           </div>
         </div>
       </div>
-    </div>
+    </AuthFormShell>
   );
 }

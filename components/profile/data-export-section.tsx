@@ -76,7 +76,7 @@ export function DataExportSection() {
 
   return (
     <div className="surface p-lg">
-      <H3 className="text-xl font-semibold mb-sm">Export Your Data</H3>
+      <H3 className="text-heading-4 mb-sm">Export Your Data</H3>
       <p className="text-muted-foreground mb-md">
         Download a copy of all your data including your profile, rounds, and scores in JSON format.
       </p>
@@ -95,7 +95,7 @@ export function DataExportSection() {
         savingLabel="Exporting..."
         savedLabel="Downloaded!"
         errorLabel="Export Data"
-        className="transition-all duration-300"
+        className="transition-colors duration-300"
       />
     </div>
   );

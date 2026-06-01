@@ -23,7 +23,7 @@ const ScoreDifferentialCalculator = () => {
 
   return (
     <div className="container px-md lg:px-lg">
-      <Card className="mx-auto max-w-[600px]">
+      <Card className="mx-auto max-w-xl">
         <CardHeader>
           <span className="flex flex-row justify-between items-center">
             <CardTitle className="text-heading-4 sm:text-heading-3">

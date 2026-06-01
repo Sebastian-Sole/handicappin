@@ -43,13 +43,13 @@ export default function AppError({ error, reset }: ErrorProps) {
             </Muted>
           </CardHeader>
           <CardContent>
-            <div className="rounded-md bg-muted p-sm text-sm">
+            <div className="rounded-md bg-muted p-sm text-body-sm">
               <p className="font-medium text-muted-foreground">Error details:</p>
               <p className="mt-xs text-muted-foreground/80 break-words">
                 {error.message || "An unexpected error occurred"}
               </p>
               {error.digest && (
-                <p className="mt-sm text-xs text-muted-foreground/60">
+                <p className="mt-sm text-meta text-muted-foreground/60">
                   Reference: {error.digest}
                 </p>
               )}

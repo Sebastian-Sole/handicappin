@@ -22,6 +22,7 @@ import {
   X,
   FileText,
 } from "lucide-react";
+import { FormFeedback } from "@/components/ui/form-feedback";
 import { cn } from "@/lib/utils";
 import { Tee } from "@/types/scorecard-input";
 import type { ExtractedTee, ExtractionResponse } from "@/lib/scorecard-extraction";
@@ -619,7 +620,7 @@ export function ScorecardImageUpload({
       {summary && !isExtracting && !dialogOpen && (
         <div className="surface-muted border p-sm space-y-sm">
           <div className="flex items-center justify-between">
-            <p className="text-sm font-medium">
+            <p className="text-label-sm">
               Extraction results
               {summary.totalTeesFound > 1 && (
                 <span className="text-muted-foreground font-normal">
@@ -642,7 +643,7 @@ export function ScorecardImageUpload({
 
           <div className="grid grid-cols-2 gap-x-md gap-y-xs">
             {SUMMARY_ITEMS.map(({ key, label }) => (
-              <div key={key} className="flex items-center gap-xs.5 text-sm">
+              <div key={key} className="flex items-center gap-xs text-body-sm">
                 {summary[key] ? (
                   <Check className="h-3.5 w-3.5 text-success shrink-0" />
                 ) : (
@@ -659,9 +660,9 @@ export function ScorecardImageUpload({
             ))}
           </div>
 
-          <div className="flex items-start gap-xs.5 pt-xs">
-            <AlertCircle className="h-3.5 w-3.5 text-muted-foreground shrink-0 mt-0.5" />
-            <p className="text-xs text-muted-foreground">
+          <div className="flex items-start gap-xs pt-xs">
+            <AlertCircle className="h-3.5 w-3.5 text-muted-foreground shrink-0 mt-xs" />
+            <p className="text-meta text-muted-foreground">
               AI extraction may be inaccurate. Please review all values before saving.
             </p>
           </div>
@@ -681,7 +682,7 @@ export function ScorecardImageUpload({
                 <ImagePlus className="h-4 w-4" />
                 Upload rating card for missing ratings
               </Button>
-              <p className="text-xs text-muted-foreground mt-xs.5">
+              <p className="text-meta text-muted-foreground mt-xs">
                 For accurate ratings, use a screenshot from the{" "}
                 <a
                   href="https://ncrdb.usga.org/NCRListing"
@@ -713,7 +714,7 @@ export function ScorecardImageUpload({
                 ? "Upload a photo of the slope/rating card to fill in the missing course and slope ratings."
                 : "Upload photos of your scorecard and rating card. You can add multiple files at once."}
             </DialogDescription>
-            <p className="text-xs text-muted-foreground pt-xs">
+            <p className="text-meta text-muted-foreground pt-xs">
               For accurate course and slope ratings, we recommend using a screenshot from the{" "}
               <a
                 href="https://ncrdb.usga.org/NCRListing"
@@ -747,20 +748,20 @@ export function ScorecardImageUpload({
                   )}
                 />
                 {isDragActive ? (
-                  <p className="text-sm font-medium text-primary">
+                  <p className="text-label-sm text-primary">
                     Drop your files here
                   </p>
                 ) : (
                   <>
                     <div className="text-center">
-                      <p className="text-sm font-medium">
+                      <p className="text-label-sm">
                         Drag & drop files here
                       </p>
-                      <p className="text-xs text-muted-foreground mt-xs">
+                      <p className="text-meta text-muted-foreground mt-xs">
                         or click to browse
                       </p>
                     </div>
-                    <p className="text-xs text-muted-foreground">
+                    <p className="text-meta text-muted-foreground">
                       JPG, PNG, WebP, or PDF &middot; Up to {MAX_FILES} files &middot; 10MB each
                     </p>
                   </>
@@ -773,14 +774,14 @@ export function ScorecardImageUpload({
               <div className="space-y-sm">
                 {isExtracting && (
                   <div className="flex items-center justify-between">
-                    <p className="text-sm font-medium">
+                    <p className="text-label-sm">
                       Processing {completedCount}/{totalCount}
                     </p>
                     <Loader2 className="h-4 w-4 animate-spin text-primary" />
                   </div>
                 )}
                 {allDone && someSucceeded && (
-                  <p className="text-sm font-medium text-success flex items-center gap-xs.5">
+                  <p className="text-label-sm text-success flex items-center gap-xs">
                     <Check className="h-4 w-4" />
                     Extraction complete
                   </p>
@@ -790,14 +791,14 @@ export function ScorecardImageUpload({
                   {trackedFiles.map((trackedFile, index) => (
                     <div
                       key={`${trackedFile.file.name}-${index}`}
-                      className="flex items-center gap-sm p-sm.5 bg-background"
+                      className="flex items-center gap-sm p-sm bg-background"
                     >
                       <FileIcon mimeType={trackedFile.file.type} />
                       <div className="w-0 flex-1">
-                        <p className="text-sm truncate">
+                        <p className="text-body-sm truncate">
                           {trackedFile.file.name}
                         </p>
-                        <p className="text-xs text-muted-foreground flex items-center gap-xs">
+                        <p className="text-meta text-muted-foreground flex items-center gap-xs">
                           {trackedFile.status === "error" && trackedFile.error ? (
                             <span className="text-destructive">
                               {trackedFile.error}
@@ -846,14 +847,12 @@ export function ScorecardImageUpload({
             )}
 
             {/* Error */}
-            {error && (
-              <p className="text-sm text-destructive text-center">{error}</p>
-            )}
+            {error && <FormFeedback type="error" message={error} />}
 
             {/* Extraction summary inside dialog */}
             {summary && allDone && someSucceeded && (
               <div className="surface-muted border p-sm space-y-sm">
-                <p className="text-sm font-medium">
+                <p className="text-label-sm">
                   Extracted
                   {summary.totalTeesFound > 1 && (
                     <span className="text-muted-foreground font-normal">
@@ -866,7 +865,7 @@ export function ScorecardImageUpload({
                   {SUMMARY_ITEMS.map(({ key, label }) => (
                     <div
                       key={key}
-                      className="flex items-center gap-xs.5 text-sm"
+                      className="flex items-center gap-xs text-body-sm"
                     >
                       {summary[key] ? (
                         <Check className="h-3.5 w-3.5 text-success shrink-0" />
@@ -886,7 +885,7 @@ export function ScorecardImageUpload({
                   ))}
                 </div>
                 {hasRatingGap && (
-                  <p className="text-xs text-muted-foreground pt-xs">
+                  <p className="text-meta text-muted-foreground pt-xs">
                     Missing ratings? Close this dialog and click &ldquo;Upload
                     rating card&rdquo; to add them.
                   </p>

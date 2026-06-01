@@ -5,7 +5,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 export function CalculatorSkeleton() {
   return (
-    <Card className="transition-all">
+    <Card className="transition-colors">
       <CardHeader>
         <div className="flex items-center justify-between">
           <div className="space-y-sm">

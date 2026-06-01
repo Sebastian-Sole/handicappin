@@ -21,7 +21,7 @@ export function CourseAnalyticsSection({ courses }: CourseAnalyticsSectionProps)
   if (courses.length === 0) {
     return (
       <section className="mb-xl">
-        <H2 className="text-xl font-semibold mb-md">Course Analytics</H2>
+        <H2 className="text-heading-4 mb-md">Course Analytics</H2>
         <Card>
           <CardContent className="p-xl text-center text-muted-foreground">
             Play more rounds to see course analytics
@@ -43,13 +43,13 @@ export function CourseAnalyticsSection({ courses }: CourseAnalyticsSectionProps)
 
   return (
     <section className="mb-xl">
-      <H2 className="text-xl font-semibold mb-md">Course Analytics</H2>
+      <H2 className="text-heading-4 mb-md">Course Analytics</H2>
 
       {/* Highlight Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-md mb-lg">
         <Card>
           <CardHeader className="pb-sm">
-            <CardTitle className="text-sm text-muted-foreground">
+            <CardTitle className="text-body-sm text-muted-foreground">
               Most Played
             </CardTitle>
           </CardHeader>
@@ -57,14 +57,14 @@ export function CourseAnalyticsSection({ courses }: CourseAnalyticsSectionProps)
             <p className="font-semibold">
               {getFlagEmoji(mostPlayed.country)} {mostPlayed.courseName}
             </p>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-body-sm text-muted-foreground">
               {mostPlayed.roundCount} rounds
             </p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="pb-sm">
-            <CardTitle className="text-sm text-muted-foreground">
+            <CardTitle className="text-body-sm text-muted-foreground">
               Best Performance
             </CardTitle>
           </CardHeader>
@@ -72,14 +72,14 @@ export function CourseAnalyticsSection({ courses }: CourseAnalyticsSectionProps)
             <p className="font-semibold">
               {getFlagEmoji(bestCourse.country)} {bestCourse.courseName}
             </p>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-body-sm text-muted-foreground">
               Avg diff: {bestCourse.avgDifferential.toFixed(1)}
             </p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="pb-sm">
-            <CardTitle className="text-sm text-muted-foreground">
+            <CardTitle className="text-body-sm text-muted-foreground">
               Challenging Course
             </CardTitle>
           </CardHeader>
@@ -87,7 +87,7 @@ export function CourseAnalyticsSection({ courses }: CourseAnalyticsSectionProps)
             <p className="font-semibold">
               {getFlagEmoji(worstCourse.country)} {worstCourse.courseName}
             </p>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-body-sm text-muted-foreground">
               Avg diff: {worstCourse.avgDifferential.toFixed(1)}
             </p>
           </CardContent>
@@ -118,7 +118,7 @@ export function CourseAnalyticsSection({ courses }: CourseAnalyticsSectionProps)
                   <TableCell>
                     <span className="mr-sm">{getFlagEmoji(course.country)}</span>
                     {course.courseName}
-                    <span className="text-muted-foreground text-xs ml-sm hidden sm:inline">
+                    <span className="text-muted-foreground text-meta ml-sm hidden sm:inline">
                       {course.city}
                     </span>
                   </TableCell>

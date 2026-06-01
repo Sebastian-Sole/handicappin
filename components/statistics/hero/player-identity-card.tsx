@@ -52,12 +52,13 @@ export function PlayerIdentityCard({
         {/* Player Type Hero */}
         <div className="text-center mb-lg">
           <div className="text-6xl md:text-7xl mb-sm">{playerType.emoji}</div>
+          {/* TODO(ui-consistency A12): responsive size ladder on H2 (text-2xl base / md:text-figure-lg) — base override intentional for mobile hero scaling, not a bare raw size; leaving until a sanctioned hero ladder covers this */}
           <H2 className="text-2xl md:text-figure-lg mb-sm">{playerType.name}</H2>
           <p className="text-muted-foreground max-w-md mx-auto">
             {playerType.description}
           </p>
           <div className="mt-sm">
-            <span className="inline-block px-sm py-xs bg-primary/10 rounded-full text-xs text-muted-foreground">
+            <span className="inline-block px-sm py-xs bg-primary/10 rounded-full text-meta text-muted-foreground">
               {Math.round(playerType.confidence * 100)}% match
             </span>
           </div>
@@ -66,7 +67,7 @@ export function PlayerIdentityCard({
         {/* Stats Row */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-md md:gap-lg mt-xl">
           {/* Handicap Index */}
-          <div className="text-center p-md bg-background/50 rounded-lg border">
+          <div className="text-center p-md surface-raised">
             <div className="flex items-center justify-center gap-sm">
               <span className="text-4xl md:text-figure-2xl">
                 {formatHandicap(currentHandicap)}
@@ -80,21 +81,21 @@ export function PlayerIdentityCard({
                 />
               )}
             </div>
-            <p className="text-sm text-muted-foreground mt-xs">Handicap Index</p>
-            <p className="text-xs text-muted-foreground">{getHandicapChangeText()}</p>
+            <p className="text-body-sm text-muted-foreground mt-xs">Handicap Index</p>
+            <p className="text-meta text-muted-foreground">{getHandicapChangeText()}</p>
           </div>
 
           {/* Rounds & Golf Age */}
-          <div className="text-center p-md bg-background/50 rounded-lg border">
+          <div className="text-center p-md surface-raised">
             <div className="text-4xl md:text-figure-2xl">{totalRounds}</div>
-            <p className="text-sm text-muted-foreground mt-xs">Total Rounds</p>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-body-sm text-muted-foreground mt-xs">Total Rounds</p>
+            <p className="text-meta text-muted-foreground">
               over {formatGolfAge(golfAgeDays)}
             </p>
           </div>
 
           {/* Last Played */}
-          <div className="text-center p-md bg-background/50 rounded-lg border">
+          <div className="text-center p-md surface-raised">
             <div
               className={cn(
                 "text-4xl md:text-figure-2xl",
@@ -103,10 +104,10 @@ export function PlayerIdentityCard({
             >
               {daysSinceLastRound > 0 ? daysSinceLastRound : "0"}
             </div>
-            <p className="text-sm text-muted-foreground mt-xs">Days Since Round</p>
+            <p className="text-body-sm text-muted-foreground mt-xs">Days Since Round</p>
             <p
               className={cn(
-                "text-xs",
+                "text-meta",
                 playNudge.urgent ? "text-warning font-medium" : "text-muted-foreground"
               )}
             >

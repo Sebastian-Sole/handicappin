@@ -1,4 +1,5 @@
 import { CalculatorsPageClient } from "./client";
+import { PageContainer } from "@/components/layout/page-container";
 
 export const metadata = {
   title: "Golf Calculators | Handicappin",
@@ -7,7 +8,11 @@ export const metadata = {
 };
 
 const CalculatorsPage = async () => {
-  return <CalculatorsPageClient />;
+  return (
+    <PageContainer>
+      <CalculatorsPageClient />
+    </PageContainer>
+  );
 };
 
 export default CalculatorsPage;
