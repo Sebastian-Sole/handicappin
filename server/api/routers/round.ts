@@ -545,8 +545,11 @@ export const roundRouter = createTRPCRouter({
           } else if (existingTee.length > 0) {
             // Tee is approved and not edited -- reuse as-is
             teeId = existingTee[0]!.id;
-          } else if (teePlayed.id) {
-            // Tee referenced by ID — verify it's actually approved and active in the DB
+          } else if (teePlayed.id && teePlayed.id > 0) {
+            // Tee referenced by a real (positive) DB ID — verify it's actually
+            // approved and active. Negative IDs are client-side temp IDs for
+            // brand-new tees (see useTeeManagement.generateTempId) and must fall
+            // through to the pending-insert branch below, not be looked up here.
             const teeById = await tx
               .select()
               .from(teeInfo)
