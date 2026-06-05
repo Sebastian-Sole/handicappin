@@ -157,7 +157,7 @@ export function TeeDialog({
             {mode === "edit" ? "Edit Tee Information" : "Add New Tee"}
           </DialogTitle>
         </DialogHeader>
-        <div className="sm:max-w-xs md:max-w-xl">
+        <div className="min-w-0 sm:max-w-xs md:max-w-xl">
           <Form {...form}>
             <form onSubmit={handleSubmit}>
               <TeeFormContent

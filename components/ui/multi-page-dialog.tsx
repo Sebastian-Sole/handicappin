@@ -30,7 +30,10 @@ export const DialogPage: React.FC<DialogPageProps> = ({
   children,
   className,
 }) => (
-  <div>
+  // min-w-0 lets this grid item (DialogContent is display:grid) shrink below the
+  // intrinsic width of wide children (e.g. the 18-hole tee table) instead of
+  // forcing the grid track — and the dialog — to overflow its own padding.
+  <div className="min-w-0">
     <DialogHeader>
       <DialogTitle>{title}</DialogTitle>
     </DialogHeader>
