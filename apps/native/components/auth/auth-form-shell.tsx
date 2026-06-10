@@ -15,6 +15,8 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+import { tokens } from "@handicappin/tokens/tokens";
+
 import { H1 } from "@/components/ui/typography";
 import { cn } from "@/lib/utils";
 
@@ -43,14 +45,20 @@ export function AuthFormShell({
       <ScrollView
         testID={testID}
         className="flex-1"
+        // ALL container styling lives in this one style object: passing
+        // contentContainerClassName AND contentContainerStyle together makes
+        // the inline style clobber the className-derived padding (observed
+        // on-sim: px-lg vanished, content ran to the screen edge). Values
+        // come from tokens; safe-area insets are runtime-only.
         // No items-center/max-w-sm: web's max-w-sm (384px) never binds inside
         // phone-width padding, and centering a %-width child against a
-        // content-sized container collapses to 0 width under Yoga. Default
-        // cross-axis stretch + px-lg padding = web's mobile layout.
-        contentContainerClassName="flex-grow justify-center px-lg py-md"
+        // content-sized container collapses to 0 width under Yoga.
         contentContainerStyle={{
-          paddingTop: insets.top,
-          paddingBottom: insets.bottom,
+          flexGrow: 1,
+          justifyContent: "center",
+          paddingHorizontal: tokens.spacing.lg,
+          paddingTop: insets.top + tokens.spacing.md,
+          paddingBottom: insets.bottom + tokens.spacing.md,
         }}
         keyboardShouldPersistTaps="handled"
       >

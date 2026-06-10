@@ -13,6 +13,8 @@ import { useState } from "react";
 import { ScrollView, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+import { tokens } from "@handicappin/tokens/tokens";
+
 import { DataSettledMarker } from "@/components/data-settled";
 import { PricingCard } from "@/components/billing/pricing-card";
 import { FormFeedback } from "@/components/ui/form-feedback";
@@ -54,8 +56,15 @@ export default function OnboardingScreen() {
     <ScrollView
       testID="onboarding-screen"
       className="flex-1 bg-background"
-      contentContainerClassName="px-lg pb-2xl gap-lg"
-      contentContainerStyle={{ paddingTop: insets.top + 16 }} // allow-hardcoded safe-area offset geometry
+      // One style object only — combining contentContainerClassName with an
+      // inline contentContainerStyle clobbers the className padding (see
+      // auth-form-shell.tsx). Mirrors web PageContainer: px-md gutters.
+      contentContainerStyle={{
+        paddingTop: insets.top + tokens.spacing.md,
+        paddingHorizontal: tokens.spacing.md,
+        paddingBottom: tokens.spacing["2xl"],
+        gap: tokens.spacing.lg,
+      }}
     >
       <DataSettledMarker settled={settled} />
       <View className="items-center mb-2xl">

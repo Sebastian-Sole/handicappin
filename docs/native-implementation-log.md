@@ -249,6 +249,17 @@ instead. Real plan selection for the native flow arrives with RevenueCat.
 - Maestro flows/onboarding.yaml PASS (cards render; mocked CTA surfaces the
   dev notice).
 
+### D11 — ScrollView container styling: ONE style object, never className+style mixed (2026-06-10)
+
+Owner feedback caught content running to the screen edge: passing
+`contentContainerClassName` and an inline `contentContainerStyle` together
+makes the inline object clobber the className-derived padding under
+NativeWind/react-native-css. Rule going forward: scroll-container styling
+lives in a single `contentContainerStyle` object fed from `tokens.spacing`
+(safe-area insets are runtime values anyway). AuthFormShell + onboarding
+fixed and re-verified on-sim; gutters now mirror web (PageContainer px-md,
+auth shell px-lg).
+
 ## Waivers
 
 (none yet)
