@@ -6,6 +6,7 @@ import { queryOptions } from "@tanstack/react-query";
 import { z } from "zod";
 
 import { trpcMutation, trpcQuery } from "@/lib/api/client";
+import { scorecardsResponseSchema } from "@/lib/api/schemas/scorecard";
 import type { ScorecardInput } from "@/lib/scorecard";
 
 export const searchedCourseSchema = z.object({
@@ -78,3 +79,14 @@ const submitResultSchema = z.unknown();
 export function submitScorecard(input: ScorecardInput): Promise<unknown> {
   return trpcMutation("round.submitScorecard", input, submitResultSchema);
 }
+
+export const scorecardsQueryOptions = (userId: string) =>
+  queryOptions({
+    queryKey: ["scorecard.getAllScorecardsByUserId", userId] as const,
+    queryFn: () =>
+      trpcQuery(
+        "scorecard.getAllScorecardsByUserId",
+        { userId },
+        scorecardsResponseSchema,
+      ),
+  });

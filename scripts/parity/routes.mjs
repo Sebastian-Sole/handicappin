@@ -40,7 +40,6 @@ export const INTENTIONAL = {
     "billing/success",
     "calculators",
     "contact",
-    "dashboard/[id]",
     "privacy-policy",
     "profile/[id]",
     "rounds/[id]/calculation",

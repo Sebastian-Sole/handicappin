@@ -8,7 +8,7 @@
  * entry simply doesn't exist yet (the gate keeps slugs honest).
  */
 import { Redirect, Tabs } from "expo-router";
-import { Home } from "lucide-react-native";
+import { Home, List } from "lucide-react-native";
 
 import { tokens } from "@handicappin/tokens/tokens";
 import { useSession } from "@/lib/auth/session-provider";
@@ -39,7 +39,17 @@ export default function TabsLayout() {
         name="index"
         options={{
           title: "Home",
+          tabBarButtonTestID: "tab-home",
           tabBarIcon: ({ color, size }) => <Home size={size} color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="dashboard/[id]"
+        options={{
+          title: "Rounds",
+          href: `/dashboard/${session.user.id}`,
+          tabBarButtonTestID: "tab-rounds",
+          tabBarIcon: ({ color, size }) => <List size={size} color={color} />,
         }}
       />
     </Tabs>

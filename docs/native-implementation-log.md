@@ -334,6 +334,32 @@ ImageBackground's `backgroundColor: true` mapping. Upstream-able.
   tee-time picker (needs @react-native-community/datetimepicker — a new
   native module mid-goal; rounds log "now").
 
+### D15 — Test user upgraded to unlimited via SQL bootstrap (2026-06-10)
+
+dashboard/statistics data (scorecard.getAllScorecardsByUserId) requires an
+unlimited/lifetime plan server-side. The REAL upgrade path is Stripe
+Checkout + webhooks — the local stack runs no webhook forwarder, so the
+webhook write was applied directly: `plan_selected='unlimited',
+subscription_status='active', billing_version++` (exactly the fields the
+webhook writes; the two owner local users carry the same shape). Web
+sessions pick the claims up via /auth/verify-session.
+
+### dashboard/[id] (Rounds tab) — PASS (in-band judgment, 2026-06-10)
+
+- Captures: /tmp/handicappin-compare/dashboard_<uid>/ + table-region pairs.
+  Rubric dashboard.yaml all PASS: Handicap card (figure-3xl primary 54,
+  links, random header + transparency copy), Recent Rounds header card
+  (chart correctly absent — web hides it below sm), Rounds History table
+  (search, sortable headers, four REAL rounds including the one submitted
+  through the native UI, View Calculation links). Random header line
+  differs by design.
+- Maestro flows/dashboard.yaml PASS (tab → history → live search filter).
+  Tab bar uses tabBarButtonTestID (text selectors collide with "Rounds
+  Played").
+- Native upgrade-required state mirrors web's plan gate (procedure 403 →
+  styled prompt). Home stats verified updating live after the native
+  round submission (avg 8.3, best +5, 4 played).
+
 ## Waivers
 
 (none yet)

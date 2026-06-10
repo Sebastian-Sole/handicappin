@@ -1,0 +1,28 @@
+# DASHBOARD (Rounds tab) · real scorecard history renders; search filters;
+# the natively-added round is present.
+# PRE-REQUISITE: signed in as the (unlimited) test user.
+appId: com.handicappin.app
+---
+- openLink: handicappin://
+- tapOn:
+    text: "Open"
+    optional: true
+- extendedWaitUntil:
+    visible:
+      id: "tab-rounds"
+    timeout: 30000
+- tapOn:
+    id: "tab-rounds"
+- extendedWaitUntil:
+    visible: "Rounds History"
+    timeout: 15000
+- assertVisible: "Handicap"
+- assertVisible: "Recent Rounds"
+- scrollUntilVisible:
+    element:
+      id: "rounds-search"
+- tapOn:
+    id: "rounds-search"
+- inputText: "St. Andrews"
+- pressKey: Enter
+- assertVisible: ".*St. Andrews Old Co.*"
