@@ -435,14 +435,53 @@ sessions pick the claims up via /auth/verify-session.
 - Deferred with visible pointers (web): email-change OTP flow, data
   export, account deletion, advanced/educational calculator interactivity.
 
+### D16 — Native unit tests run under tsx against the TS sources (2026-06-10)
+
+DoD #7 tests live in apps/native/tests/unit (33 tests): golf-stats,
+activity-transform (chart/feed shaping), auth JWT claims (including a
+regression test for the app_metadata.billing path), the billing mock seam
+(entitlement mapping, configure gate, mocked purchase/restore semantics),
+and scorecard 9-hole normalization. Runner: `tsx --test` (`pnpm --filter
+native test`) — node's native strip-types can't resolve extensionless
+internal imports in the TS sources or the @/ alias, tsx handles both.
+Tests are typed (.test.ts) and included in the native tsc program.
+
+### Final gate sweep (2026-06-10, DoD #3)
+
+- pnpm parity (theme-drift + routes + styles) ✓ · check:tokens ✓
+- web: lint ✓ (0 errors; one pre-existing warning in add-course-dialog,
+  untouched) · tsc ✓ · 506/506 tests ✓ · production build ✓
+- tokens: 37/37 ✓ · native: tsc ✓ · lint ✓ · verify:harness 55/55 ✓ ·
+  unit tests 33/33 ✓ · expo export -p ios ✓ · expo prebuild --no-install ✓
+
 ## Waivers
 
-(none yet)
+(none — the dark-mode contrast waiver predates this goal and remains in
+the contrast gate's KNOWN_SUBTHRESHOLD ledger as documented in §9 of the
+handoff; left untouched as an explicitly allowed option)
 
-## Deferred
+## Deferred (final inventory)
 
-- Google OAuth on native: attempt after email/password auth works end-to-end;
-  if the `expo-auth-session` web flow against Supabase isn't straightforward,
-  ship email/password and log here (handoff §7.2 allows this explicitly).
-- Android session-storage adapter (see D3).
-- Real RevenueCat SDK (ledger: later milestone; seam is `lib/billing/index.ts`).
+Each item ships with a visible in-app pointer where a user would look for it.
+
+- Google OAuth on native (handoff §7.2 explicitly allows email/password
+  first): web's flow is @react-oauth/google auth-code + a server exchange
+  bound to web redirect URIs; native needs an iOS OAuth client that doesn't
+  exist in any config. Visual-parity button present; press explains.
+- Email-change OTP flow, data export, account deletion (profile) — web.
+- Add-course / add-tee dialogs + AI scorecard upload (rounds/add) — web.
+- Custom tee-time picker (rounds/add) — needs
+  @react-native-community/datetimepicker (a new native module mid-goal);
+  rounds log "now" with an explanatory note.
+- Advanced/Educational calculators interactive versions — listed natively
+  with a website CTA; core four are fully interactive.
+- Web's score-distribution sidebar + score legend (rounds/[id]/calculation)
+  and the hole-averages chart modes (course detail) — display enrichments.
+- Android: session-storage chunking adapter (D3) + a device pass (target
+  was iOS sim-complete).
+- Real RevenueCat SDK (ledger: later milestone; the seam is
+  lib/billing/index.ts).
+- Dark-mode full-app visual sweep: the runtime toggle is verified on-sim
+  (D7) and compare-screen.sh supports MODE=dark; per-screen dark captures
+  were not part of the per-screen loop. The web-side dark `--primary`
+  contrast fix (§9) was NOT taken (optional).

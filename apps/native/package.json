@@ -14,7 +14,8 @@
     "check:styles": "node ../../scripts/parity/check-hardcoded-styles.mjs",
     "verify:harness": "node --test 'verification/**/*.test.mjs'",
     "verify:contrast": "node --test verification/gates/contrast-gate.test.mjs",
-    "harness:run": "node verification/run-harness.mjs"
+    "harness:run": "node verification/run-harness.mjs",
+    "test": "tsx --test tests/unit/*.test.ts"
   },
   "dependencies": {
     "@expo-google-fonts/inter": "^0.4.2",
@@ -71,6 +72,7 @@
     "@types/react": "~19.2.2",
     "eslint": "^9.39.2",
     "eslint-config-expo": "~10.0.0",
+    "tsx": "^4.21.0",
     "typescript": "~6.0.3"
   }
 }

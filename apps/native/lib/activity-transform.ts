@@ -4,7 +4,7 @@
  * Covered by native unit tests.
  */
 import type { RoundRow } from "@/lib/api/schemas/round";
-import { HOMEPAGE_ROUNDS_LIMIT } from "@/lib/golf-stats";
+import { HOMEPAGE_ROUNDS_LIMIT } from "./golf-stats";
 
 export interface ActivityItem {
   id: number;
