@@ -11,6 +11,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { EmptyState } from "@/components/ui/empty-state";
 import { H1, H2, Muted } from "@/components/ui/typography";
 import { CourseHoleTabs } from "@/components/statistics/courses/course-hole-tabs";
 import {
@@ -82,10 +83,12 @@ export default async function CourseDetailPage({ params }: PageProps) {
 
       {!hasData ? (
         <Card>
-          <CardContent className="p-2xl text-center text-muted-foreground">
-            <div className="text-4xl mb-md">⛳</div>
-            <p className="text-lg font-medium">No rounds at this course yet</p>
-            <p className="text-body-sm">Log a round here to start building stats.</p>
+          <CardContent>
+            <EmptyState
+              icon="⛳"
+              title="No rounds at this course yet"
+              description="Log a round here to start building stats."
+            />
           </CardContent>
         </Card>
       ) : (

@@ -71,7 +71,7 @@ const ScoreBarChart = ({ scores, className }: ScoreBarChartProps) => {
             config={{
               score: {
                 label: "Score Differential",
-                color: "hsl(var(--chart-1))",
+                color: "var(--chart-1)",
               },
             }}
             className="min-h-full"

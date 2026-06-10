@@ -13,7 +13,8 @@ import { Button, buttonVariants } from "@/components/ui/button";
 
 // Spacing skipped (no token equivalent): size utilities, aspect-square, and
 // arbitrary cell-size custom-property values (--cell-size, --spacing(8),
-// text-[0.8rem]) are out of scope for this spacing pass.
+// text-[0.8rem], ring-[3px]) are out of scope for this spacing pass
+// (vendored shadcn exceptions).
 
 function Calendar({
   className,

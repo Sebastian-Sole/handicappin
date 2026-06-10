@@ -70,7 +70,7 @@ export default function ContactPage() {
       <section className="w-full py-2xl md:py-4xl lg:py-5xl hero-gradient">
         <div className="mx-auto max-w-3xl px-md md:px-lg text-center">
           <Badge className="mb-md">Contact Us</Badge>
-          <H1 className="lg:leading-tighter sm:text-4xl md:text-5xl xl:text-hero-xl 2xl:text-hero-2xl mb-md">
+          <H1 className="lg:leading-tighter sm:text-hero-sm md:text-hero-md xl:text-hero-xl 2xl:text-hero-2xl mb-md">
             We&apos;re Here to Help
           </H1>
           <P className="text-foreground/80 md:text-xl/relaxed max-w-2xl mx-auto">

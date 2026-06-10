@@ -35,8 +35,7 @@ export function BillingTab({ access }: BillingTabProps) {
         <H3 className="mb-md">Current Plan</H3>
         <div className="flex items-start justify-between flex-col sm:flex-row gap-md">
           <div className="flex-1">
-            {/* Intentional compose: text-lg + font-medium emphasis (no text-lead-medium token by design) */}
-            <p className="text-lg font-medium capitalize mb-sm">
+            <p className="text-heading-5 capitalize mb-sm">
               {access.plan} Plan
             </p>
 

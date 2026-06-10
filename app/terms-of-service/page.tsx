@@ -26,7 +26,7 @@ export default function TermsOfServicePage() {
         <div className="sm:container px-md md:px-lg mx-auto">
           <div className="mx-auto max-w-3xl space-y-md text-center">
             <Badge>Legal</Badge>
-            <H1 className="lg:leading-tighter sm:text-4xl md:text-5xl">
+            <H1 className="lg:leading-tighter sm:text-hero-sm md:text-hero-md">
               Terms of Service
             </H1>
             <P className="text-foreground/80 md:text-xl/relaxed">

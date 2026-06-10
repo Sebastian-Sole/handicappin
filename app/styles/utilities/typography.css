@@ -38,6 +38,17 @@
   letter-spacing: -0.005em;
 }
 
+/* Heading rung below heading-4 — dialog titles, card-level subtitles,
+   plan names. Replaces raw `text-lg font-semibold` / `text-lg
+   font-medium` title composes. */
+@utility text-heading-5 {
+  font-family: var(--font-sans);
+  font-weight: 600;
+  font-size: 1.125rem;
+  line-height: 1.75rem;
+  letter-spacing: -0.005em;
+}
+
 @utility text-body {
   font-family: var(--font-sans);
   font-weight: 400;
@@ -141,6 +152,18 @@
    (text-heading-1 = 800/-0.02em, text-heading-2 = 600/-0.01em) plus
    any sibling `tracking-tighter` override, exactly as the original
    arbitrary values behaved. */
+
+/* Lower hero rungs — size-only, completing the ladder below hero-xl.
+   Replace raw `sm:text-4xl md:text-5xl` on marketing H1/H2s. */
+@utility text-hero-sm {
+  font-size: 2.25rem;
+  line-height: 2.5rem;
+}
+
+@utility text-hero-md {
+  font-size: 3rem;
+  line-height: 1;
+}
 
 @utility text-hero-xl {
   font-size: 3.4rem;

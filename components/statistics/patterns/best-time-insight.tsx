@@ -75,7 +75,7 @@ export function BestTimeInsight({
     <Card className="tint-success">
       <CardContent className="p-lg">
         <div className="flex items-center gap-md">
-          <div className="text-4xl">🎯</div>
+          <div className="text-figure-xl">🎯</div>
           <div>
             <H3 className="text-heading-4">When You Play Best</H3>
             <p className="text-muted-foreground">{insightMessage}</p>

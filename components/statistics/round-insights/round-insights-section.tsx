@@ -78,7 +78,8 @@ export function RoundInsightsSection({
                 </p>
               )}
             </div>
-            <div className="text-4xl text-muted-foreground">vs</div>
+            {/* "vs" divider: heading token + font-normal preserves the original regular weight (figure tokens are intentionally 700-only) */}
+            <div className="text-heading-1 font-normal text-muted-foreground">vs</div>
             <div className="text-center">
               <p className="text-figure-xl">{eighteenHole?.count || 0}</p>
               <p className="text-body-sm text-muted-foreground">18-Hole Rounds</p>

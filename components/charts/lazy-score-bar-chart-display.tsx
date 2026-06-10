@@ -8,7 +8,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 const ScoreBarChartDisplay = dynamic(
   () => import("./score-bar-chart-display"),
   {
-    loading: () => <Skeleton className="w-full h-[300px] rounded-lg" />,
+    loading: () => <Skeleton className="w-full h-(--size-chart-frame) rounded-lg" />,
     ssr: false, // Charts don't need server-side rendering
   }
 );

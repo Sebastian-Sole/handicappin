@@ -30,13 +30,13 @@ const ScoreBarChartDisplay = ({
     <Card>
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-sm">
         <div className="flex items-center gap-md justify-between w-full">
-          <CardTitle className="sm:text-2xl text-xl">
+          <CardTitle className="sm:text-2xl">
             Score Differential
           </CardTitle>
           <ScoreLegend showLegend={previousScores.length >= 5} />
         </div>
       </CardHeader>
-      <CardContent className="p-0 lg:min-h-[300px] justify-center flex items-center">
+      <CardContent className="p-0 lg:min-h-(--size-chart-frame) justify-center flex items-center">
         {previousScores.length < 5 && (
           <div className="flex justify-center items-center h-full">
             <span className="text-primary">

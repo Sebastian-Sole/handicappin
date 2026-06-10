@@ -3,6 +3,13 @@ import { useTheme } from 'next-themes';
 
 // Theme color utility that reads from CSS custom properties
 // This ensures single source of truth from globals.css
+//
+// NOTE (TD-1, docs/design-token-remediation.md): app/globals.css is the
+// canonical token source. A generated, typed contract now exists at
+// @handicappin/tokens (pnpm generate:theme — see docs/web-native-parity.md);
+// this runtime CSS-var reader stays for live theme switching on web. The
+// colorMap below is a hand-maintained mirror — when adding an entry, it must
+// point at a variable that exists in globals.css; never inline a color here.
 
 export const getThemeColor = (colorName: string): string => {
   if (typeof window === 'undefined') return '';

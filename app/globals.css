@@ -15,6 +15,7 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
+  --color-overlay: var(--overlay);
 
   --color-background: var(--background);
   --color-background-alternate: var(--background-alternate);
@@ -112,6 +113,16 @@
   --spacing-3xl: 4rem;     /* = 16 */
   --spacing-4xl: 6rem;     /* = 24 */
   --spacing-5xl: 8rem;     /* = 32 */
+
+  /* Component-size tokens (hybrid size policy, TD-2 in
+     docs/design-token-remediation.md): recurring component dimensions
+     that belong to the cross-platform contract. Reference at call
+     sites via h-(--size-chart-frame) etc. Layout one-offs (skeleton
+     mirrors, viewport caps, table min-widths) intentionally stay
+     arbitrary — see the Platform-Specific Register in that doc. */
+  --size-chart-frame: 18.75rem; /* 300px — chart frames + their lazy skeletons */
+  --size-control-min: 5rem; /* 80px — textarea min-height */
+  --size-list-max: 18.75rem; /* 300px — command/list scroll cap */
 
   --shadow-2xs: var(--shadow-2xs);
   --shadow-xs: var(--shadow-xs);
@@ -230,6 +241,9 @@
   --input: oklch(0.9 0.01 160);
   --ring: oklch(0.46 0.16 148);
 
+  /* OVERLAY: modal / sheet scrim */
+  --overlay: oklch(0 0 0 / 0.8);
+
   /* CHARTS */
   --chart-1: oklch(0.46 0.16 148);
   --chart-2: oklch(0.6 0.05 200);
@@ -320,6 +334,9 @@
   --border: oklch(0.28 0.03 150);
   --input: oklch(0.28 0.03 150);
   --ring: oklch(0.55 0.16 148);
+
+  /* OVERLAY: modal / sheet scrim */
+  --overlay: oklch(0 0 0 / 0.8);
 
   /* CHART */
   --chart-1: oklch(0.55 0.16 148);

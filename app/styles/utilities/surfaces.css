@@ -171,6 +171,18 @@
   }
 }
 
+/* Hero radial wash — top-center primary glow used behind the homepage
+   hero. Companion to hero-gradient; references the primary token via
+   color-mix so theme retunes propagate (replaces the hardcoded
+   oklch(...) arbitrary value that previously lived in home-page.tsx). */
+@utility hero-radial {
+  background-image: radial-gradient(
+    ellipse 80% 50% at 50% -20%,
+    color-mix(in oklab, var(--color-primary) 12%, transparent),
+    transparent
+  );
+}
+
 /* Formula box — de-emphasized mono-typeset tile used to render a
    calculation step (expression on one line, bold result on next).
    Collapses the `surface-muted p-sm font-mono text-sm` recipe used in 6

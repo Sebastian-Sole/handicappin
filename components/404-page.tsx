@@ -6,7 +6,7 @@ export function Page404() {
   return (
     <div className="flex flex-col items-center justify-center min-h-[calc(100vh-12rem)] bg-background px-md py-2xl">
       <div className="text-center">
-        <span className="h-24 w-24 text-primary text-6xl">🏌️‍♂️</span>
+        <span className="h-24 w-24 text-primary text-figure-3xl">🏌️‍♂️</span>
         <H1 className="mt-md text-foreground">
           Oops, looks like you&apos;ve landed in a bunker!
         </H1>

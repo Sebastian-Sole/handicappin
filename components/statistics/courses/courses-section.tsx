@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { ChevronRight } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { EmptyState } from "@/components/ui/empty-state";
 import { Separator } from "@/components/ui/separator";
 import {
   Table,
@@ -31,11 +32,12 @@ export function CoursesSection({
   if (courses.length === 0) {
     return (
       <Card>
-        <CardContent className="p-2xl text-center text-muted-foreground">
-          <div className="text-4xl mb-md">🏌️</div>
-          {/* Intentional compose: text-lg + font-medium emphasis (no text-lead-medium token by design) */}
-          <p className="text-lg font-medium">No course data yet</p>
-          <p className="text-body-sm">Play more rounds to see course analytics</p>
+        <CardContent>
+          <EmptyState
+            icon="🏌️"
+            title="No course data yet"
+            description="Play more rounds to see course analytics"
+          />
         </CardContent>
       </Card>
     );

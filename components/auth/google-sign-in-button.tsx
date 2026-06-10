@@ -336,7 +336,9 @@ function GoogleSignInButtonContent({
         onClick={handleButtonClick}
         disabled={isLoading}
       >
-        {/* Google "G" Logo SVG */}
+        {/* Google "G" Logo SVG — hex fills are Google's mandated brand
+            colors (branding guidelines), intentionally outside the design
+            token contract. */}
         <svg
           className="mr-sm h-4 w-4"
           viewBox="0 0 24 24"

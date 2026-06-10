@@ -222,7 +222,7 @@ export default function BillingSuccessPage() {
           {/* Loading State */}
           {status === "loading" && (
             <>
-              <div className="text-6xl mb-md">⏳</div>
+              <div className="text-figure-3xl mb-md">⏳</div>
               <H1 className="mb-md">Just a moment...</H1>
               <p className="text-lead text-muted-foreground">
                 Checking your subscription status...
@@ -233,7 +233,7 @@ export default function BillingSuccessPage() {
           {/* Processing State (0-5 seconds) */}
           {status === "processing" && (
             <>
-              <div className="text-6xl mb-md animate-pulse">⏳</div>
+              <div className="text-figure-3xl mb-md animate-pulse">⏳</div>
               <H1 className="mb-md">
                 Activating Your Subscription
               </H1>
@@ -250,7 +250,7 @@ export default function BillingSuccessPage() {
           {/* Success State */}
           {status === "success" && (
             <>
-              <div className="text-6xl mb-md">✅</div>
+              <div className="text-figure-3xl mb-md">✅</div>
               <H1 className="mb-md text-success">
                 Welcome to Premium!
               </H1>
@@ -267,7 +267,7 @@ export default function BillingSuccessPage() {
           {/* Delayed State (5-20 seconds, 1-2 failures) */}
           {status === "delayed" && (
             <>
-              <div className="text-6xl mb-md">⚠️</div>
+              <div className="text-figure-3xl mb-md">⚠️</div>
               <H1 className="mb-md text-warning">
                 Almost There
               </H1>
@@ -312,7 +312,7 @@ export default function BillingSuccessPage() {
           {/* Failed State (3+ failures) */}
           {status === "failed" && (
             <>
-              <div className="text-6xl mb-md">❌</div>
+              <div className="text-figure-3xl mb-md">❌</div>
               <H1 className="mb-md text-destructive">
                 Activation Issue
               </H1>

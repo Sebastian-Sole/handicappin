@@ -51,9 +51,9 @@ export function PlayerIdentityCard({
       <CardContent className="p-lg md:p-xl">
         {/* Player Type Hero */}
         <div className="text-center mb-lg">
-          <div className="text-6xl md:text-7xl mb-sm">{playerType.emoji}</div>
-          {/* TODO(ui-consistency A12): responsive size ladder on H2 (text-2xl base / md:text-figure-lg) — base override intentional for mobile hero scaling, not a bare raw size; leaving until a sanctioned hero ladder covers this */}
-          <H2 className="text-2xl md:text-figure-lg mb-sm">{playerType.name}</H2>
+          <div className="text-figure-3xl md:text-figure-4xl mb-sm">{playerType.emoji}</div>
+          {/* Responsive hero ladder on H2: figure rungs (text-figure base / md:text-figure-lg) for mobile-to-desktop scaling */}
+          <H2 className="text-figure md:text-figure-lg mb-sm">{playerType.name}</H2>
           <p className="text-muted-foreground max-w-md mx-auto">
             {playerType.description}
           </p>
@@ -69,7 +69,7 @@ export function PlayerIdentityCard({
           {/* Handicap Index */}
           <div className="text-center p-md surface-raised">
             <div className="flex items-center justify-center gap-sm">
-              <span className="text-4xl md:text-figure-2xl">
+              <span className="text-figure-xl md:text-figure-2xl">
                 {formatHandicap(currentHandicap)}
               </span>
               {handicapChange !== 0 && (
@@ -87,7 +87,7 @@ export function PlayerIdentityCard({
 
           {/* Rounds & Golf Age */}
           <div className="text-center p-md surface-raised">
-            <div className="text-4xl md:text-figure-2xl">{totalRounds}</div>
+            <div className="text-figure-xl md:text-figure-2xl">{totalRounds}</div>
             <p className="text-body-sm text-muted-foreground mt-xs">Total Rounds</p>
             <p className="text-meta text-muted-foreground">
               over {formatGolfAge(golfAgeDays)}
@@ -98,7 +98,7 @@ export function PlayerIdentityCard({
           <div className="text-center p-md surface-raised">
             <div
               className={cn(
-                "text-4xl md:text-figure-2xl",
+                "text-figure-xl md:text-figure-2xl",
                 playNudge.urgent && "text-warning"
               )}
             >
