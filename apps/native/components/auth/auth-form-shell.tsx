@@ -43,14 +43,18 @@ export function AuthFormShell({
       <ScrollView
         testID={testID}
         className="flex-1"
-        contentContainerClassName="flex-grow justify-center items-center px-lg py-md"
+        // No items-center/max-w-sm: web's max-w-sm (384px) never binds inside
+        // phone-width padding, and centering a %-width child against a
+        // content-sized container collapses to 0 width under Yoga. Default
+        // cross-axis stretch + px-lg padding = web's mobile layout.
+        contentContainerClassName="flex-grow justify-center px-lg py-md"
         contentContainerStyle={{
           paddingTop: insets.top,
           paddingBottom: insets.bottom,
         }}
         keyboardShouldPersistTaps="handled"
       >
-        <View className={cn("w-full max-w-sm gap-lg", className)}>
+        <View className={cn("w-full gap-lg", className)}>
           {title || description ? (
             <View className="gap-sm items-center">
               {title ? <H1 className="text-center">{title}</H1> : null}

@@ -41,7 +41,8 @@ const buttonTextVariants = cva("text-label-sm", {
       outline: "text-foreground",
       secondary: "text-secondary-foreground",
       ghost: "text-foreground",
-      link: "text-primary underline",
+      // Web's link variant underlines on hover only — no underline at rest.
+      link: "text-primary",
     },
   },
   defaultVariants: { variant: "default" },

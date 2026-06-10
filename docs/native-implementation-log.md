@@ -97,6 +97,53 @@ per-mode shape unchanged; generator tests updated (37 pass). Re-verified
 on-sim: gallery switches dark AND back to light at runtime. Web is untouched
 (its `.dark` class strategy stays as-is — only the NATIVE emission changed).
 
+### D8 — Native cn() registers the generated typography ramp in tailwind-merge (2026-06-10)
+
+First ported screen surfaced it: twMerge classifies `text-heading-1` (and
+the whole ramp) as a text COLOR, so `cn("text-heading-1 text-foreground")`
+silently dropped the ramp class — native pairs ramp+color on every Text
+(no DOM cascade to inherit color from), web rarely does. `lib/utils.ts`
+extends twMerge with the ramp (derived from `tokens.typography` keys, so it
+tracks the contract) as a font-size class group, plus web's semantic-spacing
+extension. Also fixed in the same pass: AuthFormShell's centered `w-full`
+column collapsed to 0 width under Yoga (percentage width vs content-sized
+parent) — native shells use default cross-axis stretch + padding instead of
+items-center + max-w (web's max-w-sm never binds inside phone padding).
+
+### D9 — Capture tooling: Maestro-driven deep links + per-mode web capture (2026-06-10)
+
+`simctl openurl` with a custom scheme pops an "Open in …?" system dialog on
+EVERY call (capture caught the dialog, not the screen). compare-screen.sh now
+navigates through `.maestro/utils/nav-deeplink.yaml` (openLink + optional
+dialog accept) and falls back to simctl when Maestro is absent. The web side
+now pins `agent-browser set media <mode>` and the sim appearance to the same
+MODE (light default) so captures compare like-for-like. Also: zero-size
+markers (fonts-ready, data-settled) are not Maestro-"visible" — flows assert
+real content; the markers stay for the capture-hygiene gate's a11y-tree scan.
+
+## Per-screen evidence
+
+### login — PASS (in-band judgment, 2026-06-10)
+
+- Captures: /tmp/handicappin-compare/login/{native,web,compare}.png (light).
+- Rubric verification/rubrics/login.yaml, judged in-band (no ANTHROPIC_API_KEY):
+  - layout_structure PASS — same order/grouping (title, description, fields,
+    primary CTA, divider, Google, link row); native intentionally has no web
+    navbar/footer chrome.
+  - color_tokens PASS — background/foreground/muted/primary/input borders all
+    from tokens; primary CTA green with primary-foreground label.
+  - type_hierarchy PASS — H1 extra-bold dominant, body-muted description,
+    small labels, uppercase meta divider; Inter everywhere.
+  - components_present PASS — 40px bordered inputs, full-width primary
+    button, outlined Google button with brand-color G, two link buttons
+    (underline-at-rest removed to match web's hover-only underline).
+- Maestro `.maestro/flows/login.yaml` PASS on live sim + local Supabase:
+  renders, accepts input, real backend rejects bad credentials, visible
+  error feedback. Positive round-trip deferred to auth-roundtrip flow (needs
+  home + logout).
+- Google sign-in: visual-parity button present; functional OAuth deferred
+  (see Deferred).
+
 ## Waivers
 
 (none yet)
