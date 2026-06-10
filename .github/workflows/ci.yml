@@ -85,6 +85,11 @@ jobs:
       - name: Web token guard
         run: pnpm check:tokens
 
+      - name: Native bundle compiles (Metro + Tailwind + react-native-css)
+        run: pnpm --filter native exec expo export -p ios
+        env:
+          CI: "1"
+
   schema-sync-check:
     runs-on: ubuntu-latest
     steps:

@@ -1068,6 +1068,10 @@ export function serializeNativeGlobalCss(model, source) {
   lines.push("/* Surface/tint/chip recipes — same class names as web. */");
   for (const [name, style] of Object.entries(tokens.surfaces.light)) {
     lines.push(`@utility ${name} {`);
+    // shadow refs resolve to a box-shadow string (RN 0.76+ supports boxShadow);
+    // also guarantees no @utility is empty — Tailwind v4 rejects empty utilities.
+    if (style.shadow != null && tokens.shadows[style.shadow])
+      lines.push(`  box-shadow: ${shadowToCss(tokens.shadows[style.shadow])};`);
     if (style.backgroundColor != null)
       lines.push(`  background-color: var(--sf-${name}-bg);`);
     if (style.color != null) lines.push(`  color: var(--sf-${name}-fg);`);
