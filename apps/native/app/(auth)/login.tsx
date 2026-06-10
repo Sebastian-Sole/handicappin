@@ -130,8 +130,7 @@ export default function LoginScreen() {
     const billing = getBillingFromJWT(freshSession);
 
     if (!billing?.plan) {
-      // typed-routes-forward-cast: target screen lands later this cluster
-      router.replace("/onboarding" as Href);
+      router.replace("/onboarding");
     } else {
       router.replace("/");
     }

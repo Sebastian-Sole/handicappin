@@ -84,8 +84,7 @@ export default function VerifySessionScreen() {
         }
 
         if (!billing["plan"]) {
-          // typed-routes-forward-cast: target screen lands next cluster
-          router.replace("/onboarding" as Href);
+          router.replace("/onboarding");
         } else {
           // typed-routes-forward-cast: returnTo targets land across clusters
           router.replace(returnTo as Href);

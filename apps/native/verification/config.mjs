@@ -117,7 +117,7 @@ export function budgetCapUSD(tier = 'opus') {
  *
  * e.g. SCREENS = ['index', 'rounds', 'statistics'];
  */
-export const SCREENS = ['index', 'login', 'signup', 'forgot-password', 'update-password', 'verify-signup', 'verify-email', 'auth/verify-session'];
+export const SCREENS = ['index', 'login', 'signup', 'forgot-password', 'update-password', 'verify-signup', 'verify-email', 'auth/verify-session', 'onboarding'];
 
 /** Native screen slug → web reference path on the Next.js app (port 3000). */
 export const WEB_PATHS = {
@@ -132,6 +132,7 @@ export const WEB_PATHS = {
   // against the auth-cluster design language (see those rubric headers).
   'verify-email': '/verify-email',
   'auth/verify-session': '/auth/verify-session',
+  onboarding: '/onboarding',
 };
 
 export const SMOKE_SCREEN = 'index';

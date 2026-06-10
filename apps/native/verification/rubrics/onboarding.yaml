@@ -1,0 +1,34 @@
+# Frozen rubric — `onboarding`.
+# Native: apps/native/app/onboarding.tsx (testID "onboarding-screen").
+# Web reference: /onboarding (signed in, no plan), phone viewport.
+# Web chrome (navbar) not a finding. Plan CTAs are MOCKED on native
+# (decision ledger: purchase flows; dev notice on press).
+screen: onboarding
+rubric_version: bring-up-v1
+items:
+  layout_structure:
+    desc: >
+      Centered "Welcome to Handicappin!" H1 + lead line, then stacked plan
+      cards (Free, Premium, Unlimited with "Best Value" badge + primary
+      border, Lifetime) each with title, description, price + interval,
+      check/cross feature list, full-width CTA (Free's is outline).
+  color_tokens:
+    desc: >
+      Cards on card token with border; included features get success check,
+      excluded get destructive cross with muted text; badge primary on
+      primary-foreground; prices in foreground figures.
+    pairings_used:
+      - body-on-page
+      - muted-on-page
+      - card-border-on-page
+  type_hierarchy:
+    desc: >
+      H1 extra-bold; lead muted; card titles heading-2; figure-lg prices;
+      body features; meta cost-comparison italics. All Inter.
+  components_present:
+    desc: >
+      Four pricing cards; floating badge over the highlighted card's top
+      edge; full-width CTAs per card.
+a11y:
+  headings: [Welcome to Handicappin!]
+  markers: [onboarding-screen, plan-free, plan-premium, plan-unlimited, plan-lifetime]

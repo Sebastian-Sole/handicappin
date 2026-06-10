@@ -1,0 +1,17 @@
+# ONBOARDING · renders plan cards with real promo-slot data; plan CTAs are
+# mocked (decision ledger) and surface the dev notice.
+# PRE-REQUISITE: signed in as a plan-less user (login flow routes here).
+appId: com.handicappin.app
+---
+- openLink: handicappin://onboarding
+- tapOn:
+    text: "Open"
+    optional: true
+- assertVisible: "Welcome to Handicappin!"
+- assertVisible: "Free"
+- assertVisible: "Start Free"
+- tapOn:
+    id: "plan-free-cta"
+- extendedWaitUntil:
+    visible: ".*development build.*"
+    timeout: 8000

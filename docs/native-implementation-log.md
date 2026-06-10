@@ -225,6 +225,30 @@ cluster) and verify-session's dynamic returnTo remain, marked with
 expo lint, parity (routes+styles+theme-drift), verify:harness 55/55,
 expo export -p ios.
 
+### D10 — Onboarding plan CTAs are mocked; plan-holders redirect home (2026-06-10)
+
+Web's free-plan selection runs a Next SERVER ACTION (createFreeTier
+Subscription) and paid plans go to Stripe Checkout — neither is callable
+from native. Per the decision ledger (purchase flows mocked), every plan CTA
+on native surfaces a clearly-labelled dev notice pointing at the website;
+promo-slot data on the lifetime card is REAL (stripe.getPromoSlots tRPC,
+verified against the test-mode Stripe key sk_test_…). Web redirects
+plan-holders to /billing (permanently web-only) — native sends them to home
+instead. Real plan selection for the native flow arrives with RevenueCat.
+
+### onboarding — PASS (in-band judgment, 2026-06-10)
+
+- Captures: /tmp/handicappin-compare/onboarding/ (both sides signed in as
+  the test user — agent-browser cookie login on web). All rubric items PASS:
+  heading/lead centered, stacked plan cards with check/cross features,
+  outline Start Free, badges.
+- LIVE positive login path proven en route: Maestro login as
+  native-goal-test@handicappin.local → real Supabase session → JWT billing
+  claims (plan null) → routed to /onboarding, which rendered with real
+  promo-slot data. (This is the first half of the auth round-trip flow.)
+- Maestro flows/onboarding.yaml PASS (cards render; mocked CTA surfaces the
+  dev notice).
+
 ## Waivers
 
 (none yet)
