@@ -5,9 +5,12 @@ import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
 import { useEffect } from "react";
 import { View } from "react-native";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 
+import { SessionProvider } from "@/lib/auth/session-provider";
 import { FONTS_READY_TEST_ID, useAppFonts } from "@/lib/fonts";
+import { QueryProvider } from "@/lib/query/provider";
 
 // Hold the splash from module load so text never paints before the Inter
 // faces resolve — otherwise cold launches FOUT and the capture gate sees a
@@ -30,16 +33,22 @@ export default function RootLayout() {
   if (!fontsReady) return null;
 
   return (
-    <SafeAreaProvider>
-      {/* Zero-size marker the Maestro/capture harness asserts on. */}
-      <View
-        testID={FONTS_READY_TEST_ID}
-        accessibilityElementsHidden
-        importantForAccessibility="no-hide-descendants"
-        style={{ width: 0, height: 0 }}
-      />
-      <Stack screenOptions={{ headerShown: false }} />
-      <StatusBar style="auto" />
-    </SafeAreaProvider>
+    <QueryProvider>
+      <SessionProvider>
+        <GestureHandlerRootView style={{ flex: 1 }}>
+          <SafeAreaProvider>
+            {/* Zero-size marker the Maestro/capture harness asserts on. */}
+            <View
+              testID={FONTS_READY_TEST_ID}
+              accessibilityElementsHidden
+              importantForAccessibility="no-hide-descendants"
+              style={{ width: 0, height: 0 }}
+            />
+            <Stack screenOptions={{ headerShown: false }} />
+            <StatusBar style="auto" />
+          </SafeAreaProvider>
+        </GestureHandlerRootView>
+      </SessionProvider>
+    </QueryProvider>
   );
 }
