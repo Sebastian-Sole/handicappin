@@ -50,7 +50,6 @@ export const INTENTIONAL = {
     "statistics",
     "statistics/courses/[courseId]",
     "terms-of-service",
-    "update-password",
     "upgrade",
     "verify-email",
     "verify-signup",

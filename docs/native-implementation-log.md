@@ -167,6 +167,25 @@ real content; the markers stay for the capture-hygiene gate's a11y-tree scan.
 - Maestro flows/forgot-password.yaml PASS (client-side email validation).
 - OTP email path goes to local Mailpit only; exercised in update-password QA.
 
+### update-password — PASS (in-band judgment, 2026-06-10)
+
+- Captures: /tmp/handicappin-compare/update-password/. All rubric items PASS
+  after one fix-forward: per-side border utilities (border-y/-l/-r) don't
+  materialize under react-native-css — the OTP strip now draws one bordered
+  rounded container with per-slot right separators (same joined-box look).
+- New primitives: input-otp (invisible TextInput owning the value behind six
+  projected slots), alert.
+- Maestro flows/update-password.yaml: renders; submit gated on 6-digit OTP;
+  zod password-length error surfaces. PASS.
+- INCIDENT + boundary (logged per autonomy protocol): one reset-password
+  edge-function call was made for the local test user before confirming the
+  local edge runtime carries a real RESEND_API_KEY — i.e. it attempted ONE
+  real Resend send to `native-goal-test@handicappin.local` (unroutable TLD;
+  bounces inside Resend; no human inbox exists for it). No further OTP email
+  triggers will be made; the email loop is explicitly OUT of scope (handoff
+  §7b) and these screens are ported for structure. The OTP row in
+  otp_verifications expires in 15 minutes; only its hash is stored.
+
 ## Waivers
 
 (none yet)
