@@ -1,16 +1,16 @@
 ---
 name: web-native-parity
-description: "Fires when changing design tokens or utility recipes (app/globals.css, app/styles/utilities/*), changing a web component or screen once apps/native exists, porting UI between web and native, or asked how web↔native parity/sync works. Supplies the port-and-verify playbook that keeps the native app 1:1 with web."
+description: "Fires when changing design tokens or utility recipes (apps/web/app/globals.css, apps/web/app/styles/utilities/*), changing a web component or screen once apps/native exists, porting UI between web and native, or asked how web↔native parity/sync works. Supplies the port-and-verify playbook that keeps the native app 1:1 with web."
 user-invocable: true
 ---
 
 # Web → Native Parity (port & verify)
 
-The web app (repo root) is the design source of truth. The native app (`apps/native`, once it exists) is a **separate** component implementation that must stay 1:1. One design system (tokens), two component libraries. Full reference: `docs/web-native-parity.md`. Binding rule: `.claude/rules/web-native-parity.md`.
+The web app (`apps/web`) is the design source of truth. The native app (`apps/native`, once it exists) is a **separate** component implementation that must stay 1:1. One design system (tokens), two component libraries. Full reference: `docs/web-native-parity.md`. Binding rule: `.claude/rules/web-native-parity.md`.
 
 ## Decide which kind of change you made
 
-**A design VALUE (color/spacing/radius/shadow/typography/surface recipe)** → it lives in `app/globals.css` or `app/styles/utilities/{typography,surfaces}.css`. Change it there, then:
+**A design VALUE (color/spacing/radius/shadow/typography/surface recipe)** → it lives in `apps/web/app/globals.css` or `apps/web/app/styles/utilities/{typography,surfaces}.css`. Change it there, then:
 
 ```bash
 pnpm generate:theme        # regenerates packages/tokens/generated/*
@@ -39,7 +39,7 @@ During interactive dev, `pnpm parity:watch` prints affected routes on every web 
 ## Gotchas
 
 - **Phase-1 dormancy.** `apps/native` does not exist yet; `parity:routes`/`parity:styles`/the drift gate detect that and exit 0 with a note. Don't "fix" the dormancy — it arms itself when the app lands. The token pipeline (`generate:theme`, `check:theme-drift`, `check:tokens`) is fully live NOW.
-- **Only the token sources are generated → native.** `generate:theme` reads `app/globals.css` + the two utility files (`theme.config.json` lists them). Editing a web *component* changes nothing in native automatically.
+- **Only the token sources are generated → native.** `generate:theme` reads `apps/web/app/globals.css` + the two utility files (`theme.config.json` lists them). Editing a web *component* changes nothing in native automatically.
 - **A value with no token isn't an excuse to hardcode.** Add it to `globals.css` `@theme` (or the typography/surfaces layer) and regenerate — then consume the token. `// allow-hardcoded <reason>` is only for genuinely token-less values.
 - **Gradients are out of contract.** `hero-gradient`/`hero-radial` are skipped by the generator (RN needs expo-linear-gradient) — the generator prints every skipped utility on each run; check that list before assuming something propagated.
 - **Surfaces are per-mode.** `color-mix` recipes resolve differently for light/dark; on native use the generated class names (mode-aware via `:root`/`.dark` vars) rather than copying a single hex.

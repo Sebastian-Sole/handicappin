@@ -16,7 +16,7 @@ Hard rules for this codebase. Follow without exception. See `package.json` for e
 - No `enum`. Use `as const` objects or union types.
 - Prefer `interface` for object shapes, `type` for unions and intersections.
 - Use the `@/` path alias for imports from the project root (e.g. `@/lib/...`, `@/components/...`, `@/server/...`, `@/db/...`, `@/trpc/...`). No deep relative imports (`../../../`).
-- Generated Supabase types live in `types/supabase.ts`. Regenerate with `pnpm gen:types` (remote) or `pnpm gen:local` (local stack). Do not hand-edit.
+- Generated Supabase types live in `apps/web/types/supabase.ts`. Regenerate with `pnpm gen:types` (remote) or `pnpm gen:local` (local stack). Do not hand-edit.
 - Validate anything that crosses a trust boundary (route params, form data, external API responses, webhook payloads) with `zod`. Pair Drizzle schemas with `drizzle-zod`.
 
 ## Next.js (App Router, v16 + Turbopack, React 19)
@@ -46,7 +46,7 @@ Hard rules for this codebase. Follow without exception. See `package.json` for e
 - **Tailwind CSS v4** utility classes. No custom CSS modules, no styled-components.
 - Component variants via `class-variance-authority` (CVA). Merge classes with `cn()` from `@/lib/utils` (which wraps `clsx` + `tailwind-merge`).
 - UI primitives are shadcn/ui on top of Radix UI. Component registry config is `components.json`; primitives live in `components/ui/`. Prefer composing existing primitives over pulling in new ones.
-- Design tokens live in `app/globals.css` (+ `app/styles/utilities/`). They are the single hand-edited source: `pnpm generate:theme` extracts the typed native contract into `packages/tokens/generated/` (committed; never hand-edit). Token-source edits require regeneration — the pre-commit hook automates it, `pnpm check:theme-drift` is the CI backstop. See `docs/web-native-parity.md`.
+- Design tokens live in `apps/web/app/globals.css` (+ `apps/web/app/styles/utilities/`). They are the single hand-edited source: `pnpm generate:theme` extracts the typed native contract into `packages/tokens/generated/` (committed; never hand-edit). Token-source edits require regeneration — the pre-commit hook automates it, `pnpm check:theme-drift` is the CI backstop. See `docs/web-native-parity.md`.
 
 ## Accessibility (WCAG 2.1 AA)
 
@@ -61,11 +61,11 @@ Hard rules for this codebase. Follow without exception. See `package.json` for e
 ## Payments, Auth, Email, Observability
 
 - **Stripe**: pin the API version used in `lib/stripe/...` (or equivalent). Webhook handlers must verify signatures and be idempotent (dedupe by event ID). Never log full event payloads or PII.
-- **Auth**: Supabase Auth via `@supabase/ssr`. Server-side session reads happen in `server/` or middleware (`proxy.ts`). Never trust `auth.uid()` on the client for authorization decisions.
+- **Auth**: Supabase Auth via `@supabase/ssr`. Server-side session reads happen in `server/` or middleware (`apps/web/proxy.ts`). Never trust `auth.uid()` on the client for authorization decisions.
 - **Email**: React Email templates in `emails/`. Send via Resend from server code only. Preview locally with `pnpm email`.
 - **Observability**: Sentry is wired through the two instrumentation files and `sentry.*.config.ts`. Don't `console.log` in shipped code — use Sentry breadcrumbs or structured logging. The Stop hook audits for stray `console.log`.
 - **Rate limiting**: `@upstash/ratelimit` + `@upstash/redis`. Apply to public endpoints (auth, contact forms, webhooks reachable without auth).
-- **Environment**: `env.ts` (`@t3-oss/env-nextjs`) is the single source of truth for env vars. Don't reach into `process.env` directly in app code.
+- **Environment**: `apps/web/env.ts` (`@t3-oss/env-nextjs`) is the single source of truth for env vars. Don't reach into `process.env` directly in app code.
 
 ## Testing
 
@@ -78,18 +78,18 @@ Hard rules for this codebase. Follow without exception. See `package.json` for e
 
 | Directory | Purpose |
 |---|---|
-| `app/` | Next.js App Router routes, layouts, route handlers |
-| `components/` | Shared components; `components/ui/` is shadcn primitives |
-| `server/` | tRPC routers, server-only business logic |
-| `trpc/` | tRPC client/provider wiring |
-| `db/` | Drizzle schema and query helpers |
-| `lib/` | Framework-agnostic utilities (`cn`, formatters, clients) |
-| `hooks/` | React hooks (application-level) |
-| `contexts/` | React context providers |
-| `emails/` | React Email templates |
+| `apps/web/app/` | Next.js App Router routes, layouts, route handlers |
+| `apps/web/components/` | Shared components; `components/ui/` is shadcn primitives |
+| `apps/web/server/` | tRPC routers, server-only business logic |
+| `apps/web/trpc/` | tRPC client/provider wiring |
+| `apps/web/db/` | Drizzle schema and query helpers |
+| `apps/web/lib/` | Framework-agnostic utilities (`cn`, formatters, clients) |
+| `apps/web/hooks/` | React hooks (application-level) |
+| `apps/web/contexts/` | React context providers |
+| `apps/web/emails/` | React Email templates |
 | `supabase/` | Migrations, edge functions, seeds |
-| `types/` | Shared types; `supabase.ts` is generated |
-| `tests/` | `unit/`, `integration/` |
+| `apps/web/types/` | Shared types; `supabase.ts` is generated |
+| `apps/web/tests/` | `unit/`, `integration/` |
 | `scripts/` | One-off `tsx`/node scripts |
 
 ## Package Manager

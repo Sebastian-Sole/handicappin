@@ -2,15 +2,16 @@
 # Design-token regression guard.
 #
 # Fails when component code reintroduces styling that bypasses the design
-# token system (app/globals.css + app/styles/utilities/*). Each check mirrors
-# a violation class closed by docs/design-token-remediation.md — keep the two
-# in sync when adding checks or exceptions.
+# token system (apps/web/app/globals.css + apps/web/app/styles/utilities/*).
+# Each check mirrors a violation class closed by
+# docs/design-token-remediation.md — keep the two in sync when adding checks
+# or exceptions.
 #
 # Usage: pnpm check:tokens
 set -uo pipefail
 cd "$(dirname "$0")/.." || exit 1
 
-SCAN_DIRS=(app components hooks contexts lib)
+SCAN_DIRS=(apps/web/app apps/web/components apps/web/hooks apps/web/contexts apps/web/lib)
 fail=0
 
 # grep wrapper: $1 = check name, $2 = extended regex, $3 = exclusion regex

@@ -18,7 +18,13 @@ import { join, relative } from "node:path";
 import { nativeAppPresent, REPO } from "./routes.mjs";
 import { affectedRoutes, buildRouteClosures, isWebUiFile } from "./drift.mjs";
 
-const WATCH_DIRS = ["components", "app", "lib", "hooks", "contexts"];
+const WATCH_DIRS = [
+  "apps/web/components",
+  "apps/web/app",
+  "apps/web/lib",
+  "apps/web/hooks",
+  "apps/web/contexts",
+];
 const DEBOUNCE_MS = 400;
 
 let closures = buildRouteClosures();

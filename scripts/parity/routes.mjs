@@ -7,7 +7,7 @@
  * config — rename a route and it changes its URL on that side, falls out of
  * the intersection, and `parity:routes` fails loudly.
  *
- *   Web (Next.js):  app/(group)/<route>/page.tsx          (repo root)
+ *   Web (Next.js):  apps/web/app/(group)/<route>/page.tsx
  *   Native (Expo):  apps/native/app/(group)/<route>.tsx | <route>/index.tsx
  *
  * DORMANT until apps/native exists: with no native app the gate prints the
@@ -24,7 +24,7 @@ import { join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
 
 export const REPO = join(fileURLToPath(new URL(".", import.meta.url)), "..", "..");
-export const WEB_APP = join(REPO, "app");
+export const WEB_APP = join(REPO, "apps/web/app");
 export const NATIVE_APP = join(REPO, "apps/native/app");
 
 /** Deliberate, documented divergences (intent — NOT a mapping). */

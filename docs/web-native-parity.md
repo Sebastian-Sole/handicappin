@@ -4,7 +4,7 @@ How the future native app will be kept 1:1 with the web app, and what is already
 
 ## Mental model: one design system, two component libraries
 
-There is **one design system** — the tokens and utility recipes defined in `app/globals.css` + `app/styles/utilities/{typography,surfaces}.css`. Web consumes them directly via Tailwind; the native app will consume them through the **generated contract** in `packages/tokens`.
+There is **one design system** — the tokens and utility recipes defined in `apps/web/app/globals.css` + `apps/web/app/styles/utilities/{typography,surfaces}.css`. Web consumes them directly via Tailwind; the native app will consume them through the **generated contract** in `packages/tokens`.
 
 There will be **two component libraries** — web components (DOM + Tailwind + shadcn) and native components (RN primitives + NativeWind). They can't share code, so each is authored separately, but **both pull from the one token source**. Write-once frameworks were evaluated and rejected in the reference project (SSR + shadcn accessibility are not negotiable); the same trade-off holds here.
 
@@ -49,7 +49,7 @@ Install the git hook once per clone: `bash scripts/install-hooks.sh`.
 All deterministic parity tooling is in place and **activates automatically the moment `apps/native/app` exists** — no rewiring:
 
 - `scripts/parity/routes.mjs` (`pnpm parity:routes`) — route auto-discovery + intersection; HARD pre-commit gate. Deliberate divergences go in its `INTENTIONAL` sets; during native bring-up, seed `INTENTIONAL.webOnly` with not-yet-ported routes and burn it down.
-- `scripts/parity/drift.mjs` (`pnpm parity:drift`) — import-graph closure (`@/` → repo root): changed web file → affected same-slug native screens. Advisory; exits 1 on affected shared routes once native exists.
+- `scripts/parity/drift.mjs` (`pnpm parity:drift`) — import-graph closure (`@/` → apps/web): changed web file → affected same-slug native screens. Advisory; exits 1 on affected shared routes once native exists.
 - `scripts/parity/watch.mjs` (`pnpm parity:watch`) — live dev signal.
 - `scripts/parity/check-hardcoded-styles.mjs` (`pnpm parity:styles`) — native twin of `check:tokens`; HARD pre-commit gate; `// allow-hardcoded <reason>` escape hatch.
 - `pnpm parity` — the one-shot gate (theme-drift + routes + native styles).
@@ -67,7 +67,7 @@ All deterministic parity tooling is in place and **activates automatically the m
 
 ## Files
 
-- `app/globals.css` + `app/styles/utilities/{typography,surfaces}.css` — the design-system source of truth (hand-edited).
+- `apps/web/app/globals.css` + `apps/web/app/styles/utilities/{typography,surfaces}.css` — the design-system source of truth (hand-edited).
 - `packages/tokens/` — generator + generated contract (`generated/` is committed; never hand-edit).
 - `packages/tokens/theme.config.json` — source paths, mode selectors, font stacks, surface contract prefixes.
 - `scripts/git-hooks/pre-commit` + `scripts/install-hooks.sh` — commit-time regen + token guard.
