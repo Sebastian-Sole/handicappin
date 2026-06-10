@@ -405,6 +405,36 @@ sessions pick the claims up via /auth/verify-session.
   fast-follow); frivolities' strokes-by-day chart is represented by the
   day-of-week chart in Activity (web duplicates it).
 
+### profile/[id] (Profile tab) + calculators — PASS (in-band judgment, 2026-06-10)
+
+- BURN-DOWN COMPLETE: INTENTIONAL.webOnly now holds exactly the seven
+  permanent web-only routes from the ledger, comment marks them permanent
+  (DoD #1 satisfied). All four bottom tabs live (Home/Rounds/Statistics/
+  Profile, D5 mapping — every tab a shared route).
+- Profile captures: /tmp/handicappin-compare/profile_<uid>/. Personal
+  (real name edit via auth.updateProfile, read-only email with website
+  note), Billing (REAL plan card "unlimited", website Change Plan, mocked
+  Restore Purchases through the RevenueCat-shaped seam surfacing a labelled
+  dev notice — the ledger's billing-mock UI), Settings (native
+  update-password, Calculators per D6, legal links via expo-web-browser,
+  destructive Sign Out). Web's sidebar nav = segmented row on phone.
+- Calculators captures: /tmp/handicappin-compare/calculators/. Core four
+  fully interactive with linked values (handicap-core math: course
+  handicap, score differential, handicap index over differential chips
+  with best-of highlighting, net score). Advanced/Educational: named cards
+  + website CTA (logged deferral — exploratory widgets). Web's accordions
+  render expanded on native (mobile-friendly; noted in rubric).
+- PORTING BUG FIXED en route: native getBillingFromJWT read a top-level
+  `billing` claim; the hook nests it under app_metadata.billing (web reads
+  it there). The auth round-trip exposed it: post-login routing sent an
+  unlimited user to onboarding.
+- Maestro: flows/profile.yaml PASS (real plan + mocked-restore notice),
+  flows/calculators.yaml PASS, flows/auth-roundtrip.yaml PASS
+  (sign out → login → REAL credentials → home with live data) — DoD #4's
+  auth round-trip complete.
+- Deferred with visible pointers (web): email-change OTP flow, data
+  export, account deletion, advanced/educational calculator interactivity.
+
 ## Waivers
 
 (none yet)

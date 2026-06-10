@@ -1,0 +1,50 @@
+# AUTH ROUND-TRIP (DoD #4) · sign out from Settings, land on login, sign
+# back in with real credentials, land on home with live data.
+# PRE-REQUISITE: signed in as the test user; local Supabase + web up.
+appId: com.handicappin.app
+---
+- openLink: handicappin://
+- tapOn:
+    text: "Open"
+    optional: true
+- extendedWaitUntil:
+    visible:
+      id: "tab-profile"
+    timeout: 30000
+- tapOn:
+    id: "tab-profile"
+- extendedWaitUntil:
+    visible: "Manage your account settings"
+    timeout: 20000
+- scrollUntilVisible:
+    element:
+      id: "profile-tab-settings"
+    direction: UP
+    centerElement: true
+- tapOn:
+    id: "profile-tab-settings"
+- scrollUntilVisible:
+    element:
+      id: "sign-out"
+    centerElement: true
+- tapOn:
+    id: "sign-out"
+# Logged out → login screen.
+- extendedWaitUntil:
+    visible: "Welcome Back"
+    timeout: 20000
+# Sign back in with the real test credentials.
+- tapOn:
+    id: "login-email"
+- inputText: "native-goal-test@handicappin.local"
+- tapOn:
+    id: "login-password"
+- inputText: "NativeGoal2026!"
+- pressKey: Enter
+- tapOn:
+    id: "login-submit"
+# Home renders with live data for the signed-in user.
+- extendedWaitUntil:
+    visible: "Welcome back, Native"
+    timeout: 30000
+- assertVisible: "Handicap Index"

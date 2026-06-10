@@ -29,19 +29,16 @@ export const NATIVE_APP = join(REPO, "apps/native/app");
 
 /** Deliberate, documented divergences (intent — NOT a mapping). */
 export const INTENTIONAL = {
-  // NATIVE BRING-UP BACKLOG (seeded 2026-06-10): every web route not yet
-  // ported to a native screen. Porting a screen = create the same-slug file
-  // in apps/native/app AND delete the entry here. The set must burn down to
-  // only the genuinely web-only routes (legal/SEO pages, web-only auth
-  // flows) — revisit each entry deliberately, don't let it fossilize.
+  // PERMANENTLY WEB-ONLY (decision ledger, docs/native-implementation-
+  // handoff.md §1; bring-up backlog fully burned down 2026-06-10): legal/
+  // marketing pages and the Stripe billing surfaces. Native links out to
+  // the website where these are reachable (expo-web-browser).
   webOnly: new Set([
     "about",
     "billing",
     "billing/success",
-    "calculators",
     "contact",
     "privacy-policy",
-    "profile/[id]",
     "terms-of-service",
     "upgrade",
   ]),

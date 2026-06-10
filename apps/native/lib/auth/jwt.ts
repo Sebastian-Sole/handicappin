@@ -38,7 +38,12 @@ export function getBillingFromJWT(
     if (!payload) return null;
     const claims: unknown = JSON.parse(base64urlDecode(payload));
     if (typeof claims !== "object" || claims === null) return null;
-    const billing = (claims as Record<string, unknown>)["billing"];
+    // Web reads app_metadata.billing (the custom-claims hook nests it there).
+    const appMetadata = (claims as Record<string, unknown>)["app_metadata"];
+    const billing =
+      typeof appMetadata === "object" && appMetadata !== null
+        ? (appMetadata as Record<string, unknown>)["billing"]
+        : undefined;
     if (typeof billing !== "object" || billing === null) return null;
     const b = billing as Record<string, unknown>;
     return {

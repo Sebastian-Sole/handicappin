@@ -1,0 +1,38 @@
+# Frozen rubric — `calculators`.
+# Native: apps/native/app/calculators.tsx (testID "calculators-screen").
+# Web reference: /calculators signed in (phone). Web chrome not a finding.
+# Web renders calculators as collapsed accordions; native shows the four
+# CORE calculators expanded with inputs (mobile-friendly). Advanced +
+# Educational list their calculators with a visible website pointer
+# (logged deferral — exploratory widgets, not data surfaces).
+screen: calculators
+rubric_version: bring-up-v1
+items:
+  layout_structure:
+    desc: >
+      Centered "Golf Calculators" H1 + WHS description, Core/Advanced/
+      Educational segmented tabs. Core: Course Handicap (4 linked inputs +
+      formula box), Score Differential (3 inputs + formula box), Handicap
+      Index (differential chips, best-of highlighted, handicap-core math),
+      Net Score (linked values). Advanced/Educational: named cards +
+      website CTA.
+  color_tokens:
+    desc: >
+      Cards on card token; formula boxes on the formula-box recipe; results
+      in primary figures; used-differential chips on chip-primary.
+    pairings_used:
+      - body-on-page
+      - muted-on-page
+      - card-border-on-page
+  type_hierarchy:
+    desc: >
+      H1 title; heading-3 calculator names; meta input labels; figure-lg
+      results; meta formula lines. All Inter.
+  components_present:
+    desc: >
+      Segmented category tabs; numeric inputs with placeholders; formula
+      boxes with live results; add/remove differential chips; website CTA
+      on non-core tabs.
+a11y:
+  headings: [Golf Calculators]
+  markers: [calculators-screen, calculators-core, calc-handicap-index, calc-add-differential]
