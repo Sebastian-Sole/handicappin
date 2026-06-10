@@ -8,7 +8,7 @@
   "outputDir": "./generated",
   "outputs": {
     "tokens": "./generated/tokens.ts",
-    "nativeCss": "./generated/native-global.css"
+    "nativeCss": "../../apps/native/global.css"
   },
   "remBasePx": 16,
   "fonts": {

@@ -29,10 +29,35 @@ export const NATIVE_APP = join(REPO, "apps/native/app");
 
 /** Deliberate, documented divergences (intent — NOT a mapping). */
 export const INTENTIONAL = {
-  // Web-only routes that will have no native screen by design. Seed this with
-  // unported routes during native bring-up; every entry should eventually be
-  // either ported or genuinely web-only (e.g. legal/SEO pages).
-  webOnly: new Set([]),
+  // NATIVE BRING-UP BACKLOG (seeded 2026-06-10): every web route not yet
+  // ported to a native screen. Porting a screen = create the same-slug file
+  // in apps/native/app AND delete the entry here. The set must burn down to
+  // only the genuinely web-only routes (legal/SEO pages, web-only auth
+  // flows) — revisit each entry deliberately, don't let it fossilize.
+  webOnly: new Set([
+    "about",
+    "auth/verify-session",
+    "billing",
+    "billing/success",
+    "calculators",
+    "contact",
+    "dashboard/[id]",
+    "forgot-password",
+    "login",
+    "onboarding",
+    "privacy-policy",
+    "profile/[id]",
+    "rounds/[id]/calculation",
+    "rounds/add",
+    "signup",
+    "statistics",
+    "statistics/courses/[courseId]",
+    "terms-of-service",
+    "update-password",
+    "upgrade",
+    "verify-email",
+    "verify-signup",
+  ]),
   // Native-only routes by design.
   nativeOnly: new Set([]),
 };
