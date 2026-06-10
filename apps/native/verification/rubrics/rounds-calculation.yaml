@@ -1,0 +1,45 @@
+# Frozen rubric — `rounds/[id]/calculation`.
+# Native: apps/native/app/rounds/[id]/calculation.tsx
+# (testID "round-calculation-screen").
+# Web reference: /rounds/<id>/calculation signed in (phone). Web chrome not
+# a finding. Web's step sections fade in via IntersectionObserver — full-page
+# web captures can show them blank below the fold; judge per-section content.
+screen: rounds/[id]/calculation
+rubric_version: bring-up-v1
+items:
+  layout_structure:
+    desc: >
+      Overview card (course H2, date/tee/hole-count icon row, Score in
+      primary + Differential figures, 9-hole badge when applicable), 4-dot
+      stepper with labels, Hole-by-Hole Results table (Hole/Par/Strokes/
+      HCP/Adj columns, unplayed holes muted, totals row on secondary), then
+      four numbered steps separated by rules: Course Handicap (editable
+      index/slope/rating/par + 18↔9 switch + formula box), Adjusted Scores
+      (stat tiles + capped/clean notice + formula), Score Differential
+      (editable rating/slope + formula, 9-hole variant when applicable),
+      Handicap Impact (before→after figures, trend banner, ESR notice when
+      non-zero, differential summary box).
+  color_tokens:
+    desc: >
+      Cards on card token; formula boxes on surface-muted; modified inputs
+      tinted warning; capped/clean notices tint-warning/tint-success; trend
+      banner tinted by direction; primary figures for computed results.
+    pairings_used:
+      - body-on-page
+      - muted-on-page
+      - card-border-on-page
+  type_hierarchy:
+    desc: >
+      heading-2 course/section titles; heading-3 step titles; figure-lg
+      overview stats; figure-sm computed results; body-sm/meta supporting
+      copy; badge text in step chips. All Inter.
+  components_present:
+    desc: >
+      Stepper circles with connector lines; holes table with totals;
+      numbered step chips; editable number fields; native Switch for 18/9;
+      reset button appears when values modified; collapsible learn-more
+      rows; formula boxes showing the live recomputed values (handicap-core
+      math).
+a11y:
+  headings: [Hole-by-Hole Results, Course Handicap, Adjusted Scores, Score Differential, Handicap Impact]
+  markers: [round-calculation-screen, holes-table, calc-step-1, calc-step-2, calc-step-3, calc-step-4]

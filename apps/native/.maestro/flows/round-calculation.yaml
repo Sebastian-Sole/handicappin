@@ -1,0 +1,33 @@
+# ROUND-CALCULATION · real scorecard loads via tRPC; the four handicap-core
+# steps render with live formula results.
+# PRE-REQUISITE: signed in as the test user; round id 5 exists (seeded +
+# native submission era).
+appId: com.handicappin.app
+---
+- openLink: handicappin://rounds/5/calculation
+- tapOn:
+    text: "Open"
+    optional: true
+# Screen may retain an earlier scroll position — head back to the top
+# (the overview card is the very first block).
+- scrollUntilVisible:
+    element:
+      text: ".*St. Andrews Old Course.*"
+    direction: UP
+    timeout: 30000
+- assertVisible: "Score"
+- assertVisible: "Differential"
+- assertVisible: "Hole-by-Hole Results"
+- scrollUntilVisible:
+    element:
+      text: "Course Handicap ="
+- assertVisible: "strokes"
+- scrollUntilVisible:
+    element:
+      text: "Handicap Impact"
+    timeout: 30000
+- scrollUntilVisible:
+    element:
+      text: "Before this round"
+    timeout: 20000
+- assertVisible: "After this round"

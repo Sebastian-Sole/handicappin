@@ -360,6 +360,26 @@ sessions pick the claims up via /auth/verify-session.
   styled prompt). Home stats verified updating live after the native
   round submission (avg 8.3, best +5, 4 played).
 
+### rounds/[id]/calculation — PASS (in-band judgment, 2026-06-10)
+
+- Captures: /tmp/handicappin-compare/rounds_5_calculation/ + scrolled step
+  shots. All rubric items PASS: overview card matches web 1:1 (identical
+  live values: 81 score, 0.9 differential, Black tee), stepper, holes table
+  (totals row 76/81/0/81 EXACTLY equals web's), four interactive steps with
+  editable values + live formula recomputation through handicap-core
+  (course handicap 75 strokes from the real tee data).
+- Web quirk noted in the rubric: step sections animate in via
+  IntersectionObserver — full-page web captures show them blank below the
+  fold; interactive parity confirmed per section.
+- Boundary lesson recorded in the schema header: drizzle serializes
+  NUMERIC/DECIMAL as strings (PostgREST sends numbers) — the scorecard
+  schemas are now coercive on numerics and tolerant of string|Date dates.
+- Maestro flows/round-calculation.yaml PASS (deep link → overview → formula
+  box → Handicap Impact before/after).
+- Deferred: web's score-distribution sidebar (display-only enrichment beside
+  the holes table; stacked phone layouts already differ structurally) —
+  logged as a fast-follow candidate, not a parity blocker. Score legend idem.
+
 ## Waivers
 
 (none yet)

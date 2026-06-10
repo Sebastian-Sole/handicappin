@@ -17,7 +17,6 @@ import { Input } from "@/components/ui/input";
 import { tokens } from "@handicappin/tokens/tokens";
 import type { ScorecardWithRound } from "@/lib/api/schemas/scorecard";
 import { useColorMode } from "@/lib/color-mode";
-import { cn } from "@/lib/utils";
 
 const ICON_SIZE = 20; // allow-hardcoded lucide icon prop mirrors web's fixed h-5 w-5 icon box
 const PAGE_SIZE = 20;
