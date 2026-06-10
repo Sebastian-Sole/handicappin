@@ -1,11 +1,13 @@
 #!/usr/bin/env bash
 # Pre-commit gate (installed by scripts/install-hooks.sh; applies to anyone
-# committing, human or agent). Two fast checks:
+# committing, human or agent). Fast checks:
 #
 #   1. Design-token sync — if the design-system source changed, regenerate
 #      @handicappin/tokens and stage the outputs so commits never carry a
 #      stale token contract (CI backstop: check:theme-drift).
 #   2. check:tokens — the web-side token-bypass guard.
+#   3. parity:routes — web/native route divergence (dormant until apps/native).
+#   4. parity:styles — hardcoded native styling (dormant until apps/native).
 #
 # Deterministic and sub-second; bypass only with --no-verify.
 set -uo pipefail
@@ -25,6 +27,17 @@ fi
 
 if ! bash scripts/check-design-tokens.sh; then
   echo "[pre-commit] check:tokens failed — commit blocked."
+  exit 1
+fi
+
+if ! node scripts/parity/routes.mjs >/dev/null; then
+  echo "[pre-commit] parity:routes failed — route sets diverged. Details:"
+  node scripts/parity/routes.mjs || true
+  exit 1
+fi
+
+if ! node scripts/parity/check-hardcoded-styles.mjs; then
+  echo "[pre-commit] parity:styles failed — hardcoded native styling. Commit blocked."
   exit 1
 fi
 

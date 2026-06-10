@@ -44,13 +44,26 @@ Install the git hook once per clone: `bash scripts/install-hooks.sh`.
 - **Value changes propagate automatically** — a token edit + `generate:theme` (or just committing; the hook regenerates) updates the entire native contract.
 - **Component/structure changes will not propagate** — when the native app exists, web component changes must be mirrored by hand. Phase 2 ports the rest of the reference tooling so you can't *forget* (route intersection, import-graph drift nudges, PostToolUse hook) and can't *cheat* (native hardcoded-style gate, visual parity judge).
 
-## Phase 2 — when `apps/native` lands (port from ks-digital)
+## Phase 2 — parity enforcement (PORTED 2026-06-10, armed-but-dormant)
 
-1. Point `theme.config.json` `outputs.nativeCss` at `apps/native/global.css`; validate against a real NativeWind build (incl. dark-mode strategy and the `@custom-variant dark` wiring).
-2. Port `scripts/parity/{routes,drift,watch}.mjs` (web root here is the repo root, not `apps/web` — adjust path constants and tsconfig baseUrl resolution) and add the route gate + drift nudge to pre-commit and `.claude/hooks`.
-3. Port `check-hardcoded-styles.mjs` into the native app (native twin of `check:tokens`).
-4. Port `.claude/rules/web-native-parity.md` + the `web-native-parity` skill, the `parity-web-change.sh` PostToolUse hook, and `compare-screen.sh` + the vision-judge verification harness.
-5. Add `apps/*` to `pnpm-workspace.yaml`; gradients (`hero-gradient`/`hero-radial`) get expo-linear-gradient equivalents generated from the same source.
+All deterministic parity tooling is in place and **activates automatically the moment `apps/native/app` exists** — no rewiring:
+
+- `scripts/parity/routes.mjs` (`pnpm parity:routes`) — route auto-discovery + intersection; HARD pre-commit gate. Deliberate divergences go in its `INTENTIONAL` sets; during native bring-up, seed `INTENTIONAL.webOnly` with not-yet-ported routes and burn it down.
+- `scripts/parity/drift.mjs` (`pnpm parity:drift`) — import-graph closure (`@/` → repo root): changed web file → affected same-slug native screens. Advisory; exits 1 on affected shared routes once native exists.
+- `scripts/parity/watch.mjs` (`pnpm parity:watch`) — live dev signal.
+- `scripts/parity/check-hardcoded-styles.mjs` (`pnpm parity:styles`) — native twin of `check:tokens`; HARD pre-commit gate; `// allow-hardcoded <reason>` escape hatch.
+- `pnpm parity` — the one-shot gate (theme-drift + routes + native styles).
+- Agent harness: `.claude/rules/web-native-parity.md` (binding rule), `.claude/skills/web-native-parity/` (playbook), `.claude/hooks/parity-web-change.sh` (PostToolUse nudge; silent while dormant).
+- `pnpm-workspace.yaml` already includes `apps/*`.
+
+## Phase 3 — native bring-up (the remaining work, needs the actual app)
+
+1. Scaffold `apps/native` (Expo + NativeWind v5 + `@expo-google-fonts/inter` registering exactly the `FONT_FACES` names from `packages/tokens/src/font-faces.mjs`).
+2. Point `theme.config.json` `outputs.nativeCss` at `apps/native/global.css`; validate the generated theme against a real NativeWind build — especially the dark-mode strategy (`.dark`-scoped vars + `@custom-variant dark`) and the surface utility classes.
+3. Seed `INTENTIONAL.webOnly` in `routes.mjs` with the unported route list; port screens, burning the list down.
+4. Gradients: give `hero-gradient`/`hero-radial` expo-linear-gradient equivalents (generator currently skips them and prints the skip list on every run).
+5. Port the visual verification layer from ks-digital once there is something to screenshot: `compare-screen.sh` (side-by-side sim/web capture) and the vision-judge harness (`apps/app/verification/` — quorum judging, iteration caps, verdict cache). Deliberately NOT ported now: it is inert without a booted simulator and a running app.
+6. Add `pnpm parity` to CI on all PRs (today only `theme-drift.yml` runs, scoped to token paths).
 
 ## Files
 
