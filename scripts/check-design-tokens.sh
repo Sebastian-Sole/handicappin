@@ -10,7 +10,7 @@
 set -uo pipefail
 cd "$(dirname "$0")/.."
 
-SCAN_DIRS=(app components)
+SCAN_DIRS=(apps/web/app apps/web/components)
 fail=0
 
 # grep wrapper: $1 = check name, $2 = extended regex, $3 = exclusion regex

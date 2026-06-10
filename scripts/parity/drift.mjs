@@ -19,7 +19,7 @@ import { existsSync, readFileSync, statSync } from "node:fs";
 import { dirname, join, relative } from "node:path";
 import { computeParity, nativeAppPresent, REPO, webRouteFiles } from "./routes.mjs";
 
-const WEB_ROOT = REPO; // `@/` → repo root (tsconfig paths: "@/*": ["./*"])
+const WEB_ROOT = join(REPO, "apps/web"); // `@/` → apps/web (tsconfig paths: "@/*": ["./*"])
 const EXTS = [".tsx", ".ts", ".jsx", ".js"];
 
 function resolveImport(spec, fromFile) {
@@ -38,9 +38,8 @@ const IMPORT_RE =
 /** Is this path a web UI source file (a parity-relevant change)? */
 export function isWebUiFile(relPath) {
   const p = relPath.replace(/\\/g, "/");
-  if (!/^(app|components|lib|hooks|contexts)\//.test(p)) return false;
-  if (/^app\/api\//.test(p)) return false; // route handlers: no visual surface
-  if (/^apps\//.test(p)) return false; // native app itself
+  if (!/^apps\/web\/(app|components|lib|hooks|contexts)\//.test(p)) return false;
+  if (/^apps\/web\/app\/api\//.test(p)) return false; // route handlers: no visual surface
   if (!/\.(tsx?|jsx?)$/.test(p)) return false;
   if (/(\.test\.tsx?|\.test\.jsx?|\.stories\.tsx?|\.d\.ts)$/.test(p)) return false;
   return true;

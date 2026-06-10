@@ -20,7 +20,7 @@ export default defineConfig({
       // package's source entry guarantees Vitest finds the module.
       "@handicappin/handicap-core": path.resolve(
         __dirname,
-        "packages/handicap-core/src/index.ts"
+        "../../packages/handicap-core/src/index.ts"
       ),
       "@": path.resolve(__dirname, "./"),
     },

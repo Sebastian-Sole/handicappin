@@ -25,7 +25,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 const rootDir = join(__dirname, "..");
 
-const MAIN_APP_SCHEMA = join(rootDir, "types/scorecard-input.ts");
+const MAIN_APP_SCHEMA = join(rootDir, "apps/web/types/scorecard-input.ts");
 const EDGE_FUNCTION_SCHEMA = join(
   rootDir,
   "supabase/functions/handicap-shared/shared-schemas.ts"

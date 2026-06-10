@@ -14,18 +14,17 @@ FILE_PATH=$(echo "$INPUT" | jq -r '.tool_input.file_path // empty')
 [ -d "$CLAUDE_PROJECT_DIR/apps/native" ] || exit 0
 
 case "$FILE_PATH" in
-  */apps/*) exit 0 ;; # the native app itself
-  */components/*.tsx | */components/*.ts | \
-  */app/*.tsx | */app/*.ts | \
-  */lib/*.tsx | */lib/*.ts | \
-  */hooks/*.tsx | */hooks/*.ts | \
-  */contexts/*.tsx | */contexts/*.ts) ;;
+  */apps/web/components/*.tsx | */apps/web/components/*.ts | \
+  */apps/web/app/*.tsx | */apps/web/app/*.ts | \
+  */apps/web/lib/*.tsx | */apps/web/lib/*.ts | \
+  */apps/web/hooks/*.tsx | */apps/web/hooks/*.ts | \
+  */apps/web/contexts/*.tsx | */apps/web/contexts/*.ts) ;;
   *) exit 0 ;;
 esac
 
 # Skip files with no visual surface.
 case "$FILE_PATH" in
-  *.test.tsx | *.test.ts | *.stories.tsx | *.d.ts | */app/api/*) exit 0 ;;
+  *.test.tsx | *.test.ts | *.stories.tsx | *.d.ts | */apps/web/app/api/*) exit 0 ;;
 esac
 
 RESULT=$(node "$CLAUDE_PROJECT_DIR/scripts/parity/drift.mjs" HEAD 2>&1)

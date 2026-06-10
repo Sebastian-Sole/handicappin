@@ -6,14 +6,14 @@ name: theme-drift
 on:
   pull_request:
     paths:
-      - "app/globals.css"
-      - "app/styles/utilities/**"
+      - "apps/web/app/globals.css"
+      - "apps/web/app/styles/utilities/**"
       - "packages/tokens/**"
   push:
     branches: [main]
     paths:
-      - "app/globals.css"
-      - "app/styles/utilities/**"
+      - "apps/web/app/globals.css"
+      - "apps/web/app/styles/utilities/**"
       - "packages/tokens/**"
 
 jobs:
