@@ -117,13 +117,14 @@ export function budgetCapUSD(tier = 'opus') {
  *
  * e.g. SCREENS = ['index', 'rounds', 'statistics'];
  */
-export const SCREENS = ['index', 'login', 'signup'];
+export const SCREENS = ['index', 'login', 'signup', 'forgot-password'];
 
 /** Native screen slug → web reference path on the Next.js app (port 3000). */
 export const WEB_PATHS = {
   index: '/',
   login: '/login',
   signup: '/signup',
+  'forgot-password': '/forgot-password',
 };
 
 export const SMOKE_SCREEN = 'index';

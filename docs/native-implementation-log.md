@@ -160,6 +160,13 @@ real content; the markers stay for the capture-hygiene gate's a11y-tree scan.
   .maestro/README.md). Keyboard dismissal in flows: `pressKey: Enter`
   (hideKeyboard is flaky; a keyboard-covered button swallows taps silently).
 
+### forgot-password — PASS (in-band judgment, 2026-06-10)
+
+- Captures: /tmp/handicappin-compare/forgot-password/. All rubric items PASS
+  first iteration (heading/description/email field/full-width CTA match).
+- Maestro flows/forgot-password.yaml PASS (client-side email validation).
+- OTP email path goes to local Mailpit only; exercised in update-password QA.
+
 ## Waivers
 
 (none yet)

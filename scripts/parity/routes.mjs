@@ -42,7 +42,6 @@ export const INTENTIONAL = {
     "calculators",
     "contact",
     "dashboard/[id]",
-    "forgot-password",
     "onboarding",
     "privacy-policy",
     "profile/[id]",
