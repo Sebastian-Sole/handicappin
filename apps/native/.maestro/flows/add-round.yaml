@@ -1,17 +1,26 @@
-# ADD-ROUND · the full real write path through the native UI: search a
-# course (live tRPC), pick the auto-selected tee, enter 18 scores
-# (auto-advance), submit via round.submitScorecard, land back on home.
+# ADD-ROUND · the full real write path through the native UI: enter via the
+# tab bar's center (+) action (D17), search a course (live tRPC), pick the
+# auto-selected tee, enter 18 scores (auto-advance), submit via
+# round.submitScorecard, land back on home.
 # PRE-REQUISITE: signed in as the test user; local web + Supabase up.
 appId: com.handicappin.app
 ---
-- openLink: handicappin://rounds/add
+- openLink: handicappin://
 - tapOn:
     text: "Open"
     optional: true
 # Generous first wait: a dev-server rebundle can run ~15s after edits.
 - extendedWaitUntil:
-    visible: "Add Round"
+    visible: ".*Welcome back.*"
     timeout: 30000
+# The center (+) opens the add-round full-screen modal (D17).
+- tapOn:
+    id: "tab-add-round"
+- extendedWaitUntil:
+    visible: "Add Round"
+    timeout: 15000
+- assertVisible:
+    id: "close-add-round"
 - tapOn:
     id: "course-picker-trigger"
 - tapOn:

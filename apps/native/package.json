@@ -23,6 +23,7 @@
     "@handicappin/handicap-core": "workspace:*",
     "@handicappin/tokens": "workspace:*",
     "@hookform/resolvers": "^5.2.2",
+    "@react-native-community/datetimepicker": "9.1.0",
     "@shopify/react-native-skia": "2.6.2",
     "@supabase/supabase-js": "^2.95.3",
     "@tailwindcss/postcss": "^4.1.18",

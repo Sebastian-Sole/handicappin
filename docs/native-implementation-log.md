@@ -454,6 +454,73 @@ Tests are typed (.test.ts) and included in the native tsc program.
 - tokens: 37/37 ✓ · native: tsc ✓ · lint ✓ · verify:harness 55/55 ✓ ·
   unit tests 33/33 ✓ · expo export -p ios ✓ · expo prebuild --no-install ✓
 
+## Feedback round (2026-06-10, post-PR user testing)
+
+The owner tested the sim build and reported six issues. All fixed forward
+the same day; per-fix evidence below. These are USER-DIRECTED native
+patterns — where they diverge from web (modal presentation, the center
+(+) action) the divergence is the requirement, not drift.
+
+### D17 — Navigation: add-round is a closable full-screen modal; the tab
+### bar persists on every non-modal screen; center (+) tab action (2026-06-10)
+
+What: (a) `rounds/add` presents as a root-stack `fullScreenModal` with an
+explicit close (X, `close-add-round`) that falls back to `/` when there is
+no back history (cold deep link). (b) `rounds/[id]/calculation` and
+`calculators` moved INSIDE the `(tabs)` navigator as `href: null` screens —
+slugs unchanged, so route parity holds — giving them the bottom tab bar the
+owner asked for. (c) A prominent circular primary (+) button sits in the
+center tab slot (Home, Rounds, +, Statistics, Profile) and opens the
+add-round modal; its backing route (`add`) is a redirect-only stub declared
+in `INTENTIONAL.nativeOnly`.
+Why: owner feedback — "no way to close / no navbar" on those screens and an
+explicit ask for the center (+) pattern.
+Alternatives: keeping the screens outside tabs with custom headers (rejected:
+the ask was the navbar); a floating FAB overlaying a 4-slot bar (rejected:
+overlapping touch targets near the Rounds/Statistics boundary).
+Evidence: Maestro-driven captures /tmp/verify-home.png (+ button),
+/tmp/verify-add-modal.png (X button, modal), close round-trip asserted in
+flow; tab-home asserted visible on calculation + calculators.
+
+### D18 — StatBox badges: variant="outline" under tint-* (2026-06-10)
+
+What: the home stat badges composed `tint-success`/`tint-warning`/`tint-info`
+over the Badge DEFAULT variant. twMerge can't know tint-* is a background
+utility, so the default's `bg-primary` survived the merge and won the
+cascade on native — every tinted badge rendered solid primary green (the
+"neutral" badge looked right only because `bg-muted` IS a registered bg
+class and replaced `bg-primary` in the merge). Fix: `variant="outline"`
+(the activity-feed "Best" badge already used this pattern and passed QA).
+Why: owner feedback — "badge and their text colors are not correct".
+Evidence: /tmp/verify-home.png — improvement = soft success chip with
+success text, achievement = soft warning chip, neutral = muted; matches
+web's statBox.tsx recipe.
+
+### D19 — Tee-time date+time picker un-deferred (2026-06-10)
+
+What: @react-native-community/datetimepicker@9.1.0 (expo install pin),
+iOS `mode="datetime"` `display="compact"`, themed via tokens
+(themeVariant + accentColor primary), value rounded with
+roundToNearestMinute like web's DatePicker; no min/max (web has none).
+The "rounds log now" note is gone. Requires a dev-client rebuild
+(`expo run:ios`) — the original deferral reason — which the owner's
+explicit request now justifies.
+Why: owner feedback — "Add round needs a date and time picker".
+
+### Feedback-round styling fixes (no decision, just bugs)
+
+- Scorecard table HOLE strip (owner: "background color doesn't fill the
+  entire cell, white in between"): `items-center` on the data ROW
+  shrink-wrapped every cell vertically, so the accent HOLE cell didn't
+  stretch to the row height set by the score input. Removed it; cells now
+  stretch (Yoga default) and center their own content with justify-center.
+  Evidence: /tmp/verify-scorecard-table.png — contiguous accent strip.
+- Handicap Impact overflow (owner report): the FormulaBox footer row put
+  two content-sized label columns side by side; Yoga text doesn't shrink
+  by default, so the row overflowed the viewport. Both columns are now
+  flex-1 (labels wrap); the trend banner's text view got `shrink` for the
+  same reason. Evidence: /tmp/verify-handicap-impact.png.
+
 ## Waivers
 
 (none — the dark-mode contrast waiver predates this goal and remains in
@@ -470,9 +537,9 @@ Each item ships with a visible in-app pointer where a user would look for it.
   exist in any config. Visual-parity button present; press explains.
 - Email-change OTP flow, data export, account deletion (profile) — web.
 - Add-course / add-tee dialogs + AI scorecard upload (rounds/add) — web.
-- Custom tee-time picker (rounds/add) — needs
-  @react-native-community/datetimepicker (a new native module mid-goal);
-  rounds log "now" with an explanatory note.
+- ~~Custom tee-time picker (rounds/add)~~ — UN-DEFERRED in the feedback
+  round (D19): @react-native-community/datetimepicker shipped with a
+  dev-client rebuild.
 - Advanced/Educational calculators interactive versions — listed natively
   with a website CTA; core four are fully interactive.
 - Web's score-distribution sidebar + score legend (rounds/[id]/calculation)

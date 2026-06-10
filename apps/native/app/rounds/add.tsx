@@ -10,10 +10,12 @@
  * defaults to "now" — a native date picker needs a new native module
  * (deferred; logged).
  */
+import DateTimePicker from "@react-native-community/datetimepicker";
 import { useQuery } from "@tanstack/react-query";
 import { Redirect, router } from "expo-router";
+import { X } from "lucide-react-native";
 import { useMemo, useState } from "react";
-import { ScrollView, Text, View } from "react-native";
+import { Pressable, ScrollView, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { tokens } from "@handicappin/tokens/tokens";
@@ -37,6 +39,7 @@ import {
   type SearchedCourse,
 } from "@/lib/api/procedures/scorecard";
 import { useSession } from "@/lib/auth/session-provider";
+import { useColorMode } from "@/lib/color-mode";
 import { useDataSettled } from "@/lib/query/settle";
 import {
   FREE_TIER_ROUND_LIMIT,
@@ -49,6 +52,15 @@ import { cn } from "@/lib/utils";
 
 type SubmitState = "idle" | "loading" | "success" | "error";
 
+// Cold deep links open the modal with no history — fall back to Home.
+const closeModal = () => {
+  if (router.canGoBack()) {
+    router.back();
+  } else {
+    router.replace("/");
+  }
+};
+
 interface FeedbackState {
   type: "success" | "error" | "info";
   message: string;
@@ -57,10 +69,14 @@ interface FeedbackState {
 const emptyScores = (): Score[] =>
   Array.from({ length: 18 }, () => ({ strokes: 0, hcpStrokes: 0 }));
 
+const CLOSE_ICON_SIZE = 20; // allow-hardcoded lucide icon prop inside the 40px close button
+
 export default function AddRoundScreen() {
   const { session, initializing } = useSession();
   const userId = session?.user.id ?? null;
   const insets = useSafeAreaInsets();
+  const mode = useColorMode();
+  const mutedForeground = tokens.colors[mode]["muted-foreground"];
 
   const [selectedCourse, setSelectedCourse] = useState<SearchedCourse | null>(
     null,
@@ -72,7 +88,7 @@ export default function AddRoundScreen() {
   );
   const [scores, setScores] = useState<Score[]>(emptyScores());
   const [notes, setNotes] = useState("");
-  const [teeTime] = useState(() =>
+  const [teeTime, setTeeTime] = useState(() =>
     roundToNearestMinute(new Date()).toISOString(),
   );
   const [feedback, setFeedback] = useState<FeedbackState | null>(null);
@@ -205,7 +221,7 @@ export default function AddRoundScreen() {
           You&apos;ve used all {FREE_TIER_ROUND_LIMIT} free rounds. Upgrade on
           handicappin.com to keep logging.
         </Text>
-        <Button variant="outline" onPress={() => router.back()}>
+        <Button variant="outline" onPress={closeModal}>
           Go back
         </Button>
       </View>
@@ -225,7 +241,18 @@ export default function AddRoundScreen() {
       keyboardShouldPersistTaps="handled"
     >
       <DataSettledMarker settled={settled} />
-      <H1>Add Round</H1>
+      <View className="flex-row items-start justify-between gap-md">
+        <H1 className="flex-1">Add Round</H1>
+        <Pressable
+          testID="close-add-round"
+          accessibilityRole="button"
+          accessibilityLabel="Close"
+          onPress={closeModal}
+          className="h-10 w-10 items-center justify-center rounded-full bg-muted active:opacity-80"
+        >
+          <X size={CLOSE_ICON_SIZE} color={mutedForeground} />
+        </Pressable>
+      </View>
       <Text className="text-body-sm text-muted-foreground">
         Fill out the scorecard to register your round.
       </Text>
@@ -324,13 +351,22 @@ export default function AddRoundScreen() {
 
         <View className="gap-sm">
           <Label>Tee time</Label>
-          <Text className="text-body text-foreground">
-            {new Date(teeTime).toLocaleString()}
-          </Text>
-          <Text className="text-meta text-muted-foreground">
-            Rounds log with the current date in this build; pick a custom date
-            on handicappin.com.
-          </Text>
+          {/* Same semantics as web's DatePicker: free date+time choice,
+              rounded to the nearest minute (no min/max — web has none). */}
+          <View className="flex-row">
+            <DateTimePicker
+              testID="tee-time-picker"
+              value={new Date(teeTime)}
+              mode="datetime"
+              display="compact"
+              themeVariant={mode}
+              accentColor={tokens.colors[mode].primary}
+              disabled={busy}
+              onValueChange={(_event, date) => {
+                setTeeTime(roundToNearestMinute(date).toISOString());
+              }}
+            />
+          </View>
         </View>
       </View>
 

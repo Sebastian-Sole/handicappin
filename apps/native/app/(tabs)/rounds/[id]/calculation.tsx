@@ -625,7 +625,7 @@ function HandicapImpactStep({ calc }: { calc: RoundCalculation }) {
           )}
         >
           <TrendIcon size={TREND_ICON_SIZE} color={trendColor} />
-          <View>
+          <View className="shrink">
             <Text className={cn("text-body font-semibold", changeTextClass)}>
               {Math.abs(change) <= 0.05
                 ? "No change"
@@ -656,8 +656,10 @@ function HandicapImpactStep({ calc }: { calc: RoundCalculation }) {
         ) : null}
 
         <FormulaBox>
-          <View className="flex-row items-center justify-between">
-            <View>
+          {/* Columns get flex-1 so the long labels WRAP — Yoga gives text
+              flexShrink:0 by default, which is what overflowed the screen. */}
+          <View className="flex-row items-center justify-between gap-md">
+            <View className="flex-1">
               <Text className="text-body-sm text-muted-foreground">
                 This round&apos;s Score Differential
               </Text>
@@ -665,8 +667,8 @@ function HandicapImpactStep({ calc }: { calc: RoundCalculation }) {
                 {Math.round(calc.scoreDifferentialCalculation * 10) / 10}
               </Text>
             </View>
-            <View className="items-end">
-              <Text className="text-body-sm text-muted-foreground">
+            <View className="flex-1 items-end">
+              <Text className="text-body-sm text-muted-foreground text-right">
                 Differential used in calculation
               </Text>
               <Text className="text-figure text-foreground">

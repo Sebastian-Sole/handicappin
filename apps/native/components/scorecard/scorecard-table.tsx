@@ -120,19 +120,22 @@ export function ScorecardTable({
           <HeaderCell label="SCORE" wide />
         </View>
         {displayedHoles.map((hole, i) => (
-          <View key={i} className="flex-row border-t border-border items-center">
-            <View className="flex-1 py-sm items-center bg-accent">
+          // Cells stretch to the row height (the SCORE input is the tallest)
+          // and center their own content — items-center on the ROW would
+          // shrink-wrap each cell and leave background gaps in the HOLE strip.
+          <View key={i} className="flex-row border-t border-border">
+            <View className="flex-1 py-sm items-center justify-center bg-accent">
               <Text className="text-body-sm text-secondary-foreground font-medium">
                 {i + 1}
               </Text>
             </View>
-            <View className="flex-1 py-sm items-center">
+            <View className="flex-1 py-sm items-center justify-center">
               <Text className="text-body-sm text-foreground">{hole.par}</Text>
             </View>
-            <View className="flex-1 py-sm items-center">
+            <View className="flex-1 py-sm items-center justify-center">
               <Text className="text-body-sm text-foreground">{hole.hcp}</Text>
             </View>
-            <View className="flex-[1.5] p-xs items-center">
+            <View className="flex-[1.5] p-xs items-center justify-center">
               <Input
                 ref={(el) => {
                   inputRefs.current[i] = el;

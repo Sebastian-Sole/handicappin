@@ -47,6 +47,10 @@ export const INTENTIONAL = {
     // Token-gallery bring-up screen, kept for harness calibration and
     // dark-mode spot checks (handoff §6). Not a product route.
     "__gallery",
+    // Backing route for the tab bar's center (+) action (implementation
+    // log D17, user-directed). The custom tabBarButton opens /rounds/add;
+    // the route itself is a redirect-only stub, never a destination.
+    "add",
   ]),
 };
 

@@ -44,7 +44,13 @@ export default function RootLayout() {
               importantForAccessibility="no-hide-descendants"
               style={{ width: 0, height: 0 }}
             />
-            <Stack screenOptions={{ headerShown: false }} />
+            <Stack screenOptions={{ headerShown: false }}>
+              {/* Full-screen modal with an explicit in-screen close (D17). */}
+              <Stack.Screen
+                name="rounds/add"
+                options={{ presentation: "fullScreenModal" }}
+              />
+            </Stack>
             <StatusBar style="auto" />
           </SafeAreaProvider>
         </GestureHandlerRootView>

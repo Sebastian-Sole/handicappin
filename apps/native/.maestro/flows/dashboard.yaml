@@ -13,11 +13,20 @@ appId: com.handicappin.app
     timeout: 30000
 - tapOn:
     id: "tab-rounds"
+# Anchor at the top first (dev-client restores scroll state), then walk
+# the sections — "Rounds History" is below the first viewport.
 - extendedWaitUntil:
-    visible: "Rounds History"
+    visible: "Current Handicap"
     timeout: 15000
+- scrollUntilVisible:
+    element: "Current Handicap"
+    direction: UP
+    optional: true
 - assertVisible: "Handicap"
-- assertVisible: "Recent Rounds"
+- scrollUntilVisible:
+    element: "Recent Rounds"
+- scrollUntilVisible:
+    element: "Rounds History"
 - scrollUntilVisible:
     element:
       id: "rounds-search"

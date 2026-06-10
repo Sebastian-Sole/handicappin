@@ -42,7 +42,10 @@ export function StatBox({
       </View>
       <Text className="text-figure text-foreground mb-xs">{value}</Text>
       <View className="flex-row mb-sm">
-        <Badge className={cn("border", badge.box)}>
+        {/* variant="outline" so the default variant's bg-primary can't fight
+            the tint-* recipe — twMerge doesn't know tint-* is a background
+            class, so under the default variant BOTH land and primary wins. */}
+        <Badge variant="outline" className={cn("border", badge.box)}>
           <Text className={cn("text-meta", badge.text)}>{change}</Text>
         </Badge>
       </View>

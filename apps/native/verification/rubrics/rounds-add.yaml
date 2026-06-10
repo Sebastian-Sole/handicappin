@@ -2,18 +2,22 @@
 # Native: apps/native/app/rounds/add.tsx (testID "add-round-screen").
 # Web reference: /rounds/add signed in (phone viewport). Web chrome not a
 # finding. DEFERRED (logged): add-course/add-tee dialogs, AI scorecard
-# upload, custom tee-time picker — their affordances point to the website.
+# upload — their affordances point to the website. The tee-time picker is
+# NATIVE since the feedback round (D19: iOS compact date+time chips), and
+# the screen presents as a full-screen modal with a close (X) button (D17)
+# — neither is a finding.
 screen: rounds/add
 rubric_version: bring-up-v1
 items:
   layout_structure:
     desc: >
-      "Add Round" H1, helper line, free-tier Usage Limit card (icon, "You
-      have N out of 25 rounds remaining", progress bar, % used, Upgrade Plan
-      CTA), then the entry card: Course picker, Tee picker, 18/9 hole
-      toggle, tee-time block, scorecard area (placeholder until course+tee
-      chosen; then tee banner + HOLE/PAR/HCP/SCORE rows with OUT/IN/TOTAL),
-      Notes field, full-width Submit Round button.
+      "Add Round" H1 with close (X) button, helper line, free-tier Usage
+      Limit card (icon, "You have N out of 25 rounds remaining", progress
+      bar, % used, Upgrade Plan CTA), then the entry card: Course picker,
+      Tee picker, 18/9 hole toggle, tee-time date+time picker, scorecard
+      area (placeholder until course+tee chosen; then tee banner +
+      HOLE/PAR/HCP/SCORE rows with OUT/IN/TOTAL; the HOLE column is a
+      contiguous accent strip), Notes field, full-width Submit Round button.
   color_tokens:
     desc: >
       Usage card on surface with primary progress; pickers as outline
@@ -34,4 +38,4 @@ items:
       summary rows; multiline notes input; submit button.
 a11y:
   headings: [Add Round]
-  markers: [add-round-screen, course-picker-trigger, tee-picker-trigger, scorecard-table, submit-round, usage-limit-alert]
+  markers: [add-round-screen, close-add-round, course-picker-trigger, tee-picker-trigger, tee-time-picker, scorecard-table, submit-round, usage-limit-alert]
