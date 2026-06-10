@@ -7,7 +7,6 @@
  */
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Redirect, router, useLocalSearchParams } from "expo-router";
-import type { Href } from "expo-router";
 import { useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { Text, View } from "react-native";

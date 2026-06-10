@@ -314,7 +314,7 @@ export const roundRouter = createTRPCRouter({
       }
 
       // 0. Check user access (plan selected)
-      const access = await getComprehensiveUserAccess(userId);
+      const access = await getComprehensiveUserAccess(userId, ctx.supabase);
 
       // 0a. First check: Has user selected a plan?
       if (!access.hasAccess) {

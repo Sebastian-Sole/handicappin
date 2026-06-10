@@ -260,6 +260,50 @@ lives in a single `contentContainerStyle` object fed from `tokens.spacing`
 fixed and re-verified on-sim; gutters now mirror web (PageContainer px-md,
 auth shell px-lg).
 
+### D12 — Web fix: getComprehensiveUserAccess takes the request's Supabase client (2026-06-10)
+
+Seeding rounds through the REAL write path exposed a web bug for bearer
+(native) clients: `getComprehensiveUserAccess` built its own COOKIE client,
+so bearer-authenticated requests read the profile as anon, RLS hid the row,
+and every native write was rejected as plan-less. The function now accepts
+an optional request-scoped client; the three tRPC callers (round, scorecard,
+stats) pass `ctx.supabase`. Pages/middleware keep the cookie default. Web
+gates after the change: tsc clean, eslint clean, ALL 506 web tests pass
+(build verified in the end-of-goal gate run).
+
+### D13 — RN layout gotchas catalogued from the home port (2026-06-10)
+
+- Arbitrary-value classes (`basis-[45%]`) do not compile under
+  react-native-css → grid geometry goes in a style object
+  (flexBasis/flexGrow), carried by a plain View wrapper (Pressable ignores
+  style-prop flexBasis).
+- `flex-1`'s implicit `flexBasis: 0` defeats wrap-grids — never combine it
+  with percentage bases.
+- Badge needs `variant="outline"` under tint-* recipes or the default
+  variant's `bg-primary` wins the cascade.
+- Test data: scripts/seed-native-test-rounds.mjs (real sign-in → reference
+  data read as that user → round.submitScorecard through the live web
+  server). Test user now: free plan (selected through the real web
+  onboarding flow), 3 approved rounds at St. Andrews Old Course.
+
+### home ("" / index) — PASS (in-band judgment, 2026-06-10)
+
+- Captures: /tmp/handicappin-compare/index/ (+ scrolled pairs). Judged vs
+  signed-in web at phone width: hero (gradient via expo-linear-gradient from
+  token alphas — out-of-contract per §4), welcome header, count-up handicap
+  figure, stacked CTAs, 2×2 stat grid with identical REAL values (54 / 10.8
+  / +18 / 3), Recent Activity timeline (3 seeded rounds, Best + First round!
+  badges, View All), 2-up quick actions, Journey to Scratch, At a Glance.
+  All four rubric items PASS after three fix-forward iterations (CTA
+  stacking at phone width, Best badge variant, quick-action grid geometry).
+- Charts section: desktop-only on web (`hidden md:block`) — correctly absent
+  from both phone surfaces.
+- Maestro flows/home.yaml PASS (hero → activity → goal → glance with real
+  data). Token gallery retired to __gallery (INTENTIONAL.nativeOnly) with
+  its rubric; SMOKE_SCREEN now __gallery.
+- Tab shell landed ((tabs)/_layout.tsx): Home tab live; Rounds/Statistics/
+  Profile tabs register as their screens port (D5 mapping).
+
 ## Waivers
 
 (none yet)

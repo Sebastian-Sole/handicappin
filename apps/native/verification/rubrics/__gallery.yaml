@@ -1,0 +1,40 @@
+# Frozen rubric — `__gallery` (token-gallery bring-up screen, retired to a
+# native-only calibration route when home took over "/").
+# Native: apps/native/app/__gallery.tsx (testID "token-gallery").
+# Web reference: apps/web at `/` is the marketing/dashboard root, which the
+# gallery does NOT mirror 1:1 — this rubric therefore scores the gallery
+# against the DESIGN-SYSTEM CONTRACT (the same generated tokens both apps
+# consume), not against a screen layout.
+#
+# Item ids below are the booleans the vision judge must return in `items`.
+screen: __gallery
+rubric_version: bring-up-v1
+items:
+  layout_structure:
+    desc: >
+      Single scrollable column, padded (spacing lg), sections in order:
+      "Token gallery" heading + intro, Colors, Typography, Surfaces,
+      Spacing ramp. No clipped or overlapping sections.
+  color_tokens:
+    desc: >
+      Eight color swatches (primary, secondary, accent, muted, destructive,
+      success, warning, info) render with distinct, saturated fills matching
+      the generated light palette; page background is the `background` token,
+      headings use `foreground`.
+    pairings_used:
+      - body-on-page
+      - muted-on-page
+      - card-border-on-page
+  type_hierarchy:
+    desc: >
+      The 8-step type ramp renders with visibly decreasing scale and correct
+      weights (heading-1 extra-bold 36 → meta 12, eyebrow uppercase + tracked);
+      all in Inter, no fallback face.
+  components_present:
+    desc: >
+      Surface recipes render: bordered `surface` card, translucent
+      `surface-muted`, five tint-* cards with 1px tinted borders, a pill-shaped
+      chip-primary, a 48×48 icon-chip-info. Spacing ramp bars step xs→5xl.
+a11y:
+  headings: [Token gallery, Colors, Typography, Surfaces, Spacing ramp]
+  markers: [token-gallery, gallery-colors, gallery-typography, gallery-surfaces, gallery-spacing]

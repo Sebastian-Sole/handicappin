@@ -51,7 +51,11 @@ export const INTENTIONAL = {
     "upgrade",
   ]),
   // Native-only routes by design.
-  nativeOnly: new Set([]),
+  nativeOnly: new Set([
+    // Token-gallery bring-up screen, kept for harness calibration and
+    // dark-mode spot checks (handoff §6). Not a product route.
+    "__gallery",
+  ]),
 };
 
 export function nativeAppPresent() {

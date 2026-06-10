@@ -1,11 +1,12 @@
 /**
- * Token gallery — the bring-up screen.
+ * Token gallery — the bring-up screen, retired to a native-only route
+ * (INTENTIONAL.nativeOnly) when home took over "/" — still useful for
+ * harness calibration and dark-mode spot checks.
  *
  * Renders the generated design-system contract end-to-end so the NativeWind
  * pipeline, the typography ramp, and the surface recipes can be verified on a
  * device/simulator before any product screen is ported. The verification
- * harness uses this screen for calibration. Replace with the real home screen
- * once porting starts (it must then mirror apps/web/app/page.tsx).
+ * harness uses this screen for calibration.
  *
  * Styling rules apply here like everywhere in native: className utilities
  * from the generated theme or values from @handicappin/tokens — nothing

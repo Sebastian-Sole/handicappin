@@ -167,7 +167,7 @@ export const scorecardRouter = createTRPCRouter({
       // Use the database-backed `getComprehensiveUserAccess` (not JWT claims) so
       // a user who upgraded inside the JWT's 1h TTL isn't locked out by a stale
       // `plan: "free"` claim. Mirrors the canonical pattern used in round.ts.
-      const access = await getComprehensiveUserAccess(userId);
+      const access = await getComprehensiveUserAccess(userId, ctx.supabase);
       if (
         !access.hasAccess ||
         (access.plan !== "unlimited" && access.plan !== "lifetime")

@@ -117,11 +117,12 @@ export function budgetCapUSD(tier = 'opus') {
  *
  * e.g. SCREENS = ['index', 'rounds', 'statistics'];
  */
-export const SCREENS = ['index', 'login', 'signup', 'forgot-password', 'update-password', 'verify-signup', 'verify-email', 'auth/verify-session', 'onboarding'];
+export const SCREENS = ['index', 'login', 'signup', 'forgot-password', 'update-password', 'verify-signup', 'verify-email', 'auth/verify-session', 'onboarding', '__gallery'];
 
 /** Native screen slug → web reference path on the Next.js app (port 3000). */
 export const WEB_PATHS = {
-  index: '/',
+  index: '/', // authenticated home (sign in first); __gallery judged vs the contract
+  __gallery: '/',
   login: '/login',
   signup: '/signup',
   'forgot-password': '/forgot-password',
@@ -135,7 +136,7 @@ export const WEB_PATHS = {
   onboarding: '/onboarding',
 };
 
-export const SMOKE_SCREEN = 'index';
+export const SMOKE_SCREEN = '__gallery';
 
 /**
  * Web pre-filter mode. Starts 'per-iteration'; the yield gate (prefilter)
