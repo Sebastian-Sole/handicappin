@@ -42,8 +42,6 @@ export const INTENTIONAL = {
     "contact",
     "privacy-policy",
     "profile/[id]",
-    "statistics",
-    "statistics/courses/[courseId]",
     "terms-of-service",
     "upgrade",
   ]),

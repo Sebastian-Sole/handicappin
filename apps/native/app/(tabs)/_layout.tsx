@@ -8,7 +8,7 @@
  * entry simply doesn't exist yet (the gate keeps slugs honest).
  */
 import { Redirect, Tabs } from "expo-router";
-import { Home, List } from "lucide-react-native";
+import { BarChart2, Home, List } from "lucide-react-native";
 
 import { tokens } from "@handicappin/tokens/tokens";
 import { useSession } from "@/lib/auth/session-provider";
@@ -50,6 +50,16 @@ export default function TabsLayout() {
           href: `/dashboard/${session.user.id}`,
           tabBarButtonTestID: "tab-rounds",
           tabBarIcon: ({ color, size }) => <List size={size} color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="statistics"
+        options={{
+          title: "Statistics",
+          tabBarButtonTestID: "tab-statistics",
+          tabBarIcon: ({ color, size }) => (
+            <BarChart2 size={size} color={color} />
+          ),
         }}
       />
     </Tabs>

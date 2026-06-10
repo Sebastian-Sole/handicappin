@@ -44,8 +44,8 @@ export const scorecardWithRoundSchema = z
       .object({
         id: z.coerce.number().optional(),
         name: z.string(),
-        city: z.string().optional(),
-        country: z.string().optional(),
+        city: z.string().default(""),
+        country: z.string().default(""),
       })
       .passthrough(),
     teePlayed: z
@@ -64,7 +64,20 @@ export const scorecardWithRoundSchema = z
         slopeRatingBack9: z.coerce.number(),
         totalDistance: z.coerce.number(),
         distanceMeasurement: z.string(),
-        holes: z.array(z.unknown()).optional(),
+        holes: z
+          .array(
+            z
+              .object({
+                id: z.coerce.number().optional(),
+                teeId: z.coerce.number().optional(),
+                holeNumber: z.coerce.number(),
+                par: z.coerce.number(),
+                hcp: z.coerce.number(),
+                distance: z.coerce.number(),
+              })
+              .passthrough(),
+          )
+          .optional(),
       })
       .passthrough(),
     scores: z.array(

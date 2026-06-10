@@ -117,7 +117,7 @@ export function budgetCapUSD(tier = 'opus') {
  *
  * e.g. SCREENS = ['index', 'rounds', 'statistics'];
  */
-export const SCREENS = ['index', 'login', 'signup', 'forgot-password', 'update-password', 'verify-signup', 'verify-email', 'auth/verify-session', 'onboarding', '__gallery', 'rounds/add', 'dashboard/[id]', 'rounds/[id]/calculation'];
+export const SCREENS = ['index', 'login', 'signup', 'forgot-password', 'update-password', 'verify-signup', 'verify-email', 'auth/verify-session', 'onboarding', '__gallery', 'rounds/add', 'dashboard/[id]', 'rounds/[id]/calculation', 'statistics', 'statistics/courses/[courseId]'];
 
 /** Native screen slug → web reference path on the Next.js app (port 3000). */
 export const WEB_PATHS = {
@@ -138,6 +138,8 @@ export const WEB_PATHS = {
   // dynamic [id] screens: compare-screen.sh takes the concrete path
   'dashboard/[id]': '/dashboard/aad0b543-df1d-481b-a2e9-8e573acd8997',
   'rounds/[id]/calculation': '/rounds/5/calculation',
+  statistics: '/statistics',
+  'statistics/courses/[courseId]': '/statistics/courses/10823',
 };
 
 export const SMOKE_SCREEN = '__gallery';

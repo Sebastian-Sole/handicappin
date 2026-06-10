@@ -1,0 +1,42 @@
+# Frozen rubric — `statistics` (the Statistics tab).
+# Native: apps/native/app/(tabs)/statistics/index.tsx (testID "statistics-screen").
+# Web reference: /statistics signed in as an unlimited user (phone).
+# Web chrome not a finding. Native's time-range filter is a segmented row
+# (web: Select dropdown) — same options, mobile-native control, accepted.
+screen: statistics
+rubric_version: bring-up-v1
+items:
+  layout_structure:
+    desc: >
+      "Statistics" H1 + "Deep dive" line, time-range control (6 months /
+      1 year / All time), tinted Player Identity hero (emoji, player type,
+      description, % match chip, handicap/rounds/days-since stat tiles),
+      then four inner tabs: Performance (Highlights cards, Overview Stats
+      grid, Best Month, Exceptional Rounds), Activity (stat row, Rounds Per
+      Month + Day of Week bar charts, seasonal cards, Round Types "vs",
+      Time of Day chart), Courses (overview grid, highlight cards,
+      All Courses table → detail), Frivolities (odyssey cards, score
+      distribution, par-type, front/back, lunar).
+  color_tokens:
+    desc: >
+      Identity card on tint-primary with surface-raised tiles; charts use
+      the primary token for bars with muted-foreground axis labels on
+      border-colored lines; highlight cards on tint-success/-warning/-info;
+      distribution counts in score-* tokens.
+    pairings_used:
+      - body-on-page
+      - muted-on-page
+      - card-border-on-page
+  type_hierarchy:
+    desc: >
+      figure-lg page title; figure-xl identity tiles; heading-3 section
+      titles with emoji chips; figure stat values; body-sm/meta supporting
+      text. All Inter (chart axis labels use the bundled Inter face).
+  components_present:
+    desc: >
+      Segmented time filter; identity hero; 4-tab segmented control; stat
+      card grids; TWO live Skia bar charts (victory-native) with real data;
+      seasonal/highlight cards; all-courses table rows with chevrons.
+a11y:
+  headings: [Statistics]
+  markers: [statistics-screen, player-identity-card, stats-tab-performance, stats-tab-activity, stats-tab-courses, stats-tab-frivolities, chart-rounds-per-month, chart-day-of-week]

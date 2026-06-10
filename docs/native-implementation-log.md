@@ -380,6 +380,31 @@ sessions pick the claims up via /auth/verify-session.
   the holes table; stacked phone layouts already differ structurally) —
   logged as a fast-follow candidate, not a parity blocker. Score legend idem.
 
+### statistics + statistics/courses/[courseId] — PASS (in-band judgment, 2026-06-10)
+
+- The ENTIRE pure-calculation layer (lib/statistics/{calculations,
+  player-type,format-utils,types}) is a verbatim mirror of web's over the
+  native trust-boundary type — zero re-derivation of stats logic.
+- Captures: /tmp/handicappin-compare/statistics/ + per-tab shots +
+  /tmp/handicappin-compare/statistics_courses_10823/. Identical REAL values
+  on both sides (Newcomer 100% match, 54.0, 4 rounds over 21 days; course
+  detail 8.3 avg diff, per-hole aggregates 4.8/+0.8…).
+- FIRST CHARTS LIVE: victory-native (Skia) bar charts render with
+  tokens.colors primary bars + muted-foreground Inter axis labels
+  (components/charts/token-bar-chart.tsx — the ledger's chart foundation).
+- Maestro flows/statistics.yaml PASS end-to-end: Performance → Activity
+  (both charts) → Courses → course detail (hole averages + rounds list).
+- Test-harness lessons baked into the flow header: the dev client RESTORES
+  nav/scroll state between Maestro launches (always scroll UP to an anchor
+  first); near-tab-bar rows swallow taps (centerElement before tapping);
+  labels inside horizontal scrollers aren't matchable (occurrence-index
+  fallback, commented).
+- Accepted deltas (logged): time-range filter is a segmented row vs web's
+  Select dropdown (same options, mobile control); web's hole-averages
+  Avg-score/Distribution chart modes are table-only natively (deferred
+  fast-follow); frivolities' strokes-by-day chart is represented by the
+  day-of-week chart in Activity (web duplicates it).
+
 ## Waivers
 
 (none yet)
