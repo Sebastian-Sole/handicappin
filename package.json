@@ -5,6 +5,8 @@
   "description": "Workspace orchestrator. Web app: apps/web. Native app: apps/native. Shared packages: packages/*.",
   "scripts": {
     "dev": "pnpm --filter web dev",
+    "dev:native": "pnpm --filter native start",
+    "dev:all": "concurrently -n web-stack,native,parity -c blue,cyan,magenta \"pnpm --filter web dev:all\" \"pnpm --filter native start\" \"pnpm run parity:watch\"",
     "build": "pnpm --filter web build",
     "start": "pnpm --filter web start",
     "lint": "pnpm --filter web lint",
@@ -33,5 +35,8 @@
       "import-in-the-middle": "1.15.0",
       "require-in-the-middle": "7.5.2"
     }
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.1"
   }
 }
