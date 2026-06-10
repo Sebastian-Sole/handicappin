@@ -84,6 +84,19 @@ settings-like surface; Home stays focused on stats + recent rounds, matching
 web's logged-in homepage which has no calculators entry point either).
 `calculators.tsx` lives on the root stack.
 
+### D7 — Dark mode: generator now emits `@media (prefers-color-scheme: dark)` (2026-06-10)
+
+Validated on-simulator per handoff §6 BEFORE porting screens: with the
+`.dark`-class strategy the gallery stayed light when the sim switched to dark
+appearance — the class compiles but never activates (no DOM node carries it
+on native). Applied the handoff's sanctioned fix in
+`packages/tokens/src/generate.mjs serializeNativeGlobalCss`: dark vars now
+ride `@media (prefers-color-scheme: dark)` (react-native-css maps it to the
+OS Appearance API) and `@custom-variant dark` is media-based. `tokens.ts`
+per-mode shape unchanged; generator tests updated (37 pass). Re-verified
+on-sim: gallery switches dark AND back to light at runtime. Web is untouched
+(its `.dark` class strategy stays as-is — only the NATIVE emission changed).
+
 ## Waivers
 
 (none yet)

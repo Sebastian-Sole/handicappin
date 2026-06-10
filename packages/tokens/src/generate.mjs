@@ -1002,7 +1002,12 @@ export function serializeNativeGlobalCss(model, source) {
   lines.push("@import 'tailwindcss';");
   lines.push("@import 'nativewind/theme';");
   lines.push("");
-  lines.push('@custom-variant dark (&:is(.dark *));');
+  // Media-query dark strategy: react-native-css maps prefers-color-scheme to
+  // the OS Appearance API, so vars switch with the system scheme at runtime.
+  // (The web-style `.dark`-class strategy compiles but never ACTIVATES on
+  // native — there is no DOM node to put the class on. Verified on-sim
+  // 2026-06-10; see docs/native-implementation-log.md.)
+  lines.push("@custom-variant dark (@media (prefers-color-scheme: dark));");
   lines.push("");
 
   // @theme inline: token slots referencing runtime vars (mode-switchable).
@@ -1045,14 +1050,24 @@ export function serializeNativeGlobalCss(model, source) {
     return out;
   };
   for (const mode of ["light", "dark"]) {
-    lines.push(mode === "light" ? ":root {" : ".dark {");
+    // Dark vars live under a prefers-color-scheme media query (NOT a `.dark`
+    // class): react-native-css resolves the media query against the OS
+    // appearance, which is the only runtime dark signal native has.
+    const indent = mode === "dark" ? "  " : "";
+    if (mode === "dark") {
+      lines.push("@media (prefers-color-scheme: dark) {");
+    }
+    lines.push(`${indent}:root {`);
     for (const [name, hex] of Object.entries(tokens.colors[mode])) {
-      lines.push(`  --${name}: ${hex};`);
+      lines.push(`${indent}  --${name}: ${hex};`);
     }
     lines.push("");
-    lines.push("  /* resolved surface recipe colors (color-mix flattened) */");
-    lines.push(...surfaceVarLines(mode));
-    lines.push("}");
+    lines.push(`${indent}  /* resolved surface recipe colors (color-mix flattened) */`);
+    lines.push(...surfaceVarLines(mode).map((l) => `${indent}${l}`));
+    lines.push(`${indent}}`);
+    if (mode === "dark") {
+      lines.push("}");
+    }
     lines.push("");
   }
 

@@ -3,14 +3,13 @@
 # Selectors are accessible-name/testID based (never coordinate/index) — a
 # selector that can't find a node is itself an a11y finding.
 #
-# appId: apps/native/app.json sets no ios.bundleIdentifier yet, so this is the
-# `expo prebuild` convention for the `handicappin` slug — update it together
-# with verification/config.mjs SIM.appId the day a real bundle id is set.
+# appId: matches ios.bundleIdentifier in apps/native/app.json — keep in sync
+# with verification/config.mjs SIM.appId (cross-referenced).
 #
 # PRE-REQUISITE (quality gate): Expo dev server + iOS simulator already running
 # and the app installed. This flow does NOT auto-start them — an auto-started
 # server masks a broken launch instead of catching it.
-appId: com.anonymous.handicappin
+appId: com.handicappin.app
 ---
 - launchApp
 # Font-ready gate (the app renders nothing under the splash until fonts resolve).

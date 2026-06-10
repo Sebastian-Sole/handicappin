@@ -1,0 +1,43 @@
+# Frozen rubric — `login`.
+# Native: apps/native/app/(auth)/login.tsx (testID "login-screen").
+# Web reference: apps/web /login (logged out), phone viewport.
+#
+# Mobile-chrome differences are EXPECTED and not findings: web shows the
+# marketing navbar + footer around the auth card; native is the form alone
+# (no navbar/footer on a native auth stack). Judge the auth SURFACE.
+screen: login
+rubric_version: bring-up-v1
+items:
+  layout_structure:
+    desc: >
+      Centered narrow column on the page background: "Welcome Back" heading,
+      muted description line, Email + Password labelled fields, full-width
+      primary "Sign In" button, "OR CONTINUE WITH" divider row, outlined
+      Google button with the multicolor G logo, then two link-style buttons
+      ("Forgot password?", "Don't have an account?") side by side. Order and
+      grouping match web.
+  color_tokens:
+    desc: >
+      Page uses the background token; heading in foreground; description and
+      divider label in muted-foreground; primary button uses the primary
+      token with primary-foreground text; inputs are bordered (input token)
+      on background; link buttons use the primary color.
+    pairings_used:
+      - body-on-page
+      - muted-on-page
+      - primary-foreground-on-primary
+  type_hierarchy:
+    desc: >
+      Heading is the H1 step (extra-bold, clearly larger); description is
+      body-size muted; field labels are the small label step; button labels
+      the label step; divider text uppercase meta. All Inter, no fallback
+      face, no clipped glyphs.
+  components_present:
+    desc: >
+      Two single-line text inputs with ~40px height, rounded-md borders;
+      primary button ~40px tall, full width; Google button outlined variant
+      with logo + label; both footer links rendered as text-only link
+      buttons. No web-only chrome (navbar/footer) expected on native.
+a11y:
+  headings: [Welcome Back]
+  markers: [login-screen, login-email, login-password, login-submit]

@@ -27,14 +27,14 @@ export const CACHE_DIR = join(ARTIFACTS_DIR, 'verdict-cache');
  * environment via SIM_DEVICE / SIM_OS without editing this file
  * (`xcrun simctl list devices available` shows what's installed locally).
  *
- * appId: apps/native/app.json sets no `ios.bundleIdentifier` yet, so this is
- * the `expo prebuild` convention for the `handicappin` slug. Update it the day
- * a real bundle id is set in app.json.
+ * appId: matches `ios.bundleIdentifier` in apps/native/app.json — keep this,
+ * app.json, and the Maestro flows' `appId:` lines in sync (they are
+ * cross-referenced).
  */
 export const SIM = {
   device: process.env.SIM_DEVICE || 'iPhone 17 Pro',
   os: process.env.SIM_OS || 'iOS 26',
-  appId: 'com.anonymous.handicappin',
+  appId: 'com.handicappin.app',
 };
 
 /**
@@ -117,12 +117,12 @@ export function budgetCapUSD(tier = 'opus') {
  *
  * e.g. SCREENS = ['index', 'rounds', 'statistics'];
  */
-export const SCREENS = ['index'];
+export const SCREENS = ['index', 'login'];
 
 /** Native screen slug → web reference path on the Next.js app (port 3000). */
 export const WEB_PATHS = {
   index: '/',
-  // 'rounds': '/rounds',
+  login: '/login',
 };
 
 export const SMOKE_SCREEN = 'index';
