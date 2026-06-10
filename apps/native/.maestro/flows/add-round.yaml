@@ -1,0 +1,57 @@
+# ADD-ROUND · the full real write path through the native UI: search a
+# course (live tRPC), pick the auto-selected tee, enter 18 scores
+# (auto-advance), submit via round.submitScorecard, land back on home.
+# PRE-REQUISITE: signed in as the test user; local web + Supabase up.
+appId: com.handicappin.app
+---
+- openLink: handicappin://rounds/add
+- tapOn:
+    text: "Open"
+    optional: true
+# Generous first wait: a dev-server rebundle can run ~15s after edits.
+- extendedWaitUntil:
+    visible: "Add Round"
+    timeout: 30000
+- tapOn:
+    id: "course-picker-trigger"
+- tapOn:
+    id: "course-search-input"
+- inputText: "St. Andrews"
+- extendedWaitUntil:
+    visible: ".*St. Andrews Old Course.*"
+    timeout: 12000
+- tapOn: ".*St. Andrews Old Course.*"
+# First tee auto-selects once tees load.
+- extendedWaitUntil:
+    visible: ".*TEE.*"
+    timeout: 12000
+- tapOn:
+    id: "score-input-1"
+# 18 single digits in [2..9] auto-advance through every hole.
+- inputText: "4"
+- inputText: "4"
+- inputText: "4"
+- inputText: "4"
+- inputText: "4"
+- inputText: "4"
+- inputText: "4"
+- inputText: "4"
+- inputText: "4"
+- inputText: "5"
+- inputText: "5"
+- inputText: "5"
+- inputText: "5"
+- inputText: "5"
+- inputText: "5"
+- inputText: "5"
+- inputText: "5"
+- inputText: "5"
+- pressKey: Enter
+- scrollUntilVisible:
+    element:
+      id: "submit-round"
+- tapOn:
+    id: "submit-round"
+- extendedWaitUntil:
+    visible: ".*(Round submitted|Welcome back).*"
+    timeout: 20000

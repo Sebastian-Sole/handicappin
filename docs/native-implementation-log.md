@@ -304,6 +304,36 @@ gates after the change: tsc clean, eslint clean, ALL 506 web tests pass
 - Tab shell landed ((tabs)/_layout.tsx): Home tab live; Rounds/Statistics/
   Profile tabs register as their screens port (D5 mapping).
 
+### D14 — Dependency patch: react-native-css 3.0.7 boolean nativeStyleMapping (2026-06-10)
+
+Selecting a course on rounds/add crashed every render of the score inputs:
+react-native-css's TextInput interop declares `nativeStyleMapping:
+{ textAlign: true }` but its style-mover assumes string paths and calls
+`path.split(".")` → "undefined is not a function" for ANY TextInput whose
+style pipeline carries textAlign (RN routes the textAlign PROP through
+style). Patched via `pnpm patch` (patches/react-native-css@3.0.7.patch):
+`true` now means "copy to the same-named prop" — also fixes
+ImageBackground's `backgroundColor: true` mapping. Upstream-able.
+
+### rounds/add — PASS (in-band judgment, 2026-06-10)
+
+- Captures: /tmp/handicappin-compare/rounds_add/. Rubric rounds-add.yaml all
+  PASS: H1+helper, Usage Limit card (icon/progress/Upgrade CTA — matches
+  web 1:1 with the same live numbers), course/tee pickers, 18/9 toggle,
+  score table (web's mobile variant), notes, submit.
+- LIVE end-to-end (Maestro flows/add-round.yaml): course search via real
+  tRPC → St. Andrews Old Course → tee auto-select → 18 scores with
+  auto-advance → round.submitScorecard → DB row id=5 (81 strokes, 0.9
+  differential — server-side USGA math). The same real write path web uses.
+- Fixes en route: FlatList-in-modal needed keyboardShouldPersistTaps
+  (first tap only dismissed the keyboard); cold-start deep links bounced
+  via login because the screen redirected before session restore finished
+  (now waits on `initializing`); D14 dependency patch.
+- DEFERRED (visible affordances point to handicappin.com; log entries):
+  add-course dialog, add/edit-tee dialog, AI scorecard upload, custom
+  tee-time picker (needs @react-native-community/datetimepicker — a new
+  native module mid-goal; rounds log "now").
+
 ## Waivers
 
 (none yet)

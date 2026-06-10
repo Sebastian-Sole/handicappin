@@ -38,7 +38,10 @@
     },
     "onlyBuiltDependencies": [
       "@shopify/react-native-skia"
-    ]
+    ],
+    "patchedDependencies": {
+      "react-native-css@3.0.7": "patches/react-native-css@3.0.7.patch"
+    }
   },
   "devDependencies": {
     "concurrently": "^9.2.1"
