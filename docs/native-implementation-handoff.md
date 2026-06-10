@@ -116,6 +116,20 @@ docs/            web-native-parity.md (spec) · design-token-remediation.md (tok
 
 Then port screens. **Order:** auth cluster (`login`, `signup`, `forgot-password`, `update-password`, `verify-email`, `verify-signup`, `auth/verify-session`) → `onboarding` → home `""` → `rounds/add` → `dashboard/[id]` → `rounds/[id]/calculation` (heavy `handicap-core` reuse — import, never reimplement) → `statistics` → `statistics/courses/[courseId]` → `profile/[id]` → `calculators`.
 
+## 7b. Dev environment ownership (servers, simulator, test data)
+
+**You own the full dev-environment lifecycle.** Start and stop processes as the work requires — don't wait for an operator:
+
+- **Web** (needed as the visual reference + the tRPC API): run `pnpm dev` as a background process; it serves on :3000. Kill stale processes holding ports you need (`lsof -ti:3000 -ti:8081 | xargs kill`) — other projects on this machine sometimes hold :8081; alternatively pass `--port` to Metro.
+- **Native**: `pnpm --filter native ios` builds + boots a simulator the first time (slow; rebuild only when native deps change); thereafter background `expo start` and reload. Manage simulators directly with `xcrun simctl` (boot/screenshot/openurl) — that's also what the capture tooling uses.
+- Run servers as managed background processes and check their output; clean up what you start when a phase ends. `pnpm dev:all` is for humans — as an agent, prefer individually-managed processes you can monitor and restart.
+
+**Test data & auth (do this before porting data screens):** screens must show real data, but you cannot receive verification emails and must never send real ones (autonomy protocol (b)). Sanctioned paths, in order of preference:
+1. **Local Supabase**: `supabase start` (config in `supabase/`), point BOTH apps' env at the local stack (web: `apps/web/.env.local` overrides; native: `lib/env.ts` dev values), apply migrations, and seed (`pnpm build:seed` / `scripts/sql`). Create the test user with auto-confirm via the local auth admin API, then add rounds through the app's own tRPC mutations (exercises the real write path).
+2. **Remote project fallback** (if local Supabase is unusable): create a pre-confirmed test user via the admin API using `SUPABASE_SERVICE_ROLE_KEY` from `apps/web/.env` (server-side admin creation skips the email), clearly named (e.g. `native-goal-test@…`), and log it for cleanup. Never trigger flows that email real addresses or touch Stripe live mode.
+
+Email-verification screens (`verify-email`, `verify-signup`, `auth/verify-session`) are ported for STRUCTURE and judged against their web twins visually; exercising the real email loop is out of scope — log it.
+
 ## 8. The per-screen porting workflow
 
 1. Read the web page (`apps/web/app/<route>/page.tsx`) and its component closure (`pnpm parity:drift` shows what reaches it). Identify the tRPC procedures it uses.
