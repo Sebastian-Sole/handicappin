@@ -1,0 +1,32 @@
+# Frozen rubric — `verify-signup`.
+# Native: apps/native/app/(auth)/verify-signup.tsx (testID "verify-signup-screen").
+# Web reference: /verify-signup, phone viewport. Web chrome not a finding.
+screen: verify-signup
+rubric_version: bring-up-v1
+items:
+  layout_structure:
+    desc: >
+      Narrow column: "Verify Your Email" heading, muted description, Email
+      Address field (placeholder your@email.com), centered "Verification
+      Code" label over a 3–3 OTP strip with separator, spam-folder hint,
+      full-width primary "Verify Email" button (disabled until 6 digits),
+      centered resend link, bordered Tip alert.
+  color_tokens:
+    desc: >
+      Auth-cluster palette; OTP strips bordered with the input token;
+      disabled CTA reduced opacity; resend link primary; tip alert bordered.
+    pairings_used:
+      - body-on-page
+      - muted-on-page
+      - primary-foreground-on-primary
+  type_hierarchy:
+    desc: >
+      H1 extra-bold; body muted description; small labels; meta hint and tip
+      texts. All Inter.
+  components_present:
+    desc: >
+      One bordered input with placeholder; two joined 3-slot OTP groups with
+      a separator glyph between; primary CTA; link-style resend; alert box.
+a11y:
+  headings: [Verify Your Email]
+  markers: [verify-signup-screen, verify-signup-email, verify-signup-otp, verify-signup-submit]

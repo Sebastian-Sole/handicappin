@@ -8,7 +8,6 @@
  */
 import { zodResolver } from "@hookform/resolvers/zod";
 import { router } from "expo-router";
-import type { Href } from "expo-router";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { View } from "react-native";
@@ -108,9 +107,8 @@ export default function ForgotPasswordScreen() {
       });
 
       setTimeout(() => {
-        // typed-routes-forward-cast: target screen lands later this cluster
         router.push(
-          `/update-password?email=${encodeURIComponent(values.email)}` as Href,
+          `/update-password?email=${encodeURIComponent(values.email)}`,
         );
       }, 1500);
     } catch {

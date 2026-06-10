@@ -1,0 +1,31 @@
+# Frozen rubric — `verify-email`.
+# Native: apps/native/app/(auth)/verify-email.tsx (testID "verify-email-screen").
+#
+# NO STABLE WEB VISUAL EXISTS: the web page is a server redirect handler
+# (exchanges ?code= and bounces to /login). This rubric therefore scores the
+# native screen against the AUTH-CLUSTER DESIGN LANGUAGE (same basis as the
+# token-gallery rubric), not a web screenshot. States: verifying (transient)
+# and failed (stable, captured with an invalid code).
+screen: verify-email
+rubric_version: bring-up-v1
+items:
+  layout_structure:
+    desc: >
+      Centered narrow column. Failed state: "Verification Failed" H1,
+      muted "Failed to verify email, try again" body, full-width primary
+      "Back to Login" button. Verifying state: H1 + muted wait copy.
+  color_tokens:
+    desc: >
+      Background token canvas; foreground H1; muted body; primary CTA with
+      primary-foreground label.
+    pairings_used:
+      - body-on-page
+      - muted-on-page
+      - primary-foreground-on-primary
+  type_hierarchy:
+    desc: H1 extra-bold; body muted; label-size button text. All Inter.
+  components_present:
+    desc: One full-width primary button in the failed state; nothing else.
+a11y:
+  headings: [Verification Failed]
+  markers: [verify-email-screen]

@@ -117,7 +117,7 @@ export function budgetCapUSD(tier = 'opus') {
  *
  * e.g. SCREENS = ['index', 'rounds', 'statistics'];
  */
-export const SCREENS = ['index', 'login', 'signup', 'forgot-password', 'update-password'];
+export const SCREENS = ['index', 'login', 'signup', 'forgot-password', 'update-password', 'verify-signup', 'verify-email', 'auth/verify-session'];
 
 /** Native screen slug → web reference path on the Next.js app (port 3000). */
 export const WEB_PATHS = {
@@ -126,6 +126,12 @@ export const WEB_PATHS = {
   signup: '/signup',
   'forgot-password': '/forgot-password',
   'update-password': '/update-password',
+  'verify-signup': '/verify-signup',
+  // verify-email + auth/verify-session: web twins are server redirect
+  // handlers with no stable visual — rubrics score the native states
+  // against the auth-cluster design language (see those rubric headers).
+  'verify-email': '/verify-email',
+  'auth/verify-session': '/auth/verify-session',
 };
 
 export const SMOKE_SCREEN = 'index';

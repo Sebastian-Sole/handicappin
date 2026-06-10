@@ -36,7 +36,6 @@ export const INTENTIONAL = {
   // flows) — revisit each entry deliberately, don't let it fossilize.
   webOnly: new Set([
     "about",
-    "auth/verify-session",
     "billing",
     "billing/success",
     "calculators",
@@ -51,8 +50,6 @@ export const INTENTIONAL = {
     "statistics/courses/[courseId]",
     "terms-of-service",
     "upgrade",
-    "verify-email",
-    "verify-signup",
   ]),
   // Native-only routes by design.
   nativeOnly: new Set([]),

@@ -16,6 +16,8 @@ export interface InputOTPProps {
   disabled?: boolean;
   testID?: string;
   accessibilityLabel?: string;
+  /** Render two joined groups with a dash between (web verify-signup style). */
+  separator?: boolean;
 }
 
 export function InputOTP({
@@ -25,11 +27,37 @@ export function InputOTP({
   disabled = false,
   testID,
   accessibilityLabel,
+  separator = false,
 }: InputOTPProps) {
   const inputRef = useRef<TextInput>(null);
   const [focused, setFocused] = useState(false);
   const chars = value.split("");
   const activeIndex = Math.min(value.length, maxLength - 1);
+  const groupBreak = separator ? Math.ceil(maxLength / 2) : maxLength;
+
+  const renderSlot = (index: number, isLastInGroup: boolean) => {
+    const isActive = focused && index === activeIndex;
+    return (
+      <View
+        key={index}
+        className={cn(
+          "h-10 w-10 items-center justify-center",
+          !isLastInGroup && "border-r border-input",
+          isActive && "border-2 border-ring rounded-sm",
+        )}
+      >
+        <Text className="text-body-sm text-foreground">
+          {chars[index] ?? ""}
+        </Text>
+      </View>
+    );
+  };
+
+  // One bordered rounded strip per group + per-slot right separators:
+  // per-side border-y/-l/-r utilities don't materialize reliably under
+  // react-native-css, and this draws the same joined-box look as web.
+  const groupClass =
+    "flex-row items-center rounded-md border border-input bg-background overflow-hidden";
 
   return (
     <Pressable
@@ -37,31 +65,23 @@ export function InputOTP({
       accessibilityLabel={accessibilityLabel}
       onPress={() => inputRef.current?.focus()}
       disabled={disabled}
-      // One bordered rounded strip + per-slot right separators: per-side
-      // border-y/-l/-r utilities don't materialize reliably under
-      // react-native-css, and this draws the same joined-box look.
-      className={cn(
-        "flex-row items-center rounded-md border border-input bg-background overflow-hidden",
-        disabled && "opacity-50",
-      )}
+      className={cn("flex-row items-center gap-sm", disabled && "opacity-50")}
     >
-      {Array.from({ length: maxLength }, (_, index) => {
-        const isActive = focused && index === activeIndex;
-        return (
-          <View
-            key={index}
-            className={cn(
-              "h-10 w-10 items-center justify-center",
-              index < maxLength - 1 && "border-r border-input",
-              isActive && "border-2 border-ring rounded-sm",
-            )}
-          >
-            <Text className="text-body-sm text-foreground">
-              {chars[index] ?? ""}
-            </Text>
-          </View>
-        );
-      })}
+      <View className={groupClass}>
+        {Array.from({ length: groupBreak }, (_, i) =>
+          renderSlot(i, i === groupBreak - 1),
+        )}
+      </View>
+      {separator ? (
+        <Text className="text-body text-muted-foreground">-</Text>
+      ) : null}
+      {separator ? (
+        <View className={groupClass}>
+          {Array.from({ length: maxLength - groupBreak }, (_, i) =>
+            renderSlot(groupBreak + i, groupBreak + i === maxLength - 1),
+          )}
+        </View>
+      ) : null}
       {/* Invisible input that owns the value (testID lives on the visible
           Pressable — invisible nodes aren't tappable for Maestro). */}
       <TextInput

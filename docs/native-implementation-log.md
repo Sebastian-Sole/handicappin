@@ -186,6 +186,45 @@ real content; the markers stay for the capture-hygiene gate's a11y-tree scan.
   §7b) and these screens are ported for structure. The OTP row in
   otp_verifications expires in 15 minutes; only its hash is stored.
 
+### verify-signup — PASS (in-band judgment, 2026-06-10)
+
+- Captures: /tmp/handicappin-compare/verify-signup/. All rubric items PASS
+  (3–3 OTP groups with separator, hint, resend link, tip alert; web's
+  separator glyph is a middot vs native dash — below finding threshold).
+- Maestro flows/verify-signup.yaml PASS against the REAL verify-signup-otp
+  edge function: prefilled email via deep link (percent-encoded @), wrong
+  code surfaces the backend's "No pending verification found for this
+  email" in the destructive alert. No resend tap (it would email).
+- Fix recorded: native screens persist across deep links (unlike web full
+  page loads) — ?email= now syncs via effect, not just useState initializer.
+
+### verify-email — PASS (in-band judgment vs design language, 2026-06-10)
+
+- Web twin is a SERVER REDIRECT HANDLER (no stable visual): rubric scores
+  the native states against the auth-cluster design language (documented in
+  the rubric header). Native failed-state captured via invalid ?code= deep
+  link: H1 + muted body + primary Back to Login — consistent with cluster.
+- Code path mirrors web: exchangeCodeForSession → profile.verified=true →
+  /login?verified=true; missing code → /login. Email loop out of scope.
+
+### auth/verify-session — PASS (in-band judgment vs design language, 2026-06-10)
+
+- Web twin redirects logged-out visitors server-side and its in-session
+  states depend on live JWT-hook timing — same design-language rubric basis.
+- Native mirrors the web state machine exactly (3 refresh retries for
+  billing claims → onboarding/returnTo; failed → logout + retry buttons).
+  Logged-out Redirect to /login?error=session_expired verified by code
+  review; live session states exercised in the auth round-trip era.
+
+### Auth cluster wrap (2026-06-10)
+
+All 7 auth routes ported and removed from INTENTIONAL.webOnly (15 entries
+remain). Typed-route forward casts swept — only `/onboarding` (next
+cluster) and verify-session's dynamic returnTo remain, marked with
+`typed-routes-forward-cast` comments. Full gate set green: native tsc,
+expo lint, parity (routes+styles+theme-drift), verify:harness 55/55,
+expo export -p ios.
+
 ## Waivers
 
 (none yet)

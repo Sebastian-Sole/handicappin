@@ -97,9 +97,8 @@ export default function LoginScreen() {
             "Please verify your email before signing in. Redirecting to verification...",
         });
         setTimeout(() => {
-          // typed-routes-forward-cast: target screen lands later this cluster
           router.push(
-            `/verify-signup?email=${encodeURIComponent(values.email)}` as Href,
+            `/verify-signup?email=${encodeURIComponent(values.email)}`,
           );
         }, 1500);
         setIsSubmitting(false);
@@ -224,15 +223,13 @@ export default function LoginScreen() {
         <View className="flex-row items-center justify-center flex-wrap">
           <Button
             variant="link"
-            // typed-routes-forward-cast: target screen lands later this cluster
-            onPress={() => router.push("/forgot-password" as Href)}
+            onPress={() => router.push("/forgot-password")}
           >
             Forgot password?
           </Button>
           <Button
             variant="link"
-            // typed-routes-forward-cast: target screen lands later this cluster
-            onPress={() => router.push("/signup" as Href)}
+            onPress={() => router.push("/signup")}
           >
             Don&apos;t have an account?
           </Button>

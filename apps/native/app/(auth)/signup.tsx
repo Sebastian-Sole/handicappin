@@ -7,7 +7,6 @@
  */
 import { zodResolver } from "@hookform/resolvers/zod";
 import { router } from "expo-router";
-import type { Href } from "expo-router";
 import { useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { Text, View } from "react-native";
@@ -99,9 +98,8 @@ export default function SignupScreen() {
       });
 
       setTimeout(() => {
-        // typed-routes-forward-cast: target screen lands later this cluster
         router.push(
-          `/verify-signup?email=${encodeURIComponent(values.email)}` as Href,
+          `/verify-signup?email=${encodeURIComponent(values.email)}`,
         );
       }, 1500);
     } catch (error: unknown) {
@@ -276,8 +274,7 @@ export default function SignupScreen() {
         <View className="flex-row items-center justify-center flex-wrap">
           <Button
             variant="link"
-            // typed-routes-forward-cast: target screen lands later this cluster
-            onPress={() => router.push("/forgot-password" as Href)}
+            onPress={() => router.push("/forgot-password")}
           >
             Forgot password?
           </Button>
