@@ -1,6 +1,8 @@
 # ONBOARDING · renders plan cards with real promo-slot data; plan CTAs are
 # mocked (decision ledger) and surface the dev notice.
-# PRE-REQUISITE: signed in as a plan-less user (login flow routes here).
+# PRE-REQUISITE: signed in as a PLAN-LESS user (plan-holders are redirected
+# home by design, so this flow only passes against a fresh account — it ran
+# green during the onboarding screen's QA; see the implementation log).
 appId: com.handicappin.app
 ---
 - openLink: handicappin://onboarding

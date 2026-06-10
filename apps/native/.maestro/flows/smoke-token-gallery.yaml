@@ -11,13 +11,17 @@
 # server masks a broken launch instead of catching it.
 appId: com.handicappin.app
 ---
-- launchApp
-# Font-ready gate (the app renders nothing under the splash until fonts resolve).
-- assertVisible:
-    id: 'fonts-ready'
-- assertVisible:
-    id: 'token-gallery'
-- assertVisible: 'Token gallery'
+# The gallery retired to the native-only __gallery route when home took
+# over "/" — deep link to it (launchApp alone would land on home).
+- openLink: handicappin://__gallery
+- tapOn:
+    text: "Open"
+    optional: true
+# Gallery heading doubles as the font-ready signal (zero-size markers are
+# not Maestro-visible; the capture gate checks fonts-ready itself).
+- extendedWaitUntil:
+    visible: 'Token gallery'
+    timeout: 30000
 
 # Section headings in order — also the glyph/no-tofu proxy (Inter 600/800).
 - assertVisible: 'Colors'
