@@ -46,7 +46,7 @@ Hard rules for this codebase. Follow without exception. See `package.json` for e
 - **Tailwind CSS v4** utility classes. No custom CSS modules, no styled-components.
 - Component variants via `class-variance-authority` (CVA). Merge classes with `cn()` from `@/lib/utils` (which wraps `clsx` + `tailwind-merge`).
 - UI primitives are shadcn/ui on top of Radix UI. Component registry config is `components.json`; primitives live in `components/ui/`. Prefer composing existing primitives over pulling in new ones.
-- Design tokens live in `app/globals.css`.
+- Design tokens live in `app/globals.css` (+ `app/styles/utilities/`). They are the single hand-edited source: `pnpm generate:theme` extracts the typed native contract into `packages/tokens/generated/` (committed; never hand-edit). Token-source edits require regeneration — the pre-commit hook automates it, `pnpm check:theme-drift` is the CI backstop. See `docs/web-native-parity.md`.
 
 ## Accessibility (WCAG 2.1 AA)
 

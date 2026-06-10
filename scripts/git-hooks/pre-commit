@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+# Pre-commit gate (installed by scripts/install-hooks.sh; applies to anyone
+# committing, human or agent). Two fast checks:
+#
+#   1. Design-token sync — if the design-system source changed, regenerate
+#      @handicappin/tokens and stage the outputs so commits never carry a
+#      stale token contract (CI backstop: check:theme-drift).
+#   2. check:tokens — the web-side token-bypass guard.
+#
+# Deterministic and sub-second; bypass only with --no-verify.
+set -uo pipefail
+cd "$(git rev-parse --show-toplevel)"
+
+TOKEN_SOURCES='^(app/globals\.css|app/styles/utilities/|packages/tokens/(src/|theme\.config\.json))'
+
+if git diff --cached --name-only | grep -qE "$TOKEN_SOURCES"; then
+  echo "[pre-commit] design-token source changed — regenerating @handicappin/tokens"
+  if ! pnpm --filter @handicappin/tokens generate:theme >/dev/null 2>&1; then
+    echo "[pre-commit] generate:theme FAILED — fix the token source before committing:"
+    pnpm --filter @handicappin/tokens generate:theme
+    exit 1
+  fi
+  git add packages/tokens/generated
+fi
+
+if ! bash scripts/check-design-tokens.sh; then
+  echo "[pre-commit] check:tokens failed — commit blocked."
+  exit 1
+fi
+
+exit 0

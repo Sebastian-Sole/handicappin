@@ -1,0 +1,27 @@
+{
+  "source": "../../app/globals.css",
+  "typographySource": "../../app/styles/utilities/typography.css",
+  "surfacesSource": "../../app/styles/utilities/surfaces.css",
+  "themeInlineBlock": "@theme inline",
+  "lightSelector": ":root",
+  "darkSelector": ".dark",
+  "outputDir": "./generated",
+  "outputs": {
+    "tokens": "./generated/tokens.ts",
+    "nativeCss": "./generated/native-global.css"
+  },
+  "remBasePx": 16,
+  "fonts": {
+    "sans": "Inter, ui-sans-serif, system-ui, sans-serif",
+    "mono": "ui-monospace, SFMono-Regular, Menlo, monospace",
+    "serif": "ui-serif, Georgia, serif"
+  },
+  "surfaceUtilityPrefixes": [
+    "surface",
+    "tint-",
+    "chip-",
+    "icon-chip",
+    "formula-box",
+    "marketing-elevated"
+  ]
+}
