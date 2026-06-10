@@ -10,7 +10,7 @@ import { Redirect, router, useLocalSearchParams } from "expo-router";
 import type { Href } from "expo-router";
 import { useRef, useState } from "react";
 import { useForm } from "react-hook-form";
-import { View } from "react-native";
+import { Text, View } from "react-native";
 import { z } from "zod";
 
 import { AuthFormShell } from "@/components/auth/auth-form-shell";
@@ -30,7 +30,6 @@ import { Input } from "@/components/ui/input";
 import { getBillingFromJWT } from "@/lib/auth/jwt";
 import { useSession } from "@/lib/auth/session-provider";
 import { supabase } from "@/lib/supabase";
-import { Text } from "react-native";
 
 interface FeedbackState {
   type: "success" | "error" | "info";

@@ -14,11 +14,10 @@ import {
   type FieldPath,
   type FieldValues,
 } from "react-hook-form";
-import { View } from "react-native";
+import { Text, View } from "react-native";
 
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
-import { Text } from "react-native";
 
 const Form = FormProvider;
 

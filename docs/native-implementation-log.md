@@ -144,6 +144,22 @@ real content; the markers stay for the capture-hygiene gate's a11y-tree scan.
 - Google sign-in: visual-parity button present; functional OAuth deferred
   (see Deferred).
 
+### signup — PASS (in-band judgment, 2026-06-10)
+
+- Captures: /tmp/handicappin-compare/signup/{native,web,compare}.png (light).
+- Rubric verification/rubrics/signup.yaml, judged in-band: all four items
+  PASS. Iterated twice: helper texts aligned to web's FormDescription
+  (text-body-sm muted), legal links aligned to web's LegalDialog trigger
+  style (muted + underline, not primary).
+- Maestro `.maestro/flows/signup.yaml` PASS: form accepts input, zod consent
+  refine blocks submit with the exact web error message. Full account
+  creation exercised in the verify-signup QA (avoids minting junk users per
+  flow run).
+- Sim environment note: password AutoFill sheets render out-of-process and
+  are INVISIBLE to Maestro — disabled on the sim once (documented in
+  .maestro/README.md). Keyboard dismissal in flows: `pressKey: Enter`
+  (hideKeyboard is flaky; a keyboard-covered button swallows taps silently).
+
 ## Waivers
 
 (none yet)

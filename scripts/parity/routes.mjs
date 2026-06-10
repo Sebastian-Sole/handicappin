@@ -48,7 +48,6 @@ export const INTENTIONAL = {
     "profile/[id]",
     "rounds/[id]/calculation",
     "rounds/add",
-    "signup",
     "statistics",
     "statistics/courses/[courseId]",
     "terms-of-service",
