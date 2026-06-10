@@ -65,6 +65,29 @@ jobs:
       - name: Test
         run: pnpm test run
 
+  parity:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Web-native parity gate (theme drift + routes + native styles)
+        run: pnpm parity
+
+      - name: Web token guard
+        run: pnpm check:tokens
+
   schema-sync-check:
     runs-on: ubuntu-latest
     steps:

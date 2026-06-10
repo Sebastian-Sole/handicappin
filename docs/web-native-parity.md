@@ -56,14 +56,22 @@ All deterministic parity tooling is in place and **activates automatically the m
 - Agent harness: `.claude/rules/web-native-parity.md` (binding rule), `.claude/skills/web-native-parity/` (playbook), `.claude/hooks/parity-web-change.sh` (PostToolUse nudge; silent while dormant).
 - `pnpm-workspace.yaml` already includes `apps/*`.
 
-## Phase 3 — native bring-up (the remaining work, needs the actual app)
+## Phase 3 — native bring-up (STARTED 2026-06-10)
 
-1. Scaffold `apps/native` (Expo + NativeWind v5 + `@expo-google-fonts/inter` registering exactly the `FONT_FACES` names from `packages/tokens/src/font-faces.mjs`).
-2. Point `theme.config.json` `outputs.nativeCss` at `apps/native/global.css`; validate the generated theme against a real NativeWind build — especially the dark-mode strategy (`.dark`-scoped vars + `@custom-variant dark`) and the surface utility classes.
-3. Seed `INTENTIONAL.webOnly` in `routes.mjs` with the unported route list; port screens, burning the list down.
-4. Gradients: give `hero-gradient`/`hero-radial` expo-linear-gradient equivalents (generator currently skips them and prints the skip list on every run).
-5. Port the visual verification layer from ks-digital once there is something to screenshot: `compare-screen.sh` (side-by-side sim/web capture) and the vision-judge harness (`apps/app/verification/` — quorum judging, iteration caps, verdict cache). Deliberately NOT ported now: it is inert without a booted simulator and a running app.
-6. Add `pnpm parity` to CI on all PRs (today only `theme-drift.yml` runs, scoped to token paths).
+Done:
+
+1. ✅ `apps/native` scaffolded: Expo SDK 56 + expo-router + NativeWind 5 preview (`react-native-css`) + `@expo-google-fonts/inter` registering exactly the `FONT_FACES` names. Single `fontsReady` splash gate with a harness-visible marker.
+2. ✅ Generator targets `apps/native/global.css` (drift-checked). Validated via `expo export -p web` (Metro + NativeWind): compiled CSS contains the typography ramp with Inter faces, surface recipes with per-mode vars, and both light and dark token values. Runtime dark-mode *toggle* still needs on-device confirmation.
+3. ✅ `INTENTIONAL.webOnly` seeded with the 22-route burn-down backlog; gates armed and green (`parity:routes`, `parity:styles`).
+4. ✅ QA framework ported (`apps/native/verification/`, 55 hermetic tests): vision-judge quorum (default `claude-sonnet-4-6`, needs `ANTHROPIC_API_KEY`), per-mode WCAG contrast gate against the generated tokens, a11y matrix, capture hygiene, web prefilter, verdict cache, loop control. `compare-screen.sh` + Maestro onboarding (`.maestro/README.md`, smoke flow; install Maestro CLI per that README).
+5. ✅ `pnpm parity` + `check:tokens` run in CI on all PRs (ci.yml `parity` job).
+
+Remaining (screen-porting era):
+
+6. Port screens route by route, deleting each from `INTENTIONAL.webOnly`; first sim run: `pnpm --filter native ios`, then calibrate the vision judge on real captures (`pnpm --filter native harness:run index`).
+7. Set `ios.bundleIdentifier` in `apps/native/app.json` (Maestro flow + harness `appId` reference the prebuild default `com.anonymous.handicappin` until then — update together).
+8. Gradients: expo-linear-gradient equivalents for `hero-gradient`/`hero-radial` when the homepage is ported.
+9. **Known WCAG finding (web-side fix needed):** dark-mode `--primary-foreground` on `--primary` measures 4.27:1 (< 4.5:1, WCAG 1.4.3). The contrast gate carries a frozen waiver so regressions still fail; the real fix belongs in `apps/web/app/globals.css` dark `--primary`/`--primary-foreground`.
 
 ## Files
 
