@@ -521,6 +521,77 @@ Why: owner feedback — "Add round needs a date and time picker".
   flex-1 (labels wrap); the trend banner's text view got `shrink` for the
   same reason. Evidence: /tmp/verify-handicap-impact.png.
 
+## Tweak round 2 (2026-06-11, owner sim-testing)
+
+Seven further owner findings. All addressed same-day; the two structural
+ones became D20/D21.
+
+### D20 — Dashboard density + row navigation (2026-06-11)
+
+What: (a) native drops web's educational essay on the Rounds tab (random
+frivolity header, two transparency paragraphs, learn-more link) so the
+handicap figure and rounds data lead — the "How is my handicap
+calculated?" link stays as the learning path. (b) Rounds-history rows are
+fully tappable and navigate to the round's calculation; the web-only
+"View Calculation" link column is dropped. (c) The Date column shows the
+day only (web shows full date+time) at 110pt — the owner asked for
+tighter date↔course spacing. (d) The forgot-password screen gains a
+"Back to login" link (web reaches login via its global navbar; native
+auth has no chrome).
+Why: owner feedback — "wall of text users scroll past", "entire row
+should be clickable", "spacing can be smaller", "no back button".
+Discovery worth recording: rows WIDER than the horizontal-scroll viewport
+must NOT be the iOS accessibility element — a flattened row's activation
+point is its UNCLIPPED center, which can sit outside the viewport where
+taps die (hit-testing clips to bounds). The narrow date cell carries the
+button role/label instead; row presses work from any visible cell. (A
+dead Fast-Refresh socket after a transient syntax error masked this for
+several probe rounds — cold-relaunch before trusting on-sim negatives.)
+Evidence: /tmp/verify-dashboard-declutter.png, /tmp/verify-rounds-table.png,
+Maestro row-tap → "Hole-by-Hole Results" assertion green; flow
+dashboard.yaml re-anchored and green.
+Also: "expandable beyond 5 rounds" — NOT a cap: the table renders every
+round (paginating at 20/page, mirroring web); the account simply had 5
+rounds when the owner tested. No change.
+
+### D21 — Add-course / add-tee dialogs ported (2026-06-11)
+
+What: web's AddCourseDialog (multi-page: course info → one page per tee,
+per-page Next gating, Add Another Tee / Remove Tee, whole-form Save gate)
+and TeeDialog (add mode) ported as native page sheets: add-course-modal,
+add-tee-modal, tee-form-section (tee info, auto-summing course/slope
+ratings, 18-hole par/hcp/distance entry transposed to vertical rows,
+web's grouped validation list). Country list mirrored verbatim from
+web's combobox into lib/countries.ts; refinement layer (totals,
+unique HCPs, unique tee name+gender, website https-prefixing) mirrored
+into lib/scorecard-form.ts over the core schemas. New entities ride the
+existing submitScorecard contract: course goes up approvalStatus
+"pending" (server inserts), new tees go up id-less. Fixed in passing:
+add.tsx hardcoded course approvalStatus "approved" in the payload —
+now passes the real status. Triggers: buttons under both pickers + an
+"Add ... as a new course" empty-state action in the course search.
+Why: owner — "We are missing the add course/tee dialogs."
+Deferred within this: AI scorecard upload (premium, was already
+deferred) and edit-tee mode (web-only for now).
+Tests: 9 new unit tests (scorecard-form: blankTee, refinements, error
+grouping, website transform) — native suite 42/42. Flow
+add-course-dialog.yaml walks both dialogs (course page → tee page →
+validation summary → prefilled empty-state path → add-tee on existing
+course); the full new-course submit path shares the schemas + server
+contract web already exercises.
+Evidence: /tmp/verify-add-course-p0.png, /tmp/verify-add-course-tee-page.png,
+/tmp/verify-tee-validation.png, /tmp/verify-add-course-prefill.png,
+/tmp/verify-add-tee-modal.png.
+
+### Stepper connector fix (no decision — bug, 2026-06-11)
+
+The calculation stepper rendered each step as [spacer|circle|half-line],
+so connectors stopped halfway to the next circle (owner: "lines not
+connecting the nodes properly"). Connectors are now SIBLINGS between the
+circle+label columns, wrapped in an h-10 justify-center box so each line
+meets both neighboring circles at their vertical center.
+Evidence: /tmp/verify-stepper.png.
+
 ## Waivers
 
 (none — the dark-mode contrast waiver predates this goal and remains in
@@ -536,7 +607,8 @@ Each item ships with a visible in-app pointer where a user would look for it.
   bound to web redirect URIs; native needs an iOS OAuth client that doesn't
   exist in any config. Visual-parity button present; press explains.
 - Email-change OTP flow, data export, account deletion (profile) — web.
-- Add-course / add-tee dialogs + AI scorecard upload (rounds/add) — web.
+- ~~Add-course / add-tee dialogs~~ — UN-DEFERRED in tweak round 2 (D21).
+  Still web-only from that cluster: AI scorecard upload + edit-tee mode.
 - ~~Custom tee-time picker (rounds/add)~~ — UN-DEFERRED in the feedback
   round (D19): @react-native-community/datetimepicker shipped with a
   dev-client rebuild.

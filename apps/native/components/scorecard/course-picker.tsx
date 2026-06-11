@@ -31,12 +31,15 @@ interface CoursePickerProps {
   selectedLabel: string;
   onSelect: (course: SearchedCourse) => void;
   disabled?: boolean;
+  /** Opens the add-course dialog, prefilled with the search term (D21). */
+  onRequestAddCourse?: (initialName: string) => void;
 }
 
 export function CoursePicker({
   selectedLabel,
   onSelect,
   disabled,
+  onRequestAddCourse,
 }: CoursePickerProps) {
   const mode = useColorMode();
   const [open, setOpen] = useState(false);
@@ -107,9 +110,19 @@ export function CoursePicker({
               <Text className="text-body text-muted-foreground">
                 No courses found
               </Text>
-              <Text className="text-body-sm text-muted-foreground text-center">
-                New courses can be added on handicappin.com for now.
-              </Text>
+              {onRequestAddCourse ? (
+                <Button
+                  testID="add-course-from-search"
+                  variant="outline"
+                  onPress={() => {
+                    setOpen(false);
+                    onRequestAddCourse(searchTerm);
+                    setSearchTerm("");
+                  }}
+                >
+                  {`Add "${searchTerm}" as a new course`}
+                </Button>
+              ) : null}
             </View>
           ) : null}
           <FlatList

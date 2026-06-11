@@ -13,13 +13,15 @@
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { useQuery } from "@tanstack/react-query";
 import { Redirect, router } from "expo-router";
-import { X } from "lucide-react-native";
+import { Plus, X } from "lucide-react-native";
 import { useMemo, useState } from "react";
 import { Pressable, ScrollView, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { tokens } from "@handicappin/tokens/tokens";
 
+import { AddCourseModal } from "@/components/scorecard/add-course-modal";
+import { AddTeeModal } from "@/components/scorecard/add-tee-modal";
 import { CoursePicker } from "@/components/scorecard/course-picker";
 import { ScorecardTable } from "@/components/scorecard/scorecard-table";
 import { UsageLimitAlert } from "@/components/scorecard/usage-limit-alert";
@@ -48,7 +50,13 @@ import {
   type Score,
   type Tee,
 } from "@/lib/scorecard";
+import type { CourseForm } from "@/lib/scorecard-form";
 import { cn } from "@/lib/utils";
+
+/** Search returns approved courses only; a just-added course is pending. */
+type SelectedCourse = Omit<SearchedCourse, "approvalStatus"> & {
+  approvalStatus: "approved" | "pending";
+};
 
 type SubmitState = "idle" | "loading" | "success" | "error";
 
@@ -78,10 +86,20 @@ export default function AddRoundScreen() {
   const mode = useColorMode();
   const mutedForeground = tokens.colors[mode]["muted-foreground"];
 
-  const [selectedCourse, setSelectedCourse] = useState<SearchedCourse | null>(
+  const [selectedCourse, setSelectedCourse] = useState<SelectedCourse | null>(
     null,
   );
   const [selectedTee, setSelectedTee] = useState<FetchedTee | null>(null);
+  // Add-course/add-tee dialogs (D21): new entities live in client state
+  // until submit creates them server-side as "pending" — mirroring web's
+  // modifications pattern.
+  const [addCourseOpen, setAddCourseOpen] = useState(false);
+  const [addTeeOpen, setAddTeeOpen] = useState(false);
+  const [addCoursePrefill, setAddCoursePrefill] = useState("");
+  const [addedCourse, setAddedCourse] = useState<CourseForm | null>(null);
+  const [addedTees, setAddedTees] = useState<Record<number, FetchedTee[]>>(
+    {},
+  );
   const [holeCount, setHoleCount] = useState<18 | 9>(18);
   const [nineHoleSection, setNineHoleSection] = useState<"front" | "back">(
     "front",
@@ -104,16 +122,56 @@ export default function AddRoundScreen() {
   });
   const teesQuery = useQuery({
     ...courseTeesQueryOptions(selectedCourse?.id ?? 0),
-    enabled: selectedCourse != null,
+    // A just-added course (id -1) exists only client-side — nothing to fetch.
+    enabled: selectedCourse != null && selectedCourse.id > 0,
   });
 
   const settled = useDataSettled([profileQuery, roundCountQuery]);
 
-  const tees = useMemo(() => teesQuery.data ?? [], [teesQuery.data]);
+  const tees = useMemo<FetchedTee[]>(() => {
+    if (selectedCourse?.id === -1) {
+      return (addedCourse?.tees ?? []) as FetchedTee[];
+    }
+    const fetched = teesQuery.data ?? [];
+    const extras = selectedCourse ? (addedTees[selectedCourse.id] ?? []) : [];
+    return [...fetched, ...extras];
+  }, [teesQuery.data, selectedCourse, addedCourse, addedTees]);
   // Auto-select the first tee when the list arrives (web behavior).
   if (tees.length > 0 && selectedTee === null) {
     setSelectedTee(tees[0] ?? null);
   }
+
+  const handleCourseAdded = (course: CourseForm) => {
+    setAddedCourse(course);
+    setSelectedCourse({
+      id: -1,
+      name: course.name,
+      city: course.city,
+      country: course.country,
+      website: course.website ?? "",
+      approvalStatus: "pending",
+    });
+    setSelectedTee((course.tees?.[0] as FetchedTee | undefined) ?? null);
+  };
+
+  const handleTeeAdded = (tee: Tee) => {
+    if (!selectedCourse) return;
+    const fetchedShaped = tee as FetchedTee;
+    if (selectedCourse.id === -1) {
+      setAddedCourse((prev) =>
+        prev ? { ...prev, tees: [...(prev.tees ?? []), tee] } : prev,
+      );
+    } else {
+      setAddedTees((prev) => ({
+        ...prev,
+        [selectedCourse.id]: [
+          ...(prev[selectedCourse.id] ?? []),
+          fetchedShaped,
+        ],
+      }));
+    }
+    setSelectedTee(fetchedShaped);
+  };
 
   const displayedHoles = useMemo(
     () =>
@@ -178,7 +236,9 @@ export default function AddRoundScreen() {
         course: {
           id: selectedCourse.id,
           name: selectedCourse.name,
-          approvalStatus: "approved",
+          // Pass the REAL status: "pending" tells the server to create a
+          // just-added course (it was hardcoded "approved" before D21).
+          approvalStatus: selectedCourse.approvalStatus,
           country: selectedCourse.country,
           city: selectedCourse.city,
           website: selectedCourse.website ?? "",
@@ -293,7 +353,27 @@ export default function AddRoundScreen() {
               setSelectedCourse(course);
               setSelectedTee(null);
             }}
+            onRequestAddCourse={(initialName) => {
+              setAddCoursePrefill(initialName);
+              setAddCourseOpen(true);
+            }}
           />
+          <Button
+            testID="add-course-trigger"
+            variant="outline"
+            disabled={busy}
+            onPress={() => {
+              setAddCoursePrefill("");
+              setAddCourseOpen(true);
+            }}
+          >
+            <View className="flex-row items-center gap-sm">
+              <Plus size={CLOSE_ICON_SIZE} color={mutedForeground} />
+              <Text className="text-label-sm text-foreground">
+                Add New Course
+              </Text>
+            </View>
+          </Button>
         </View>
 
         <View className="gap-sm">
@@ -310,6 +390,19 @@ export default function AddRoundScreen() {
             disabled={busy || !selectedCourse}
             onSelect={setSelectedTee}
           />
+          <Button
+            testID="add-tee-trigger"
+            variant="outline"
+            disabled={busy || !selectedCourse}
+            onPress={() => setAddTeeOpen(true)}
+          >
+            <View className="flex-row items-center gap-sm">
+              <Plus size={CLOSE_ICON_SIZE} color={mutedForeground} />
+              <Text className="text-label-sm text-foreground">
+                Add New Tee
+              </Text>
+            </View>
+          </Button>
         </View>
 
         <View className="gap-sm">
@@ -415,6 +508,18 @@ export default function AddRoundScreen() {
             ? "Submitted!"
             : "Submit Round"}
       </Button>
+
+      <AddCourseModal
+        open={addCourseOpen}
+        initialCourseName={addCoursePrefill}
+        onClose={() => setAddCourseOpen(false)}
+        onAdd={handleCourseAdded}
+      />
+      <AddTeeModal
+        open={addTeeOpen}
+        onClose={() => setAddTeeOpen(false)}
+        onSave={handleTeeAdded}
+      />
     </ScrollView>
   );
 }

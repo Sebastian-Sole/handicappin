@@ -29,8 +29,10 @@ type SortColumn =
   | "round.scoreDifferential"
   | "round.exceptionalScoreAdjustment";
 
+// Date column shows the day only (web shows date+time): mobile density —
+// the tighter column was an owner ask (D20). Tap the row for full detail.
 const COLUMNS: { column: SortColumn; label: string; width: number }[] = [
-  { column: "teeTime", label: "Date", width: 170 },
+  { column: "teeTime", label: "Date", width: 110 },
   { column: "course.name", label: "Course", width: 180 },
   { column: "round.adjustedGrossScore", label: "Score", width: 80 },
   { column: "round.parPlayed", label: "Par", width: 70 },
@@ -150,23 +152,34 @@ export function RoundsTable({
                   ) : null}
                 </Pressable>
               ))}
-              <View className="px-md py-sm" style={{ width: 150 }}>
-                <Text className="text-label-sm text-primary font-bold">
-                  Actions
-                </Text>
-              </View>
             </View>
-            {/* Data rows */}
+            {/* Data rows — the WHOLE row navigates (owner ask, D20); the
+                web-only "View Calculation" link column is folded into it.
+                The row is WIDER than the scroll viewport, so it must NOT be
+                the accessibility element: a flattened row's activation
+                point is its unclipped center, which sits OUTSIDE the
+                viewport where taps die. The narrow date cell carries the
+                button semantics instead — its center is always visible, and
+                its activation falls through to the row Pressable. */}
             {filteredAndSorted.map((scorecard) => (
-              <View
+              <Pressable
                 key={scorecard.round.id}
-                className="flex-row border-b border-border items-center"
+                accessible={false}
+                onPress={() =>
+                  router.push(
+                    // typed-routes-forward-cast: target lands this cluster
+                    `/rounds/${scorecard.round.id}/calculation` as Href,
+                  )
+                }
+                className="flex-row border-b border-border items-center active:bg-muted"
               >
                 <Text
+                  accessibilityRole="button"
+                  accessibilityLabel={`View calculation for ${scorecard.course.name}, ${new Date(scorecard.teeTime).toLocaleDateString()}`}
                   className="text-body-sm text-foreground px-md py-sm"
-                  style={{ width: 170 }}
+                  style={{ width: 110 }}
                 >
-                  {new Date(scorecard.teeTime).toLocaleString()}
+                  {new Date(scorecard.teeTime).toLocaleDateString()}
                 </Text>
                 <Text
                   className="text-body-sm text-foreground px-md py-sm"
@@ -203,22 +216,7 @@ export function RoundsTable({
                       ) / 10
                     : 0}
                 </Text>
-                <View className="px-md py-sm" style={{ width: 150 }}>
-                  <Pressable
-                    accessibilityRole="link"
-                    onPress={() =>
-                      router.push(
-                        // typed-routes-forward-cast: target lands this cluster
-                        `/rounds/${scorecard.round.id}/calculation` as Href,
-                      )
-                    }
-                  >
-                    <Text className="text-label-sm text-primary underline">
-                      View Calculation
-                    </Text>
-                  </Pressable>
-                </View>
-              </View>
+              </Pressable>
             ))}
           </View>
         </ScrollView>

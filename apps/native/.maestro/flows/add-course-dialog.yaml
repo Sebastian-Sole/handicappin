@@ -1,0 +1,115 @@
+# Tweak round 2 — part B: add-course / add-tee dialog walk.
+appId: com.handicappin.app
+---
+- launchApp:
+    stopApp: true
+- openLink: handicappin://
+- tapOn:
+    text: "Open"
+    optional: true
+- extendedWaitUntil:
+    visible: ".*Welcome back.*"
+    timeout: 30000
+- tapOn:
+    id: "tab-add-round"
+- extendedWaitUntil:
+    visible: "Add Round"
+    timeout: 15000
+# Direct trigger under the course picker.
+- assertVisible: "Add New Course"
+- tapOn:
+    id: "add-course-trigger"
+- extendedWaitUntil:
+    visible: "Add New Course"
+    timeout: 10000
+- tapOn:
+    id: "course-name-input"
+- inputText: "Maestro Test Course"
+- pressKey: Enter
+- tapOn:
+    id: "country-picker-trigger"
+# The search input autofocuses — type directly; tapping it re-opens the
+# iOS selection callout which covers the first result row.
+- inputText: "Norway"
+- tapOn:
+    id: "country-option-norway"
+- tapOn:
+    id: "course-city-input"
+- inputText: "Oslo"
+- pressKey: Enter
+- takeScreenshot: /tmp/verify-add-course-p0
+- tapOn:
+    id: "next-page"
+- extendedWaitUntil:
+    visible: ".*Tee 1 of 1.*"
+    timeout: 10000
+- assertVisible: "Heads up!"
+- assertVisible: "Add Another Tee"
+- assertVisible: "Save Course"
+- takeScreenshot: /tmp/verify-add-course-tee-page
+# The validity summary lives below the 18-hole table.
+- scrollUntilVisible:
+    element: "⚠ Incomplete"
+    speed: 70
+    timeout: 40000
+- takeScreenshot: /tmp/verify-tee-validation
+# Fill the tee name to prove field plumbing on this page.
+- scrollUntilVisible:
+    element:
+      id: "tee-name-input"
+    direction: UP
+    speed: 70
+    timeout: 40000
+- tapOn:
+    id: "tee-name-input"
+- inputText: "GOLD"
+- pressKey: Enter
+- assertVisible: ".*Tee 1 of 1 — GOLD.*"
+- tapOn: "Back"
+- extendedWaitUntil:
+    visible: "Course Name"
+    timeout: 10000
+- tapOn: "Cancel"
+# Empty-state add path from the course picker search.
+- tapOn:
+    id: "course-picker-trigger"
+- tapOn:
+    id: "course-search-input"
+- inputText: "Zxqv Nonexistent"
+- extendedWaitUntil:
+    visible: "No courses found"
+    timeout: 15000
+- assertVisible: ".*Add \"Zxqv Nonexistent\" as a new course.*"
+- tapOn:
+    id: "add-course-from-search"
+- extendedWaitUntil:
+    visible: "Add New Course"
+    timeout: 10000
+- takeScreenshot: /tmp/verify-add-course-prefill
+- tapOn: "Cancel"
+# Add-tee trigger on an existing course.
+- tapOn:
+    id: "course-picker-trigger"
+- tapOn:
+    id: "course-search-input"
+- inputText: "St. Andrews"
+- extendedWaitUntil:
+    visible: ".*St. Andrews Old Course.*"
+    timeout: 12000
+- tapOn: ".*St. Andrews Old Course.*"
+- extendedWaitUntil:
+    visible: ".*TEE.*"
+    timeout: 12000
+- scrollUntilVisible:
+    element:
+      id: "add-tee-trigger"
+- tapOn:
+    id: "add-tee-trigger"
+- extendedWaitUntil:
+    visible: "Add New Tee"
+    timeout: 10000
+- assertVisible: "Tee Information"
+- assertVisible: "Course Rating"
+- takeScreenshot: /tmp/verify-add-tee-modal
+- tapOn: "Cancel"
+- assertVisible: "Add Round"

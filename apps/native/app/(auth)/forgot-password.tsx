@@ -164,6 +164,22 @@ export default function ForgotPasswordScreen() {
             >
               {submitButtonText}
             </Button>
+            {/* Web reaches login via the global navbar; native auth
+                screens have no chrome, so the way back is explicit. */}
+            <Button
+              testID="back-to-login"
+              variant="link"
+              className="self-center"
+              onPress={() => {
+                if (router.canGoBack()) {
+                  router.back();
+                } else {
+                  router.replace("/login");
+                }
+              }}
+            >
+              Back to login
+            </Button>
           </View>
         </Form>
       </View>
