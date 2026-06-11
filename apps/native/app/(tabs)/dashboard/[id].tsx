@@ -116,15 +116,19 @@ export default function DashboardScreen() {
         </Button>
       </View>
 
-      {/* Recent Rounds header card — web hides the chart below sm. */}
-      <View className="surface p-lg rounded-lg">
-        <View className="flex-row items-center justify-between mb-md">
-          <H2 className="pb-0">Recent Rounds</H2>
-          <Button variant="link" onPress={() => router.push("/rounds/add")}>
-            Add a round
-          </Button>
+      {/* Recent Rounds header card — web hides the chart below sm. Hidden
+          entirely when no rounds exist (owner ask): the table's empty state
+          already carries the add-your-first-round CTA. */}
+      {scorecards.length > 0 ? (
+        <View className="surface p-lg rounded-lg">
+          <View className="flex-row items-center justify-between mb-md">
+            <H2 className="pb-0">Recent Rounds</H2>
+            <Button variant="link" onPress={() => router.push("/rounds/add")}>
+              Add a round
+            </Button>
+          </View>
         </View>
-      </View>
+      ) : null}
 
       <RoundsTable scorecards={scorecards} />
     </ScrollView>

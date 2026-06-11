@@ -12,10 +12,11 @@ items:
   layout_structure:
     desc: >
       Surface cards in order: Handicap (H2, large primary figure, "Current
-      Handicap", calculated link), Recent Rounds (H2 + "Add a round" link),
-      Rounds History (H2, search field, sortable Date/Course/Score/Par/
-      Differential/Adjustment headers with ↑↓, one tappable row per round;
-      >20 rounds adds pagination).
+      Handicap", calculated link), Recent Rounds (H2 + "Add a round" link;
+      hidden entirely when the user has no rounds), Rounds History (H2,
+      search field, sortable Date/Course/Score/Par/Differential/Adjustment
+      headers with ↑↓, one tappable row per round; >20 rounds adds
+      pagination).
   color_tokens:
     desc: >
       Cards on surface recipe; handicap figure in primary; links primary;
