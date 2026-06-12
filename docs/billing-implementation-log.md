@@ -27,6 +27,35 @@ Next and Metro bundlers.
 exactly what the ledger forbids); putting them in `packages/handicap-core`
 (wrong domain); putting them web-side only (native can't import).
 
+### D23 — Out-of-order cursor rides webhook_events (provider + event_time_ms) (2026-06-12)
+
+**What:** the per-provider out-of-order guard (DoD #3) needs the timestamp
+of the last APPLIED event per (user, provider). Two nullable columns were
+added to the existing `webhook_events` table — `provider`
+('stripe'|'apple') and `event_time_ms` — plus a partial index
+`(user_id, provider, event_time_ms) WHERE status='success'`. The guard
+reads `max(event_time_ms)` over success rows; the cursor advances on every
+successfully EVALUATED event (even ones that lose precedence and don't
+change the projection), because a newer evaluated fact from a provider
+makes every older fact from that provider obsolete regardless of who won.
+
+**Why:** the handoff mandates "idempotency via the existing webhook_events
+table" and an out-of-order guard, but provides no storage for the cursor.
+Extending the table the idempotency already lives in keeps one
+system-of-record for webhook processing state. Existing Stripe rows stay
+NULL — Stripe handler ordering semantics are explicitly unchanged
+(DoD #4 "updated minimally").
+
+**Alternatives rejected:** a dedicated cursor table (more schema surface
+for the same data); deriving order from the projection (impossible —
+CANCELLATION/UNCANCELLATION don't move period_end, so only event time
+orders them); profile-side last_event columns (claims/profile shape is
+frozen beyond billing_provider).
+
+**Backfill note:** existing paid profiles were backfilled
+`billing_provider='stripe'` (Stripe is the only provider that has ever
+billed this app); free/plan-less profiles stay NULL.
+
 ## Waivers
 
 (none yet)

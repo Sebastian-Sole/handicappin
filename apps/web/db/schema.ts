@@ -18,6 +18,7 @@ import { sql } from "drizzle-orm";
 import { createSelectSchema } from "drizzle-zod";
 import type { InferSelectModel } from "drizzle-orm";
 import type { PlanType, SubscriptionStatus } from "@/lib/stripe-types";
+import type { BillingProviderId } from "@handicappin/billing-core";
 
 const authSchema = pgSchema("auth");
 
@@ -47,6 +48,8 @@ export const profile = pgTable(
     currentPeriodEnd: bigint("current_period_end", { mode: "number" }), // Y2038-proof unix timestamp
     cancelAtPeriodEnd: boolean("cancel_at_period_end").default(false).notNull(),
     billingVersion: integer("billing_version").default(1).notNull(),
+    // Which provider bills the CURRENT contract (D-arch): webhook/service writes only
+    billingProvider: text("billing_provider").$type<BillingProviderId | null>(),
   },
   (table) => [
     foreignKey({
@@ -79,6 +82,7 @@ export const profile = pgTable(
         AND current_period_end IS NOT DISTINCT FROM (SELECT current_period_end FROM profile WHERE id = auth.uid())
         AND cancel_at_period_end IS NOT DISTINCT FROM (SELECT cancel_at_period_end FROM profile WHERE id = auth.uid())
         AND billing_version IS NOT DISTINCT FROM (SELECT billing_version FROM profile WHERE id = auth.uid())
+        AND billing_provider IS NOT DISTINCT FROM (SELECT billing_provider FROM profile WHERE id = auth.uid())
       )`,
     }),
     pgPolicy("Users can insert their own profile", {
@@ -440,6 +444,10 @@ export const webhookEvents = pgTable(
     errorMessage: text("error_message"),
     retryCount: integer("retry_count").default(0).notNull(),
     userId: uuid("user_id"),
+    // Per-provider out-of-order guard: which provider sent the event and the
+    // provider's own event timestamp. NULL on legacy Stripe rows.
+    provider: text("provider").$type<BillingProviderId | null>(),
+    eventTimeMs: bigint("event_time_ms", { mode: "number" }),
   },
   (table) => [
     index("idx_webhook_events_event_type").on(table.eventType),

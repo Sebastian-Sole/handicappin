@@ -41,6 +41,7 @@ const profile: Tables<"profile"> = {
   current_period_end: 1735689600,
   cancel_at_period_end: false,
   billing_version: 1,
+  billing_provider: "stripe",
 };
 
 const access: FeatureAccess = {

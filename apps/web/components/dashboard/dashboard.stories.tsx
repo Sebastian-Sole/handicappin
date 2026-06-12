@@ -18,6 +18,7 @@ const profile: Tables<"profile"> = {
   plan_selected: null,
   plan_selected_at: null,
   subscription_status: null,
+  billing_provider: null,
   verified: true,
 };
 

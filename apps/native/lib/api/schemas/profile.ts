@@ -26,6 +26,9 @@ export const subscriptionStatusSchema = z.enum([
 ]);
 export type SubscriptionStatus = z.infer<typeof subscriptionStatusSchema>;
 
+export const billingProviderSchema = z.enum(["stripe", "apple"]);
+export type BillingProviderId = z.infer<typeof billingProviderSchema>;
+
 export const profileSchema = z.object({
   id: z.string(),
   email: z.string(),
@@ -40,6 +43,8 @@ export const profileSchema = z.object({
   current_period_end: z.number().nullable(),
   cancel_at_period_end: z.boolean(),
   billing_version: z.number(),
+  // Tolerant of older web servers that don't send the column yet.
+  billing_provider: billingProviderSchema.nullable().optional().default(null),
 });
 
 export type Profile = z.infer<typeof profileSchema>;
