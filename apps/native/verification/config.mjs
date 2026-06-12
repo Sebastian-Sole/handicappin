@@ -23,16 +23,17 @@ export const ARTIFACTS_DIR = join(HARNESS_DIR, 'artifacts'); // run logs + captu
 export const CACHE_DIR = join(ARTIFACTS_DIR, 'verdict-cache');
 
 /**
- * iOS simulator target. Re-verify on-machine before a live run
- * (`xcrun simctl list devices available`).
+ * iOS simulator target. Defaults match the reference machine; override per
+ * environment via SIM_DEVICE / SIM_OS without editing this file
+ * (`xcrun simctl list devices available` shows what's installed locally).
  *
  * appId: apps/native/app.json sets no `ios.bundleIdentifier` yet, so this is
  * the `expo prebuild` convention for the `handicappin` slug. Update it the day
  * a real bundle id is set in app.json.
  */
 export const SIM = {
-  device: 'iPhone 17 Pro',
-  os: 'iOS 26',
+  device: process.env.SIM_DEVICE || 'iPhone 17 Pro',
+  os: process.env.SIM_OS || 'iOS 26',
   appId: 'com.anonymous.handicappin',
 };
 

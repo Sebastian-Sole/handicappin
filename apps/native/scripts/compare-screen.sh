@@ -22,10 +22,21 @@
 set -uo pipefail
 
 ROUTE="${1:?usage: compare-screen.sh <native-route> [web-path]}"
+# Route slugs are [a-z0-9/_-] by construction; reject anything else so the
+# slug can't escape the output dir (a bare "..") or smuggle URL syntax into
+# the deep link.
+if [[ ! "$ROUTE" =~ ^[a-zA-Z0-9][a-zA-Z0-9/_-]*$ ]]; then
+  echo "error: route contains invalid characters: $ROUTE" >&2
+  exit 1
+fi
 # Native route `index` is the root screen → web `/`; otherwise mirror the slug.
 if [ "$ROUTE" = "index" ]; then DEFAULT_WEBPATH="/"; else DEFAULT_WEBPATH="/$ROUTE"; fi
 WEBPATH="${2:-$DEFAULT_WEBPATH}"
 WEB_BASE="${WEB_BASE:-http://localhost:3000}"
+if [[ ! "$WEB_BASE" =~ ^https?:// ]]; then
+  echo "error: WEB_BASE must be an http(s) URL: $WEB_BASE" >&2
+  exit 1
+fi
 SETTLE="${SETTLE:-4}"
 OUT="/tmp/handicappin-compare/${ROUTE//\//_}"
 mkdir -p "$OUT"

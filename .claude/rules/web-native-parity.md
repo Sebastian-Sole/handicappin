@@ -1,8 +1,8 @@
 # Web ↔ Native Parity
 
-The web app (`apps/web`) is the **design source of truth**. The native app (`apps/native`, once it exists) is a **separate component implementation** that must stay 1:1 with web. There is ONE design system (tokens), not two — but two component libraries that both consume it.
+The web app (`apps/web`) is the **design source of truth**. The native app (`apps/native`) is a **separate component implementation** that must stay 1:1 with web. There is ONE design system (tokens), not two — but two component libraries that both consume it.
 
-Status: the native app does not exist yet. The token contract and all gates below are live; the native-side gates are dormant and arm automatically when `apps/native` lands. Until then the binding requirement is: keep the token discipline (no bypasses) so generation stays one-to-one.
+Status: `apps/native` exists and every gate below is ARMED. The generated NativeWind entry is `apps/native/global.css` (emitted by `pnpm generate:theme` alongside `packages/tokens/generated/`). Screen porting is tracked in `INTENTIONAL.webOnly` (`scripts/parity/routes.mjs`) — burn that list down as routes are ported; never add to it casually.
 
 ## What is automatic (do not hand-maintain)
 
@@ -23,6 +23,6 @@ When you rename or add a **route**, `pnpm parity:routes` fails until the route m
 ## Enforcement layers
 - `pnpm check:tokens` — web styling that bypasses tokens. HARD (pre-commit).
 - `pnpm check:theme-drift` — stale generated contract. HARD (pre-commit regen + CI `theme-drift.yml`).
-- `pnpm parity:routes` — route divergence. HARD (pre-commit; dormant until native exists).
-- `pnpm parity:styles` — hardcoded native styling. HARD (pre-commit; dormant until native exists).
+- `pnpm parity:routes` — route divergence. HARD (pre-commit; armed).
+- `pnpm parity:styles` — hardcoded native styling. HARD (pre-commit; armed).
 - `pnpm parity:drift` — changed web file → affected native screens. Advisory (PostToolUse hook + `pnpm parity:watch`).

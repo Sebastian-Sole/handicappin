@@ -24,6 +24,7 @@ const WATCH_DIRS = [
   "apps/web/lib",
   "apps/web/hooks",
   "apps/web/contexts",
+  "apps/web/utils",
 ];
 const DEBOUNCE_MS = 400;
 

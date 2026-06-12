@@ -38,7 +38,7 @@ const IMPORT_RE =
 /** Is this path a web UI source file (a parity-relevant change)? */
 export function isWebUiFile(relPath) {
   const p = relPath.replace(/\\/g, "/");
-  if (!/^apps\/web\/(app|components|lib|hooks|contexts)\//.test(p)) return false;
+  if (!/^apps\/web\/(app|components|lib|hooks|contexts|utils)\//.test(p)) return false;
   if (/^apps\/web\/app\/api\//.test(p)) return false; // route handlers: no visual surface
   if (!/\.(tsx?|jsx?)$/.test(p)) return false;
   if (/(\.test\.tsx?|\.test\.jsx?|\.stories\.tsx?|\.d\.ts)$/.test(p)) return false;

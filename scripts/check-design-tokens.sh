@@ -61,8 +61,8 @@ check "raw size+weight compose (text-lg font-semibold etc.)" \
   'components/ui/(badge|typography)\.tsx'
 
 if [[ "$fail" -ne 0 ]]; then
-  echo "Design-token check failed. Use tokens from app/globals.css /"
-  echo "app/styles/utilities/, or register a documented exception in"
+  echo "Design-token check failed. Use tokens from apps/web/app/globals.css /"
+  echo "apps/web/app/styles/utilities/, or register a documented exception in"
   echo "docs/design-token-remediation.md and this script."
   exit 1
 fi

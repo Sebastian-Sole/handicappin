@@ -6,7 +6,7 @@ user-invocable: true
 
 # Web → Native Parity (port & verify)
 
-The web app (`apps/web`) is the design source of truth. The native app (`apps/native`, once it exists) is a **separate** component implementation that must stay 1:1. One design system (tokens), two component libraries. Full reference: `docs/web-native-parity.md`. Binding rule: `.claude/rules/web-native-parity.md`.
+The web app (`apps/web`) is the design source of truth. The native app (`apps/native`) is a **separate** component implementation that must stay 1:1. One design system (tokens), two component libraries. Full reference: `docs/web-native-parity.md`. Binding rule: `.claude/rules/web-native-parity.md`.
 
 ## Decide which kind of change you made
 
@@ -38,7 +38,7 @@ During interactive dev, `pnpm parity:watch` prints affected routes on every web 
 
 ## Gotchas
 
-- **Phase-1 dormancy.** `apps/native` does not exist yet; `parity:routes`/`parity:styles`/the drift gate detect that and exit 0 with a note. Don't "fix" the dormancy — it arms itself when the app lands. The token pipeline (`generate:theme`, `check:theme-drift`, `check:tokens`) is fully live NOW.
+- **All gates are ARMED.** `apps/native` exists, so `parity:routes`/`parity:styles`/the drift gate enforce for real. A web route without a native twin must be ported or declared in `INTENTIONAL.webOnly` (`scripts/parity/routes.mjs`) — that list is a burn-down, not a dumping ground.
 - **Only the token sources are generated → native.** `generate:theme` reads `apps/web/app/globals.css` + the two utility files (`theme.config.json` lists them). Editing a web *component* changes nothing in native automatically.
 - **A value with no token isn't an excuse to hardcode.** Add it to `globals.css` `@theme` (or the typography/surfaces layer) and regenerate — then consume the token. `// allow-hardcoded <reason>` is only for genuinely token-less values.
 - **Gradients are out of contract.** `hero-gradient`/`hero-radial` are skipped by the generator (RN needs expo-linear-gradient) — the generator prints every skipped utility on each run; check that list before assuming something propagated.
