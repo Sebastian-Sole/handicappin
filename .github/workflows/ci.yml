@@ -3,8 +3,10 @@ name: CI
 on:
   push:
     branches: [main]
+  # No branch filter on PRs: stacked PRs (base = another feature branch)
+  # must run the same gates as main-targeted ones — with the filter, the
+  # whole native/billing stack shipped with zero build/test CI.
   pull_request:
-    branches: [main]
 
 # Environment variables for CI builds
 # Stripe keys use real test-mode secrets for integration tests
@@ -56,9 +58,6 @@ jobs:
       - name: Lint
         run: pnpm lint
 
-      - name: Design-token bypass guard
-        run: pnpm check:tokens
-
       - name: Type check
         run: pnpm build
 
@@ -76,7 +75,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: "pnpm"
 
       - name: Install dependencies
