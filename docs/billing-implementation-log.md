@@ -56,6 +56,33 @@ frozen beyond billing_provider).
 `billing_provider='stripe'` (Stripe is the only provider that has ever
 billed this app); free/plan-less profiles stay NULL.
 
+### D24 — PRODUCT_CHANGE writes nothing; cursor advances only on evaluated entitlement events (2026-06-12)
+
+**What:** the RC webhook acknowledges PRODUCT_CHANGE without touching the
+projection AND without advancing the ordering cursor. Likewise TRANSFER,
+TEST, unknown products, non-APP_STORE stores, and unhandled event types
+are recorded for idempotency with `event_time_ms = NULL` (no cursor
+advance). The cursor moves only on the seven evaluated entitlement events
+(INITIAL_PURCHASE, RENEWAL, CANCELLATION, UNCANCELLATION, BILLING_ISSUE,
+EXPIRATION, NON_RENEWING_PURCHASE).
+
+**Why:** RevenueCat's event-flows doc (read 2026-06-12) is explicit:
+upgrades dispatch PRODUCT_CHANGE *alongside a RENEWAL* that carries the
+new product; downgrades dispatch PRODUCT_CHANGE immediately while "the
+customer will retain their entitlement based on the original product"
+until a later RENEWAL applies it. Writing on PRODUCT_CHANGE would grant
+deferred downgrades early; advancing the cursor on it could mark the
+sibling RENEWAL stale and lose the actual product switch. The D-status-
+mapping table doesn't bind PRODUCT_CHANGE, so this is the faithful
+interpretation (verified by integration test: PRODUCT_CHANGE no-op, then
+RENEWAL with new product applies the downgrade).
+
+**Also decided here:** the double-contract and TRANSFER alerts are
+recorded queryably in the success row's `error_message`
+(`double_contract: kept <provider>` / `transfer: ...`) in addition to the
+Sentry alert — integration tests assert the recorded note, and operators
+can audit alerts without Sentry access.
+
 ## Waivers
 
 (none yet)

@@ -6,6 +6,7 @@
 import * as Sentry from "@sentry/nextjs";
 import { captureSentryError } from "@/lib/sentry-utils";
 import { logger } from "@/lib/logging";
+import type { DoubleContractAlert } from "@/utils/billing/apply-billing-event";
 
 export interface WebhookFailureAlert {
   userId: string;
@@ -68,4 +69,77 @@ export async function sendAdminWebhookAlert(failure: WebhookFailureAlert): Promi
   );
 
   logger.info("Critical webhook failure sent to Sentry", { eventId: failure.eventId });
+}
+
+/**
+ * Double-contract alert (decision ledger D-precedence): a user appears to
+ * hold ACTIVE contracts with BOTH providers. We keep max entitlement and
+ * never auto-cancel the other side — a human resolves the double billing.
+ */
+export async function sendDoubleContractAlert(
+  userId: string,
+  alert: DoubleContractAlert,
+): Promise<void> {
+  logger.error("BILLING DOUBLE-CONTRACT - ADMIN ALERT", {
+    userId,
+    ...alert,
+  });
+
+  captureSentryError(
+    new Error(
+      `Billing double-contract for user: ${alert.currentProvider}(${alert.currentPlan}) vs incoming ${alert.incomingProvider}(${alert.incomingPlan}) — kept ${alert.keptProvider}`,
+    ),
+    {
+      level: "fatal",
+      userId,
+      eventType: "billing.double_contract",
+      eventId: alert.eventId,
+      tags: {
+        billing_alert: "double_contract",
+        kept_provider: alert.keptProvider,
+      },
+      extra: {
+        remediation: {
+          action:
+            "User is paying two providers. Refund/cancel ONE manually — never auto-cancel.",
+          currentProvider: alert.currentProvider,
+          incomingProvider: alert.incomingProvider,
+        },
+      },
+    },
+  );
+}
+
+/**
+ * RevenueCat TRANSFER alert (D-status-mapping: no entitlement write).
+ * Entitlements moved between app user ids — needs a human eye because our
+ * app_user_id IS the Supabase user id and transfers can mean account
+ * switching or family-share edge cases.
+ */
+export async function sendTransferAlert(params: {
+  eventId: string;
+  transferredFrom: string[];
+  transferredTo: string[];
+}): Promise<void> {
+  logger.error("BILLING TRANSFER EVENT - ADMIN ALERT", params);
+
+  captureSentryError(
+    new Error(
+      `RevenueCat TRANSFER: entitlements moved between app users (no automatic write performed)`,
+    ),
+    {
+      level: "error",
+      eventType: "billing.transfer",
+      eventId: params.eventId,
+      tags: { billing_alert: "transfer" },
+      extra: {
+        transferredFrom: params.transferredFrom,
+        transferredTo: params.transferredTo,
+        remediation: {
+          action:
+            "Verify which Supabase users are involved and reconcile entitlement manually if needed.",
+        },
+      },
+    },
+  );
 }
