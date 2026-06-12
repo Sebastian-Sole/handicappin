@@ -1,0 +1,22 @@
+# UTIL · sign in as the local test user (local-only creds, see the native
+# handoff §7; mirror of auth-roundtrip's second half). Lands wherever the
+# claims route the account (home for plan-holders, onboarding for plan-less).
+appId: com.handicappin.app
+---
+- stopApp
+- openLink: handicappin://login
+- tapOn:
+    text: "Open"
+    optional: true
+- extendedWaitUntil:
+    visible: "Welcome Back"
+    timeout: 20000
+- tapOn:
+    id: "login-email"
+- inputText: "native-goal-test@handicappin.local"
+- tapOn:
+    id: "login-password"
+- inputText: "NativeGoal2026!"
+- pressKey: Enter
+- tapOn:
+    id: "login-submit"

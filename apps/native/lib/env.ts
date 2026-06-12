@@ -22,8 +22,16 @@ const envSchema = z.object({
    * (decision ledger D-seam): absent → mock provider (CI, sim verification);
    * present → real react-native-purchases SDK. Client-exposed by design
    * (RC public SDK keys are not secrets).
+   *
+   * Preprocessed because "absent" arrives in several shapes: the key is
+   * omitted from fresh manifests, but Expo's config serializer turns null
+   * extras into {} (and dev clients embed a build-time snapshot), so any
+   * non-string here means "no key" — never crash the boot over it.
    */
-  revenueCatIosApiKey: z.string().min(1).nullable(),
+  revenueCatIosApiKey: z.preprocess(
+    (value) => (typeof value === "string" && value.length > 0 ? value : null),
+    z.string().min(1).nullable(),
+  ),
 });
 
 export type Env = z.infer<typeof envSchema>;
