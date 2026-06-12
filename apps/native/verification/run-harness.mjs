@@ -38,6 +38,7 @@ import { preFilterScreen } from './prefilter/web-prefilter.mjs';
 import { isCaptureReady } from './ios-gate/capture-hygiene.mjs';
 import { buildJudgePrompt } from './judge/build-prompt.mjs';
 import { quorumVerdict, proposeVerdict, MODE } from './judge/quorum.mjs';
+import { verdictKey, getCachedVerdict, putCachedVerdict } from './judge/verdict-cache.mjs';
 import {
   createScreenState,
   recordIteration,
@@ -141,14 +142,41 @@ export async function runHarness(screen = SMOKE_SCREEN, opts = {}) {
   log.stages.judge = { prompt_chars: prompt.length, reference_in_prompt: true };
   if (judge.model) log.stages.judge.model = judge.model;
   if (captured?.treeSnapshot && isCaptureReady(captured.treeSnapshot).ready) {
-    const j1 = await judge(prompt, captured, 1);
-    const j2 = await judge(prompt, captured, 2);
-    if (j1 && j2) {
-      const q = quorumVerdict(j1, j2);
+    // Verdict cache: identical captures + rubric + judge model never re-pay
+    // for a vision call. Only armed for a REAL judge (judge.model set) —
+    // injected test fakes stay off-disk and fully deterministic.
+    const cacheKey =
+      judge.model && captured.iosBytes && captured.webBytes
+        ? verdictKey(captured.iosBytes, captured.webBytes, { judgeModel: judge.model })
+        : null;
+    let q = null;
+    let fromCache = false;
+    let visionCalls = 0;
+    if (cacheKey) {
+      const hit = await getCachedVerdict(cacheKey);
+      if (hit?.quorum) {
+        q = hit.quorum;
+        fromCache = true;
+      }
+    }
+    if (!q) {
+      const j1 = await judge(prompt, captured, 1);
+      visionCalls += 1;
+      const j2 = await judge(prompt, captured, 2);
+      visionCalls += 1;
+      if (j1 && j2) {
+        q = quorumVerdict(j1, j2);
+        if (cacheKey) await putCachedVerdict(cacheKey, { quorum: q });
+      }
+    }
+    if (q) {
+      // The signoff record is recomputed on cache hits too — the ledger
+      // reflects THIS run; only the metered judge calls are skipped.
       const record = proposeVerdict(screen, q, mode);
       log.stages.judge.quorum = q;
       log.stages.judge.signoff = record;
-      recordIteration(st, { redItems: q.verdict === 'PASS' ? [] : Object.keys(q.perItem).filter((k) => !q.perItem[k].pass), visionCallsUsed: 2 });
+      if (fromCache) log.stages.judge.fromCache = true;
+      recordIteration(st, { redItems: q.verdict === 'PASS' ? [] : Object.keys(q.perItem).filter((k) => !q.perItem[k].pass), visionCallsUsed: visionCalls });
       if (record.status === 'PENDING_HUMAN_SIGN_OFF') log.redItems.push('judge:PENDING_HUMAN_SIGN_OFF');
       else if (record.final_verdict === 'FAIL') log.redItems.push('judge:FAIL');
     } else {
@@ -156,6 +184,11 @@ export async function runHarness(screen = SMOKE_SCREEN, opts = {}) {
         ? `judge error → human sign-off required (${judge.lastError})`
         : 'no judge model wired → human-in-the-loop sign-off required';
       log.redItems.push('judge:PENDING_HUMAN_SIGN_OFF');
+      // A judge that errored still made metered calls — record them so the
+      // budget ledger never undercounts a paid attempt.
+      if (visionCalls > 0 && judge.model) {
+        recordIteration(st, { redItems: log.redItems, visionCallsUsed: visionCalls });
+      }
     }
   } else {
     log.stages.judge.note = 'skipped — no clean iOS frame to judge';

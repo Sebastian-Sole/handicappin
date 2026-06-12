@@ -12,7 +12,7 @@
  * evaluators is instant for unchanged screens. $0 infra.
  */
 import { createHash } from 'node:crypto';
-import { readFile, writeFile, mkdir, readFile as rf } from 'node:fs/promises';
+import { readFile, writeFile, mkdir } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { CACHE_DIR, RUBRIC_VERSION, JUDGE } from '../config.mjs';
@@ -44,7 +44,7 @@ function cachePath(key) {
 export async function getCachedVerdict(key) {
   const p = cachePath(key);
   if (!existsSync(p)) return null;
-  return JSON.parse(await rf(p, 'utf8'));
+  return JSON.parse(await readFile(p, 'utf8'));
 }
 
 /** Persist a verdict under its key. */
