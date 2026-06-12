@@ -100,11 +100,11 @@ export const tokens: Tokens = {
       "secondary-foreground": "#2b2001",
       "destructive": "#cc272e",
       "destructive-foreground": "#f6f9fb",
-      "success": "#1b9247",
+      "success": "#007834",
       "success-foreground": "#f8f8f8",
-      "warning": "#eba941",
-      "warning-foreground": "#0d1a0d",
-      "info": "#0089ca",
+      "warning": "#8d5e00",
+      "warning-foreground": "#f8f8f8",
+      "info": "#006da2",
       "info-foreground": "#f8f8f8",
       "muted": "#e4edee",
       "muted-foreground": "#566768",
@@ -141,14 +141,14 @@ export const tokens: Tokens = {
     "dark": {
       "border": "#1e2d21",
       "input": "#1e2d21",
-      "ring": "#008935",
+      "ring": "#229944",
       "overlay": "#000000cc",
       "background": "#000d02",
       "background-alternate": "#041608",
       "foreground": "#ecf4ef",
-      "primary": "#008935",
-      "primary-foreground": "#f8f8f8",
-      "primary-alternate": "#006825",
+      "primary": "#229944",
+      "primary-foreground": "#030f05",
+      "primary-alternate": "#3bac56",
       "secondary": "#382c0c",
       "secondary-foreground": "#ebddb9",
       "destructive": "#de3b3d",
@@ -168,13 +168,13 @@ export const tokens: Tokens = {
       "card": "#041608",
       "card-foreground": "#ecf4ef",
       "bar": "#17261a",
-      "bar-active": "#008935",
-      "chart-1": "#008935",
+      "bar-active": "#229944",
+      "chart-1": "#229944",
       "chart-2": "#225052",
       "chart-3": "#c57d00",
       "chart-4": "#de3b3d",
       "chart-5": "#f4c947",
-      "chart-primary": "#008935",
+      "chart-primary": "#229944",
       "chart-destructive": "#de3b3d",
       "score-eagle": "#f7c900",
       "score-birdie": "#05df72",
@@ -184,12 +184,12 @@ export const tokens: Tokens = {
       "score-triple": "#e40015",
       "sidebar": "#011205",
       "sidebar-foreground": "#ecf4ef",
-      "sidebar-primary": "#008935",
-      "sidebar-primary-foreground": "#f8f8f8",
+      "sidebar-primary": "#229944",
+      "sidebar-primary-foreground": "#030f05",
       "sidebar-accent": "#0b2010",
       "sidebar-accent-foreground": "#ecf4ef",
       "sidebar-border": "#1e2d21",
-      "sidebar-ring": "#008935"
+      "sidebar-ring": "#229944"
     }
   },
   "radii": {
@@ -607,21 +607,21 @@ export const tokens: Tokens = {
         "borderRadius": 8
       },
       "tint-success": {
-        "backgroundColor": "#1b92471a",
+        "backgroundColor": "#0078341a",
         "borderWidth": 1,
-        "borderColor": "#1b924733",
+        "borderColor": "#00783433",
         "borderRadius": 8
       },
       "tint-warning": {
-        "backgroundColor": "#eba9411a",
+        "backgroundColor": "#8d5e001a",
         "borderWidth": 1,
-        "borderColor": "#eba94133",
+        "borderColor": "#8d5e0033",
         "borderRadius": 8
       },
       "tint-info": {
-        "backgroundColor": "#0089ca1a",
+        "backgroundColor": "#006da21a",
         "borderWidth": 1,
-        "borderColor": "#0089ca33",
+        "borderColor": "#006da233",
         "borderRadius": 8
       },
       "tint-destructive": {
@@ -708,8 +708,8 @@ export const tokens: Tokens = {
         "height": 48,
         "borderRadius": 8,
         "flexShrink": 0,
-        "backgroundColor": "#1b92471a",
-        "color": "#1b9247"
+        "backgroundColor": "#0078341a",
+        "color": "#007834"
       },
       "icon-chip-warning": {
         "alignItems": "center",
@@ -718,8 +718,8 @@ export const tokens: Tokens = {
         "height": 48,
         "borderRadius": 8,
         "flexShrink": 0,
-        "backgroundColor": "#eba9411a",
-        "color": "#eba941"
+        "backgroundColor": "#8d5e001a",
+        "color": "#8d5e00"
       },
       "icon-chip-info": {
         "alignItems": "center",
@@ -728,8 +728,8 @@ export const tokens: Tokens = {
         "height": 48,
         "borderRadius": 8,
         "flexShrink": 0,
-        "backgroundColor": "#0089ca1a",
-        "color": "#0089ca"
+        "backgroundColor": "#006da21a",
+        "color": "#006da2"
       },
       "icon-chip-destructive": {
         "alignItems": "center",
@@ -754,24 +754,24 @@ export const tokens: Tokens = {
         "paddingVertical": 4,
         "paddingHorizontal": 8,
         "borderRadius": 9999,
-        "backgroundColor": "#1b92471a",
-        "color": "#1b9247"
+        "backgroundColor": "#0078341a",
+        "color": "#007834"
       },
       "chip-warning": {
         "alignItems": "center",
         "paddingVertical": 4,
         "paddingHorizontal": 8,
         "borderRadius": 9999,
-        "backgroundColor": "#eba9411a",
-        "color": "#eba941"
+        "backgroundColor": "#8d5e001a",
+        "color": "#8d5e00"
       },
       "chip-info": {
         "alignItems": "center",
         "paddingVertical": 4,
         "paddingHorizontal": 8,
         "borderRadius": 9999,
-        "backgroundColor": "#0089ca1a",
-        "color": "#0089ca"
+        "backgroundColor": "#006da21a",
+        "color": "#006da2"
       },
       "chip-destructive": {
         "alignItems": "center",
@@ -802,9 +802,9 @@ export const tokens: Tokens = {
         "borderRadius": 8
       },
       "tint-primary": {
-        "backgroundColor": "#0089351a",
+        "backgroundColor": "#2299441a",
         "borderWidth": 1,
-        "borderColor": "#00893533",
+        "borderColor": "#22994433",
         "borderRadius": 8
       },
       "tint-success": {
@@ -899,8 +899,8 @@ export const tokens: Tokens = {
         "height": 48,
         "borderRadius": 8,
         "flexShrink": 0,
-        "backgroundColor": "#0089351a",
-        "color": "#008935"
+        "backgroundColor": "#2299441a",
+        "color": "#229944"
       },
       "icon-chip-success": {
         "alignItems": "center",
@@ -947,8 +947,8 @@ export const tokens: Tokens = {
         "paddingVertical": 4,
         "paddingHorizontal": 8,
         "borderRadius": 9999,
-        "backgroundColor": "#0089351a",
-        "color": "#008935"
+        "backgroundColor": "#2299441a",
+        "color": "#229944"
       },
       "chip-success": {
         "alignItems": "center",

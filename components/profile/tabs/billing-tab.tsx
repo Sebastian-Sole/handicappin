@@ -62,7 +62,7 @@ export function BillingTab({ access }: BillingTabProps) {
             {/* Always show "Change Plan" for non-lifetime users */}
             {!access.isLifetime && (
               <Link href="/upgrade">
-                <Button className="bg-primary text-primary-foreground px-lg py-sm rounded-lg hover:bg-primary/80 transition-colors">
+                <Button className="bg-primary text-primary-foreground px-lg py-sm rounded-lg hover:bg-primary-alternate transition-colors">
                   {access.plan === "free" ? "Upgrade Plan" : "Change Plan"}
                 </Button>
               </Link>
