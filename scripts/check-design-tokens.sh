@@ -8,9 +8,9 @@
 #
 # Usage: pnpm check:tokens
 set -uo pipefail
-cd "$(dirname "$0")/.."
+cd "$(dirname "$0")/.." || exit 1
 
-SCAN_DIRS=(app components)
+SCAN_DIRS=(app components hooks contexts lib)
 fail=0
 
 # grep wrapper: $1 = check name, $2 = extended regex, $3 = exclusion regex
@@ -19,8 +19,8 @@ fail=0
 check() {
   local name="$1" pattern="$2" allow="${3:-__none__}"
   local hits
-  hits=$(grep -rEn "$pattern" "${SCAN_DIRS[@]}" --include='*.tsx' 2>/dev/null |
-    grep -v '\.stories\.' | grep -vE "$allow" || true)
+  hits=$(grep -rEn "$pattern" "${SCAN_DIRS[@]}" --include='*.tsx' --include='*.ts' 2>/dev/null |
+    grep -v '\.stories\.' | grep -v '\.d\.ts:' | grep -vE "$allow" || true)
   if [[ -n "$hits" ]]; then
     echo "FAIL: $name"
     echo "$hits" | head -20

@@ -14,7 +14,7 @@
  *
  * Usage: node scripts/parity/drift.mjs [baseRef]   (default: origin/main, else HEAD~1)
  */
-import { execSync } from "node:child_process";
+import { execFileSync } from "node:child_process";
 import { existsSync, readFileSync, statSync } from "node:fs";
 import { dirname, join, relative } from "node:path";
 import { computeParity, nativeAppPresent, REPO, webRouteFiles } from "./routes.mjs";
@@ -70,20 +70,32 @@ function closure(entry) {
   return seen;
 }
 
+const git = (args) => execFileSync("git", args, { cwd: REPO, encoding: "utf8" });
+
 function changedWebFiles(baseRef) {
   let base = baseRef;
+  // Refs reach git as a single argv element (no shell), but still reject
+  // anything that isn't ref-shaped so a leading "-" can't smuggle options in.
+  if (base && !/^[A-Za-z0-9][\w./^~@{}-]*$/.test(base)) {
+    console.error(`parity:drift — invalid base ref: ${JSON.stringify(base)}`);
+    process.exit(2);
+  }
   if (!base) {
     try {
-      execSync("git rev-parse --verify origin/main", { cwd: REPO, stdio: "ignore" });
+      execFileSync("git", ["rev-parse", "--verify", "origin/main"], {
+        cwd: REPO,
+        stdio: "ignore",
+      });
       base = "origin/main";
     } catch {
       base = "HEAD~1";
     }
   }
-  const out = execSync(
-    `git diff --name-only ${base}...HEAD; git diff --name-only; git diff --cached --name-only`,
-    { cwd: REPO, encoding: "utf8" },
-  );
+  const out = [
+    git(["diff", "--name-only", `${base}...HEAD`]),
+    git(["diff", "--name-only"]),
+    git(["diff", "--cached", "--name-only"]),
+  ].join("\n");
   return [...new Set(out.split("\n").map((s) => s.trim()).filter(Boolean))]
     .filter(isWebUiFile)
     .map((p) => join(REPO, p));

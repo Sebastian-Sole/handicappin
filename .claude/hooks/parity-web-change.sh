@@ -11,6 +11,7 @@ INPUT=$(cat)
 FILE_PATH=$(echo "$INPUT" | jq -r '.tool_input.file_path // empty')
 
 [ -z "$FILE_PATH" ] && exit 0
+[ -z "$CLAUDE_PROJECT_DIR" ] && exit 0
 [ -d "$CLAUDE_PROJECT_DIR/apps/native" ] || exit 0
 
 case "$FILE_PATH" in

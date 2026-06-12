@@ -18,7 +18,7 @@
  * No dependencies — plain Node ESM + the standard library.
  */
 import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
-import { dirname, extname, join, relative } from "node:path";
+import { dirname, join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -119,9 +119,11 @@ function isZeroValue(line, colonRegionStart) {
   return next === undefined || !/[0-9.]/.test(next);
 }
 
-/** Allowlist comment on the same line (escape hatch + off-scale spacing). */
+/** Allowlist comment on the same line (escape hatch + off-scale spacing).
+    Both markers must appear inside a `//` comment — a bare "off-scale"
+    substring in a string or identifier must not mute the checks. */
 function hasAllowComment(line) {
-  return /\/\/.*allow-hardcoded/.test(line) || /off-scale/.test(line);
+  return /\/\/.*(?:allow-hardcoded|off-scale)/.test(line);
 }
 
 /** Pure comment lines are never flagged. */
@@ -160,11 +162,12 @@ function collectFiles(dir, acc) {
   }
   for (const name of entries) {
     const full = join(dir, name);
-    const st = statSync(full);
+    const st = statSync(full, { throwIfNoEntry: false });
+    if (!st) continue; // deleted mid-scan or broken symlink
     if (st.isDirectory()) {
       if (name === "node_modules") continue;
       collectFiles(full, acc);
-    } else if (/\.(tsx?|ts)$/.test(name) && extname(name) !== ".d.ts") {
+    } else if (/\.tsx?$/.test(name) && !name.endsWith(".d.ts")) {
       acc.push(full);
     }
   }

@@ -11,7 +11,7 @@
 #
 # Deterministic and sub-second; bypass only with --no-verify.
 set -uo pipefail
-cd "$(git rev-parse --show-toplevel)"
+cd "$(git rev-parse --show-toplevel)" || exit 1
 
 TOKEN_SOURCES='^(app/globals\.css|app/styles/utilities/|packages/tokens/(src/|theme\.config\.json))'
 
