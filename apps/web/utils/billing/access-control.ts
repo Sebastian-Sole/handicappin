@@ -99,18 +99,3 @@ export async function getComprehensiveUserAccess(
   // 5. No plan selected yet - needs onboarding
   return createNoAccessResponse();
 }
-
-/**
- * Helper to check if user can add more rounds (for free tier limit)
- */
-export async function canAddRound(userId: string): Promise<boolean> {
-  const access = await getComprehensiveUserAccess(userId);
-
-  // Paid users can always add rounds
-  if (access.hasPremiumAccess) {
-    return true;
-  }
-
-  // Free users must have remaining rounds
-  return access.remainingRounds > 0;
-}

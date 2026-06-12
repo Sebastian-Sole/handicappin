@@ -14,7 +14,7 @@ import DateTimePicker from "@react-native-community/datetimepicker";
 import { useQuery } from "@tanstack/react-query";
 import { Redirect, router } from "expo-router";
 import { Plus, X } from "lucide-react-native";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Pressable, ScrollView, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -111,6 +111,15 @@ export default function AddRoundScreen() {
   );
   const [feedback, setFeedback] = useState<FeedbackState | null>(null);
   const [submitState, setSubmitState] = useState<SubmitState>("idle");
+
+  // Post-submit "heading home" timer — cleared on unmount so a user who
+  // navigates away inside the grace window isn't yanked back to Home.
+  const navTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => {
+    return () => {
+      if (navTimer.current) clearTimeout(navTimer.current);
+    };
+  }, []);
 
   const profileQuery = useQuery({
     ...profileQueryOptions(userId ?? ""),
@@ -256,7 +265,7 @@ export default function AddRoundScreen() {
         type: "success",
         message: "Round submitted! Heading home...",
       });
-      setTimeout(() => router.replace("/"), 1500);
+      navTimer.current = setTimeout(() => router.replace("/"), 1500);
     } catch (error) {
       setSubmitState("error");
       setFeedback({
@@ -456,6 +465,9 @@ export default function AddRoundScreen() {
               accentColor={tokens.colors[mode].primary}
               disabled={busy}
               onValueChange={(_event, date) => {
+                // Android delivers undefined on dismiss; iOS never does, but
+                // the Android pass is deferred work — don't leave it a crash.
+                if (!date) return;
                 setTeeTime(roundToNearestMinute(date).toISOString());
               }}
             />

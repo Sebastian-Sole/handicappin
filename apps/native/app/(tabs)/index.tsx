@@ -10,7 +10,6 @@ import { useQueries, useQuery } from "@tanstack/react-query";
 import { ScrollView, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { getRelevantRounds } from "@handicappin/handicap-core";
 import { tokens } from "@handicappin/tokens/tokens";
 
 import { ActivityFeed } from "@/components/homepage/activity-feed";
@@ -94,9 +93,6 @@ export default function HomeScreen() {
     if (timeComparison !== 0) return timeComparison;
     return a.id - b.id;
   });
-
-  const relevantRoundsList = getRelevantRounds(sortedRounds);
-  void relevantRoundsList; // chart influence flags arrive with the statistics screens
 
   const previousScores = sortedRounds
     .slice(-10)

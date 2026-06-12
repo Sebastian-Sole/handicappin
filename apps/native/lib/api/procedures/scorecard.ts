@@ -73,7 +73,9 @@ export const courseTeesQueryOptions = (courseId: number) =>
       trpcQuery("tee.fetchTees", { courseId }, z.array(fetchedTeeSchema)),
   });
 
-/** The mutation returns the created round row id among other fields. */
+/** The result is DISCARDED by every caller — success is signalled by the
+    mutation not throwing. No field is consumed, so no response schema is
+    enforced; add one the day a caller starts reading the payload. */
 const submitResultSchema = z.unknown();
 
 export function submitScorecard(input: ScorecardInput): Promise<unknown> {
