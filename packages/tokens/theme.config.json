@@ -1,14 +1,14 @@
 {
-  "source": "../../app/globals.css",
-  "typographySource": "../../app/styles/utilities/typography.css",
-  "surfacesSource": "../../app/styles/utilities/surfaces.css",
+  "source": "../../apps/web/app/globals.css",
+  "typographySource": "../../apps/web/app/styles/utilities/typography.css",
+  "surfacesSource": "../../apps/web/app/styles/utilities/surfaces.css",
   "themeInlineBlock": "@theme inline",
   "lightSelector": ":root",
   "darkSelector": ".dark",
   "outputDir": "./generated",
   "outputs": {
     "tokens": "./generated/tokens.ts",
-    "nativeCss": "./generated/native-global.css"
+    "nativeCss": "../../apps/native/global.css"
   },
   "remBasePx": 16,
   "fonts": {

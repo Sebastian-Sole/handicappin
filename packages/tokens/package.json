@@ -10,13 +10,12 @@
       "default": "./generated/tokens.ts"
     },
     "./font-faces": "./src/font-faces.mjs",
-    "./native-global.css": "./generated/native-global.css",
     "./theme.config.json": "./theme.config.json",
     "./package.json": "./package.json"
   },
   "scripts": {
     "generate:theme": "node ./src/generate.mjs",
-    "check:drift": "node ./src/generate.mjs && git diff --exit-code -- generated",
+    "check:drift": "node ./src/generate.mjs && git diff --exit-code -- generated ../../apps/native/global.css",
     "check-types": "tsc --noEmit --strict --skipLibCheck --moduleResolution bundler --module esnext ./generated/tokens.ts",
     "test": "node --test"
   },

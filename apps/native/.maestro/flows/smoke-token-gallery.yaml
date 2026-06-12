@@ -1,0 +1,32 @@
+# SMOKE · index — token-gallery bring-up screen renders, fonts resolved,
+# gallery sections reachable by scroll.
+# Selectors are accessible-name/testID based (never coordinate/index) — a
+# selector that can't find a node is itself an a11y finding.
+#
+# appId: apps/native/app.json sets no ios.bundleIdentifier yet, so this is the
+# `expo prebuild` convention for the `handicappin` slug — update it together
+# with verification/config.mjs SIM.appId the day a real bundle id is set.
+#
+# PRE-REQUISITE (quality gate): Expo dev server + iOS simulator already running
+# and the app installed. This flow does NOT auto-start them — an auto-started
+# server masks a broken launch instead of catching it.
+appId: com.anonymous.handicappin
+---
+- launchApp
+# Font-ready gate (the app renders nothing under the splash until fonts resolve).
+- assertVisible:
+    id: 'fonts-ready'
+- assertVisible:
+    id: 'token-gallery'
+- assertVisible: 'Token gallery'
+
+# Section headings in order — also the glyph/no-tofu proxy (Inter 600/800).
+- assertVisible: 'Colors'
+- assertVisible: 'Typography'
+
+# Surfaces sit below the fold on a phone — reach them by scrolling, then assert.
+- scrollUntilVisible:
+    element:
+      id: 'gallery-surfaces'
+- assertVisible:
+    id: 'gallery-surfaces'
