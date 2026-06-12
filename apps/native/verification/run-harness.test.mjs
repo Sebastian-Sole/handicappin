@@ -86,9 +86,10 @@ test('HAPPY PATH — clean screen proposes PASS and PAUSES for human sign-off (H
 test('the contrast stage covers BOTH colour modes (per-mode contract)', async () => {
   const log = await runHarness('index', { capture: goodCapture, judge: passJudge });
   assert.deepEqual(Object.keys(log.stages.contrast_gate.modes).sort(), ['dark', 'light']);
-  // The known web-side miss is reported as waived, not silently green.
-  assert.equal(log.stages.contrast_gate.modes.dark.waived.length, 1);
-  assert.equal(log.stages.contrast_gate.modes.dark.waived[0].id, 'text-on-primary');
+  // The once-waived dark text-on-primary miss was fixed web-side: both
+  // modes must now pass with an empty waiver list.
+  assert.equal(log.stages.contrast_gate.modes.dark.waived.length, 0);
+  assert.equal(log.stages.contrast_gate.modes.dark.pass, true);
 });
 
 test('iOS gate degrades HONESTLY when no sim is wired (no fake green)', async () => {

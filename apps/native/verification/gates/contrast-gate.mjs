@@ -57,14 +57,9 @@ export const FROZEN_PAIRINGS = Object.freeze([
  * further regression past the recorded number still fails the gate.
  */
 export const KNOWN_SUBTHRESHOLD = Object.freeze([
-  {
-    mode: 'dark',
-    id: 'text-on-primary',
-    frozenRatio: 4.27, // #f8f8f8 on #008935 — measured 2026-06-10
-    reason:
-      'dark primary button text is 4.27:1 (< 4.5:1) in the WEB tokens today; ' +
-      'fix belongs in apps/web/app/globals.css, not in the native port',
-  },
+  // EMPTY — the one waiver this ledger ever held (dark text-on-primary at
+  // 4.27:1) was burned down by the web-side palette fix: dark --primary
+  // lightened and --primary-foreground flipped dark, landing at 5.31:1.
 ]);
 
 function thresholdFor(kind) {
