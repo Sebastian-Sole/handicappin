@@ -12,7 +12,7 @@
  * hardcoded (enforced by pnpm parity:styles).
  */
 import { tokens } from "@handicappin/tokens/tokens";
-import { ScrollView, Text, View } from "react-native";
+import { ScrollView, Text, View, useColorScheme } from "react-native";
 
 const SWATCH_NAMES = [
   "primary",
@@ -48,6 +48,10 @@ const SURFACES = [
 ] as const;
 
 export default function TokenGallery() {
+  // Swatches must follow the active scheme — a calibration screen that pins
+  // light values would judge dark-mode captures against the wrong contract.
+  const scheme = useColorScheme();
+  const swatchColors = tokens.colors[scheme === "dark" ? "dark" : "light"];
   return (
     <ScrollView
       testID="token-gallery"
@@ -66,7 +70,7 @@ export default function TokenGallery() {
           <View key={name} className="items-center gap-xs">
             <View
               className="w-16 h-16 rounded-lg border border-border"
-              style={{ backgroundColor: tokens.colors.light[name] }}
+              style={{ backgroundColor: swatchColors[name] }}
             />
             <Text className="text-meta text-muted-foreground">{name}</Text>
           </View>
@@ -100,6 +104,16 @@ export default function TokenGallery() {
           </View>
         ))}
       </View>
+
+      {/* The capture gate's data-settled signal. This screen has no data
+          layer, so it is settled by construction — without the marker the
+          vision stage can never fire on a live capture. */}
+      <View
+        accessibilityLabel="data-settled"
+        accessibilityElementsHidden
+        importantForAccessibility="no-hide-descendants"
+        style={{ width: 0, height: 0 }}
+      />
     </ScrollView>
   );
 }

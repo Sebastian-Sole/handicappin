@@ -1,5 +1,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+import { join, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import {
   isCaptureReady,
   waitForCleanFrame,
@@ -16,6 +19,22 @@ const clean = {
 
 test('a clean, font-ready + data-settled frame is capture-ready', () => {
   assert.deepEqual(isCaptureReady(clean), { ready: true, reasons: [] });
+});
+
+test('marker literals stay in sync with the app sources (cross-boundary duplicates)', () => {
+  // The app is TS, the harness is plain mjs — the marker strings are
+  // duplicated across that boundary by necessity. This pins them together.
+  const appRoot = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
+  const fontsTs = readFileSync(join(appRoot, 'lib/fonts.ts'), 'utf8');
+  assert.ok(
+    fontsTs.includes(`"${FONTS_READY_TEST_ID}"`),
+    'lib/fonts.ts must define the same fonts-ready marker the gate polls for',
+  );
+  const galleryTsx = readFileSync(join(appRoot, 'app/index.tsx'), 'utf8');
+  assert.ok(
+    galleryTsx.includes(`"${DATA_SETTLED_LABEL}"`),
+    'the gallery must render the same data-settled marker the gate polls for',
+  );
 });
 
 test('a skeleton frame is discarded (would have wasted a vision call)', () => {
