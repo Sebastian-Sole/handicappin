@@ -53,7 +53,7 @@ jobs:
           cache: "pnpm"
 
       - name: Install dependencies
-        run: pnpm install
+        run: pnpm install --frozen-lockfile
 
       - name: Lint
         run: pnpm lint
@@ -86,6 +86,10 @@ jobs:
 
       - name: Web token guard
         run: pnpm check:tokens
+
+      - name: Verification harness unit tests (hermetic — no simulator)
+        run: node --test "verification/**/*.test.mjs"
+        working-directory: apps/native
 
       - name: Native bundle compiles (Metro + Tailwind + react-native-css)
         run: pnpm --filter native exec expo export -p ios
