@@ -161,7 +161,7 @@ export async function Navbar() {
             <DropdownMenuTrigger asChild>
               <button
                 type="button"
-                className="rounded-full bg-primary p-xs hover:bg-primary/80"
+                className="rounded-full bg-primary p-xs hover:bg-primary-alternate"
                 aria-label="User menu"
               >
                 <Avatar className="h-8 w-8 flex items-center justify-center">

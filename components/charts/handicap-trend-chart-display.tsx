@@ -34,17 +34,17 @@ const HandicapTrendChartDisplay = ({
     <Card>
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-sm">
         <React.Fragment>
-          <CardTitle className="sm:text-2xl text-xl min-[400px]:hidden">
+          <CardTitle className="sm:text-2xl sm:hidden">
             HCP Trend
           </CardTitle>
-          <CardTitle className="sm:text-2xl text-xl min-[400px]:block hidden">
+          <CardTitle className="sm:text-2xl sm:block hidden">
             Handicap Trend
           </CardTitle>
         </React.Fragment>
         <div className="flex items-center space-x-sm">
           <span className="sm:text-figure text-figure-sm">{handicapIndex}</span>
           {/* TODO: Conditionally render only if more than 5 rounds */}
-          <div className="min-[340px]:block hidden">
+          <div className="xs:block hidden">
             <StatDelta
               value={percentageChange}
               invert
@@ -54,7 +54,7 @@ const HandicapTrendChartDisplay = ({
           </div>
         </div>
       </CardHeader>
-      <CardContent className="p-0 lg:min-h-[300px] flex justify-center items-center">
+      <CardContent className="p-0 lg:min-h-(--size-chart-frame) flex justify-center items-center">
         {previousHandicaps.length < 5 && (
           <div className="flex justify-center items-center h-full">
             <span className="text-primary">

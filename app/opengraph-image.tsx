@@ -2,6 +2,22 @@ import { ImageResponse } from "next/og";
 
 export const runtime = "edge";
 
+/* Satori (next/og) renders with inline styles and cannot parse oklch(),
+   so brand colors are sRGB hex conversions of the tokens in
+   app/globals.css. The authoritative hex values live in
+   packages/tokens/generated/tokens.ts — copy from there when the source
+   tokens change:
+   bgFrom    = tokens.colors.dark["background-alternate"]
+   bgTo      = tokens.colors.dark["background"]
+   brandFrom = tokens.colors.dark["score-birdie"]
+   brandTo   = tokens.colors.light["score-birdie"] */
+const og = {
+  bgFrom: "#041608",
+  bgTo: "#000d02",
+  brandFrom: "#05df72",
+  brandTo: "#00c659",
+};
+
 export const alt = "Handicappin' - Golf Handicap Tracker";
 export const size = {
   width: 1200,
@@ -15,7 +31,7 @@ export default async function Image() {
       <div
         style={{
           fontSize: 64,
-          background: "linear-gradient(135deg, #1a2e1a 0%, #0f1f0f 100%)",
+          background: `linear-gradient(135deg, ${og.bgFrom} 0%, ${og.bgTo} 100%)`,
           width: "100%",
           height: "100%",
           display: "flex",
@@ -31,7 +47,7 @@ export default async function Image() {
             fontSize: 80,
             fontWeight: 700,
             marginBottom: 20,
-            background: "linear-gradient(90deg, #4ade80, #22c55e)",
+            background: `linear-gradient(90deg, ${og.brandFrom}, ${og.brandTo})`,
             backgroundClip: "text",
             color: "transparent",
           }}

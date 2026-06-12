@@ -1,0 +1,39 @@
+name: theme-drift
+
+# Fails when the design-system source (app/globals.css + utility layers)
+# changed but the generated token contract (packages/tokens/generated) was
+# not regenerated — the CI backstop behind the pre-commit hook.
+on:
+  pull_request:
+    paths:
+      - "app/globals.css"
+      - "app/styles/utilities/**"
+      - "packages/tokens/**"
+  push:
+    branches: [main]
+    paths:
+      - "app/globals.css"
+      - "app/styles/utilities/**"
+      - "packages/tokens/**"
+
+jobs:
+  theme-drift:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile --filter @handicappin/tokens
+      - name: Token generator unit tests
+        run: pnpm --filter @handicappin/tokens test
+      - name: Generated contract is in sync with source
+        run: pnpm --filter @handicappin/tokens check:drift
+      - name: Generated tokens.ts type-checks strictly
+        run: pnpm --filter @handicappin/tokens check-types

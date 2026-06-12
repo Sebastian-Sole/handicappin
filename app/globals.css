@@ -15,6 +15,7 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
+  --color-overlay: var(--overlay);
 
   --color-background: var(--background);
   --color-background-alternate: var(--background-alternate);
@@ -113,6 +114,16 @@
   --spacing-4xl: 6rem;     /* = 24 */
   --spacing-5xl: 8rem;     /* = 32 */
 
+  /* Component-size tokens (hybrid size policy, TD-2 in
+     docs/design-token-remediation.md): recurring component dimensions
+     that belong to the cross-platform contract. Reference at call
+     sites via h-(--size-chart-frame) etc. Layout one-offs (skeleton
+     mirrors, viewport caps, table min-widths) intentionally stay
+     arbitrary — see the Platform-Specific Register in that doc. */
+  --size-chart-frame: 18.75rem; /* 300px — chart frames + their lazy skeletons */
+  --size-control-min: 5rem; /* 80px — textarea min-height */
+  --size-list-max: 18.75rem; /* 300px — command/list scroll cap */
+
   --shadow-2xs: var(--shadow-2xs);
   --shadow-xs: var(--shadow-xs);
   --shadow-sm: var(--shadow-sm);
@@ -122,6 +133,9 @@
   --shadow-xl: var(--shadow-xl);
   --shadow-2xl: var(--shadow-2xl);
 
+  /* Tracking ramp is relative to --tracking-normal (0.025em), so the
+     resolved values shift with the baseline: tight intentionally lands on
+     exactly 0em — it "un-tracks" the global letterspacing. */
   --tracking-tighter: calc(var(--tracking-normal) - 0.05em);
   --tracking-tight: calc(var(--tracking-normal) - 0.025em);
   --tracking-normal: var(--tracking-normal);
@@ -192,7 +206,10 @@
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.2 0.03 145);
 
-  /* PRIMARY: "Tour Green" */
+  /* PRIMARY: "Tour Green".
+     --primary-alternate is the opaque hover/active surface for primary
+     buttons and badges — alpha-thinned hovers (bg-primary/80) break the
+     primary/primary-foreground contrast pairing, an opaque step doesn't. */
   --primary: oklch(0.46 0.16 148);
   --primary-foreground: oklch(0.98 0 0);
   --primary-alternate: oklch(0.4 0.16 148);
@@ -213,22 +230,28 @@
   --destructive: oklch(0.55 0.2 25);
   --destructive-foreground: oklch(0.98 0.005 240);
 
-  /* SUCCESS: "Fairway Green" */
-  --success: oklch(0.58 0.15 150);
+  /* SUCCESS: "Fairway Green" — L capped so text-success meets 4.5:1 on
+     --background and on the chip/tint recipe surfaces (WCAG 1.4.3 AA). */
+  --success: oklch(0.5 0.15 150);
   --success-foreground: oklch(0.98 0 0);
 
-  /* WARNING: "Caution Amber" */
-  --warning: oklch(0.78 0.14 75);
-  --warning-foreground: oklch(0.2 0.03 145);
+  /* WARNING: "Caution Amber" — deep accessible amber; the bright ramp
+     (oklch L ≥ 0.7) reads at < 2:1 as text. Foreground is white because
+     the base is now dark enough to carry it. */
+  --warning: oklch(0.52 0.14 75);
+  --warning-foreground: oklch(0.98 0 0);
 
-  /* INFO: "Sky Blue" */
-  --info: oklch(0.6 0.14 240);
+  /* INFO: "Sky Blue" — same 4.5:1 text constraint as success. */
+  --info: oklch(0.51 0.14 240);
   --info-foreground: oklch(0.98 0 0);
 
   /* BORDERS & INPUTS */
   --border: oklch(0.9 0.01 160);
   --input: oklch(0.9 0.01 160);
   --ring: oklch(0.46 0.16 148);
+
+  /* OVERLAY: modal / sheet scrim */
+  --overlay: oklch(0 0 0 / 0.8);
 
   /* CHARTS */
   --chart-1: oklch(0.46 0.16 148);
@@ -285,10 +308,14 @@
   --popover: oklch(0.18 0.04 150);
   --popover-foreground: oklch(0.96 0.01 160);
 
-  /* PRIMARY */
-  --primary: oklch(0.55 0.16 148);
-  --primary-foreground: oklch(0.98 0 0);
-  --primary-alternate: oklch(0.45 0.16 148);
+  /* PRIMARY — dark mode inverts the button pairing: a mid green can't
+     reach 4.5:1 with white text AND 4.5:1 as text on the near-black
+     background (the bands don't overlap), so the surface lightens and the
+     button text goes dark instead. Hover (--primary-alternate) steps
+     BRIGHTER here, opposite of light mode. */
+  --primary: oklch(0.6 0.16 148);
+  --primary-foreground: oklch(0.15 0.03 148);
+  --primary-alternate: oklch(0.66 0.16 148);
 
   /* SECONDARY: "Wet Sand" */
   --secondary: oklch(0.3 0.05 90);
@@ -319,10 +346,13 @@
   /* BORDERS & INPUTS */
   --border: oklch(0.28 0.03 150);
   --input: oklch(0.28 0.03 150);
-  --ring: oklch(0.55 0.16 148);
+  --ring: oklch(0.6 0.16 148);
+
+  /* OVERLAY: modal / sheet scrim */
+  --overlay: oklch(0 0 0 / 0.8);
 
   /* CHART */
-  --chart-1: oklch(0.55 0.16 148);
+  --chart-1: oklch(0.6 0.16 148);
   --chart-2: oklch(0.4 0.05 200);
   --chart-3: oklch(0.65 0.15 70);
   --chart-4: oklch(0.6 0.2 25);
@@ -339,15 +369,15 @@
   /* SIDEBAR */
   --sidebar: oklch(0.16 0.04 150);
   --sidebar-foreground: oklch(0.96 0.01 160);
-  --sidebar-primary: oklch(0.55 0.16 148);
-  --sidebar-primary-foreground: oklch(0.98 0 0);
+  --sidebar-primary: oklch(0.6 0.16 148);
+  --sidebar-primary-foreground: oklch(0.15 0.03 148);
   --sidebar-accent: oklch(0.22 0.04 150);
   --sidebar-accent-foreground: oklch(0.96 0.01 160);
   --sidebar-border: oklch(0.28 0.03 150);
-  --sidebar-ring: oklch(0.55 0.16 148);
+  --sidebar-ring: oklch(0.6 0.16 148);
 
   /* Bars */
-  --bar-active: oklch(0.55 0.16 148);
+  --bar-active: oklch(0.6 0.16 148);
   --bar-inactive: oklch(0.25 0.03 150);
 }
 

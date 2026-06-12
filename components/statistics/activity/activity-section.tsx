@@ -1,6 +1,7 @@
 "use client";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { EmptyState } from "@/components/ui/empty-state";
 import { Separator } from "@/components/ui/separator";
 import { StatisticsSection } from "../shared/statistics-section";
 import { RoundsPerMonthChart } from "../round-insights/rounds-per-month-chart";
@@ -41,11 +42,12 @@ export function ActivitySection({
   if (hasNoData) {
     return (
       <Card>
-        <CardContent className="p-2xl text-center text-muted-foreground">
-          <div className="text-4xl mb-md">📊</div>
-          {/* Intentional compose: text-lg + font-medium emphasis (no text-lead-medium token by design) */}
-          <p className="text-lg font-medium">No activity data yet</p>
-          <p className="text-body-sm">Play some rounds to see your activity patterns</p>
+        <CardContent>
+          <EmptyState
+            icon="📊"
+            title="No activity data yet"
+            description="Play some rounds to see your activity patterns"
+          />
         </CardContent>
       </Card>
     );
@@ -226,7 +228,7 @@ export function ActivitySection({
               <CardContent className="flex items-center justify-center min-h-[140px]">
                 <div className="flex items-center justify-center gap-xl md:gap-2xl">
                   <div className="text-center">
-                    <div className="text-4xl md:text-figure-2xl">
+                    <div className="text-figure-xl md:text-figure-2xl">
                       {nineHole?.count ?? 0}
                     </div>
                     <p className="text-body-sm text-muted-foreground mt-xs">9-Hole</p>
@@ -236,9 +238,10 @@ export function ActivitySection({
                       </p>
                     )}
                   </div>
-                  <div className="text-3xl text-muted-foreground font-light">vs</div>
+                  {/* "vs" divider: heading token for size, font-light preserves the original thin weight (figure tokens are intentionally 700-only) */}
+                  <div className="text-heading-2 font-light text-muted-foreground">vs</div>
                   <div className="text-center">
-                    <div className="text-4xl md:text-figure-2xl">
+                    <div className="text-figure-xl md:text-figure-2xl">
                       {eighteenHole?.count ?? 0}
                     </div>
                     <p className="text-body-sm text-muted-foreground mt-xs">18-Hole</p>

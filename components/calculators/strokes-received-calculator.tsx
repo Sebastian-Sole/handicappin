@@ -53,8 +53,7 @@ export function StrokesReceivedCalculator() {
                 strokes > 0 ? "bg-primary/20" : "bg-muted/50"
               }`}
             >
-              {/* Intentional compose: responsive font-bold + text-sm/sm:text-base (no responsive figure token by design). */}
-              <span className="font-bold text-sm sm:text-base">{strokes}</span>
+              <span className="text-badge">{strokes}</span>
             </div>
           </div>
         ))}
@@ -69,8 +68,7 @@ export function StrokesReceivedCalculator() {
                 strokes > 0 ? "bg-primary/20" : "bg-muted/50"
               }`}
             >
-              {/* Intentional compose: responsive font-bold + text-sm/sm:text-base (no responsive figure token by design). */}
-              <span className="font-bold text-sm sm:text-base">{strokes}</span>
+              <span className="text-badge">{strokes}</span>
             </div>
           </div>
         ))}

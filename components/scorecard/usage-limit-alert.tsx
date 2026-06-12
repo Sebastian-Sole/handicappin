@@ -37,7 +37,7 @@ export function UsageLimitAlert({
       container: "surface",
       icon: "text-primary",
       progress: "bg-primary",
-      button: "bg-primary text-primary-foreground hover:bg-primary/80",
+      button: "bg-primary text-primary-foreground hover:bg-primary-alternate",
     },
     warning: {
       container: "tint-warning",

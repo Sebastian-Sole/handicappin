@@ -310,7 +310,7 @@ export function PerformanceSection({
                     <CardContent density="compact">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-sm">
-                          <div className="text-2xl">🏆</div>
+                          <div className="text-figure">🏆</div>
                           <div>
                             <p className="font-semibold">
                               {getFlagEmoji(round.country)} {round.courseName}

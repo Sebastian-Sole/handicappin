@@ -27,7 +27,7 @@ const barData = [
 ];
 
 const barConfig = {
-  rounds: { label: "Rounds played", color: "hsl(var(--primary))" },
+  rounds: { label: "Rounds played", color: "var(--primary)" },
 } satisfies ChartConfig;
 
 const lineData = [
@@ -42,7 +42,7 @@ const lineData = [
 ];
 
 const lineConfig = {
-  handicap: { label: "Handicap index", color: "hsl(var(--primary))" },
+  handicap: { label: "Handicap index", color: "var(--primary)" },
 } satisfies ChartConfig;
 
 const meta = {

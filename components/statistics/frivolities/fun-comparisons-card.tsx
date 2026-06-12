@@ -293,7 +293,7 @@ export function FunComparisonsCard({
     return (
       <Card>
         <CardContent className="p-lg text-center text-muted-foreground">
-          <p className="text-4xl mb-sm">🏌️</p>
+          <p className="text-figure-xl mb-sm">🏌️</p>
           <p>Play more rounds to unlock fun comparisons!</p>
         </CardContent>
       </Card>
@@ -314,7 +314,7 @@ export function FunComparisonsCard({
               key={index}
               className="flex items-start gap-sm surface-muted p-sm"
             >
-              <span className="text-2xl flex-shrink-0">{comparison.emoji}</span>
+              <span className="text-figure flex-shrink-0">{comparison.emoji}</span>
               <p className="text-body-sm">{comparison.text}</p>
             </div>
           ))}

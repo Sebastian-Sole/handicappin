@@ -194,7 +194,7 @@ export function VerifySessionContent({
         {/* Verifying State */}
         {state === "verifying" && (
           <>
-            <div className="text-6xl mb-md animate-spin">⏳</div>
+            <div className="text-figure-3xl mb-md animate-spin">⏳</div>
             <H1 className="mb-sm">Verifying Your Session</H1>
             <p className="text-muted-foreground mb-lg">
               Please wait while we verify your account...
@@ -212,7 +212,7 @@ export function VerifySessionContent({
         {/* Retrying State */}
         {state === "retrying" && (
           <>
-            <div className="text-6xl mb-md animate-pulse">🔄</div>
+            <div className="text-figure-3xl mb-md animate-pulse">🔄</div>
             <H1 className="mb-sm">Retrying...</H1>
             <p className="text-muted-foreground mb-sm">
               Attempt {attemptCount + 1} of {MAX_RETRY_ATTEMPTS}
@@ -233,7 +233,7 @@ export function VerifySessionContent({
         {/* Failed State (Max Retries) */}
         {state === "failed" && (
           <>
-            <div className="text-6xl mb-md">❌</div>
+            <div className="text-figure-3xl mb-md">❌</div>
             <H1 className="mb-sm">Verification Failed</H1>
             <p className="text-muted-foreground mb-lg">{errorMessage}</p>
             <div className="space-y-sm">
@@ -252,7 +252,7 @@ export function VerifySessionContent({
         {/* Error State (Unexpected) */}
         {state === "error" && (
           <>
-            <div className="text-6xl mb-md">⚠️</div>
+            <div className="text-figure-3xl mb-md">⚠️</div>
             <H1 className="mb-sm">Something Went Wrong</H1>
             <p className="text-muted-foreground mb-sm">
               We encountered an error while verifying your session.

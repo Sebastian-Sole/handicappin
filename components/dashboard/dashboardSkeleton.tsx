@@ -14,7 +14,7 @@ const DashboardSkeleton = () => {
 
           {/* Title box */}
           <Skeleton className="h-6 w-3/4 mb-sm" />
-          <Skeleton className="h-6 w-3/4 mb-sm min-[378px]:hidden block 2xl:hidden" />
+          <Skeleton className="h-6 w-3/4 mb-sm xs:hidden block 2xl:hidden" />
           <Skeleton className="h-6 w-1/4 mb-lg" />
 
           {/* First text */}
@@ -22,18 +22,18 @@ const DashboardSkeleton = () => {
           <Skeleton className="h-4 w-2/3 mb-sm" />
           <Skeleton className="h-4 w-1/2 mb-sm block xl:hidden 2xl:block" />
 
-          <Skeleton className="h-4 w-1/2 mb-sm block md:hidden 2xl:block min-[2000px]:hidden" />
-          <Skeleton className="h-4 w-1/2 mb-sm block sm:hidden 2xl:block min-[2000px]:hidden" />
+          <Skeleton className="h-4 w-1/2 mb-sm block md:hidden 2xl:block 3xl:hidden" />
+          <Skeleton className="h-4 w-1/2 mb-sm block sm:hidden 2xl:block 3xl:hidden" />
 
           <Skeleton className="h-4 w-1/2 mb-sm block sm:hidden 2xl:block 3xl:hidden" />
-          <Skeleton className="h-4 w-1/2 mb-sm block min-[378px]:hidden 2xl:block 3xl:hidden" />
-          <Skeleton className="h-4 w-1/2 mb-sm block min-[378px]:hidden 2xl:block 3xl:hidden" />
-          <Skeleton className="h-4 w-1/2 mb-sm block min-[378px]:hidden" />
-          <Skeleton className="h-4 w-1/2 mb-sm block min-[378px]:hidden" />
-          <Skeleton className="h-4 w-1/2 mb-sm block min-[345px]:hidden" />
-          <Skeleton className="h-4 w-1/2 mb-sm block min-[345px]:hidden" />
-          <Skeleton className="h-4 w-1/2 mb-sm block min-[345px]:hidden" />
-          <Skeleton className="h-4 w-1/2 mb-sm block min-[345px]:hidden" />
+          <Skeleton className="h-4 w-1/2 mb-sm block xs:hidden 2xl:block 3xl:hidden" />
+          <Skeleton className="h-4 w-1/2 mb-sm block xs:hidden 2xl:block 3xl:hidden" />
+          <Skeleton className="h-4 w-1/2 mb-sm block xs:hidden" />
+          <Skeleton className="h-4 w-1/2 mb-sm block xs:hidden" />
+          <Skeleton className="h-4 w-1/2 mb-sm block xs:hidden" />
+          <Skeleton className="h-4 w-1/2 mb-sm block xs:hidden" />
+          <Skeleton className="h-4 w-1/2 mb-sm block xs:hidden" />
+          <Skeleton className="h-4 w-1/2 mb-sm block xs:hidden" />
 
           <Skeleton className="h-4 w-full mb-xl" />
 
@@ -41,14 +41,14 @@ const DashboardSkeleton = () => {
           <Skeleton className="h-4 w-full mb-sm" />
           <Skeleton className="h-4 w-full mb-sm block sm:hidden" />
           <Skeleton className="h-4 w-full mb-sm block lg:hidden 2xl:block" />
-          <Skeleton className="h-4 w-full mb-sm block min-[378px]:hidden 2xl:block 3xl:hidden" />
-          <Skeleton className="h-4 w-full mb-sm block min-[378px]:hidden" />
-          <Skeleton className="h-4 w-1/2 mb-sm block min-[378px]:hidden" />
+          <Skeleton className="h-4 w-full mb-sm block xs:hidden 2xl:block 3xl:hidden" />
+          <Skeleton className="h-4 w-full mb-sm block xs:hidden" />
+          <Skeleton className="h-4 w-1/2 mb-sm block xs:hidden" />
 
-          <Skeleton className="h-4 w-1/2 mb-sm block min-[345px]:hidden" />
-          <Skeleton className="h-4 w-1/2 mb-sm block min-[345px]:hidden" />
-          <Skeleton className="h-4 w-1/2 mb-sm block min-[345px]:hidden" />
-          <Skeleton className="h-4 w-1/2 mb-sm block min-[345px]:hidden" />
+          <Skeleton className="h-4 w-1/2 mb-sm block xs:hidden" />
+          <Skeleton className="h-4 w-1/2 mb-sm block xs:hidden" />
+          <Skeleton className="h-4 w-1/2 mb-sm block xs:hidden" />
+          <Skeleton className="h-4 w-1/2 mb-sm block xs:hidden" />
 
           <Skeleton className="h-4 w-2/3 mb-md" />
 

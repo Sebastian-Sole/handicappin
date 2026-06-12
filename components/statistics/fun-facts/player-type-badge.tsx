@@ -10,7 +10,7 @@ export function PlayerTypeBadge({ playerType }: PlayerTypeBadgeProps) {
   return (
     <Card className="tint-primary">
       <CardContent className="p-lg text-center">
-        <div className="text-6xl mb-md">{playerType.emoji}</div>
+        <div className="text-figure-3xl mb-md">{playerType.emoji}</div>
         <H3 className="text-figure mb-sm">{playerType.name}</H3>
         <p className="text-muted-foreground">{playerType.description}</p>
         <div className="mt-md flex justify-center">

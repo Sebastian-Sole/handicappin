@@ -38,6 +38,17 @@
   letter-spacing: -0.005em;
 }
 
+/* Heading rung below heading-4 — dialog titles, card-level subtitles,
+   plan names. Replaces raw `text-lg font-semibold` / `text-lg
+   font-medium` title composes. */
+@utility text-heading-5 {
+  font-family: var(--font-sans);
+  font-weight: 600;
+  font-size: 1.125rem;
+  line-height: 1.75rem;
+  letter-spacing: -0.005em;
+}
+
 @utility text-body {
   font-family: var(--font-sans);
   font-weight: 400;
@@ -66,7 +77,8 @@
   line-height: 1.75rem;
 }
 
-/* 1.125rem figure rung — added 2026-05-30 to close A7 token gap. */
+/* 1.125rem figure rung between text-meta-strong and text-figure-sm.
+   Use for secondary stat values and sub-figure contexts. */
 @utility text-figure-xs {
   font-family: var(--font-sans);
   font-weight: 700;
@@ -142,6 +154,21 @@
    any sibling `tracking-tighter` override, exactly as the original
    arbitrary values behaved. */
 
+/* Lower hero rungs — size-only, completing the ladder below hero-xl.
+   Replace raw `sm:text-4xl md:text-5xl` on marketing H1/H2s.
+   The ladder is sm/md/xl/2xl by design: there is no text-hero-lg — the
+   marketing pages jump from 3rem to 3.4rem. Don't insert one without a
+   concrete callsite. */
+@utility text-hero-sm {
+  font-size: 2.25rem;
+  line-height: 2.5rem;
+}
+
+@utility text-hero-md {
+  font-size: 3rem;
+  line-height: 1;
+}
+
 @utility text-hero-xl {
   font-size: 3.4rem;
   line-height: 1;
@@ -184,8 +211,7 @@
 }
 
 /* Eyebrow at small size — one rung up from text-eyebrow (text-xs → text-sm).
-   Replaces `text-sm font-medium uppercase tracking-wider`. Added 2026-05-30
-   to close A10 token gap. */
+   Replaces `text-sm font-medium uppercase tracking-wider`. */
 
 @utility text-eyebrow-sm {
   font-size: 0.875rem;

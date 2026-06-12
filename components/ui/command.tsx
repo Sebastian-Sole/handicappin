@@ -9,8 +9,7 @@ import { cn } from "@/lib/utils";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 
 // Spacing skipped (no token equivalent): -mx-1 (negative). Size utilities
-// (h-4, w-4, h-5, w-5, h-11, h-12, size-4) and max-h-[300px] are out of
-// scope for this pass.
+// (h-4, w-4, h-5, w-5, h-11, h-12, size-4) are out of scope for this pass.
 
 const Command = React.forwardRef<
   React.ElementRef<typeof CommandPrimitive>,
@@ -64,7 +63,10 @@ const CommandList = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <CommandPrimitive.List
     ref={ref}
-    className={cn("max-h-[300px] overflow-y-auto overflow-x-hidden", className)}
+    className={cn(
+      "max-h-(--size-list-max) overflow-y-auto overflow-x-hidden",
+      className
+    )}
     {...props}
   />
 ));
