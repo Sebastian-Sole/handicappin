@@ -30,10 +30,17 @@ test('marker literals stay in sync with the app sources (cross-boundary duplicat
     fontsTs.includes(`"${FONTS_READY_TEST_ID}"`),
     'lib/fonts.ts must define the same fonts-ready marker the gate polls for',
   );
-  const galleryTsx = readFileSync(join(appRoot, 'app/index.tsx'), 'utf8');
+  const galleryTsx = readFileSync(join(appRoot, 'app/__gallery.tsx'), 'utf8');
   assert.ok(
     galleryTsx.includes(`"${DATA_SETTLED_LABEL}"`),
     'the gallery must render the same data-settled marker the gate polls for',
+  );
+  // Data screens get the marker via the settle hook — the literal lives once
+  // in lib/query/settle.ts on the app side.
+  const settleTs = readFileSync(join(appRoot, 'lib/query/settle.ts'), 'utf8');
+  assert.ok(
+    settleTs.includes(`"${DATA_SETTLED_LABEL}"`),
+    'lib/query/settle.ts must define the same data-settled label the gate polls for',
   );
 });
 
