@@ -1,4 +1,4 @@
-import { defineConfig } from "vitest/config";
+import { configDefaults, defineConfig } from "vitest/config";
 import path from "path";
 import dotenv from "dotenv";
 
@@ -10,6 +10,10 @@ export default defineConfig({
   test: {
     globals: true,
     environment: "node",
+    // Workspace packages run their own suites (packages/tokens uses
+    // `node --test`, which Vitest can't collect); the root run covers
+    // app code only.
+    exclude: [...configDefaults.exclude, "packages/**"],
   },
   resolve: {
     alias: {
