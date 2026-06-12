@@ -1,0 +1,42 @@
+# BILLING STATE: plan=NULL (§1 "plan null/free → full paywall").
+# PRE-REQUISITE: signed in as the test user with plan_selected=NULL — the
+# claims route plan-less users to onboarding. Extends onboarding.yaml's
+# assertions with the policy items: restore always visible + disclosure.
+appId: com.handicappin.app
+---
+- stopApp
+- openLink: handicappin://onboarding
+- tapOn:
+    text: "Open"
+    optional: true
+- assertVisible: "Welcome to Handicappin!"
+- assertVisible: "Free"
+- assertVisible: "Start Free"
+- takeScreenshot: /tmp/handicappin-billing-states/null-onboarding-top
+# Paid CTA goes through the billing seam → labelled dev notice (mock mode).
+- scrollUntilVisible:
+    element:
+      id: "plan-premium-cta"
+    centerElement: true
+- tapOn:
+    id: "plan-premium-cta"
+# The feedback banner renders at the top of the scroll view.
+- scrollUntilVisible:
+    element:
+      text: ".*development build.*"
+    direction: UP
+    timeout: 20000
+- takeScreenshot: /tmp/handicappin-billing-states/null-onboarding-mock-notice
+# §1: Restore always visible; 3.1.2 disclosure + legal links present.
+- scrollUntilVisible:
+    element:
+      id: "onboarding-restore"
+    timeout: 60000
+- assertVisible: "Restore Purchases"
+- scrollUntilVisible:
+    element:
+      text: ".*renew automatically.*"
+    timeout: 30000
+- assertVisible: "Terms of Service"
+- assertVisible: "Privacy Policy"
+- takeScreenshot: /tmp/handicappin-billing-states/null-onboarding-disclosure

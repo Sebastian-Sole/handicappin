@@ -141,6 +141,31 @@ expo-web-browser (`SITE_URL/profile/<uid>`). Not an owner gap.
 
 (none yet)
 
-## Per-state paywall evidence
+## Per-state paywall evidence (2026-06-12, DoD #9)
 
-(populated during cluster 8)
+Method: profile driven through each state — SQL in the exact webhook write
+shape for the stripe/free/null states (D15 pattern), and REAL RC-shaped
+POSTs to the LOCAL webhook (`/api/webhooks/revenuecat`, dev-mode auth
+skip) for every apple state, so the on-sim verification exercised the full
+pipeline: webhook → applyBillingEvent → projection → tRPC → paywall.
+Flows live in `apps/native/.maestro/billing-states/` (kept OUT of
+`.maestro/flows/` — they assume driven states, the main suite assumes the
+test account's resting state). Captures in /tmp/handicappin-billing-states/.
+All judgments in-band (vision) against the §1 matrix + design language.
+
+| State | Driven by | Maestro | Capture(s) | In-band verdict |
+|---|---|---|---|---|
+| plan NULL → onboarding | SQL + fresh sign-in | state-null-onboarding.yaml PASS (+ the original onboarding.yaml PASS — its plan-less prerequisite finally held) | null-onboarding-{top,mock-notice,disclosure}.png | PASS — full paywall: real pricing cards w/ live promo data (93 slots), paid CTA → labelled dev notice (mock seam), Restore button, full 3.1.2 disclosure + Terms/Privacy links |
+| plan free (profile) | SQL | state-free.yaml PASS | free-{paywall,mock-notice,restore}.png | PASS — "Free Plan / 18 rounds remaining", purchasable real lineup ($19/yr, $29/yr, $149 one-time) w/ Subscribe buttons, mock notice on buy, disclosure, Restore; no neutral copy |
+| stripe + premium + active | SQL (webhook shape) | state-stripe-active.yaml PASS | stripe-premium-active.png | PASS — "Renews on June 14, 2027", neutral "managed on handicappin.com" as plain muted TEXT (no link — D-policy), NO purchase/plan-change/manage buttons, Restore present |
+| apple + unlimited + active | REAL INITIAL_PURCHASE webhook (route correctly flagged double-contract vs the seeded stripe-active and kept max entitlement) | state-apple-active.yaml PASS | apple-unlimited-active.png | PASS — primary "Switch to Premium" (group plan change), "Manage Subscription (App Store)", Restore, renews line |
+| apple + cancel_at_period_end | REAL CANCELLATION webhook | state-apple-cap.yaml PASS | apple-cancel-at-period-end.png | PASS — "Cancels on June 14, 2027", plan change + manage remain (still active until period end) |
+| apple + past_due | REAL UNCANCELLATION + BILLING_ISSUE webhooks | state-past-due.yaml PASS | apple-past-due.png | PASS — destructive "Payment issue — please update your payment method.", manage + Restore, NO plan change, NO purchase buttons (D26) |
+| lifetime (apple) | REAL NON_RENEWING_PURCHASE webhook | state-lifetime.yaml PASS | lifetime.png | PASS — "✓ Lifetime Access", "No subscription management needed", Restore only |
+
+**Restoration:** test account reset to the original
+unlimited/active/stripe shape (`current_period_end` NULL,
+`cancel_at_period_end` false, billing_version bumped), the sim-verify
+webhook_events rows deleted (no stale apple cursor), and re-verified
+END-TO-END: sign-out → sign-in (fresh JWT) → the standard profile.yaml
+flow PASS ("Unlimited Plan" + mocked-restore notice).

@@ -1,0 +1,41 @@
+# BILLING STATE: apple + unlimited + active (§1 "active + provider apple →
+# native plan change + Apple manage link"). Driven by a REAL
+# INITIAL_PURCHASE webhook against the local server.
+appId: com.handicappin.app
+---
+- stopApp
+- openLink: handicappin://
+- tapOn:
+    text: "Open"
+    optional: true
+- extendedWaitUntil:
+    visible:
+      id: "tab-profile"
+    timeout: 30000
+- tapOn:
+    id: "tab-profile"
+- extendedWaitUntil:
+    visible: "Manage your account settings"
+    timeout: 20000
+- tapOn:
+    id: "profile-tab-billing"
+- extendedWaitUntil:
+    visible: ".*[Uu]nlimited Plan.*"
+    timeout: 15000
+- assertVisible: ".*Renews on.*"
+# Native plan change within the subscription group + Apple manage link.
+- assertVisible:
+    id: "billing-plan-change"
+- assertVisible: "Switch to Premium"
+- assertVisible:
+    id: "billing-apple-manage"
+- assertVisible: "Manage Subscription (App Store)"
+# No purchase buttons, no stripe neutral copy.
+- assertNotVisible: "Upgrade Your Plan"
+- assertNotVisible: ".*managed on handicappin.com.*"
+- scrollUntilVisible:
+    element:
+      id: "billing-restore"
+    centerElement: true
+- assertVisible: "Restore Purchases"
+- takeScreenshot: /tmp/handicappin-billing-states/apple-unlimited-active

@@ -1,0 +1,36 @@
+# BILLING STATE: apple + unlimited + active + cancel_at_period_end (driven
+# by a REAL CANCELLATION webhook). Still active until period end: plan
+# change + manage remain; the status line says "Cancels on ...".
+appId: com.handicappin.app
+---
+- stopApp
+- openLink: handicappin://
+- tapOn:
+    text: "Open"
+    optional: true
+- extendedWaitUntil:
+    visible:
+      id: "tab-profile"
+    timeout: 30000
+- tapOn:
+    id: "tab-profile"
+- extendedWaitUntil:
+    visible: "Manage your account settings"
+    timeout: 20000
+- tapOn:
+    id: "profile-tab-billing"
+- extendedWaitUntil:
+    visible: ".*[Uu]nlimited Plan.*"
+    timeout: 15000
+- assertVisible: ".*Cancels on.*"
+- assertVisible:
+    id: "billing-plan-change"
+- assertVisible:
+    id: "billing-apple-manage"
+- assertNotVisible: "Upgrade Your Plan"
+- scrollUntilVisible:
+    element:
+      id: "billing-restore"
+    centerElement: true
+- assertVisible: "Restore Purchases"
+- takeScreenshot: /tmp/handicappin-billing-states/apple-cancel-at-period-end
