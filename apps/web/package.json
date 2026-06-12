@@ -21,6 +21,7 @@
     "build-storybook": "storybook build"
   },
   "dependencies": {
+    "@handicappin/billing-core": "workspace:*",
     "@handicappin/handicap-core": "workspace:*",
     "@hookform/resolvers": "^5.2.2",
     "@radix-ui/react-avatar": "^1.1.11",

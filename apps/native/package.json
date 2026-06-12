@@ -20,6 +20,7 @@
   "dependencies": {
     "@expo-google-fonts/inter": "^0.4.2",
     "@expo/ui": "~56.0.16",
+    "@handicappin/billing-core": "workspace:*",
     "@handicappin/handicap-core": "workspace:*",
     "@handicappin/tokens": "workspace:*",
     "@hookform/resolvers": "^5.2.2",
