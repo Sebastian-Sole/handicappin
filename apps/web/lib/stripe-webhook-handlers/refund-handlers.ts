@@ -71,18 +71,23 @@ export async function handleChargeRefunded(
     }
 
     const currentPlan = userProfile[0].planSelected;
+    const currentProvider = userProfile[0].billingProvider;
 
     // Log refund details
     logWebhookDebug("Refund details", {
       userId,
       currentPlan,
+      currentProvider,
       isFullRefund,
       amountRefunded: formatAmount(amountRefunded, currency),
       amountCharged: formatAmount(amountCharged, currency),
     });
 
-    // For lifetime plans, full refund = revoke access
-    if (currentPlan === "lifetime" && isFullRefund) {
+    // For lifetime plans, full refund = revoke access. This is the ONE
+    // sanctioned lifetime overwrite: the refunded Stripe charge IS the
+    // lifetime payment. It only applies to a STRIPE-billed lifetime — a
+    // Stripe refund must never revoke an apple-billed entitlement.
+    if (currentPlan === "lifetime" && isFullRefund && currentProvider !== "apple") {
       logPaymentEvent(
         `Full refund detected - revoking lifetime access for user ${userId}`
       );
@@ -95,12 +100,17 @@ export async function handleChargeRefunded(
           subscriptionStatus: "canceled",
           currentPeriodEnd: null,
           cancelAtPeriodEnd: false,
+          billingProvider: null,
           billingVersion: sql`billing_version + 1`,
         })
         .where(eq(profile.id, userId));
 
       logWebhookSuccess(
         `Revoked lifetime access for user ${userId} due to full refund`
+      );
+    } else if (currentPlan === "lifetime" && isFullRefund) {
+      logWebhookWarning(
+        `Full Stripe refund for user ${userId} whose lifetime is billed by ${currentProvider} - NOT revoking (cross-provider mismatch, investigate manually)`
       );
     } else if (isFullRefund) {
       // Full refund for subscription - let subscription.deleted handle it

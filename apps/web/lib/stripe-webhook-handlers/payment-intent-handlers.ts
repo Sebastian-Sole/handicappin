@@ -11,6 +11,8 @@ import {
   logPaymentEvent,
 } from "@/lib/webhook-logger";
 import { sendWelcomeEmail } from "@/lib/email-service";
+import type { BillingFact } from "@/utils/billing/apply-billing-event";
+import { guardedStripeProfileWrite } from "./profile-billing-write";
 import type { WebhookContext, WebhookResult } from "./types";
 
 /**
@@ -84,29 +86,55 @@ export async function handlePaymentIntentSucceeded(
 
     const isFirstTimePurchase = oldPlan === "free";
 
+    let written = false;
     try {
-      await db
-        .update(profile)
-        .set({
-          planSelected: purchase.plan,
-          planSelectedAt: new Date(),
-          subscriptionStatus: "active",
-          currentPeriodEnd: null,
-          cancelAtPeriodEnd: false,
-          billingVersion: sql`billing_version + 1`,
-        })
-        .where(eq(profile.id, purchase.userId));
+      const fact: BillingFact = {
+        provider: "stripe",
+        plan: purchase.plan,
+        status: "active",
+        currentPeriodEnd: null,
+        cancelAtPeriodEnd: false,
+        eventTimeMs: ctx.event.created * 1000,
+        eventId: ctx.eventId,
+      };
 
-      logWebhookSuccess(
-        `Granted ${purchase.plan} access to user ${purchase.userId}`
-      );
+      const result = await guardedStripeProfileWrite({
+        userId: purchase.userId,
+        handler: "handlePaymentIntentSucceeded",
+        fact,
+        write: async () => {
+          await db
+            .update(profile)
+            .set({
+              planSelected: purchase.plan,
+              planSelectedAt: new Date(),
+              subscriptionStatus: "active",
+              currentPeriodEnd: null,
+              cancelAtPeriodEnd: false,
+              billingProvider: "stripe",
+              billingVersion: sql`billing_version + 1`,
+            })
+            .where(eq(profile.id, purchase.userId));
+        },
+      });
+      written = result.written;
+
+      if (written) {
+        logWebhookSuccess(
+          `Granted ${purchase.plan} access to user ${purchase.userId}`
+        );
+      } else {
+        logWebhookInfo(
+          `Lifetime grant for user ${purchase.userId} blocked by precedence guard`
+        );
+      }
     } catch (dbError) {
       logWebhookError("Error updating plan", dbError);
       throw dbError;
     }
 
     // Send welcome email for first-time purchases
-    if (isFirstTimePurchase && userEmail) {
+    if (written && isFirstTimePurchase && userEmail) {
       try {
         const dashboardUrl = `${process.env.NEXT_PUBLIC_APP_URL}/dashboard`;
 
