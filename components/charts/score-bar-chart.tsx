@@ -22,9 +22,16 @@ interface ScoreBarChartProps {
     influencesHcp?: boolean;
   }[];
   className?: string;
+  /** Show the "rotate your device" hint on viewports below `sm` (for
+      callers that hide the chart itself on small screens). */
+  showRotateHint?: boolean;
 }
 
-const ScoreBarChart = ({ scores, className }: ScoreBarChartProps) => {
+const ScoreBarChart = ({
+  scores,
+  className,
+  showRotateHint = false,
+}: ScoreBarChartProps) => {
   const colors = useThemeColors();
 
   // Calculate evenly spaced ticks with clean numbers
@@ -150,7 +157,7 @@ const ScoreBarChart = ({ scores, className }: ScoreBarChartProps) => {
           </ChartContainer>
         </div>
       )}
-      {className === "hidden sm:block" && scores.length !== 0 && (
+      {showRotateHint && scores.length !== 0 && (
         <div className={`flex justify-center mt-md sm:hidden p-xl`}>
           <Muted className="flex items-center">
             <RefreshCcw className="mr-sm" />

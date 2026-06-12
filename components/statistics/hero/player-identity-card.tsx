@@ -58,7 +58,7 @@ export function PlayerIdentityCard({
             {playerType.description}
           </p>
           <div className="mt-sm">
-            <span className="inline-block px-sm py-xs bg-primary/10 rounded-full text-meta text-muted-foreground">
+            <span className="chip-muted text-meta">
               {Math.round(playerType.confidence * 100)}% match
             </span>
           </div>

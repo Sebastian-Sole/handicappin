@@ -4,14 +4,18 @@ export const runtime = "edge";
 
 /* Satori (next/og) renders with inline styles and cannot parse oklch(),
    so brand colors are sRGB hex conversions of the tokens in
-   app/globals.css — keep in sync if those tokens change.
-   bgFrom/bgTo  = dark --background-alternate / --background
-   brandFrom/To = --score-birdie (dark) / --score-birdie (light) */
+   app/globals.css. The authoritative hex values live in
+   packages/tokens/generated/tokens.ts — copy from there when the source
+   tokens change:
+   bgFrom    = tokens.colors.dark["background-alternate"]
+   bgTo      = tokens.colors.dark["background"]
+   brandFrom = tokens.colors.dark["score-birdie"]
+   brandTo   = tokens.colors.light["score-birdie"] */
 const og = {
   bgFrom: "#041608",
   bgTo: "#000d02",
   brandFrom: "#05df72",
-  brandTo: "#00c950",
+  brandTo: "#00c659",
 };
 
 export const alt = "Handicappin' - Golf Handicap Tracker";

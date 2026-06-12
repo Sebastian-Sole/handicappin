@@ -26,7 +26,11 @@ const DashboardGraphDisplay = ({ graphData }: DashboardGraphDisplayProps) => {
           </Button>
         </Link>
       </div>
-      <ScoreBarChart scores={graphData} className="hidden sm:block" />
+      <ScoreBarChart
+        scores={graphData}
+        className="hidden sm:block"
+        showRotateHint
+      />
     </div>
   );
 };
