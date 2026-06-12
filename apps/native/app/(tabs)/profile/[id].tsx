@@ -32,12 +32,29 @@ import { FormFeedback } from "@/components/ui/form-feedback";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { H1, H2, H3 } from "@/components/ui/typography";
+import type { PaidPlan } from "@handicappin/billing-core";
+
+import { PaywallPackages } from "@/components/billing/paywall-packages";
 import { trpcMutation } from "@/lib/api/client";
 import { profileQueryOptions } from "@/lib/api/procedures/auth";
 import { roundCountQueryOptions } from "@/lib/api/procedures/round";
+import type {
+  BillingProviderId,
+  PlanType,
+  SubscriptionStatus,
+} from "@/lib/api/schemas/profile";
 import { useSession } from "@/lib/auth/session-provider";
-import { billing } from "@/lib/billing";
 import { PLAN_FEATURES } from "@/lib/billing/plan-content";
+import {
+  paywallPolicyFor,
+  STRIPE_NEUTRAL_COPY,
+} from "@/lib/billing/paywall-policy";
+import {
+  getManagementUrl,
+  MOCK_RESTORE_PREFIX,
+  purchasePlan,
+  restorePurchases,
+} from "@/lib/billing/purchase-flow";
 import { useColorMode } from "@/lib/color-mode";
 import { openLegalDocument, SITE_URL } from "@/lib/legal";
 import { useDataSettled } from "@/lib/query/settle";
@@ -179,13 +196,15 @@ export default function ProfileScreen() {
           {tab === "billing" ? (
             <BillingTab
               plan={profile.plan_selected}
+              status={profile.subscription_status}
+              provider={profile.billing_provider}
               currentPeriodEnd={profile.current_period_end}
               cancelAtPeriodEnd={profile.cancel_at_period_end}
               roundCount={roundCountQuery.data ?? 0}
               userId={profile.id}
             />
           ) : null}
-          {tab === "settings" ? <SettingsTab /> : null}
+          {tab === "settings" ? <SettingsTab userId={profile.id} /> : null}
         </>
       )}
     </ScrollView>
@@ -290,33 +309,94 @@ function PersonalTab({
 
 function BillingTab({
   plan,
+  status,
+  provider,
   currentPeriodEnd,
   cancelAtPeriodEnd,
   roundCount,
   userId,
 }: {
-  plan: string | null;
+  plan: PlanType | null;
+  status: SubscriptionStatus | null;
+  provider: BillingProviderId | null;
   currentPeriodEnd: number | null;
   cancelAtPeriodEnd: boolean;
   roundCount: number;
   userId: string;
 }) {
   const [feedback, setFeedback] = useState<FeedbackState | null>(null);
+  const [changingPlan, setChangingPlan] = useState(false);
+  const queryClient = useQueryClient();
   const isLifetime = plan === "lifetime";
   const remainingRounds = Math.max(0, FREE_TIER_ROUND_LIMIT - roundCount);
   const features = PLAN_FEATURES[plan ?? "free"] ?? [];
 
+  // THE §1 policy matrix — drives every affordance below.
+  const policy = paywallPolicyFor({ plan, status, provider, cancelAtPeriodEnd });
+  const refreshProfile = () =>
+    void queryClient.invalidateQueries({
+      queryKey: ["auth.getProfileFromUserId", userId],
+    });
+
   const onRestore = async () => {
-    // Decision ledger: restore is a MOCKED flow — re-reads the REAL backend
-    // state through the RevenueCat-shaped seam and says so out loud.
-    await billing.configure({ appUserID: userId });
-    const info = await billing.restorePurchases();
-    const active = Object.keys(info.entitlements.active);
+    const result = await restorePurchases(userId);
+    if (result.kind === "error") {
+      setFeedback({ type: "error", message: result.message });
+      return;
+    }
+    const list =
+      result.activeEntitlements.length > 0
+        ? result.activeEntitlements.join(", ")
+        : "none";
     setFeedback({
       type: "info",
-      message: `Dev build: purchases are mocked. Backend state restored — active entitlement${active.length === 1 ? "" : "s"}: ${active.length > 0 ? active.join(", ") : "none"}.`,
+      message: result.mocked
+        ? `${MOCK_RESTORE_PREFIX} Backend state restored — active entitlement${result.activeEntitlements.length === 1 ? "" : "s"}: ${list}.`
+        : `Purchases restored — active entitlement${result.activeEntitlements.length === 1 ? "" : "s"}: ${list}.`,
     });
+    if (!result.mocked) refreshProfile();
   };
+
+  // Apple-billed plan change: the OTHER yearly tier, same subscription group.
+  const planChangeTarget: PaidPlan | null =
+    plan === "premium" ? "unlimited" : plan === "unlimited" ? "premium" : null;
+
+  const onPlanChange = async (target: PaidPlan) => {
+    setChangingPlan(true);
+    try {
+      const result = await purchasePlan(userId, target);
+      if (result.kind === "mock-notice") {
+        setFeedback({ type: "info", message: result.message });
+      } else if (result.kind === "purchased") {
+        setFeedback({
+          type: "success",
+          message: `Plan change complete — you're now on ${target}.`,
+        });
+        refreshProfile();
+      } else if (result.kind === "error") {
+        setFeedback({ type: "error", message: result.message });
+      }
+    } finally {
+      setChangingPlan(false);
+    }
+  };
+
+  const onAppleManage = async () => {
+    const url = await getManagementUrl(userId);
+    void WebBrowser.openBrowserAsync(url);
+  };
+
+  const statusLine = (() => {
+    if (status === "past_due") {
+      return "Payment issue — please update your payment method.";
+    }
+    if (currentPeriodEnd && !isLifetime) {
+      return cancelAtPeriodEnd
+        ? `Cancels on ${formatDate(currentPeriodEnd)}`
+        : `Renews on ${formatDate(currentPeriodEnd)}`;
+    }
+    return null;
+  })();
 
   return (
     <View className="gap-lg" testID="profile-billing">
@@ -346,11 +426,16 @@ function BillingTab({
               {remainingRounds} rounds remaining
             </Text>
           ) : null}
-          {currentPeriodEnd && !isLifetime ? (
-            <Text className="text-body text-muted-foreground">
-              {cancelAtPeriodEnd
-                ? `Cancels on ${formatDate(currentPeriodEnd)}`
-                : `Renews on ${formatDate(currentPeriodEnd)}`}
+          {statusLine ? (
+            <Text
+              className={cn(
+                "text-body",
+                status === "past_due"
+                  ? "text-destructive"
+                  : "text-muted-foreground",
+              )}
+            >
+              {statusLine}
             </Text>
           ) : null}
           {isLifetime ? (
@@ -359,25 +444,63 @@ function BillingTab({
             </Text>
           ) : null}
         </View>
+
         <View className="gap-sm">
-          {!isLifetime ? (
-            <Button
-              onPress={() => {
-                void WebBrowser.openBrowserAsync(`${SITE_URL}/upgrade`);
-              }}
+          {/* §1: stripe-sourced — neutral copy, deliberately NOT a link */}
+          {policy.showStripeNeutralCopy ? (
+            <Text
+              testID="billing-stripe-neutral"
+              className="text-body-sm text-muted-foreground"
             >
-              {plan === "free" ? "Upgrade Plan" : "Change Plan"}
+              {STRIPE_NEUTRAL_COPY}
+            </Text>
+          ) : null}
+
+          {/* §1: apple-sourced — native plan change within the group */}
+          {policy.showNativePlanChange && planChangeTarget ? (
+            <Button
+              testID="billing-plan-change"
+              disabled={changingPlan}
+              onPress={() => void onPlanChange(planChangeTarget)}
+            >
+              {changingPlan
+                ? "Working…"
+                : `Switch to ${planChangeTarget === "unlimited" ? "Unlimited" : "Premium"}`}
             </Button>
-          ) : (
+          ) : null}
+
+          {/* §1: apple-sourced — Apple manage-subscriptions affordance */}
+          {policy.showAppleManage ? (
+            <Button
+              testID="billing-apple-manage"
+              variant="outline"
+              onPress={() => void onAppleManage()}
+            >
+              Manage Subscription (App Store)
+            </Button>
+          ) : null}
+
+          {isLifetime ? (
             <Text className="text-body-sm text-muted-foreground">
               No subscription management needed
             </Text>
-          )}
-          <Button variant="outline" onPress={() => void onRestore()}>
+          ) : null}
+
+          {/* §1: Restore always visible */}
+          <Button
+            testID="billing-restore"
+            variant="outline"
+            onPress={() => void onRestore()}
+          >
             Restore Purchases
           </Button>
         </View>
       </View>
+
+      {/* §1: plan null/free — full paywall (purchasable) */}
+      {policy.showPurchaseButtons ? (
+        <PaywallPackages userId={userId} onPurchased={refreshProfile} />
+      ) : null}
 
       <View className="surface p-lg rounded-lg gap-md">
         <H3>Plan Features</H3>
@@ -410,13 +533,20 @@ function BillingTab({
   );
 }
 
-function SettingsTab() {
+function SettingsTab({ userId }: { userId: string }) {
   const mode = useColorMode();
   const colors = tokens.colors[mode];
 
   const onSignOut = async () => {
     await supabase.auth.signOut();
     router.replace("/login");
+  };
+
+  // App Store 5.1.1(v): account deletion must be reachable in-app. Web's
+  // REAL deletion flow (OTP-confirmed, cancels subscriptions, deletes auth
+  // user + data) lives on the profile page's settings tab — link out to it.
+  const onDeleteAccount = () => {
+    void WebBrowser.openBrowserAsync(`${SITE_URL}/profile/${userId}`);
   };
 
   return (
@@ -454,8 +584,25 @@ function SettingsTab() {
           </View>
         </Button>
         <Text className="text-meta text-muted-foreground">
-          Data export and account deletion are available on handicappin.com.
+          Data export is available on handicappin.com.
         </Text>
+      </View>
+
+      <View className="surface p-lg rounded-lg gap-md">
+        <H3>Account</H3>
+        <Text className="text-body-sm text-muted-foreground">
+          Deleting your account permanently removes your profile, rounds, and
+          statistics, and cancels any active subscription. Deletion is
+          completed on handicappin.com (your profile page → Settings) with
+          email confirmation.
+        </Text>
+        <Button
+          testID="settings-delete-account"
+          variant="outline"
+          onPress={onDeleteAccount}
+        >
+          <Text className="text-label-sm text-destructive">Delete Account</Text>
+        </Button>
       </View>
 
       <View className="surface p-lg rounded-lg gap-md">

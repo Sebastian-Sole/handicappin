@@ -8,6 +8,8 @@
  * mirror the web upgrade page's plan lineup so the paywall renders something
  * truthful about what exists, with placeholder prices labelled as such.
  */
+import { APPLE_SKUS } from "@handicappin/billing-core";
+
 import type {
   BillingCustomerInfo,
   BillingEntitlement,
@@ -21,29 +23,35 @@ export type SubscriptionStateFetcher = (
   userId: string,
 ) => Promise<SubscriptionState>;
 
+/**
+ * The REAL product lineup (decision ledger D-products): premium yearly,
+ * unlimited yearly, lifetime — no monthly. SKUs come from the shared
+ * constants module; prices mirror web's PLAN_PRICING. Only the purchase
+ * FLOW is mocked — what's on offer is truthful.
+ */
 const MOCK_OFFERINGS: BillingOfferings = (() => {
   const packages: BillingPackage[] = [
     {
-      identifier: "$rc_monthly",
-      packageType: "MONTHLY",
+      identifier: "premium_yearly",
+      packageType: "ANNUAL",
       offeringIdentifier: "default",
       product: {
-        identifier: "premium_monthly",
+        identifier: APPLE_SKUS.premiumYearly,
         title: "Premium",
-        description: "Dashboard and calculators access",
-        priceString: "$3.99/mo (mock)",
+        description: "For golf enthusiasts",
+        priceString: "$19/yr",
         currencyCode: "USD",
       },
     },
     {
-      identifier: "$rc_annual",
+      identifier: "unlimited_yearly",
       packageType: "ANNUAL",
       offeringIdentifier: "default",
       product: {
-        identifier: "unlimited_annual",
+        identifier: APPLE_SKUS.unlimitedYearly,
         title: "Unlimited",
-        description: "Unlimited rounds, dashboard, and calculators",
-        priceString: "$29.99/yr (mock)",
+        description: "Unlimited rounds, statistics, and calculators",
+        priceString: "$29/yr",
         currencyCode: "USD",
       },
     },
@@ -52,10 +60,10 @@ const MOCK_OFFERINGS: BillingOfferings = (() => {
       packageType: "LIFETIME",
       offeringIdentifier: "default",
       product: {
-        identifier: "lifetime",
+        identifier: APPLE_SKUS.lifetime,
         title: "Lifetime",
-        description: "Everything, forever",
-        priceString: "$79.99 (mock)",
+        description: "Unlimited access, forever",
+        priceString: "$149",
         currencyCode: "USD",
       },
     },
@@ -63,13 +71,13 @@ const MOCK_OFFERINGS: BillingOfferings = (() => {
   return {
     current: {
       identifier: "default",
-      serverDescription: "Mock offering mirroring the web plan lineup",
+      serverDescription: "The real plan lineup (D-products); purchase flow mocked",
       availablePackages: packages,
     },
     all: {
       default: {
         identifier: "default",
-        serverDescription: "Mock offering mirroring the web plan lineup",
+        serverDescription: "The real plan lineup (D-products); purchase flow mocked",
         availablePackages: packages,
       },
     },

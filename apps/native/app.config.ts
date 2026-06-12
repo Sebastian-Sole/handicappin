@@ -28,6 +28,9 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
       supabaseAnonKey:
         process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY ?? LOCAL_SUPABASE_ANON_KEY,
       apiBaseUrl: process.env.EXPO_PUBLIC_API_BASE_URL ?? LOCAL_API_BASE_URL,
+      // Billing seam switch (D-seam): unset → RevenueCat-shaped mock.
+      revenueCatIosApiKey:
+        process.env.EXPO_PUBLIC_REVENUECAT_IOS_API_KEY ?? null,
     },
   },
 });

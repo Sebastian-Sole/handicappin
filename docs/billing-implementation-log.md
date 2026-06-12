@@ -83,6 +83,56 @@ recorded queryably in the success row's `error_message`
 Sentry alert — integration tests assert the recorded note, and operators
 can audit alerts without Sentry access.
 
+### D25 — Native seam: lazy-required SDK module, pure selection rule, real lineup prices (2026-06-12)
+
+**What:** `lib/billing/index.ts` selects the provider via
+`selectBillingProviderKind(env.revenueCatIosApiKey)` (pure module, unit
+tested). The real `RevenueCatBillingProvider` lives in its own module and
+is `require`d ONLY inside the key-present branch — a key-less app (CI,
+sim verification) never evaluates the SDK module, so the app boots even
+if the native module were absent. The SDK is wrapped behind pure
+structural mapping (`revenuecat-mapping.ts`, unit tested in node);
+`configure()` runs `Purchases.configure({apiKey})` once + `logIn(supabase
+userId)` per session (D-rc-scope). Mock offerings now carry the REAL
+D-products lineup (premium $19/yr, unlimited $29/yr, lifetime $149 — the
+monthly placeholder is gone) with truthful price strings; only the
+purchase FLOW is mocked, and it still says so via the labelled dev notice.
+
+**Why:** D-seam requires "the SDK must never be configured without a key"
+and a mock-driven app that passes the full Maestro suite key-less. Lazy
+evaluation + the constructor throw + factory guard give three layers.
+Price strings stopped being labelled "(mock)" because they now state the
+real lineup's real prices — the mock label belongs on the FLOW (the dev
+notice), not on truthful catalog data.
+
+### D26 — Paywall policy: non-active paid contracts show management, never purchase buttons (2026-06-12)
+
+**What:** `paywallPolicyFor` implements the LOCKED §1 matrix and extends
+it to the states the matrix doesn't enumerate: `past_due` and
+canceled-in-grace keep their owning provider's affordance (apple → manage
+link, no plan change while not active; stripe → neutral copy) and never
+show purchase buttons. Legacy paid rows with `billing_provider` NULL are
+treated as stripe-billed (every pre-existing paid contract is Stripe's —
+same rationale as the migration backfill). Onboarding remains the
+plan-null full paywall; paid CTAs purchase through the seam, free-tier
+selection and the EARLY100 promo claim keep the dev notice pointing at
+the website (web server flows, unreachable from native — D10 carry-over).
+Restore is on both surfaces; the auto-renew disclosure + Terms/Privacy
+links render wherever purchase buttons can appear (App Store 3.1.2).
+
+**Why:** buying while a contract exists double-bills (the exact failure
+D-precedence's double-contract alert exists to catch — the UI shouldn't
+manufacture that case); a past-due user's fix is updating payment, which
+lives with the owning provider.
+
+**Compliance note (DoD #10):** web HAS a real account-deletion flow
+(`apps/web/components/profile/account-deletion-section.tsx` on the
+profile settings tab → `server/api/routers/account.ts`: OTP-confirmed,
+cancels Stripe subscriptions, deletes auth user + data). The native
+Settings tab now has an explicit "Delete Account" entry (App Store
+5.1.1(v)) that explains the consequence and opens that surface via
+expo-web-browser (`SITE_URL/profile/<uid>`). Not an owner gap.
+
 ## Waivers
 
 (none yet)
