@@ -49,9 +49,13 @@ const round2 = (n) => Math.round(n * 100) / 100;
 /** rem needs finer precision (0.525, 1.225, …) than the 2-decimal px granularity. */
 const round5 = (n) => Math.round(n * 1e5) / 1e5;
 
-/** parseRem("0.875rem") -> 0.875 ; parseRem("16px") -> 16 (px treated as number). */
+/** Unit-aware rem/em parse: "0.875rem" -> 0.875, "16px" -> 1 (converted at
+    16px/rem). Without the px branch a px-valued token would be read as rem
+    and silently inflate 16x. */
 export function parseRem(value) {
-  return parseFloat(String(value).trim());
+  const v = String(value).trim();
+  const n = parseFloat(v);
+  return /^-?[\d.]+px$/.test(v) ? n / 16 : n;
 }
 
 /** "1px" | "-12px" | "0.5rem" | "0" -> number (px), rem-aware. */
@@ -198,13 +202,17 @@ const VAR_RE = /^var\(\s*(--[\w-]+)\s*(?:,\s*([\s\S]+))?\)$/;
  *   oklch(...)      -> convert.
  * Returns null if a var() cannot be resolved (no theme value, no fallback).
  */
-export function resolveColorValue(value, themeVars) {
+export function resolveColorValue(value, themeVars, depth = 0) {
+  if (depth > 8) return null; // var() chain too deep — treat as unresolvable
   const v = String(value).trim();
   const varMatch = v.match(VAR_RE);
   if (varMatch) {
     const ref = varMatch[1];
-    if (themeVars.has(ref)) return cssColorToHex(themeVars.get(ref));
-    if (varMatch[2]) return cssColorToHex(varMatch[2].trim());
+    // A theme value may itself be a var() (token aliasing) — recurse so the
+    // chain bottoms out at a literal color instead of feeding "var(--x)"
+    // into cssColorToHex.
+    if (themeVars.has(ref)) return resolveColorValue(themeVars.get(ref), themeVars, depth + 1);
+    if (varMatch[2]) return resolveColorValue(varMatch[2].trim(), themeVars, depth + 1);
     return null;
   }
   return cssColorToHex(v);
@@ -752,7 +760,9 @@ export function buildModel(cssSources, config) {
           case "padding": {
             const parts = value.split(/\s+/);
             const px = parts.map(lengthPx);
-            if (px.some((p) => p == null)) {
+            if (px.some((p) => p == null) || px.length > 2) {
+              // 3-/4-value shorthand has no slot in the contract — surface it
+              // as unsupported rather than silently dropping values.
               unsupported = `${prop}: ${value}`;
             } else if (px.length === 1) {
               out.padding = px[0];
