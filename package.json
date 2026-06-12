@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "description": "Workspace orchestrator. Web app: apps/web. Native app: apps/native. Shared packages: packages/*.",
+  "packageManager": "pnpm@10.33.0",
   "scripts": {
     "dev": "pnpm --filter web dev",
     "dev:native": "pnpm --filter native start",
