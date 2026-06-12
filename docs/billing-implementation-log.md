@@ -133,13 +133,51 @@ Settings tab now has an explicit "Delete Account" entry (App Store
 5.1.1(v)) that explains the consequence and opens that surface via
 expo-web-browser (`SITE_URL/profile/<uid>`). Not an owner gap.
 
+## Final gate sweep (2026-06-12, DoD #12)
+
+- pnpm parity (theme-drift + routes + styles) ✓ · check:tokens ✓ ·
+  check:schema-sync ✓
+- web: lint ✓ (0 errors; the one pre-existing add-course-dialog warning,
+  untouched) · tsc ✓ · **644/644 tests** (506 pre-existing + 78
+  applyBillingEvent + 24 reconcile-core + 26 RC-webhook integration + 10
+  stripe-guard integration; integration suites run against the REAL local
+  Supabase) · production build ✓
+- tokens: 37/37 ✓
+- native: tsc ✓ · lint ✓ · unit **60/60** (+13 paywall-policy/seam, +5
+  RC mapping) · verify:harness 55/55 ✓ · expo export -p ios ✓ ·
+  expo prebuild --no-install ✓ (added the android package id to app.json —
+  committed)
+- Maestro with NO RevenueCat key (the D-seam proof): **16/16 existing
+  flows PASS** on the rebuilt dev client (react-native-purchases native
+  module installed; mock provider active) + the 7 per-state billing flows
+- reconcile-billing dry-run: clean execution against the local stack +
+  live Stripe TEST API (caught real period-end drift on an owner account —
+  reported, correctly not auto-applied)
+
 ## Waivers
 
-(none yet)
+(none)
 
 ## Deferred
 
-(none yet)
+- **--apply path of reconcile-billing against live RC data** — implemented
+  conservatively + unit-tested, but only exercisable once
+  REVENUECAT_API_KEY exists (owner console work; runbook §4 step 9).
+- **Real-SDK purchase paths on device** — the RevenueCatBillingProvider
+  compiles and is structurally tested; actually exercising StoreKit needs
+  the owner's App Store Connect products + TestFlight (runbook §4). The
+  mock path is fully verified on-sim.
+- **Apple lifetime refund auto-revocation** — deliberately NOT implemented
+  (D-precedence: lifetime absorbing). Manual remediation documented in
+  runbook §6; reconcile flags the divergence.
+- **Maestro suite statefulness** — login/forgot-password flows require a
+  signed-out sim and onboarding requires a plan-less account (documented
+  in their headers); sign-in/out utils under .maestro/utils/ drive those
+  states. Suite-runner orchestration (one command for the full matrix)
+  left as repo tooling for later.
+- Carried over from the native goal, unchanged: Google OAuth on native,
+  email-change OTP / data export (web links), Android pass, dark-mode
+  full-app sweep.
 
 ## Per-state paywall evidence (2026-06-12, DoD #9)
 
