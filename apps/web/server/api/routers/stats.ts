@@ -33,7 +33,7 @@ export const statsRouter = createTRPCRouter({
       const userId = ctx.user.id;
 
       // Gate on plan — mirrors scorecard.getAllScorecardsByUserId.
-      const access = await getComprehensiveUserAccess(userId);
+      const access = await getComprehensiveUserAccess(userId, ctx.supabase);
       if (
         !access.hasAccess ||
         (access.plan !== "unlimited" && access.plan !== "lifetime")

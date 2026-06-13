@@ -1,0 +1,38 @@
+# Frozen rubric — `dashboard/[id]` (the Rounds tab).
+# Native: apps/native/app/(tabs)/dashboard/[id].tsx (testID "dashboard-screen").
+# Web reference: /dashboard/<uid> signed in as an unlimited user (phone).
+# Web chrome not a finding. Web hides the score chart below the sm
+# breakpoint — both phone surfaces carry header-only Recent Rounds cards.
+# D20 (owner-directed): native DROPS web's educational essay (random
+# frivolity header + transparency paragraphs + learn-more link) and the
+# View Calculation column — whole rows navigate. Neither is a finding.
+screen: dashboard/[id]
+rubric_version: bring-up-v1
+items:
+  layout_structure:
+    desc: >
+      Surface cards in order: Handicap (H2, large primary figure, "Current
+      Handicap", calculated link), Recent Rounds (H2 + "Add a round" link;
+      hidden entirely when the user has no rounds), Rounds History (H2,
+      search field, sortable Date/Course/Score/Par/Differential/Adjustment
+      headers with ↑↓, one tappable row per round; >20 rounds adds
+      pagination).
+  color_tokens:
+    desc: >
+      Cards on surface recipe; handicap figure in primary; links primary;
+      header labels primary bold; rows on background with border separators.
+    pairings_used:
+      - body-on-page
+      - muted-on-page
+      - card-border-on-page
+  type_hierarchy:
+    desc: >
+      heading-2 card titles; figure-3xl handicap; label-sm table headers;
+      body-sm cells. All Inter.
+  components_present:
+    desc: >
+      Three surface cards; search input; sortable header row; data rows with
+      live values (the natively-submitted round included); link buttons.
+a11y:
+  headings: [Handicap, Recent Rounds, Rounds History]
+  markers: [dashboard-screen, rounds-table, rounds-search]

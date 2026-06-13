@@ -1,0 +1,27 @@
+# CALCULATORS · core calculators compute live (course handicap links into
+# net score; handicap index via handicap-core needs 3+ differentials).
+# PRE-REQUISITE: signed in (any plan).
+appId: com.handicappin.app
+---
+- openLink: handicappin://calculators
+- tapOn:
+    text: "Open"
+    optional: true
+- extendedWaitUntil:
+    visible: "Golf Calculators"
+    timeout: 30000
+- scrollUntilVisible:
+    element:
+      text: "Golf Calculators"
+    direction: UP
+    timeout: 20000
+- assertVisible: "Course Handicap"
+- tapOn:
+    id: "calc-handicap-index"
+- inputText: "10"
+- pressKey: Enter
+- scrollUntilVisible:
+    element:
+      text: "Score Differential"
+    centerElement: true
+- assertVisible: "Adjusted Gross Score"

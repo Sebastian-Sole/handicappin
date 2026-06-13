@@ -1,0 +1,15 @@
+# UTILITY (not a test flow — lives outside flows/ so suite runs skip it).
+# Deep-link the running app to a route, accepting iOS's "Open in app?"
+# system dialog when it appears (simctl openurl shows it on every call;
+# Maestro is the only scriptable way to dismiss it).
+#
+# Usage: maestro test -e LINK="handicappin://login" .maestro/utils/nav-deeplink.yaml
+appId: com.handicappin.app
+---
+# Note: zero-size markers (fonts-ready) are NOT Maestro-visible — readiness
+# is the capture-hygiene gate's concern, not navigation's. The optional tap
+# absorbs the system dialog when openLink surfaces one.
+- openLink: ${LINK}
+- tapOn:
+    text: "Open"
+    optional: true

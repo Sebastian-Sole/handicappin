@@ -1,0 +1,36 @@
+# SIGNUP · renders the form and enforces legal consent client-side (the full
+# account-creation path is exercised by the verify-signup OTP QA — this flow
+# avoids minting throwaway users on every run).
+appId: com.handicappin.app
+---
+- openLink: handicappin://signup
+- tapOn:
+    text: "Open"
+    optional: true
+- assertVisible: "Sign Up"
+- assertVisible: "Create a new account to get started"
+- tapOn:
+    id: "signup-name"
+- inputText: "Maestro Tester"
+- tapOn:
+    id: "signup-email"
+- inputText: "maestro-validation@example.com"
+# NOTE: requires password AutoFill DISABLED on the sim (Settings → General →
+# AutoFill & Passwords → both toggles off). The strong-password sheet renders
+# OUT OF PROCESS — Maestro can neither see nor dismiss it (one-time sim
+# setup, documented in .maestro/README.md).
+- tapOn:
+    id: "signup-password"
+- inputText: "password-123"
+# Return key dismisses the keyboard (hideKeyboard is flaky on iOS drivers
+# and a covered button swallows taps silently).
+- pressKey: Enter
+- scrollUntilVisible:
+    element:
+      id: "signup-submit"
+# Consent left unchecked → zod refine blocks submit with a visible message.
+- tapOn:
+    id: "signup-submit"
+- extendedWaitUntil:
+    visible: "You must agree to the Terms of Service and Privacy Policy"
+    timeout: 8000

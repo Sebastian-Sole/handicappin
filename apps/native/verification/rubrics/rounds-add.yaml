@@ -1,0 +1,41 @@
+# Frozen rubric — `rounds/add`.
+# Native: apps/native/app/rounds/add.tsx (testID "add-round-screen").
+# Web reference: /rounds/add signed in (phone viewport). Web chrome not a
+# finding. DEFERRED (logged): AI scorecard upload + edit-tee — pointers to
+# the website. The tee-time picker is NATIVE since D19 (iOS compact
+# date+time chips); add-course/add-tee dialogs are NATIVE since D21 (paged
+# sheet + tee form with grouped validation). The screen presents as a
+# full-screen modal with a close (X) button (D17) — none are findings.
+screen: rounds/add
+rubric_version: bring-up-v1
+items:
+  layout_structure:
+    desc: >
+      "Add Round" H1 with close (X) button, helper line, free-tier Usage
+      Limit card (icon, "You have N out of 25 rounds remaining", progress
+      bar, % used, Upgrade Plan CTA), then the entry card: Course picker,
+      Tee picker, 18/9 hole toggle, tee-time date+time picker, scorecard
+      area (placeholder until course+tee chosen; then tee banner +
+      HOLE/PAR/HCP/SCORE rows with OUT/IN/TOTAL; the HOLE column is a
+      contiguous accent strip), Notes field, full-width Submit Round button.
+  color_tokens:
+    desc: >
+      Usage card on surface with primary progress; pickers as outline
+      buttons on background; table headers on accent with
+      secondary-foreground text; primary submit CTA.
+    pairings_used:
+      - body-on-page
+      - muted-on-page
+      - primary-foreground-on-primary
+  type_hierarchy:
+    desc: >
+      H1 extra-bold; body-sm helper; heading-3 usage title; small labels;
+      label-sm table headers; body-sm cells. All Inter.
+  components_present:
+    desc: >
+      Usage card with progress bar + CTA; two picker triggers with chevrons;
+      segmented hole-count buttons; score inputs (~36px) per hole with
+      summary rows; multiline notes input; submit button.
+a11y:
+  headings: [Add Round]
+  markers: [add-round-screen, close-add-round, course-picker-trigger, add-course-trigger, tee-picker-trigger, add-tee-trigger, tee-time-picker, scorecard-table, submit-round, usage-limit-alert]

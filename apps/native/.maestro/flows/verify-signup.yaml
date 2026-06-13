@@ -1,0 +1,21 @@
+# VERIFY-SIGNUP · renders with prefilled email; a wrong 6-digit code hits the
+# REAL verify-signup-otp edge function and surfaces its error (no email is
+# sent on the verify path — resend is never tapped here).
+appId: com.handicappin.app
+---
+# (@ percent-encoded — raw @ inside a deep-link query derails URL parsing)
+- openLink: "handicappin://verify-signup?email=native-goal-test%40handicappin.local"
+- tapOn:
+    text: "Open"
+    optional: true
+- assertVisible: "Verify Your Email"
+- assertVisible: "native-goal-test@handicappin.local"
+- tapOn:
+    id: "verify-signup-otp"
+- inputText: "000000"
+- pressKey: Enter
+- tapOn:
+    id: "verify-signup-submit"
+- extendedWaitUntil:
+    visible: ".*(failed|Invalid|invalid|expired|verification).*"
+    timeout: 10000

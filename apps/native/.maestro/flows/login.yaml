@@ -1,0 +1,25 @@
+# LOGIN · renders the auth surface and rejects bad credentials with visible
+# feedback (the positive round-trip lives in auth-roundtrip.yaml — it needs
+# home + logout). Selectors: testID/accessible text only.
+#
+# PRE-REQUISITE: sim booted, app installed, Metro running, local Supabase up
+# (bad-credential feedback comes from the real auth backend).
+appId: com.handicappin.app
+---
+- openLink: handicappin://login
+- tapOn:
+    text: "Open"
+    optional: true
+- assertVisible: "Welcome Back"
+- assertVisible: "Sign in to your account to continue"
+- tapOn:
+    id: "login-email"
+- inputText: "nobody@example.com"
+- tapOn:
+    id: "login-password"
+- inputText: "definitely-wrong-password"
+- tapOn:
+    id: "login-submit"
+- extendedWaitUntil:
+    visible: "Invalid email or password. Please try again."
+    timeout: 10000

@@ -1,0 +1,36 @@
+# Frozen rubric — `signup`.
+# Native: apps/native/app/(auth)/signup.tsx (testID "signup-screen").
+# Web reference: apps/web /signup (logged out), phone viewport.
+# Mobile-chrome differences (web navbar/footer) are not findings.
+screen: signup
+rubric_version: bring-up-v1
+items:
+  layout_structure:
+    desc: >
+      Centered narrow column: "Sign Up" heading, muted description, Name
+      field (with placeholder + helper text), Email field (placeholder),
+      Password field (helper text), legal-consent checkbox row with linked
+      Terms/Privacy text, full-width primary "Sign Up" button, divider,
+      outlined Google signup button, then "Forgot password?" / "Already have
+      an account?" links. Order and grouping match web.
+  color_tokens:
+    desc: >
+      Background/foreground/muted tokens as on login; helper texts muted;
+      checkbox bordered with primary; legal links in primary color; primary
+      CTA green with white label.
+    pairings_used:
+      - body-on-page
+      - muted-on-page
+      - primary-foreground-on-primary
+  type_hierarchy:
+    desc: >
+      H1 extra-bold heading; body muted description; small field labels;
+      meta-size helper and consent texts; uppercase meta divider. All Inter.
+  components_present:
+    desc: >
+      Three bordered inputs with visible placeholders where specified;
+      16px square checkbox; tappable Terms/Privacy links; full-width primary
+      button; outlined Google button with G logo; two footer links.
+a11y:
+  headings: [Sign Up]
+  markers: [signup-screen, signup-name, signup-email, signup-password, signup-consent, signup-submit]

@@ -1,0 +1,26 @@
+# HOME · the authenticated home renders real data end-to-end: hero stats,
+# activity feed rows from the seeded rounds, quick actions, glance cards.
+# PRE-REQUISITE: signed in as the test user (see auth-roundtrip.yaml).
+appId: com.handicappin.app
+---
+- openLink: handicappin://
+- tapOn:
+    text: "Open"
+    optional: true
+# The screen may retain an earlier scroll position — head back to the top.
+- scrollUntilVisible:
+    element:
+      text: "Welcome back, Native"
+    direction: UP
+    timeout: 20000
+- assertVisible: "Handicap Index"
+- assertVisible: "Log Round"
+- scrollUntilVisible:
+    element:
+      text: "Recent Activity"
+- assertVisible: "Recent Activity"
+- assertVisible: "View All"
+- scrollUntilVisible:
+    element:
+      text: "Journey to Scratch"
+- assertVisible: "At a Glance"

@@ -27,14 +27,14 @@ export const CACHE_DIR = join(ARTIFACTS_DIR, 'verdict-cache');
  * environment via SIM_DEVICE / SIM_OS without editing this file
  * (`xcrun simctl list devices available` shows what's installed locally).
  *
- * appId: apps/native/app.json sets no `ios.bundleIdentifier` yet, so this is
- * the `expo prebuild` convention for the `handicappin` slug. Update it the day
- * a real bundle id is set in app.json.
+ * appId: matches `ios.bundleIdentifier` in apps/native/app.json — keep this,
+ * app.json, and the Maestro flows' `appId:` lines in sync (they are
+ * cross-referenced).
  */
 export const SIM = {
   device: process.env.SIM_DEVICE || 'iPhone 17 Pro',
   os: process.env.SIM_OS || 'iOS 26',
-  appId: 'com.anonymous.handicappin',
+  appId: 'com.handicappin.app',
 };
 
 /**
@@ -117,15 +117,34 @@ export function budgetCapUSD(tier = 'opus') {
  *
  * e.g. SCREENS = ['index', 'rounds', 'statistics'];
  */
-export const SCREENS = ['index'];
+export const SCREENS = ['index', 'login', 'signup', 'forgot-password', 'update-password', 'verify-signup', 'verify-email', 'auth/verify-session', 'onboarding', '__gallery', 'rounds/add', 'dashboard/[id]', 'rounds/[id]/calculation', 'statistics', 'statistics/courses/[courseId]', 'profile/[id]', 'calculators'];
 
 /** Native screen slug → web reference path on the Next.js app (port 3000). */
 export const WEB_PATHS = {
-  index: '/',
-  // 'rounds': '/rounds',
+  index: '/', // authenticated home (sign in first); __gallery judged vs the contract
+  __gallery: '/',
+  login: '/login',
+  signup: '/signup',
+  'forgot-password': '/forgot-password',
+  'update-password': '/update-password',
+  'verify-signup': '/verify-signup',
+  // verify-email + auth/verify-session: web twins are server redirect
+  // handlers with no stable visual — rubrics score the native states
+  // against the auth-cluster design language (see those rubric headers).
+  'verify-email': '/verify-email',
+  'auth/verify-session': '/auth/verify-session',
+  onboarding: '/onboarding',
+  'rounds/add': '/rounds/add',
+  // dynamic [id] screens: compare-screen.sh takes the concrete path
+  'dashboard/[id]': '/dashboard/aad0b543-df1d-481b-a2e9-8e573acd8997',
+  'rounds/[id]/calculation': '/rounds/5/calculation',
+  statistics: '/statistics',
+  'statistics/courses/[courseId]': '/statistics/courses/10823',
+  'profile/[id]': '/profile/aad0b543-df1d-481b-a2e9-8e573acd8997',
+  calculators: '/calculators',
 };
 
-export const SMOKE_SCREEN = 'index';
+export const SMOKE_SCREEN = '__gallery';
 
 /**
  * Web pre-filter mode. Starts 'per-iteration'; the yield gate (prefilter)

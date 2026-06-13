@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "description": "Workspace orchestrator. Web app: apps/web. Native app: apps/native. Shared packages: packages/*.",
+  "packageManager": "pnpm@10.33.0",
   "scripts": {
     "dev": "pnpm --filter web dev",
     "dev:native": "pnpm --filter native start",
@@ -35,6 +36,12 @@
       "import-in-the-middle": "1.15.0",
       "require-in-the-middle": "7.5.2",
       "lightningcss": "1.30.1"
+    },
+    "onlyBuiltDependencies": [
+      "@shopify/react-native-skia"
+    ],
+    "patchedDependencies": {
+      "react-native-css@3.0.7": "patches/react-native-css@3.0.7.patch"
     }
   },
   "devDependencies": {

@@ -1,4 +1,6 @@
 {
+  "installCommand": "npx --yes pnpm@10.33.0 install --frozen-lockfile",
+  "buildCommand": "npx --yes pnpm@10.33.0 run build",
   "crons": [
     {
       "path": "/api/cron/reconcile-stripe",

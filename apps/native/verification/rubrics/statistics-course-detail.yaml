@@ -1,0 +1,36 @@
+# Frozen rubric — `statistics/courses/[courseId]`.
+# Native: apps/native/app/(tabs)/statistics/courses/[courseId].tsx
+# (testID "course-detail-screen").
+# Web reference: /statistics/courses/<id> signed in (phone). Web chrome not
+# a finding. Web's hole-averages view-mode tabs (Table / Avg score chart /
+# Distribution) are table-only on native (chart modes logged as deferred);
+# native adds a Front 9 / Back 9 segmented selector (web equivalent: tabs).
+screen: statistics/courses/[courseId]
+rubric_version: bring-up-v1
+items:
+  layout_structure:
+    desc: >
+      Back-to-statistics link, COURSE eyebrow, flag + name H1, city/country
+      line, 2×2 summary cards (Rounds, Avg Score, Avg Differential,
+      Best/Worst), hole-by-hole averages table (Hole/Par/Avg/vs Par/Best)
+      with front/back selection, then "Rounds here" cards (date, tee + hole
+      count, strokes, differential) linking to calculations.
+  color_tokens:
+    desc: >
+      Cards on card token; muted eyebrow/labels; foreground figures; border
+      separators in the table.
+    pairings_used:
+      - body-on-page
+      - muted-on-page
+      - card-border-on-page
+  type_hierarchy:
+    desc: >
+      eyebrow COURSE; H1 course name; figure-lg summary values; heading-3
+      section titles; body-sm/meta table text. All Inter.
+  components_present:
+    desc: >
+      Four summary stat cards; segmented Front/Back control; hole table
+      with real aggregates; round row cards with figures.
+a11y:
+  headings: [Hole-by-hole averages, Rounds here]
+  markers: [course-detail-screen]

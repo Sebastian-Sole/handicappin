@@ -367,7 +367,14 @@ describe("serializers", () => {
   it("native css emits @theme inline slots, per-mode vars, ramp and surfaces", () => {
     const css = serializeNativeGlobalCss(model, "fixture.css");
     assert.ok(css.includes("--color-primary: var(--primary);"));
-    assert.ok(css.includes(".dark {"));
+    // Dark vars MUST ride prefers-color-scheme (react-native-css maps it to
+    // the OS Appearance API). A `.dark` class block compiles but never
+    // activates on native — there is no DOM node to carry the class.
+    assert.ok(css.includes("@media (prefers-color-scheme: dark)"));
+    assert.ok(!css.includes(".dark {"));
+    assert.ok(
+      css.includes("@custom-variant dark (@media (prefers-color-scheme: dark));"),
+    );
     assert.ok(css.includes("@utility text-heading-1"));
     assert.ok(css.includes("font-family: Inter_800ExtraBold;"));
     assert.ok(css.includes("@utility tint-primary"));

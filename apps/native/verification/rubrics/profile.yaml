@@ -1,0 +1,39 @@
+# Frozen rubric — `profile/[id]` (the Profile tab).
+# Native: apps/native/app/(tabs)/profile/[id].tsx (testID "profile-screen").
+# Web reference: /profile/<uid> signed in (phone). Web chrome not a finding.
+# Web's sidebar tab nav collapses to a segmented row on native (same three
+# tabs + icons). Logged deferrals shown with pointers: email-change OTP,
+# data export, account deletion (web); plan changes via website (ledger).
+screen: profile/[id]
+rubric_version: bring-up-v1
+items:
+  layout_structure:
+    desc: >
+      "Profile" H1 + manage line, three-tab nav (Personal/Billing/Settings,
+      active on primary). Personal: surface card with Name input (editable,
+      saves via real tRPC), Email (read-only + website note), Handicap
+      Index figure, Save CTA. Billing: Current Plan card (real plan/renewal
+      from tRPC, Upgrade/Change via website, mocked Restore Purchases with
+      a labelled dev notice), Plan Features checklist. Settings: Change
+      Password (native update-password), Calculators entry (D6), legal
+      links, destructive Sign Out.
+  color_tokens:
+    desc: >
+      Active tab on primary with primary-foreground; cards on surface;
+      handicap figure primary; feature checks success/destructive; Sign Out
+      destructive with destructive-foreground.
+    pairings_used:
+      - body-on-page
+      - muted-on-page
+      - primary-foreground-on-primary
+  type_hierarchy:
+    desc: >
+      figure-xl page title; heading-2/3 section titles; heading-5 plan name;
+      small labels; body/meta support text. All Inter.
+  components_present:
+    desc: >
+      Segmented tab row with icons; name input + save; read-only email;
+      plan card with CTA buttons; feature list; settings buttons; sign-out.
+a11y:
+  headings: [Profile, Personal Information, Billing & Subscription, Settings]
+  markers: [profile-screen, profile-tab-personal, profile-tab-billing, profile-tab-settings, profile-name, profile-save, sign-out]

@@ -1,0 +1,34 @@
+# Frozen rubric — `auth/verify-session`.
+# Native: apps/native/app/(auth)/auth/verify-session.tsx (testID "verify-session-screen").
+#
+# NO STABLE WEB VISUAL EXISTS for the capture path: web redirects logged-out
+# visitors server-side, and the in-session states depend on live JWT-hook
+# timing. Scored against the AUTH-CLUSTER DESIGN LANGUAGE (gallery-rubric
+# basis). States: verifying (info dots), retrying (warning dots + attempt
+# counter), failed/error (H1 + error feedback + two stacked buttons).
+screen: auth/verify-session
+rubric_version: bring-up-v1
+items:
+  layout_structure:
+    desc: >
+      Centered narrow column per state: H1 ("Verifying Your Session" /
+      "Retrying..." / "Verification Failed"), muted body copy, three-dot
+      progress row (verifying/retrying), or error feedback + full-width
+      primary "Log Out and Try Again" over outline "Retry Verification".
+  color_tokens:
+    desc: >
+      Dots use info (verifying) / warning (retrying) tokens; error feedback
+      uses the destructive tint recipe; buttons primary/outline variants.
+    pairings_used:
+      - body-on-page
+      - muted-on-page
+      - primary-foreground-on-primary
+  type_hierarchy:
+    desc: H1 extra-bold; body muted; label-size button text. All Inter.
+  components_present:
+    desc: >
+      Three 12px dots in the progress states; stacked primary + outline
+      full-width buttons in failure states.
+a11y:
+  headings: [Verifying Your Session]
+  markers: [verify-session-screen]

@@ -1,0 +1,71 @@
+# STATISTICS · the statistics tab renders real data: player identity card,
+# inner tabs (Performance default, Activity with the Skia bar charts,
+# Courses with the all-courses table → per-course detail).
+# Lessons baked in: the dev client restores nav/scroll state between Maestro
+# launches → always scroll UP to a known anchor first; segmented rows near
+# the bottom bar swallow taps → centerElement before tapping.
+# PRE-REQUISITE: signed in as the (unlimited) test user.
+appId: com.handicappin.app
+---
+- openLink: handicappin://
+- tapOn:
+    text: "Open"
+    optional: true
+- extendedWaitUntil:
+    visible:
+      id: "tab-statistics"
+    timeout: 30000
+- tapOn:
+    id: "tab-statistics"
+- extendedWaitUntil:
+    visible: "Deep dive into your golf performance"
+    timeout: 20000
+# Back to the top regardless of restored scroll state.
+- scrollUntilVisible:
+    element:
+      text: "Deep dive into your golf performance"
+    direction: UP
+    timeout: 20000
+- assertVisible: "Statistics"
+# Performance tab is the default — spot-check the identity card.
+- scrollUntilVisible:
+    element:
+      text: "Handicap Index"
+    centerElement: true
+- assertVisible: "Total Rounds"
+# Activity tab: charts render (Skia bar chart cards).
+- scrollUntilVisible:
+    element:
+      id: "stats-tab-activity"
+    centerElement: true
+- tapOn:
+    id: "stats-tab-activity"
+- scrollUntilVisible:
+    element:
+      text: "Rounds Per Month"
+- scrollUntilVisible:
+    element:
+      text: "Rounds by Day of Week"
+# Courses tab: all-courses table links to the per-course detail.
+- scrollUntilVisible:
+    element:
+      id: "stats-tab-courses"
+    direction: UP
+    centerElement: true
+- tapOn:
+    id: "stats-tab-courses"
+- scrollUntilVisible:
+    element:
+      text: "All Courses"
+    centerElement: true
+# The table row's a11y label is swallowed by its horizontal scroller, so
+# select the 4th name occurrence (3 highlight cards precede the table row).
+- tapOn:
+    text: ".*St. Andrews Old Course.*"
+    index: 3
+- extendedWaitUntil:
+    visible: "Hole-by-hole averages"
+    timeout: 20000
+- scrollUntilVisible:
+    element:
+      text: "Rounds here"

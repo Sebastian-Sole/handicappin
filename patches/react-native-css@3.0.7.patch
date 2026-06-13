@@ -1,0 +1,38 @@
+diff --git a/dist/commonjs/native/styles/index.js b/dist/commonjs/native/styles/index.js
+index 222296d6bd95a69dd87af100d8387753c54d2095..ef051c123853b4ab288556cff1e29d85255e705d 100644
+--- a/dist/commonjs/native/styles/index.js
++++ b/dist/commonjs/native/styles/index.js
+@@ -373,6 +373,14 @@ function nativeStyleMapping(config, props) {
+       continue;
+     }
+     let target = props;
++    // PATCH(handicappin): mappings declare `true` for "same-name prop"
++    // (TextInput textAlign, ImageBackground backgroundColor) but this mover
++    // assumed string paths — path.split crashed any TextInput receiving a
++    // textAlign style. Upstream react-native-css 3.0.7.
++    if (path === true) {
++      target[key] = styleValue;
++      continue;
++    }
+     const tokens = path.split(".");
+     const lastToken = tokens.pop();
+     for (const token of tokens) {
+diff --git a/dist/module/native/styles/index.js b/dist/module/native/styles/index.js
+index 067f8edb6459cf6b15258df079c541746f233af5..92a945b556a0d33522c3b13e3945e827faca96b3 100644
+--- a/dist/module/native/styles/index.js
++++ b/dist/module/native/styles/index.js
+@@ -369,6 +369,14 @@ function nativeStyleMapping(config, props) {
+       continue;
+     }
+     let target = props;
++    // PATCH(handicappin): mappings declare `true` for "same-name prop"
++    // (TextInput textAlign, ImageBackground backgroundColor) but this mover
++    // assumed string paths — path.split crashed any TextInput receiving a
++    // textAlign style. Upstream react-native-css 3.0.7.
++    if (path === true) {
++      target[key] = styleValue;
++      continue;
++    }
+     const tokens = path.split(".");
+     const lastToken = tokens.pop();
+     for (const token of tokens) {

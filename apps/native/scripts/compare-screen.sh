@@ -18,7 +18,8 @@
 # apply). For authed routes the operator must either be logged in in the
 # agent-browser profile beforehand, or compare logged-out routes only.
 #
-# Env overrides: WEB_BASE (default http://localhost:3000), SETTLE (native render wait, default 4)
+# Env overrides: WEB_BASE (default http://localhost:3000), SETTLE (native render wait, default 4),
+#                MODE (light|dark, default light — applied to BOTH the sim and the web capture)
 set -uo pipefail
 
 ROUTE="${1:?usage: compare-screen.sh <native-route> [web-path]}"
@@ -38,19 +39,33 @@ if [[ ! "$WEB_BASE" =~ ^https?:// ]]; then
   exit 1
 fi
 SETTLE="${SETTLE:-4}"
+MODE="${MODE:-light}"
 OUT="/tmp/handicappin-compare/${ROUTE//\//_}"
+if [ "$MODE" = "dark" ]; then OUT="$OUT-dark"; fi
 mkdir -p "$OUT"
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
+NAV_FLOW="$REPO_ROOT/apps/native/.maestro/utils/nav-deeplink.yaml"
 
 # Deep link: the root screen is the bare scheme; other routes append the slug.
 if [ "$ROUTE" = "index" ]; then DEEPLINK="handicappin://"; else DEEPLINK="handicappin://$ROUTE"; fi
 
-echo "→ native: $DEEPLINK"
-xcrun simctl openurl booted "$DEEPLINK" >/dev/null 2>&1 || echo "  (deep link failed — is the sim booted + app installed?)"
+xcrun simctl ui booted appearance "$MODE" >/dev/null 2>&1
+
+echo "→ native: $DEEPLINK ($MODE)"
+# simctl openurl pops an "Open in app?" system dialog on EVERY call for a
+# custom scheme; the maestro utility flow opens the link and accepts it.
+if command -v maestro >/dev/null 2>&1; then
+  maestro test -e LINK="$DEEPLINK" "$NAV_FLOW" >/dev/null 2>&1 \
+    || echo "  (maestro nav failed — falling back to simctl openurl)"
+else
+  xcrun simctl openurl booted "$DEEPLINK" >/dev/null 2>&1 || echo "  (deep link failed — is the sim booted + app installed?)"
+fi
 sleep "$SETTLE"
 xcrun simctl io booted screenshot "$OUT/native.png" >/dev/null 2>&1 && echo "  ✓ $OUT/native.png" || echo "  ✗ native capture failed"
 
-echo "→ web: $WEB_BASE$WEBPATH (phone viewport — log in first for authed routes)"
+echo "→ web: $WEB_BASE$WEBPATH (phone viewport, $MODE — log in first for authed routes)"
 agent-browser set viewport 402 874 >/dev/null 2>&1
+agent-browser set media "$MODE" >/dev/null 2>&1
 agent-browser open "$WEB_BASE$WEBPATH" >/dev/null 2>&1
 agent-browser wait --load networkidle >/dev/null 2>&1
 agent-browser eval "window.scrollTo(0,0)" >/dev/null 2>&1

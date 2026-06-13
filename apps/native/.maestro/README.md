@@ -54,3 +54,12 @@ Maestro cannot measure a view's hittable bounds, so the **≥44×44 incl.
 `hitSlop`** assertion belongs in component code (enforce `minWidth/minHeight:
 44` + `hitSlop` on icon buttons as interactive components land). The harness's
 a11y tier records it as a per-screen row (`touch_target_2_5_5`).
+
+## One-time simulator setup: disable password AutoFill
+
+iOS's "Use Strong Password?" / "Save Password?" sheets render OUT OF PROCESS —
+Maestro can neither see nor dismiss them, and a covered control swallows taps
+while every step still reports COMPLETED. Before running flows on a fresh
+simulator: Settings → General → AutoFill & Passwords → turn OFF both
+"AutoFill Passwords and Passkeys" and "Suggest Strong Passwords".
+(State persists per simulator. The flows themselves stay selector-only.)
