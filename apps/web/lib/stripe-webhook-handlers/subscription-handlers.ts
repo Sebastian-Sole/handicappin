@@ -12,6 +12,8 @@ import {
 import { verifyCustomerOwnership } from "@/lib/stripe-security";
 import { verifyPaymentAmount, formatAmount } from "@/utils/billing/pricing";
 import { logger } from "@/lib/logging";
+import type { BillingFact } from "@/utils/billing/apply-billing-event";
+import { guardedStripeProfileWrite } from "./profile-billing-write";
 import type { WebhookContext, WebhookResult } from "./types";
 
 /**
@@ -166,6 +168,7 @@ export async function handleSubscriptionChange(
         subscriptionStatus: subscription.status,
         currentPeriodEnd: subscription.items.data[0]?.current_period_end,
         cancelAtPeriodEnd: isCancelling,
+        billingProvider: "stripe" as const,
         billingVersion: sql`billing_version + 1`,
       };
 
@@ -180,12 +183,38 @@ export async function handleSubscriptionChange(
         },
       });
 
-      const result = await db
-        .update(profile)
-        .set(updateData)
-        .where(eq(profile.id, userId));
+      // Precedence guards (D-precedence): never overwrite lifetime, never
+      // clobber an apple-active contract. Stripe stays unordered (no cursor).
+      const fact: BillingFact = {
+        provider: "stripe",
+        plan,
+        status: subscription.status === "trialing" ? "trialing" : "active",
+        currentPeriodEnd:
+          subscription.items.data[0]?.current_period_end ?? null,
+        cancelAtPeriodEnd: isCancelling,
+        eventTimeMs: ctx.event.created * 1000,
+        eventId: ctx.eventId,
+      };
 
-      logger.debug("[Webhook] Database update result", { result });
+      const { written } = await guardedStripeProfileWrite({
+        userId,
+        handler: "handleSubscriptionChange",
+        fact,
+        write: async () => {
+          const result = await db
+            .update(profile)
+            .set(updateData)
+            .where(eq(profile.id, userId));
+          logger.debug("[Webhook] Database update result", { result });
+        },
+      });
+
+      if (!written) {
+        logWebhookInfo(
+          `Subscription change for user ${userId} not written (precedence guard)`,
+        );
+        return { success: true, message: "Blocked by precedence guard" };
+      }
 
       // Verify the update actually happened
       const verifyProfile = await db
@@ -271,24 +300,49 @@ export async function handleSubscriptionDeleted(
     );
   }
 
-  // Revert to free tier
+  // Revert to free tier — guarded: a dying stripe subscription must never
+  // strip a lifetime entitlement or an apple-billed contract.
   try {
-    await db
-      .update(profile)
-      .set({
-        planSelected: "free",
-        planSelectedAt: new Date(),
-        subscriptionStatus: "canceled",
-        currentPeriodEnd: null,
-        cancelAtPeriodEnd: false,
-        billingVersion: sql`billing_version + 1`,
-      })
-      .where(eq(profile.id, userId));
+    const fact: BillingFact = {
+      provider: "stripe",
+      plan: "free",
+      status: "canceled",
+      currentPeriodEnd: null,
+      cancelAtPeriodEnd: false,
+      eventTimeMs: ctx.event.created * 1000,
+      eventId: ctx.eventId,
+    };
 
-    logWebhookSuccess(`Reverted to free tier for user: ${userId}`);
-    logger.debug(
-      `[Webhook] Billing version incremented for user ${userId} - BillingSync should detect within seconds`,
-    );
+    const { written } = await guardedStripeProfileWrite({
+      userId,
+      handler: "handleSubscriptionDeleted",
+      fact,
+      write: async () => {
+        await db
+          .update(profile)
+          .set({
+            planSelected: "free",
+            planSelectedAt: new Date(),
+            subscriptionStatus: "canceled",
+            currentPeriodEnd: null,
+            cancelAtPeriodEnd: false,
+            billingProvider: null,
+            billingVersion: sql`billing_version + 1`,
+          })
+          .where(eq(profile.id, userId));
+      },
+    });
+
+    if (written) {
+      logWebhookSuccess(`Reverted to free tier for user: ${userId}`);
+      logger.debug(
+        `[Webhook] Billing version incremented for user ${userId} - BillingSync should detect within seconds`,
+      );
+    } else {
+      logWebhookInfo(
+        `Subscription deletion for user ${userId} did not revert plan (precedence guard)`,
+      );
+    }
   } catch (error) {
     logWebhookError("Error reverting user to free tier", error);
     throw error;

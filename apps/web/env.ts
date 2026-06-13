@@ -17,6 +17,12 @@ export const env = createEnv({
     STRIPE_UNLIMITED_PRICE_ID: z.string(),
     STRIPE_UNLIMITED_LIFETIME_PRICE_ID: z.string(),
 
+    // RevenueCat (Apple billing). Optional in dev: the webhook fails closed
+    // in production when the auth token is unset; the reconcile script
+    // skips Apple-side checks without the API key.
+    REVENUECAT_WEBHOOK_AUTH_TOKEN: z.string().optional(),
+    REVENUECAT_API_KEY: z.string().optional(),
+
     KV_URL: z.url(),
     KV_REST_API_URL: z.url(),
     KV_REST_API_TOKEN: z.string(),
@@ -66,6 +72,8 @@ export const env = createEnv({
     STRIPE_UNLIMITED_PRICE_ID: process.env.STRIPE_UNLIMITED_PRICE_ID,
     STRIPE_UNLIMITED_LIFETIME_PRICE_ID:
       process.env.STRIPE_UNLIMITED_LIFETIME_PRICE_ID,
+    REVENUECAT_WEBHOOK_AUTH_TOKEN: process.env.REVENUECAT_WEBHOOK_AUTH_TOKEN,
+    REVENUECAT_API_KEY: process.env.REVENUECAT_API_KEY,
     KV_URL: process.env.KV_URL,
     KV_REST_API_URL: process.env.KV_REST_API_URL,
     KV_REST_API_TOKEN: process.env.KV_REST_API_TOKEN,

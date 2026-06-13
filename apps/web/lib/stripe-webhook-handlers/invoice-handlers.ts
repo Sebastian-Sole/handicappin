@@ -12,6 +12,11 @@ import {
   logPaymentEvent,
 } from "@/lib/webhook-logger";
 import { verifyCustomerOwnership } from "@/lib/stripe-security";
+import type { BillingFact } from "@/utils/billing/apply-billing-event";
+import {
+  guardedStripeProfileWrite,
+  readBillingProjection,
+} from "./profile-billing-write";
 import type { WebhookContext, WebhookResult } from "./types";
 
 /**
@@ -91,18 +96,50 @@ export async function handleInvoicePaymentFailed(
       subscriptionId,
     });
 
-    // Update subscription status to past_due
-    await db
-      .update(profile)
-      .set({
-        subscriptionStatus: "past_due",
-        billingVersion: sql`billing_version + 1`,
-      })
-      .where(eq(profile.id, userId));
+    // Update subscription status to past_due — guarded: a stripe invoice
+    // failure must not mark an apple-billed contract (or a lifetime) past
+    // due. The fact reuses the projection's stripe contract fields since an
+    // invoice carries no plan/period of its own.
+    const projection = await readBillingProjection(userId);
+    const fact: BillingFact = {
+      provider: "stripe",
+      plan: projection?.provider === "stripe" ? projection.plan : null,
+      status: "past_due",
+      currentPeriodEnd:
+        projection?.provider === "stripe" ? projection.currentPeriodEnd : null,
+      cancelAtPeriodEnd:
+        projection?.provider === "stripe"
+          ? projection.cancelAtPeriodEnd
+          : false,
+      eventTimeMs: ctx.event.created * 1000,
+      eventId: ctx.eventId,
+    };
 
-    logWebhookSuccess(
-      `Updated subscription status to past_due for user ${userId}`
-    );
+    const { written } = await guardedStripeProfileWrite({
+      userId,
+      handler: "handleInvoicePaymentFailed",
+      fact,
+      write: async () => {
+        await db
+          .update(profile)
+          .set({
+            subscriptionStatus: "past_due",
+            billingProvider: "stripe",
+            billingVersion: sql`billing_version + 1`,
+          })
+          .where(eq(profile.id, userId));
+      },
+    });
+
+    if (written) {
+      logWebhookSuccess(
+        `Updated subscription status to past_due for user ${userId}`
+      );
+    } else {
+      logWebhookInfo(
+        `past_due write for user ${userId} blocked by precedence guard`
+      );
+    }
 
     // Log warning if this is the final attempt
     if (attemptCount >= 3) {

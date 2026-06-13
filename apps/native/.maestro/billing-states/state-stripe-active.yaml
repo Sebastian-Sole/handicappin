@@ -1,0 +1,41 @@
+# BILLING STATE: stripe + premium + active (§1 "active + provider stripe →
+# no purchase buttons; neutral copy" — and per D-policy, NO tappable link).
+# PRE-REQUISITE: signed in; profile driven to stripe/premium/active.
+appId: com.handicappin.app
+---
+- stopApp
+- openLink: handicappin://
+- tapOn:
+    text: "Open"
+    optional: true
+- extendedWaitUntil:
+    visible:
+      id: "tab-profile"
+    timeout: 30000
+- tapOn:
+    id: "tab-profile"
+- extendedWaitUntil:
+    visible: "Manage your account settings"
+    timeout: 20000
+- tapOn:
+    id: "profile-tab-billing"
+- extendedWaitUntil:
+    visible: ".*[Pp]remium Plan.*"
+    timeout: 15000
+- assertVisible: ".*Renews on.*"
+# Neutral copy present; no purchase/plan-change/manage affordances.
+- assertVisible:
+    id: "billing-stripe-neutral"
+- assertVisible: ".*managed on handicappin.com.*"
+- assertNotVisible: "Upgrade Your Plan"
+- assertNotVisible:
+    id: "billing-plan-change"
+- assertNotVisible:
+    id: "billing-apple-manage"
+# Restore always visible.
+- scrollUntilVisible:
+    element:
+      id: "billing-restore"
+    centerElement: true
+- assertVisible: "Restore Purchases"
+- takeScreenshot: /tmp/handicappin-billing-states/stripe-premium-active
