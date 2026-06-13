@@ -55,6 +55,17 @@ const userFilter = args.includes("--user")
   ? args[args.indexOf("--user") + 1]
   : null;
 
+// --user is interpolated into a PostgREST query (id=eq.<userFilter>); a
+// non-UUID value could inject filter syntax against the service-role client.
+if (userFilter !== null) {
+  const UUID_RE =
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  if (!UUID_RE.test(userFilter)) {
+    console.error(`Invalid --user value (expected a UUID): ${userFilter}`);
+    process.exit(1);
+  }
+}
+
 const SUPABASE_URL = env.NEXT_PUBLIC_SUPABASE_URL;
 const SERVICE_ROLE_KEY = env.SUPABASE_SERVICE_ROLE_KEY;
 const STRIPE_KEY = env.STRIPE_SECRET_KEY;
@@ -128,7 +139,7 @@ function fmtState(state) {
   return `${state.plan}/${state.status} periodEnd=${state.currentPeriodEnd ?? "-"} cap=${state.cancelAtPeriodEnd}`;
 }
 
-async function applyCorrection(userId, providerState) {
+async function applyCorrection(userId, providerState, provider) {
   // PostgREST can't increment in place — read the version, write everything
   // in one PATCH (bumped version refreshes clients' claims).
   const rows = await supabaseRest(
@@ -142,6 +153,10 @@ async function applyCorrection(userId, providerState) {
       subscription_status: providerState.status,
       current_period_end: providerState.currentPeriodEnd,
       cancel_at_period_end: providerState.cancelAtPeriodEnd,
+      // Correct the provider too, else a drifted billing_provider is never
+      // fixed. A free/no-contract result on this provider carries NULL
+      // (matches the migration backfill: provider is set only for paid plans).
+      billing_provider: providerState.plan === "free" ? null : provider,
       billing_version: rows[0].billing_version + 1,
     }),
   });
@@ -276,7 +291,7 @@ async function main() {
 
     const verdict = decideApply(r.projection, r.providerState ?? null, r.diffs, r.side);
     if (APPLY && verdict.apply) {
-      await applyCorrection(r.userId, r.providerState);
+      await applyCorrection(r.userId, r.providerState, r.side);
       applied += 1;
       console.log(`    → APPLIED provider state`);
     } else if (verdict.apply) {
