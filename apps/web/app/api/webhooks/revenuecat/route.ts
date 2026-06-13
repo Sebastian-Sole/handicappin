@@ -86,12 +86,10 @@ async function recordEvent(params: {
 
 async function recordFailure(event: RcEvent, userId: string | null, message: string): Promise<void> {
   try {
-    const existing = await db
-      .select()
-      .from(webhookEvents)
-      .where(eq(webhookEvents.eventId, event.id))
-      .limit(1);
-    const retryCount = existing.length > 0 ? (existing[0].retryCount || 0) + 1 : 1;
+    // Pure upsert: a brand-new row starts at retryCount 1; a conflicting
+    // (already-seen) row gets its count incremented by the SQL expression in
+    // onConflictDoUpdate below. The previous pre-read to compute retryCount
+    // was dead — its value never reached the conflict path.
     await db
       .insert(webhookEvents)
       .values({
@@ -99,7 +97,7 @@ async function recordFailure(event: RcEvent, userId: string | null, message: str
         eventType: `revenuecat.${event.type}`,
         status: "failed",
         errorMessage: message,
-        retryCount,
+        retryCount: 1,
         userId,
         provider: PROVIDER,
         eventTimeMs: null,

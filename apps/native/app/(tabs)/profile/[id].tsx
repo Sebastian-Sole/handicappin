@@ -238,7 +238,7 @@ function PersonalTab({
     onSuccess: () => {
       setFeedback({ type: "success", message: "Profile updated" });
       void queryClient.invalidateQueries({
-        queryKey: ["auth.getProfileFromUserId", profileId],
+        queryKey: profileQueryOptions(profileId).queryKey,
       });
     },
     onError: (error) => {
@@ -335,7 +335,7 @@ function BillingTab({
   const policy = paywallPolicyFor({ plan, status, provider, cancelAtPeriodEnd });
   const refreshProfile = () =>
     void queryClient.invalidateQueries({
-      queryKey: ["auth.getProfileFromUserId", userId],
+      queryKey: profileQueryOptions(userId).queryKey,
     });
 
   const onRestore = async () => {
