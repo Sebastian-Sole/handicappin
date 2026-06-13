@@ -99,6 +99,9 @@ export function PaywallPackages({
             size="sm"
             disabled={purchasing !== null}
             onPress={() => void onBuy(pkg)}
+            // Each buy button reads "Subscribe" — give screen readers a label
+            // that names the specific plan and price it purchases.
+            accessibilityLabel={`Subscribe to ${pkg.product.title}, ${pkg.product.priceString}`}
           >
             {purchasing === pkg.identifier ? "…" : "Subscribe"}
           </Button>

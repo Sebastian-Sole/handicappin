@@ -63,6 +63,9 @@ export const profile = pgTable(
       "btree",
       table.email.asc().nullsLast().op("text_ops")
     ),
+    // Mirrors 20260612080537_add_billing_provider.sql — declared here so
+    // drizzle-kit generate stays in sync and won't try to drop it.
+    index("idx_profile_billing_provider").on(table.billingProvider),
     pgPolicy("Users can view their own profile", {
       as: "permissive",
       for: "select",
@@ -453,6 +456,12 @@ export const webhookEvents = pgTable(
     index("idx_webhook_events_event_type").on(table.eventType),
     index("idx_webhook_events_user_id").on(table.userId),
     index("idx_webhook_events_processed_at").on(table.processedAt),
+    // Per-provider ordering cursor (partial: success rows only). Mirrors
+    // 20260612080537_add_billing_provider.sql so drizzle-kit generate stays
+    // in sync.
+    index("idx_webhook_events_provider_cursor")
+      .on(table.userId, table.provider, table.eventTimeMs)
+      .where(sql`status = 'success'`),
     foreignKey({
       columns: [table.userId],
       foreignColumns: [profile.id],
