@@ -31,8 +31,18 @@ const databaseUrl = process.env.DATABASE_URL;
 const isLocalStack =
   !!databaseUrl?.includes("127.0.0.1") || !!databaseUrl?.includes("localhost");
 
+// CI points DATABASE_URL at a localhost placeholder but supplies DUMMY Supabase
+// credentials (no real stack is provisioned). Dummy creds must count as "no
+// local stack" so this suite skips in CI and runs only against a real
+// `supabase start` — matching the dummy-key guard the Stripe suites use.
+const hasRealSupabase =
+  !!supabaseUrl &&
+  !supabaseUrl.includes("dummy") &&
+  !!serviceRoleKey &&
+  !serviceRoleKey.includes("dummy");
+
 const describeIfLocal =
-  supabaseUrl && serviceRoleKey && isLocalStack ? describe : describe.skip;
+  hasRealSupabase && isLocalStack ? describe : describe.skip;
 
 const TEST_EMAIL = "stripe-guards-test@handicappin.local";
 const FUTURE_S = Math.floor(Date.parse("2027-06-12T00:00:00Z") / 1000);
