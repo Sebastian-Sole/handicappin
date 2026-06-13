@@ -234,6 +234,8 @@ export async function POST(request: NextRequest) {
         currentPeriodEnd: profile.currentPeriodEnd,
         cancelAtPeriodEnd: profile.cancelAtPeriodEnd,
         billingProvider: profile.billingProvider,
+        // Captured for the optimistic-lock predicate on the final write.
+        billingVersion: profile.billingVersion,
       })
       .from(profile)
       .where(eq(profile.id, appUserId))
@@ -252,6 +254,7 @@ export async function POST(request: NextRequest) {
       return acknowledged({ skipped: "unknown-user" });
     }
     userId = profileRows[0].id;
+    const billingVersionAtRead = profileRows[0].billingVersion;
 
     const projection: BillingProjection = {
       provider: profileRows[0].billingProvider,
@@ -333,7 +336,13 @@ export async function POST(request: NextRequest) {
     }
 
     if (decision.changed) {
-      await db
+      // Optimistic concurrency: the write only lands if billing_version is
+      // still what we read. Every write path (this route + the Stripe
+      // handlers) bumps the version, so a concurrent webhook that already
+      // wrote will make this predicate miss — preventing a stale event from
+      // silently clobbering a higher entitlement past applyBillingEvent's
+      // precedence logic.
+      const updated = await db
         .update(profile)
         .set({
           planSelected: decision.projection.plan,
@@ -344,7 +353,26 @@ export async function POST(request: NextRequest) {
           billingProvider: decision.projection.provider,
           billingVersion: sql`billing_version + 1`,
         })
-        .where(eq(profile.id, userId));
+        .where(
+          and(
+            eq(profile.id, userId),
+            eq(profile.billingVersion, billingVersionAtRead),
+          ),
+        )
+        .returning({ id: profile.id });
+
+      if (updated.length === 0) {
+        // Lost the race. Do NOT record the event (no success/failure row) so
+        // RevenueCat's redelivery re-runs read→decide→write against the
+        // now-committed state and converges. Non-2xx triggers that retry.
+        logWebhookWarning(
+          `RevenueCat ${event.type} for user ${userId} hit a concurrent billing update (billing_version moved from ${billingVersionAtRead}) - asking RevenueCat to retry`,
+        );
+        return NextResponse.json(
+          { error: "Concurrent billing update, retry" },
+          { status: 409 },
+        );
+      }
       logWebhookSuccess(
         `RevenueCat ${event.type} applied for user ${userId}: plan=${decision.projection.plan} status=${decision.projection.status} provider=${decision.projection.provider} (${decision.reason})`,
       );
