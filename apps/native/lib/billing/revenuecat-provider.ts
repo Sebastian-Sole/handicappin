@@ -24,6 +24,11 @@ import {
 
 export class RevenueCatBillingProvider implements BillingProvider {
   private readonly apiKey: string;
+  /** SDK-level `Purchases.configure()` is one-shot and must not repeat. */
+  private sdkConfigured = false;
+  /** "Ready for purchases" — true ONLY after logIn() binds the store receipt
+   * to our Supabase user id. A logIn() failure must leave this false so the
+   * requireConfigured guard blocks purchases against the anonymous RC user. */
   private configured = false;
   /** Native package objects from the last getOfferings(), by identifier —
    * purchasePackage must hand the SDK its own object back. */
@@ -41,16 +46,21 @@ export class RevenueCatBillingProvider implements BillingProvider {
   }
 
   async configure(options: { appUserID: string }): Promise<void> {
-    if (!this.configured) {
+    if (!this.sdkConfigured) {
       if (__DEV__) {
         await Purchases.setLogLevel(LOG_LEVEL.DEBUG);
       }
       // app_user_id IS the Supabase user id (D-rc-scope): configure
       // anonymously, then logIn binds the store receipt to our user id.
       Purchases.configure({ apiKey: this.apiKey });
-      this.configured = true;
+      this.sdkConfigured = true;
     }
+    // Only mark purchase-ready AFTER logIn resolves. If it throws (network /
+    // RC outage), `configured` stays false and the next call re-runs logIn —
+    // a purchase can never fire against the anonymous $RCAnonymousID user,
+    // whose INITIAL_PURCHASE webhook the backend rejects as non-UUID.
     await Purchases.logIn(options.appUserID);
+    this.configured = true;
   }
 
   async getOfferings(): Promise<BillingOfferings> {
