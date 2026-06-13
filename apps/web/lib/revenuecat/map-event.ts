@@ -120,6 +120,11 @@ export function mapRevenueCatEvent(
     }
 
     case "CANCELLATION": {
+      // When CANCELLATION omits product_id (RC commonly does), plan falls back
+      // to the stored projection. If a PRODUCT_CHANGE is pending (write-free
+      // per D24), that projection is the PRE-change tier, so the recorded plan
+      // can be briefly stale. No access-control impact (status is unchanged)
+      // and it self-heals on the next RENEWAL, which is authoritative.
       const plan = skuPlan ?? base?.plan ?? null;
       if (!plan) return { kind: "skip", reason: "unknown-product" };
       return {
@@ -169,8 +174,13 @@ export function mapRevenueCatEvent(
     }
 
     case "EXPIRATION": {
-      if (!skuPlan) return { kind: "skip", reason: "unknown-product" };
       // Mirror of customer.subscription.deleted: revert to free tier.
+      // Deliberately does NOT require a resolvable product_id — expiration
+      // means "no Apple entitlement" regardless of which SKU expired, and
+      // skipping on a missing product_id would silently leave an expired
+      // user with paid access. Cross-provider safety is still preserved by
+      // applyBillingEvent (an apple→free fact can't clobber a live Stripe
+      // contract).
       return {
         kind: "fact",
         fact: {
