@@ -1,5 +1,59 @@
 # Backlog
 
+## Ship the Mobile App (iOS) — owner action required
+
+The native iOS app (`apps/native`) and cross-platform billing are **code-complete and merged to `main`** (PRs #127→#130). Nothing charges anyone and the app runs a labelled billing mock until the console/account setup below is done — so this is **owner work, not engineering work**. Authoritative step-by-step: **`docs/billing-runbook.md`**. This section is the index of everything that stands between `main` and a shipped App Store build.
+
+### A. Billing console setup (only the owner can do this)
+
+Follow `docs/billing-runbook.md` §1–§3 in order — agreements first, because nothing else is testable without them. In brief:
+
+1. **App Store Connect** (`docs/billing-runbook.md` §1)
+   - Accept the **Paid Applications** agreement; complete **banking + tax** (hard blocker — IAPs aren't testable in TestFlight without these).
+   - Enroll in the **Small Business Program** (15% vs 30% commission) — not retroactive, do it before launch.
+   - Create the two auto-renewables in ONE subscription group and the one non-consumable, with **exact** product IDs (a typo means purchases grant nothing): `com.handicappin.premium.yearly` ($19/yr), `com.handicappin.unlimited.yearly` ($29/yr), `com.handicappin.lifetime` ($149). Rank Unlimited above Premium so Apple handles upgrade/downgrade.
+   - Create a **sandbox tester** account.
+2. **RevenueCat console** (`docs/billing-runbook.md` §2)
+   - New project → add the iOS app (`com.handicappin.app`) → upload App Store Connect credentials.
+   - Add the three products, create three **entitlements** named exactly `premium` / `unlimited` / `lifetime`, build the `default` offering and mark it current.
+   - Copy the **public Apple SDK key** (`appl_…`, for the app) and the **secret key** (`sk_…`, for the reconcile script).
+   - Add a **webhook** → `https://handicappin.com/api/webhooks/revenuecat` with an `Authorization` value you generate (`openssl rand -hex 32`). **Do not** enable RevenueCat's Stripe/Web Billing integration — Stripe stays owned by the existing web webhook.
+3. **Environment variables** (`docs/billing-runbook.md` §3)
+   - **Vercel (web)**: `REVENUECAT_WEBHOOK_AUTH_TOKEN` (must equal the webhook Authorization value verbatim) and `REVENUECAT_API_KEY` (the `sk_…` secret). Redeploy web **before** any purchase can happen.
+   - **Native (`apps/native/eas.json`)**: replace `EXPO_PUBLIC_REVENUECAT_IOS_API_KEY=appl_SET-ME` with the public key in the `preview`/`production` profiles only (leave `development` unset so CI/sim keep using the mock). Also set the real `EXPO_PUBLIC_SUPABASE_URL` / `EXPO_PUBLIC_SUPABASE_ANON_KEY` for preview/production (still `SET-ME`).
+
+### B. Build, test, submit
+
+4. **TestFlight sandbox pass** (`docs/billing-runbook.md` §4) — `eas build --profile preview --platform ios` → `eas submit` → install → sign the device into the sandbox account → walk the full matrix (purchase / upgrade / downgrade / cancel / expire / lifetime / restore / Stripe-sanity / reconcile dry-run). Sandbox renewals are ~1 hour.
+5. **App Store submission** (`docs/billing-runbook.md` §5) — submit the build **with the in-app purchases attached to the version** (reviewed together). The required compliance pieces are already in the app: auto-renew disclosure + Terms/Privacy links (3.1.2) and the in-app delete-account entry (5.1.1(v)).
+6. **Post-approval** — spot-check one real purchase + refund it, run `node scripts/reconcile-billing.mjs` (dry run), confirm Small Business Program enrollment.
+
+### C. Known by-design edges (operate, don't "fix")
+
+- **Apple lifetime refunds don't auto-revoke** (lifetime is absorbing by design) — revoke manually (set profile to free); the reconcile dry-run flags the mismatch.
+- **Double contracts** (someone actively paying both Stripe and Apple) — the webhook keeps max entitlement and raises a Sentry `billing.double_contract` alert; cancel one side manually.
+- **Free-tier selection and the EARLY100 lifetime promo remain web flows** — the native paywall says so on those CTAs.
+
+### D. Deferred native features (not ship-blockers; track separately)
+
+From the native build (PR #129), intentionally not yet ported — the app links out to web or hides these:
+- Google OAuth sign-in (needs an iOS OAuth client configured).
+- Email change / data export / account deletion flows (native links to the web versions).
+- AI scorecard photo upload and edit-tee on `rounds/add`.
+- Advanced / educational calculator interactivity (native shows the core calculators).
+- Android build + submission (iOS-only for now).
+- Per-screen dark-mode visual-parity captures.
+
+### E. Open code follow-ups (tracked as issues, non-blocking)
+
+- **#131** — destructive-hue color pairs still marginally below WCAG AA.
+- **#132** — automated contrast-regression gate over the token contract.
+- **#134** — extend the billing-version optimistic lock to the Stripe webhook write closures (the Apple side already has it).
+
+**Context**: Output of the #127→#130 PR stack (design-system parity → monorepo + native bring-up → 16 native screens → cross-platform billing). Architecture ledger: `docs/billing-implementation-handoff.md` §1. Implementation log: `docs/billing-implementation-log.md`. Web↔native parity rules: `docs/web-native-parity.md`.
+
+---
+
 ## Rejected Submission Re-submission UX
 
 Users whose submissions are rejected currently have no clear path to resubmit. The rejected round remains in their history with no explanation or action. A future improvement should:
