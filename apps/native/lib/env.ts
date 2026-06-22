@@ -17,6 +17,21 @@ const envSchema = z.object({
   supabaseAnonKey: z.string().min(1),
   /** Base URL of the Next.js app serving /api/trpc (dev: http://localhost:3000). */
   apiBaseUrl: z.url(),
+  /**
+   * RevenueCat iOS public SDK key (appl_...). THE billing-provider switch
+   * (decision ledger D-seam): absent → mock provider (CI, sim verification);
+   * present → real react-native-purchases SDK. Client-exposed by design
+   * (RC public SDK keys are not secrets).
+   *
+   * Preprocessed because "absent" arrives in several shapes: the key is
+   * omitted from fresh manifests, but Expo's config serializer turns null
+   * extras into {} (and dev clients embed a build-time snapshot), so any
+   * non-string here means "no key" — never crash the boot over it.
+   */
+  revenueCatIosApiKey: z.preprocess(
+    (value) => (typeof value === "string" && value.length > 0 ? value : null),
+    z.string().min(1).nullable(),
+  ),
 });
 
 export type Env = z.infer<typeof envSchema>;

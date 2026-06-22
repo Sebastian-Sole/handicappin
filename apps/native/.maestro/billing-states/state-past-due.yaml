@@ -1,0 +1,38 @@
+# BILLING STATE: apple + unlimited + past_due (driven by a REAL
+# BILLING_ISSUE webhook → D-status-mapping: past_due, access denied).
+# Policy (D26): payment-issue line; manage affordance to fix payment; NO
+# plan change, NO purchase buttons; restore stays.
+appId: com.handicappin.app
+---
+- stopApp
+- openLink: handicappin://
+- tapOn:
+    text: "Open"
+    optional: true
+- extendedWaitUntil:
+    visible:
+      id: "tab-profile"
+    timeout: 30000
+- tapOn:
+    id: "tab-profile"
+- extendedWaitUntil:
+    visible: "Manage your account settings"
+    timeout: 20000
+- tapOn:
+    id: "profile-tab-billing"
+- extendedWaitUntil:
+    visible: ".*[Uu]nlimited Plan.*"
+    timeout: 15000
+- assertVisible: ".*Payment issue.*"
+- assertVisible:
+    id: "billing-apple-manage"
+- assertNotVisible:
+    id: "billing-plan-change"
+- assertNotVisible: "Upgrade Your Plan"
+- assertNotVisible: ".*managed on handicappin.com.*"
+- scrollUntilVisible:
+    element:
+      id: "billing-restore"
+    centerElement: true
+- assertVisible: "Restore Purchases"
+- takeScreenshot: /tmp/handicappin-billing-states/apple-past-due

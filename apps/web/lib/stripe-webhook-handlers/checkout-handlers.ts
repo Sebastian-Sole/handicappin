@@ -15,6 +15,8 @@ import {
 import { verifyCustomerOwnership } from "@/lib/stripe-security";
 import { verifyPaymentAmount, formatAmount } from "@/utils/billing/pricing";
 import { sendWelcomeEmail } from "@/lib/email-service";
+import type { BillingFact } from "@/utils/billing/apply-billing-event";
+import { guardedStripeProfileWrite } from "./profile-billing-write";
 import type { WebhookContext, WebhookResult } from "./types";
 
 /**
@@ -74,13 +76,13 @@ export async function handleCheckoutCompleted(
 
   // For subscription mode, handle subscription immediately to avoid race condition
   if (session.mode === "subscription") {
-    await handleSubscriptionCheckout(session, userId, expandedSession);
+    await handleSubscriptionCheckout(session, userId, expandedSession, ctx);
     return { success: true };
   }
 
   // For payment mode (lifetime), check payment status first
   if (session.mode === "payment") {
-    await handlePaymentCheckout(session, userId, customerId, expandedSession);
+    await handlePaymentCheckout(session, userId, customerId, expandedSession, ctx);
     return { success: true };
   }
 
@@ -90,7 +92,8 @@ export async function handleCheckoutCompleted(
 async function handleSubscriptionCheckout(
   session: Stripe.Checkout.Session,
   userId: string,
-  expandedSession: Stripe.Checkout.Session
+  expandedSession: Stripe.Checkout.Session,
+  ctx: WebhookContext
 ) {
   logSubscriptionEvent("Subscription checkout - updating plan immediately");
 
@@ -192,22 +195,48 @@ async function handleSubscriptionCheckout(
       session.customer_details?.email || session.customer_email;
     const isFirstTimeSubscription = oldPlan === "free";
 
-    // Update plan immediately (status fields updated by subscription.created event)
-    await db
-      .update(profile)
-      .set({
-        planSelected: plan,
-        planSelectedAt: new Date(),
-        billingVersion: sql`billing_version + 1`,
-      })
-      .where(eq(profile.id, userId));
+    // Update plan immediately (status fields updated by subscription.created
+    // event) — guarded: a fresh stripe checkout must not displace a higher
+    // apple-active contract or a lifetime entitlement.
+    const fact: BillingFact = {
+      provider: "stripe",
+      plan,
+      status: "active",
+      currentPeriodEnd: null, // unknown at checkout; subscription.created fills it
+      cancelAtPeriodEnd: false,
+      eventTimeMs: ctx.event.created * 1000,
+      eventId: ctx.eventId,
+    };
 
-    logWebhookSuccess(
-      `Updated plan_selected to '${plan}' for user: ${userId} at checkout (status will be updated by subscription.created)`
-    );
+    const { written } = await guardedStripeProfileWrite({
+      userId,
+      handler: "handleSubscriptionCheckout",
+      fact,
+      write: async () => {
+        await db
+          .update(profile)
+          .set({
+            planSelected: plan,
+            planSelectedAt: new Date(),
+            billingProvider: "stripe",
+            billingVersion: sql`billing_version + 1`,
+          })
+          .where(eq(profile.id, userId));
+      },
+    });
+
+    if (written) {
+      logWebhookSuccess(
+        `Updated plan_selected to '${plan}' for user: ${userId} at checkout (status will be updated by subscription.created)`
+      );
+    } else {
+      logWebhookInfo(
+        `Checkout plan write for user ${userId} blocked by precedence guard`
+      );
+    }
 
     // Send welcome email for first-time subscriptions
-    if (isFirstTimeSubscription && userEmail) {
+    if (written && isFirstTimeSubscription && userEmail) {
       await sendWelcomeEmailSafely(userEmail, plan, userId);
     }
   } catch (error) {
@@ -220,7 +249,8 @@ async function handlePaymentCheckout(
   session: Stripe.Checkout.Session,
   userId: string,
   customerId: string | undefined,
-  expandedSession: Stripe.Checkout.Session
+  expandedSession: Stripe.Checkout.Session,
+  ctx: WebhookContext
 ) {
   logPaymentEvent("Payment mode detected - checking payment status");
 
@@ -365,11 +395,11 @@ async function handlePaymentCheckout(
     });
 
     if (paymentStatus === "paid") {
-      await grantLifetimeAccess(session, userId, plan);
+      await grantLifetimeAccess(session, userId, plan, ctx);
     } else if (paymentStatus === "unpaid") {
       await storePendingPurchase(session, userId, priceId, plan);
     } else if (paymentStatus === "no_payment_required") {
-      await grantLifetimeAccess(session, userId, plan);
+      await grantLifetimeAccess(session, userId, plan, ctx);
     } else {
       logWebhookWarning(
         `Unknown payment status: ${paymentStatus} for session ${session.id}`
@@ -384,7 +414,8 @@ async function handlePaymentCheckout(
 async function grantLifetimeAccess(
   session: Stripe.Checkout.Session,
   userId: string,
-  plan: string
+  plan: string,
+  ctx: WebhookContext
 ) {
   logPaymentEvent(`Payment confirmed - granting ${plan} access to user ${userId}`);
 
@@ -401,19 +432,44 @@ async function grantLifetimeAccess(
   const isFirstTimePurchase = oldPlan === "free";
 
   try {
-    await db
-      .update(profile)
-      .set({
-        planSelected: plan as any,
-        planSelectedAt: new Date(),
-        subscriptionStatus: "active",
-        currentPeriodEnd: null,
-        cancelAtPeriodEnd: false,
-        billingVersion: sql`billing_version + 1`,
-      })
-      .where(eq(profile.id, userId));
+    const fact: BillingFact = {
+      provider: "stripe",
+      plan: plan as BillingFact["plan"],
+      status: "active",
+      currentPeriodEnd: null,
+      cancelAtPeriodEnd: false,
+      eventTimeMs: ctx.event.created * 1000,
+      eventId: ctx.eventId,
+    };
 
-    logWebhookSuccess(`Granted ${plan} access to user ${userId}`);
+    const { written } = await guardedStripeProfileWrite({
+      userId,
+      handler: "grantLifetimeAccess",
+      fact,
+      write: async () => {
+        await db
+          .update(profile)
+          .set({
+            planSelected: plan as any,
+            planSelectedAt: new Date(),
+            subscriptionStatus: "active",
+            currentPeriodEnd: null,
+            cancelAtPeriodEnd: false,
+            billingProvider: "stripe",
+            billingVersion: sql`billing_version + 1`,
+          })
+          .where(eq(profile.id, userId));
+      },
+    });
+
+    if (written) {
+      logWebhookSuccess(`Granted ${plan} access to user ${userId}`);
+    } else {
+      logWebhookInfo(
+        `Lifetime grant for user ${userId} blocked by precedence guard (already lifetime or higher contract)`
+      );
+      return;
+    }
   } catch (dbError) {
     logWebhookError("Error updating plan", dbError);
     throw dbError;

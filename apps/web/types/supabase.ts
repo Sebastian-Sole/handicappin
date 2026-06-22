@@ -362,6 +362,7 @@ export type Database = {
       }
       profile: {
         Row: {
+          billing_provider: string | null
           billing_version: number
           cancel_at_period_end: boolean
           createdAt: string
@@ -377,6 +378,7 @@ export type Database = {
           verified: boolean
         }
         Insert: {
+          billing_provider?: string | null
           billing_version?: number
           cancel_at_period_end?: boolean
           createdAt?: string
@@ -392,6 +394,7 @@ export type Database = {
           verified?: boolean
         }
         Update: {
+          billing_provider?: string | null
           billing_version?: number
           cancel_at_period_end?: boolean
           createdAt?: string
@@ -739,8 +742,10 @@ export type Database = {
         Row: {
           error_message: string | null
           event_id: string
+          event_time_ms: number | null
           event_type: string
           processed_at: string
+          provider: string | null
           retry_count: number
           status: string
           user_id: string | null
@@ -748,8 +753,10 @@ export type Database = {
         Insert: {
           error_message?: string | null
           event_id: string
+          event_time_ms?: number | null
           event_type: string
           processed_at?: string
+          provider?: string | null
           retry_count?: number
           status: string
           user_id?: string | null
@@ -757,8 +764,10 @@ export type Database = {
         Update: {
           error_message?: string | null
           event_id?: string
+          event_time_ms?: number | null
           event_type?: string
           processed_at?: string
+          provider?: string | null
           retry_count?: number
           status?: string
           user_id?: string | null

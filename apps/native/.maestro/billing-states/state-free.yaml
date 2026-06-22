@@ -1,0 +1,60 @@
+# BILLING STATE: plan=free (§1 matrix row "plan null/free → full paywall").
+# PRE-REQUISITE: signed in as the test user; profile driven to free via SQL.
+# Expects: purchasable paywall (real lineup), restore, disclosure; no
+# stripe neutral copy, no apple manage.
+appId: com.handicappin.app
+---
+- stopApp
+- openLink: handicappin://
+- tapOn:
+    text: "Open"
+    optional: true
+- extendedWaitUntil:
+    visible:
+      id: "tab-profile"
+    timeout: 30000
+- tapOn:
+    id: "tab-profile"
+- extendedWaitUntil:
+    visible: "Manage your account settings"
+    timeout: 20000
+- tapOn:
+    id: "profile-tab-billing"
+- extendedWaitUntil:
+    visible: ".*[Ff]ree Plan.*"
+    timeout: 15000
+- assertVisible: ".*rounds remaining.*"
+# Full paywall: the real lineup is purchasable.
+- scrollUntilVisible:
+    element:
+      text: "Upgrade Your Plan"
+    centerElement: true
+- assertVisible: "Upgrade Your Plan"
+- takeScreenshot: /tmp/handicappin-billing-states/free-paywall
+- scrollUntilVisible:
+    element:
+      id: "paywall-buy-unlimited_yearly"
+    centerElement: true
+- assertVisible:
+    id: "paywall-buy-premium_yearly"
+- assertVisible:
+    id: "paywall-buy-unlimited_yearly"
+# Purchase through the seam surfaces the labelled dev notice (mock mode).
+- tapOn:
+    id: "paywall-buy-premium_yearly"
+- extendedWaitUntil:
+    visible: ".*development build.*"
+    timeout: 8000
+- takeScreenshot: /tmp/handicappin-billing-states/free-mock-notice
+# Disclosure + restore always visible.
+- scrollUntilVisible:
+    element:
+      id: "paywall-disclosure"
+- assertVisible: ".*renew automatically.*"
+- scrollUntilVisible:
+    element:
+      id: "billing-restore"
+    direction: UP
+- assertVisible: "Restore Purchases"
+- assertNotVisible: ".*managed on handicappin.com.*"
+- takeScreenshot: /tmp/handicappin-billing-states/free-restore

@@ -20,6 +20,7 @@
   "dependencies": {
     "@expo-google-fonts/inter": "^0.4.2",
     "@expo/ui": "~56.0.16",
+    "@handicappin/billing-core": "workspace:*",
     "@handicappin/handicap-core": "workspace:*",
     "@handicappin/tokens": "workspace:*",
     "@hookform/resolvers": "^5.2.2",
@@ -56,6 +57,7 @@
     "react-native": "0.85.3",
     "react-native-css": "^3.0.7",
     "react-native-gesture-handler": "~2.31.1",
+    "react-native-purchases": "^10.3.0",
     "react-native-reanimated": "4.3.1",
     "react-native-safe-area-context": "~5.7.0",
     "react-native-screens": "4.25.2",

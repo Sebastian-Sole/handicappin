@@ -1,0 +1,39 @@
+# BILLING STATE: lifetime (§1 "lifetime (any provider) → no purchase
+# buttons"). Driven by a REAL NON_RENEWING_PURCHASE webhook (apple lifetime).
+appId: com.handicappin.app
+---
+- stopApp
+- openLink: handicappin://
+- tapOn:
+    text: "Open"
+    optional: true
+- extendedWaitUntil:
+    visible:
+      id: "tab-profile"
+    timeout: 30000
+- tapOn:
+    id: "tab-profile"
+- extendedWaitUntil:
+    visible: "Manage your account settings"
+    timeout: 20000
+- tapOn:
+    id: "profile-tab-billing"
+- extendedWaitUntil:
+    visible: ".*[Ll]ifetime Plan.*"
+    timeout: 15000
+- assertVisible: ".*Lifetime Access.*"
+- assertVisible: "No subscription management needed"
+# No purchase, no plan change, no manage, no neutral copy.
+- assertNotVisible: "Upgrade Your Plan"
+- assertNotVisible:
+    id: "billing-plan-change"
+- assertNotVisible:
+    id: "billing-apple-manage"
+- assertNotVisible: ".*managed on handicappin.com.*"
+# Restore always visible.
+- scrollUntilVisible:
+    element:
+      id: "billing-restore"
+    centerElement: true
+- assertVisible: "Restore Purchases"
+- takeScreenshot: /tmp/handicappin-billing-states/lifetime

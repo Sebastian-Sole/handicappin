@@ -17,7 +17,8 @@
       "env": {
         "EXPO_PUBLIC_SUPABASE_URL": "https://SET-ME.supabase.co",
         "EXPO_PUBLIC_SUPABASE_ANON_KEY": "SET-ME",
-        "EXPO_PUBLIC_API_BASE_URL": "https://handicappin.com"
+        "EXPO_PUBLIC_API_BASE_URL": "https://handicappin.com",
+        "EXPO_PUBLIC_REVENUECAT_IOS_API_KEY": "appl_SET-ME"
       }
     },
     "production": {
@@ -25,7 +26,8 @@
       "env": {
         "EXPO_PUBLIC_SUPABASE_URL": "https://SET-ME.supabase.co",
         "EXPO_PUBLIC_SUPABASE_ANON_KEY": "SET-ME",
-        "EXPO_PUBLIC_API_BASE_URL": "https://handicappin.com"
+        "EXPO_PUBLIC_API_BASE_URL": "https://handicappin.com",
+        "EXPO_PUBLIC_REVENUECAT_IOS_API_KEY": "appl_SET-ME"
       }
     }
   },

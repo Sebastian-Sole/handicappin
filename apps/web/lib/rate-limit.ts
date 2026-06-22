@@ -191,13 +191,17 @@ export function getIdentifier(request: Request, userId?: string): string {
     return `user:${userId}`;
   }
 
-  // Fall back to IP address for unauthenticated requests
+  // Fall back to IP address for unauthenticated requests.
+  // Prefer x-real-ip: on Vercel the platform sets it to the true client IP and
+  // overwrites any client-supplied value. x-forwarded-for is NOT trustworthy
+  // for this — a client can prepend an arbitrary IP and Vercel appends the
+  // real one on the RIGHT, so the leftmost (client) entry is attacker-chosen
+  // and would let one client mint unlimited rate-limit buckets.
+  const realIp = request.headers.get('x-real-ip')?.trim();
   const forwarded = request.headers.get('x-forwarded-for');
-  const realIp = request.headers.get('x-real-ip');
-
-  // x-forwarded-for can contain multiple IPs (client, proxy1, proxy2)
-  // Take the first one (original client IP)
-  const ip = forwarded?.split(',')[0]?.trim() || realIp || 'unknown';
+  // Fallback only (non-Vercel/local): take the LAST hop, the closest proxy.
+  const forwardedLast = forwarded?.split(',').pop()?.trim();
+  const ip = realIp || forwardedLast || 'unknown';
 
   return `ip:${ip}`;
 }
