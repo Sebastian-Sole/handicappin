@@ -186,3 +186,11 @@ Held in `_staging` (14), nothing entered seed without clearing validation:
 - **#36 Grenland** — your ratings call (2017 staged vs 2026 PDF).
 - **6 needs-verify** (#15 Bodø Golfpark, #33 Gjerdrum, #97 Norsjø, #102 Ogna, #114 Romerike, #116 Sandane) — each "promote once a human confirms one JS-gated rating page".
 - **4 pilot candidates** — Alta, Hovden, Molde, Stavanger.
+
+---
+
+## ✏️ Staging resolution (2026-06-29) — seed 130 → 136
+User reviewed the 14 held:
+- **PROMOTED (6):** Gjerdrum, Molde, Sandane, Sorknes, Stavanger, + **Norsjø** (rebuilt from the club's scorecard image — prior staged values were wrong; 5 men's tees 62/57/52/48/32 + 4 women's 57/52/48/32, meters, par 72).
+- **DELETED (5, unverifiable — "let a user submit it"):** Alta, Austrått, Hovden, Ogna, Tjøme.
+- **RE-SOURCING (3):** Bodø Golfpark (SI swap + rating fix), Grenland (2026 NGF ratings), Romerike (GolfPass meters).
