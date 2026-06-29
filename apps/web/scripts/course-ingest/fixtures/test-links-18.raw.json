@@ -1,0 +1,36 @@
+{
+  "name": "Test Links Eighteen",
+  "city": "Testville",
+  "country": "Scotland",
+  "website": "https://testlinks.example",
+  "isNineHole": false,
+  "distanceMeasurement": "yards",
+  "pars": [4, 5, 3, 4, 4, 3, 5, 4, 4, 4, 4, 3, 5, 4, 4, 3, 5, 4],
+  "strokeIndexMen": [7, 3, 15, 1, 11, 17, 5, 13, 9, 8, 4, 16, 2, 12, 18, 6, 14, 10],
+  "strokeIndexWomen": [5, 3, 15, 1, 11, 17, 7, 13, 9, 8, 4, 16, 2, 12, 18, 6, 14, 10],
+  "tees": [
+    {
+      "name": "White",
+      "gender": "mens",
+      "courseRating18": 71.2,
+      "slopeRating18": 129,
+      "courseRatingFront9": 35.8,
+      "slopeRatingFront9": 130,
+      "courseRatingBack9": 35.4,
+      "slopeRatingBack9": 128,
+      "distances": [380, 520, 165, 410, 395, 180, 540, 400, 385, 400, 390, 170, 515, 405, 395, 175, 530, 395]
+    },
+    {
+      "name": "Red",
+      "gender": "ladies",
+      "courseRating18": 73.0,
+      "slopeRating18": 132,
+      "courseRatingFront9": 36.6,
+      "slopeRatingFront9": 133,
+      "courseRatingBack9": 36.4,
+      "slopeRatingBack9": 131,
+      "distances": [320, 460, 140, 360, 340, 150, 470, 350, 330, 350, 340, 150, 455, 355, 345, 150, 460, 345]
+    }
+  ],
+  "source": { "provider": "fixture", "url": "synthetic:18-hole-multitee" }
+}
