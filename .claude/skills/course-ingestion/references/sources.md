@@ -6,11 +6,28 @@ Geographic priority: **Norway + Scotland/UK first.**
 
 ## Sourcing policy (strict — set by the project)
 
-- **Ratings / slope / par**: authoritative from the **club's own site**. Capture every tee × gender (Herrer/Damer).
-- **Per-hole grid (par, stroke index, distances)**: club's own scorecard first → else **GolfPass** → else the course is **not supported** (log `no_data`, skip). Use ONLY these two sources for per-hole numbers; never AllSquare / Golfify / other aggregators, and never blend or interpolate.
+The source priority is **country-aware** (see the country blocks below). Common rules:
+
 - **Complete-only**: emit a tee only if it has a full 18-hole grid; a course needs at least the primary men's + women's tee complete, else skip. No partial / ratings-only tees.
-- **9-hole → expand to 18** (`isNineHole:true`). **Fewer than 9 holes (6-hole, etc.) → not supported.**
-- **Discrepancies**: the club value wins; flag the disagreement in the report.
+- **9-hole → expand to 18** (`isNineHole:true`). **Fewer than 9 holes (6-hole, etc.) → not supported.** For a regulation 9-hole course `courseRating18` is the **18-round** rating (a regulation course's 18-round CR is ~62–74; a bare ~26–34 figure is the *9-hole* rating in the wrong field — the `ratings:suspect-18-field` WARN flags this). A par-3 course legitimately has a low CR.
+- **Corroborate before you stage**: never emit a tee whose existence or numbers rest on a single page. A tee/par/rating must agree across **≥2 sources**; if they disagree, the authoritative source (below) wins and you flag it. This is what kills the "phantom Blue tee from a different course" and the stale-PDF errors.
+- **Source hygiene** (check every source before trusting it):
+  - **Stale**: reject a club PDF/scorecard older than ~2 seasons if a current WHS rating exists — routings change (holes added/removed, par re-rated).
+  - **Parked/squatted domain**: if the club URL serves casino/spam/parking instead of a golf site, discard it and source by name from the WHS databases + GolfPass.
+  - **9-hole-in-18-field**: a regulation course with `courseRating18 < 55` is almost always a 9-hole figure mis-stored — fix to the 18-round value.
+
+### Norway
+
+Club site first (many on `golfbox.no`), **GolfPass** fallback for the per-hole grid; no other aggregators. Distances in **meters**. (Unchanged — this works well for Norwegian clubs.)
+
+### UK / Scotland — WHS-first
+
+Scotland has a national WHS course-rating database the small clubs don't reproduce well on their own sites (stale PDFs, JS-only cards, parked domains), so **lead with the WHS data**:
+
+- **Ratings / slope / par / stroke-index**: from the **authoritative WHS data** — Scottish Golf course rating / **coursehandicap.com** / **BlueGolf** (`course.bluegolf.com`) / **golfify.io** — cross-checked across **≥2** of them. Capture every tee × gender. These mirror the national WHS database and are more current/reliable than a small club's own page.
+- **Per-hole distances**: the **club's own current scorecard** is best (clubs are authoritative for yardages); else the WHS-source scorecard; else GolfPass. Distances in **yards** — confirm.
+- **Existence + location**: confirm the course is in Scotland from the club site (geo-check); if it's actually England/Wales/NI/RoI, skip (`skipped_not_scotland`).
+- **Discrepancies**: WHS/national source wins for ratings; the club card wins for distances; flag every disagreement.
 
 ## 1. The course's own website — PRIMARY
 

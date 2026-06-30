@@ -12,7 +12,7 @@ The input a scraper/extractor produces. Intentionally looser than the app's `cou
 | `website` | string? | scheme optional; the pipeline prefixes `https://` |
 | `isNineHole` | bool | 9-hole cards carry 9 entries; expanded to 18 |
 | `distanceMeasurement` | `"meters"` \| `"yards"` | **Confirm from the source** — Norway is usually meters |
-| `pars` | int[] | course-level par per hole (9 or 18), shared across tees |
+| `pars` | int[] | course-level **default** par per hole (9 or 18); a tee may override it |
 | `strokeIndexMen` | int[] | men's stroke-index allocation (9 or 18) |
 | `strokeIndexWomen` | int[]? | falls back to men's if absent |
 | `tees` | RawTee[] | one entry **per (name, gender)** |
@@ -22,6 +22,15 @@ The input a scraper/extractor produces. Intentionally looser than the app's `cou
 ### RawTee
 
 `name`, `gender` (`"mens"` \| `"ladies"`), `courseRating18`, `slopeRating18`, optional **real** per-nine ratings (`courseRatingFront9`, `slopeRatingFront9`, `courseRatingBack9`, `slopeRatingBack9`), and `distances` (9 or 18 per-hole distances for this tee).
+
+Optional per-tee overrides (use only when the card shows this tee differs):
+
+- `pars` — per-tee par per hole, when this tee plays a **different par** than the course default. Common on UK ladies/forward tees (a men's par 4 plays par 5 for ladies; a long par 5 plays par 4 from a forward tee). Same length as the course `pars`. Omit when the tee matches the default.
+- `strokeIndex` — per-tee stroke-index allocation, when the changed hole pars shift it. Omit to inherit the course-level (gender) allocation.
+
+<important>
+If a tee's playing par differs from the course default, set this tee's `pars` — do NOT skip the tee and do NOT force it onto the default par. Each tee stores its own par/holes in the DB. The WHS handicap index uses CR/slope (not par), but the app's stableford/net scoring and displayed `totalPar` depend on a correct per-tee par. A forced or skipped tee silently loses women's/forward tees.
+</important>
 
 ## 9-hole expansion
 

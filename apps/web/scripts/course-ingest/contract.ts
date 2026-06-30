@@ -29,6 +29,15 @@ export const rawTeeSchema = z.object({
   slopeRatingBack9: z.number().int().optional(),
   /** 9 entries (9-hole) or 18 entries (18-hole). Per-hole distance for this tee. */
   distances: z.array(z.number().int().nonnegative()),
+  /** Per-tee par override for tees that play a different par than the course
+   *  default — common on UK ladies/forward tees (a men's par-4 plays par-5 for
+   *  ladies, a long par-5 plays par-4 from the forward tee, etc.). 9 or 18
+   *  entries; falls back to course-level `pars` when omitted. */
+  pars: z.array(z.number().int()).optional(),
+  /** Per-tee stroke-index override for when a tee's changed hole pars shift the
+   *  allocation. 9 or 18 entries; falls back to the course-level (gender)
+   *  stroke index when omitted. */
+  strokeIndex: z.array(z.number().int()).optional(),
 });
 
 export const rawCourseSchema = z.object({
@@ -51,6 +60,31 @@ export const rawCourseSchema = z.object({
   source: z
     .object({ provider: z.string(), url: z.string().optional() })
     .optional(),
+}).superRefine((c, ctx) => {
+  // Every per-hole array must match the course's hole count (9 or 18). A
+  // mismatched per-tee `pars`/`strokeIndex` would silently misalign holes, so
+  // reject it at the contract boundary rather than emit corrupt SQL.
+  const n = c.pars.length;
+  const checkLen = (
+    arr: number[] | null | undefined,
+    path: (string | number)[],
+    label: string,
+  ) => {
+    if (arr != null && arr.length !== n) {
+      ctx.addIssue({
+        code: "custom",
+        message: `${label} must have ${n} entries to match 'pars' (got ${arr.length})`,
+        path,
+      });
+    }
+  };
+  checkLen(c.strokeIndexMen, ["strokeIndexMen"], "strokeIndexMen");
+  checkLen(c.strokeIndexWomen, ["strokeIndexWomen"], "strokeIndexWomen");
+  c.tees.forEach((t, i) => {
+    checkLen(t.distances, ["tees", i, "distances"], `tees.${i}.distances`);
+    checkLen(t.pars, ["tees", i, "pars"], `tees.${i}.pars`);
+    checkLen(t.strokeIndex, ["tees", i, "strokeIndex"], `tees.${i}.strokeIndex`);
+  });
 });
 
 export type RawTee = z.infer<typeof rawTeeSchema>;

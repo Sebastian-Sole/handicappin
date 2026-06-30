@@ -28,31 +28,34 @@ function round1(n: number): number {
 export function normalize(raw: RawCourse): { resolved: Course; meta: NormalizeMeta } {
   const nine = raw.isNineHole;
 
-  // Course-level par + stroke index, expanded to 18 if needed.
-  const pars18 = nine ? expandNine(raw.pars) : raw.pars;
-  const siMen18 = nine
-    ? expandNineHoleStrokeIndex(raw.strokeIndexMen)
-    : raw.strokeIndexMen;
+  // Course-level stroke-index sources (men's, and women's falling back to men's).
+  // Par and stroke index are resolved PER TEE below so that forward/ladies tees
+  // which legitimately play a different par (and allocation) are stored exactly,
+  // not forced onto the course default.
   const siWomenSource = raw.strokeIndexWomen ?? raw.strokeIndexMen;
-  const siWomen18 = nine
-    ? expandNineHoleStrokeIndex(siWomenSource)
-    : siWomenSource;
+  const expandPar = (p: number[]) => (nine ? expandNine(p) : p);
+  const expandSi = (si: number[]) =>
+    nine ? expandNineHoleStrokeIndex(si) : si;
 
   let fabricatedNineRatings = false;
 
   const tees: Tee[] = raw.tees.map((rt: RawTee): Tee => {
     const distances18 = nine ? expandNine(rt.distances) : rt.distances;
-    const strokeIndex = rt.gender === "ladies" ? siWomen18 : siMen18;
+
+    // Per-tee par + stroke index, each falling back to the course-level value.
+    const teePars18 = expandPar(rt.pars ?? raw.pars);
+    const defaultSi = rt.gender === "ladies" ? siWomenSource : raw.strokeIndexMen;
+    const strokeIndex = expandSi(rt.strokeIndex ?? defaultSi);
 
     const holes: Hole[] = distances18.map((distance, i) => ({
       holeNumber: i + 1,
-      par: pars18[i],
+      par: teePars18[i],
       distance,
       hcp: strokeIndex[i],
     }));
 
-    const outPar = sum(pars18.slice(0, 9));
-    const inPar = sum(pars18.slice(9, 18));
+    const outPar = sum(teePars18.slice(0, 9));
+    const inPar = sum(teePars18.slice(9, 18));
     const outDistance = sum(distances18.slice(0, 9));
     const inDistance = sum(distances18.slice(9, 18));
 

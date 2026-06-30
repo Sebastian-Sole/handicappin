@@ -141,6 +141,19 @@ export function validate(
         });
       }
     }
+
+    // A regulation course (has par-4/5 holes) with a course rating in the high
+    // 20s/30s is almost always a 9-hole rating mis-stored in the 18-round field
+    // (the silent Asta-class bug). Par-3 courses legitimately rate this low, so
+    // gate on the presence of par >= 4 holes to avoid false positives.
+    const maxPar = Math.max(...holes.map((h) => h.par));
+    if (maxPar >= 4 && (tee.courseRating18 ?? 0) < 55) {
+      findings.push({
+        level: "warn",
+        code: "ratings:suspect-18-field",
+        message: `${where}: courseRating18 ${tee.courseRating18} is implausibly low for a regulation course (max par ${maxPar}) — likely a 9-hole rating in the 18-round field. Verify against the WHS rating.`,
+      });
+    }
   });
 
   // 3) Cross-tee consistency: par/stroke-index geometry should match per hole.
