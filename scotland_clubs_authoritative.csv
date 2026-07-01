@@ -1,0 +1,728 @@
+ClubId,ClubName,Region,Town,Postcode,Holes,Website,Lat,Long,Members,FoundingYear,TeeBooking
+2001,Abbotsford Golf Club,South Ayrshire,Ayr,KA7 2ST,18,https://www.abbotsfordgolf.co.uk/website/,55.4485,-4.631988,91,,False
+2002,Aberdeen Ladies Golf Club,Aberdeen City,Aberdeen,AB23 8AT,18,http://www.aberdeenladiesgc.co.uk/,57.179718,-2.084093,146,,False
+2003,Aberdeen Petroleum Golf Club,Aberdeen City,Aberdeen,AB13 0AB,18,https://kippielodge.co.uk,57.1035767,-2.250633,217,,False
+2004,Aberdeenshire Ladies County Golf Association,Aberdeenshire,,,18,,,,465,,False
+2005,Aberdour Golf Club,Fife,Burntisland,KY3 0TX,18,https://www.aberdourgolfclub.co.uk/,56.05105,-3.299092,860,,False
+2006,Aberfeldy Golf Club,Perth & Kinross,Aberfeldy,PH15 2BH,9,https://www.aberfeldy-golfclub.co.uk/,56.61978,-3.869981,163,,True
+2007,Aberfoyle Golf Club,Stirling,Stirling,FK8 3UY,18,https://www.aberfoylegolf.co.uk/,56.1758537,-4.36234,204,,True
+2008,Aberlady Golf Club,East Lothian,Longniddry,EH32 0QD,18,,56.0126,-2.8726,0,,False
+2009,Abernethy Golf Club,Highland,Nethy Bridge,PH25 3EB,9,https://abernethygolfclub.com/,57.2697258,-3.653422,315,,True
+2010,Aboyne Golf Club,Aberdeenshire,Aboyne,AB34 5HP,18,https://www.aboynegolfclub.co.uk/,57.0841,-2.7696,482,,False
+2012,Aegon Golf Club,Edinburgh,Edinburgh,EH12 9SE,18,,,,0,,False
+2013,Aigas Golf Club,Highland,Beauly,IV4 7AD,18,https://www.aigas-holidays.co.uk/aigas-golf/,57.44283,-4.55532,69,,False
+2728,Ailsa Club Golf Club,South Ayrshire,Maidens Road,KA26 9LT,,,,,48,,False
+2014,Ailsa Craig Golf Club,South Ayrshire,Ayr,KA8 0QY,18,https://www.turnberry.co.uk/ailsa-golf-course-scotland,55.44055,-4.637941,32,,False
+2015,Airdrie Golf Club,North Lanarkshire,Airdrie,ML6 0PQ,18,https://www.airdriegolfclub.co.uk/,55.87946,-3.991135,833,,False
+2016,Alford Golf Club,Aberdeenshire,Alford,AB33 8AE,18,https://www.alfordgolfclub.com/,57.23517,-2.703019,388,,False
+2017,Alloa Golf Club,Clackmannanshire,Alloa,FK10 3AX,18,https://alloagolfclub.co.uk/,56.1306648,-3.773243,559,,False
+2018,Alness Golf Club,Highland,Alness,IV17 0QA,18,https://alnessgolf.co.uk/,57.698494,-4.25648,262,,True
+2019,Alton Golf Club,North Ayrshire,Stevenston,KA20 4LB,18,https://www.altongolfclub.com/,,,21,,False
+2020,Alva Golf Club,Clackmannanshire,Alva,,18,https://www.alvagolfclub.co.uk/,56.1554375,-3.800678,93,,True
+2021,Alyth Golf Club,Perth & Kinross,Blairgowrie,PH11 8HF,18,https://www.alythgolfclub.co.uk/,56.6217232,-3.205772,542,,False
+2022,Amateur Golf Tour Limited,Edinburgh,Redditch,B98 8LG,18,,,,0,,False
+2023,Angus County Golf Association,Angus,,,18,,,,1,,True
+2024,Angus Ladies County Golf Association,Angus,,DD7 7JF,18,,,,174,,False
+2025,Annanhill Golf Club,East Ayrshire,Kilmarnock,KA1 2RT,18,https://eastayrshireleisure.com/venue/annanhill-golf-course/,55.61095,-4.523923,186,,False
+2026,Anstruther Golf Club,Fife,"Anstruther, KY10 3DZ",KY10 3DZ,18,http://www.anstruthergolf.co.uk/,56.22047,-2.7055,572,,False
+2027,Arbroath Artisan Golf Club,Angus,Arbroath,DD11 2PE,18,https://www.arbroathgolfcourse.co.uk/,56.54509,-2.620517,308,,True
+2720,Arbroath Golf Links Golf Club,Angus,,DD11 2PE,,https://www.arbroathgolfcourse.co.uk/,,,0,,False
+2028,Archerfield Links Golf Club,East Lothian,North Berwick,EH39 5HQ,18,https://www.archerfieldgolfclub.com/,56.0447845,-2.803468,529,,False
+2029,Ardeer Golf Club,North Ayrshire,Stevenston,KA20 4LB,18,https://ardeergolfclub.co.uk/,55.6564522,-4.745524,219,,True
+2712,Ardfin Estate Golf Club,Argyll & Bute,,,18,,55.8005028,-6.03583574,0,,False
+2030,Argyll & Bute Golf Union,Argyll & Bute,,PA20 9HQ,18,,,,0,,False
+2031,Army Golf Association,Edinburgh,Aldershot,GU11 2LB,18,,,,0,,False
+2032,Askernish Golf Club,Eilean Siar,Isle of South Uist,HS8 5SY,18,https://www.askernishgolfclub.com/,57.18713,-7.396316,125,,True
+2033,Auchenblae Golf Club,Aberdeenshire,Auchenblae,AB30 1TX,18,https://www.auchenblaegolfcourse.co.uk/,56.9094467,-2.424518,85,,False
+2034,Auchenharvie 88 Golf Club,North Ayrshire,Stevenston,KA20 3HU,18,https://www.auchenharvie88.co.uk/,55.6355743,-4.757506,68,,False
+2035,Auchmill Golf Club,Aberdeen City,Aberdeen,AB16 7FQ,18,https://auchmillgolfclub.co.uk/,57.16944,-2.171777,246,,True
+2036,Auchterarder Golf Club,Perth & Kinross,Auchterarder,PH3 1LS,18,https://www.auchterardergolf.co.uk/,56.2908745,-3.723005,674,,False
+2037,Auchterderran Golf Club,Fife,Lochgelly,KY5 0NH,18,,56.1519852,-3.272993,45,,True
+2706,Away Home Club,Glasgow,,,,,,,0,,False
+2038,Ayr Belleisle Golf Club,South Ayrshire,Ayr,KA7 4DU,18,https://ayrbelleislegolfclub.co.uk/,55.4391,-4.6394,263,,False
+2039,Ayr Belleisle Ladies Golf Club,South Ayrshire,Ayr,KA9 4DU,18,,55.44055,-4.637941,61,,False
+2040,Ayr Carrick Golf Club,South Ayrshire,Ayr,KA8 0HJ,18,https://www.ayrcarrick.golf-club.website/,55.45085,-4.639229,98,,False
+2041,Ayr Dalmilling Golf Club,South Ayrshire,,,18,https://www.golfsouthayrshire.com/play/the-courses/dalmiling/,55.46798,-4.59415,65,,False
+2042,Ayr Dalmilling Ladies Golf Club,South Ayrshire,Ayr,KA8 0QY,18,,55.4670753,-4.58886,35,,False
+2043,Ayr Neptune Golf Club,South Ayrshire,Glasgow,KA8 0QY,18,http://www.neptunegc.co.uk/,55.44055,-4.637941,26,,False
+2044,Ayr Seafield Golf Club,South Ayrshire,Ayr,KA7 4DU,18,https://ayrseafield.golf-club.website/website/index.php,55.44055,-4.637941,143,,False
+2045,Ayr Seafield Ladies Golf Club,South Ayrshire,Ayr,KA7 4DU,18,https://www.seafieldladiesgolfclub.com/club-info/index,55.449398,-4.642381,94,,False
+2046,Ayrshire Golf Association,South Ayrshire,Prestwick,KA9 2DT,18,https://ayrshiregolf.blogspot.com/,,,0,,True
+2047,Ayrshire Ladies County Golf Association,Aberdeen City,,,18,,,,0,,False
+2067,BIGGA,Edinburgh,Alne,YO61 1UF,18,,,,0,,False
+2048,Baberton Golf Club,Edinburgh,Juniper Green,EH14 5DU,18,https://www.babertongc.com/,55.9071236,-3.288868,1163,,False
+2049,Balbirnie Park Golf Club,Fife,Glenrothes,KY7 6NR,18,https://www.balbirniegolf.com/,56.2082748,-3.145155,712,,False
+2050,Balfron Golf Society,Stirling,Balfron,G63 0SZ,18,https://www.balfrongolfclub.co.uk/,56.07437,-4.335953,500,,False
+2052,Ballater Golf Club,Aberdeenshire,Ballater,AB35 5LX,18,https://www.ballatergolfclub.co.uk/,57.04543,-3.045129,429,,False
+2291,Ballindalloch Golf Course,Highland,,AB37 9AX,18,https://www.ballindallochhighlandestate.com/golf/?_gl=1*muavkp*_up*MQ..*_ga*MTg1ODUwOTUzNi4xNjg0ODMzMzk4*_ga_3LE03C97M8*MTY4NDgzMzM5Ny4xLjEuMTY4NDgzMzg3OS4wLjAuMA..,57.40482,-3.36765,0,,False
+2053,Ballochmyle Golf Club,East Ayrshire,Mauchline,KA5 6LE,18,https://ballochmylegolfclub.com/,55.5084,-4.3567,878,,True
+2054,Ballumbie Castle Golf Club,Dundee,Dundee,DD4 0SY,18,https://www.ballumbiegolf.co.uk/contact.html,56.49447,-2.908489,533,,False
+2056,Balmore Golf Club Ltd,East Dunbartonshire,Glasgow,G64 4AW,18,http://www.balmoregolfclub.co.uk/,55.9386177,-4.250931,816,,False
+2057,Banchory Golf Club,Aberdeenshire,Banchory,AB31 5TA,18,http://www.banchorygolfclub.co.uk/,57.0505447,-2.507457,864,,False
+2058,Bank of Scotland Golf Club,Edinburgh,Edinburgh,EH11 4BP,18,,,,0,,False
+2059,Barrie Douglas Foundation,Edinburgh,Perth,PH1 5DJ,18,,,,0,,False
+2060,Barshaw Golf Club,Renfrewshire,Paisley,G52 3ST,18,,55.8495,-4.399221,36,,False
+2061,Bass Rock Golf Club,East Lothian,North Berwick,EH39 4BB,18,https://bassrockgolfclub.co.uk/,56.0587273,-2.727337,168,,True
+2062,Bathgate Golf Club,West Lothian,Bathgate,EH48 1BA,18,https://www.bathgategolfclub.com/,55.89843,-3.636629,847,,False
+2063,Bearsden Golf Club,East Dunbartonshire,Glasgow,G61 4BP,18,https://bearsdengolfclub.co.uk/,55.9200974,-4.350128,793,,False
+2064,Beith Golf Club,North Ayrshire,KA15 2JR,KA15 2JR,18,https://beith.cw.sct.dotgolf.co.uk/,55.761,-4.59802,169,,True
+2065,Bellshill Golf Club,North Lanarkshire,Bellshill,ML4 2RZ,18,http://www.bellshillgolfclub.com/,55.8086357,-4.01518,597,,False
+2066,Benbecula Golf Club,Eilean Siar,Isle of Benbecula,HS7 5LU,18,https://www.benbeculagolfclub.co.uk/,57.45778,-7.396372,35,,False
+2068,Biggar Golf Club,South Lanarkshire,Broughton Road,ML12 6HA,18,https://www.biggargolfclub.co.uk/,55.6232071,-3.507949,173,,True
+2069,Binny Golf Club,West Lothian,Broxburn,EH52 6NH,18,http://www.binnygolf.co.uk/,55.9324,-3.5075,329,,False
+2070,Bishopbriggs Golf Club,East Dunbartonshire,Glasgow,G64 2DX,18,https://www.bishopbriggsgolfclub.com/,55.908638,-4.231059,776,,False
+2071,Bishopshire Golf Club,Perth & Kinross,Kinross,KY13 9HX,18,http://www.bishopshiregolf.club,56.20854,-3.328808,32,,False
+2072,Blair Atholl Golf Club,Perth & Kinross,Blair Atholl,PH18 5TG,18,https://www.blairathollgolf.co.uk/,56.7655258,-3.839444,115,,True
+2073,Blairgowrie Golf Club,Perth & Kinross,Blairgowrie,PH10 6LG,18,https://www.theblairgowriegolfclub.co.uk/,56.57372,-3.336413,1927,,False
+2074,Blairmore & Strone Golf Club,Argyll & Bute,Strone,PA23 8SB,18,https://www.1golf.eu/en/club/blairmore-strone-golf-club/,55.9915466,-4.931159,35,,False
+2075,Blind Golf Scotland (the Scottish Blind Golf Socie,Fife,Dunfermline,KY12 7YH,18,,,,22,,False
+2076,Boat of Garten Golf Club,Highland,Boat of Garten,PH24 3BQ,18,https://www.boatgolf.com/cms/,57.2501755,-3.751131,298,,False
+2077,Bon Accord Golf Club,Aberdeen City,Aberdeen,AB24 5QB,18,,57.1600075,-2.087255,114,,False
+2078,Bonar Bridge-Ardgay Golf Club,Highland,Bonar Bridge,IV24 3EJ,18,https://www.bonarbridgegolf.co.uk/,57.8931923,-4.333583,63,,False
+2079,Bonnybridge Golf Club,Falkirk,Bonnybridge,FK4 1NY,18,https://www.bonnybridgegolfclub.co.uk/,56.00968,-3.879594,482,,False
+2080,Bonnyton Golf Club,Renfrewshire,Glasgow,G76 0QA,18,https://www.bonnytongolfclub.com,55.7410622,-4.308645,866,,False
+2081,Border Ladies County Golf Association,Scottish Borders,,,18,,,,0,,False
+2082,Borders Golfers' Association,Scottish Borders,,TD1 3SY,18,https://bordergolf.co.uk/,,,0,,False
+2083,Bothwell Castle Golf Club,South Lanarkshire,Glasgow,G71 8TD,18,http://www.bcgolf.co.uk/,55.8128,-4.079481,831,,False
+2084,Braehead (Alloa) Golf Club,Clackmannanshire,Alloa,FK10 2NT,18,http://www.braeheadgolfclub.co.uk,56.1252136,-3.830235,720,,False
+2085,Braehead Golf Club,South Ayrshire,Ayr,KA8 0JS,18,,55.4694366,-4.604505,39,,False
+2086,Braemar Golf Club,Aberdeenshire,Ballater,AB35 5XX,18,https://www.braemargolfclub.co.uk/website/,56.9965477,-3.401611,80,,False
+2087,Braes Golf Centre,Falkirk,Falkirk,FK2 0LS,18,https://braesgolf.co.uk/,55.9690437,-3.700815,161,,False
+2088,Braids United Golf Club,Edinburgh,Edinburgh,EH10 6JY,18,http://www.braids-united.co.uk/,55.91564,-3.204998,86,,True
+2089,Brechin Golf Club,Angus,Brechin,DD9 7PD,18,https://www.brechingolfclub.co.uk/,56.7484856,-2.650455,440,,False
+2090,Bridge of Allan Golf Club,Stirling,Stirling,FK9 4LY,18,https://www.bofagc.com/,56.1609,-3.9423,328,,False
+2091,Bridgend & District Golf Club,West Lothian,Linlithgow,EH49 6NW,18,https://www.visitwestlothian.co.uk/things-to-do/golf/bridgend-district-golf-club/,55.9628,-3.5394,0,,False
+2092,Brighouse Bay Golf Club,Dumfries & Galloway,Kirkcudbright,DG6 4TS,18,,54.7833061,-4.12092,39,,False
+2093,British University & Colleges Sport,Edinburgh,London,SE1 0QX,18,,,,0,,False
+2716,Broadlees Golf Centre,South Lanarkshire,South Lanarkshire,,9,,55.71142,-4.10183,0,,False
+2094,Broadlees Golf Club,South Lanarkshire,Strathaven,ML10 6GH,18,,55.7113457,-4.10170126,0,,False
+2095,Brodick Golf Club,North Ayrshire,Isle of Arran,KA27 8DL,18,https://www.brodickgolf.com/,55.5776062,-5.153421,156,,False
+2096,Broomieknowe Golf Club,Midlothian,Bonnyrigg,EH19 2HZ,18,https://www.broomieknowe.com/,55.88178,-3.105476,865,,False
+2097,Brora Golf Club,Highland,Brora,KW9 6QS,18,https://broragolfclub.co.uk/,58.01305,-3.847243,626,,False
+2098,Bruntsfield Allied Golf Club,Edinburgh,Edinburgh,EH13 0QA,18,,,,0,,False
+2099,Bruntsfield Links Golfing Society,Edinburgh,Edinburgh,EH4 6JH,18,http://www.bruntsfieldlinks.co.uk,55.968132,-3.322533,991,,False
+2721,Buchan Ladies Senior Golf Association,Aberdeenshire,,,,,,,125,,True
+2729,Buchan Senior Golf Society ,Aberdeenshire,,,,,,,235,,True
+2100,Buchanan Castle Golf Club,Stirling,Glasgow,G63 0HY,18,https://buchanancastlegolfclub.co.uk/,56.0759163,-4.489967,420,,False
+2101,Buckpool Golf Club,Moray,Buckie,AB56 1DU,18,https://buckpoolgolf.com/,57.6716652,-2.987178,525,,True
+2102,Burntisland Golf House Club,Fife,Burntisland,KY3 9LQ,18,https://burntislandgolfhouseclub.co.uk/,56.06824,-3.222258,597,,False
+2103,Bute Golf Club,Argyll & Bute,Isle of Bute,PA20 9PF,18,https://www.butegolfclub.com/,55.76944,-5.064274,123,,False
+2574,CMAE Scotland ,Edinburgh,Falkirk,G12 0TX,18,http://www.cmae-scotland.uk,,,260,,True
+2132,Cabot Highlands ,Moray,Inverness,IV2 7JL,18,https://www.castlestuartgolf.com/,57.5289421,-4.104683,0,,False
+2104,Caird Park Golf Club,Dundee,Dundee,DD4 9BX,18,https://www.golfdundee.co.uk/,56.4844627,-2.958457,8,,False
+2105,Calderbraes Golf Club,South Lanarkshire,Glasgow,G71 7TS,18,,55.83594,-4.100649,213,,False
+2106,Caldwell Golf Club,East Renfrewshire,Glasgow,G78 4AU,18,https://caldwellgolfclub.com/,55.76351,-4.5077,447,,False
+2107,Caledonian Golf Club,Aberdeen City,Aberdeen,AB24 5QB,18,https://www.carnoustiecaledonia.co.uk/,57.1600075,-2.087255,162,,False
+2108,Callander Golf Club,Stirling,Callander,FK17 8EN,18,https://www.callandergolfclub.co.uk/,56.2435646,-4.199163,274,,False
+2109,Cambuslang Golf Club,South Lanarkshire,Glasgow,G72 7NA,18,http://www.cambuslanggolf.co.uk/,55.82437,-4.159017,345,,False
+2110,Campsie Golf Club,East Dunbartonshire,Lennoxtown,G66 7HX,18,http://www.campsiegolfclub.com,55.97992,-4.204819,184,,False
+2111,Canmore Golf Club,Fife,Dunfermline,KY12 0PE,18,https://www.canmoregolfclub.uk/,56.0836449,-3.457111,461,,False
+2112,Caprington Golf Club,East Ayrshire,Kilmarnock,KA1 4UW,18,https://www.capringtongolfclub.com/,55.58642,-4.509143,422,,False
+2113,"Cardrona Hotel, Golf & Spa",Scottish Borders,Peebles,EH45 8NE,18,http://www.macdonaldhotels.co.uk/cardrona/golf/course,55.6419,-3.116542,66,,False
+2114,Cardross Golf Club,Argyll & Bute,Dumbarton,G82 5LB,18,https://www.cardrossgolfclub.co.uk/,55.9614,-4.6484,893,,True
+2115,Carluke Golf Club,South Lanarkshire,Carluke,ML8 5HG,18,https://www.carlukegolfclub.com/,55.7333527,-3.879316,795,,False
+2116,Carnegie Club at Skibo Castle,Highland,Dornoch,IV25 3RQ,18,https://www.carnegieclub.co.uk/golf-championship-links.html,57.8769722,-4.133423,20,,False
+2117,Carnoustie Caledonia Golf Club,Angus,Carnoustie,DD7 7JF,18,https://www.carnoustiecaledonia.co.uk/,56.49771,-2.719346,509,,False
+2118,Carnoustie Craws,Angus,Carnoustie,DD7 7JE,18,https://www.carnoustiegolflinks.com/junior/the-carnoustie-craws/,,,0,,False
+2119,Carnoustie Golf Club,Angus,Carnoustie,DD7 7JF,18,https://www.carnoustiegolflinks.com/,56.49777,-2.719007,568,,False
+2120,Carnoustie Golf Links,Angus,Carnoustie,DD7 7JE,18,https://www.carnoustiegolflinks.com/,56.4988327,-2.713585,1,,False
+2121,Carnoustie Ladies' Golf Club,Angus,Carnoustie,DD7 7JF,18,http://www.carnoustieladiesgolfclub.co.uk/,56.49777,-2.719007,70,,False
+2122,Carnoustie Mercantile Golf Club,Angus,Carnoustie,DD7 6JY,18,https://www.carnoustiemercantile.co.uk/,56.5047874,-2.696183,107,,False
+2123,Carnoustie New Taymouth Golf Club,Angus,Carnoustie,DD7 7JF,18,https://www.carnoustiegolflinks.com/,56.499073,-2.715766,48,,False
+2124,Carnwath Golf Club,South Lanarkshire,Lanark,ML11 8JX,18,https://www.carnwathgc.co.uk,55.7007523,-3.631475,586,,False
+2125,Carradale Golf Club,Argyll & Bute,PA28 6RY,PA28 6RY,18,https://www.carradalegolf.com/,55.58932,-5.46501,169,,True
+2126,Carrbridge Golf Club,Highland,Carrbridge,PH23 3AU,18,https://carrbridgegolf.co.uk/,57.2851868,-3.820852,369,,True
+2709,Carrick Knowe Golf Course,Edinburgh,Edinburgh,EH12 5UZ,18,,55.9409676,-3.25826359,0,,False
+2128,Carrick Speakers Golf Club,South Ayrshire,Girvan,KA26 9HW,18,,55.246994,-4.85839,0,,False
+2127,Carrick at Cameron House Golf Club,Argyll & Bute,Alexandria,G83 8QZ,18,https://www.cameronhouse.co.uk/golf/courses/the-carrick/,56.0393181,-4.637653,514,,False
+2129,Carrickvale Golf Club,Edinburgh,Edinburgh,EH12 5UZ,18,https://www.carrickvalegolfclub.co.uk/,55.9383469,-3.25628257,144,,False
+2130,Castle Douglas Golf Club,Dumfries & Galloway,Castle Douglas,DG7 1BA,18,https://cdgolfclub.co.uk/,54.94242,-3.936125,197,,False
+2131,Castle Park Golf Club,East Lothian,Haddington,EH41 4PL,18,https://www.castleparkgolfclub.co.uk/,55.88044,-2.720498,608,,False
+2133,Cathcart Castle Golf Club,Glasgow,Glasgow,G76 7YL,18,https://www.cathcartcastle.net/,55.7866859,-4.294963,705,,False
+2134,Cathkin Braes Golf Club,South Lanarkshire,Glasgow,G73 4SE,18,https://cathkinbraesgolfclub.co.uk/,55.7981949,-4.208335,948,,False
+2135,Cawder Golf Club,East Dunbartonshire,Glasgow,G64 3QD,18,https://cawdergolfclub.com/,55.9270172,-4.2329,1271,,False
+2136,Charleton Golf Course ,Fife,Leven,KY9 1HG,18,https://charleton.co.uk/,56.2218361,-2.867709,146,,False
+2137,Chase Golf Club,North Lanarkshire,Ayr,KA7 3LB,18,https://thechasegolfclub.co.uk/index.html,55.45199,-4.602912,54,,False
+2138,Clackmannan County Golf Union,Clackmannanshire,,,18,,,,0,,False
+2139,Clober Golf Club,East Dunbartonshire,Glasgow,G62 7HP,18,https://www.clobergolfclub.co.uk/,55.9461,-4.3278,391,,False
+2140,Cluny Golf Club,Fife,Kirkcaldy,KY2 6QU,18,,56.1548157,-3.219294,163,,True
+2141,Clydebank & District Golf Club,West Dunbartonshire,Clydebank,G81 5QY,18,https://www.clydebankdgc.co.uk/,55.9235344,-4.395216,716,,False
+2142,Clydebank Overtoun Golf Club,West Dunbartonshire,Dalmuir,G81 3RE,18,https://www.clydebankovertoun.com/,55.9151268,-4.42536,126,,False
+2143,Clydeview & Cleddans Golf Club,West Dunbartonshire,Clydebank,G81 3RF,18,,55.9157143,-4.424356,0,,False
+2411,Coatbridge Golf Club,North Lanarkshire,Coatbridge,ML5 4TN,18,https://www.activenl.co.uk/lochview-family-golf-centre,55.87235,-4.057554,130,,False
+2144,Cochrane Castle Golf Club,Renfrewshire,Renfrewshire,PA5 0HF,18,https://cochranecastle.com/,55.8222122,-4.517842,508,,True
+2145,Colvend Golf Club,Dumfries & Galloway,Dalbeattie,DG5 4PY,18,https://www.colvendgolfclub.co.uk/,54.8763,-3.7378,146,,True
+2146,Colville Park Golf Club,North Lanarkshire,Motherwell,ML1 4UG,18,https://colvilleparkgc.co.uk/,55.8013725,-3.982487,559,,False
+2147,Comiston Ladies Golf Club,Edinburgh,Edinburgh EH10 6JY,EH10 6JY,18,https://www.comistonladiesgolfclub.co.uk/,55.9159279,-3.205831,44,,True
+2148,Comrie Golf Club,Perth & Kinross,Crieff,PH6 2LR,18,https://www.comriegolf.co.uk/,56.3788147,-3.984457,295,,True
+2149,Corrie Golf Club,North Lanarkshire,Isle of Arran,KA27 8JD,18,https://www.corriegolfclub.com/,55.6603775,-5.154115,85,,True
+2150,Corstorphine 8.30 Golf Club,Edinburgh,Broxburn,EH52 6NX,18,,,,0,,False
+2151,Council of National Golf Unions (CONGU),Edinburgh,St Andrews,KY16 9AT,18,,,,0,,False
+2152,Cowal Golf Club,Argyll & Bute,Dunoon,PA23 8LT,18,https://www.cowalgolfclub.co.uk/,55.9630852,-4.917595,291,,True
+2153,Cowdenbeath Golf Club,Fife,Cowdenbeath,KY4 8PF,18,https://cowdenbeath-golfclub.com/,56.11378,-3.36457,156,,True
+2154,Cowglen Golf Club,Glasgow,Glasgow,G43 1AU,18,https://www.cowglengolfclub.co.uk/,55.8220863,-4.319431,504,,False
+2155,Craibstone Golf Club,Aberdeen City,Aberdeen,AB21 9SX,18,https://www.marshall-leisure.co.uk/,57.18419,-2.22406,349,,True
+2156,Craig Lee Foundation,Stirling,Striling,FK8 2PB,18,,,,0,,False
+2157,Craigie Hill Golf Club,Perth & Kinross,Perth,PH2 0NE,18,http://www.craigiehill.co.uk,56.38567,-3.45644,241,,True
+2158,Craigielaw Golf Club,East Lothian,Longniddry,EH32 0PY,18,https://www.craigielawgolfclub.com/,56.00744,-2.876736,439,,False
+2159,Craigmillar Park Golf Club,Edinburgh,Edinburgh,EH9 3HG,18,https://www.craigmillarpark.co.uk/,55.92469,-3.18325,581,,False
+2160,Craignure Golf Club,Argyll & Bute,Isle of Mull,PA65 6BA,18,https://craignuregolfclub.co.uk/,56.48175,-5.7303,60,,True
+2161,Crail Golfing Society,Fife,Anstruther,KY10 3XN,18,https://crailgolfingsociety.co.uk/,56.2799568,-2.593882,1387,,False
+2162,Crichton Golf Club,Dumfries & Galloway,Dumfries,DG1 4TH,18,http://www.crichtongolfclub.com,55.05514,-3.595731,444,,False
+2163,Crieff Golf Club,Perth & Kinross,Crieff,PH7 3LR,18,http://www.crieffgolf.co.uk,56.3794,-3.8284,923,,False
+2164,Crosshouse Golf Club,East Ayrshire,Kilmarnock,KA1 2RT,18,,55.61095,-4.523923,47,,False
+2165,Crow Wood Golf Club,North Lanarkshire,Glasgow,G69 9JF,18,https://www.crowwoodgolfclub.co.uk/,55.9006729,-4.121328,748,,False
+2166,Cruden Bay Golf Club,Aberdeenshire,Peterhead,AB42 0NN,18,https://crudenbaygolfclub.co.uk/,57.4151955,-1.851963,949,,False
+2167,Cullen Links Golf Club,Moray,Buckie,AB56 4WB,18,https://www.cullenlinksgolf.co.uk/,57.6933975,-2.832284,239,,False
+2168,Cupar Golf Club,Fife,Cupar,KY15 5JT,18,http://www.cupargolfclub.co.uk/,56.3127441,-3.008692,223,,True
+2207,DALCGA,East Dunbartonshire,,,18,https://dalcga.co.uk/,,,183,,True
+2169,Dalbeattie Golf Club,Dumfries & Galloway,Dalbeattie,DG5 4LS,18,https://www.dalbeattiegolfclub.co.uk/,54.93792,-3.83094,229,,False
+2170,Dalhousie Golf Club,Angus,Carnoustie,DD7 7JE,18,https://www.dalhousie.co.uk/,56.4988327,-2.713585,149,,False
+2171,Dalmahoy Hotel & Country Club,Edinburgh,Edinburgh,EH27 8EB,18,https://www.dalmahoyhotelandcountryclub.co.uk/,55.90401,-3.37051,723,,False
+2172,Dalmally Golf Club,Argyll & Bute,Argyll,PA33 1AE,18,https://dalmallygolfclub.co.uk/,56.40487,-5.0083,94,,True
+2173,Dalmunzie Golf Club,Perth & Kinross,Blairgowrie,PH10 7QE,18,https://www.dalmunzieestate.com/golf,56.8122139,-3.469564,19,,False
+2174,Dalziel Park Golf & Country Club,North Lanarkshire,Motherwell,ML1 5RZ,18,,55.7985725,-3.942285,411,,False
+2175,Darwin Escapes,Edinburgh,East Yorkshire,DN14 6QU,18,,,,0,,False
+2176,David Lloyd Rouken Glen Golf Club,East Renfrewshire,Glasgow,G46 7UY,18,https://www.davidlloyd.co.uk/clubs/glasgow-rouken-glen/golf/,55.7949,-4.3249,171,,False
+2177,Deaconsbank Golf Club,East Renfrewshire,Glasgow,,18,https://deaconsbank.cw.sct.dotgolf.co.uk,55.7949,-4.3249,36,,False
+2178,Deer Park Golf & Country Club,West Lothian,West Lothian,EH54 8AB,18,http://www.deer-park.co.uk,55.91282,-3.5327,673,,False
+2179,Deeside Golf Club,Aberdeen City,Aberdeen,AB15 9DL,18,https://www.deesidegolfclub.com/,57.11076,-2.19424,1508,,True
+2180,Dental & Medical Golf Society of Edinburgh,Edinburgh,Edinburgh,EH1 3QP,18,,,,0,,False
+2181,Dirleton Castle Ladies Golf Club,East Lothian,Gullane,EH31 2BB,18,https://dirletoncastleladies.chessck.co.uk/,,,0,,False
+2182,Doon Valley Golf and Social Club,East Ayrshire,Ayr,KA6 7JT,18,,55.36153,-4.495804,21,,False
+2183,Dougalston Golf Club,East Dunbartonshire,Glasgow,G62 8HJ,18,https://www.dougalstongolfclub.co.uk/,55.94854,-4.29527,246,,False
+2184,Douglas Park Golf Club,East Dunbartonshire,,G61 2TJ,18,https://www.douglasparkgolfclub.co.uk/,55.9214821,-4.317026,816,,False
+2185,Douglas Water Golf Club,South Lanarkshire,Rigside,ML11 9NP,18,,55.594532,-3.789352,82,,False
+2186,Downfield Golf Club,Dundee,Dundee,DD2 3QP,18,https://www.downfieldgolf.com/,56.4891968,-3.027159,856,,False
+2188,Drongan Golf Club,South Ayrshire,Drongan,KA6 7DH,18,,55.4327164,-4.457788,60,,False
+2189,Drumoig Golf Club,Fife,St Andrews,KY16 0DS,18,http://drumoig.cw.sct.dotgolf.co.uk,52.9645653,-0.00279246364,490,,False
+2190,Drumpellier Golf Club,North Lanarkshire,Coatbridge,ML5 1RX,18,https://www.drumpelliergolfclub.co.uk/visitors/,55.8689232,-4.065748,664,,False
+2191,Duddingston Golf Club,Edinburgh,Edinburgh,EH15 3QD,18,https://www.duddingstongolfclub.co.uk/,55.9371872,-3.135056,698,,False
+2192,Duff House Royal Golf Club,Aberdeenshire,Banff,AB45 3SX,18,http://www.duffhouseroyal.com,57.6609726,-2.521268,647,,False
+2193,Dufftown Golf Club,Moray,Dufftown,AB55 4BS,18,https://dufftowngolfclub.com/,57.437,-3.1499,295,,True
+2195,Dullatur Golf Club,North Lanarkshire,Glasgow,G68 0DW,18,http://www.dullaturgolf.com/,55.9610023,-4.010301,1429,,False
+2196,Dumbarnie Golf Links,Fife,Fife,KY8 6JQ,18,https://www.dumbarnielinks.com/,56.21557,-2.883792,0,,False
+2197,Dumbarton Golf Club,West Dunbartonshire,Broadmeadow,G82 2BQ,18,https://www.dumbartongolfclub.co.uk/,55.95185,-4.566319,612,,False
+2198,Dumbartonshire Golf Union,East Dunbartonshire,,,18,https://dgu.org.uk,,,8,,False
+2199,Dumfries & County Golf Club,Dumfries & Galloway,Dumfries,DG1 1JX,18,https://thecounty.co.uk/,55.0801277,-3.601097,817,,False
+2200,Dumfries & Galloway Golf Club,Dumfries & Galloway,Dumfries,DG2 7NY,18,https://www.dandggolfclub.co.uk/,55.0652161,-3.62764,728,,True
+2201,Dumfriesshire Ladies County Golf Association,Dumfries & Galloway,,,18,,,,1,,False
+2202,Dun Ochil Golf Club,Perth & Kinross,Auchterarder,PH3 1NF,18,http://dunochil.com/website/,56.2833862,-3.752183,96,,True
+2203,Dun Whinny Golf Club,Perth & Kinross,Auchterarder,PH3 1NB,18,https://www.dunwhinny.com/,56.2833,-3.7521,126,,True
+2204,Dunaverty Golf Club,Argyll & Bute,Argyll,PA28 6RW,18,https://www.dunavertygolfclub.com/,55.3127,-5.6448,449,,True
+2205,Dunbar Castle Golf Club,East Lothian,Tranent,EH34 5AB,18,,,,0,,False
+2206,Dunbar Golf Club,East Lothian,Dunbar,EH42 1LL,18,https://dunbargolfclub.com/,55.99771,-2.499694,700,,False
+2208,Dunblane New Golf Club,Stirling,Dunblane,FK15 0LJ,18,http://www.dngc.co.uk/,56.1865,-3.9611,1019,,False
+2209,Dunbracken Ladies Golf Club,Perth & Kinross,Auchterarder,PH3 1NF,18,,56.2794571,-3.758132,46,,False
+2210,Dundas Parks Golf Club,Edinburgh,South Queensferry,EH30 9SS,18,https://www.dundasparksgolf.co.uk,55.97864,-3.400849,595,,False
+2211,Dundonald Links Golf Club,North Ayrshire,Irvine,KA11 5BF,18,https://dundonaldlinks.com/,55.5839844,-4.6517,0,,False
+2212,Dunecht House Golf Club,Aberdeenshire,Westhill,AB32 7AW,18,https://dunechthousegolfclub.co.uk/,57.16197,-2.40976,341,,True
+2213,Dunfermline Golf Club,Fife,Fife,KY12 8QW,18,http://www.dunfermlinegolfclub.com,56.05733,-3.500089,1074,,False
+2214,Dunkeld & Birnam Golf Club,Perth & Kinross,PH8 0ES,PH8 0ES,18,https://www.dunkeldandbirnamgolfclub.co.uk/,56.5710258,-3.572291,277,,False
+2215,Dunnikier Park Golf Club,Fife,Fife KY1 3LP,KY1 3LP,18,https://www.dunnikierparkgolfclub.com/,56.13603,-3.162235,530,,False
+2216,Dunning Golf Club,Perth & Kinross,Perth,PH2 0RH,18,https://www.dunninggolfclub.co.uk/,56.31336,-3.593478,374,,False
+2217,Dunoon Golf Society,Argyll & Bute,Dunoon,PA23 8HJ,18,,55.9628944,-4.920454,0,,False
+2218,Duns Golf Club,Scottish Borders,Duns,TD11 3NR,18,https://www.dunsgolfclub.com/,55.7746,-2.3692,221,,False
+2219,Durness Golf Club,Highland,Lairg,IV27 4PN,18,https://www.durnessgolfclub.org/,58.5679932,-4.747875,58,,False
+2221,Earlsferry Thistle Golf Club,Fife,Leven,KY9 1AY,18,https://earlsferrythistle.org.uk/,56.1884155,-2.842197,107,,False
+2222,Earlsferry Thistle Ladies Golf Club,Fife,Leven,KY9 1AY,18,,56.1884155,-2.842197,0,,False
+2223,East Kilbride Golf Club,South Lanarkshire,Glasgow,G74 4PH,18,https://www.ekgolfclub.com/,55.78307,-4.16142,1066,,False
+2224,East Kilbride Inland Revenue Ladies Section,North Lanarkshire,Glasgow,G75 8LZ,18,,55.7554,-4.216163,0,,False
+2225,East Kilbride Sports Club Golf Club,South Lanarkshire,Glasgow,G75 0QZ,18,https://eastkilbridesportsclub.com/,55.7483368,-4.145364,30,,False
+2226,East Lothian Junior Golf League,Edinburgh,North Berwick,EH39 4AT,18,,,,0,,False
+2227,East Lothian Ladies County Golf Association,East Lothian,,,18,,,,257,,True
+2228,East Renfrewshire Golf Club,East Renfrewshire,Glasgow,G77 6RT,18,https://www.eastrengolfclub.co.uk/,55.7562332,-4.355906,944,,False
+2229,Easter Moffat Golf Club,North Lanarkshire,Airdrie,ML6 8NP,18,http://www.emgc.org.uk/,55.8761864,-3.921365,660,,False
+2726,Eastwood Twelve Golf Club,East Renfrewshire,,,12,https://eastwoodtwelve.co.uk/?utm_source=google&utm_medium=organic&utm_campaign=ew12-gbp,55.74466,-4.3604,298,,False
+2230,Eden Club,Fife,Dairsie,KY15 4SW,18,,56.3559723,-2.944453,0,,False
+2231,EdenFields Golf Club,Fife,KY15 5RS,KY15 5RS,18,https://www.elmwoodgolf.co.uk/season-tickets/edenfields-golf-club/,56.3033676,-3.056848,31,,False
+2232,Edinburgh Academical Golf Club,Edinburgh,Edinburgh,EH3 7RN,18,,,,0,,False
+2233,Edinburgh City Chambers Golf Club,Edinburgh,Edinburgh,EH3 5AX,18,,,,0,,False
+2234,Edinburgh Leisure Golf Club,Edinburgh,Edinburgh,EH10 6JY,18,https://www.edinburghleisure.co.uk/activities/golf,55.9409676,-3.25826359,328,,False
+2235,Edinburgh Thistle Golf Club,Edinburgh,Edinburgh,EH10 6JY,18,https://www.edinburghthistlegolfclub.com/,55.9159279,-3.205831,43,,False
+2236,Edinburgh Western Golf Club,Edinburgh,Edinburgh,EH10 6JY,18,https://ewgc.golf-club.website/website/,55.9159279,-3.205831,39,,True
+2237,Edzell Golf Club,Angus,Brechin,DD9 7TF,18,https://www.edzellgolfclub.com/,56.8057,-2.6545,856,,False
+2238,Elderslie Golf Club,Renfrewshire,Eldeslie,PA5 9AZ,18,https://eldersliegolfclub.com/,55.8381348,-4.474299,708,,False
+2239,Electric Golf Club,Edinburgh,Edinburgh,EH15 2QZ,18,,,,0,,False
+2240,Elgin Golf Club,Moray,Elgin,IV30 8SX,18,https://www.elgingolfclub.com/,57.6297,-3.313181,915,,False
+2241,Elie & Earlsferry Ladies Golf Club,Fife,Elie,KY9 1AS,18,http://www.ladiesgolfelie.co.uk/,56.1884155,-2.842197,376,,False
+2242,Elie Sports Club,Fife,Elie,KY9 1AS,18,,56.1915245,-2.830914,104,,False
+2243,Elmwood Golfing Society,Fife,Cupar,KY15 5RS,18,https://www.elmwoodgolf.co.uk/season-tickets/elmwood-golfing-society/,56.3021,-3.0584,109,,False
+2244,England Golf,Edinburgh,Lincolnshire,LN10 6PU,18,,,,0,,False
+2245,Eriskay Whisky Galore Golf Club,Highland,Tain,IV19 1JE,18,https://www.eriskaygolfclub.com/,57.8128853,-4.050833,36,,False
+2246,Erskine Golf Club,Renfrewshire,Bishopton,PA7 5PH,18,https://www.erskinegolfclublimited.co.uk/,55.91983,-4.505155,914,,False
+2247,Eyemouth Golf Club,Scottish Borders,Eyemouth,TD14 5SF,18,http://www.eyemouthgolfclub.co.uk,55.8655739,-2.089691,566,,False
+2248,Fairmont St Andrews,Fife,St Andrews,KY16 8PN,18,http://www.fairmont.com/st-andrews-scotland,56.31878,-2.742589,88,,False
+2249,Faldo Series,Edinburgh,Windsor,SL4 1HQ,18,,,,0,,False
+2250,Falkirk Golf Club,Falkirk,Falkirk,FK2 7YP,18,http://www.falkirkgolfclub.co.uk/,56.00618,-3.816,812,,False
+2251,Falkirk Tryst Golf Club,Falkirk,FK5 4BT,FK5 4BD,18,https://www.falkirktrystgolfclub.com/,56.0242157,-3.815188,910,,False
+2252,Falkland Golf Club,Fife,Cupar,KY15 7AA,9,https://www.falklandgolfclub.com/,56.25599,-3.19849,217,,True
+2253,Fereneze Golf Club,East Renfrewshire,Glasgow,G78 1HJ,18,https://ferenezegolfclub.co.uk,55.8047066,-4.401794,1049,,False
+2254,Fife County Ladies Golf Association,Fife,,,18,https://fclga.blogspot.com/,,,0,,True
+2723,Fife Golf Limited,Fife,Glenrothes,KY7 6NR,,,,,0,,False
+2255,Fife Golfing Association,Fife,,KY3 9EN,18,,,,0,,True
+2256,Forfar Golf Club,Angus,Forfar,DD8 2RL,18,http://www.forfargolfclub.co.uk,56.6469421,-2.843514,407,,True
+2257,Forres Golf Club,Moray,Forres,IV36 2RD,18,https://forresgolfclub.co.uk/,57.60858,-3.596503,461,,True
+2258,Forrester Park Golf Club,Fife,Cairneyhill,KY12 8RF,18,https://www.forresterparkresort.com/,56.0645828,-3.531692,443,,True
+2259,Fort Augustus Golf Club,Highland,Fort Augustus,PH32 4DS,18,,57.1374664,-4.688791,22,,False
+2260,Fort William Golf Club,Highland,Fort William,PH33 6SW,18,https://fortwilliamgolfclub.com/,56.8491,-5.0469,308,,True
+2261,Fortrose & Rosemarkie Golf Club,Highland,Fortrose,IV10 8SE,18,https://fortrosegolfclub.co.uk/,57.58229,-4.108931,962,,False
+2262,Fraserburgh Golf Club,Aberdeenshire,Aberdeenshire,AB43 8TL,18,https://fraserburghgolfclub.org/,57.6784,-1.9961,825,,True
+2263,Gairloch Golf Club,Highland,IV21 2BD,IV21 2BD,18,https://gairlochgolfclub.co.uk/index.html,57.7168,-5.6848,149,,True
+2264,Galashiels Golf Club,Scottish Borders,Galashiels,TD1 2NJ,18,http://www.galashielsgolfclub.co.uk,55.6209373,-2.80419,186,,True
+2265,Galloway Ladies County Golf Association,Dumfries & Galloway,,DG8 8NZ,18,http://www.gallowayladies.co.uk/,,,43,,False
+2266,Gannochy Golf Club,Angus,Brechin,DD9 7DR,18,,,,0,,False
+2267,Garmouth & Kingston Golf Club,Moray,Fochabers,IV32 7NJ,18,http://garmouthkingstongolfclub.com/,57.6665955,-3.105525,170,,False
+2268,Gatehouse Golf Club,Dumfries & Galloway,Gatehouse,DG7 2BE,18,http://www.gatehousegolfclub.com/,54.8952255,-4.178061,158,,False
+2269,George Heriot's FP Golf Club,Edinburgh,Edinburgh,EH3 6AS,18,,,,0,,False
+2270,Gifford Golf Club,East Lothian,EH41 4JE,EH41 4JE,18,https://www.giffordgolfclub.com/,55.9001961,-2.751106,647,,False
+2271,Girvan Golf Club,South Ayrshire,Girvan,KA26 9HW,18,https://www.girvangolf.com/,55.246994,-4.85839,151,,False
+2272,Glacier Golf Club,East Ayrshire,KA3 2HW,KA3 6FG,18,,55.58626,-4.508326,34,,False
+2731,Glasgow Gailes Links ,South Ayrshire,Irvine,KA11 5AE,18,https://gaileslinks.co.uk,,,0,,False
+2273,Glasgow Golf Club,East Dunbartonshire,Glasgow,G61 2TW,18,https://glasgowgolfclub.com/,55.908432,-4.30230856,1489,,False
+2274,Glasgow Golf Union,Glasgow,,KA15 1AQ,18,https://www.glasgowgolfunion.com,,,3,,True
+2275,Glasgow Victoria Golf Club,North Lanarkshire,Glasgow,G33 1AH,18,,55.8766,-4.179853,3,,False
+2276,Gleddoch Resorts Ltd,Renfrewshire,Port Glasgow,PA14 6YE,18,https://www.gleddoch.com/,55.9181,-4.5861,452,,False
+2277,Glen Golf Club,East Lothian,North Berwick,EH39 4LE,18,http://www.glengolfclub.co.uk,56.0572662,-2.705085,813,,False
+2278,Glenalmond Junior Golf Club,Perth & Kinross,Perth,PH1 3RY,18,,,,38,,False
+2279,Glenbervie Golf Club,Falkirk,Larbert,FK5 4SJ,18,http://www.glenberviegolfclub.com,56.03485,-3.852856,829,,False
+2280,Glencorse Golf Club,Midlothian,Penicuik,EH26 0RD,18,https://www.glencorsegolfclub.com/,55.8493,-3.200413,882,,True
+2281,Glencruitten Golf Club,Argyll & Bute,Oban,PA34 4PU,18,https://golfoban.com/,56.4121,-5.4593,694,,True
+2282,Gleneagles,Perth & Kinross,Auchterarder,PH3 1NF,18,http://www.gleneagles.com,56.2830734,-3.75422,0,,False
+2283,Glenearn Golf Club,Perth & Kinross,Auchterarder,PH3 1NF,18,https://glenearngolfclub.co.uk/,56.2833862,-3.752183,203,,True
+2284,Glenrothes Golf Club,Fife,Glenrothes,KY6 2LA,18,http://www.glenrothesgolf.org.uk/,56.1880722,-3.209552,255,,False
+2285,Gogarburn Golf Club,Edinburgh,Newbridge,EH28 8NN,18,https://www.gogarburngc.com/,55.93316,-3.350048,269,,False
+2286,Golf Dundee Club,Dundee,Dundee,DD4 9BX,18,https://www.golfdundee.co.uk/,,,0,,False
+2287,Golf Dundee Ladies Section,Angus,Dundee,DD4 9BX,18,,56.4844627,-2.958457,0,,False
+2288,Golf House Club Elie,Fife,Leven,KY9 1AS,18,https://www.golfhouseclub.co.uk/members/,56.1884155,-2.842197,601,,False
+2290,Golf Ireland,Edinburgh,County Kildare,W23 R8C6,18,,,,0,,False
+2644,Golf South Ayrshire Golf Club,South Ayrshire,Troon,KA10 6NF,18,http://www.golfsouthayrshire.com,55.4395981,-4.640012,360,,False
+2289,Golf in Scotland Series Events,Edinburgh,West Lothian,EH48 0LL,18,,,,0,,False
+2713,GolfIt Glasgow Golf Club,Glasgow,,,9,,55.8785553,-4.17748833,0,,False
+2292,Golspie Golf Club,Highland,Golspie,KW10 6ST,18,https://www.golspiegolfclub.co.uk/,57.9703979,-3.986953,154,,False
+2293,Gordonians Golf Club,Aberdeen City,Aberdeen,AB15 4BR,18,,,,0,,False
+2294,Gourock Golf Club,Inverclyde,Inverclyde,PA19 1HD,18,https://gourockgolfclub.com/,55.9468,-4.8411,953,,True
+2295,Grange & Broughty Golf Club,Angus,Dundee,DD5 4AW,18,https://grangeandbroughtygc.co.uk/,56.482235,-2.81209,941,,False
+2296,Grangemouth Golf Club,Falkirk,Falkirk,FK2 0YA,18,http://www.grangemouthgolfclub.co.uk/,55.99612,-3.687016,825,,True
+2297,Grantown-on-Spey Golf Club,Highland,Grantown-on-Spey,PH26 3HY,18,http://www.grantownonspeygc.co.uk,57.33258,-3.59935,278,,False
+2298,Greenburn Golf Club,West Lothian,Bathgate,EH47 9HJ,18,https://www.greenburngolfclub.co.uk/,55.8243,-3.700434,710,,False
+2299,Greenhills Golf Club,South Lanarkshire,,G75 9DW,18,https://greenhillsgolfclub.co.uk,55.7266464,-4.190724,62,,False
+2300,Greenock Golf Club,Inverclyde,Greenock,PA16 8RE,18,https://greenockgolfclub.co.uk/,55.9511,-4.7864,598,,True
+2301,Greenock Whinhill Golf Club,Inverclyde,Inverclyde,PA16 9LN,18,https://ilactivegolf.com/,55.935585,-4.764352,272,,False
+2302,Griers Golf Club,Glasgow,Glasgow,G32 0AG,18,,55.8766,-4.179853,36,,False
+2303,Gullane Golf Club,East Lothian,Gullane,EH31 2BB,18,https://www.gullanegolfclub.com,56.0339,-2.8364,1316,,False
+2304,Gullane Ladies Golf Club,East Lothian,Gullane,EH31 2BB,18,https://www.gullanegolfclub.co.uk/gullane_ladies_golf_club,56.03405,-2.838118,0,,False
+2305,Haddington Golf Club,East Lothian,Haddington,EH41 4PT,18,http://haddingtongolf.co.uk/,55.9549065,-2.764514,642,,False
+2306,Haggs Castle Golf Club,Glasgow,Glasgow,G41 4SN,18,https://www.haggscastlegolfclub.com/,55.8384,-4.307993,659,,False
+2307,Hailes Golf Club,Edinburgh,Edinburgh,EH14 2JD,18,,,,0,,False
+2308,Hamilton Golf Club,South Lanarkshire,Hamilton,ML3 7UE,18,https://www.hamiltongolfclub.co.uk/,55.7611122,-4.007869,1045,,False
+2309,Harburn Golf Club,West Lothian,West Calder,EH55 8RS,18,https://harburngolfclub.co.uk/,55.83901,-3.53881,828,,False
+2310,Harrison Golf Club,Edinburgh,Edinburgh,EH10 6JZ,18,http://harrisongolfclub.org.uk/,55.91614,-3.204318,68,,True
+2311,Hawick Golf Club,Scottish Borders,Hawick,TD9 0NY,18,http://www.hawickgolfclub.com/,55.4119225,-2.799796,345,,True
+2312,Hayston Golf Club,East Dunbartonshire,Glasgow,G66 1RN,18,https://www.haystongolf.com/,55.9434929,-4.173073,514,,False
+2313,Hazlehead Golf Club,Aberdeen City,Aberdeen,AB15 8BD,18,https://www.hazleheadgolfclub.co.uk/,57.1407433,-2.179514,356,,False
+2314,Helensburgh Golf Club,Argyll & Bute,Helensburgh,G84 9HZ,18,https://www.helensburghgolfclub.co.uk/,56.0147438,-4.709358,688,,True
+2315,Helmsdale Golf Club,Highland,Sutherland,KW8 6JL,18,http://www.helmsdale.org/golf.html,58.1209,-3.6581,14,,False
+2316,Hilton Park Golf Club,East Dunbartonshire,Glasgow,G62 7HB,18,https://hiltonpark.net/,55.9683876,-4.36294,1151,,False
+2317,Hirsel Golf Club,Scottish Borders,Coldstream,TD12 4NJ,18,https://www.hirselgc.co.uk/,55.65061,-2.261847,0,,False
+2318,Hollandbush Golf Club,South Lanarkshire,Lanark,ML11 0JS,18,http://www.hollandbushgolfclub.co.uk/,55.6230927,-3.892141,388,,False
+2319,Honourable Company of Edinburgh Golfers,East Lothian,Gullane,EH31 2EG,18,,56.0415764,-2.82117,284,,False
+2320,Hopeman Golf Club,Moray,Moray,IV30 5YA,18,https://www.hopemangolf.club/,57.7078438,-3.421937,436,,False
+2321,Huntly Golf Club,Aberdeenshire,Huntly,AB54 4SH,18,https://www.huntlygolfclub.com/,57.4554,-2.780454,283,,False
+2322,Hybrid Golf,Edinburgh,Cheshire,WA8 9EB,18,,,,0,,False
+2323,Inchmarlo Golf Club,Aberdeenshire,AB31 4BQ,AB31 4BQ,18,https://www.inchmarlogolf.co.uk/,57.0604668,-2.528532,472,,True
+2324,Independent Schools Golf Association,Edinburgh,London,NW7 2BN,18,,,,0,,False
+2325,Innellan Golf Club,Argyll & Bute,Dunoon,PA23 7SG,18,https://www.innellangolfclub.co.uk/,55.89614,-4.957232,96,,False
+2326,Innerleithen Golf Club,Scottish Borders,EH44 6NL,EH44 6NL,18,http://www.innerleithengolf.co.uk/,55.64855,-3.067089,208,,True
+2327,Insch Golf Club,Aberdeenshire,Insch,AB52 6JY,18,https://www.inschgolfclub.co.uk/,57.3458138,-2.616331,412,,False
+2328,Inverallochy Golf Club,Aberdeenshire,Fraserburgh,AB43 8XY,18,https://inverallochygolfclub.com/,57.66952,-1.92072,466,,True
+2329,Inveraray Golf Club,Argyll & Bute,Argyll,PA32 8XT,18,,56.2208557,-5.087351,27,,False
+2330,Invergordon Golf Club,Highland,Invergordon,IV18 0BD,18,https://invergordongolf.co.uk/,57.6918564,-4.187376,457,,True
+2331,Inverness Golf Club,Highland,Inverness,IV2 3XQ,18,https://www.invernessgolfclub.co.uk/,57.47339,-4.200334,1053,,False
+2332,Inverurie Golf Club,Aberdeenshire,Inverurie,AB51 5JB,18,https://www.inveruriegolfclub.co.uk/,57.2806,-2.3965,1005,,True
+2333,Irish Golfing Society Scotland,Glasgow,Glasgow,G61 4PN,18,,,,0,,False
+2335,Irvine Ravenspark Golf Club,North Ayrshire,Irvine,KA12 8SR,18,https://www.irgc.co.uk/,55.6312752,-4.678045,209,,False
+2336,Islay Golf Club,Argyll & Bute,Isle of Islay,PA42 7AN,18,https://islaygolfclub.co.uk/,55.6617546,-6.250827,213,,False
+2337,Isle of Barra Golf Club,Eilean Siar,Isle of Barra,HS9 5XX,18,https://isleofbarra.com/barragolfclub.htm,57.0083,-7.5003,33,,False
+2338,Isle of Harris Golf Club,Eilean Siar,Isle of Harris,HS3 3HX,18,https://www.harrisgolf.com/,57.8317223,-7.034114,209,,True
+2339,Isle of Seil Golf Club,Argyll & Bute,Oban,PA34 4RA,18,https://isleofseil.cw.sct.dotgolf.co.uk/home,56.28974,-5.606334,87,,True
+2340,Isle of Skye Golf Club,Highland,Isle of Skye,IV48 8TD,18,https://isleofskyegolfclub.co.uk/,57.3100471,-6.094915,176,,True
+2341,Jedburgh Golf Club,Scottish Borders,Jedburgh,TD8 6TA,18,https://www.jedburghgolfclub.co.uk/,55.4696236,-2.576998,188,,True
+2342,Junior Golf East Lothian,East Lothian,Tranent,EH33 1LZ,18,,,,0,,False
+2343,Junior Golf Scotland,Edinburgh,Renfrewshire,G46 6EW,18,,,,145,,False
+2344,Junior Tour Scotland,Edinburgh,Prestonpans,EH32 9GA,18,https://www.juniortourscotland.com,,,637,,False
+2345,Keith Golf Club,Moray,Keith,AB55 5GF,18,http://www.keithgolfclub.co.uk/,57.5423622,-2.96726,179,,False
+2346,Kelso Golf Club,Scottish Borders,Kelso,TD5 7SL,18,http://www.kelsogolfclub.co.uk/,55.6079979,-2.431581,366,,False
+2347,Kemnay Golf Club,Aberdeenshire,Inverurie,AB51 5RA,18,,57.2293663,-2.44969,699,,False
+2348,Kenmore Golf Club,Perth & Kinross,Kenmore,PH15 2HN,18,https://www.taymouth.co.uk,56.58797,-4.002746,63,,True
+2349,Kettledrum Golf Club,Angus,Dundee,DD1 5NQ,18,,56.4844627,-2.958457,18,,False
+2350,Kidsneuk Ladies Golf Club,North Ayrshire,North Ayshire,KA12 8SR,18,https://kidsneukladies.cw.sct.dotgolf.co.uk/,55.6312752,-4.678045,39,,False
+2351,Kilbirnie Place Golf Club,North Ayrshire,Kilbirnie,KA25 7AT,18,https://www.kilbirnieplacegc.co.uk/,55.7534523,-4.695267,281,,True
+2352,Kilbowie Golf Club,West Dunbartonshire,Clydebank,G81 3RE,18,https://dgu.org.uk/clydeview-gc/,55.915,-4.4267,16,,False
+2353,Killin Golf Club,Stirling,Killin,FK21 8TX,9,https://www.killingolfclub.co.uk/,56.4788742,-4.32154,76,,True
+2354,Kilmacolm Golf Club,Inverclyde,Kilmacolm,PA13 4PD,18,http://www.kilmacolmgolfclub.com,55.8893,-4.6076,918,,False
+2355,Kilmarnock (Barassie) Golf Club,South Ayrshire,Troon,KA10 6SY,18,https://www.kbgc.co.uk/,55.56,-4.65,999,,False
+2356,Kilspindie Golf Club,East Lothian,Longniddry,EH32 0QD,18,https://www.kilspindiegolfclub.co.uk/,56.0126,-2.8726,717,,False
+2357,Kilsyth Lennox Golf Club,North Lanarkshire,Glasgow,G65 0RS,18,https://www.kilsythlennox.com/,55.98396,-4.0528,383,,True
+2358,King James VI Golf Club,Perth & Kinross,Perth,PH2 8NR,18,https://www.kingjamesvi.co.uk/,56.38863,-3.425755,429,,False
+2359,Kingennie Golf Club,Angus,Dundee,DD5 3RD,9,https://www.forbesofkingennie.co.uk/golf/kingennie-golf-course/,56.51461,-2.84696,618,,False
+2360,Kinghorn Golf Club,Fife,Burntisland,KY3 9RS,18,https://www.kinghorngolfclub.com/,56.0676765,-3.179771,220,,False
+2361,Kinghorn Thistle Golf Club,Fife,Burntisland,KY3 9RS,18,https://www.kinghorngolfclub.com/,56.0674477,-3.179782,0,,False
+2362,Kings Acre Golf Club,Midlothian,Lasswade,EH18 1AU,18,https://www.kings-acregolf.com/,55.89083,-3.117318,527,,False
+2363,Kings Golf Club,Highland,Inverness,IV3 8AX,18,https://www.kingsgolfclubinverness.co.uk/,57.4660263,-4.255089,1094,,False
+2011,Kingsbarns Golf Links Golf Club,Edinburgh,,KY16 8QD,18,https://www.kingsbarns.com,56.2994576,-2.66313958,0,,False
+2364,Kingsbarns Golfing Society,Fife,St. Andrews,KY16 8SS,18,,56.29908,-2.64608,0,,False
+2365,Kingsfield Golf Club,West Lothian,Linlithgow,EH49 7LS,9,https://kingsfieldgolfandleisure.co.uk/,55.9839859,-3.55971,638,,True
+2366,Kingsfield Ladies Golf Club,West Lothian,Linlithgow,EH49 7LS,18,,,,0,,True
+2367,Kingsknowe Golf Club,Edinburgh,Edinburgh,EH14 2JD,18,http://www.kingsknowe.com,55.91401,-3.262601,836,,False
+2368,Kingussie Golf Club,Highland,Kingussie,PH21 1LR,18,https://kingussiegolfclub.co.uk/,57.0887642,-4.056087,249,,False
+2369,Kinloss Country Golf Club Ltd,Moray,Forres,IV36 2UB,18,,,,0,,False
+2370,Kinross Golf Club,Perth & Kinross,Kinross,KY13 8EU,18,http://www.kinrossgolfclub.co.uk/,56.20979,-3.416331,859,,False
+2371,Kintore Golf Club,Aberdeenshire,Inverurie,AB51 0UR,18,https://www.kintoregolfclub.net/,57.2464676,-2.336452,361,,False
+2717,Kippie ,Aberdeen City,Aberdeen,AB13 0AB,,https://kippielodge.co.uk,57.1035767,-2.250633,31,,True
+2372,Kirkcaldy Golf Club,Fife,Kirkcaldy,KY2 5LT,18,https://kirkcaldygolfclub.co.uk/,56.10038,-3.177176,435,,True
+2373,Kirkcudbright Golf Club,Dumfries & Galloway,Kirkcudbright,DG6 4EZ,18,https://www.kirkcudbrightgolf.co.uk/,54.84178,-4.040943,277,,True
+2374,Kirkhill Golf Club,South Lanarkshire,Glasgow,G72 8YN,18,http://www.kirkhillgolfclub.org.uk/,55.8047943,-4.173459,763,,False
+2375,Kirkintilloch Golf Club,East Dunbartonshire,Glasgow,G66 1RN,18,https://www.kirkintillochgolfclub.co.uk,55.9434929,-4.173073,598,,False
+2376,Kirriemuir Golf Club,Angus,Kirriemuir,DD8 4LN,18,https://www.kirriemuirgolfclub.co.uk/,56.6868668,-2.999549,565,,False
+2377,Knightswood Golf Club,Glasgow,Glasgow,G13 3DN,18,https://www.glasgowlife.org.uk/sport/venues/knightswood-golf-course,55.8912,-4.352183,71,,False
+2705,Kotarana (Test) Golf Club,Edinburgh,Viking Way,KY11 2UU,9,https://www.scottishgolf.org,-36.8872,174.84053,184,,True
+2710,Kotarana NCO Golf Club,Edinburgh,,,,,56.0278778,-3.25628257,6,,False
+2378,Kyles of Bute Golf Club,Argyll & Bute,Tighnabruaich,PA21 2BH,18,https://www.kylesofbutegolfclub.co.uk/,55.88,-5.2453,76,,True
+2379,Ladies Golf Club Troon,South Ayrshire,Troon,KA10 6HE,18,https://tlgct.org.uk/,55.5293922,-4.645995,316,,False
+2380,"Ladies Panmure Golf Club, Monifieth",Angus,Dundee,DD5 4AW,18,https://ladiespanmuregolf.co.uk/club/,56.4821625,-2.812353,55,,True
+2381,Ladybank Golf Club,Fife,Cupar,KY15 7RA,18,https://ladybankgolf.co.uk/,56.2821732,-3.124282,895,,False
+2382,Lamlash Golf Club,North Ayrshire,Isle of Arran,KA27 8JU,18,https://lamlashgolfclub.com/,55.547,-5.1308,132,,False
+2383,Lanark Golf Club,South Lanarkshire,Lanark,ML11 7RX,18,https://www.lanarkgolfclub.co.uk/,55.67236,-3.753722,707,,False
+2384,Lanarkshire Golf Association,South Lanarkshire,,,18,http://lanarkshiregolf.com/,,,33,,False
+2385,Lanarkshire Ladies County Golf Association,North Lanarkshire,,,18,,,,121,,True
+2386,Langholm Golf Club,Dumfries & Galloway,Langholm,DG13 0JS,18,https://www.langholmgolfclub.co.uk/,55.15085,-2.995449,106,,False
+2387,Langlands Golf Club,South Lanarkshire,East Kilbride,G75 9DW,18,http://www.langlandsgolfclub.co.uk/,55.7266464,-4.190724,270,,False
+2388,Largs Golf Club,North Ayrshire,Largs,KA30 8EU,18,https://www.largsgolfclub.co.uk/,55.78444,-4.856472,849,,False
+2389,Larkhall Golf Club,South Lanarkshire,Larkhall,ML9 3AA,18,https://www.slleisureandculture.co.uk/info/243/larkhall_golf_course,55.73549,-3.951589,167,,False
+2390,Lauder Golf Club,Scottish Borders,Lauder,TD2 6RS,18,http://lauder.golf-club.website,55.70421,-2.749776,173,,False
+2391,Leadhills Golf Club,South Lanarkshire,Biggar,ML12 6XT,18,,55.4156876,-3.762618,77,,False
+2392,Lenzie Golf Club,East Dunbartonshire,Glasgow,G66 5DA,18,https://www.lenziegolfclub.co.uk/,55.914917,-4.15042,974,,False
+2393,Leslie Golf Club,Fife,Glenrothes,KY6 3EZ,18,https://www.lesliegolfclub.co.uk/,56.2050171,-3.213794,11,,True
+2394,Letham Golf Club,Perth & Kinross,Perth,PH1 2UJ,18,,56.40422,-3.43204,31,,True
+2395,Leuchars Station Golf Club,Fife,St Andrews,KY16 0JX,18,https://www.armygolf.co.uk/locations/leuchars-station/,56.38238,-2.875826,36,,False
+2396,Leven Golfing Society ,Fife,Fife,KY8 4HS,18,http://www.levengolfingsociety.co.uk/,56.1976471,-2.989842,639,,False
+2397,Leven Thistle Golf Club,Fife,,KY8 4JF,18,https://www.leventhistlegc.co.uk/,56.1980553,-2.988222,578,,True
+2398,Liberton Golf Club,Edinburgh,Edinburgh,EH16 5UJ,18,https://libertongc.co.uk/,55.9194,-3.148158,626,,False
+2399,Lilliardsedge Golf Club,Scottish Borders,Jedburgh,TD8 6TZ,18,https://wigtownshirecounty.com/,55.5285759,-2.591231,112,,False
+2400,Linlithgow Golf Club,West Lothian,Linlithgow,EH49 6QF,18,https://linlithgowgolf.co.uk/,55.9669,-3.6177,821,,False
+2401,Lisini 9 Golf Club,North Lanarkshire,Motherwell,ml1 5rz,18,,55.7978668,-3.941791,0,,False
+2402,Littlehill Golf Club,Glasgow,Glasgow,G64 1UT,18,,55.8969536,-4.21756,171,,False
+2403,Loch Lomond Golf Club,Argyll & Bute,Alexandria,G83 8NT,18,https://www.lochlomond.com/,56.0647,-4.6374,81,,False
+2404,Lochcarron Golf Club,Highland,Strathcarron,IV54 8YS,18,https://lochcarrongolfclub.co.uk/,57.41927,-5.465693,49,,True
+2405,Lochend Golf Club,Edinburgh,Edinburgh,EH7 6RG,18,https://lochendgolfclub.co.uk/,55.9648056,-3.138508,253,,True
+2406,Lochgelly Golf Club,Fife,Lochgelly,KY5 9PB,18,,56.12852,-3.318268,527,,False
+2407,Lochgilphead Golf Club,Argyll & Bute,Lochgilphead,PA31 8LE,18,https://www.lochgilpheadgolfclub.co.uk/,56.0432,-5.418053,197,,True
+2408,Lochgoilhead Golf Club,Argyll & Bute,Cairndow,,18,https://lochgoilhead.info/golf-club/,56.1725,-4.9059,47,,True
+2409,Lochmaben Golf Club,Dumfries & Galloway,Dumfriesshire,DG11 1NT,18,https://www.lochmabengolf.co.uk/,55.1277962,-3.441791,623,,False
+2410,Lochore Meadows Golf Club,Fife,Lochgelly,KY5 8BA,18,https://fifegolftrust.co.uk/lochore-meadows-golf-course/,56.150425,-3.337198,90,,False
+2412,Lochwinnoch Golf Club,Renfrewshire,Lochwinnoch,PA12 4AN,18,https://www.lochwinnochgolf.co.uk/,55.7980957,-4.640306,217,,True
+2413,Lockerbie Golf Club,Dumfries & Galloway,Lockerbie,DG11 2ND,18,http://www.lockerbiegolf.co.uk/,55.12488,-3.346616,177,,False
+2414,Logie Golf Club,Dundee,Dundee,DD2 3DY,18,,56.47411,-3.016264,0,,False
+2415,Longniddry Artisans Golf Club,Edinburgh,Longniddry,EH32 0QL,18,,,,0,,False
+2416,Longniddry Golf Club,East Lothian,Longniddry,EH32 0NL,18,https://www.longniddrygolfclub.co.uk/,55.9774246,-2.900896,836,,False
+2417,Longside Golf Club,Aberdeenshire,Aberdeenshire,AB42 4XJ,18,http://www.longsidegolfclub.co.uk/,57.5201263,-1.946966,321,,True
+2418,Loretto School,East Lothian,Musselburgh,EH21 7RE,18,,,,121,,False
+2419,Lothians Golf Association,East Lothian,,,18,,,,0,,False
+2420,Loudoun Gowf Club,East Ayrshire,Galston,KA4 8PA,18,http://www.loudoungowfclub.co.uk/,55.603817,-4.372175,628,,False
+2421,Luffness New Golf Club,East Lothian,East Lothian,EH32 0QA,18,https://www.luffnessnew.com/,56.0179024,-2.83464,691,,False
+2422,Lumphanan Golf Club,Aberdeenshire,Banchory,AB31 4PW,9,https://lumphanangolfclub.co.uk/,57.1274071,-2.68482,90,,True
+2423,Lundin 1937 Golf Club,Fife,Kirkcaldy,KY2 5QL,18,,,,0,,False
+2424,Lundin Golf Club,Fife,Leven,KY8 6BA,18,https://www.lundingolfclub.co.uk/,56.21098,-2.953556,705,,False
+2425,Lundin Ladies Golf Club,Fife,Leven,KY8 6AR,9,https://lundinladiesgolfclub.co.uk/,56.2145233,-2.955453,340,,True
+2426,Lundin Montrave Golf Club,Fife,Leven,KY8 6BA,18,,,,0,,False
+2427,Lybster Golf Club,Highland,Lybster,KW3 6BJ,18,https://lybstergolfclub.co.uk/,58.3046265,-3.284929,61,,False
+2442,MGR Golf Club,Fife,St Andrews,KY16 9EF,18,,56.33901,-2.800487,0,,False
+2428,Machrie Bay Golf Club,North Ayrshire,Isle of Arran,KA27 8DY,18,https://machriebay.com/,55.555233,-5.340891,86,,True
+2429,Machrihanish Dunes Golf Club,Argyll & Bute,Argyll,PA28 6PT,18,https://machrihanishdunes.com/,55.45573,-5.70396,24,,False
+2430,Machrihanish Golf Club,Argyll & Bute,Argyll,PA28 6PT,18,https://www.machgolf.com/,55.42388,-5.731212,1129,,False
+2431,Malletsheugh Golf Club,Glasgow,Troon,KA10 6NJ,18,https://malletsheughgolfclub.wixsite.com/est1976,55.5450249,-4.652198,17,,False
+2220,Mar Hall Golf and Spa Resort Golf Club,East Renfrewshire,Bishopton,PA7 5NW,18,https://www.marhall.com/golf-course.html,55.9209137,-4.47875,444,,False
+2432,Marine Golf Club,Aberdeen City,Aberdeen,AB11 8TN,18,https://marinegolfclub.webs.com/,57.13712,-2.06792,25,,False
+2433,Maverston Golf Club,Moray,IV30 8LR,IV30 8LR,18,https://www.maverstongolf.com/,57.65,-3.17,458,,False
+2434,Maybole Golf Club,South Ayrshire,Maybole,KA19 7DX,18,https://www.maybolegolf.com/,55.3514862,-4.689596,0,,False
+2435,McDonald Golf Club,Aberdeenshire,Ellon,AB41 9AW,18,https://www.ellongolfclub.co.uk/,57.3705,-2.0854,679,,True
+2436,Mearns Castle Golf Club,East Renfrewshire,Glasgow,G77 5RR,18,https://mcgolfacademy.co.uk/,55.7707748,-4.292832,682,,False
+2437,Meldrum House Golf Club,Aberdeenshire,Inverurie,AB51 0AE,18,https://www.meldrumhouse.com/,57.35173,-2.326563,327,,False
+2438,Melrose Golf Club,Scottish Borders,Melrose,TD6 9HS,18,https://melrosegolfclub.co.uk/,55.5902,-2.7253,121,,False
+2439,Melville Golf Club,Midlothian,Lasswade,EH18 1AN,18,https://melvillegolf.com/,55.8883171,-3.097177,44,,False
+2440,Merchants of Edinburgh Golf Club,Edinburgh,Edinburgh,EH10 5PY,18,https://www.merchantsgolf.com/,55.9205055,-3.223527,467,,False
+2441,Methil Golf Club,Fife,Leven,KY8 4HS,18,,,,0,,False
+2443,Midlothian County Ladies Golf Association,Midlothian,,,18,https://www.mclga.com,,,560,,True
+2444,Millport Golf Club,North Ayrshire,Isle of Cumbrae,KA28 0HB,18,https://www.millportgolfclub.co.uk/,55.76082,-4.937013,199,,True
+2445,Milnathort Golf Club Ltd,Perth & Kinross,Milnathort,KY13 9XA,9,https://www.milnathortgolfclub.co.uk,56.2249,-3.4288,573,,True
+2446,Milngavie Golf Club,East Dunbartonshire,Glasgow,G62 8EP,18,http://www.milngaviegolfclub.com,55.9565544,-4.33202,522,,False
+2447,Minto Golf Club,Scottish Borders,Hawick,TD9 8SA,18,https://www.mintogolf.co.uk/,55.4722328,-2.683086,287,,True
+2448,Moffat Golf Club,Dumfries & Galloway,Moffat,DG10 9SB,18,https://www.moffatgolfclub.co.uk/,55.3316231,-3.457474,259,,True
+2449,Monifieth Golf Club,Angus,Dundee,DD5 4AW,18,https://monifiethgolf.co.uk/,56.482235,-2.81209,408,,False
+2450,Monifieth Junior Golf Academy,Angus,Monifieth,DD5 4AW,18,https://monifiethjga.co.uk/,,,202,,False
+2451,Montrose Caledonia Golf Club,Angus,Montrose,DD10 8SW,18,https://montrosegolflinks.com/,56.71549,-2.45294,98,,False
+2452,Montrose Golf Links,Angus,Montrose,DD10 8SW,18,https://montrosegolflinks.com/,56.71549,-2.45294,0,,False
+2453,Moorpark Golf Club,North Ayrshire,Stevenston,KA20 3HU,18,https://www.moorparkgc.co.uk/,55.6355743,-4.757506,35,,False
+2454,Moray Golf Club,Moray,Lossiemouth,IV31 6QS,18,http://www.moraygolf.co.uk,57.7205658,-3.296795,1106,,False
+2455,Mortonhall Golf Club,Edinburgh,Edinburgh,EH10 6PB,18,https://www.mortonhallgc.co.uk/,55.91128,-3.20956,968,,False
+2456,Mount Vernon Golf Club,Edinburgh,Edinburgh,EH17 7QQ,18,,,,0,,False
+2457,Muckhart Golf Club,Clackmannanshire,Dollar,FK14 7JH,18,http://www.muckhartgolf.com,56.1822243,-3.609248,623,,False
+2458,Muir Of Ord Golf Club,Highland,Muir of Ord,IV6 7SX,18,https://muirofordgolfclub.co.uk/,57.5135269,-4.457353,824,,False
+2714,Muirfield,East Lothian,East Lothian,EH31 2EG,18,http://www.muirfield.org.uk,56.0419273,-2.82075238,0,,False
+2459,Muirkirk Golf Club,East Ayrshire,Cumnock,KA18 3QQ,18,http://www.muirkirkgolfclub.com/,55.522747,-4.065482,28,,False
+2460,Murcar Links Golf Club,Aberdeen City,Aberdeen,AB23 8BD,18,https://murcarlinks.com/,57.2012,-2.072907,893,,False
+2461,Murrayfield Golf Club,Edinburgh,Edinburgh,EH12 6EU,18,https://www.murrayfieldgolfclub.co.uk/,55.9496346,-3.250693,1335,,False
+2462,Murrayshall Golf Club,Perth & Kinross,Perth,PH2 7PH,18,http://www.murrayshall.co.uk,56.4224854,-3.366041,310,,False
+2463,Musselburgh Golf Club,East Lothian,Musselburgh,EH21 6SA,18,https://www.themusselburghgolfclub.com/,55.9311829,-3.059641,920,,False
+2464,Musselburgh Links Ladies Golf Club,Midlothian,Musselburgh,EH21 7SR,18,http://www.musselburghlinksladies.co.uk/,55.9469643,-3.042116,28,,False
+2465,Musselburgh Old Course Golf Club,East Lothian,Musselburgh,EH21 7SD,18,http://www.musselburgholdlinks.co.uk/,55.94867,-3.043973,147,,True
+2466,Muthill Golf Club,Perth & Kinross,Crieff,PH5 2DA,18,https://muthillgolfclub.co.uk/,56.33068,-3.845398,177,,True
+2469,NCG Top 100s Tour,Edinburgh,Leeds,LS17 9BF,18,,,,0,,False
+2479,NGL Golf Consultancy Ltd,Edinburgh,Finchampstead,RG40 4YJ,18,,,,0,,False
+2467,Nairn Dunbar Golf Club,Highland,Nairn,IV12 5AE,18,http://www.nairndunbar.com,57.5862,-3.8591,778,,True
+2468,Nairn Golf Club,Highland,Nairn,IV12 4HB,18,https://www.nairngolfclub.co.uk/,57.58761,-3.895816,1157,,False
+2470,New Cumnock Golf Club,East Ayrshire,New Cumnock,KA18 4PN,18,,55.4068527,-4.200103,177,,True
+2471,New Galloway Golf Club,Dumfries & Galloway,Castle Douglas,DG7 3RN,18,https://newgallowaygolfclub.com/,55.07298,-4.141047,85,,False
+2472,New Golf Club St Andrews,Fife,St Andrews,KY16 9JE,18,https://www.newgolfclubstandrews.co.uk/,56.3427048,-2.805677,1503,,False
+2473,Newbattle Golf Club,Midlothian,Dalkeith,EH22 3AD,18,http://www.newbattlegolfclub.com/,55.8884125,-3.072375,591,,False
+2474,Newburgh-On-Ythan Golf Club,Aberdeenshire,Ellon,AB41 6BY,18,https://newburghgolfclub.co.uk/,57.3133125,-2.000681,345,,False
+2475,Newcastleton Golf Club,Scottish Borders,Newcastleton,TD9 0QD,18,,55.1804466,-2.82461,25,,False
+2476,Newmachar Golf Club,Aberdeenshire,Aberdeen,AB21 7UU,18,http://www.newmachargolfclub.co.uk,57.239418,-2.190245,1245,,False
+2477,Newton Stewart Golf Club,Dumfries & Galloway,Newton Stewart,DG8 6PF,18,https://www.newtonstewartgolfclub.co.uk/,54.96152,-4.476164,270,,True
+2478,Newtonmore Golf Club,Highland,Newtonmore,PH20 1AT,18,https://www.newtonmoregolf.com/,57.0639877,-4.118593,284,,True
+2480,Niddry Castle Golf Club,West Lothian,West Lothian,EH52 6RQ,18,https://www.niddrycastlegolfclub.co.uk/,55.9568,-3.453,207,,False
+2481,Nigg Bay Golf Club,Aberdeen City,Aberdeen,AB11 9QT,18,https://www.niggbaygolfclub.co.uk/,57.1380539,-2.067443,318,,False
+2482,North Beach Golf Club,South Ayrshire,Prestwick,KA92LG,18,,55.5002823,-4.619005,56,,False
+2483,North Berwick Golf Club,East Lothian,North Berwick,EH39 4BB,18,https://www.northberwickgolfclub.com/,56.0586,-2.7273,537,,False
+2485,North East District Association,Highland,Fraserburgh,AB43 8YL,18,,,,1,,True
+2487,North East Scotland Seniors Golf Association,Edinburgh,Aberdeen,AB14 0QL,18,,,,0,,False
+2486,North East of Scotland Golfers Alliance,Edinburgh,Straik Road,AB32 6TJ,18,https://www.negolfalliance.co.uk/,,,172,,True
+2488,North Inch Junior Golf Club,Perth & Kinross,Perth,PH1 5HS,18,https://www.northinchgolf.co.uk/junior-club,56.4093971,-3.435447,30,,True
+2489,Northern Counties Ladies Golf Association,Highland,,,18,,,,0,,False
+2490,Northern Golf Club,Aberdeen City,Aberdeen,AB24 5QB,18,,57.1600075,-2.087255,222,,False
+2492,Old Course Ranfurly Golf Club,Renfrewshire,Bridge of Weir,PA11 3DE,18,http://www.oldranfurly.com,55.85234,-4.57939,596,,True
+2493,Oldmeldrum Golf Club,Aberdeenshire,Inverurie,AB51 0DJ,18,https://www.oldmeldrumgolf.co.uk/,57.3362236,-2.313469,755,,True
+2707,OpenPlay,Edinburgh,,,,,55.9533,3.1883,5878,,False
+2494,Orkney Golf Club,Orkney,Orkney,KW15 1RD,18,https://orkneygolfclub.co.uk/,58.99452,-2.99416,403,,False
+2495,Paisley Golf Club,Renfrewshire,Paisley,PA2 8TZ,18,,55.8118668,-4.445282,752,,False
+2496,Palacerigg Golf Club,North Lanarkshire,Glasgow,G67 3HU,18,http://www.palacerigggolfclub.co.uk/,55.9354248,-3.957599,280,,False
+2497,Panmure Golf Club,Angus,Carnoustie,DD7 7RT,18,http://www.panmuregolfclub.co.uk,56.495388,-2.749286,543,,False
+2498,Paul Lawrie Foundation,Edinburgh,Aberdeen,AB12 5YN,18,,,,101,,True
+2499,Paul Lawrie Golf Centre,Aberdeenshire,Aberdeen,AB12 5YN,9,https://www.paullawriegolfcentre.co.uk/,57.1111565,-2.171847,837,,False
+2500,Pecten Golf Club,Aberdeenshire,,AB11 6DB,18,https://pectengolf.co.uk/,,,58,,True
+2501,Peebles Golf Club,Scottish Borders,Peebles,EH45 8EU,18,https://www.peeblesgolfclub.com/,55.6552,-3.20045,621,,False
+2502,Perth & Kinross County Golf Union,Perth & Kinross,PH1 5DJ,PH1 5DJ,18,,,,117,,False
+2503,Perth & Kinross Ladies County Golf Association,Perth & Kinross,,,18,,,,226,,True
+2504,Perth Academy FP Golf Club,Perth & Kinross,Perth,PH1 1BX,18,,,,0,,False
+2505,Perth Artisans Golf Club,Perth & Kinross,Perth,PH1 5HS,18,https://perthartisan.golf-club.website,56.4019928,-3.436587,134,,True
+2506,Perth Ladies Golf Club,Perth & Kinross,Perth,PH1 5DN,18,https://www.perthladiesgolfclub.co.uk/,56.4039,-3.4322,43,,True
+2507,Perth Railway Golf Club,Perth & Kinross,Perth,PH1 2UH,18,,56.4019928,-3.436587,53,,True
+2508,Peterculter Golf Club,Aberdeen City,Aberdeen,AB14 0LN,18,https://www.petercultergolfclub.co.uk/,57.08827,-2.26905,1099,,True
+2509,Peterhead Golf Club,Aberdeenshire,Peterhead,AB42 1LT,18,https://www.peterheadgolfclub.co.uk/,57.51806,-1.803394,561,,False
+2510,Piperdam Golf Club,Angus,Dundee,DD2 5LP,18,https://www.piperdam.com/golf/golf-in-scotland/,56.4992,-3.131346,105,,False
+2511,Pitlochry Golf Club,Perth & Kinross,Pitlochry,PH16 5QY,18,https://www.pitlochrygolf.co.uk/,56.70971,-3.736457,200,,False
+2512,Pitreavie (Dunfermline) Golf Club,Fife,Dunfermline,KY11 8PR,18,https://www.pitreaviegolfclub.co.uk/,56.05542,-3.437162,1218,,True
+2513,Playsport Golf Club,South Lanarkshire,Glasgow,G74 4GT,18,https://playsportgolf.co.uk/,55.78175,-4.173435,793,,True
+2514,Polkemmet Golf Club,West Lothian,Bathgate,EH47 0AD,18,https://www.westlothianleisure.com/venues/outdoors/polkemmet-golf-and-driving-range/,55.8656654,-3.721642,4,,False
+2515,Pollok Golf Club,Glasgow,Glasgow,G43 1BG,18,https://www.pollokgolf.com/,55.82236,-4.307346,802,,False
+2516,Pontoon Golf Club,South Ayrshire,Girvan,KA26 9HW,18,,55.246994,-4.85839,15,,False
+2517,Port Bannatyne Golf Club,Argyll & Bute,Isle of Bute,PA20 0PH,18,https://portbannatynegolfclub.co.uk/,55.8583755,-5.085797,106,,True
+2518,Port Glasgow Golf Club,Inverclyde,Port Glasgow,PA14 5XE,18,https://www.portglasgowgolfclub.co.uk/,55.9244766,-4.682075,359,,True
+2519,Port Seton Golf Club,East Lothian,Prestonpans,EH32 0HN,18,,,,0,,False
+2520,Portlethen Golf Club,Aberdeenshire,Aberdeen,AB12 4YA,18,http://www.portlethengolfclub.com/,57.06894,-2.148702,923,,True
+2521,Portmahomack (Tarbat) Golf Club,Highland,Tain,IV20 1YJ,18,https://portmahomackgolfclub.com/,57.8352432,-3.824303,198,,True
+2522,Portmann Golf Club,East Ayrshire,Kilmarnock,KA1 2JG,18,,55.58256,-4.77109,76,,False
+2523,Portobello Golf Club,Edinburgh,Edinburgh,EH15 1JJ,18,https://www.edinburghleisure.co.uk/venues/portobello-golf-course,55.9492531,-3.118472,34,,False
+2524,Portpatrick Dunskey Golf Club,Dumfries & Galloway,Stranraer,DG9 8TB,18,https://www.portpatrickgolfclub.com/,54.84586,-5.116341,316,,False
+2525,Powfoot Golf Club,Dumfries & Galloway,Annan,DG12 5QE,18,http://www.powfootgolfclub.com,54.9782753,-3.343656,710,,False
+2526,Prestonfield Golf Club Limited,Edinburgh,Edinburgh,EH16 5HS,18,https://www.prestonfieldgolf.co.uk/,55.93655,-3.166483,919,,False
+2527,Prestwick Centre Golf Club,North Ayrshire,Prestwick,KA9 2NR,18,http://www.pcgolf.club,,,66,,False
+2528,Prestwick Golf Club,South Ayrshire,Prestwick,KA9 1QH,18,https://www.prestwickgc.co.uk/,55.5014076,-4.615232,320,,False
+2529,Prestwick St Cuthbert Golf Club,South Ayrshire,Prestwick,KA9 2SX,18,https://www.stcuthbert.co.uk/,55.4902878,-4.60262,746,,False
+2530,Prestwick St Nicholas Golf Club,South Ayrshire,Prestwick,KA9 1SN,18,https://www.prestwickstnicholas.com/,55.493187,-4.620481,878,,False
+2531,ProDreamUSA,Edinburgh,Glasgow,G77 5LL,18,,,,0,,False
+2532,Pumpherston Golf Club,West Lothian,West Lothian,EH53 0LQ,18,https://www.pumpherstongolfclub.co.uk/,55.9108276,-3.484071,600,,False
+2546,RICS Golf Club,Edinburgh,Edinburgh,EH6 5QN,18,,,,0,,False
+2533,Radnor Park Golf Club,West Dunbartonshire,Clydebank,G81 3DA,18,https://radnorparkgolfclub.weebly.com/,55.9157143,-4.424356,28,,False
+2534,Ralston Golf Club,Renfrewshire,Paisley,PA1 3DT,18,http://www.ralstongolfclub.com,55.8441544,-4.383896,922,,False
+2535,Ranfurly Castle Golf Club,Renfrewshire,PA11 3HN,PA11 3HN,18,https://www.ranfurlycastlegolfclub.co.uk/,55.8546333,-4.586823,647,,True
+2536,Ratho Park Golf Club,Edinburgh,Newbridge,EH28 8NX,18,https://www.rathoparkgolfclub.co.uk/,55.92316,-3.36612,941,,False
+2537,Ravelston Golf Club,Edinburgh,Edinburgh,EH4 3NZ,18,http://www.ravelstongolfclub.co.uk/,55.9544449,-3.259269,687,,False
+2538,Reay Golf Club,Highland,Thurso,KW14 7RE,18,https://www.reaygolfclub.co.uk/,58.5600166,-3.779145,171,,False
+2539,Redburn Golf Club,North Ayrshire,Dalry,KA24 5DX,18,https://www.redburngc.com,58.5600166,-3.779145,55,,False
+2540,Register House Golf Club,Edinburgh,Edinburgh,EH8 7AU,18,,,,0,,False
+2541,Renaissance Golf Club,East Lothian,North Berwick,EH39 5HS,18,https://trcaa.com/,56.05164,-2.811735,214,,False
+2542,Renfrew Golf Club,Renfrewshire,Renfrew,PA4 9EG,18,http://www.renfrewgolfclub.net/,55.8827934,-4.402651,899,,False
+2543,Renfrewshire Golf Union,Renfrewshire,,PA5 9RA,18,https://www.renfrewshiregolfunion.co.uk/,,,10,,True
+2544,Renfrewshire Ladies County Golf Association,Renfrewshire,,,18,,,,206,,True
+2545,Rhodes Golf Club,East Lothian,North Berwick,EH39 4LE,18,,56.0572662,-2.705085,53,,True
+2547,Rosehearty Golf Club,Aberdeenshire,"Aberdeenshire, Scotland",AB43 7JJ,18,https://www.roseheartygolfclub.com/home,57.6957932,-2.110791,144,,True
+2548,Ross Priory Golf Club,West Dunbartonshire,,G83 8NL,18,,56.05466,-4.547244,62,,False
+2549,Rothes Golf Club,Moray,AB38 7AN,AB38 7AN,18,https://rothesgolfclub.co.uk/,57.51353,-3.2383,272,,False
+2550,Rothesay Golf Club,Argyll & Bute,Isle of Bute,PA20 9HN,18,http://www.rothesaygolfclub.co.uk/,55.8327065,-5.050336,213,,False
+2551,Routenburn Golf Club,North Ayrshire,Largs,KA30 8QA,18,https://www.routenburngolfclub.co.uk/,55.80663,-4.872294,127,,False
+2552,Rowallan Castle Golf Club,East Ayrshire,Ayrshire,KA3 2LP,18,https://rowallancastle.com/rowallan-championship-golf-course-ayrshire/,55.6527023,-4.492336,537,,False
+2553,Roxburghe Hotel & Golf Course,Scottish Borders,TD5 8JZ,TD5 8JZ,18,https://roxburghe-golf.com/en/home,55.55847,-2.47011137,326,,False
+2554,Royal & Ancient Golf Club of St Andrews,Fife,,,18,,56.3435631,-2.80233,1615,,False
+2555,Royal Aberdeen Golf Club,Aberdeen City,Aberdeen,AB23 8AT,18,http://www.royalaberdeengolf.com/,57.179718,-2.084093,678,,False
+2055,Royal Balmoral Golf Club,Aberdeenshire,Ballater,AB35 5TB,18,,57.0343857,-3.218944,105,,True
+2556,Royal Bank of Scotland (Edinburgh) Golf Club,Edinburgh,Edinburgh,EH12 8YH,18,,,,0,,False
+2557,Royal Burgess Golfing Society of Edinburgh,Edinburgh,Edinburgh,EH4 6BU,18,https://www.royalburgess.co.uk/,55.96181,-3.305888,1044,,False
+2558,Royal Dornoch Golf Club,Highland,Dornoch,IV25 3LW,18,https://royaldornoch.com/,57.87902,-4.023651,1681,,False
+2559,Royal Montrose Mercantile Golf Club,Angus,Montrose,DD10 8SW,18,https://www.royalmontrosemercantilegolfclub.co.uk/,56.7152977,-2.453906,523,,False
+2560,Royal Musselburgh Golf Club,East Lothian,Prestonpans,EH32 9RP,18,https://www.royalmusselburgh.co.uk/,55.95,-2.99,1003,,False
+2561,Royal Perth Golfing Society & County & City Club,Perth & Kinross,Perth,PH1 5NG,18,,,,0,,False
+2562,Royal Tarlair Golf Club,Aberdeenshire,Macduff,AB44 1TA,18,https://royaltarlair.co.uk/,57.6703,-2.481,399,,True
+2563,Royal Troon Golf Club,South Ayrshire,Troon,KA10 6EP,18,https://www.royaltroon.co.uk,55.5326347,-4.650651,872,,False
+2565,SALJGA,Fife,St Andrews,KY16 9SF,18,,56.3447952,-2.826478,7,,False
+2571,SRUC Elmwood Golf,Fife,KY15 5RS,KY15 5RS,18,https://www.elmwoodgolf.co.uk,,,470,,True
+2564,Saline Golf Club,Fife,Saline,KY12 9NF,18,https://salinegc.co.uk/,56.1129,-3.5636,199,,True
+2566,Sandyhills Golf Club,Glasgow,Glasgow,G32 9NA,18,http://www.sandyhillsgolfclub.co.uk/,55.8463554,-4.148745,781,,False
+2567,Sanquhar Golf Club,Dumfries & Galloway,Sanquhar,DG4 6JZ,18,https://www.southofscotlandgolf.com/sanquhar-golf-club/,55.36332,-3.936966,54,,True
+2568,Scarifiers Golf Club,Edinburgh,Edinburgh,EH4 2EH,18,,,,0,,False
+2569,Scone Golf Club,Perth & Kinross,Perth,PH1 1QX,18,,,,0,,False
+2570,Scoonie Golf Club,Fife,Leven,KY8 4SP,18,https://scooniegolfclub.com/,56.2022,-2.9906,128,,True
+2572,Scotscraig Golf Club,Fife,Tayport,DD6 9DZ,18,http://www.scotscraiggolfingclub.com,56.4423752,-2.873621,761,,False
+2573,Scottish BTU Golfing Society,Glasgow,Glasgow,G61 3DT,18,,,,0,,False
+2575,Scottish Golf Clubmasters Association,North Lanarkshire,Glasgow,G71 6EJ,18,,,,0,,False
+2711,Scottish Golf Events,Edinburgh,,,,,-5.36194849,46.32557,18,,True
+2484,Scottish Golf North,Highland,Nairn,IV12 4RW,18,,,,3,,True
+2718,Scottish Golf Performance Golf Club,Edinburgh,Rosyth,KY11 2UU,,https://www.scottishgolf.org/performance-programme,,,1,,False
+2576,Scottish Police Golf Association,Fife,Stirling,FK8 2HD,18,,,,0,,False
+2577,Scottish Seniors Golfing Society,Edinburgh,Renfrewshire,PA6 7JE,18,http://www.scottishseniorsgolf.com,,,644,,False
+2578,Scottish Sports Association,Edinburgh,Edinburgh,EH12 9DQ,18,,,,0,,False
+2579,Scottish Universities Golfing Society,Edinburgh,Edinburgh,EH10 4HG,18,,,,0,,False
+2580,Scottish Veteran Ladies Golf Association,Edinburgh,Galashiels,TD1 3SH,18,,,,0,,False
+2581,Scottish Veteran Ladies Golf Association Borders D,Edinburgh,Selkirk,TD7 4BD,18,,,,0,,False
+2582,Scottish Veteran Ladies Golf Association Dumfries ,Edinburgh,,,18,,,,0,,False
+2583,Scottish Veteran Ladies Golf Association East Divi,Edinburgh,,,18,,,,1,,False
+2584,Scottish Veteran Ladies Golf Association Galloway ,Edinburgh,Castle Douglas,DG7 2HJ,18,,,,0,,False
+2585,Scottish Veteran Ladies Golf Association Highlands,Edinburgh,Tain,IV19 1LA,18,,,,0,,False
+2586,Scottish Veteran Ladies Golf Association Midland D,Edinburgh,Tayport,DD6 9LE,18,,,,0,,False
+2587,Scottish Veteran Ladies Golf Association Northern ,Edinburgh,,,18,,,,0,,False
+2588,Scottish Veteran Ladies Golf Association West Divi,Edinburgh,Greenock,PA16 7SR,18,,,,0,,False
+2589,Selkirk Golf Club,Scottish Borders,Selkirk,TD7 4NW,18,https://selkirkgolf.co.uk/,55.5430069,-2.825736,260,,True
+2590,Shaws Bar Golf Club,Glasgow,G46 7UZ,G43 1DU,18,https://shawsbargolf.club/,55.7983,-4.3247,40,,False
+2591,Shetland Golf Club,Shetland,Shetland,ZE2 9SB,18,https://www.shetlandgolfclub.co.uk/,60.16618,-1.226647,377,,True
+2592,Shiskine Golf Club,North Ayrshire,Isle of Arran,KA27 8HA,18,https://www.shiskinegolf.com/,55.50404,-5.338171,248,,False
+2593,Shotts Golf Club,North Lanarkshire,Shotts,ML7 5BJ,18,http://shottsgolfclub.co.uk/,55.82826,-3.78508,597,,False
+2594,Silverknowes Golf Club,Edinburgh,Edinburgh,EH4 5ET,18,,55.97281,-3.272768,269,,False
+2595,Skelmorlie Golf Club,North Ayrshire,Skelmorlie,PA17 5ES,18,http://www.skelmorliegolf.co.uk/,55.86516,-4.87717,367,,True
+2598,South Ronaldsay Golf Club,Orkney,Orkney,KW17 2SN,18,https://southronaldsaygolf.com/,58.82442,-2.962249,113,,True
+2597,South of Scotland Golfers' Association,Dumfries & Galloway,,,18,https://www.southofscotlandgolfers.com/,,,63,,True
+2599,Southerness Golf Club,Dumfries & Galloway,Dumfries,DG2 8AZ,18,https://southernessgolfclub.com/,54.8735962,-3.597183,647,,False
+2600,Spean Bridge Golf Club,Highland,PH34 4EF,PH34 4EF,18,https://speangolf.co.uk/,56.8950157,-4.913227,154,,True
+2601,Spey Bay Golf Club,Moray,Fochabers,IV32 7PJ,18,http://www.speybay.co/,57.67187,-3.082679,182,,False
+2602,Spey Valley Golf Club,Highland,Aviemore,PH22 1PN,18,https://www.macdonaldhotels.co.uk/aviemore/see-and-do/activities/golfing,57.1882057,-3.833783,271,,False
+2604,St Andrews Golf Club,Fife,St Andrews,KY16 9JB,18,https://thestandrewsgolfclub.co.uk/,56.34556,-2.808616,1570,,False
+2722,St Andrews Ladies Jubilee Open Golf Club,Fife,,KY16 9JG,,,,,0,,False
+2605,St Andrews Links Trust,Fife,St Andrews,KY16 9SF,18,http://www.standrews.com,56.3447952,-2.8,1,,False
+2606,St Andrews Thistle Golf Club,Fife,St Andrews,KY16 9JB,18,https://standrewsthistle.com/,56.34268,-2.803784,363,,False
+2607,St Boswells Golf Club,Scottish Borders,Melrose,TD6 0BA,9,https://stboswellsgolfclub.co.uk/,55.5750961,-2.641821,347,,True
+2608,St Fillans Golf Club,Perth & Kinross,St Fillans,PH6 2NJ,9,https://st-fillans-golf.com/,56.3905869,-4.107202,191,,True
+2609,St Leonards Golf Club,Fife,St Andrews,KY16 9QJ,18,https://www.stleonards.golf/,56.33903,-2.790119,107,,False
+2610,St Medan Golf Club,Dumfries & Galloway,Newton Stewart,DG8 8NJ,18,https://stmedangolfclub.com/,54.7253342,-4.53887,107,,True
+2611,St Michaels Golf Club,Fife,St. Andrews,KY16 0DX,18,https://stmichaelsgolfclub.com/,56.3875,-2.9022,429,,False
+2612,St Mungo Golf Club,North Ayrshire,Irvine,KA12 8SN,18,http://www.stmungogolfclub.com,55.6263847,-4.686052,36,,False
+2613,St Regulus Ladies Golf Club,Fife,St Andrews,KY16 9JG,18,https://www.st-regulus-lgc.co.uk/,56.34244,-2.80352,408,,False
+2614,St Rule Club,Fife,St Andrews,KY16 9JB,18,https://www.thestruleclub.co.uk/,56.34268,-2.803784,344,,False
+2615,Standard Life Golf Club,Edinburgh,Edinburgh,EH15 1ET,18,,,,0,,False
+2616,Station Masters Golf Club,Angus,Carnoustie,DD7 7AP,18,https://thestationmasters.com/,56.5011635,-2.706709,147,,False
+2617,Stephen Gallacher Foundation,Edinburgh,Edinburgh,EH2 1DD,18,https://www.sgfoundation.co.uk,,,213,,False
+2618,Stewarton Golf Club,East Ayrshire,Kilmarnock,KA3 3HQ,18,http://www.stewartongolfclub.co.uk,55.61095,-4.523923,19,,True
+2619,Stewarts Melville FP Golf Club,Edinburgh,Edinburgh,EH3 5DL,18,,,,0,,False
+2621,Stirling Golf Club,Stirling,Stirling,FK8 2QY,18,https://www.stirlinggolfclub.com/,56.1183548,-3.949412,847,,False
+2620,Stirling and Clackmannan Ladies Golf Association,Stirling,,,18,,,,0,,False
+2622,Stirlingshire Golf Union,Stirling,,,18,,,,4,,True
+2623,Stonehaven Golf Club,Aberdeenshire,Stonehaven,AB39 3RH,18,http://stonehavengolfclub.com/,56.9776955,-2.192824,424,,False
+2624,Stornoway Golf Club,Eilean Siar,Isle of Lewis,HS2 0XP,18,http://www.stornowaygolfclub.co.uk/,58.21591,-6.395769,300,,False
+2625,Stranraer Golf Club,Dumfries & Galloway,Stranraer,DG9 0LF,18,https://www.stranraergolfclub.net/,54.9247437,-5.070083,382,,False
+2719,Strathallan School ,Perth & Kinross,Perth,,9,https://www.strathallan.co.uk,,,946,,True
+2626,Strathaven Golf Club,South Lanarkshire,Strathaven,ML10 6NL,18,https://www.strathavengc.com/,55.6856537,-4.069673,1033,,False
+2627,Strathclyde Park Golf Club,South Lanarkshire,Hamilton,ML3 6BY,18,,55.78231,-4.034815,96,,True
+2628,Strathendrick Golf Club,Stirling,Drymen,G63 0EY,18,http://www.strathendrickgolfclub.co.uk/,56.05501,-4.452641,262,,True
+2629,Strathlene Buckie Golf Club,Moray,Buckie,AB56 4DJ,18,http://www.strathlenegolfclub.co.uk/,57.6899,-2.927527,305,,True
+2630,Strathmore Golf Club,Perth & Kinross,Blairgowrie,PH11 8NZ,18,https://www.strathmoregolf.com/,56.60172,-3.218874,322,,False
+2631,Strathpeffer Spa Golf Club,Highland,Strathpeffer,IV14 9AS,18,https://strathpefferspagolfclub.co.uk/,57.59159,-4.543903,242,,True
+2632,Strathtay Golf Club,Perth & Kinross,Pitlochry,PH9 0PJ,18,https://www.strathtaygolfclub.com/,56.65823,-3.782446,31,,True
+2633,Stromness Golf Club,Orkney,Orkney,KW16 3DW,18,https://stromnessgc.co.uk/,58.9534,-3.2999,316,,True
+2634,Swanston Golf Club Ltd,Edinburgh,Edinburgh,EH10 7DS,18,https://swanstongolf.co.uk/,55.8940048,-3.217384,483,,False
+2635,Tain Golf Club,Highland,Tain,IV19 1JE,18,https://www.tain-golfclub.co.uk/,57.8033562,-4.047002,548,,False
+2636,Tam O'Shanter Golf & Social Club,South Ayrshire,Ayr,KA7 4DU,18,,55.439312,-4.639556,129,,False
+2637,Tantallon Golf Club,East Lothian,North Berwick,EH39 4AH,18,https://tantallongolfclub.co.uk/,56.0583725,-2.726607,426,,False
+2638,Tarbert Golf Club,Argyll & Bute,Argyll,PA29 6XY,18,https://tarbertgolfclub.com/,55.86154,-5.43758,74,,True
+2639,Tarland Golf Club,Aberdeenshire,Aboyne,AB34 4TB,18,https://www.tarlandgolfclub.co.uk/,57.13841,-2.843495,104,,False
+2640,Taymouth Castle Golf Club,Perth & Kinross,Aberfeldy,PH15 2AS,18,https://www.taymouthcastlegolfclub.com/,56.6206627,-3.865314,22,,False
+2641,Taynuilt Golf Club,Argyll & Bute,Argyll,PA35 1JE,9,https://taynuiltgolfclub.co.uk/,56.4326477,-5.241058,217,,True
+2194,The Craigtoun Course Golf Club,Fife,St Andrews,KY16 8NX,18,https://standrews.com/golf/courses/the-craigtoun-course,56.3178177,-2.838279,238,,False
+2642,The Donald Cameron League,Edinburgh,Glasgow,G63 9RG,18,,,,0,,False
+2643,The Golf Foundation,Edinburgh,Hoddesdon,EN11 0FJ,18,,,,0,,False
+2334,The Irvine Golf Club,North Ayrshire,Irvine,KA12 8SN,18,https://www.theirvinegolfclub.co.uk,55.6263847,-4.686052,861,,False
+2727,"The Machrie, Islay ",Argyll & Bute,,,18,,55.662,-6.25032,0,,False
+2645,The PGA,Edinburgh,Sutton Coldfield,B76 9PT,18,,,,0,,False
+2646,The PGA in Scotland,Edinburgh,Auchterarder,PH3 1NE,18,,,,0,,False
+2647,The R&A,Edinburgh,St Andrews,KY16 9JA,18,,,,0,,False
+2725,The Taymouth Castle Golf and Sport Club Golf Club,Perth & Kinross,Kenmore,PH15 2EZ,18,,56.58697,-3.985422,2,,False
+2648,Thirty-Two Golf Club,Glasgow,Glasgow,G2 1EH,18,,,,0,,False
+2649,Thornhill Golf Club,Dumfries & Galloway,Thornhill,DG3 5DW,18,https://www.thornhillgolfclub.co.uk/,55.2457581,-3.749311,280,,False
+2650,Thornton Golf Club,Fife,Kirkcaldy,KY1 4DW,18,https://thorntongolf.com/,56.1670074,-3.128434,378,,True
+2651,Thurso Golf Club,Highland,Thurso,KW14 7XF,18,https://www.thursogolfclub.com/,58.5734253,-3.56176,204,,False
+2652,Tillicoultry Golf Club,Clackmannanshire,Tillicoultry,FK13 6BL,18,http://www.tillicoultrygolfclub.com,56.1540756,-3.750558,146,,False
+2653,Tobermory Golf Club,Argyll & Bute,Isle of Mull,PA75 6PS,18,https://tobermorygolfclub.com/,56.6270027,-6.06811,104,,True
+2654,Torphins Golf Club,Aberdeenshire,AB31 4JU,AB31 4JU,18,https://www.torphinsgolfclub.co.uk/,57.1173,-2.6333,87,,False
+2655,Torrance House Golf Club,South Lanarkshire,Glasgow,G75 0QZ,18,https://torrancehousegc.co.uk/,55.7483368,-4.145364,277,,False
+2656,Torrance Park Golf Club,North Lanarkshire,Motherwell,ML1 5UU,18,https://www.torranceparkgolf.co.uk/,55.8226433,-3.957463,0,,False
+2657,Torwoodlee Golf Club,Scottish Borders,Galashiels,TD1 2NE,18,https://www.torwoodleegolfclub.co.uk/,55.63,-2.83,490,,False
+2658,Traigh Golf Club,Highland,Arisaig,PH39 4NT,18,https://www.traighgolf.co.uk/,56.94015,-5.855918,79,,True
+2659,Travel Twenty Golf Club,Edinburgh,Edinburgh,EH10 6RP,18,,,,0,,False
+2660,Troon Bentinck Ladies Golf Club,South Ayrshire,Troon,KA10 6NF,18,,55.5423622,-4.652219,56,,False
+2661,Troon Merchants Golf Club,South Ayrshire,Troon,KA10 6UW,18,,55.56565,-4.639868,30,,False
+2662,Troon Portland Golf Club,South Ayrshire,Troon,KA10 6HE,18,https://www.royaltroon.co.uk/the-courses/portland-course/,55.5293922,-4.645995,139,,False
+2663,Troon St Meddans Golf Club,South Ayrshire,Troon,KA10 6NF,18,https://troonstmeddansgolfclub.com/,55.54328,-4.653492,306,,False
+2664,Troon Welbeck Golf Club,South Ayrshire,Troon,KA10 6NF,18,http://www.troonwelbeckgolfclub.com/,55.54328,-4.653492,288,,False
+2665,Trump International Golf Links,Aberdeenshire,Aberdeen,AB23 8YE,18,https://www.trumpgolfscotland.com/,57.27741,-2.02107,222,,False
+2666,Tulliallan Golf Club,Fife,Alloa,FK10 4BB,18,http://www.tulliallangolf.co.uk/,56.0773659,-3.719688,527,,False
+2667,Turnberry Golf Club,South Ayrshire,Turnberry,KA26 9LT,18,https://www.turnberrygolfclub.net/,55.314106,-4.828921,467,,False
+2668,Turnberry Staff Golf Club,South Ayrshire,Turnberry,KA26 9LT,18,,55.314106,-4.828921,7,,False
+2669,Turnhouse Golf Club Ltd,Edinburgh,Edinburgh,EH12 0AD,18,https://www.turnhousegolfclub.com/,55.9502,-3.3349,747,,True
+2670,Turriff Golf Club,Aberdeenshire,Turriff,AB53 4HD,18,https://www.turriffgolfclub.com/,57.53489,-2.484777,483,,True
+2671,Ullapool Golf Club,Highland,Ullapool,IV26 2TH,18,http://ullapoolgolfclub.co.uk/,57.9057,-5.166,148,,True
+2672,University of St Andrews Golf Club,Fife,St Andrews,KY16 9DY,18,https://golf.wp.st-andrews.ac.uk/,56.3373566,-2.811258,217,,False
+2673,Uphall Golf Club,West Lothian,Broxburn,EH52 6JT,18,https://www.uphallgolfclub.com/,55.927,-3.518,424,,False
+2715,VMS Communications,Fife,Viking Way,,,,,,0,,False
+2674,Vale of Leven Golf Club,West Dunbartonshire,Alexandria,G83 9ET,18,https://volgc.org/,55.98676,-4.566053,359,,False
+2675,Vaul Golf Club,Argyll & Bute,Isle of Tiree,PA77 6TP,9,https://vaulgolfclub.co.uk/,56.5286026,-6.793123,89,,True
+2676,Visit Scotland,Edinburgh,Edinburgh,EH6 6JH,18,,,,0,,False
+2677,Wales Golf,Edinburgh,Newport,NP18 1JQ,18,,,,0,,False
+2678,Wallacetown Golf Club,South Ayrshire,,KA10 6EA,18,,55.6290436,-4.631357,40,,False
+2679,Watsonian Golf Club,Edinburgh,Edinburgh,EH15 1NY,18,,,,0,,False
+2724,Wellsgreen Golf Range,Fife,Leven,KY8 5RU,6,,56.1769,-3.06903219,51,,True
+2680,West Kilbride Golf Club,North Ayrshire,West Kilbride,KA23 9HT,18,https://www.westkilbridegolfclub.com/,55.6882133,-4.867621,798,,True
+2681,West Links Junior Golf Club,East Lothian,North Berwick,EH39 4BB,18,,56.0587,-2.7273,169,,False
+2682,West Linton Golf Club,Scottish Borders,West Linton,EH46 7HN,18,https://www.wlgc.co.uk/,55.7548065,-3.369991,684,,False
+2683,West Lothian Golf Club,West Lothian,Linlithgow,EH49 7RH,18,https://www.westlothiangc.com/,55.99,-3.59,557,,True
+2684,West of Scotland Girls Golfing Association,West Dunbartonshire,,,18,,,,69,,True
+2685,Western Gailes Golf Club,North Ayrshire,Irvine,KA11 5AE,18,https://www.westerngailes.com/,55.59018,-4.662403,415,,False
+2686,Westerwood Golf Club,North Lanarkshire,Glasgow,G68 0EW,18,https://www.thewesterwoodhotel.co.uk/golf/,55.96834,-3.979435,250,,False
+2687,Westhill Golf Club,Aberdeenshire,Westhill,AB32 6RY,18,https://westhillgolf.co.uk/,57.1610947,-2.295705,365,,False
+2688,Westray Golf Club,Orkney,Orkney,KW17 2DA,18,https://westraygolf.org/,59.3360634,-2.972932,46,,True
+2689,Westwood Golf Club,Glasgow,East Kilbride,G75 9DW,18,,55.7266464,-4.190724,67,,False
+2690,Whalsay Golf Club,Shetland,Shetland,ZE2 9AW,18,http://www.whalsaygolfclub.co.uk/,60.3764076,-0.931961,91,,False
+2691,Whitecraigs Golf Club,East Renfrewshire,Glasgow,G46 6SW,18,https://whitecraigs.intelligentgolf.co.uk/,55.7867851,-4.312771,1085,,False
+2692,Whitehill House Golf Club,Midlothian,EH24 9EG,EH3 7PE,18,https://www.whitehillhousegolf.co.uk/,55.8500748,-3.125742,111,,True
+2693,Whitemuir Golf Club,Perth & Kinross,Auchterarder,PH3 1NF,18,,56.2833862,-3.752183,160,,False
+2694,Whiting Bay Golf Club,North Ayrshire,Isle of Arran,KA27 8QT,18,https://www.whitingbaygolf.com/,55.48806,-5.100815,129,,False
+2695,Wick Golf Club,Highland,Wick,KW1 4RW,18,https://www.wickgolfclub.org.uk/,58.4747925,-3.134827,213,,False
+2696,Wigtown & Bladnoch Golf Club,Dumfries & Galloway,Newton Stewart,DG8 9DY,18,https://wandbgc.co.uk/,54.8655052,-4.445726,67,,True
+2697,Wigtownshire County Golf Club,Dumfries & Galloway,Newton Stewart,DG8 0NN,18,https://wigtownshirecountygolfclub.com/,54.8674278,-4.839651,276,,True
+2698,Williamwood Golf Club,East Renfrewshire,Glasgow,G44 3YR,18,https://www.williamwoodgc.co.uk/,55.795948,-4.273938,865,,False
+2699,Windyhill Golf Club,East Dunbartonshire,G61 4QQ,G61 4QQ,18,https://windyhillgolfclub.co.uk/,55.9334,-4.366085,245,,True
+2700,Winterfield Golf Club,East Lothian,Dunbar,EH42 1AU,18,https://winterfieldgc.com/,56.00418,-2.53809,981,,True
+2701,Wishaw Golf Club,North Lanarkshire,Wishaw,ML2 7PH,18,https://www.wishawgolfclub.com/,55.7767525,-3.930276,762,,False
+2702,Woll Golf Club,Scottish Borders,Ashkirk,TD7 4PE,18,https://www.wollgolf.co.uk/,55.48391,-2.851526,293,,False
+2703,Women on the Tee,Edinburgh,Twickenham,TW2 6SN,18,,,,0,,False
+2187,Woodlands Glencoe Golf Club,Highland,Ballachulish,PH49 4JX,9,https://www.woodlands.scot/golf-course/dragons-tooth-golf-club/,56.68548,-5.18817,117,,True
+2704,XIX Hole Golf Club,Fife,St Andrews,KY16 9DF,18,,56.3365,-2.8094,30,,False
+2491,o35tour,Edinburgh,Flintshire,CH8 9HB,18,,,,0,,False
+2603,sportscotland,Edinburgh,Glasgow,G40 1DA,18,,,,0,,False
