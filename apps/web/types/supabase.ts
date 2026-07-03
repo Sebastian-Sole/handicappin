@@ -581,7 +581,10 @@ export type Database = {
           createdAt: string
           id: number
           parentTeeId: number | null
+          rejectionReason: string | null
+          resolvedAt: string | null
           roundId: number | null
+          status: string
           submissionType: string
           submittedBy: string | null
           teeId: number | null
@@ -591,7 +594,10 @@ export type Database = {
           createdAt?: string
           id?: never
           parentTeeId?: number | null
+          rejectionReason?: string | null
+          resolvedAt?: string | null
           roundId?: number | null
+          status?: string
           submissionType: string
           submittedBy?: string | null
           teeId?: number | null
@@ -601,7 +607,10 @@ export type Database = {
           createdAt?: string
           id?: never
           parentTeeId?: number | null
+          rejectionReason?: string | null
+          resolvedAt?: string | null
           roundId?: number | null
+          status?: string
           submissionType?: string
           submittedBy?: string | null
           teeId?: number | null
@@ -825,7 +834,7 @@ export type Database = {
         Returns: Json
       }
       reject_submission: {
-        Args: { p_submission_id: number }
+        Args: { p_reason?: string; p_submission_id: number }
         Returns: undefined
       }
       remap_round_to_tee: {

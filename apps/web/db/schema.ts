@@ -390,6 +390,12 @@ export const submissions = pgTable(
     createdAt: timestamp({ withTimezone: true })
       .default(sql`now()`)
       .notNull(),
+    status: text()
+      .$type<"pending" | "approved" | "rejected">()
+      .default("pending")
+      .notNull(),
+    resolvedAt: timestamp({ withTimezone: true }),
+    rejectionReason: text(),
   },
   (table) => [
     index("submissions_submitted_by_idx").on(table.submittedBy),
