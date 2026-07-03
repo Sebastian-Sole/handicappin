@@ -23,6 +23,10 @@ import { webhookRateLimit, getIdentifier } from "@/lib/rate-limit";
 import { mapRevenueCatEvent } from "@/lib/revenuecat/map-event";
 import { rcWebhookPayloadSchema, type RcEvent } from "@/lib/revenuecat/schema";
 import {
+  sendSubscriptionCancelledEmail,
+  sendPaymentFailedEmail,
+} from "@/lib/email-service";
+import {
   logWebhookReceived,
   logWebhookSuccess,
   logWebhookError,
@@ -117,6 +121,100 @@ async function recordFailure(event: RcEvent, userId: string | null, message: str
 
 const UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+function getBillingUrl(): string {
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://handicappin.com";
+  return `${appUrl.replace(/\/$/, "")}/billing`;
+}
+
+/**
+ * Maps an RC event type to (at most) one lifecycle email family. Pure — no
+ * I/O — so it's unit-testable without mocking the database or Resend.
+ * Deliberately narrow (D-status-mapping is out of scope here): only the two
+ * event types this plan targets produce an email.
+ */
+export type RcLifecycleEmailKind = "cancelled" | "payment-failed" | null;
+
+export function classifyRevenueCatLifecycleEmail(
+  eventType: string,
+): RcLifecycleEmailKind {
+  if (eventType === "CANCELLATION") return "cancelled";
+  if (eventType === "BILLING_ISSUE") return "payment-failed";
+  return null;
+}
+
+/**
+ * Apple-side lifecycle emails, mirroring the Stripe webhook handlers'
+ * post-write sends: only called after the optimistic-locked write actually
+ * landed, and a send failure must never fail the webhook response (RC
+ * would otherwise retry the whole event on a transient Resend error).
+ */
+async function sendRevenueCatCancelledEmailSafely(params: {
+  userId: string;
+  userEmail: string;
+  plan: string | null;
+  expirationAtMs: number | null;
+}): Promise<void> {
+  const { userId, userEmail, plan, expirationAtMs } = params;
+  if (!plan) {
+    logWebhookWarning(
+      `RevenueCat CANCELLATION for user ${userId} has no resolvable plan - skipping cancelled email`,
+    );
+    return;
+  }
+  try {
+    const endDate = expirationAtMs
+      ? new Date(expirationAtMs)
+      : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+
+    const emailResult = await sendSubscriptionCancelledEmail({
+      to: userEmail,
+      plan,
+      endDate,
+      billingUrl: getBillingUrl(),
+    });
+
+    if (!emailResult.success) {
+      logWebhookWarning(
+        `RevenueCat cancelled email failed for user ${userId}, but processing continues`,
+        { error: emailResult.error },
+      );
+    }
+  } catch (emailError) {
+    logWebhookError(
+      `Error sending RevenueCat cancelled email for user ${userId} (webhook processing continues)`,
+      emailError,
+    );
+  }
+}
+
+async function sendRevenueCatPaymentFailedEmailSafely(params: {
+  userId: string;
+  userEmail: string;
+  plan: string | null;
+}): Promise<void> {
+  const { userId, userEmail, plan } = params;
+  try {
+    const emailResult = await sendPaymentFailedEmail({
+      to: userEmail,
+      plan,
+      billingUrl: getBillingUrl(),
+      isFinalAttempt: false,
+    });
+
+    if (!emailResult.success) {
+      logWebhookWarning(
+        `RevenueCat payment-failed email failed for user ${userId}, but processing continues`,
+        { error: emailResult.error },
+      );
+    }
+  } catch (emailError) {
+    logWebhookError(
+      `Error sending RevenueCat payment-failed email for user ${userId} (webhook processing continues)`,
+      emailError,
+    );
+  }
+}
 
 export async function POST(request: NextRequest) {
   let event: RcEvent | null = null;
@@ -227,6 +325,7 @@ export async function POST(request: NextRequest) {
     const profileRows = await db
       .select({
         id: profile.id,
+        email: profile.email,
         planSelected: profile.planSelected,
         subscriptionStatus: profile.subscriptionStatus,
         currentPeriodEnd: profile.currentPeriodEnd,
@@ -252,6 +351,7 @@ export async function POST(request: NextRequest) {
       return acknowledged({ skipped: "unknown-user" });
     }
     userId = profileRows[0].id;
+    const userEmail = profileRows[0].email;
     const billingVersionAtRead = profileRows[0].billingVersion;
 
     const projection: BillingProjection = {
@@ -374,6 +474,31 @@ export async function POST(request: NextRequest) {
       logWebhookSuccess(
         `RevenueCat ${event.type} applied for user ${userId}: plan=${decision.projection.plan} status=${decision.projection.status} provider=${decision.projection.provider} (${decision.reason})`,
       );
+
+      // Minimal Apple-side lifecycle emails (two event families only) —
+      // only after the write actually landed, matching the Stripe webhook
+      // handlers' post-write send pattern.
+      const lifecycleEmailKind = classifyRevenueCatLifecycleEmail(event.type);
+      if (lifecycleEmailKind && userEmail) {
+        if (lifecycleEmailKind === "cancelled") {
+          await sendRevenueCatCancelledEmailSafely({
+            userId,
+            userEmail,
+            plan: decision.projection.plan,
+            expirationAtMs: event.expiration_at_ms ?? null,
+          });
+        } else {
+          await sendRevenueCatPaymentFailedEmailSafely({
+            userId,
+            userEmail,
+            plan: decision.projection.plan,
+          });
+        }
+      } else if (lifecycleEmailKind && !userEmail) {
+        logWebhookWarning(
+          `No profile email for user ${userId} - skipping RevenueCat ${event.type} email`,
+        );
+      }
     } else {
       logWebhookInfo(
         `RevenueCat ${event.type} for user ${userId} produced no projection change (${decision.reason})`,

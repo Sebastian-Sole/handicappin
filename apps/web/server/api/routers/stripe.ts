@@ -16,13 +16,7 @@ import {
   checkoutRateLimit,
   portalRateLimit,
 } from "@/lib/rate-limit";
-import {
-  sendSubscriptionUpgradedEmail,
-  sendSubscriptionDowngradedEmail,
-  sendSubscriptionCancelledEmail,
-} from "@/lib/email-service";
 import { PlanSchema } from "@/lib/stripe-types";
-import Stripe from "stripe";
 
 // Helper to check rate limits and throw tRPC error if exceeded
 async function checkRateLimit(
@@ -285,75 +279,18 @@ export const stripeRouter = createTRPCRouter({
       })
     )
     .mutation(async ({ ctx, input }) => {
-      const { user, supabase } = ctx;
+      const { user } = ctx;
 
-      // Get current plan before update
-      const { data: currentProfile } = await supabase
-        .from("profile")
-        .select("plan_selected")
-        .eq("id", user.id)
-        .single();
-
-      const currentPlan = currentProfile?.plan_selected || "free";
-
-      // Update subscription via Stripe
+      // Update subscription via Stripe. Lifecycle emails (upgrade/downgrade/
+      // cancel) are sent from the Stripe webhook handlers, not here — the
+      // webhook is the single source of truth for ALL Stripe-side changes
+      // (portal, dunning, this mutation's own API calls), so sending here
+      // too would double-send.
+      const baseUrl = getServerBaseUrl();
       const result = await updateStripeSubscription({
         userId: user.id,
         newPlan: input.newPlan,
       });
-
-      // Send email notification (non-blocking)
-      const baseUrl = getServerBaseUrl();
-      const billingUrl = `${baseUrl}/billing`;
-
-      try {
-        if (result.changeType === "upgrade" && user.email) {
-          const proratedCharge =
-            result.subscription?.latest_invoice &&
-            typeof result.subscription.latest_invoice !== "string"
-              ? (result.subscription.latest_invoice as Stripe.Invoice).amount_due || 0
-              : 0;
-
-          const currency =
-            result.subscription?.items.data[0]?.price.currency || "usd";
-
-          await sendSubscriptionUpgradedEmail({
-            to: user.email,
-            oldPlan: currentPlan,
-            newPlan: input.newPlan,
-            proratedCharge,
-            currency,
-            billingUrl,
-          });
-        } else if (result.changeType === "downgrade" && user.email) {
-          const periodEnd = result.subscription?.items?.data[0]?.current_period_end;
-          const effectiveDate = periodEnd
-            ? new Date(periodEnd * 1000)
-            : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
-
-          await sendSubscriptionDowngradedEmail({
-            to: user.email,
-            oldPlan: currentPlan,
-            newPlan: input.newPlan,
-            effectiveDate,
-            billingUrl,
-          });
-        } else if (result.changeType === "cancel" && user.email) {
-          const periodEnd = result.subscription?.items?.data[0]?.current_period_end;
-          const endDate = periodEnd
-            ? new Date(periodEnd * 1000)
-            : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
-
-          await sendSubscriptionCancelledEmail({
-            to: user.email,
-            plan: currentPlan,
-            endDate,
-            billingUrl,
-          });
-        }
-      } catch (emailError) {
-        console.error("Failed to send subscription change email:", emailError);
-      }
 
       // If changing to lifetime, return checkout URL
       if ("requiresCheckout" in result && result.requiresCheckout) {
