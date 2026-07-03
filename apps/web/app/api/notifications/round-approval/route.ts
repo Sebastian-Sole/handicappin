@@ -214,6 +214,32 @@ export async function POST(request: NextRequest) {
         scorecard,
       });
     } else {
+      // Best-effort lookup of the rejection reason. A round can have more
+      // than one submission (e.g. a new course + a new tee submitted
+      // together) — pull every resolved-and-rejected reason for this round
+      // and join them, most recently resolved first, so the user sees every
+      // reason if more than one entity was rejected.
+      let rejectionReason: string | null = null;
+      const { data: rejectedSubmissions, error: submissionsError } =
+        await supabase
+          .from("submissions")
+          .select("rejectionReason, resolvedAt")
+          .eq("roundId", round.id)
+          .eq("status", "rejected")
+          .order("resolvedAt", { ascending: false });
+
+      if (submissionsError) {
+        logger.warn(
+          "Failed to fetch rejection reason for round-approval notification",
+          { roundId, error: submissionsError.message },
+        );
+      } else {
+        const reasons = (rejectedSubmissions ?? [])
+          .map((row) => row.rejectionReason)
+          .filter((reason): reason is string => !!reason);
+        rejectionReason = reasons.length > 0 ? reasons.join("\n\n") : null;
+      }
+
       await sendRoundRejectedEmail({
         to: profile.email,
         name: profile.name,
@@ -221,6 +247,7 @@ export async function POST(request: NextRequest) {
         teeName: tee?.name,
         teePlayedAt: round.teeTime,
         roundsUrl: `${baseUrl}/rounds/add`,
+        rejectionReason,
       });
     }
 

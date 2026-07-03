@@ -19,6 +19,7 @@ interface RoundRejectedEmailProps {
   teePlayedAt?: Date | string;
   roundsUrl: string;
   supportEmail: string;
+  rejectionReason?: string | null;
 }
 
 function formatDate(value: Date | string | undefined): string | null {
@@ -39,6 +40,7 @@ export default function RoundRejectedEmail({
   teePlayedAt,
   roundsUrl,
   supportEmail,
+  rejectionReason,
 }: RoundRejectedEmailProps) {
   const playedOn = formatDate(teePlayedAt);
   const greeting = name ? `Hi ${name},` : "Hi,";
@@ -118,6 +120,19 @@ export default function RoundRejectedEmail({
                 </Section>
               </Section>
 
+              {rejectionReason ? (
+                <Section className="mb-6">
+                  <Text className="text-xs text-gray-500 uppercase tracking-wide mb-1 mt-0">
+                    Why it was rejected
+                  </Text>
+                  <Section className="border-l-4 border-amber-500 bg-amber-50 rounded-r-md py-3 px-4">
+                    <Text className="text-sm text-gray-800 mt-0 mb-0">
+                      {rejectionReason}
+                    </Text>
+                  </Section>
+                </Section>
+              ) : null}
+
               <Section className="mb-6">
                 <Text className="text-sm font-semibold text-gray-900 mb-3 mt-0">
                   Here&apos;s what you can do
@@ -128,9 +143,9 @@ export default function RoundRejectedEmail({
                     Resubmit with corrected details
                   </Text>
                   <Text className="text-sm text-gray-700 mt-0 mb-0">
-                    Double-check the course, tee, and hole data. Most rejections
-                    come from tee ratings or hole pars that don&apos;t match the
-                    course&apos;s official scorecard.
+                    {rejectionReason
+                      ? "Fix the issue above and resubmit — double-check the course, tee, and hole data before you do."
+                      : "Double-check the course, tee, and hole data. Most rejections come from tee ratings or hole pars that don't match the course's official scorecard."}
                   </Text>
                 </Section>
 

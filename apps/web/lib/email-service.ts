@@ -603,9 +603,9 @@ export async function sendRoundApprovedEmail({
 }
 
 /**
- * Notify a user that their submitted round was not approved. Uses the generic
- * rejection message so the user understands next steps (contact support or
- * resubmit) without exposing admin-only details.
+ * Notify a user that their submitted round was not approved. Includes the
+ * admin's rejection reason when available; falls back to generic guidance
+ * for older events resolved before reasons were required.
  */
 export async function sendRoundRejectedEmail({
   to,
@@ -614,6 +614,7 @@ export async function sendRoundRejectedEmail({
   teeName,
   teePlayedAt,
   roundsUrl,
+  rejectionReason,
 }: {
   to: string;
   name?: string | null;
@@ -621,6 +622,7 @@ export async function sendRoundRejectedEmail({
   teeName?: string;
   teePlayedAt?: Date | string;
   roundsUrl: string;
+  rejectionReason?: string | null;
 }): Promise<SendEmailResult> {
   try {
     logger.info("Sending round rejected email", {
@@ -636,6 +638,7 @@ export async function sendRoundRejectedEmail({
         teePlayedAt,
         roundsUrl,
         supportEmail: "sebastiansole@handicappin.com",
+        rejectionReason,
       }),
     );
 
