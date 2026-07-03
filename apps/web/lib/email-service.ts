@@ -464,6 +464,11 @@ export async function sendAdminSubmissionNotification({
       roundId,
     });
 
+    // Matches the base-URL pattern used elsewhere for server-side (non-request)
+    // email links — see app/api/notifications/round-approval/route.ts.
+    const siteUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://handicappin.com";
+    const moderationUrl = `${siteUrl}/admin/submissions`;
+
     const emailHtml = await render(
       AdminSubmissionNotificationEmail({
         submitterEmail,
@@ -475,6 +480,7 @@ export async function sendAdminSubmissionNotification({
         courseIsNew,
         submissions,
         roundId,
+        moderationUrl,
       }),
     );
 

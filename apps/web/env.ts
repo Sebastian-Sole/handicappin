@@ -30,6 +30,9 @@ export const env = createEnv({
     REDIS_URL: z.url(),
 
     ADMIN_ALERT_EMAILS: z.string(),
+    // Who may moderate (admin console access). Deliberately separate from
+    // ADMIN_ALERT_EMAILS (who receives notification emails) — see plans/002.
+    ADMIN_EMAILS: z.string(),
     RESET_TOKEN_SECRET: z.string(),
 
     OPENAI_API_KEY: z.string().min(1),
@@ -80,6 +83,7 @@ export const env = createEnv({
     KV_REST_API_READ_ONLY_TOKEN: process.env.KV_REST_API_READ_ONLY_TOKEN,
     REDIS_URL: process.env.REDIS_URL,
     ADMIN_ALERT_EMAILS: process.env.ADMIN_ALERT_EMAILS,
+    ADMIN_EMAILS: process.env.ADMIN_EMAILS,
     RESET_TOKEN_SECRET: process.env.RESET_TOKEN_SECRET,
     OPENAI_API_KEY: process.env.OPENAI_API_KEY,
     GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET,

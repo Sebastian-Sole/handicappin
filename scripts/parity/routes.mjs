@@ -35,6 +35,7 @@ export const INTENTIONAL = {
   // the website where these are reachable (expo-web-browser).
   webOnly: new Set([
     "about",
+    "admin/submissions", // Admin moderation console — operator tool, web-only by design (plans/002).
     "billing",
     "billing/success",
     "contact",

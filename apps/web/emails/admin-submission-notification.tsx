@@ -5,6 +5,7 @@ import {
   Heading,
   Hr,
   Html,
+  Link,
   Preview,
   Section,
   Text,
@@ -30,6 +31,7 @@ interface AdminSubmissionNotificationEmailProps {
   courseIsNew: boolean;
   submissions: SubmissionSummary[];
   roundId?: number;
+  moderationUrl?: string;
 }
 
 const SUBMISSION_TYPE_LABEL: Record<SubmissionSummary["type"], string> = {
@@ -50,6 +52,7 @@ export default function AdminSubmissionNotificationEmail({
     { type: "new_tee", teeName: "Blue", teeGender: "male" },
   ],
   roundId,
+  moderationUrl = "https://handicappin.com/admin/submissions",
 }: AdminSubmissionNotificationEmailProps) {
   const submissionCount = submissions.length + (courseIsNew ? 1 : 0);
   const location = [courseCity, courseCountry].filter(Boolean).join(", ");
@@ -138,11 +141,15 @@ export default function AdminSubmissionNotificationEmail({
 
               <Section className="mt-6 pt-6 border-t border-gray-200">
                 <Text className="text-sm text-gray-700 mb-2">
-                  <strong>Next step:</strong> review the submission(s) and call{" "}
-                  <code>approve_submission(submissionId)</code> or{" "}
-                  <code>reject_submission(submissionId)</code> via the Supabase
-                  SQL editor using the service role.
+                  <strong>Next step:</strong> review and approve or reject the
+                  submission(s) in the moderation queue.
                 </Text>
+                <Link
+                  href={moderationUrl}
+                  className="text-sm font-semibold text-blue-600"
+                >
+                  Review in the moderation queue
+                </Link>
               </Section>
 
               <Section className="mt-8 pt-6 border-t border-gray-200">
