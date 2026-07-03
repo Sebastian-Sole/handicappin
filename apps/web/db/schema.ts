@@ -116,6 +116,7 @@ export const course = pgTable(
     city: text().notNull().default("St. Andrews"),
     website: text(),
     submittedBy: uuid().references(() => profile.id, { onDelete: "set null" }),
+    source: text().$type<"user" | "ingest">().default("user").notNull(),
   },
   (table) => [
     uniqueIndex("course_name_country_city_key").using(
