@@ -1,5 +1,5 @@
 /**
- * Run: deno test supabase/functions/_shared/throttle.test.ts
+ * Run: deno test --allow-env supabase/functions/_shared/throttle.test.ts
  *
  * Uses a stubbed Supabase client (in-memory rows) so these tests don't need
  * a running Postgres instance — they only exercise the throttle decision

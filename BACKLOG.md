@@ -62,7 +62,7 @@ The OTP-send edge functions (`reset-password`, `resend-verification-otp`, `send-
 2. **Vercel env (production)**: confirm `RATE_LIMIT_ENABLED=true` and `KV_REST_API_URL` / `KV_REST_API_TOKEN` are set. `apps/web/lib/rate-limit.ts` fails open without them, which silently disables the nine existing web limiters (checkout, portal, contact, AI extraction, etc.) too.
 3. **Supabase edge-function env**: optional overrides `RATE_LIMIT_OTP_PER_EMAIL_HOUR` (default 3) and `RATE_LIMIT_OTP_PER_IP_HOUR` (default 10) if the defaults prove too tight/loose after launch traffic.
 
-**Context**: `.claude/plans/004-auth-rate-limiting.md`. `request-email-change` was left unwired — it upserts a single row per user into `pending_email_changes` (not `otp_verifications`), so the per-email/purpose row-counting design in `throttle.ts` doesn't apply to it; it already has its own 2-minute per-user cooldown. Per-IP rate limiting on *verify* attempts (`verify-password-reset-otp`) was also left as a follow-up — see the comment at the top of that file for why it needs a schema change.
+**Context**: `plans/004-auth-rate-limiting.md`. `request-email-change` was left unwired — it upserts a single row per user into `pending_email_changes` (not `otp_verifications`), so the per-email/purpose row-counting design in `throttle.ts` doesn't apply to it; it already has its own 2-minute per-user cooldown. Per-IP rate limiting on *verify* attempts (`verify-password-reset-otp`) was also left as a follow-up — see the comment at the top of that file for why it needs a schema change.
 
 ---
 
