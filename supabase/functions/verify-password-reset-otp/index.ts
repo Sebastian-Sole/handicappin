@@ -9,9 +9,21 @@
 // - Generic error messages to prevent account enumeration
 // - Cryptographically secure hash verification (SHA-256)
 // - One-time use (OTP deleted after successful verification)
+// - Send-side throttling (see ../_shared/throttle.ts) caps how many OTPs
+//   can be generated per email+purpose and per IP per hour, which bounds
+//   how many distinct OTPs an attacker can ever have in flight to guess
+//   against for a given email.
 //
-// TODO: Add IP-based rate limiting (e.g., max 10 attempts per IP per hour)
-// Currently relies on per-OTP attempt limiting only
+// Per-IP rate limiting on *verify* attempts (as opposed to sends) is not
+// implemented here: this endpoint only ever updates/deletes existing
+// otp_verifications rows, it never inserts one, so there is no existing
+// column that logs a verify attempt against a request IP independent of
+// which email/OTP was targeted. Building a sound version of "max N verify
+// attempts per IP per hour" needs a dedicated attempts-log (ip + timestamp,
+// unlinked from otp_verifications) — that's a schema change, and this plan
+// is explicitly scoped to not touch supabase/migrations/. Left as a
+// follow-up requiring a migration; per-OTP attempt limiting above remains
+// the primary control on this endpoint.
 
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "jsr:@supabase/supabase-js@2";

@@ -54,6 +54,18 @@ From the native build (PR #129), intentionally not yet ported — the app links 
 
 ---
 
+## Auth hardening — owner switches
+
+The OTP-send edge functions (`reset-password`, `resend-verification-otp`, `send-verification-email`) now throttle themselves against the existing `otp_verifications` table (`supabase/functions/_shared/throttle.ts`) — no owner action needed for that part. The pieces below are hosted configuration the code can't reach:
+
+1. **Supabase dashboard → Authentication → Rate Limits**: confirm/tighten the built-in limits for sign-in attempts and token grants. This is the actual control for `supabase.auth.signInWithPassword` (`apps/web/components/auth/login.tsx`), which calls Supabase's auth endpoint directly from the client — our Next.js layer never sees it, so app code can't throttle it.
+2. **Vercel env (production)**: confirm `RATE_LIMIT_ENABLED=true` and `KV_REST_API_URL` / `KV_REST_API_TOKEN` are set. `apps/web/lib/rate-limit.ts` fails open without them, which silently disables the nine existing web limiters (checkout, portal, contact, AI extraction, etc.) too.
+3. **Supabase edge-function env**: optional overrides `RATE_LIMIT_OTP_PER_EMAIL_HOUR` (default 3) and `RATE_LIMIT_OTP_PER_IP_HOUR` (default 10) if the defaults prove too tight/loose after launch traffic.
+
+**Context**: `.claude/plans/004-auth-rate-limiting.md`. `request-email-change` was left unwired — it upserts a single row per user into `pending_email_changes` (not `otp_verifications`), so the per-email/purpose row-counting design in `throttle.ts` doesn't apply to it; it already has its own 2-minute per-user cooldown. Per-IP rate limiting on *verify* attempts (`verify-password-reset-otp`) was also left as a follow-up — see the comment at the top of that file for why it needs a schema change.
+
+---
+
 ## Rejected Submission Re-submission UX
 
 Users whose submissions are rejected currently have no clear path to resubmit. The rejected round remains in their history with no explanation or action. A future improvement should:

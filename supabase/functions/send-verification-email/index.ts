@@ -9,6 +9,7 @@ import * as React from "https://esm.sh/react@18.2.0";
 import { render } from "https://esm.sh/@react-email/components@0.0.22?deps=react@18.2.0";
 import { createClient } from "jsr:@supabase/supabase-js@2";
 import { generateOTP, hashOTP, getOTPExpiry } from "../_shared/otp-utils.ts";
+import { checkOtpSendAllowed } from "../_shared/throttle.ts";
 
 // This is from supabase docs: https://supabase.com/docs/guides/auth/auth-hooks/send-email-hook
 console.log("send-verification-email (OTP-based)");
@@ -73,6 +74,37 @@ Deno.serve(async (req) => {
     // Normalize email for consistent storage (defense-in-depth)
     const normalizedEmail = user.email.toLowerCase().trim();
 
+    // Request IP, for throttling below and for the OTP audit trail on insert
+    const requestIp =
+      req.headers.get("x-forwarded-for")?.split(",")[0] || "unknown";
+
+    // Throttle OTP sends per email+purpose and per IP. This function is
+    // invoked by Supabase Auth's send-email hook (HMAC-verified above), but
+    // repeated signups to the same email would otherwise still burst
+    // Resend sends with no cap.
+    const throttle = await checkOtpSendAllowed(supabase, {
+      email: normalizedEmail,
+      ip: requestIp !== "unknown" ? requestIp : null,
+      purpose: "signup",
+    });
+
+    if (!throttle.allowed) {
+      return new Response(
+        JSON.stringify({
+          error: { message: "Too many verification emails requested. Please try again later." },
+        }),
+        {
+          status: 429,
+          headers: {
+            "Content-Type": "application/json",
+            ...(throttle.retryAfterSeconds
+              ? { "Retry-After": String(throttle.retryAfterSeconds) }
+              : {}),
+          },
+        }
+      );
+    }
+
     // Generate OTP
     const otp = generateOTP();
     const otpHash = await hashOTP(otp);
@@ -87,8 +119,7 @@ Deno.serve(async (req) => {
         otp_hash: otpHash,
         otp_type: "signup",
         expires_at: expiresAt.toISOString(),
-        request_ip:
-          req.headers.get("x-forwarded-for")?.split(",")[0] || "unknown",
+        request_ip: requestIp,
       });
 
     if (insertError) {
