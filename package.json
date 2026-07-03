@@ -20,6 +20,7 @@
     "gen:local": "pnpm --filter web gen:local",
     "storybook": "pnpm --filter web storybook",
     "build:seed": "./scripts/build-seed.sh",
+    "load:courses": "node scripts/load-staged-courses.mjs",
     "check:schema-sync": "node scripts/check-schema-sync.mjs",
     "check:tokens": "bash scripts/check-design-tokens.sh",
     "generate:theme": "pnpm --filter @handicappin/tokens generate:theme",
@@ -45,6 +46,7 @@
     }
   },
   "devDependencies": {
-    "concurrently": "^9.2.1"
+    "concurrently": "^9.2.1",
+    "postgres": "^3.4.8"
   }
 }
