@@ -7,8 +7,11 @@
  *
  * Part 2: `handleSubscriptionDeleted` — the cancelled email fires only
  * when the guarded write landed AND the prior projection was an ACTIVE
- * paid plan (a past_due contract dying after failed dunning was already
- * told by the final-attempt payment-failed email).
+ * paid plan NOT already scheduled to cancel (a past_due contract dying
+ * after failed dunning was already told by the final-attempt
+ * payment-failed email; a cancel-at-period-end contract was already
+ * notified at cancel time, so its expected deletion at term end must not
+ * double-email).
  *
  * Module-level dependencies (@/db, @/lib/stripe, email-service, the
  * precedence-guard seam) are stubbed the same way
@@ -201,7 +204,7 @@ describe("handleSubscriptionDeleted - cancelled email", () => {
     mockSendCancelled.mockResolvedValue({ success: true });
   });
 
-  it("sends the cancelled email when the prior projection was an active paid plan", async () => {
+  it("sends the cancelled email when the prior projection was an active paid plan not scheduled to cancel", async () => {
     mockReadProjection.mockResolvedValueOnce({
       provider: "stripe",
       plan: "premium",
@@ -217,6 +220,21 @@ describe("handleSubscriptionDeleted - cancelled email", () => {
     expect(mockSendCancelled).toHaveBeenCalledWith(
       expect.objectContaining({ to: "user@example.com", plan: "premium" }),
     );
+  });
+
+  it("does not send when the prior projection was already cancel-at-period-end (notified at cancel time)", async () => {
+    mockReadProjection.mockResolvedValueOnce({
+      provider: "stripe",
+      plan: "premium",
+      status: "active",
+      currentPeriodEnd: 1999999999,
+      cancelAtPeriodEnd: true,
+    });
+    mockGuardedWrite.mockResolvedValueOnce({ written: true, verdict: null });
+
+    await handleSubscriptionDeleted(buildDeletedCtx());
+
+    expect(mockSendCancelled).not.toHaveBeenCalled();
   });
 
   it("does not send when the prior projection was past_due (dunning already emailed)", async () => {

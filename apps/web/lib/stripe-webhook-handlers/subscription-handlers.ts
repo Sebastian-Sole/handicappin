@@ -420,15 +420,28 @@ export async function handleSubscriptionDeleted(
         `[Webhook] Billing version incremented for user ${userId} - BillingSync should detect within seconds`,
       );
 
-      // Only email when the prior contract was an ACTIVE paid plan — an
-      // already-free/plan-less profile has nothing to notify about, and a
-      // past_due contract dying after failed dunning was already told by
-      // the final-attempt payment-failed email.
+      // Only email when the prior contract was an ACTIVE paid plan that was
+      // NOT already scheduled to cancel:
+      // - an already-free/plan-less profile has nothing to notify about;
+      // - a past_due contract dying after failed dunning was already told
+      //   by the final-attempt payment-failed email;
+      // - a cancel-at-period-end contract was already notified at cancel
+      //   time (the classifier's false->true transition) — its deletion at
+      //   term end is the expected conclusion, not news.
+      // What remains is a genuinely immediate deletion (e.g. a Stripe-
+      // dashboard hard-cancel of an active subscription).
       const priorPlan = priorProjection?.plan ?? null;
       const priorWasActive =
         priorProjection?.status === "active" ||
         priorProjection?.status === "trialing";
-      if (priorPlan && planRank(priorPlan) > 0 && priorWasActive) {
+      const priorWasAlreadyCancelling =
+        priorProjection?.cancelAtPeriodEnd === true;
+      if (
+        priorPlan &&
+        planRank(priorPlan) > 0 &&
+        priorWasActive &&
+        !priorWasAlreadyCancelling
+      ) {
         await sendSubscriptionChangeEmailSafely({
           userId,
           classification: { kind: "cancelled", plan: priorPlan },
