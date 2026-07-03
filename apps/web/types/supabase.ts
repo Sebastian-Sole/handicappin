@@ -41,6 +41,7 @@ export type Database = {
           country: string
           id: number
           name: string
+          source: string
           submittedBy: string | null
           website: string | null
         }
@@ -50,6 +51,7 @@ export type Database = {
           country?: string
           id?: number
           name: string
+          source?: string
           submittedBy?: string | null
           website?: string | null
         }
@@ -59,6 +61,7 @@ export type Database = {
           country?: string
           id?: number
           name?: string
+          source?: string
           submittedBy?: string | null
           website?: string | null
         }
