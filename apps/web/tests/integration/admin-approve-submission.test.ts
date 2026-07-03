@@ -1,12 +1,14 @@
 /**
- * `approve_submission` RPC integration test (plans/002-admin-moderation-console).
+ * `approve_submission` RPC integration test (plans/002-admin-moderation-console,
+ * updated for plans/003-rejection-loop's retained-submission lifecycle).
  *
  * Exercises the real, already-hardened RPC (supabase/migrations/
- * 20260410165734_fix_submission_fk_and_procedure_safety.sql) against the
- * REAL local Supabase stack: seeds a pending new_course submission, calls
+ * 20260703091818_submission_lifecycle_and_reason.sql) against the REAL local
+ * Supabase stack: seeds a pending new_course submission, calls
  * `approve_submission` via the service-role client (the same call the admin
  * router makes), and asserts the course/tee flip to approved and the
- * submission row is deleted.
+ * submission row is RETAINED with status = 'approved' (submissions are no
+ * longer deleted on resolution — see plans/003-rejection-loop.md).
  *
  * Mirrors the `describeIfLocal` harness established in
  * stripe-billing-guards.test.ts — this suite only runs against a real
@@ -106,8 +108,8 @@ describeIfLocal(
       const admin = createClient(supabaseUrl!, serviceRoleKey!, {
         auth: { autoRefreshToken: false, persistSession: false },
       });
-      // Submission row is deleted by the RPC on success; clean up defensively
-      // in case a test failed before reaching that point.
+      // Submission rows are retained (resolved, not deleted) — clean up
+      // explicitly instead of relying on the RPC to remove them.
       if (submissionId) {
         await db.delete(submissions).where(eq(submissions.id, submissionId));
       }
@@ -121,7 +123,7 @@ describeIfLocal(
       await admin.auth.admin.deleteUser(userId);
     }, 30_000);
 
-    test("approving a pending new_course submission approves the course + tee and deletes the submission row", async () => {
+    test("approving a pending new_course submission approves the course + tee and retains the submission row as approved", async () => {
       const [createdCourse] = await db
         .insert(course)
         .values({
@@ -170,11 +172,14 @@ describeIfLocal(
         .where(eq(teeInfo.id, teeId));
       expect(approvedTee?.approvalStatus).toBe("approved");
 
-      const remainingSubmissions = await db
+      const [resolvedSubmission] = await db
         .select()
         .from(submissions)
         .where(eq(submissions.id, submissionId));
-      expect(remainingSubmissions).toHaveLength(0);
+      expect(resolvedSubmission).toBeDefined();
+      expect(resolvedSubmission?.status).toBe("approved");
+      expect(resolvedSubmission?.resolvedAt).not.toBeNull();
+      expect(resolvedSubmission?.rejectionReason).toBeNull();
     });
   },
 );
