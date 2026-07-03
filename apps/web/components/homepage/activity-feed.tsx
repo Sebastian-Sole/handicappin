@@ -67,6 +67,7 @@ export function ActivityFeed({
                 key={activity.id}
                 activity={activity}
                 isLast={index === activities.length - 1 || index === 4}
+                profileId={profileId}
               />
             ))}
           </div>
@@ -79,17 +80,28 @@ export function ActivityFeed({
 function ActivityItemRow({
   activity,
   isLast,
+  profileId,
 }: {
   activity: ActivityItem;
   isLast: boolean;
+  profileId: string;
 }) {
   const formattedDate = new Intl.DateTimeFormat("en-US", {
     month: "short",
     day: "numeric",
   }).format(activity.date);
 
+  // Rejected rounds don't have calculation data worth visiting — send the
+  // user to their submission history (with the rejection reason) instead of
+  // the round calculation page. Approved/pending rounds keep the original
+  // destination.
+  const href =
+    activity.approvalStatus === "rejected"
+      ? `/profile/${profileId}?tab=submissions`
+      : `/rounds/${activity.id}/calculation`;
+
   return (
-    <Link href={`/rounds/${activity.id}/calculation`}>
+    <Link href={href}>
       <div
         className={cn(
           "flex items-start gap-sm p-sm -mx-sm rounded-lg",
@@ -108,7 +120,7 @@ function ActivityItemRow({
                   activity.approvalStatus === "approved"
                     ? "Approved round"
                     : activity.approvalStatus === "rejected"
-                      ? "Round rejected"
+                      ? "Round rejected — see why in My Submissions"
                       : "Round pending approval"
                 }
                 className={cn(
@@ -126,7 +138,7 @@ function ActivityItemRow({
               {activity.approvalStatus === "approved"
                 ? "Approved round"
                 : activity.approvalStatus === "rejected"
-                  ? "Round rejected"
+                  ? "Round rejected — see why in My Submissions"
                   : "Round pending approval"}
             </TooltipContent>
           </Tooltip>

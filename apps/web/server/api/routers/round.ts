@@ -181,6 +181,19 @@ export const getBestRoundInputSchema = z.object({
   userId: z.string().uuid(),
 });
 
+export interface MySubmission {
+  id: number;
+  submissionType: "new_course" | "new_tee" | "tee_edit";
+  status: "pending" | "approved" | "rejected";
+  createdAt: string;
+  resolvedAt: string | null;
+  rejectionReason: string | null;
+  courseId: number | null;
+  courseName: string | null;
+  teeId: number | null;
+  teeName: string | null;
+}
+
 export const roundRouter = createTRPCRouter({
   getAllByUserId: authedProcedure
     .input(getAllByUserIdInputSchema)
@@ -996,4 +1009,83 @@ export const roundRouter = createTRPCRouter({
 
       return newRound.round;
     }),
+
+  /**
+   * A user's own submission history — status, resolution, and (for
+   * rejections) the reason. Uses the request-scoped, user-authenticated
+   * Supabase client (`ctx.supabase`), not the drizzle `db` connection or a
+   * service-role client: `submissions` RLS already restricts SELECT to
+   * `submittedBy = auth.uid()` (db/schema.ts), so this can only ever return
+   * the caller's own rows.
+   */
+  listMySubmissions: authedProcedure.query(
+    async ({ ctx }): Promise<MySubmission[]> => {
+      const { data: rows, error } = await ctx.supabase
+        .from("submissions")
+        .select(
+          "id, submissionType, status, createdAt, resolvedAt, rejectionReason, courseId, teeId"
+        )
+        .order("createdAt", { ascending: false });
+
+      if (error) {
+        logger.error("Failed to list user's submissions", {
+          userId: ctx.user.id,
+          error: error.message,
+        });
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: error.message,
+        });
+      }
+
+      const submissionRows = rows ?? [];
+      if (submissionRows.length === 0) return [];
+
+      const courseIds = [
+        ...new Set(
+          submissionRows
+            .map((row) => row.courseId)
+            .filter((id): id is number => id !== null)
+        ),
+      ];
+      const teeIds = [
+        ...new Set(
+          submissionRows
+            .map((row) => row.teeId)
+            .filter((id): id is number => id !== null)
+        ),
+      ];
+
+      const [{ data: courseRows }, { data: teeRows }] = await Promise.all([
+        courseIds.length > 0
+          ? ctx.supabase.from("course").select("id, name").in("id", courseIds)
+          : Promise.resolve({ data: [] as { id: number; name: string }[] }),
+        teeIds.length > 0
+          ? ctx.supabase.from("teeInfo").select("id, name").in("id", teeIds)
+          : Promise.resolve({ data: [] as { id: number; name: string }[] }),
+      ]);
+
+      const courseNameById = new Map(
+        (courseRows ?? []).map((c) => [c.id, c.name])
+      );
+      const teeNameById = new Map((teeRows ?? []).map((t) => [t.id, t.name]));
+
+      return submissionRows.map((row) => ({
+        id: row.id,
+        submissionType: row.submissionType as MySubmission["submissionType"],
+        status: row.status as MySubmission["status"],
+        createdAt: row.createdAt,
+        resolvedAt: row.resolvedAt,
+        rejectionReason: row.rejectionReason,
+        courseId: row.courseId,
+        courseName:
+          row.courseId !== null
+            ? (courseNameById.get(row.courseId) ?? null)
+            : null,
+        teeId: row.teeId,
+        teeName:
+          row.teeId !== null ? (teeNameById.get(row.teeId) ?? null) : null,
+      }));
+    }
+  ),
 });

@@ -8,11 +8,17 @@ import { FeatureAccess } from "@/types/billing";
 import { PersonalInformationTab } from "./tabs/personal-information-tab";
 import { BillingTab } from "./tabs/billing-tab";
 import { SettingsTab } from "./tabs/settings-tab";
-import { User as UserIcon, CreditCard, Settings } from "lucide-react";
+import { SubmissionsTab } from "./tabs/submissions-tab";
+import {
+  User as UserIcon,
+  CreditCard,
+  Settings,
+  FileEdit,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import { H1 } from "@/components/ui/typography";
 
-type TabId = "personal" | "billing" | "settings";
+type TabId = "personal" | "submissions" | "billing" | "settings";
 
 interface Tab {
   id: TabId;
@@ -28,6 +34,7 @@ interface TabbedProfilePageProps {
 
 const tabs: Tab[] = [
   { id: "personal", label: "Personal Information", icon: UserIcon },
+  { id: "submissions", label: "My Submissions", icon: FileEdit },
   { id: "billing", label: "Billing", icon: CreditCard },
   { id: "settings", label: "Settings", icon: Settings },
 ];
@@ -59,7 +66,10 @@ export function TabbedProfilePage({
     const urlTab = searchParams.get("tab") as TabId;
     const validTab =
       urlTab &&
-      (urlTab === "personal" || urlTab === "billing" || urlTab === "settings")
+      (urlTab === "personal" ||
+        urlTab === "submissions" ||
+        urlTab === "billing" ||
+        urlTab === "settings")
         ? urlTab
         : "personal";
 
@@ -113,6 +123,7 @@ export function TabbedProfilePage({
           {activeTab === "personal" && (
             <PersonalInformationTab authUser={authUser} profile={profile} />
           )}
+          {activeTab === "submissions" && <SubmissionsTab />}
           {activeTab === "billing" && <BillingTab access={access} />}
           {activeTab === "settings" && <SettingsTab />}
         </div>
