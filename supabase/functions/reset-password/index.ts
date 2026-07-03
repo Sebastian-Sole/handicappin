@@ -5,6 +5,7 @@ import { render } from "https://esm.sh/@react-email/components@0.0.22?deps=react
 import { corsHeaders } from "../_shared/cors.ts";
 import { generateOTP, hashOTP, getOTPExpiry } from "../_shared/otp-utils.ts";
 import { validateEmail } from "../_shared/validation.ts";
+import { checkOtpSendAllowed } from "../_shared/throttle.ts";
 import * as React from "https://esm.sh/react@18.2.0";
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY")!);
@@ -71,6 +72,40 @@ Deno.serve(async (req) => {
     // Normalize email (lowercase + trim) for consistent lookups and storage
     const normalizedEmail = email.toLowerCase().trim();
 
+    // Get request IP for throttling + audit
+    const requestIp =
+      req.headers.get("x-forwarded-for")?.split(",")[0] ||
+      req.headers.get("x-real-ip") ||
+      "unknown";
+
+    // Throttle OTP sends per email+purpose and per IP before doing any work.
+    // Checked ahead of the profile lookup so throttled vs. non-throttled
+    // responses don't add a new timing/shape signal to the existing
+    // account-enumeration defenses below.
+    const throttle = await checkOtpSendAllowed(supabase, {
+      email: normalizedEmail,
+      ip: requestIp !== "unknown" ? requestIp : null,
+      purpose: "password_reset",
+    });
+
+    if (!throttle.allowed) {
+      return new Response(
+        JSON.stringify({
+          error: "Too many requests. Please try again later.",
+        }),
+        {
+          status: 429,
+          headers: {
+            ...corsHeaders,
+            "Content-Type": "application/json",
+            ...(throttle.retryAfterSeconds
+              ? { "Retry-After": String(throttle.retryAfterSeconds) }
+              : {}),
+          },
+        }
+      );
+    }
+
     // Find user by email using profile table (O(1) with index)
     const { data: profile, error: profileError } = await supabase
       .from("profile")
@@ -117,12 +152,6 @@ Deno.serve(async (req) => {
     const otp = generateOTP();
     const otpHash = await hashOTP(otp);
     const expiresAt = getOTPExpiry(); // 15 minutes
-
-    // Get request IP for audit
-    const requestIp =
-      req.headers.get("x-forwarded-for")?.split(",")[0] ||
-      req.headers.get("x-real-ip") ||
-      "unknown";
 
     // Store OTP in database with normalized email for consistent lookups
     const { error: insertError } = await supabase

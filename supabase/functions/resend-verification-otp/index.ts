@@ -6,6 +6,7 @@ import { generateOTP, hashOTP, getOTPExpiry } from "../_shared/otp-utils.ts";
 import EmailOTP from "../send-verification-email/email-otp.tsx";
 import { validateEmail } from "../_shared/validation.ts";
 import { corsHeaders } from "../_shared/cors.ts";
+import { checkOtpSendAllowed } from "../_shared/throttle.ts";
 
 console.log("resend-verification-otp function");
 
@@ -52,6 +53,39 @@ Deno.serve(async (req) => {
 
     // Normalize email for consistent lookups
     const normalizedEmail = email.toLowerCase().trim();
+
+    // Request IP, for throttling below and for the OTP audit trail on insert
+    const requestIp =
+      req.headers.get("x-forwarded-for")?.split(",")[0] || "unknown";
+
+    // Throttle OTP sends per email+purpose and per IP before doing any work.
+    // Checked ahead of the profile lookup so throttled vs. non-throttled
+    // responses don't add a new timing/shape signal to the existing
+    // account-enumeration defenses below.
+    const throttle = await checkOtpSendAllowed(supabase, {
+      email: normalizedEmail,
+      ip: requestIp !== "unknown" ? requestIp : null,
+      purpose: "signup",
+    });
+
+    if (!throttle.allowed) {
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: "Too many requests. Please try again later.",
+        }),
+        {
+          status: 429,
+          headers: {
+            ...corsHeaders,
+            "Content-Type": "application/json",
+            ...(throttle.retryAfterSeconds
+              ? { "Retry-After": String(throttle.retryAfterSeconds) }
+              : {}),
+          },
+        }
+      );
+    }
 
     // Check if user exists by querying profile table (O(1) with index)
     const { data: profile, error: profileError } = await supabase
@@ -146,7 +180,7 @@ Deno.serve(async (req) => {
         otp_hash: otpHash,
         otp_type: "signup",
         expires_at: expiresAt.toISOString(),
-        request_ip: req.headers.get("x-forwarded-for")?.split(",")[0] || "unknown",
+        request_ip: requestIp,
       });
 
     if (insertError) {
