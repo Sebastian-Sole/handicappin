@@ -26,6 +26,7 @@ export const approveSubmissionInput = z.object({
 
 export const rejectSubmissionInput = z.object({
   submissionId: z.number().int().positive(),
+  reason: z.string().trim().min(3).max(1000),
 });
 
 /**
@@ -113,10 +114,11 @@ async function fetchSubmitterEmails(
 
 export const adminRouter = createTRPCRouter({
   /**
-   * Every row in `submissions` represents a pending approve/reject decision
-   * — the row is deleted the moment it's resolved (see `approve_submission`
-   * / `reject_submission`, supabase/migrations/20260410165734). So this is
-   * simply "all submissions", oldest first.
+   * Submissions are now a retained record — `approve_submission` /
+   * `reject_submission` (supabase/migrations/20260703091818) mark a row
+   * resolved (status + resolvedAt + rejectionReason) instead of deleting
+   * it. The queue only cares about the still-open ones, so this filters to
+   * `status = 'pending'`, oldest first.
    */
   listPendingSubmissions: adminProcedure.query(
     async (): Promise<PendingSubmission[]> => {
@@ -131,6 +133,7 @@ export const adminRouter = createTRPCRouter({
       const { data: submissions, error } = await supabaseAdmin
         .from("submissions")
         .select("id, submissionType, createdAt, courseId, teeId, submittedBy")
+        .eq("status", "pending")
         .order("createdAt", { ascending: true });
 
       if (error) {
@@ -234,6 +237,7 @@ export const adminRouter = createTRPCRouter({
 
       const { error } = await supabaseAdmin.rpc("reject_submission", {
         p_submission_id: input.submissionId,
+        p_reason: input.reason,
       });
 
       if (error) {

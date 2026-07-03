@@ -7,6 +7,8 @@ import { api } from "@/trpc/react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { FormFeedback } from "@/components/ui/form-feedback";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 import {
   Table,
   TableBody,
@@ -33,6 +35,8 @@ const SUBMISSION_TYPE_LABEL: Record<PendingSubmission["submissionType"], string>
   tee_edit: "Tee edit",
 };
 
+const REJECTION_REASON_MIN_LENGTH = 3;
+
 type PendingAction = {
   submission: PendingSubmission;
   action: "approve" | "reject";
@@ -46,6 +50,7 @@ export function SubmissionsQueueClient({
   const utils = api.useUtils();
   const [pendingAction, setPendingAction] = useState<PendingAction | null>(null);
   const [feedback, setFeedback] = useState<FeedbackState | null>(null);
+  const [rejectReason, setRejectReason] = useState("");
 
   const { data: submissions } = api.admin.listPendingSubmissions.useQuery(
     undefined,
@@ -67,6 +72,7 @@ export function SubmissionsQueueClient({
     onSuccess: async () => {
       setFeedback({ type: "success", message: "Submission rejected." });
       setPendingAction(null);
+      setRejectReason("");
       await utils.admin.listPendingSubmissions.invalidate();
     },
     onError: (error) => {
@@ -75,6 +81,8 @@ export function SubmissionsQueueClient({
   });
 
   const isMutating = approveMutation.isPending || rejectMutation.isPending;
+  const trimmedReason = rejectReason.trim();
+  const isReasonValid = trimmedReason.length >= REJECTION_REASON_MIN_LENGTH;
 
   const handleConfirm = () => {
     if (!pendingAction) return;
@@ -83,13 +91,18 @@ export function SubmissionsQueueClient({
     if (action === "approve") {
       approveMutation.mutate({ submissionId: submission.id });
     } else {
-      rejectMutation.mutate({ submissionId: submission.id });
+      if (!isReasonValid) return;
+      rejectMutation.mutate({
+        submissionId: submission.id,
+        reason: trimmedReason,
+      });
     }
   };
 
   const handleDialogOpenChange = (open: boolean) => {
     if (!open && !isMutating) {
       setPendingAction(null);
+      setRejectReason("");
     }
   };
 
@@ -221,6 +234,27 @@ export function SubmissionsQueueClient({
                   .
                 </DialogDescription>
               </DialogHeader>
+              {pendingAction.action === "reject" && (
+                <div className="space-y-sm">
+                  <Label htmlFor="reject-reason">Reason shown to the user</Label>
+                  <Textarea
+                    id="reject-reason"
+                    value={rejectReason}
+                    onChange={(event) => setRejectReason(event.target.value)}
+                    placeholder="e.g. Tee ratings don't match the course's official scorecard."
+                    rows={3}
+                    disabled={isMutating}
+                    aria-required="true"
+                    aria-invalid={!isReasonValid}
+                  />
+                  {!isReasonValid && rejectReason.length > 0 && (
+                    <p className="text-body-sm text-destructive">
+                      Reason must be at least {REJECTION_REASON_MIN_LENGTH}{" "}
+                      characters.
+                    </p>
+                  )}
+                </div>
+              )}
               <DialogFooter className="gap-sm sm:gap-0">
                 <DialogClose asChild>
                   <Button variant="outline" disabled={isMutating}>
@@ -232,7 +266,10 @@ export function SubmissionsQueueClient({
                     pendingAction.action === "reject" ? "destructive" : "default"
                   }
                   onClick={handleConfirm}
-                  disabled={isMutating}
+                  disabled={
+                    isMutating ||
+                    (pendingAction.action === "reject" && !isReasonValid)
+                  }
                 >
                   {isMutating ? (
                     <>
