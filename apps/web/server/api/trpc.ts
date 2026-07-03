@@ -16,6 +16,7 @@ import {
 } from "@supabase/supabase-js";
 
 import { env } from "@/env";
+import { isAdminEmail } from "@/lib/admin-authz";
 import { logger } from "@/lib/logging";
 import type { Database } from "@/types/supabase";
 import { createServerComponentClient } from "@/utils/supabase/server";
@@ -251,6 +252,23 @@ export const authedProcedure = t.procedure.use(async function isAuthed(opts) {
       user: ctx.user,
     },
   });
+});
+
+/**
+ * Admin-gated procedure. Builds on `authedProcedure` (user must already be
+ * signed in) and additionally requires the user's email to be present in
+ * the `ADMIN_EMAILS` allowlist (see `@/lib/admin-authz`).
+ *
+ * Used by the moderation queue (plans/002-admin-moderation-console) — the
+ * only privileged surface in the app today.
+ */
+export const adminProcedure = authedProcedure.use(async function isAdmin(opts) {
+  const { ctx } = opts;
+  if (!isAdminEmail(ctx.user.email, env.ADMIN_EMAILS)) {
+    throw new TRPCError({ code: "FORBIDDEN" });
+  }
+
+  return opts.next(opts);
 });
 
 // Exported for tests only — these helpers have no consumers outside `createTRPCContext`.
