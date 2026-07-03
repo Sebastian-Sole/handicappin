@@ -3,6 +3,7 @@ import { render } from "@react-email/components";
 import SubscriptionUpgradedEmail from "@/emails/subscription-upgraded";
 import SubscriptionDowngradedEmail from "@/emails/subscription-downgraded";
 import SubscriptionCancelledEmail from "@/emails/subscription-cancelled";
+import PaymentFailedEmail from "@/emails/payment-failed";
 import WelcomeEmail from "@/emails/welcome";
 import ContactFormEmail from "@/emails/contact-form";
 import ContactConfirmationEmail from "@/emails/contact-confirmation";
@@ -220,6 +221,72 @@ export async function sendSubscriptionCancelledEmail({
       `Failed to send subscription cancelled email to ${redactEmail(
         to,
       )} (plan: ${plan})`,
+      error,
+    );
+
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Unknown error",
+    };
+  }
+}
+
+/**
+ * Send payment-failed notification to user
+ * Used when a Stripe invoice payment attempt fails (dunning) or an
+ * Apple/RevenueCat BILLING_ISSUE event is received. Intentionally omits
+ * amounts, card details, and invoice IDs (data minimization).
+ */
+export async function sendPaymentFailedEmail({
+  to,
+  name,
+  plan,
+  billingUrl,
+  isFinalAttempt,
+}: {
+  to: string;
+  name?: string | null;
+  plan: string | null;
+  billingUrl: string;
+  isFinalAttempt: boolean;
+}): Promise<SendEmailResult> {
+  try {
+    logWebhookInfo(`Sending payment failed email to ${redactEmail(to)}`);
+
+    const emailHtml = await render(
+      PaymentFailedEmail({
+        name,
+        plan,
+        billingUrl,
+        isFinalAttempt,
+        supportEmail: "sebastiansole@handicappin.com",
+      }),
+    );
+
+    const result = await resend.emails.send({
+      from: FROM_EMAIL,
+      to,
+      subject: isFinalAttempt
+        ? "Final notice: your payment failed"
+        : "We couldn't process your payment",
+      html: emailHtml,
+    });
+
+    logWebhookSuccess(
+      `Payment failed email sent successfully to ${redactEmail(to)}`,
+      {
+        messageId: result.data?.id,
+        isFinalAttempt,
+      },
+    );
+
+    return {
+      success: true,
+      messageId: result.data?.id,
+    };
+  } catch (error) {
+    logWebhookError(
+      `Failed to send payment failed email to ${redactEmail(to)}`,
       error,
     );
 

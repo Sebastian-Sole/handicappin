@@ -12,6 +12,7 @@ import {
   logPaymentEvent,
 } from "@/lib/webhook-logger";
 import { verifyCustomerOwnership } from "@/lib/stripe-security";
+import { sendPaymentFailedEmail } from "@/lib/email-service";
 import type { BillingFact } from "@/utils/billing/apply-billing-event";
 import {
   guardedStripeProfileWrite,
@@ -135,6 +136,23 @@ export async function handleInvoicePaymentFailed(
       logWebhookSuccess(
         `Updated subscription status to past_due for user ${userId}`
       );
+
+      // Email only on an actually-applied fact: the precedence guard
+      // blocking the write means an Apple/lifetime user must NOT get a
+      // Stripe dunning email for a contract Stripe doesn't own.
+      const userEmail = invoice.customer_email;
+      if (userEmail) {
+        await sendPaymentFailedEmailSafely({
+          userEmail,
+          plan: fact.plan,
+          isFinalAttempt: attemptCount >= 3,
+          userId,
+        });
+      } else {
+        logWebhookWarning(
+          `No customer email on invoice ${invoice.id} - skipping payment-failed email for user ${userId}`
+        );
+      }
     } else {
       logWebhookInfo(
         `past_due write for user ${userId} blocked by precedence guard`
@@ -157,4 +175,43 @@ export async function handleInvoicePaymentFailed(
   }
 
   return { success: true };
+}
+
+/**
+ * Send the payment-failed email without letting a send failure fail the
+ * webhook (Stripe would retry the whole event) — same try/catch shape as
+ * checkout-handlers.ts's sendWelcomeEmailSafely.
+ */
+async function sendPaymentFailedEmailSafely(params: {
+  userEmail: string;
+  plan: BillingFact["plan"];
+  isFinalAttempt: boolean;
+  userId: string;
+}) {
+  try {
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://handicappin.com";
+    const billingUrl = `${appUrl.replace(/\/$/, "")}/billing`;
+
+    const emailResult = await sendPaymentFailedEmail({
+      to: params.userEmail,
+      plan: params.plan,
+      billingUrl,
+      isFinalAttempt: params.isFinalAttempt,
+    });
+
+    if (!emailResult.success) {
+      logWebhookWarning(
+        `Payment failed email failed for user ${params.userId}, but processing continues`,
+        {
+          error: emailResult.error,
+        }
+      );
+    }
+  } catch (emailError) {
+    // Log but don't throw - email failure shouldn't break webhook
+    logWebhookError(
+      `Error sending payment failed email for user ${params.userId} (webhook processing continues)`,
+      emailError
+    );
+  }
 }
