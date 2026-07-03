@@ -1,0 +1,20 @@
+{
+  "name": "Ballerud Golf",
+  "city": "Høvik",
+  "country": "Norway",
+  "website": "ballerud.no",
+  "isNineHole": true,
+  "distanceMeasurement": "meters",
+  "pars": [3, 3, 3, 3, 3, 3, 3, 3, 3],
+  "strokeIndexMen": [1, 3, 17, 9, 15, 5, 13, 7, 11],
+  "tees": [
+    {
+      "name": "Yellow",
+      "gender": "mens",
+      "courseRating18": 26.4,
+      "slopeRating18": 89,
+      "distances": [135, 123, 61, 91, 91, 89, 104, 100, 90]
+    }
+  ],
+  "source": { "provider": "fixture", "url": "seed:ballerud_golf.sql" }
+}

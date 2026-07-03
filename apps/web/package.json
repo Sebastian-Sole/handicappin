@@ -16,6 +16,7 @@
     "email": "email dev",
     "gen:local": "pnpx supabase gen types typescript --local > types/supabase.ts",
     "backfill:subscription-periods": "tsx scripts/backfill-subscription-periods.ts",
+    "course:ingest": "tsx scripts/course-ingest/cli.ts",
     "dev:all": "concurrently -n next,stripe,supabase -c blue,magenta,green \"pnpm dev\" \"stripe listen --forward-to localhost:3000/api/stripe/webhook\" \"supabase functions serve --no-verify-jwt --env-file ../../supabase/.env.local\"",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build"
