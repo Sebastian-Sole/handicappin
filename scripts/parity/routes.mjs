@@ -52,6 +52,12 @@ export const INTENTIONAL = {
     // log D17, user-directed). The custom tabBarButton opens /rounds/add;
     // the route itself is a redirect-only stub, never a destination.
     "add",
+    // Live hole-by-hole scoring (2026-07, user-directed): native-only by
+    // design — no desktop screens on a golf course. Web keeps the batch
+    // scorecard form; there is no web twin to build.
+    "rounds/live",
+    "rounds/live/setup",
+    "rounds/live/review",
   ]),
 };
 

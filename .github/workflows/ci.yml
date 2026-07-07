@@ -26,6 +26,9 @@ env:
   KV_REST_API_TOKEN: "dummy_kv_token"
   KV_REST_API_READ_ONLY_TOKEN: "dummy_kv_readonly_token"
   ADMIN_ALERT_EMAILS: "admin@example.com"
+  # Required since the July 2026 admin-console work (env.ts) — its absence
+  # broke build-and-test on main from 2026-07-03 onward.
+  ADMIN_EMAILS: "admin@example.com"
   RESET_TOKEN_SECRET: "dummy_reset_secret_32chars_long!"
   SUPABASE_SERVICE_ROLE_KEY: "dummy_service_role_key"
   HANDICAP_CRON_SECRET: "dummy_handicap_cron_secret"

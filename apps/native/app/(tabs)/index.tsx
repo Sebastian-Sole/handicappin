@@ -7,6 +7,8 @@
  * reference and here.
  */
 import { useQueries, useQuery } from "@tanstack/react-query";
+import { router } from "expo-router";
+import { useEffect } from "react";
 import { ScrollView, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -17,6 +19,7 @@ import { HandicapGoal } from "@/components/homepage/handicap-goal";
 import { Hero } from "@/components/homepage/hero";
 import { QuickActions } from "@/components/homepage/quick-actions";
 import { QuickStats } from "@/components/homepage/quick-stats";
+import { ResumeRoundCard } from "@/components/live-round/resume-round-card";
 import { DataSettledMarker } from "@/components/data-settled";
 import { profileQueryOptions } from "@/lib/api/procedures/auth";
 import { courseByIdQueryOptions, teeByIdQueryOptions } from "@/lib/api/procedures/course";
@@ -29,10 +32,37 @@ import { useUserId } from "@/lib/auth/session-provider";
 import { transformRoundsToActivities } from "@/lib/activity-transform";
 import { HOMEPAGE_ROUNDS_LIMIT } from "@/lib/golf-stats";
 import { useDataSettled } from "@/lib/query/settle";
+import { isAutoResumable } from "@/lib/round-session/selectors";
+import { getSession } from "@/lib/round-session/store";
+import { usePendingSubmitRetry } from "@/lib/round-session/use-pending-submit-retry";
+
+// One-shot per JS launch: cold-starting mid-round drops the player straight
+// back onto their hole. Deliberately consumed on the FIRST Home mount even
+// when there is nothing to resume — later mounts (e.g. minimizing a live
+// round to check stats) must never yank the user back.
+let autoResumeConsumed = false;
 
 export default function HomeScreen() {
   const userId = useUserId();
   const insets = useSafeAreaInsets();
+
+  // Flush any round that finished offline (also re-runs on app foreground).
+  usePendingSubmitRetry();
+
+  useEffect(() => {
+    if (autoResumeConsumed) return;
+    autoResumeConsumed = true;
+    const live = getSession();
+    if (
+      live &&
+      userId != null &&
+      live.userId === userId && // never auto-open another account's round
+      live.status === "active" &&
+      isAutoResumable(live, new Date().toISOString())
+    ) {
+      router.push("/rounds/live");
+    }
+  }, [userId]);
 
   const profileQuery = useQuery({
     ...profileQueryOptions(userId ?? ""),
@@ -142,6 +172,8 @@ export default function HomeScreen() {
       }}
     >
       <DataSettledMarker settled={settled} />
+
+      <ResumeRoundCard />
 
       <Hero
         profile={profile}
