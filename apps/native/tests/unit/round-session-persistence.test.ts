@@ -6,6 +6,7 @@ import { applyEvent, startSession } from "../../lib/round-session/engine";
 import {
   ACTIVE_SESSION_KEY,
   createSessionPersistence,
+  LAST_SETUP_KEY,
   PENDING_SUBMIT_KEY,
   type KvBackend,
 } from "../../lib/round-session/persistence";
@@ -106,5 +107,25 @@ describe("last setup persistence", () => {
     const loaded = p.loadLastSetup();
     assert.equal(loaded?.course.name, "Test Links");
     assert.equal(loaded?.tee.holes?.length, 18);
+  });
+
+  it("rejects a lastSetup whose tee is missing its holes", () => {
+    const kv = makeKv();
+    const p = createSessionPersistence(kv);
+    const { holes: _holes, ...teeWithoutHoles } = makeTee();
+    kv.setItemSync(
+      LAST_SETUP_KEY,
+      JSON.stringify({
+        v: 1,
+        course: makeSessionCourse(),
+        tee: teeWithoutHoles,
+        holeCount: 18,
+        savedAt: T0,
+      }),
+    );
+    // Offline prefill is the whole point of the snapshot — a tee without
+    // holes is useless, so the loader must reject (and clear) it.
+    assert.equal(p.loadLastSetup(), null);
+    assert.equal(kv.map.has(LAST_SETUP_KEY), false);
   });
 });

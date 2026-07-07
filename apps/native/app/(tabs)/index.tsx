@@ -55,12 +55,14 @@ export default function HomeScreen() {
     const live = getSession();
     if (
       live &&
+      userId != null &&
+      live.userId === userId && // never auto-open another account's round
       live.status === "active" &&
       isAutoResumable(live, new Date().toISOString())
     ) {
       router.push("/rounds/live");
     }
-  }, []);
+  }, [userId]);
 
   const profileQuery = useQuery({
     ...profileQueryOptions(userId ?? ""),

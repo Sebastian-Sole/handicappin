@@ -61,7 +61,25 @@ const lastSetupSchema = z.object({
     website: z.string(),
     approvalStatus: z.enum(["approved", "pending"]),
   }),
-  tee: z.object({ name: z.string() }).passthrough(),
+  // The snapshot exists to make offline prefill work, which needs the full
+  // 18 holes — a tee without them is useless here, so the schema insists.
+  tee: z
+    .object({
+      name: z.string(),
+      holes: z
+        .array(
+          z
+            .object({
+              holeNumber: z.number(),
+              par: z.number(),
+              hcp: z.number(),
+              distance: z.number(),
+            })
+            .passthrough(),
+        )
+        .min(18),
+    })
+    .passthrough(),
   holeCount: z.literal(9).or(z.literal(18)),
   nineHoleSection: z.enum(["front", "back"]).optional(),
   savedAt: z.string(),

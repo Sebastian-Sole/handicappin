@@ -92,6 +92,23 @@ describe("applyEvent / SCORE_SET", () => {
     assert.equal(s2.eventSeq, 1);
   });
 
+  it("rejects non-finite strokes (same reference, nothing persisted)", () => {
+    const s = start();
+    assert.equal(
+      applyEvent(s, { type: "SCORE_SET", holeIndex: 0, strokes: NaN, at }),
+      s,
+    );
+    assert.equal(
+      applyEvent(s, {
+        type: "SCORE_SET",
+        holeIndex: 0,
+        strokes: Infinity,
+        at,
+      }),
+      s,
+    );
+  });
+
   it("clamps strokes to 1..30", () => {
     const low = applyEvent(start(), {
       type: "SCORE_SET",

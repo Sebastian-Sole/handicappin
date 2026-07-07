@@ -27,11 +27,11 @@ import {
   vsPar,
 } from "@/lib/round-session/selectors";
 import {
-  clearRoundSession,
+  discardRoundSession,
   dispatch,
   getSession,
-  useRoundSession,
 } from "@/lib/round-session/store";
+import { useOwnedRoundSession } from "@/lib/round-session/use-owned-session";
 
 const closeModal = () => {
   if (router.canGoBack()) {
@@ -45,7 +45,7 @@ const closeModal = () => {
 const ADVANCE_DELAY_MS = 300;
 
 export default function LiveRoundScreen() {
-  const session = useRoundSession();
+  const session = useOwnedRoundSession();
   const { width } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const pagerRef = useRef<FlatList<Hole>>(null);
@@ -78,8 +78,19 @@ export default function LiveRoundScreen() {
   const disabled = session.status !== "active";
   const nowIso = () => new Date().toISOString();
 
+  // Manual navigation (strip tap, swipe) cancels any queued auto-advance —
+  // otherwise the 300ms timer fires afterwards and yanks the user away
+  // from the hole they deliberately chose.
+  const cancelPendingAdvance = () => {
+    if (advanceTimer.current) {
+      clearTimeout(advanceTimer.current);
+      advanceTimer.current = null;
+    }
+  };
+
   // Dispatch only — the cursor effect above does the actual scrolling.
   const jumpTo = (holeIndex: number) => {
+    cancelPendingAdvance();
     dispatch({ type: "HOLE_SELECTED", holeIndex, at: nowIso() });
   };
 
@@ -125,7 +136,9 @@ export default function LiveRoundScreen() {
         vsPar={vsPar(session)}
         onLeave={closeModal}
         onAbandon={() => {
-          clearRoundSession();
+          // discard (not clear): also drops a pendingSubmit parked by this
+          // session, so an abandoned round can't auto-submit later.
+          discardRoundSession();
           closeModal();
         }}
       />
@@ -140,9 +153,13 @@ export default function LiveRoundScreen() {
           distanceProvider={nullDistanceProvider}
           onPick={handlePick}
           onOther={setStepperFor}
-          onPageSettled={(holeIndex) =>
-            dispatch({ type: "HOLE_SELECTED", holeIndex, at: nowIso() })
-          }
+          onPageSettled={(holeIndex) => {
+            // A swipe that lands on a different hole is manual navigation.
+            if (holeIndex !== getSession()?.currentHoleIndex) {
+              cancelPendingAdvance();
+            }
+            dispatch({ type: "HOLE_SELECTED", holeIndex, at: nowIso() });
+          }}
           initialIndex={session.currentHoleIndex}
           disabled={disabled}
         />

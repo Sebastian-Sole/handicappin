@@ -8,6 +8,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef } from "react";
 import { AppState } from "react-native";
 
+import { useUserId } from "@/lib/auth/session-provider";
 import {
   invalidateRoundQueries,
   retryPendingSubmit,
@@ -15,6 +16,7 @@ import {
 
 export function usePendingSubmitRetry(): void {
   const queryClient = useQueryClient();
+  const userId = useUserId();
   const busyRef = useRef(false);
 
   useEffect(() => {
@@ -22,7 +24,7 @@ export function usePendingSubmitRetry(): void {
       if (busyRef.current) return;
       busyRef.current = true;
       try {
-        const outcome = await retryPendingSubmit();
+        const outcome = await retryPendingSubmit(userId);
         if (outcome === "submitted" || outcome === "deduped") {
           invalidateRoundQueries(queryClient);
         }
@@ -36,5 +38,5 @@ export function usePendingSubmitRetry(): void {
       if (state === "active") void run();
     });
     return () => subscription.remove();
-  }, [queryClient]);
+  }, [queryClient, userId]);
 }

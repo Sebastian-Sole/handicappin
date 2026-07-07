@@ -69,6 +69,10 @@ export const HolePager = forwardRef<FlatList<Hole>, HolePagerProps>(
           index,
         })}
         onMomentumScrollEnd={handleMomentumEnd}
+        // Android can drop momentum-end events (RN long-standing issue);
+        // the drag-end fallback computes the same offset-derived index.
+        // Full Android hardening is deferred with the platform pass.
+        onScrollEndDrag={handleMomentumEnd}
         renderItem={({ item, index }) => (
           <HoleCard
             hole={item}

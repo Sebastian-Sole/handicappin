@@ -9,13 +9,11 @@ import { Alert, Text, View } from "react-native";
 import { formatVsPar } from "@/components/live-round/score-colors";
 import { Button } from "@/components/ui/button";
 import { isStale, scoredCount, vsPar } from "@/lib/round-session/selectors";
-import {
-  clearRoundSession,
-  useRoundSession,
-} from "@/lib/round-session/store";
+import { discardRoundSession } from "@/lib/round-session/store";
+import { useOwnedRoundSession } from "@/lib/round-session/use-owned-session";
 
 export function ResumeRoundCard() {
-  const session = useRoundSession();
+  const session = useOwnedRoundSession();
   if (!session) return null;
 
   const stale = isStale(session, new Date().toISOString());
@@ -31,7 +29,7 @@ export function ResumeRoundCard() {
         {
           text: "Discard",
           style: "destructive",
-          onPress: () => clearRoundSession(),
+          onPress: () => discardRoundSession(),
         },
       ],
     );

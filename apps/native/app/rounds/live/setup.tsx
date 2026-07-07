@@ -41,8 +41,8 @@ import type { SessionCourse } from "@/lib/round-session/types";
 import {
   sessionPersistence,
   startRoundSession,
-  useRoundSession,
 } from "@/lib/round-session/store";
+import { useOwnedRoundSession } from "@/lib/round-session/use-owned-session";
 import {
   FREE_TIER_ROUND_LIMIT,
   roundToNearestMinute,
@@ -70,7 +70,10 @@ export default function LiveRoundSetupScreen() {
   const insets = useSafeAreaInsets();
   const mode = useColorMode();
   const mutedForeground = tokens.colors[mode]["muted-foreground"];
-  const activeRound = useRoundSession();
+  // Owned-session check: another account's persisted round must not bounce
+  // this user into it. Starting a new round here overwrites that slot
+  // (single-slot tradeoff, by design).
+  const activeRound = useOwnedRoundSession();
 
   // Lazy one-time read; full tee snapshot means offline prefill works.
   const [lastSetup] = useState(() => sessionPersistence.loadLastSetup());

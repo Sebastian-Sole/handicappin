@@ -39,11 +39,13 @@ import {
 import { finishEligibility } from "@/lib/round-session/selectors";
 import {
   clearRoundSession,
+  discardRoundSession,
   dispatch,
   getSession,
   sessionPersistence,
-  useRoundSession,
 } from "@/lib/round-session/store";
+import { useOwnedRoundSession } from "@/lib/round-session/use-owned-session";
+import { useUserId } from "@/lib/auth/session-provider";
 import {
   toScorecardInput,
   type SubmitAs,
@@ -61,7 +63,8 @@ interface FeedbackState {
 const BACK_ICON_SIZE = 20; // allow-hardcoded lucide icon prop inside the 40px back button
 
 export default function LiveRoundReviewScreen() {
-  const session = useRoundSession();
+  const session = useOwnedRoundSession();
+  const userId = useUserId();
   const queryClient = useQueryClient();
   const insets = useSafeAreaInsets();
   const mode = useColorMode();
@@ -88,7 +91,7 @@ export default function LiveRoundReviewScreen() {
     if (submitState !== "offline") return;
     let cancelled = false;
     const attempt = async () => {
-      const outcome = await retryPendingSubmit();
+      const outcome = await retryPendingSubmit(userId);
       if (cancelled) return;
       if (outcome !== "failed") {
         // submitted/deduped — or "none": the slot was already flushed by
@@ -108,17 +111,23 @@ export default function LiveRoundReviewScreen() {
       clearInterval(interval);
       subscription.remove();
     };
-  }, [submitState, queryClient]);
+  }, [submitState, queryClient, userId]);
 
   if (!session) {
-    // Post-success the session is cleared in the same tick as the redirect
-    // home; render nothing rather than bouncing through setup.
-    return submitState === "success" ? null : (
+    // The session can be cleared out from under this screen by any success
+    // path (manual submit grace, retry effect, background retry) moments
+    // before navigation lands. Only a genuinely idle screen with no session
+    // should bounce to setup; anything in-flight renders nothing and lets
+    // the pending router.replace finish.
+    return submitState === "idle" ? (
       <Redirect href="/rounds/live/setup" />
-    );
+    ) : null;
   }
 
   const busy = submitState === "loading" || submitState === "success";
+  // Offline-parked: the queued payload is frozen, so the inputs that fed it
+  // must freeze too — edits here would silently never reach the server.
+  const parked = submitState === "offline";
   const eligibility = finishEligibility(session);
   const nowIso = () => new Date().toISOString();
 
@@ -199,7 +208,7 @@ export default function LiveRoundReviewScreen() {
   const onRetry = async () => {
     if (busy) return;
     setSubmitState("loading");
-    const outcome = await retryPendingSubmit();
+    const outcome = await retryPendingSubmit(userId);
     if (outcome !== "failed") {
       // Round is on the server (retryPendingSubmit already cleared the
       // session + slot) — go home directly; lingering here would render
@@ -222,7 +231,16 @@ export default function LiveRoundReviewScreen() {
       "All scores from this round will be lost.",
       [
         { text: "Keep round", style: "cancel" },
-        { text: "Discard", style: "destructive", onPress: goHome },
+        {
+          text: "Discard",
+          style: "destructive",
+          onPress: () => {
+            // Also drops this session's pendingSubmit slot — a discarded
+            // round must never auto-submit when connectivity returns.
+            discardRoundSession();
+            router.replace("/");
+          },
+        },
       ],
     );
   };
@@ -283,7 +301,7 @@ export default function LiveRoundReviewScreen() {
               display="compact"
               themeVariant={mode}
               accentColor={tokens.colors[mode].primary}
-              disabled={busy}
+              disabled={busy || parked}
               onValueChange={(_event, date) => {
                 if (!date) return;
                 setTeeTime(roundToNearestMinute(date).toISOString());
@@ -302,7 +320,7 @@ export default function LiveRoundReviewScreen() {
             className={cn("h-auto py-sm", "min-h-20")}
             value={notes}
             onChangeText={setNotes}
-            editable={!busy}
+            editable={!busy && !parked}
           />
         </View>
       </View>

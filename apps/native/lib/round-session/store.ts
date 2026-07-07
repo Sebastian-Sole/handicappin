@@ -69,24 +69,40 @@ export function dispatch(event: SessionEvent): RoundSession | null {
   if (current === null) return null;
   const next = applyEvent(current, event);
   if (next === current) return current;
-  cached = next;
+  // Persist FIRST: if the SQLite write throws, memory and disk must not
+  // diverge (a score shown in the UI that wouldn't survive relaunch).
   sessionPersistence.saveActiveSession(next);
+  cached = next;
   emit();
   return next;
 }
 
 export function startRoundSession(params: StartSessionParams): RoundSession {
   const session = startSession(params);
-  cached = session;
   sessionPersistence.saveActiveSession(session);
+  cached = session;
   emit();
   return session;
 }
 
 export function clearRoundSession(): void {
-  cached = null;
   sessionPersistence.clearActiveSession();
+  cached = null;
   emit();
+}
+
+/**
+ * User-intent discard: clears the session AND any pendingSubmit slot it
+ * produced — otherwise a round finished offline and then discarded would
+ * still auto-submit the next time connectivity returns.
+ */
+export function discardRoundSession(): void {
+  const session = hydrate();
+  const pending = sessionPersistence.loadPendingSubmit();
+  if (pending && session && pending.sessionId === session.id) {
+    sessionPersistence.clearPendingSubmit();
+  }
+  clearRoundSession();
 }
 
 /** Reactive view of the active session (null when none). */

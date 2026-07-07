@@ -19,7 +19,7 @@ import { tokens } from "@handicappin/tokens/tokens";
 import { StartRoundSheet } from "@/components/live-round/start-round-sheet";
 import { useSession } from "@/lib/auth/session-provider";
 import { useColorMode } from "@/lib/color-mode";
-import { useRoundSession } from "@/lib/round-session/store";
+import { useOwnedRoundSession } from "@/lib/round-session/use-owned-session";
 
 const PLUS_ICON_SIZE = 28; // allow-hardcoded lucide icon prop sized to the 56px action button
 
@@ -27,8 +27,9 @@ function AddRoundTabButton({ style }: { style?: StyleProp<ViewStyle> }) {
   const mode = useColorMode();
   // Live round in progress: (+) jumps straight back into it (zero-friction
   // resume, badge dot signals the state). Otherwise it offers the two entry
-  // modes (live vs scorecard) via a bottom sheet.
-  const liveSession = useRoundSession();
+  // modes (live vs scorecard) via a bottom sheet. Owned-session hook: a
+  // round persisted by a DIFFERENT account on this device reads as none.
+  const liveSession = useOwnedRoundSession();
   const [sheetOpen, setSheetOpen] = useState(false);
   return (
     <View style={style} className="items-center justify-center">

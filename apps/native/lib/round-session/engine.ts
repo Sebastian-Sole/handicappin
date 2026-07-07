@@ -85,6 +85,10 @@ export function applyEvent(s: RoundSession, e: SessionEvent): RoundSession {
   switch (e.type) {
     case "SCORE_SET": {
       if (s.status !== "active" || !inRange(s, e.holeIndex)) return s;
+      // NaN would defeat the same-reference idempotence check below
+      // (NaN !== NaN) and poison the persisted session — the engine is a
+      // protocol surface (future watch events), so don't trust callers.
+      if (!Number.isFinite(e.strokes)) return s;
       const strokes = clampStrokes(e.strokes);
       const current = s.entries[e.holeIndex];
       if (current?.strokes === strokes) return s;

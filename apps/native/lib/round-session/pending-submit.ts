@@ -82,17 +82,24 @@ export type RetryOutcome = "none" | "submitted" | "deduped" | "failed";
     gets its outcome. Without this, two racing retries could double-submit. */
 let inFlight: Promise<RetryOutcome> | null = null;
 
-export function retryPendingSubmit(): Promise<RetryOutcome> {
+export function retryPendingSubmit(
+  forUserId: string | null,
+): Promise<RetryOutcome> {
   if (inFlight) return inFlight;
-  inFlight = doRetry().finally(() => {
+  inFlight = doRetry(forUserId).finally(() => {
     inFlight = null;
   });
   return inFlight;
 }
 
-async function doRetry(): Promise<RetryOutcome> {
+async function doRetry(forUserId: string | null): Promise<RetryOutcome> {
   const pending = sessionPersistence.loadPendingSubmit();
   if (!pending) return "none";
+  // Never submit another account's parked round with this account's auth.
+  // Leave the slot alone — it belongs to whoever parked it.
+  if (forUserId == null || pending.payload.userId !== forUserId) {
+    return "none";
+  }
 
   if (await roundAlreadyLanded(pending.payload)) {
     finalizePending(pending.sessionId);
