@@ -64,11 +64,24 @@ export function subscribe(listener: () => void): () => void {
   };
 }
 
+const CONTENT_EVENTS = new Set(["SCORE_SET", "SCORE_CLEARED", "NOTES_SET"]);
+
 export function dispatch(event: SessionEvent): RoundSession | null {
   const current = hydrate();
   if (current === null) return null;
   const next = applyEvent(current, event);
   if (next === current) return current;
+  // An ACCEPTED content edit invalidates any parked offline submit: the
+  // frozen payload no longer reflects the round, and silently submitting
+  // stale scores would be worse than asking the user to finish again.
+  // (Deliberate alternative to locking the round while parked — a golfer
+  // must never be locked out of their own scorecard by missing signal.)
+  if (CONTENT_EVENTS.has(event.type)) {
+    const pending = sessionPersistence.loadPendingSubmit();
+    if (pending && pending.sessionId === current.id) {
+      sessionPersistence.clearPendingSubmit();
+    }
+  }
   // Persist FIRST: if the SQLite write throws, memory and disk must not
   // diverge (a score shown in the UI that wouldn't survive relaunch).
   sessionPersistence.saveActiveSession(next);
