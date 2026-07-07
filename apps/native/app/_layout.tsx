@@ -8,7 +8,10 @@ import { View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 
+import { tokens } from "@handicappin/tokens/tokens";
+
 import { SessionProvider } from "@/lib/auth/session-provider";
+import { useColorMode } from "@/lib/color-mode";
 import { FONTS_READY_TEST_ID, useAppFonts } from "@/lib/fonts";
 import { QueryProvider } from "@/lib/query/provider";
 
@@ -21,6 +24,7 @@ SplashScreen.preventAutoHideAsync().catch(() => {
 
 export default function RootLayout() {
   const { fontsReady } = useAppFonts();
+  const mode = useColorMode();
 
   useEffect(() => {
     if (fontsReady) {
@@ -44,11 +48,33 @@ export default function RootLayout() {
               importantForAccessibility="no-hide-descendants"
               style={{ width: 0, height: 0 }}
             />
-            <Stack screenOptions={{ headerShown: false }}>
+            {/* contentStyle: the navigator's card is BLACK by default, and
+                it's visible mid-transition (most obviously as a dark sheet
+                sliding up ahead of the fullScreenModal content). Painting
+                the card the app background makes transitions seamless. */}
+            <Stack
+              screenOptions={{
+                headerShown: false,
+                contentStyle: {
+                  backgroundColor: tokens.colors[mode].background,
+                },
+              }}
+            >
               {/* Full-screen modal with an explicit in-screen close (D17). */}
               <Stack.Screen
                 name="rounds/add"
                 options={{ presentation: "fullScreenModal" }}
+              />
+              {/* Live scoring flow (setup → hole screen → review as a nested
+                  stack). Swipe-dismiss disabled: the session survives
+                  regardless (SQLite-backed), but an accidental dismiss
+                  mid-round shouldn't cost the user their place. */}
+              <Stack.Screen
+                name="rounds/live"
+                options={{
+                  presentation: "fullScreenModal",
+                  gestureEnabled: false,
+                }}
               />
             </Stack>
             <StatusBar style="auto" />

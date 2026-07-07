@@ -12,23 +12,39 @@
  */
 import { Redirect, router, Tabs } from "expo-router";
 import { BarChart2, Home, List, Plus, User } from "lucide-react-native";
+import { useState } from "react";
 import { Pressable, View, type StyleProp, type ViewStyle } from "react-native";
 
 import { tokens } from "@handicappin/tokens/tokens";
+import { StartRoundSheet } from "@/components/live-round/start-round-sheet";
 import { useSession } from "@/lib/auth/session-provider";
 import { useColorMode } from "@/lib/color-mode";
+import { useRoundSession } from "@/lib/round-session/store";
 
 const PLUS_ICON_SIZE = 28; // allow-hardcoded lucide icon prop sized to the 56px action button
 
 function AddRoundTabButton({ style }: { style?: StyleProp<ViewStyle> }) {
   const mode = useColorMode();
+  // Live round in progress: (+) jumps straight back into it (zero-friction
+  // resume, badge dot signals the state). Otherwise it offers the two entry
+  // modes (live vs scorecard) via a bottom sheet.
+  const liveSession = useRoundSession();
+  const [sheetOpen, setSheetOpen] = useState(false);
   return (
     <View style={style} className="items-center justify-center">
       <Pressable
         testID="tab-add-round"
         accessibilityRole="button"
-        accessibilityLabel="Log a new round"
-        onPress={() => router.push("/rounds/add")}
+        accessibilityLabel={
+          liveSession ? "Resume live round" : "Log a new round"
+        }
+        onPress={() => {
+          if (liveSession) {
+            router.push("/rounds/live");
+          } else {
+            setSheetOpen(true);
+          }
+        }}
         // Token-fed lift so the circle floats half out of the bar.
         style={{ marginTop: -tokens.spacing.lg }}
         className="h-14 w-14 items-center justify-center rounded-full border-4 border-background bg-primary active:opacity-90"
@@ -37,7 +53,17 @@ function AddRoundTabButton({ style }: { style?: StyleProp<ViewStyle> }) {
           size={PLUS_ICON_SIZE}
           color={tokens.colors[mode]["primary-foreground"]}
         />
+        {liveSession ? (
+          <View
+            testID="tab-add-round-live-badge"
+            className="absolute -top-1 -right-1 h-3 w-3 rounded-full bg-warning border-2 border-background"
+          />
+        ) : null}
       </Pressable>
+      <StartRoundSheet
+        visible={sheetOpen}
+        onClose={() => setSheetOpen(false)}
+      />
     </View>
   );
 }
