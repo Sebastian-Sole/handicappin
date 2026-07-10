@@ -10,6 +10,7 @@ import { SafeAreaProvider } from "react-native-safe-area-context";
 
 import { tokens } from "@handicappin/tokens/tokens";
 
+import { WatchBridgeHost } from "@/components/watch-bridge-host";
 import { SessionProvider } from "@/lib/auth/session-provider";
 import { useColorMode } from "@/lib/color-mode";
 import { FONTS_READY_TEST_ID, useAppFonts } from "@/lib/fonts";
@@ -39,6 +40,7 @@ export default function RootLayout() {
   return (
     <QueryProvider>
       <SessionProvider>
+        <WatchBridgeHost />
         <GestureHandlerRootView style={{ flex: 1 }}>
           <SafeAreaProvider>
             {/* Zero-size marker the Maestro/capture harness asserts on. */}

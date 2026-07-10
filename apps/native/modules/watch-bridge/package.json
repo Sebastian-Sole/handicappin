@@ -1,0 +1,7 @@
+{
+  "name": "watch-bridge",
+  "version": "1.0.0",
+  "description": "Local Expo module: WatchConnectivity bridge for the Apple Watch companion",
+  "main": "index.ts",
+  "private": true
+}

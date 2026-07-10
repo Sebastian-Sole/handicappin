@@ -1,0 +1,50 @@
+# WATCH-SEED · start a live round from the phone so the paired watch has
+# (a) an active session to mirror and (b) a lastSetup slot that feeds the
+# watch's "Recent" catalog. Used by the watch E2E harness
+# (targets/watch-ui-tests/run-watch-e2e.sh); harmless standalone.
+# PRE-REQUISITE: signed in as the test user; local web + Supabase up.
+appId: com.handicappin.app
+---
+- stopApp
+- openLink: handicappin://
+- tapOn:
+    text: "Open"
+    optional: true
+- extendedWaitUntil:
+    visible: ".*Welcome back.*"
+    timeout: 30000
+# Center (+) opens the two-option sheet (live round / scorecard entry).
+- tapOn:
+    id: "tab-add-round"
+# The sheet rows' testIDs aren't in the a11y tree, and the row's label
+# concatenates title + subtitle — match with wildcards.
+- extendedWaitUntil:
+    visible: ".*Play live round.*"
+    timeout: 10000
+- tapOn: ".*Play live round.*"
+- extendedWaitUntil:
+    visible: "Live Round"
+    timeout: 15000
+- tapOn:
+    id: "course-picker-trigger"
+- tapOn:
+    id: "course-search-input"
+- inputText: "St. Andrews"
+- extendedWaitUntil:
+    visible: ".*St. Andrews Old Course.*"
+    timeout: 12000
+- tapOn: ".*St. Andrews Old Course.*"
+# Tee is prefilled from lastSetup or picked fresh; tolerate both.
+- tapOn:
+    id: "tee-picker-trigger"
+- extendedWaitUntil:
+    visible: ".*mens.*"
+    timeout: 12000
+- tapOn: ".*mens.*"
+- tapOn:
+    id: "live-start-round"
+# Hole screen = session started (and lastSetup persisted).
+- extendedWaitUntil:
+    visible:
+      id: "live-round-screen"
+    timeout: 15000
