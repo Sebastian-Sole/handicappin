@@ -1,0 +1,26 @@
+# WATCH-DISCARD · discard the active live round from the phone (watch E2E
+# harness step: proves the watch clears when the phone session dies, and
+# frees the single session slot for the watch-driven start test).
+# PRE-REQUISITE: an active live round (watch-seed-live-round.yaml).
+appId: com.handicappin.app
+---
+- openLink: handicappin://rounds/live
+- tapOn:
+    text: "Open"
+    optional: true
+- extendedWaitUntil:
+    visible:
+      id: "live-round-screen"
+    timeout: 15000
+- tapOn:
+    id: "live-finish"
+- extendedWaitUntil:
+    visible:
+      id: "live-review-screen"
+    timeout: 15000
+- tapOn:
+    id: "live-review-discard"
+- tapOn: "Discard"
+- extendedWaitUntil:
+    visible: ".*Welcome back.*"
+    timeout: 15000

@@ -31,18 +31,32 @@ records what the seam guarantees so the watch work needs no refactor.
   Identical `SCORE_SET`s are idempotent (the reducer returns the same
   reference), so duplicate delivery is safe.
 
-## What the watch build will actually need (future work)
+## The watch build (implemented 2026-07 — docs/apple-watch.md)
 
-1. A watchOS target in the Xcode project (Expo config plugin or prebuild).
-2. A Swift mirror of the ~100-line reducer in `engine.ts` (this file + the
-   TS source are the spec; the unit tests in
-   `tests/unit/round-session-engine.test.ts` define the semantics).
-3. `WatchConnectivity` bridge module on the RN side that (a) publishes the
-   snapshot after each store change and (b) feeds received watch events
-   into the same `store.dispatch`.
-4. An App Group (`group.com.handicappin.app`) ONLY if the watch must read
-   the persisted session while the phone app is dead; otherwise
-   applicationContext's last-value semantics suffice.
+1. watchOS target: `targets/watch/` via @bacons/apple-targets (regenerated
+   into the Xcode project on prebuild).
+2. Swift mirror of the reducer: `targets/watch/Core/Engine.swift` (+
+   Models/Protocol/WatchSessionStore). The TS source + unit tests remain
+   the spec; the SwiftPM package `watch-core/` runs the mirrored suite
+   with `swift test`.
+3. WatchConnectivity bridge: `modules/watch-bridge/` (native, dumb pipe) +
+   `lib/round-session/watch-bridge.ts` (publishes snapshots on store
+   change, zod-validates watch frames, feeds events into `store.dispatch`,
+   answers catalog/search/tees/start/submit RPCs). Wire shapes:
+   `watch-protocol.ts` ↔ `targets/watch/Core/Protocol.swift`.
+4. No App Group yet — applicationContext last-value semantics carry the
+   snapshot; revisit only if the watch must read state while the phone
+   app is dead.
+5. Home-screen stats ride the same `ContextFrame` as an optional `stats`
+   key (`WatchStats`): index, last round, season counters — computed
+   phone-side from the same tRPC procedures the phone home uses. The
+   `recalculating` flag covers the server's handicap queue delay (~1 min
+   pg_cron sweep after a submit): the phone flips it on when any owned
+   session reaches `submitted`, polls its profile, and republishes when
+   the index settles. `SubmitReply` additionally carries the
+   synchronously-computed `differential` so the watch's post-round summary
+   never has to guess. Omit-optional-keys (never null) applies to every
+   nested key — NSNull poisons the whole frame.
 
 ## GPS seam (same philosophy)
 
