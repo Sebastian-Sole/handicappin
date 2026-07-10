@@ -32,10 +32,10 @@ export const teeSchema = z
     id: z.number().optional(),
     name: z.string().min(1, "Tee name is required"),
     gender: z.enum(["mens", "ladies"]),
-    // Rating floors are one stroke per hole, not regulation-course norms
-    // (mirrors apps/web/types/scorecard-input.ts): approved par-3 courses
-    // rate far below 40, and one such round in a user's history must not
-    // wedge their handicap recalculation forever.
+    // Rating floors are one stroke per hole, not regulation-course norms:
+    // approved par-3/executive courses rate far below 40 (Ballerud Golf,
+    // an 18-hole par-3 course, has courseRating18 26.4). Rejecting them
+    // here 400s the scorecard AND wedges handicap recalculation forever.
     courseRating18: z
       .number()
       .min(18, "Course rating must be at least 18")
