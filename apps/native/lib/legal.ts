@@ -7,7 +7,7 @@
  */
 import * as WebBrowser from "expo-web-browser";
 
-export const LEGAL_VERSION = "2026-02-11";
+export const LEGAL_VERSION = "2026-07-12";
 
 export const SITE_URL = "https://handicappin.com";
 

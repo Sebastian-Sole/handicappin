@@ -47,7 +47,7 @@ export function NineHoleCalculator() {
       nineHolePar
     );
 
-    // Played differential (using utility for USGA-compliant rounding)
+    // Played differential (using utility for USGA-precision rounding (1 decimal))
     const playedDifferential = calculateScoreDifferential(
       nineHoleScore,
       nineHoleCourseRating,

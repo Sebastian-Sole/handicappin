@@ -1,7 +1,7 @@
 import AboutSkeleton from "@/components/loading/about-skeleton";
 import { Badge } from "@/components/ui/badge";
 import { StatTile } from "@/components/ui/stat-tile";
-import { H1, H2, H3, P } from "@/components/ui/typography";
+import { H1, H2, H3, Muted, P } from "@/components/ui/typography";
 import { createClient } from "@supabase/supabase-js";
 import { Suspense } from "react";
 import type { Metadata } from "next";
@@ -53,7 +53,7 @@ const getCachedAboutStats = unstable_cache(
 export const metadata: Metadata = {
   title: "About Us - Why Handicappin' Exists",
   description:
-    "Learn why we built Handicappin' - a golf handicap tracker that puts user experience first. USGA compliant calculations, detailed round tracking, and transparent statistics.",
+    "Learn why we built Handicappin' - a golf handicap tracker that puts user experience first. WHS-method calculations, detailed round tracking, and transparent statistics.",
   alternates: {
     canonical: "https://handicappin.com/about",
   },
@@ -187,7 +187,7 @@ export default async function AboutPage() {
                     </div>
                     <div className="space-y-xs">
                       <H3 className="text-xl">
-                        USGA Compliant Calculations
+                        Transparent WHS-Method Calculations
                       </H3>
                       <p className="text-muted-foreground">
                         Our app provides real-time, accurate handicap index
@@ -206,7 +206,7 @@ export default async function AboutPage() {
                         International Flexibility
                       </H3>
                       <p className="text-muted-foreground">
-                        Log rounds from any USGA compliant course in the world.
+                        Log rounds from any rated course in the world.
                         Handicappin&apos; is designed to work with any course,
                         anywhere, with no extra hurdles.
                       </p>
@@ -254,8 +254,8 @@ export default async function AboutPage() {
                 </div>
                 <div className="surface p-lg w-full">
                   <StatTile
-                    value={<span className="text-primary">USGA</span>}
-                    label="Ruling Compliant"
+                    value={<span className="text-primary">WHS</span>}
+                    label="Calculation Method"
                   />
                 </div>
                 <div className="surface p-lg w-full">
@@ -271,6 +271,11 @@ export default async function AboutPage() {
                   />
                 </div>
               </div>
+              <Muted className="mt-lg max-w-2xl text-center">
+                Handicappin&apos; is an independent app. It is not affiliated
+                with or endorsed by the USGA or The R&amp;A, and it does not
+                issue an official Handicap Index&reg;.
+              </Muted>
             </div>
           </div>
         </section>

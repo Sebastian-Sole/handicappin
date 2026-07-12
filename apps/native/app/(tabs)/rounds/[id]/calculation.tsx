@@ -585,11 +585,26 @@ function HandicapImpactStep({ calc }: { calc: RoundCalculation }) {
       title="Handicap Impact"
       description="How this round affected your Handicap Index"
       learnMoreContent={
-        <Text className="text-body-sm text-muted-foreground">
-          Your Handicap Index is recalculated from your best Score
-          Differentials (USGA Rule 5.2). Exceptional rounds (7+ strokes
-          better than your index) trigger an additional ESR adjustment.
-        </Text>
+        <View className="gap-sm">
+          <Text className="text-body-sm text-muted-foreground">
+            Your Handicap Index is recalculated from your best Score
+            Differentials (USGA Rule 5.2). Exceptional rounds (7+ strokes
+            better than your index) trigger an additional ESR adjustment.
+          </Text>
+          <Text className="text-body-sm text-muted-foreground">
+            Your Handicap Index can also be limited by the WHS soft and hard
+            caps: once it would rise more than 3.0 strokes above your lowest
+            index of the last 365 days, further increases are halved, and it
+            can never rise more than 5.0 above that low point. If a cap
+            applied to this round, the &apos;after&apos; value reflects it.
+          </Text>
+          <Text className="text-body-sm text-muted-foreground">
+            Official handicap bodies also apply a daily Playing Conditions
+            Calculation (PCC) of &minus;1.0 to +3.0. Handicappin&apos; does
+            not apply PCC, so your index here can differ slightly from an
+            official one.
+          </Text>
+        </View>
       }
     >
       <View className="gap-md">

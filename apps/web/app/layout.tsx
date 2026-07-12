@@ -21,11 +21,11 @@ export const metadata: Metadata = {
   metadataBase: new URL("https://handicappin.com"),
   title: {
     default:
-      "Handicappin' - Golf Handicap Tracker & Calculator | USGA Compliant",
+      "Handicappin' - Golf Handicap Tracker & Calculator | Transparent WHS-Method Math",
     template: "%s | Handicappin'",
   },
   description:
-    "Track your golf handicap with USGA-compliant calculations. Log rounds, calculate your handicap index automatically, and understand every calculation. Free golf handicap tracking app.",
+    "Track your golf handicap with calculations that follow the World Handicap System (WHS) method — every step shown. Log rounds and calculate your handicap index automatically. Unofficial: not an official handicap service. Free golf handicap tracking app.",
   keywords: [
     "golf handicap",
     "handicap calculator",
@@ -57,13 +57,13 @@ export const metadata: Metadata = {
     siteName: "Handicappin'",
     title: "Handicappin' - Golf Handicap Tracker & Calculator",
     description:
-      "Track your golf handicap with USGA-compliant calculations. Log rounds, calculate your handicap index automatically, and understand every calculation.",
+      "Track your golf handicap with calculations that follow the World Handicap System (WHS) method — every step shown. Unofficial: not an official handicap service.",
   },
   twitter: {
     card: "summary_large_image",
     title: "Handicappin' - Golf Handicap Tracker & Calculator",
     description:
-      "Track your golf handicap with USGA-compliant calculations. Free golf handicap tracking app.",
+      "Track your golf handicap with calculations that follow the WHS method — every step shown. Unofficial: not an official handicap service. Free golf handicap tracking app.",
   },
   robots: {
     index: true,

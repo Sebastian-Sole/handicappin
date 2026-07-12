@@ -1,7 +1,7 @@
 import { H2, P } from "@/components/ui/typography";
 import Link from "next/link";
 
-const EFFECTIVE_DATE = "February 11, 2026";
+const EFFECTIVE_DATE = "July 12, 2026";
 
 export function TermsContent() {
   return (
@@ -37,7 +37,7 @@ export function TermsContent() {
         </H2>
         <P className="text-foreground/80">
           Handicappin&apos; is a web-based golf handicap tracking application
-          that provides USGA-compliant handicap calculations, round management,
+          that provides WHS-method handicap calculations, round management,
           interactive scorecards, performance analytics, and related tools. The
           Service is provided on an &quot;as is&quot; and &quot;as
           available&quot; basis.

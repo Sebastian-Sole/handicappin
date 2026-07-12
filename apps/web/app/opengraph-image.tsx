@@ -71,7 +71,7 @@ export default async function Image() {
             marginTop: 20,
           }}
         >
-          USGA Compliant | Free Forever
+          WHS-Method Calculations | Free Forever
         </div>
       </div>
     ),

@@ -297,7 +297,7 @@ export default function RoundApprovedEmail({
 
               <Section className="mt-8 pt-6 border-t border-gray-200">
                 <Text className="text-xs text-gray-500 text-center mb-0">
-                  Handicappin&apos; — transparent, USGA-compliant handicap
+                  Handicappin&apos; — transparent, WHS-method handicap
                   tracking.
                 </Text>
               </Section>

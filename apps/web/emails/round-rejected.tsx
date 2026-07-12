@@ -179,7 +179,7 @@ export default function RoundRejectedEmail({
 
               <Section className="mt-6 pt-2">
                 <Text className="text-xs text-gray-500 text-center mb-0">
-                  Handicappin&apos; — transparent, USGA-compliant handicap
+                  Handicappin&apos; — transparent, WHS-method handicap
                   tracking.
                 </Text>
               </Section>
