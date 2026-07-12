@@ -112,6 +112,34 @@ function makeFullRoundScores(
   });
 }
 
+/**
+ * Builds 18 hole scores summing to `72 - strokesUnderPar`: birdies on the
+ * first `strokesUnderPar` holes, par everywhere else. Used by the
+ * CORRECTNESS-02 measurement cases, which need under-par rounds to open a
+ * wide gap between the raw differential and the rolling index.
+ */
+function makeUnderParRoundScores(
+  holes: Hole[],
+  roundId: number,
+  strokesUnderPar: number
+): Score[] {
+  if (strokesUnderPar < 0 || strokesUnderPar > 18) {
+    throw new Error("strokesUnderPar out of birdie-safe range (0-18)");
+  }
+  let remaining = strokesUnderPar;
+  return holes.map((hole) => {
+    const sub = remaining > 0 ? 1 : 0;
+    remaining -= sub;
+    return {
+      id: scoreIdCounter++,
+      roundId,
+      holeId: hole.id,
+      strokes: hole.par - sub,
+      hcpStrokes: 0,
+    };
+  });
+}
+
 /** Same as {@link makeFullRoundScores} but for a single 9-hole section. */
 function makeNineHoleScores(
   holes: Hole[],
@@ -532,5 +560,74 @@ describe("computeHandicapTimeline: CORRECTNESS-02 measurement (uncapped vs cappe
       result[4].updatedHandicapIndex - result[5].rawDifferential;
     expect(differenceVsUncapped).toBeGreaterThanOrEqual(7);
     expect(differenceVsCapped).toBeLessThan(7);
+  });
+
+  // Shared fixture for the two severity-flip cases below: same 5-round
+  // history as above (4 steady rounds of raw 8, then a hard-cap-triggering
+  // blow-up of raw 36), followed by an UNDER-PAR round 6 whose raw
+  // differential is chosen per case.
+  //
+  // Measurement caveat (applies to both cases): the "capped" comparison
+  // value `result[4].updatedHandicapIndex` is recomputed by Pass 2 AFTER
+  // round 6's own ESR offset has already contaminated rounds 0-4's final
+  // differentials (Pass 1 writes offsets into the whole trailing window
+  // before Pass 2 runs). So it is not literally "the capped index the
+  // player had before teeing off on round 6" — it is the closest value
+  // observable on the function's output, and here it lands at 2.0 (vs 3.0
+  // in the no-under-par case above, where round 6's offset was only 1).
+  function severityFlipFixture(round6Scores: Score[]): ProcessedRound[] {
+    const holesByTee = new Map([[TEE_B.id!, HOLES_B]]);
+    const rounds: RoundFixture[] = [
+      { id: 1, teeId: TEE_B.id!, teeTime: day(0), scores: makeFullRoundScores(HOLES_B, 1, 8) },
+      { id: 2, teeId: TEE_B.id!, teeTime: day(1), scores: makeFullRoundScores(HOLES_B, 2, 8) },
+      { id: 3, teeId: TEE_B.id!, teeTime: day(2), scores: makeFullRoundScores(HOLES_B, 3, 8) },
+      { id: 4, teeId: TEE_B.id!, teeTime: day(3), scores: makeFullRoundScores(HOLES_B, 4, 8) },
+      { id: 5, teeId: TEE_B.id!, teeTime: day(4), scores: makeFullRoundScores(HOLES_B, 5, 36) },
+      { id: 6, teeId: TEE_B.id!, teeTime: day(5), scores: round6Scores },
+    ];
+    return runTimeline(rounds, [TEE_B], holesByTee, 8.0);
+  }
+
+  it("applies offset 2 against the uncapped index where the capped index would imply only offset 1 (severity flip)", () => {
+    // 5-under round: raw differential -5. Uncapped basis: 8.0 - (-5) = 13
+    // >= 10 -> offset 2 (what production does). Capped basis:
+    // 2.0 - (-5) = 7 -> only >= 7, so a capped-comparison design would
+    // apply offset 1, not 2. Detection agrees; SEVERITY flips.
+    const result = severityFlipFixture(makeUnderParRoundScores(HOLES_B, 6, 5));
+    const pass1Seq = pass1RollingIndexSequence(result);
+
+    expect(pass1Seq[4]).toBeCloseTo(8.0, 5);
+    expect(result[4].updatedHandicapIndex).toBeCloseTo(2.0, 5);
+    expect(result[5].rawDifferential).toBe(-5);
+    expect(result[5].esrOffset).toBe(2); // production: offset 2 (uncapped basis)
+    expect(result.map((r) => r.esrOffset)).toEqual([6, 6, 4, 2, 2, 2]);
+
+    const differenceVsUncapped = pass1Seq[4] - result[5].rawDifferential;
+    const differenceVsCapped =
+      result[4].updatedHandicapIndex - result[5].rawDifferential;
+    expect(differenceVsUncapped).toBeGreaterThanOrEqual(10); // -> offset 2
+    expect(differenceVsCapped).toBeGreaterThanOrEqual(7); // would still trigger...
+    expect(differenceVsCapped).toBeLessThan(10); // ...but only at offset 1
+  });
+
+  it("applies offset 2 against the uncapped index where the capped index would imply NO trigger at all (strongest flip)", () => {
+    // 2-under round: raw differential -2. Uncapped basis: 8.0 - (-2) = 10
+    // >= 10 -> offset 2 (what production does). Capped basis:
+    // 2.0 - (-2) = 4 < 7 -> a capped-comparison design would not flag this
+    // round as exceptional AT ALL. Maximum divergence: offset 2 vs none.
+    const result = severityFlipFixture(makeUnderParRoundScores(HOLES_B, 6, 2));
+    const pass1Seq = pass1RollingIndexSequence(result);
+
+    expect(pass1Seq[4]).toBeCloseTo(8.0, 5);
+    expect(result[4].updatedHandicapIndex).toBeCloseTo(2.0, 5);
+    expect(result[5].rawDifferential).toBe(-2);
+    expect(result[5].esrOffset).toBe(2); // production: offset 2 (uncapped basis)
+    expect(result.map((r) => r.esrOffset)).toEqual([6, 6, 4, 2, 2, 2]);
+
+    const differenceVsUncapped = pass1Seq[4] - result[5].rawDifferential;
+    const differenceVsCapped =
+      result[4].updatedHandicapIndex - result[5].rawDifferential;
+    expect(differenceVsUncapped).toBeGreaterThanOrEqual(10); // -> offset 2
+    expect(differenceVsCapped).toBeLessThan(7); // -> no trigger at all
   });
 });
