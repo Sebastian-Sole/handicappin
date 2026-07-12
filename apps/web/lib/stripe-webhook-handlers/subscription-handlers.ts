@@ -25,6 +25,7 @@ import {
   readBillingProjection,
 } from "./profile-billing-write";
 import type { WebhookContext, WebhookResult } from "./types";
+import { getPostHogClient } from "@/lib/posthog";
 
 /**
  * Classification of a subscription webhook event into (at most) one
@@ -311,6 +312,20 @@ export async function handleSubscriptionChange(
         classification,
         dateForEmail,
       });
+
+      if (classification.kind === "cancelled") {
+        const posthog = getPostHogClient();
+        posthog.capture({
+          distinctId: userId,
+          event: "subscription cancelled",
+          properties: {
+            plan: classification.plan,
+            billing_provider: "stripe",
+            cancel_at_period_end: isCancelling,
+          },
+        });
+        await posthog.flush();
+      }
     } catch (error) {
       logWebhookError("Error updating plan", error);
       throw error;
@@ -448,6 +463,18 @@ export async function handleSubscriptionDeleted(
           dateForEmail: new Date(), // immediate — the subscription is gone now
         });
       }
+
+      const posthog = getPostHogClient();
+      posthog.capture({
+        distinctId: userId,
+        event: "subscription cancelled",
+        properties: {
+          plan: priorProjection?.plan ?? "unknown",
+          billing_provider: "stripe",
+          cancel_at_period_end: false,
+        },
+      });
+      await posthog.flush();
     } else {
       logWebhookInfo(
         `Subscription deletion for user ${userId} did not revert plan (precedence guard)`,

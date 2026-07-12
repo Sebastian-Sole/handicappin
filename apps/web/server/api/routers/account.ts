@@ -12,6 +12,7 @@ import { OTP_EXPIRY_MINUTES, OTP_MAX_ATTEMPTS } from "@/lib/otp-constants";
 import { storeOtp, getOtp, incrementAttempts, deleteOtp } from "@/lib/otp-store";
 import { generateOTP } from "@/lib/otp-utils";
 import * as Sentry from "@sentry/nextjs";
+import { getPostHogClient } from "@/lib/posthog";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -378,6 +379,16 @@ export const accountRouter = createTRPCRouter({
           }
 
           span.setAttribute("subscriptionsCancelled", stripeResult.cancelledCount);
+
+          const posthog = getPostHogClient();
+          posthog.capture({
+            distinctId: userId,
+            event: "account deleted",
+            properties: {
+              subscriptions_cancelled: stripeResult.cancelledCount,
+            },
+          });
+          await posthog.flush();
 
           return {
             success: true,

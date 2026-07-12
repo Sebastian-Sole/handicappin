@@ -14,6 +14,7 @@ import { webhookRateLimit, getIdentifier } from "@/lib/rate-limit";
 import { shouldAlertAdmin, sendAdminWebhookAlert } from "@/lib/admin-alerts";
 import { logger } from "@/lib/logging";
 import { webhookHandlers } from "@/lib/stripe-webhook-handlers";
+import { getPostHogClient } from "@/lib/posthog";
 
 export async function POST(request: NextRequest) {
   let event: Stripe.Event | null = null;
@@ -206,6 +207,8 @@ export async function POST(request: NextRequest) {
 
     // All other errors are server errors (500)
     logWebhookError("Webhook handler failed", error);
+    const userId = event ? extractUserId(event) : null;
+    getPostHogClient().captureException(error, userId ?? undefined);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

@@ -17,6 +17,7 @@ import {
   portalRateLimit,
 } from "@/lib/rate-limit";
 import { PlanSchema } from "@/lib/stripe-types";
+import { getPostHogClient } from "@/lib/posthog";
 
 // Helper to check rate limits and throw tRPC error if exceeded
 async function checkRateLimit(
@@ -171,6 +172,17 @@ export const stripeRouter = createTRPCRouter({
           message: "Failed to create checkout session URL",
         });
       }
+
+      const posthog = getPostHogClient();
+      posthog.capture({
+        distinctId: user.id,
+        event: "checkout initiated",
+        properties: {
+          plan: input.plan,
+          checkout_session_id: session.id,
+        },
+      });
+      await posthog.flush();
 
       return {
         url: session.url,
@@ -341,6 +353,17 @@ export const stripeRouter = createTRPCRouter({
           : result.changeType === "upgrade"
           ? "Plan upgraded! You'll be charged the prorated difference."
           : "Plan change scheduled for end of billing period";
+
+      const posthogSub = getPostHogClient();
+      posthogSub.capture({
+        distinctId: user.id,
+        event: "subscription updated",
+        properties: {
+          new_plan: input.newPlan,
+          change_type: result.changeType,
+        },
+      });
+      await posthogSub.flush();
 
       return {
         success: true,

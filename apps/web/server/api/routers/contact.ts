@@ -6,6 +6,7 @@ import {
   sendContactFormEmail,
   sendContactConfirmationEmail,
 } from "@/lib/email-service";
+import { getPostHogClient } from "@/lib/posthog";
 
 const contactFormSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
@@ -57,6 +58,16 @@ export const contactRouter = createTRPCRouter({
         to: input.email,
         name: input.name,
       });
+
+      const posthog = getPostHogClient();
+      posthog.capture({
+        distinctId: ip,
+        event: "contact form submitted",
+        properties: {
+          subject: input.subject,
+        },
+      });
+      await posthog.flush();
 
       return { success: true };
     }),

@@ -28,6 +28,7 @@ import { FREE_TIER_ROUND_LIMIT } from "@/utils/billing/constants";
 import { logger } from "@/lib/logging";
 import { sendAdminSubmissionNotification } from "@/lib/email-service";
 import type { SubmissionSummary } from "@/emails/admin-submission-notification";
+import { getPostHogClient } from "@/lib/posthog";
 
 type RoundCalculations = {
   adjustedGrossScore: number;
@@ -1006,6 +1007,21 @@ export const roundRouter = createTRPCRouter({
           );
         }
       }
+
+      const posthog = getPostHogClient();
+      posthog.capture({
+        distinctId: userId,
+        event: "round submitted",
+        properties: {
+          round_id: newRound.round.id,
+          holes_played: newRound.round.holesPlayed,
+          approval_status: newRound.round.approvalStatus,
+          course_is_new: newRound.courseIsNew,
+          score_differential: newRound.round.scoreDifferential,
+          total_strokes: newRound.round.totalStrokes,
+        },
+      });
+      await posthog.flush();
 
       return newRound.round;
     }),

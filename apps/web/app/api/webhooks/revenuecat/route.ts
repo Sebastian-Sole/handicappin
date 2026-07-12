@@ -34,6 +34,7 @@ import {
   logWebhookWarning,
 } from "@/lib/webhook-logger";
 import { logger } from "@/lib/logging";
+import { getPostHogClient } from "@/lib/posthog";
 import {
   applyBillingEvent,
   type BillingProjection,
@@ -475,6 +476,30 @@ export async function POST(request: NextRequest) {
         `RevenueCat ${event.type} applied for user ${userId}: plan=${decision.projection.plan} status=${decision.projection.status} provider=${decision.projection.provider} (${decision.reason})`,
       );
 
+      const posthog = getPostHogClient();
+      if (event.type === "INITIAL_PURCHASE" || event.type === "RENEWAL") {
+        posthog.capture({
+          distinctId: userId,
+          event: "apple subscription started",
+          properties: {
+            plan: decision.projection.plan,
+            billing_provider: "apple",
+            event_type: event.type,
+          },
+        });
+        await posthog.flush();
+      } else if (event.type === "CANCELLATION") {
+        posthog.capture({
+          distinctId: userId,
+          event: "apple subscription cancelled",
+          properties: {
+            plan: decision.projection.plan,
+            billing_provider: "apple",
+          },
+        });
+        await posthog.flush();
+      }
+
       // Minimal Apple-side lifecycle emails (two event families only) —
       // only after the write actually landed, matching the Stripe webhook
       // handlers' post-write send pattern.
@@ -524,6 +549,7 @@ export async function POST(request: NextRequest) {
     });
   } catch (error) {
     logWebhookError("RevenueCat webhook handler failed", error);
+    getPostHogClient().captureException(error, userId ?? undefined);
     if (event?.id) {
       await recordFailure(
         event,
