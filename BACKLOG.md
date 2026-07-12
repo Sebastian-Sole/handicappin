@@ -68,14 +68,9 @@ The OTP-send edge functions (`reset-password`, `resend-verification-otp`, `send-
 
 ## Official handicap — owner actions
 
-Getting Handicappin' to an "official" handicap posture (medium-term: at least one licensed jurisdiction; long-term: pitching Norges Golfforbund on replacing GolfBox) requires actions only the owner can take — applications, agreements, and relationship-building with licensing bodies. Full context: `docs/official-handicap-roadmap.md`; live tracker: wayfinder map [#144](https://github.com/Sebastian-Sole/handicappin/issues/144).
+Official-handicap owner actions (AGA/USGA/England Golf/NGF outreach, Norwegian pilot clubs) are tracked on the wayfinder map [#144](https://github.com/Sebastian-Sole/handicappin/issues/144); see `docs/official-handicap-roadmap.md` for full context.
 
-1. **[blocked on owner]** Contact 1–2 target AGAs about Type-3 club licensing — requirements, cost, timeline.
-2. **[blocked on owner]** Contact the USGA about the vendor integration program (working label "GPA") — confirm the exact program name, eligibility, and API access levels.
-3. **[blocked on owner]** Email England Golf about ISV/CONGU licence terms for a consumer-facing app.
-4. **[blocked on owner]** Monitor NGF's Union-database rollout and request an introductory conversation once it's live — treat the NGF relationship as strategic, not transactional.
-5. **[blocked on owner]** Decide the peer-attestation question: build `.claude/plans/usga-round-verification.md` as scoped, or formally close it in favor of the shipped admin-approval workflow.
-6. **[blocked on owner]** Identify 1–2 friendly Norwegian clubs as future pilot candidates for club-facing features.
+- **[blocked on owner, no ticket yet]** Decide the peer-attestation question: build `.claude/plans/usga-round-verification.md` as scoped, or formally close it in favor of the shipped admin-approval workflow.
 
 ---
 

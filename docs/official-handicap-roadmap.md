@@ -114,14 +114,14 @@ Before Handicappin' can credibly walk into an AGA/USGA/NGF/England Golf conversa
 
 ## 7. Owner action checklist
 
-**Live tracker for all of these: [Issue #144](https://github.com/Sebastian-Sole/handicappin/issues/144)** (wayfinder map, child tickets #145–#154). This checklist is mirrored in `BACKLOG.md` under "Official handicap — owner actions."
+**Live tracker: [Issue #144](https://github.com/Sebastian-Sole/handicappin/issues/144)** (wayfinder map). Each action below is a GitHub ticket except ⑤, which has no ticket yet — see its line for why.
 
-1. **[blocked on owner]** Contact 1–2 target AGAs about Type-3 club licensing — requirements, cost, timeline. (Route A, §3)
-2. **[blocked on owner]** Contact the USGA about the vendor integration program (working label "GPA") — confirm the exact program name, eligibility, and API access levels. (Route A, §3)
-3. **[blocked on owner]** Email England Golf about ISV/CONGU licence terms for a consumer-facing app — is enrollment currently open to a small vendor? (Route B, §4)
-4. **[blocked on owner]** Monitor NGF's Union-database rollout and request an introductory conversation once it's live. This is also the first move of the B-long endgame (§4) — treat the NGF relationship as strategic, not transactional; don't rush it toward a pitch before there's something concrete to show.
-5. **[blocked on owner]** Decide the peer-attestation question (§6): build `.claude/plans/usga-round-verification.md` as scoped, or formally close it in favor of the shipped admin-approval workflow.
-6. **[blocked on owner]** Identify 1–2 friendly Norwegian clubs as future pilot candidates for club-facing features — groundwork for the B-long endgame (§4), not a near-term build.
+1. **[blocked on owner]** [#150](https://github.com/Sebastian-Sole/handicappin/issues/150) — Contact 1–2 target AGAs about Type-3 club licensing (requirements, cost, timeline). (Route A, §3)
+2. **[blocked on owner]** [#151](https://github.com/Sebastian-Sole/handicappin/issues/151) — Contact the USGA about the vendor integration program (working label "GPA"); confirm the exact program name, eligibility, and API access levels. (Route A, §3)
+3. **[blocked on owner]** [#154](https://github.com/Sebastian-Sole/handicappin/issues/154) — Email England Golf about ISV/CONGU licence terms for a consumer-facing app; is enrollment currently open to a small vendor? (Route B, §4)
+4. **[blocked on owner]** [#147](https://github.com/Sebastian-Sole/handicappin/issues/147) — Monitor NGF's Union-database rollout and request an introductory conversation once it's live (blocked by the research ticket [#145](https://github.com/Sebastian-Sole/handicappin/issues/145)). This is also the first move of the B-long endgame (§4) — treat the NGF relationship as strategic, not transactional; don't rush it toward a pitch before there's something concrete to show.
+5. **[blocked on owner]** *(no ticket yet)* Decide the peer-attestation question (§6): build `.claude/plans/usga-round-verification.md` as scoped, or formally close it in favor of the shipped admin-approval workflow.
+6. **[blocked on owner]** [#149](https://github.com/Sebastian-Sole/handicappin/issues/149) — Identify 1–2 friendly Norwegian clubs as future pilot candidates for club-facing features; groundwork for the B-long endgame (§4), not a near-term build.
 
 ---
 
