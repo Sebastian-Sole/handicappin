@@ -2,19 +2,8 @@ import { createClient } from "jsr:@supabase/supabase-js@2";
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 
 // Import existing handicap calculation logic
-import {
-  calculateHandicapIndex,
-  calculateScoreDifferential,
-  calculateCourseHandicap,
-  calculateAdjustedGrossScore,
-  calculateAdjustedPlayedScore,
-  calculateLowHandicapIndex,
-  applyHandicapCaps,
-  addHcpStrokesToScores,
-  calculateExpected9HoleDifferential,
-  calculate9HoleScoreDifferential,
-  ProcessedRound,
-} from "../handicap-shared/utils.ts";
+import { ProcessedRound } from "../handicap-shared/utils.ts";
+import { computeHandicapTimeline } from "../handicap-shared/timeline.ts";
 
 import {
   holeResponseSchema,
@@ -22,11 +11,7 @@ import {
   teeResponseSchema,
 } from "../handicap-shared/shared-schemas.ts";
 import { roundResponseSchema } from "../handicap-shared/round-schemas.ts";
-import {
-  EXCEPTIONAL_ROUND_THRESHOLD,
-  MAX_SCORE_DIFFERENTIAL,
-  ESR_WINDOW_SIZE,
-} from "../handicap-shared/constants.ts";
+import { MAX_SCORE_DIFFERENTIAL } from "../handicap-shared/constants.ts";
 
 // Configuration from environment variables
 const BATCH_SIZE = parseInt(Deno.env.get("HANDICAP_QUEUE_BATCH_SIZE") || "25");
@@ -298,8 +283,9 @@ async function processUserHandicap(
       ])
     );
 
-    // Initialize processed rounds array
-    const processedRounds: ProcessedRound[] = userRounds.map((r) => ({
+    // Build the chronologically-sorted processed-round stubs. Every other
+    // field is computed by computeHandicapTimeline below.
+    const processedRoundStubs: ProcessedRound[] = userRounds.map((r) => ({
       id: r.id,
       teeTime: new Date(r.teeTime),
       existingHandicapIndex: MAX_SCORE_DIFFERENTIAL,
@@ -314,164 +300,29 @@ async function processUserHandicap(
       approvalStatus: r.approvalStatus,
     }));
 
-    // Pass 1+2 (merged): Compute AGS/APS/courseHandicap using a rolling
-    // handicap index (USGA correctness), then derive raw differentials and
-    // detect ESR. Previously Pass 1 used a fixed `MAX_SCORE_DIFFERENTIAL`
-    // (54) for every round which inflated AGS for established players
-    // because the per-hole NDB caps (`addHcpStrokesToScores` ->
-    // `calculateAdjustedPlayedScore`) were computed against far too many
-    // strokes. Each round's data only depends on its own rolling index
-    // and prior rounds' rawDifferentials (for ESR window), so merging the
-    // two passes is functionally equivalent to the old order plus the
-    // rolling-index correction.
-    let rollingIndex = initialHandicapIndex;
-    for (let i = 0; i < processedRounds.length; i++) {
-      const pr = processedRounds[i];
-      // IMPORTANT: assign rolling index BEFORE any AGS/APS/courseHandicap
-      // computation so they use the correct index for this round.
-      pr.existingHandicapIndex = rollingIndex;
+    // Which 9-hole section (front/back) was played, keyed by round id —
+    // consulted only for rounds with exactly 9 scores.
+    const nineHoleSections = new Map<number, "front" | "back">();
+    userRounds.forEach((r) => {
+      if (r.nineHoleSection) nineHoleSections.set(r.id, r.nineHoleSection);
+    });
 
-      const teePlayed = teeMap.get(pr.teeId);
-      if (!teePlayed) throw new Error(`Tee not found for round ${pr.id}`);
-
-      const roundScores = roundScoresMap.get(pr.id);
-      if (!roundScores) throw new Error(`Scores not found for round ${pr.id}`);
-
-      const holesForRound = holesMap.get(pr.teeId);
-      if (!holesForRound)
-        throw new Error(`Holes not found for tee ${pr.teeId}`);
-
-      const numberOfHolesPlayed = roundScores.length;
-      // Use the round's recorded section (front/back) so back-9 rounds
-      // pick the right ratings/par. Null/undefined falls back to "front".
-      const sectionForCourseHandicap: "front" | "back" =
-        userRounds[i].nineHoleSection ?? "front";
-
-      const courseHandicap = calculateCourseHandicap(
-        pr.existingHandicapIndex,
-        teePlayed,
-        numberOfHolesPlayed,
-        sectionForCourseHandicap
-      );
-
-      const scoresWithHcpStrokes = addHcpStrokesToScores(
-        holesForRound,
-        roundScores,
-        courseHandicap,
-        numberOfHolesPlayed
-      );
-
-      // Determine if player has an established handicap (USGA requires 3+ rounds)
-      // For rounds 0, 1, 2 (first 3 rounds): player does not have established handicap
-      // For rounds 3+ : player has established handicap
-      const hasEstablishedHandicap = i >= 3;
-
-      const adjustedPlayedScore = calculateAdjustedPlayedScore(
-        holesForRound,
-        scoresWithHcpStrokes,
-        hasEstablishedHandicap
-      );
-
-      const adjustedGrossScore = calculateAdjustedGrossScore(
-        adjustedPlayedScore,
-        courseHandicap,
-        numberOfHolesPlayed,
-        holesForRound,
-        roundScores
-      );
-
-      pr.adjustedGrossScore = adjustedGrossScore;
-      pr.adjustedPlayedScore = adjustedPlayedScore;
-      pr.courseHandicap = courseHandicap;
-
-      // Calculate differential based on holes played (USGA Rule 5.1b for 9-hole)
-      if (numberOfHolesPlayed === 9) {
-        // Pick front-9 or back-9 ratings/par per USGA Rule 5.1b based on section.
-        const section: "front" | "back" =
-          userRounds[i].nineHoleSection ?? "front";
-        const isBack = section === "back";
-        const nineHoleCourseRating = isBack
-          ? teePlayed.courseRatingBack9
-          : teePlayed.courseRatingFront9;
-        const nineHoleSlopeRating = isBack
-          ? teePlayed.slopeRatingBack9
-          : teePlayed.slopeRatingFront9;
-        const nineHolePar = isBack ? teePlayed.inPar : teePlayed.outPar;
-
-        const expectedDifferential = calculateExpected9HoleDifferential(
-          pr.existingHandicapIndex,
-          nineHoleCourseRating,
-          nineHoleSlopeRating,
-          nineHolePar
-        );
-
-        // Calculate 18-hole equivalent differential
-        pr.rawDifferential = calculate9HoleScoreDifferential(
-          pr.adjustedPlayedScore, // Use adjustedPlayedScore for 9-hole, not adjustedGrossScore
-          nineHoleCourseRating,
-          nineHoleSlopeRating,
-          expectedDifferential
-        );
-      } else {
-        // 18-hole calculation uses 18-hole ratings
-        pr.rawDifferential = calculateScoreDifferential(
-          pr.adjustedGrossScore,
-          teePlayed.courseRating18,
-          teePlayed.slopeRating18
-        );
-      }
-
-      const startIdx = Math.max(0, i - (ESR_WINDOW_SIZE - 1));
-      const relevantDifferentials = processedRounds
-        .slice(startIdx, i + 1)
-        .map((round) => round.rawDifferential);
-      pr.updatedHandicapIndex = calculateHandicapIndex(relevantDifferentials);
-
-      const difference = rollingIndex - pr.rawDifferential;
-      if (difference >= EXCEPTIONAL_ROUND_THRESHOLD) {
-        const offset = difference >= 10 ? 2 : 1;
-        const esrStartIdx = Math.max(
-          0,
-          i - (Math.min(ESR_WINDOW_SIZE, i + 1) - 1)
-        );
-        for (let j = esrStartIdx; j <= i; j++) {
-          processedRounds[j].esrOffset += offset;
-        }
-      }
-
-      rollingIndex = pr.updatedHandicapIndex;
-    }
-
-    // Pass 2: Apply ESR offsets and calculate final differentials
-    for (let i = 0; i < processedRounds.length; i++) {
-      const pr = processedRounds[i];
-      pr.existingHandicapIndex =
-        i === 0
-          ? initialHandicapIndex
-          : processedRounds[i - 1].updatedHandicapIndex;
-
-      pr.finalDifferential = pr.rawDifferential - pr.esrOffset;
-      const startIdx = Math.max(0, i - (ESR_WINDOW_SIZE - 1));
-      const relevantDifferentials = processedRounds
-        .slice(startIdx, i + 1)
-        .map((r) => r.finalDifferential);
-      const calculatedIndex = calculateHandicapIndex(relevantDifferentials);
-
-      // Apply soft/hard caps per USGA Rule 5.7.
-      // calculateLowHandicapIndex returns null when no rounds exist in the
-      // 365-day window, and applyHandicapCaps short-circuits on null — so the
-      // null-check inside applyHandicapCaps is the correct gate (not a 20-round
-      // threshold, which Rule 5.7 does not require).
-      pr.updatedHandicapIndex = applyHandicapCaps(
-        calculatedIndex,
-        calculateLowHandicapIndex(processedRounds, i)
-      );
-
-      pr.updatedHandicapIndex = Math.min(
-        pr.updatedHandicapIndex,
-        MAX_SCORE_DIFFERENTIAL
-      );
-    }
+    // Compute the rolling handicap timeline (course handicap / AGS / APS,
+    // Exceptional Score Reduction detection and offset application, and the
+    // soft/hard-capped rolling handicap index) in one call. This is the
+    // ONLY implementation of the merged Pass 1 + Pass 2 logic — see
+    // packages/handicap-core/src/timeline.ts (mirrored here as
+    // handicap-shared/timeline.ts, kept in sync via
+    // scripts/check-handicap-sync.mjs). Do not reintroduce the two-pass
+    // loop inline here.
+    const processedRounds = computeHandicapTimeline({
+      processedRounds: processedRoundStubs,
+      teeMap,
+      roundScoresMap,
+      holesMap,
+      nineHoleSections,
+      initialHandicapIndex,
+    });
 
     // Perform all DB updates atomically in a single transaction via stored procedure
     const roundUpdates = processedRounds.map((pr) => ({
