@@ -22,6 +22,7 @@
     "build:seed": "./scripts/build-seed.sh",
     "load:courses": "node scripts/load-staged-courses.mjs",
     "check:schema-sync": "node scripts/check-schema-sync.mjs",
+    "check:handicap-sync": "node scripts/check-handicap-sync.mjs",
     "check:tokens": "bash scripts/check-design-tokens.sh",
     "generate:theme": "pnpm --filter @handicappin/tokens generate:theme",
     "check:theme-drift": "pnpm --filter @handicappin/tokens check:drift",
