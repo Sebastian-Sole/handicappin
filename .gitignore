@@ -60,3 +60,4 @@ storybook-static
 
 # Swift Package Manager build cache (watch-core sources live on the watch branch)
 apps/native/watch-core/.build/
+.env.local

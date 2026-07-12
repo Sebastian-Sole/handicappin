@@ -5,6 +5,7 @@ import { z } from "zod";
 import { logger } from "@/lib/logging";
 import { oauthCallbackRateLimit, getIdentifier } from "@/lib/rate-limit";
 import { createServerComponentClient } from "@/utils/supabase/server";
+import { getPostHogClient } from "@/lib/posthog";
 
 const MAX_NAME_LENGTH = 100;
 const DEFAULT_NAME = "Golfer";
@@ -328,12 +329,26 @@ export async function GET(request: NextRequest) {
       // Determine redirect based on plan status
       // Note: We check planSelected from the profile query, not JWT claims
       // This is because JWT claims may not be updated yet for OAuth flow
+      const posthog = getPostHogClient();
+
       if (!profile.planSelected) {
         logger.info("OAuth user has no plan, redirecting to onboarding", {
           userId: user.id,
         });
         span.setAttribute("oauth.result", "existing_user_no_plan");
         span.setStatus({ code: 1 });
+
+        posthog.identify({
+          distinctId: user.id,
+          properties: { provider },
+        });
+        posthog.capture({
+          distinctId: user.id,
+          event: "user signed up",
+          properties: { provider },
+        });
+        await posthog.flush();
+
         return NextResponse.redirect(`${origin}/onboarding`);
       }
 
@@ -346,6 +361,17 @@ export async function GET(request: NextRequest) {
       span.setAttribute("oauth.result", "existing_user");
       span.setAttribute("oauth.plan", profile.planSelected);
       span.setStatus({ code: 1 });
+
+      posthog.identify({
+        distinctId: user.id,
+        properties: { provider, plan: profile.planSelected },
+      });
+      posthog.capture({
+        distinctId: user.id,
+        event: "user signed in",
+        properties: { provider, plan: profile.planSelected },
+      });
+      await posthog.flush();
 
       return NextResponse.redirect(`${origin}/`);
     }

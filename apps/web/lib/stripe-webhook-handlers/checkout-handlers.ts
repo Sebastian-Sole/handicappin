@@ -18,6 +18,7 @@ import { sendWelcomeEmail } from "@/lib/email-service";
 import type { BillingFact } from "@/utils/billing/apply-billing-event";
 import { guardedStripeProfileWrite } from "./profile-billing-write";
 import type { WebhookContext, WebhookResult } from "./types";
+import { getPostHogClient } from "@/lib/posthog";
 
 /**
  * Handle checkout completion - update plan_selected
@@ -229,6 +230,18 @@ async function handleSubscriptionCheckout(
       logWebhookSuccess(
         `Updated plan_selected to '${plan}' for user: ${userId} at checkout (status will be updated by subscription.created)`
       );
+      const posthog = getPostHogClient();
+      posthog.capture({
+        distinctId: userId,
+        event: "subscription started",
+        properties: {
+          plan,
+          billing_provider: "stripe",
+          is_first_subscription: isFirstTimeSubscription,
+          checkout_session_id: session.id,
+        },
+      });
+      await posthog.flush();
     } else {
       logWebhookInfo(
         `Checkout plan write for user ${userId} blocked by precedence guard`
@@ -464,6 +477,18 @@ async function grantLifetimeAccess(
 
     if (written) {
       logWebhookSuccess(`Granted ${plan} access to user ${userId}`);
+      const posthog = getPostHogClient();
+      posthog.capture({
+        distinctId: userId,
+        event: "subscription started",
+        properties: {
+          plan,
+          billing_provider: "stripe",
+          is_first_subscription: isFirstTimePurchase,
+          checkout_session_id: session.id,
+        },
+      });
+      await posthog.flush();
     } else {
       logWebhookInfo(
         `Lifetime grant for user ${userId} blocked by precedence guard (already lifetime or higher contract)`
