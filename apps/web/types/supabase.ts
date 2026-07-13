@@ -510,25 +510,34 @@ export type Database = {
       }
       score: {
         Row: {
+          fairwayHit: boolean | null
           hcpStrokes: number
           holeId: number
           id: number
+          penaltyStrokes: number | null
+          putts: number | null
           roundId: number
           strokes: number
           userId: string
         }
         Insert: {
+          fairwayHit?: boolean | null
           hcpStrokes?: number
           holeId: number
           id?: number
+          penaltyStrokes?: number | null
+          putts?: number | null
           roundId: number
           strokes: number
           userId: string
         }
         Update: {
+          fairwayHit?: boolean | null
           hcpStrokes?: number
           holeId?: number
           id?: number
+          penaltyStrokes?: number | null
+          putts?: number | null
           roundId?: number
           strokes?: number
           userId?: string
