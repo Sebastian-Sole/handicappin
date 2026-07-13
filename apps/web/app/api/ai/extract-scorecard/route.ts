@@ -13,6 +13,8 @@ import {
 import { validateRequest, successResponse, errorResponse } from "@/lib/api-validation";
 import { env } from "@/env";
 import { logger } from "@/lib/logging";
+import { getPostHogClient } from "@/lib/posthog";
+import { ANALYTICS_EVENTS } from "@handicappin/analytics";
 
 const MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024; // 10MB
 const MAX_OUTPUT_TOKENS = 4096; // Cap AI response size to control cost
@@ -136,6 +138,14 @@ export async function POST(request: NextRequest) {
 
     // 7. Post-process to fix common AI mistakes
     const postProcessed = postProcessExtractedTees(validated.tees);
+
+    const posthog = getPostHogClient();
+    posthog.capture({
+      distinctId: user.id,
+      event: ANALYTICS_EVENTS.AI_SCORECARD_EXTRACTED,
+      properties: { mime_type: mimeType },
+    });
+    await posthog.flush();
 
     return successResponse({ tees: postProcessed }, rateLimitHeaders);
   } catch (error) {

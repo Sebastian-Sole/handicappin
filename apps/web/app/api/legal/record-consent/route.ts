@@ -6,6 +6,8 @@ import { createServerComponentClient } from "@/utils/supabase/server";
 import { db } from "@/db";
 import { legalConsents } from "@/db/schema";
 import { consentRecordingRateLimit, getIdentifier } from "@/lib/rate-limit";
+import { getPostHogClient } from "@/lib/posthog";
+import { ANALYTICS_EVENTS } from "@handicappin/analytics";
 
 const requestSchema = z.object({
   legalVersion: z.string().min(1),
@@ -85,6 +87,17 @@ export async function POST(request: NextRequest) {
         acceptanceMethod,
       },
     ]);
+
+    const posthog = getPostHogClient();
+    posthog.capture({
+      distinctId: user.id,
+      event: ANALYTICS_EVENTS.LEGAL_CONSENT_RECORDED,
+      properties: {
+        acceptance_method: acceptanceMethod,
+        legal_version: legalVersion,
+      },
+    });
+    await posthog.flush();
 
     return NextResponse.json({ success: true });
   } catch (error) {

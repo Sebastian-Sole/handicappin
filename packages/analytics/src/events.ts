@@ -94,6 +94,10 @@ export interface AnalyticsEventMap {
   contact_form_submitted: { subject: string };
   /** server: apps/web/server/api/routers/account.ts */
   account_deleted: { subscriptions_cancelled: number };
+  /** server: apps/web/app/api/ai/extract-scorecard/route.ts */
+  ai_scorecard_extracted: { mime_type: string };
+  /** server: apps/web/app/api/legal/record-consent/route.ts */
+  legal_consent_recorded: { acceptance_method: string; legal_version: string };
 }
 
 export type AnalyticsEventName = keyof AnalyticsEventMap;
@@ -127,4 +131,6 @@ export const ANALYTICS_EVENTS = {
   CALCULATOR_USED: "calculator_used",
   CONTACT_FORM_SUBMITTED: "contact_form_submitted",
   ACCOUNT_DELETED: "account_deleted",
+  AI_SCORECARD_EXTRACTED: "ai_scorecard_extracted",
+  LEGAL_CONSENT_RECORDED: "legal_consent_recorded",
 } as const satisfies Record<string, AnalyticsEventName>;
