@@ -40,6 +40,14 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
               process.env.EXPO_PUBLIC_REVENUECAT_IOS_API_KEY,
           }
         : {}),
+      // PostHog product analytics: unset → no-op client (fail-open; dev
+      // builds deliberately stay unset). Same omit-when-unset pattern as
+      // the RevenueCat key — never null in extra.
+      ...(process.env.EXPO_PUBLIC_POSTHOG_API_KEY
+        ? {
+            posthogApiKey: process.env.EXPO_PUBLIC_POSTHOG_API_KEY,
+          }
+        : {}),
     },
   },
 });

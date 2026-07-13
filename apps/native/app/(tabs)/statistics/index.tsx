@@ -7,7 +7,7 @@
  */
 import { useQuery } from "@tanstack/react-query";
 import { Redirect, router } from "expo-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Pressable, ScrollView, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -24,6 +24,7 @@ import {
 import { DataSettledMarker } from "@/components/data-settled";
 import { Button } from "@/components/ui/button";
 import { H1, H2 } from "@/components/ui/typography";
+import { analytics } from "@/lib/analytics";
 import { profileQueryOptions } from "@/lib/api/procedures/auth";
 import { scorecardsQueryOptions } from "@/lib/api/procedures/scorecard";
 import { useSession } from "@/lib/auth/session-provider";
@@ -74,6 +75,11 @@ export default function StatisticsScreen() {
   const insets = useSafeAreaInsets();
   const [timeRange, setTimeRange] = useState<TimeRange>("all");
   const [tab, setTab] = useState<StatsTab>("performance");
+
+  // Mirrors web: one stats_viewed per screen mount, then one per tab switch.
+  useEffect(() => {
+    analytics.capture("stats_viewed", { tab: "performance" });
+  }, []);
 
   const userId = session?.user.id ?? null;
   const scorecardsQuery = useQuery({
@@ -268,7 +274,10 @@ export default function StatisticsScreen() {
           { value: "frivolities", label: "Fun" },
         ]}
         value={tab}
-        onChange={setTab}
+        onChange={(next) => {
+          analytics.capture("stats_viewed", { tab: next });
+          setTab(next);
+        }}
       />
 
       {tab === "performance" ? (

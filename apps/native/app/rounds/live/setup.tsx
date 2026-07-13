@@ -13,7 +13,7 @@ import { useQuery } from "@tanstack/react-query";
 import { randomUUID } from "expo-crypto";
 import { Redirect, router } from "expo-router";
 import { X } from "lucide-react-native";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Pressable, ScrollView, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -27,6 +27,7 @@ import { Button } from "@/components/ui/button";
 import { FormFeedback } from "@/components/ui/form-feedback";
 import { Label } from "@/components/ui/label";
 import { H1 } from "@/components/ui/typography";
+import { analytics } from "@/lib/analytics";
 import { profileQueryOptions } from "@/lib/api/procedures/auth";
 import { roundCountQueryOptions } from "@/lib/api/procedures/round";
 import {
@@ -106,6 +107,11 @@ export default function LiveRoundSetupScreen() {
 
   const settled = useDataSettled([profileQuery, roundCountQuery]);
 
+  // Live-round setup opened (plan 009 funnel entry).
+  useEffect(() => {
+    analytics.capture("round_add_started", { method: "live" });
+  }, []);
+
   const tees = useMemo<FetchedTee[]>(() => {
     const fetched = teesQuery.data ?? [];
     // Keep the prefilled tee usable offline (dedupe once the fetch lands).
@@ -169,6 +175,7 @@ export default function LiveRoundSetupScreen() {
       ...(holeCount === 9 ? { nineHoleSection } : {}),
       savedAt: now,
     });
+    analytics.capture("live_round_started", { holes: holeCount });
     // replace: back from the hole screen must not return to setup.
     router.replace("/rounds/live");
   };

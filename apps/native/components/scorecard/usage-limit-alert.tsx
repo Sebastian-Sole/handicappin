@@ -10,6 +10,7 @@ import { Text, View } from "react-native";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { tokens } from "@handicappin/tokens/tokens";
+import { analytics } from "@/lib/analytics";
 import { useColorMode } from "@/lib/color-mode";
 import { SITE_URL } from "@/lib/legal";
 import { cn } from "@/lib/utils";
@@ -85,6 +86,7 @@ export function UsageLimitAlert({
         <Button
           className="w-full"
           onPress={() => {
+            analytics.capture("upgrade_clicked", { surface: "round_limit" });
             void WebBrowser.openBrowserAsync(`${SITE_URL}/upgrade`);
           }}
         >

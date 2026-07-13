@@ -32,6 +32,7 @@ import { FormFeedback } from "@/components/ui/form-feedback";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { H1 } from "@/components/ui/typography";
+import { analytics } from "@/lib/analytics";
 import { profileQueryOptions } from "@/lib/api/procedures/auth";
 import { roundCountQueryOptions } from "@/lib/api/procedures/round";
 import {
@@ -119,6 +120,12 @@ export default function AddRoundScreen() {
     return () => {
       if (navTimer.current) clearTimeout(navTimer.current);
     };
+  }, []);
+
+  // Manual add-round form opened (plan 009 funnel entry; submission success
+  // is captured SERVER-side in round.submitScorecard as round_submitted).
+  useEffect(() => {
+    analytics.capture("round_add_started", { method: "manual" });
   }, []);
 
   const profileQuery = useQuery({
