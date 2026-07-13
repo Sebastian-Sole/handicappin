@@ -1,0 +1,24 @@
+{
+  "name": "@handicappin/analytics",
+  "version": "0.0.1",
+  "private": true,
+  "description": "Canonical product-analytics event taxonomy shared by web, native, and the server capture layer. SDK-free by design: each app wires its own PostHog SDK behind the AnalyticsClient interface.",
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./src/index.ts"
+    }
+  },
+  "files": [
+    "src"
+  ],
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.3"
+  }
+}
