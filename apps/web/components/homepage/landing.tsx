@@ -90,9 +90,9 @@ const faqs = [
       "Your handicap index is calculated by taking the average of your best 8 score differentials from your last 20 rounds. A score differential essentially tells how well you played compared to the difficulty of the course. Handicappin' handles all these calculations automatically and shows you exactly how each round affects your handicap.",
   },
   {
-    question: "Is Handicappin' USGA compliant?",
+    question: "Does Handicappin' follow the official handicap rules?",
     answer:
-      "Yes! Handicappin' follows all USGA handicap calculation rules, including score differentials, soft caps, hard caps, and exceptional score reductions. We are up to date with the latest USGA rules, and your handicap index is calculated the same way other handicap services do it. We promise to always be up to date with the latest USGA rules.",
+      "Handicappin' follows the World Handicap System (WHS) calculation method — score differentials, net double bogey, soft and hard caps, and exceptional score reductions — and we keep the math current as the rules evolve. Every step of your calculation is shown. Handicappin' is independent and unofficial: we are not affiliated with or endorsed by the USGA or The R&A, and we do not issue an official Handicap Index®.",
   },
 ];
 
@@ -121,7 +121,7 @@ export default async function Landing() {
               with Data-Driven Insights
             </H1>
             <p className="text-xl text-muted-foreground text-pretty mb-xl max-w-2xl mx-auto">
-              Log every golf round, calculate your USGA handicap index
+              Log every golf round, calculate your WHS-method handicap index
               automatically, and understand the score differential calculations
               behind the scenes.
             </p>
@@ -207,7 +207,7 @@ export default async function Landing() {
                 </div>
                 <CardTitle>Handicap Calculation</CardTitle>
                 <CardDescription>
-                  USGA-compliant handicap calculation that updates automatically
+                  WHS-method handicap calculation that updates automatically
                   and instantly with every round you play.
                 </CardDescription>
               </CardHeader>
@@ -215,7 +215,7 @@ export default async function Landing() {
                 <ul className="space-y-sm text-body-sm text-muted-foreground">
                   <li className="flex items-center gap-sm">
                     <CheckCircle className="h-4 w-4 min-h-4 min-w-4 flex-shrink-0 text-primary" />
-                    USGA compliance
+                    WHS method
                   </li>
                   <li className="flex items-center gap-sm">
                     <CheckCircle className="h-4 w-4 min-h-4 min-w-4 flex-shrink-0 text-primary" />
@@ -388,6 +388,11 @@ export default async function Landing() {
               </Link>
             )}
           </div>
+          <p className="text-body-sm text-muted-foreground text-center mt-xl max-w-2xl mx-auto">
+            Handicappin&apos; is an independent app. It is not affiliated with
+            or endorsed by the USGA or The R&amp;A, and it does not issue an
+            official Handicap Index&reg;.
+          </p>
         </div>
       </section>
 

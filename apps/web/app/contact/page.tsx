@@ -34,9 +34,9 @@ const faqs = [
       "Your handicap index is calculated using the USGA World Handicap System. It uses the best 8 of your last 20 score differentials, multiplied by 0.96. Each score differential is calculated as (Adjusted Gross Score - Course Rating) x 113 / Slope Rating.",
   },
   {
-    question: "Is Handicappin' USGA compliant?",
+    question: "Does Handicappin' follow the official handicap rules?",
     answer:
-      "Yes! Handicappin' follows the official USGA World Handicap System rules for all calculations, including exceptional score reduction (ESR), soft caps, and hard caps. Our calculations are transparent and match official USGA methodology.",
+      "Yes — Handicappin' follows the World Handicap System calculation method, and every calculation is shown step by step. We are unofficial: not affiliated with the USGA or The R&A, and we do not issue an official Handicap Index.",
   },
   {
     question: "How do I add a course that's not in the database?",

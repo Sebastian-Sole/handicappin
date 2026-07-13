@@ -6,7 +6,7 @@ export function OrganizationJsonLd() {
     url: "https://handicappin.com",
     logo: "https://handicappin.com/images/logo.png",
     description:
-      "Golf handicap tracking app with USGA-compliant calculations. Track rounds, calculate handicap index, and understand your golf statistics.",
+      "Golf handicap tracking with transparent WHS-method calculations (unofficial; not affiliated with the USGA or The R&A). Track rounds, calculate handicap index, and understand your golf statistics.",
   };
 
   return (
@@ -57,9 +57,9 @@ export function SoftwareApplicationJsonLd() {
       offerCount: 4,
     },
     description:
-      "USGA-compliant golf handicap tracking application. Log rounds, calculate handicap index automatically, and get detailed insights into your golf game.",
+      "Golf handicap tracking with transparent WHS-method calculations (unofficial; not affiliated with the USGA or The R&A). Log rounds, calculate handicap index automatically, and get detailed insights into your golf game.",
     featureList: [
-      "USGA-compliant handicap calculation",
+      "Transparent WHS-method handicap calculation",
       "Automatic handicap index updates",
       "Detailed round tracking",
       "Course handicap calculator",

@@ -56,6 +56,19 @@ const HandicapImpactStep = () => {
               </P>
             </div>
           )}
+          <P>
+            Your Handicap Index can also be limited by the WHS soft and hard
+            caps: once it would rise more than 3.0 strokes above your lowest
+            index of the last 365 days, further increases are halved, and it
+            can never rise more than 5.0 above that low point. If a cap applied
+            to this round, the &apos;after&apos; value reflects it.
+          </P>
+          <P>
+            Official handicap bodies also apply a daily Playing Conditions
+            Calculation (PCC) of &minus;1.0 to +3.0. Handicappin&apos; does not
+            apply PCC, so your index here can differ slightly from an official
+            one.
+          </P>
           <Link
             href="https://www.usga.org/handicapping/roh/Content/rules/5%201a%20Calculation%20of%20a%20Score%20Differential18Hole.htm"
             target="_blank"
