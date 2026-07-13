@@ -141,6 +141,7 @@ export function computeHandicapTimeline(
     // Determine if player has an established handicap (USGA requires 3+ rounds)
     // For rounds 0, 1, 2 (first 3 rounds): player does not have established handicap
     // For rounds 3+ : player has established handicap
+    // Also gates ESR detection below (plan 012).
     const hasEstablishedHandicap = i >= 3;
 
     const adjustedPlayedScore = calculateAdjustedPlayedScore(
@@ -204,8 +205,23 @@ export function computeHandicapTimeline(
       .map((round) => round.rawDifferential);
     pr.updatedHandicapIndex = calculateHandicapIndex(relevantDifferentials);
 
+    // Rule 5.9: ESR applies only against an ESTABLISHED Handicap Index.
+    // With fewer than 3 prior differentials there is no established index —
+    // the 54 returned by calculateHandicapIndex is a display placeholder,
+    // not a comparison basis — so ESR must not fire at all for i < 3
+    // (plan 012). Decision A (owner, 2026-07-13): even a user-provided
+    // initialHandicapIndex (a real official index) does not make rounds
+    // 0-2 ESR-eligible — we cannot distinguish a genuine declared index
+    // from the schema default of 54, so the i >= 3 gate applies uniformly.
+    //
+    // Known deviation (CORRECTNESS-02, deliberate, NOT changed here): for
+    // i >= 3 the ESR basis `rollingIndex` is Pass 1's UNCAPPED rolling
+    // index, not the capped index Pass 2 ultimately displays. This is
+    // one-directionally more ESR-aggressive after cap events
+    // (anti-sandbagging-conservative). See the measurement cases in
+    // apps/web/tests/unit/handicap/timeline.test.ts.
     const difference = rollingIndex - pr.rawDifferential;
-    if (difference >= EXCEPTIONAL_ROUND_THRESHOLD) {
+    if (hasEstablishedHandicap && difference >= EXCEPTIONAL_ROUND_THRESHOLD) {
       const offset = difference >= 10 ? 2 : 1;
       const esrStartIdx = Math.max(
         0,
