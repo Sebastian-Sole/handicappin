@@ -1,4 +1,4 @@
-import { useRef } from "react";
+import { Fragment, useRef } from "react";
 import {
   Table,
   TableBody,
@@ -8,9 +8,19 @@ import {
   TableRow,
 } from "../ui/table";
 import { Input } from "../ui/input";
+import { Button } from "../ui/button";
 import { Hole, Score, Tee } from "@/types/scorecard-input";
 import { CONSTANTS } from "@/constants/golf";
 import { Skeleton } from "../ui/skeleton";
+import { cn } from "@/lib/utils";
+
+/** Shot-level detail fields a hole row can edit (plans/010). */
+export type ScoreDetail = Partial<
+  Pick<Score, "putts" | "fairwayHit" | "penaltyStrokes">
+>;
+
+const MAX_PUTTS = 20;
+const MAX_PENALTIES = 10;
 
 interface ScorecardTableProps {
   selectedTee: Tee | undefined;
@@ -19,6 +29,106 @@ interface ScorecardTableProps {
   scores: Score[];
   onScoreChange: (holeIndex: number, score: number) => void;
   disabled: boolean;
+  /** "Detailed scoring" mode: expose putts/fairway/penalties per hole. */
+  detailedScoring?: boolean;
+  onScoreDetailChange?: (holeIndex: number, detail: ScoreDetail) => void;
+}
+
+/** Parse a bounded optional integer from a text input ("" clears it). */
+function parseDetailValue(raw: string, max: number): number | undefined {
+  if (raw === "") return undefined;
+  const parsed = parseInt(raw, 10);
+  if (Number.isNaN(parsed)) return undefined;
+  return Math.min(Math.max(parsed, 0), max);
+}
+
+/**
+ * Tri-state fairway control: – (not set) → ✓ (hit) → ✗ (missed) → –.
+ * Par-3 holes have no fairway; the control is disabled there (FIR excludes
+ * them, and NULL is the canonical "does not apply" value).
+ */
+function FairwayCycle({
+  value,
+  holeNumber,
+  par,
+  disabled,
+  onChange,
+}: {
+  value: boolean | null | undefined;
+  holeNumber: number;
+  par: number;
+  disabled: boolean;
+  onChange: (next: boolean | undefined) => void;
+}) {
+  const isPar3 = par === 3;
+  const stateLabel =
+    value === true ? "hit" : value === false ? "missed" : "not set";
+  const next = value === true ? false : value === false ? undefined : true;
+  return (
+    <Button
+      type="button"
+      variant="outline"
+      size="sm"
+      className={cn(
+        "w-full min-w-8 px-sm",
+        value === true && "text-success",
+        value === false && "text-destructive"
+      )}
+      disabled={disabled || isPar3}
+      aria-label={
+        isPar3
+          ? `Fairway hole ${holeNumber}: not applicable (par 3)`
+          : `Fairway hole ${holeNumber}: ${stateLabel}. Activate to change`
+      }
+      onClick={() => onChange(next)}
+    >
+      {isPar3 ? "·" : value === true ? "✓" : value === false ? "✗" : "–"}
+    </Button>
+  );
+}
+
+/** Penalties stay hidden behind a "+" until the golfer had any (default 0). */
+function PenaltyControl({
+  value,
+  holeNumber,
+  disabled,
+  onChange,
+}: {
+  value: number | null | undefined;
+  holeNumber: number;
+  disabled: boolean;
+  onChange: (next: number | undefined) => void;
+}) {
+  if (value == null) {
+    return (
+      <Button
+        type="button"
+        variant="ghost"
+        size="sm"
+        className="w-full min-w-8 px-sm text-muted-foreground"
+        disabled={disabled}
+        aria-label={`Add penalty strokes for hole ${holeNumber}`}
+        onClick={() => onChange(0)}
+      >
+        +
+      </Button>
+    );
+  }
+  return (
+    <Input
+      className="border border-border h-9 text-center w-full"
+      type="number"
+      min={0}
+      max={MAX_PENALTIES}
+      aria-label={`Penalty strokes for hole ${holeNumber}`}
+      value={value}
+      disabled={disabled}
+      onChange={(e) => onChange(parseDetailValue(e.target.value, MAX_PENALTIES) ?? 0)}
+      onWheel={(e) => {
+        e.currentTarget.blur();
+      }}
+    />
+  );
 }
 
 export function ScorecardTable({
@@ -28,12 +138,47 @@ export function ScorecardTable({
   scores,
   onScoreChange,
   disabled,
+  detailedScoring = false,
+  onScoreDetailChange,
 }: ScorecardTableProps) {
   const desktopInputRefs = useRef<(HTMLInputElement | null)[]>([]);
   const mobileInputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
   const calculateTotal = (scores: Score[], start: number, end: number) =>
     scores.slice(start, end).reduce((sum, score) => sum + score.strokes, 0);
+
+  const handleDetailChange = (holeIndex: number, detail: ScoreDetail) => {
+    onScoreDetailChange?.(holeIndex, detail);
+  };
+
+  const sumDetail = (
+    key: "putts" | "penaltyStrokes",
+    start: number,
+    end: number
+  ) => {
+    let sum = 0;
+    let count = 0;
+    scores.slice(start, end).forEach((score) => {
+      const value = score[key];
+      if (value != null) {
+        sum += value;
+        count += 1;
+      }
+    });
+    return count > 0 ? String(sum) : "—";
+  };
+
+  const fairwaySummary = (start: number, end: number) => {
+    let hits = 0;
+    let total = 0;
+    scores.slice(start, end).forEach((score) => {
+      if (score.fairwayHit != null) {
+        total += 1;
+        if (score.fairwayHit) hits += 1;
+      }
+    });
+    return total > 0 ? `${hits}/${total}` : "—";
+  };
 
   const handleScoreInput = (
     e: React.ChangeEvent<HTMLInputElement>,
@@ -224,6 +369,134 @@ export function ScorecardTable({
                   {calculateTotal(scores, 0, holeCount)}
                 </TableCell>
               </TableRow>
+
+              {/* Detailed scoring rows (plans/010) */}
+              {detailedScoring && (
+                <>
+                  {/* Putts Row */}
+                  <TableRow className="hover:bg-inherit">
+                    <TableCell className="font-medium bg-accent dark:bg-muted text-secondary-foreground dark:text-primary-foreground">
+                      PUTTS
+                    </TableCell>
+                    {scores.slice(0, holeCount).map((score, i) => (
+                      <TableCell key={i} className="p-sm">
+                        <Input
+                          className="border border-border h-full text-center w-full"
+                          type="number"
+                          min={0}
+                          max={MAX_PUTTS}
+                          aria-label={`Putts for hole ${i + 1}`}
+                          value={score.putts ?? ""}
+                          disabled={disabled}
+                          onChange={(e) =>
+                            handleDetailChange(i, {
+                              putts: parseDetailValue(
+                                e.target.value,
+                                MAX_PUTTS
+                              ),
+                            })
+                          }
+                          onWheel={(e) => {
+                            e.currentTarget.blur();
+                          }}
+                        />
+                      </TableCell>
+                    ))}
+                    {holeCount === CONSTANTS.EIGHTEEN_HOLES && (
+                      <>
+                        <TableCell className="text-center">
+                          {sumDetail("putts", 0, CONSTANTS.NINE_HOLES)}
+                        </TableCell>
+                        <TableCell className="text-center">
+                          {sumDetail(
+                            "putts",
+                            CONSTANTS.NINE_HOLES,
+                            CONSTANTS.EIGHTEEN_HOLES
+                          )}
+                        </TableCell>
+                      </>
+                    )}
+                    <TableCell className="text-center">
+                      {sumDetail("putts", 0, holeCount)}
+                    </TableCell>
+                  </TableRow>
+
+                  {/* Fairway Row */}
+                  <TableRow className="hover:bg-inherit">
+                    <TableCell className="font-medium bg-accent dark:bg-muted text-secondary-foreground dark:text-primary-foreground">
+                      FAIRWAY
+                    </TableCell>
+                    {scores.slice(0, holeCount).map((score, i) => (
+                      <TableCell
+                        key={i}
+                        className="p-sm bg-background-alternate"
+                      >
+                        <FairwayCycle
+                          value={score.fairwayHit}
+                          holeNumber={i + 1}
+                          par={displayedHoles[i]?.par ?? 4}
+                          disabled={disabled}
+                          onChange={(next) =>
+                            handleDetailChange(i, { fairwayHit: next })
+                          }
+                        />
+                      </TableCell>
+                    ))}
+                    {holeCount === CONSTANTS.EIGHTEEN_HOLES && (
+                      <>
+                        <TableCell className="text-center bg-background-alternate">
+                          {fairwaySummary(0, CONSTANTS.NINE_HOLES)}
+                        </TableCell>
+                        <TableCell className="text-center bg-background-alternate">
+                          {fairwaySummary(
+                            CONSTANTS.NINE_HOLES,
+                            CONSTANTS.EIGHTEEN_HOLES
+                          )}
+                        </TableCell>
+                      </>
+                    )}
+                    <TableCell className="text-center bg-background-alternate">
+                      {fairwaySummary(0, holeCount)}
+                    </TableCell>
+                  </TableRow>
+
+                  {/* Penalties Row */}
+                  <TableRow className="hover:bg-inherit">
+                    <TableCell className="font-medium bg-accent dark:bg-muted text-secondary-foreground dark:text-primary-foreground">
+                      PENALTIES
+                    </TableCell>
+                    {scores.slice(0, holeCount).map((score, i) => (
+                      <TableCell key={i} className="p-sm">
+                        <PenaltyControl
+                          value={score.penaltyStrokes}
+                          holeNumber={i + 1}
+                          disabled={disabled}
+                          onChange={(next) =>
+                            handleDetailChange(i, { penaltyStrokes: next })
+                          }
+                        />
+                      </TableCell>
+                    ))}
+                    {holeCount === CONSTANTS.EIGHTEEN_HOLES && (
+                      <>
+                        <TableCell className="text-center">
+                          {sumDetail("penaltyStrokes", 0, CONSTANTS.NINE_HOLES)}
+                        </TableCell>
+                        <TableCell className="text-center">
+                          {sumDetail(
+                            "penaltyStrokes",
+                            CONSTANTS.NINE_HOLES,
+                            CONSTANTS.EIGHTEEN_HOLES
+                          )}
+                        </TableCell>
+                      </>
+                    )}
+                    <TableCell className="text-center">
+                      {sumDetail("penaltyStrokes", 0, holeCount)}
+                    </TableCell>
+                  </TableRow>
+                </>
+              )}
             </TableBody>
           </Table>
         </div>
@@ -282,34 +555,99 @@ export function ScorecardTable({
               </TableHeader>
               <TableBody>
                 {displayedHoles.map((hole, i) => (
-                  <TableRow key={i} className="hover:bg-inherit">
-                    <TableCell className="text-center font-medium bg-accent dark:bg-muted text-secondary-foreground dark:text-primary-foreground">
-                      {i + 1}
-                    </TableCell>
-                    <TableCell className="text-center bg-background-alternate">
-                      {hole.par}
-                    </TableCell>
-                    <TableCell className="text-center bg-background">
-                      {hole.hcp}
-                    </TableCell>
-                    <TableCell className="p-sm bg-background-alternate w-24">
-                      <Input
-                        ref={(el) => {
-                          mobileInputRefs.current[i] = el;
-                        }}
-                        className="border border-border h-12 text-center w-full text-lg"
-                        type="number"
-                        value={scores[i]?.strokes || ""}
-                        disabled={disabled}
-                        onChange={(e) =>
-                          handleScoreInput(e, i, mobileInputRefs, holeCount)
-                        }
-                        onWheel={(e) => {
-                          e.currentTarget.blur();
-                        }}
-                      />
-                    </TableCell>
-                  </TableRow>
+                  <Fragment key={i}>
+                    <TableRow className="hover:bg-inherit">
+                      <TableCell className="text-center font-medium bg-accent dark:bg-muted text-secondary-foreground dark:text-primary-foreground">
+                        {i + 1}
+                      </TableCell>
+                      <TableCell className="text-center bg-background-alternate">
+                        {hole.par}
+                      </TableCell>
+                      <TableCell className="text-center bg-background">
+                        {hole.hcp}
+                      </TableCell>
+                      <TableCell className="p-sm bg-background-alternate w-24">
+                        <Input
+                          ref={(el) => {
+                            mobileInputRefs.current[i] = el;
+                          }}
+                          className="border border-border h-12 text-center w-full text-lg"
+                          type="number"
+                          value={scores[i]?.strokes || ""}
+                          disabled={disabled}
+                          onChange={(e) =>
+                            handleScoreInput(e, i, mobileInputRefs, holeCount)
+                          }
+                          onWheel={(e) => {
+                            e.currentTarget.blur();
+                          }}
+                        />
+                      </TableCell>
+                    </TableRow>
+                    {/* Detailed scoring row (plans/010) */}
+                    {detailedScoring && (
+                      <TableRow className="hover:bg-inherit">
+                        <TableCell colSpan={4} className="bg-background p-sm">
+                          <div className="flex items-end gap-sm">
+                            <div className="flex-1 space-y-xs">
+                              <p className="text-meta text-muted-foreground text-center">
+                                Putts
+                              </p>
+                              <Input
+                                className="border border-border h-9 text-center w-full"
+                                type="number"
+                                min={0}
+                                max={MAX_PUTTS}
+                                aria-label={`Putts for hole ${i + 1}`}
+                                value={scores[i]?.putts ?? ""}
+                                disabled={disabled}
+                                onChange={(e) =>
+                                  handleDetailChange(i, {
+                                    putts: parseDetailValue(
+                                      e.target.value,
+                                      MAX_PUTTS
+                                    ),
+                                  })
+                                }
+                                onWheel={(e) => {
+                                  e.currentTarget.blur();
+                                }}
+                              />
+                            </div>
+                            <div className="flex-1 space-y-xs">
+                              <p className="text-meta text-muted-foreground text-center">
+                                Fairway
+                              </p>
+                              <FairwayCycle
+                                value={scores[i]?.fairwayHit}
+                                holeNumber={i + 1}
+                                par={hole.par}
+                                disabled={disabled}
+                                onChange={(next) =>
+                                  handleDetailChange(i, { fairwayHit: next })
+                                }
+                              />
+                            </div>
+                            <div className="flex-1 space-y-xs">
+                              <p className="text-meta text-muted-foreground text-center">
+                                Penalties
+                              </p>
+                              <PenaltyControl
+                                value={scores[i]?.penaltyStrokes}
+                                holeNumber={i + 1}
+                                disabled={disabled}
+                                onChange={(next) =>
+                                  handleDetailChange(i, {
+                                    penaltyStrokes: next,
+                                  })
+                                }
+                              />
+                            </div>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </Fragment>
                 ))}
               </TableBody>
             </Table>

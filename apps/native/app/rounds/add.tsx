@@ -23,7 +23,10 @@ import { tokens } from "@handicappin/tokens/tokens";
 import { AddCourseModal } from "@/components/scorecard/add-course-modal";
 import { AddTeeModal } from "@/components/scorecard/add-tee-modal";
 import { CoursePicker } from "@/components/scorecard/course-picker";
-import { ScorecardTable } from "@/components/scorecard/scorecard-table";
+import {
+  ScorecardTable,
+  type ScoreDetail,
+} from "@/components/scorecard/scorecard-table";
 import { UsageLimitAlert } from "@/components/scorecard/usage-limit-alert";
 import { TeePicker } from "@/components/scorecard/tee-picker";
 import { DataSettledMarker } from "@/components/data-settled";
@@ -31,6 +34,7 @@ import { Button } from "@/components/ui/button";
 import { FormFeedback } from "@/components/ui/form-feedback";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import { H1 } from "@/components/ui/typography";
 import { analytics } from "@/lib/analytics";
 import { profileQueryOptions } from "@/lib/api/procedures/auth";
@@ -48,7 +52,7 @@ import {
   FREE_TIER_ROUND_LIMIT,
   getDisplayedHoles,
   roundToNearestMinute,
-  type Score,
+  type ScoreInput,
   type Tee,
 } from "@/lib/scorecard";
 import type { CourseForm } from "@/lib/scorecard-form";
@@ -75,7 +79,7 @@ interface FeedbackState {
   message: string;
 }
 
-const emptyScores = (): Score[] =>
+const emptyScores = (): ScoreInput[] =>
   Array.from({ length: 18 }, () => ({ strokes: 0, hcpStrokes: 0 }));
 
 const CLOSE_ICON_SIZE = 20; // allow-hardcoded lucide icon prop inside the 40px close button
@@ -105,7 +109,10 @@ export default function AddRoundScreen() {
   const [nineHoleSection, setNineHoleSection] = useState<"front" | "back">(
     "front",
   );
-  const [scores, setScores] = useState<Score[]>(emptyScores());
+  const [scores, setScores] = useState<ScoreInput[]>(emptyScores());
+  // "Detailed scoring" (plans/010): opt-in putts/fairway/penalty entry.
+  // Off by default every visit (mirrors web: no persisted preference).
+  const [detailedScoring, setDetailedScoring] = useState(false);
   const [notes, setNotes] = useState("");
   const [teeTime, setTeeTime] = useState(() =>
     roundToNearestMinute(new Date()).toISOString(),
@@ -213,9 +220,23 @@ export default function AddRoundScreen() {
   const handleScoreChange = (holeIndex: number, strokes: number) => {
     setScores((prev) => {
       const next = [...prev];
-      next[holeIndex] = { strokes, hcpStrokes: 0 };
+      // Preserve any shot-level detail already entered for this hole.
+      next[holeIndex] = { ...next[holeIndex], strokes, hcpStrokes: 0 };
       return next;
     });
+  };
+
+  const handleScoreDetailChange = (holeIndex: number, detail: ScoreDetail) => {
+    setScores((prev) => {
+      const next = [...prev];
+      next[holeIndex] = { ...next[holeIndex], ...detail };
+      return next;
+    });
+  };
+
+  const handleDetailedScoringToggle = (enabled: boolean) => {
+    setDetailedScoring(enabled);
+    analytics.capture("detailed_scoring_toggled", { enabled });
   };
 
   const busy = submitState === "loading" || submitState === "success";
@@ -260,7 +281,19 @@ export default function AddRoundScreen() {
           website: selectedCourse.website ?? "",
         },
         teePlayed: selectedTee as Tee,
-        scores: playedScores,
+        // Detailed scoring on: penalties default to 0 for entered holes
+        // (the "+" control means "0 unless stated"). Off: strip any detail
+        // so a toggled-off submission is byte-identical to the old payload.
+        scores: playedScores.map((score) =>
+          detailedScoring
+            ? { ...score, penaltyStrokes: score.penaltyStrokes ?? 0 }
+            : {
+                ...score,
+                putts: undefined,
+                fairwayHit: undefined,
+                penaltyStrokes: undefined,
+              },
+        ),
         teeTime,
         approvalStatus: isAutoApproved ? "approved" : "pending",
         notes,
@@ -480,6 +513,22 @@ export default function AddRoundScreen() {
             />
           </View>
         </View>
+
+        <View className="flex-row items-center justify-between gap-sm">
+          <View className="flex-1 gap-xs">
+            <Label>Detailed scoring</Label>
+            <Text className="text-body-sm text-muted-foreground">
+              Track putts, fairways, and penalties per hole
+            </Text>
+          </View>
+          <Switch
+            testID="detailed-scoring-toggle"
+            accessibilityLabel="Detailed scoring"
+            checked={detailedScoring}
+            onCheckedChange={handleDetailedScoringToggle}
+            disabled={busy}
+          />
+        </View>
       </View>
 
       {selectedTee && displayedHoles.length > 0 ? (
@@ -490,6 +539,8 @@ export default function AddRoundScreen() {
           scores={scores}
           onScoreChange={handleScoreChange}
           disabled={busy}
+          detailedScoring={detailedScoring}
+          onScoreDetailChange={handleScoreDetailChange}
         />
       ) : (
         <View className="rounded-lg border border-border p-lg items-center">

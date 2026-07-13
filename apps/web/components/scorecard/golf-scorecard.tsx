@@ -41,12 +41,18 @@ import {
 } from "../ui/form";
 import { api } from "@/trpc/react";
 import { useDebounce } from "use-debounce";
-import { Course, Scorecard, scorecardSchema, Tee } from "@/types/scorecard-input";
+import {
+  Course,
+  Scorecard,
+  scorecardSchema,
+  Tee,
+} from "@/types/scorecard-input";
+import { Switch } from "@/components/ui/switch";
 import { Textarea } from "../ui/textarea";
 import { TeeDialog } from "./tee-dialog";
 import { FormFeedback } from "../ui/form-feedback";
 import { getTeeKey, useTeeManagement } from "@/hooks/useTeeManagement";
-import { ScorecardTable } from "./scorecard-table";
+import { ScorecardTable, type ScoreDetail } from "./scorecard-table";
 import {
   getDisplayedHoles,
   roundToNearestMinute,
@@ -104,6 +110,10 @@ export default function GolfScorecard({ profile, access }: GolfScorecardProps) {
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [addCourseDialogOpen, setAddCourseDialogOpen] = useState(false);
+  // "Detailed scoring" (plans/010): opt-in putts/fairway/penalty entry.
+  // Off by default every visit — the form persists no other UI state, and
+  // the preference deliberately has no DB column.
+  const [detailedScoring, setDetailedScoring] = useState(false);
 
   // Form setup
   const form = useForm<Scorecard>({
@@ -284,6 +294,8 @@ export default function GolfScorecard({ profile, access }: GolfScorecardProps) {
     const currentScores = form.getValues("scores");
     const newScores = [...currentScores];
     newScores[holeIndex] = {
+      // Preserve any shot-level detail already entered for this hole.
+      ...newScores[holeIndex],
       id: undefined,
       roundId: undefined,
       holeId: undefined,
@@ -291,6 +303,18 @@ export default function GolfScorecard({ profile, access }: GolfScorecardProps) {
       hcpStrokes: 0,
     };
     form.setValue("scores", newScores);
+  };
+
+  const handleScoreDetailChange = (holeIndex: number, detail: ScoreDetail) => {
+    const currentScores = form.getValues("scores");
+    const newScores = [...currentScores];
+    newScores[holeIndex] = { ...newScores[holeIndex], ...detail };
+    form.setValue("scores", newScores);
+  };
+
+  const handleDetailedScoringToggle = (enabled: boolean) => {
+    setDetailedScoring(enabled);
+    analytics.capture("detailed_scoring_toggled", { enabled });
   };
 
   const displayedHoles = useMemo(() => {
@@ -330,7 +354,19 @@ export default function GolfScorecard({ profile, access }: GolfScorecardProps) {
         teePlayed: {
           ...data.teePlayed,
         },
-        scores: data.scores.slice(0, holeCount),
+        // Detailed scoring on: penalties default to 0 for entered holes
+        // (the "+" control means "0 unless stated"). Off: strip any detail
+        // so a toggled-off submission is byte-identical to the old payload.
+        scores: data.scores.slice(0, holeCount).map((score) =>
+          detailedScoring
+            ? { ...score, penaltyStrokes: score.penaltyStrokes ?? 0 }
+            : {
+                ...score,
+                putts: undefined,
+                fairwayHit: undefined,
+                penaltyStrokes: undefined,
+              }
+        ),
         // Only attach the 9-hole section for 9-hole rounds; 18-hole rounds must omit it.
         nineHoleSection: holeCount === 9 ? nineHoleSection : undefined,
       };
@@ -815,6 +851,31 @@ export default function GolfScorecard({ profile, access }: GolfScorecardProps) {
                       </div>
                     )}
                     <div className="space-y-sm">
+                      <div className="flex items-center justify-between gap-sm">
+                        <div className="space-y-xs">
+                          <Label htmlFor="detailed-scoring">
+                            Detailed scoring
+                          </Label>
+                          <p className="text-body-sm text-muted-foreground">
+                            Track putts, fairways, and penalties per hole
+                          </p>
+                        </div>
+                        {isMounted ? (
+                          <Switch
+                            id="detailed-scoring"
+                            checked={detailedScoring}
+                            onCheckedChange={handleDetailedScoringToggle}
+                            disabled={
+                              submitState === "loading" ||
+                              submitState === "success"
+                            }
+                          />
+                        ) : (
+                          <Skeleton className="h-6 w-11" />
+                        )}
+                      </div>
+                    </div>
+                    <div className="space-y-sm">
                       <Label htmlFor="notes">Notes</Label>
                       {isMounted ? (
                         <FormField
@@ -852,6 +913,8 @@ export default function GolfScorecard({ profile, access }: GolfScorecardProps) {
                     scores={scoresValue}
                     onScoreChange={handleScoreChange}
                     disabled={submitState === "loading" || submitState === "success"}
+                    detailedScoring={detailedScoring}
+                    onScoreDetailChange={handleScoreDetailChange}
                   />
                 </div>
               )}

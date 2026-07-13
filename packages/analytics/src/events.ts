@@ -86,6 +86,8 @@ export interface AnalyticsEventMap {
 
   // --- engagement ---
   stats_viewed: { tab?: string };
+  /** The "Detailed scoring" toggle on the manual add-round form (plan 010). */
+  detailed_scoring_toggled: { enabled: boolean };
   /** id from apps/web/lib/calculator-registry.ts */
   calculator_used: { calculator: string };
 
@@ -124,6 +126,7 @@ export const ANALYTICS_EVENTS = {
   LIVE_ROUND_STARTED: "live_round_started",
   LIVE_ROUND_SUBMITTED: "live_round_submitted",
   STATS_VIEWED: "stats_viewed",
+  DETAILED_SCORING_TOGGLED: "detailed_scoring_toggled",
   CALCULATOR_USED: "calculator_used",
   CONTACT_FORM_SUBMITTED: "contact_form_submitted",
   ACCOUNT_DELETED: "account_deleted",
