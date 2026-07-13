@@ -9,7 +9,7 @@
     "lint": "eslint .",
     "gen:types": "pnpx supabase gen types --lang=typescript --project-id \"lssnaapatrurmhbbqadb\" --schema public > types/supabase.ts",
     "test": "vitest",
-    "test:unit": "vitest --exclude tests/integration/**",
+    "test:unit": "vitest --exclude \"tests/integration/**\"",
     "test:integration": "vitest tests/integration",
     "test:watch": "vitest --watch",
     "test:coverage": "vitest --coverage",
