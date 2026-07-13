@@ -5,12 +5,14 @@ import React, {
   useContext,
   useState,
   useCallback,
+  useRef,
   ReactNode,
 } from "react";
 import {
   CalculatorValues,
   CalculatorFieldType,
 } from "@/types/calculators";
+import { analytics } from "@/lib/analytics";
 
 interface CalculatorContextProps {
   values: CalculatorValues;
@@ -73,8 +75,17 @@ export function CalculatorProvider({ children }: { children: ReactNode }) {
     setLastUpdatedByState({});
   }, []);
 
+  // Every calculator reports here when it produces a result — the single
+  // chokepoint for calculator_used (plan 009). Deduped per calculator id per
+  // mount so typing in one calculator emits one event, not one per keystroke.
+  const capturedCalculators = useRef<Set<string>>(new Set());
+
   const setLastUpdatedBy = useCallback(
     (field: CalculatorFieldType, calculatorId: string | null) => {
+      if (calculatorId && !capturedCalculators.current.has(calculatorId)) {
+        capturedCalculators.current.add(calculatorId);
+        analytics.capture("calculator_used", { calculator: calculatorId });
+      }
       setLastUpdatedByState((prev) => ({ ...prev, [field]: calculatorId }));
     },
     []

@@ -9,6 +9,7 @@ import { api } from "@/trpc/react";
 import { PricingCard, PricingCardSkeleton } from "./pricing-card";
 import { PLAN_FEATURES, PLAN_DETAILS } from "./plan-features";
 import { isPaidPlan } from "@/utils/billing/access-helpers";
+import { analytics } from "@/lib/analytics";
 import { clientLogger } from "@/lib/client-logger";
 import { getTRPCRateLimitRetryAfter, getErrorMessage } from "@/lib/trpc-error";
 
@@ -81,6 +82,13 @@ export function PlanSelector({
     api.stripe.getPromoSlots.useQuery();
   const isActiveLifetimePromo = !!promoSlots?.remaining;
 
+  // Each paywall render is a funnel entry (plan 009 taxonomy).
+  useEffect(() => {
+    analytics.capture("paywall_viewed", {
+      surface: mode === "onboarding" ? "onboarding" : "upgrade_page",
+    });
+  }, [mode]);
+
   // Auto-dismiss success messages after 5 seconds
   useEffect(() => {
     if (feedbackMessage?.type === "success") {
@@ -99,6 +107,15 @@ export function PlanSelector({
     try {
       setLoading("free");
       setFeedbackMessage(null); // Clear any previous feedback
+
+      // Free-plan onboarding pick is captured SERVER-side
+      // (createFreeTierSubscription); only the upgrade CTA is UI truth here.
+      if (mode === "upgrade") {
+        analytics.capture("upgrade_clicked", {
+          plan: "free",
+          surface: "upgrade_page",
+        });
+      }
 
       // If in upgrade mode and user has a paid plan, redirect to Stripe Portal
       // Portal handles cancellations properly with correct billing cycle behavior
@@ -175,6 +192,14 @@ export function PlanSelector({
     try {
       setLoading(plan);
       setFeedbackMessage(null); // Clear any previous feedback
+
+      if (mode === "onboarding") {
+        // Paid onboarding pick (free is server-captured; checkout completion
+        // is server truth via checkout_initiated/subscription_started).
+        analytics.capture("plan_selected", { plan });
+      } else {
+        analytics.capture("upgrade_clicked", { plan, surface: "upgrade_page" });
+      }
 
       // If in upgrade mode and user has a paid plan, redirect to Stripe Portal
       // Portal handles plan changes with proper proration and billing

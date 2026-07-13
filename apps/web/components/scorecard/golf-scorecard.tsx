@@ -3,6 +3,7 @@
 import { useEffect, useState, useMemo, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { Card, CardContent } from "@/components/ui/card";
+import { analytics } from "@/lib/analytics";
 import { clientLogger } from "@/lib/client-logger";
 import {
   Select,
@@ -144,6 +145,12 @@ export default function GolfScorecard({ profile, access }: GolfScorecardProps) {
 
   // Loading state derived from query states
   const isLoading = isSearchLoading || isTeesLoading;
+
+  // Manual add-round form opened (plan 009 funnel entry; submission success
+  // is captured SERVER-side in round.submitScorecard as round_submitted).
+  useEffect(() => {
+    analytics.capture("round_add_started", { method: "manual" });
+  }, []);
 
   // Update fetched data when queries return results
   // This accumulator pattern is intentional - we want to cache previous search results
@@ -372,6 +379,11 @@ export default function GolfScorecard({ profile, access }: GolfScorecardProps) {
         typeof error.message === "string"
       ) {
         errorMessage = error.message;
+      }
+
+      // The 25-round FORBIDDEN error surfaced to the user (plan 009).
+      if (errorMessage.includes("free tier limit")) {
+        analytics.capture("round_limit_hit", {});
       }
 
       setFeedback({
