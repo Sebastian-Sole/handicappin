@@ -26,12 +26,14 @@ export interface ServerAnalytics {
     distinctId: string;
     properties?: Record<string, unknown>;
   }): void;
+  captureException(error: unknown, distinctId?: string): void;
   flush(): Promise<void>;
 }
 
 const noopServerAnalytics: ServerAnalytics = {
   capture: () => undefined,
   identify: () => undefined,
+  captureException: () => undefined,
   flush: () => Promise.resolve(),
 };
 
