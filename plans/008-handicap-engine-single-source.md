@@ -20,6 +20,7 @@
 - **Depends on**: none. Recommended before plans 010/011 (both touch scoring inputs).
 - **Category**: tech-debt / tests (compliance-enabling)
 - **Planned at**: commit `0432f5f`, 2026-07-11
+- **Issue**: https://github.com/Sebastian-Sole/handicappin/issues/138
 
 ## Why this matters
 

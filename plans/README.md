@@ -16,12 +16,13 @@ Selection note (run 2): executed non-interactively, so plans were written for th
 | 003 | Rejection loop: reason, history, path forward | P2 | L | 002 | DONE (merged to main) |
 | 004 | Auth rate limiting before App Store launch | P1 | S–M | — | DONE (merged to main; owner switches tracked in BACKLOG) |
 | 005 | Billing lifecycle emails at the webhook chokepoint | P2 | M | — | DONE (merged to main) |
-| 006 | Replace "USGA Compliant" claims with defensible wording (web+native) | P1 | S–M | — | TODO |
-| 007 | Official-handicap roadmap doc + owner runbook | P1 | S–M | — (pairs with 006) | TODO |
-| 008 | Single-source handicap engine + characterization tests | P1 | M | — | TODO |
-| 009 | Product analytics foundation (taxonomy + PostHog, web+native) | P1 | M | — | TODO |
-| 010 | Shot-level stats v1 (putts/FIR/penalties → GIR/FIR%/putts-per-round) | P2 | L | 008 (recommended), 009 (useful) | TODO |
-| 011 | Activation: starting-HI seed, CSV import, guided first-run + goal | P2 | L | 008 (recommended), 009 (useful) | TODO |
+| 006 | Replace "USGA Compliant" claims with defensible wording (web+native) ([#142](https://github.com/Sebastian-Sole/handicappin/issues/142)) | P1 | S–M | — | DONE (approved after 1 revision; merged to main 2026-07-13 via PR [#155](https://github.com/Sebastian-Sole/handicappin/pull/155)) |
+| 007 | Official-handicap roadmap doc + owner runbook ([#143](https://github.com/Sebastian-Sole/handicappin/issues/143)) | P1 | S–M | — (pairs with 006) | DONE (approved; merged to main 2026-07-13 via PR [#156](https://github.com/Sebastian-Sole/handicappin/pull/156)) |
+| 008 | Single-source handicap engine + characterization tests ([#138](https://github.com/Sebastian-Sole/handicappin/issues/138)) | P1 | M | — | DONE (approved; merged to main 2026-07-13 via PR [#157](https://github.com/Sebastian-Sole/handicappin/pull/157)) |
+| 009 | Product analytics foundation (taxonomy + PostHog, web+native) ([#139](https://github.com/Sebastian-Sole/handicappin/issues/139)) | P1 | M | — (dispatch after PR #155 merged ✓) | IN PROGRESS (executor dispatched 2026-07-13) |
+| 010 | Shot-level stats v1 (putts/FIR/penalties → GIR/FIR%/putts-per-round) ([#140](https://github.com/Sebastian-Sole/handicappin/issues/140)) | P2 | L | 008 (recommended), 009 (useful) | TODO |
+| 011 | Activation: starting-HI seed, CSV import, guided first-run + goal ([#141](https://github.com/Sebastian-Sole/handicappin/issues/141)) | P2 | L | 008 (recommended), 009 (useful), 012 (import replays the ESR bug if run first) | TODO |
+| 012 | ESR gate: no ESR without an established index ([#158](https://github.com/Sebastian-Sole/handicappin/issues/158)) | P1 | S–M | 008 merged (PR #157) ✓ | IN PROGRESS (executor dispatched 2026-07-13) |
 
 Status values: TODO | IN PROGRESS | DONE | BLOCKED (with one-line reason) | REJECTED (with one-line rationale)
 
@@ -42,7 +43,10 @@ Status values: TODO | IN PROGRESS | DONE | BLOCKED (with one-line reason) | REJE
 - **Course directory + SEO landing pages (D6, run-1 carryover, extended)**: still unplanned; run 2 added evidence that `app/sitemap.ts` is a static 5-URL file, so per-course pages also need a dynamic sitemap. Unblocked since run 1 (courses are loaded and approved in prod). Effort L.
 - **Round-less course/tee submissions** (run-1 carryover): unchanged; builds on 003's lifecycle work. Effort M.
 - **Native AI-scorecard camera flow** (run-1 carryover): unchanged; BACKLOG §D. Effort M–L.
-- **Quick wins not worth a full plan** (single-conversation fixes): bound `teeTime` to not-future in `apps/web/types/scorecard-input.ts:178` (+ mirrored edge schema); decide CORRECTNESS-01 — schema rejects 10–17-hole rounds while `calculateAdjustedGrossScore`'s partial-round branch (`packages/handicap-core/src/calculations.ts:377-384`) is dead-but-tested code; constrain `teeInfo.gender` at the DB level (currently free text, enum only in zod).
+- **NEW BUG found by plan 008's characterization work (now planned as 012 / [#158](https://github.com/Sebastian-Sole/handicappin/issues/158); verified against production code and approved by owner 2026-07-13)**: Pass 1's rolling index resets to 54 after round 1 (the fewer-than-3-differentials guard in `calculateHandicapIndex`) regardless of `initialHandicapIndex`, so rounds 2–3 of nearly every player's history spuriously trigger ESR (+2 offsets) against a phantom index of 54. Documented in `apps/web/tests/unit/handicap/timeline.test.ts` header; pinned, not fixed. Fixing it changes historical indices — plan carefully, with the (now-existing) characterization tests updated deliberately.
+- **CORRECTNESS-02 confirmed real and one-directional** (plan 008 Step 5): production's uncapped Pass-1 basis is strictly more ESR-trigger-happy than a capped basis (measured flips at offsets 0↔1 and 1↔2 after cap-engaged histories). Decision needed: keep (conservative, anti-sandbagging) or align with strict sequential WHS; pair with the 54-reset fix above.
+- **Quick wins not worth a full plan** (single-conversation fixes):
+  - `pnpm test:unit`'s unquoted `--exclude tests/integration/**` glob gets shell-expanded (zsh) so the script runs ONLY the 5 integration files; quote the glob in `apps/web/package.json`. Found by plan 008's executor; all its verification used the quoted form (29 files / 651 tests). bound `teeTime` to not-future in `apps/web/types/scorecard-input.ts:178` (+ mirrored edge schema); decide CORRECTNESS-01 — schema rejects 10–17-hole rounds while `calculateAdjustedGrossScore`'s partial-round branch (`packages/handicap-core/src/calculations.ts:377-384`) is dead-but-tested code; constrain `teeInfo.gender` at the DB level (currently free text, enum only in zod).
 
 ## Compliance/engineering findings folded into plans
 

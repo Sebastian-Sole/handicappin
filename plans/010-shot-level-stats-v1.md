@@ -19,6 +19,7 @@
 - **Depends on**: plan 008 recommended first (its characterization tests prove the engine ignores the new fields); plan 009 useful (measures adoption of the toggle)
 - **Category**: direction
 - **Planned at**: commit `0432f5f`, 2026-07-11
+- **Issue**: https://github.com/Sebastian-Sole/handicappin/issues/140
 
 ## Why this matters
 

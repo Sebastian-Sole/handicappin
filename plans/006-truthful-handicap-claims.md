@@ -20,6 +20,7 @@
 - **Depends on**: none
 - **Category**: direction (compliance/positioning)
 - **Planned at**: commit `0432f5f`, 2026-07-11
+- **Issue**: https://github.com/Sebastian-Sole/handicappin/issues/142
 
 ## Why this matters
 
@@ -151,8 +152,22 @@ Stop and report back (do not improvise) if:
 - A snapshot/test failure can't be resolved by updating the asserted string.
 - You are tempted to reword the legal disclaimers in `terms-content.tsx` — they are out of scope.
 
+## Revision 1 (2026-07-12, issued by reviewer after executor STOP)
+
+The executor's Step-1 sweep proved the original inventory incomplete. Amendments now in force:
+
+- `landing.tsx` scope expanded from "(disclaimer only)" to full claim cleanup — it held the strongest claims in the codebase: FAQ `Is Handicappin' USGA compliant?` → `Yes! …` (lines 93/95), plus claim strings at 124/210/218. Exact replacement copy provided in the revision message (FAQ rewritten to "follows the WHS calculation method … independent and unofficial … do not issue an official Handicap Index®").
+- `about/page.tsx` extra claim lines 56/190/209 confirmed in scope; line 209's "any USGA compliant course" → "any rated course".
+- `contact/page.tsx` Q&A rewritten whole, not substring-swapped.
+- `emails/round-approved.tsx:300` + `round-rejected.tsx:182` confirmed in scope ("transparent, WHS-method handicap"); they send via the Next.js notification route + Resend, not edge functions, so the edge-function STOP clause doesn't apply.
+- `terms-content.tsx:40` — surgical edit of the one claim string AUTHORIZED (disclaimers at 46-49/337-338 remain untouchable); conditional on `lib/legal-config.ts` version-bump convention being clear, else skip and report.
+- `nine-hole-calculator.tsx:50` code comment reworded so the done-criteria grep passes.
+- Native Step 3 confirmed a no-op (sweep found only educational rule citations); Step 4 parity paragraphs still required.
+
 ## Maintenance notes
 
 - Plan 007 (official-handicap roadmap) defines when stronger claims become allowed (e.g., after GHIN/GPA integration). Until a licensing milestone lands, all new marketing copy must use the "WHS-method / unofficial" vocabulary from this plan.
 - Reviewer should scrutinize: the OG image renders text at build time — confirm the new string fits its layout (opengraph-image.tsx uses fixed font sizes); and that JSON-LD stays valid JSON after edits.
 - Deferred deliberately: computing and displaying *whether a cap actually bit* on a specific round (requires plumbing Low-HI data into the step props) — worth doing when plan 008's timeline extraction makes that data cheap to expose.
+- Residual borderline strings left in place (don't match the claim regex; sweep in a future vocabulary pass): `about/page.tsx` "updates according to the latest USGA rules"; `contact/page.tsx` first FAQ "calculated using the USGA World Handicap System"; `landing.tsx` first FAQ "following USGA guidelines"; native `calculators.tsx` "WHS-compliant calculators".
+- Executed 2026-07-12 as commit `54ce71a` on `advisor/006-truthful-handicap-claims`. Documented deviations approved on merit: ToS `EFFECTIVE_DATE` bumped to July 12, 2026 (the ToS's own §1 requires a revised effective date) and `apps/native/lib/legal.ts` `LEGAL_VERSION` bumped in lockstep (its header mandates it); executor verified LEGAL_VERSION is write-only at signup — no re-consent flow triggers.

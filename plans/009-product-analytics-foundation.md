@@ -19,6 +19,7 @@
 - **Depends on**: none
 - **Category**: direction / dx
 - **Planned at**: commit `0432f5f`, 2026-07-11
+- **Issue**: https://github.com/Sebastian-Sole/handicappin/issues/139
 
 ## Why this matters
 

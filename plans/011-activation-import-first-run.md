@@ -19,6 +19,7 @@
 - **Depends on**: plan 008 strongly recommended first (imports feed the handicap engine; its tests are the safety net). Plan 009 helpful (measures activation).
 - **Category**: direction
 - **Planned at**: commit `0432f5f`, 2026-07-11
+- **Issue**: https://github.com/Sebastian-Sole/handicappin/issues/141
 
 ## Why this matters
 
