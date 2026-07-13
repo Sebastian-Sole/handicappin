@@ -11,7 +11,7 @@
  */
 import { useQuery } from "@tanstack/react-query";
 import { Redirect } from "expo-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ScrollView, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -24,6 +24,7 @@ import { PricingCard } from "@/components/billing/pricing-card";
 import { Button } from "@/components/ui/button";
 import { FormFeedback } from "@/components/ui/form-feedback";
 import { H1 } from "@/components/ui/typography";
+import { analytics } from "@/lib/analytics";
 import { promoSlotsQueryOptions } from "@/lib/api/procedures/stripe";
 import { getBillingFromJWT } from "@/lib/auth/jwt";
 import { useSession } from "@/lib/auth/session-provider";
@@ -48,6 +49,11 @@ export default function OnboardingScreen() {
   const settled = useDataSettled([promoSlots]);
   const insets = useSafeAreaInsets();
 
+  // Each native paywall render is a funnel entry (plan 009 taxonomy).
+  useEffect(() => {
+    analytics.capture("paywall_viewed", { surface: "native_paywall" });
+  }, []);
+
   if (initializing) return null;
   if (!session) return <Redirect href="/login" />;
 
@@ -65,6 +71,9 @@ export default function OnboardingScreen() {
 
   const onPurchase = async (plan: PaidPlan) => {
     setBusy(true);
+    // Paid onboarding pick — purchase completion is server truth
+    // (apple_subscription_started via the RevenueCat webhook).
+    analytics.capture("plan_selected", { plan });
     try {
       const result = await purchasePlan(userId, plan);
       if (result.kind === "mock-notice") {

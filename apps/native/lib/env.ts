@@ -32,6 +32,16 @@ const envSchema = z.object({
     (value) => (typeof value === "string" && value.length > 0 ? value : null),
     z.string().min(1).nullable(),
   ),
+  /**
+   * PostHog project API key (phc_...). Absent → analytics is a no-op
+   * (fail-open; the development profile deliberately leaves it unset).
+   * Client-exposed by design — PostHog project keys are not secrets.
+   * Same "absent arrives in several shapes" preprocessing as RevenueCat.
+   */
+  posthogApiKey: z.preprocess(
+    (value) => (typeof value === "string" && value.length > 0 ? value : null),
+    z.string().min(1).nullable(),
+  ),
 });
 
 export type Env = z.infer<typeof envSchema>;

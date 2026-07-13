@@ -1,7 +1,9 @@
 "use client";
+import { useEffect } from "react";
 import Link from "next/link";
 import { AlertCircle, TrendingUp, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { analytics } from "@/lib/analytics";
 import { cn } from "@/lib/utils";
 import { Progress } from "../ui/progress";
 import { H1, H3 } from "../ui/typography";
@@ -25,6 +27,7 @@ export function UsageLimitAlert({
   const remaining = total - current;
 
   const handleUpgrade = () => {
+    analytics.capture("upgrade_clicked", { surface: "round_limit" });
     if (onUpgrade) {
       onUpgrade();
     } else {
@@ -117,6 +120,11 @@ export function UsageLimitAlert({
 }
 
 export function UsageLimitReachedView() {
+  // The hard 25-round wall doubles as a paywall surface (plan 009 taxonomy).
+  useEffect(() => {
+    analytics.capture("paywall_viewed", { surface: "round_limit" });
+  }, []);
+
   return (
     <div className="flex items-center justify-center min-h-[80vh] py-xl">
       <div className="w-full max-w-md text-center">
@@ -131,7 +139,14 @@ export function UsageLimitReachedView() {
           tracking your golf game!
         </p>
         <Button asChild size="lg" className="w-full sm:w-auto">
-          <Link href="/upgrade">Upgrade Now</Link>
+          <Link
+            href="/upgrade"
+            onClick={() =>
+              analytics.capture("upgrade_clicked", { surface: "round_limit" })
+            }
+          >
+            Upgrade Now
+          </Link>
         </Button>
       </div>
     </div>

@@ -26,6 +26,10 @@ export default defineConfig({
         __dirname,
         "../../packages/handicap-core/src/index.ts"
       ),
+      "@handicappin/analytics": path.resolve(
+        __dirname,
+        "../../packages/analytics/src/index.ts"
+      ),
       "@": path.resolve(__dirname, "./"),
     },
   },

@@ -19,6 +19,7 @@ import type { BillingFact } from "@/utils/billing/apply-billing-event";
 import { guardedStripeProfileWrite } from "./profile-billing-write";
 import type { WebhookContext, WebhookResult } from "./types";
 import { getPostHogClient } from "@/lib/posthog";
+import { ANALYTICS_EVENTS } from "@handicappin/analytics";
 
 /**
  * Handle checkout completion - update plan_selected
@@ -233,7 +234,7 @@ async function handleSubscriptionCheckout(
       const posthog = getPostHogClient();
       posthog.capture({
         distinctId: userId,
-        event: "subscription started",
+        event: ANALYTICS_EVENTS.SUBSCRIPTION_STARTED,
         properties: {
           plan,
           billing_provider: "stripe",
@@ -480,7 +481,7 @@ async function grantLifetimeAccess(
       const posthog = getPostHogClient();
       posthog.capture({
         distinctId: userId,
-        event: "subscription started",
+        event: ANALYTICS_EVENTS.SUBSCRIPTION_STARTED,
         properties: {
           plan,
           billing_provider: "stripe",

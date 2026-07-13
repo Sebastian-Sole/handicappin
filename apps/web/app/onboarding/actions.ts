@@ -6,6 +6,7 @@ import { profile } from "@/db/schema";
 import { eq, sql } from "drizzle-orm";
 import { logger } from "@/lib/logging";
 import { getPostHogClient } from "@/lib/posthog";
+import { ANALYTICS_EVENTS } from "@handicappin/analytics";
 
 export async function createFreeTierSubscription(userId: string) {
   const supabase = await createServerComponentClient();
@@ -36,7 +37,7 @@ export async function createFreeTierSubscription(userId: string) {
     const posthog = getPostHogClient();
     posthog.capture({
       distinctId: userId,
-      event: "free plan selected",
+      event: ANALYTICS_EVENTS.PLAN_SELECTED,
       properties: {
         plan: "free",
       },

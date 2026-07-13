@@ -35,6 +35,7 @@ import {
 } from "@/lib/webhook-logger";
 import { logger } from "@/lib/logging";
 import { getPostHogClient } from "@/lib/posthog";
+import { ANALYTICS_EVENTS } from "@handicappin/analytics";
 import {
   applyBillingEvent,
   type BillingProjection,
@@ -480,7 +481,7 @@ export async function POST(request: NextRequest) {
       if (event.type === "INITIAL_PURCHASE" || event.type === "RENEWAL") {
         posthog.capture({
           distinctId: userId,
-          event: "apple subscription started",
+          event: ANALYTICS_EVENTS.APPLE_SUBSCRIPTION_STARTED,
           properties: {
             plan: decision.projection.plan,
             billing_provider: "apple",
@@ -491,7 +492,7 @@ export async function POST(request: NextRequest) {
       } else if (event.type === "CANCELLATION") {
         posthog.capture({
           distinctId: userId,
-          event: "apple subscription cancelled",
+          event: ANALYTICS_EVENTS.APPLE_SUBSCRIPTION_CANCELLED,
           properties: {
             plan: decision.projection.plan,
             billing_provider: "apple",

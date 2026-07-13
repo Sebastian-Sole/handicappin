@@ -26,6 +26,7 @@ import {
 } from "./profile-billing-write";
 import type { WebhookContext, WebhookResult } from "./types";
 import { getPostHogClient } from "@/lib/posthog";
+import { ANALYTICS_EVENTS } from "@handicappin/analytics";
 
 /**
  * Classification of a subscription webhook event into (at most) one
@@ -317,7 +318,7 @@ export async function handleSubscriptionChange(
         const posthog = getPostHogClient();
         posthog.capture({
           distinctId: userId,
-          event: "subscription cancelled",
+          event: ANALYTICS_EVENTS.SUBSCRIPTION_CANCELLED,
           properties: {
             plan: classification.plan,
             billing_provider: "stripe",
@@ -467,7 +468,7 @@ export async function handleSubscriptionDeleted(
       const posthog = getPostHogClient();
       posthog.capture({
         distinctId: userId,
-        event: "subscription cancelled",
+        event: ANALYTICS_EVENTS.SUBSCRIPTION_CANCELLED,
         properties: {
           plan: priorProjection?.plan ?? "unknown",
           billing_provider: "stripe",

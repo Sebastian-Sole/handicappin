@@ -9,6 +9,7 @@ import { ChromeGate, MainShell } from "@/components/layout/chrome-gate";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { BillingSync } from "@/components/billing-sync";
+import { AnalyticsIdentify } from "@/components/analytics-identify";
 import {
   OrganizationJsonLd,
   SoftwareApplicationJsonLd,
@@ -105,6 +106,8 @@ export default function RootLayout({
             >
               {/* BillingSync handles its own auth detection */}
               <BillingSync />
+              {/* PostHog identify — same one-shot auth detection pattern */}
+              <AnalyticsIdentify />
 
               <ChromeGate>
                 <Navbar />

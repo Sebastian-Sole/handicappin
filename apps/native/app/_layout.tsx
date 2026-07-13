@@ -10,6 +10,7 @@ import { SafeAreaProvider } from "react-native-safe-area-context";
 
 import { tokens } from "@handicappin/tokens/tokens";
 
+import { AnalyticsIdentify } from "@/components/analytics-identify";
 import { WatchBridgeHost } from "@/components/watch-bridge-host";
 import { SessionProvider } from "@/lib/auth/session-provider";
 import { useColorMode } from "@/lib/color-mode";
@@ -40,6 +41,7 @@ export default function RootLayout() {
   return (
     <QueryProvider>
       <SessionProvider>
+        <AnalyticsIdentify />
         <WatchBridgeHost />
         <GestureHandlerRootView style={{ flex: 1 }}>
           <SafeAreaProvider>

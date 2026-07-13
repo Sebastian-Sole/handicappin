@@ -29,6 +29,7 @@ import { FormFeedback } from "@/components/ui/form-feedback";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { H1 } from "@/components/ui/typography";
+import { analytics } from "@/lib/analytics";
 import { submitScorecard } from "@/lib/api/procedures/scorecard";
 import { useColorMode } from "@/lib/color-mode";
 import {
@@ -175,6 +176,11 @@ export default function LiveRoundReviewScreen() {
       await submitScorecard(payload);
       dispatch({ type: "SUBMITTED", at: nowIso() });
       sessionPersistence.clearPendingSubmit();
+      // UI-truth live event; the canonical round_submitted is captured
+      // SERVER-side inside round.submitScorecard.
+      analytics.capture("live_round_submitted", {
+        holes: finishing.holeCount,
+      });
       succeed("Round submitted! Heading home...");
     } catch (error) {
       dispatch({ type: "FINISH_CANCELLED", at: nowIso() });

@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { TimeRangeFilter } from "./time-range-filter";
 import { PlayerIdentityCard } from "./hero/player-identity-card";
 import { PerformanceSection } from "./overview/overview-section";
@@ -39,6 +39,7 @@ import {
   calculateUniqueHolesPlayed,
 } from "@/lib/statistics/calculations";
 import { calculatePlayerType } from "@/lib/statistics/player-type";
+import { analytics } from "@/lib/analytics";
 import type { Tables } from "@/types/supabase";
 import type { ScorecardWithRound } from "@/types/scorecard-input";
 import type { TimeRange } from "@/types/statistics";
@@ -56,6 +57,10 @@ interface StatisticsProps {
 export function Statistics({ profile, scorecards }: StatisticsProps) {
   const isMounted = useMounted();
   const [timeRange, setTimeRange] = useState<TimeRange>("all");
+
+  useEffect(() => {
+    analytics.capture("stats_viewed", { tab: "performance" });
+  }, []);
 
   // Sort scorecards by teeTime (numeric fields are already converted by the backend)
   const sortedScorecards = useMemo(() => {
@@ -201,7 +206,11 @@ export function Statistics({ profile, scorecards }: StatisticsProps) {
       />
 
       {/* Tabbed Content - 4 tabs: Performance, Activity, Courses, Frivolities */}
-      <Tabs defaultValue="performance" className="w-full">
+      <Tabs
+        defaultValue="performance"
+        className="w-full"
+        onValueChange={(tab) => analytics.capture("stats_viewed", { tab })}
+      >
         <TabsList className="grid w-full grid-cols-4 mb-lg">
           <TabsTrigger value="performance">Performance</TabsTrigger>
           <TabsTrigger value="activity">Activity</TabsTrigger>

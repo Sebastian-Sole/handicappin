@@ -29,6 +29,7 @@ import { logger } from "@/lib/logging";
 import { sendAdminSubmissionNotification } from "@/lib/email-service";
 import type { SubmissionSummary } from "@/emails/admin-submission-notification";
 import { getPostHogClient } from "@/lib/posthog";
+import { ANALYTICS_EVENTS } from "@handicappin/analytics";
 
 type RoundCalculations = {
   adjustedGrossScore: number;
@@ -1011,7 +1012,7 @@ export const roundRouter = createTRPCRouter({
       const posthog = getPostHogClient();
       posthog.capture({
         distinctId: userId,
-        event: "round submitted",
+        event: ANALYTICS_EVENTS.ROUND_SUBMITTED,
         properties: {
           round_id: newRound.round.id,
           holes_played: newRound.round.holesPlayed,
