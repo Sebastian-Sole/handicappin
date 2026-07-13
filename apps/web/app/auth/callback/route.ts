@@ -6,6 +6,7 @@ import { logger } from "@/lib/logging";
 import { oauthCallbackRateLimit, getIdentifier } from "@/lib/rate-limit";
 import { createServerComponentClient } from "@/utils/supabase/server";
 import { getPostHogClient } from "@/lib/posthog";
+import { ANALYTICS_EVENTS } from "@handicappin/analytics";
 
 const MAX_NAME_LENGTH = 100;
 const DEFAULT_NAME = "Golfer";
@@ -344,7 +345,7 @@ export async function GET(request: NextRequest) {
         });
         posthog.capture({
           distinctId: user.id,
-          event: "user signed up",
+          event: ANALYTICS_EVENTS.SIGNED_UP,
           properties: { provider },
         });
         await posthog.flush();
@@ -368,7 +369,7 @@ export async function GET(request: NextRequest) {
       });
       posthog.capture({
         distinctId: user.id,
-        event: "user signed in",
+        event: ANALYTICS_EVENTS.LOGGED_IN,
         properties: { provider, plan: profile.planSelected },
       });
       await posthog.flush();

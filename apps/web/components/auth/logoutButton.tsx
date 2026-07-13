@@ -1,6 +1,7 @@
 "use client";
 import { useRouter } from "next/navigation";
 import { createClientComponentClient } from "@/utils/supabase/client";
+import { analytics } from "@/lib/analytics";
 import { LogOutIcon } from "lucide-react";
 
 const LogoutButton = () => {
@@ -8,6 +9,7 @@ const LogoutButton = () => {
   const supabase = createClientComponentClient();
 
   const onClick = () => {
+    analytics.reset();
     supabase.auth.signOut();
     router.push("/");
     router.refresh();

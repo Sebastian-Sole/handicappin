@@ -7,6 +7,7 @@ import {
   sendContactConfirmationEmail,
 } from "@/lib/email-service";
 import { getPostHogClient } from "@/lib/posthog";
+import { ANALYTICS_EVENTS } from "@handicappin/analytics";
 
 const contactFormSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
@@ -62,7 +63,7 @@ export const contactRouter = createTRPCRouter({
       const posthog = getPostHogClient();
       posthog.capture({
         distinctId: ip,
-        event: "contact form submitted",
+        event: ANALYTICS_EVENTS.CONTACT_FORM_SUBMITTED,
         properties: {
           subject: input.subject,
         },

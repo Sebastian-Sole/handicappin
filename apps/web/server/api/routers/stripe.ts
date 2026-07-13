@@ -18,6 +18,7 @@ import {
 } from "@/lib/rate-limit";
 import { PlanSchema } from "@/lib/stripe-types";
 import { getPostHogClient } from "@/lib/posthog";
+import { ANALYTICS_EVENTS } from "@handicappin/analytics";
 
 // Helper to check rate limits and throw tRPC error if exceeded
 async function checkRateLimit(
@@ -176,7 +177,7 @@ export const stripeRouter = createTRPCRouter({
       const posthog = getPostHogClient();
       posthog.capture({
         distinctId: user.id,
-        event: "checkout initiated",
+        event: ANALYTICS_EVENTS.CHECKOUT_INITIATED,
         properties: {
           plan: input.plan,
           checkout_session_id: session.id,
@@ -357,7 +358,7 @@ export const stripeRouter = createTRPCRouter({
       const posthogSub = getPostHogClient();
       posthogSub.capture({
         distinctId: user.id,
-        event: "subscription updated",
+        event: ANALYTICS_EVENTS.SUBSCRIPTION_UPDATED,
         properties: {
           new_plan: input.newPlan,
           change_type: result.changeType,

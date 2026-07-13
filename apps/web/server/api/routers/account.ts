@@ -13,6 +13,7 @@ import { storeOtp, getOtp, incrementAttempts, deleteOtp } from "@/lib/otp-store"
 import { generateOTP } from "@/lib/otp-utils";
 import * as Sentry from "@sentry/nextjs";
 import { getPostHogClient } from "@/lib/posthog";
+import { ANALYTICS_EVENTS } from "@handicappin/analytics";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -383,7 +384,7 @@ export const accountRouter = createTRPCRouter({
           const posthog = getPostHogClient();
           posthog.capture({
             distinctId: userId,
-            event: "account deleted",
+            event: ANALYTICS_EVENTS.ACCOUNT_DELETED,
             properties: {
               subscriptions_cancelled: stripeResult.cancelledCount,
             },
