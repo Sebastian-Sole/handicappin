@@ -22,7 +22,7 @@ Selection note (run 2): executed non-interactively, so plans were written for th
 | 009 | Product analytics foundation (taxonomy + PostHog, web+native) ([#139](https://github.com/Sebastian-Sole/handicappin/issues/139)) | P1 | M | — (dispatch after PR #155 merged ✓) | IN PROGRESS (executor dispatched 2026-07-13) |
 | 010 | Shot-level stats v1 (putts/FIR/penalties → GIR/FIR%/putts-per-round) ([#140](https://github.com/Sebastian-Sole/handicappin/issues/140)) | P2 | L | 008 (recommended), 009 (useful) | TODO |
 | 011 | Activation: starting-HI seed, CSV import, guided first-run + goal ([#141](https://github.com/Sebastian-Sole/handicappin/issues/141)) | P2 | L | 008 (recommended), 009 (useful), 012 (import replays the ESR bug if run first) | TODO |
-| 012 | ESR gate: no ESR without an established index ([#158](https://github.com/Sebastian-Sole/handicappin/issues/158)) | P1 | S–M | 008 merged (PR #157) ✓ | IN PROGRESS (executor dispatched 2026-07-13) |
+| 012 | ESR gate: no ESR without an established index ([#158](https://github.com/Sebastian-Sole/handicappin/issues/158)) | P1 | S–M | 008 merged (PR #157) ✓ | DONE (approved; PR [#159](https://github.com/Sebastian-Sole/handicappin/pull/159) open, awaiting owner merge + recompute decision) |
 
 Status values: TODO | IN PROGRESS | DONE | BLOCKED (with one-line reason) | REJECTED (with one-line rationale)
 
