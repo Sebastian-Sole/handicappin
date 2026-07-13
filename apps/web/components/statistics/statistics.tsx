@@ -37,6 +37,7 @@ import {
   calculateHoleByHoleStats,
   calculateLunarPerformance,
   calculateUniqueHolesPlayed,
+  calculateShotLevelStats,
 } from "@/lib/statistics/calculations";
 import { calculatePlayerType } from "@/lib/statistics/player-type";
 import { analytics } from "@/lib/analytics";
@@ -109,6 +110,12 @@ export function Statistics({ profile, scorecards }: StatisticsProps) {
       seasonalStats: calculateSeasonalStats(filteredScorecards),
     };
   }, [filteredScorecards, sortedScorecards]);
+
+  // Shot-level stats (plans/010) — only rounds logged with detailed scoring
+  // contribute; the section handles the all-empty case itself.
+  const shotLevelStats = useMemo(() => {
+    return calculateShotLevelStats(filteredScorecards);
+  }, [filteredScorecards]);
 
   // Performance extended stats
   const performanceExtendedStats = useMemo(() => {
@@ -223,6 +230,7 @@ export function Statistics({ profile, scorecards }: StatisticsProps) {
           <PerformanceSection
             stats={overviewStats}
             extendedStats={performanceExtendedStats}
+            shotLevelStats={shotLevelStats}
             bestCourse={bestCourse}
           />
         </TabsContent>

@@ -17,6 +17,8 @@ import type {
   LunarPhase,
   LunarPhaseStats,
   LunarPerformance,
+  ShotStat,
+  ShotLevelStats,
 } from "@/types/statistics";
 
 const DAYS_OF_WEEK = [
@@ -1316,4 +1318,146 @@ export function calculateUniqueHolesPlayed(
   });
 
   return uniqueHoles.size;
+}
+
+// ---------------------------------------------------------------------------
+// Shot-level stats v1 (plans/010): putts, GIR, FIR, penalties.
+// All four handle PARTIAL data — they compute over the subset of holes/rounds
+// that actually have the optional detail fields and report how many rounds
+// contributed via `sampleSize` ("based on N rounds"). Zero data → value null,
+// sampleSize 0 — never NaN, never a divide-by-zero.
+// ---------------------------------------------------------------------------
+
+/** Par for the hole a score was recorded on (via the tee's hole list). */
+function resolveHolePar(
+  scorecard: ScorecardWithRound,
+  score: ScorecardWithRound["scores"][number],
+): number | undefined {
+  const holes = scorecard.teePlayed.holes;
+  if (!holes) return undefined;
+  return holes.find((h) => h.id === score.holeId)?.par;
+}
+
+/**
+ * Average putts per round over rounds with FULL putts data (every hole).
+ * 9-hole rounds are scaled ×2 to an 18-hole equivalent so mixed histories
+ * average sanely.
+ */
+export function calculatePuttsPerRound(
+  scorecards: ScorecardWithRound[],
+): ShotStat {
+  let total = 0;
+  let rounds = 0;
+
+  scorecards.forEach((scorecard) => {
+    if (scorecard.scores.length === 0) return;
+    if (!scorecard.scores.every((score) => score.putts != null)) return;
+    const roundPutts = scorecard.scores.reduce(
+      (sum, score) => sum + (score.putts ?? 0),
+      0,
+    );
+    const scale = scorecard.scores.length === 9 ? 2 : 1;
+    total += roundPutts * scale;
+    rounds += 1;
+  });
+
+  return { value: rounds > 0 ? total / rounds : null, sampleSize: rounds };
+}
+
+/**
+ * Greens in regulation %. GIR is DERIVED, not stored:
+ * (strokes − putts) ≤ (par − 2) for every hole where putts is present and
+ * the hole's par is resolvable. Denominator = holes with putts data.
+ */
+export function calculateGIRPercentage(
+  scorecards: ScorecardWithRound[],
+): ShotStat {
+  let eligibleHoles = 0;
+  let greensHit = 0;
+  const contributingRounds = new Set<number>();
+
+  scorecards.forEach((scorecard) => {
+    scorecard.scores.forEach((score) => {
+      if (score.putts == null) return;
+      const par = resolveHolePar(scorecard, score);
+      if (par == null) return;
+      eligibleHoles += 1;
+      contributingRounds.add(scorecard.round.id);
+      if (score.strokes - score.putts <= par - 2) greensHit += 1;
+    });
+  });
+
+  return {
+    value: eligibleHoles > 0 ? (greensHit / eligibleHoles) * 100 : null,
+    sampleSize: contributingRounds.size,
+  };
+}
+
+/**
+ * Fairways in regulation %. Denominator = holes with a non-null fairwayHit,
+ * excluding par-3s (no fairway; entry UI disables them, and this guard also
+ * drops any stray par-3 data defensively).
+ */
+export function calculateFIRPercentage(
+  scorecards: ScorecardWithRound[],
+): ShotStat {
+  let eligibleHoles = 0;
+  let fairwaysHit = 0;
+  const contributingRounds = new Set<number>();
+
+  scorecards.forEach((scorecard) => {
+    scorecard.scores.forEach((score) => {
+      if (score.fairwayHit == null) return;
+      const par = resolveHolePar(scorecard, score);
+      if (par === 3) return;
+      eligibleHoles += 1;
+      contributingRounds.add(scorecard.round.id);
+      if (score.fairwayHit) fairwaysHit += 1;
+    });
+  });
+
+  return {
+    value: eligibleHoles > 0 ? (fairwaysHit / eligibleHoles) * 100 : null,
+    sampleSize: contributingRounds.size,
+  };
+}
+
+/**
+ * Average penalty strokes per round over rounds with FULL penalties data
+ * (detailed entry records 0 by default, so "tracked" rounds are complete).
+ * 9-hole rounds are scaled ×2 to an 18-hole equivalent.
+ */
+export function calculatePenaltiesPerRound(
+  scorecards: ScorecardWithRound[],
+): ShotStat {
+  let total = 0;
+  let rounds = 0;
+
+  scorecards.forEach((scorecard) => {
+    if (scorecard.scores.length === 0) return;
+    if (!scorecard.scores.every((score) => score.penaltyStrokes != null)) {
+      return;
+    }
+    const roundPenalties = scorecard.scores.reduce(
+      (sum, score) => sum + (score.penaltyStrokes ?? 0),
+      0,
+    );
+    const scale = scorecard.scores.length === 9 ? 2 : 1;
+    total += roundPenalties * scale;
+    rounds += 1;
+  });
+
+  return { value: rounds > 0 ? total / rounds : null, sampleSize: rounds };
+}
+
+/** Convenience bundle for the statistics overview surfaces. */
+export function calculateShotLevelStats(
+  scorecards: ScorecardWithRound[],
+): ShotLevelStats {
+  return {
+    puttsPerRound: calculatePuttsPerRound(scorecards),
+    girPercentage: calculateGIRPercentage(scorecards),
+    firPercentage: calculateFIRPercentage(scorecards),
+    penaltiesPerRound: calculatePenaltiesPerRound(scorecards),
+  };
 }

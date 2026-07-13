@@ -8,7 +8,9 @@ import { cn } from "@/lib/utils";
 import { StatisticsSection } from "../shared/statistics-section";
 import { getFlagEmoji } from "@/utils/frivolities/headerGenerator";
 import {
+  formatDecimal,
   formatDifferential,
+  formatPercentage,
   formatScore,
   formatWithSign,
   isValidNumber,
@@ -17,17 +19,27 @@ import type {
   OverviewStats,
   CoursePerformance,
   PerformanceExtendedStats,
+  ShotLevelStats,
+  ShotStat,
 } from "@/types/statistics";
 
 interface PerformanceSectionProps {
   stats: OverviewStats;
   extendedStats: PerformanceExtendedStats;
+  shotLevelStats: ShotLevelStats;
   bestCourse?: CoursePerformance;
 }
+
+/** "based on N rounds" subtitle for a shot-level stat card. */
+const basedOn = (stat: ShotStat): string =>
+  stat.sampleSize === 0
+    ? "no data yet"
+    : `based on ${stat.sampleSize} round${stat.sampleSize !== 1 ? "s" : ""}`;
 
 export function PerformanceSection({
   stats,
   extendedStats,
+  shotLevelStats,
   bestCourse,
 }: PerformanceSectionProps) {
   const getImprovementMessage = (): string => {
@@ -246,6 +258,86 @@ export function PerformanceSection({
             </CardContent>
           </Card>
         </div>
+      </StatisticsSection>
+
+      <Separator />
+
+      {/* Shot-Level Stats Section (plans/010) */}
+      <StatisticsSection
+        icon="🎯"
+        title="Shot-Level Stats"
+        description="Putts, fairways, and penalties from detailed scoring"
+      >
+        {shotLevelStats.puttsPerRound.sampleSize > 0 ||
+        shotLevelStats.girPercentage.sampleSize > 0 ||
+        shotLevelStats.firPercentage.sampleSize > 0 ||
+        shotLevelStats.penaltiesPerRound.sampleSize > 0 ? (
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-md">
+            <Card>
+              <CardContent density="compact">
+                <p className="text-body-sm text-muted-foreground">
+                  Putts / Round
+                </p>
+                <p className="text-figure">
+                  {formatDecimal(shotLevelStats.puttsPerRound.value, 1)}
+                </p>
+                <p className="text-meta text-muted-foreground">
+                  {basedOn(shotLevelStats.puttsPerRound)}
+                </p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent density="compact">
+                <p className="text-body-sm text-muted-foreground">GIR</p>
+                <p className="text-figure">
+                  {formatPercentage(shotLevelStats.girPercentage.value)}
+                </p>
+                <p className="text-meta text-muted-foreground">
+                  {basedOn(shotLevelStats.girPercentage)}
+                </p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent density="compact">
+                <p className="text-body-sm text-muted-foreground">
+                  Fairways Hit
+                </p>
+                <p className="text-figure">
+                  {formatPercentage(shotLevelStats.firPercentage.value)}
+                </p>
+                <p className="text-meta text-muted-foreground">
+                  {basedOn(shotLevelStats.firPercentage)}
+                </p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent density="compact">
+                <p className="text-body-sm text-muted-foreground">
+                  Penalties / Round
+                </p>
+                <p className="text-figure">
+                  {formatDecimal(shotLevelStats.penaltiesPerRound.value, 1)}
+                </p>
+                <p className="text-meta text-muted-foreground">
+                  {basedOn(shotLevelStats.penaltiesPerRound)}
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+        ) : (
+          <Card>
+            <CardContent density="compact">
+              <p className="text-body-sm text-muted-foreground">
+                No shot-level data yet. Turn on{" "}
+                <span className="font-medium text-foreground">
+                  Detailed scoring
+                </span>{" "}
+                when adding a round to track putts, greens in regulation,
+                fairways, and penalties.
+              </p>
+            </CardContent>
+          </Card>
+        )}
       </StatisticsSection>
 
       {/* Best Month Section (if available) */}

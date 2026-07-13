@@ -83,8 +83,14 @@ export const scorecardWithRoundSchema = z
     scores: z.array(
       z
         .object({
+          holeId: z.coerce.number().optional(),
           strokes: z.coerce.number(),
           hcpStrokes: z.coerce.number(),
+          // Shot-level detail (plans/010). Deliberately NOT z.coerce — the
+          // columns are nullable and Number(null) would corrupt NULL → 0.
+          putts: z.number().nullish(),
+          fairwayHit: z.boolean().nullish(),
+          penaltyStrokes: z.number().nullish(),
         })
         .passthrough(),
     ),

@@ -57,6 +57,7 @@ import {
   calculatePerfectHoles,
   calculateUniqueCourses,
   calculateUniqueHolesPlayed,
+  calculateShotLevelStats,
   filterByTimeRange,
 } from "@/lib/statistics/calculations";
 import { calculatePlayerType } from "@/lib/statistics/player-type";
@@ -128,6 +129,12 @@ export default function StatisticsScreen() {
       seasonalStats: calculateSeasonalStats(filteredScorecards),
     }),
     [filteredScorecards, sortedScorecards],
+  );
+  // Shot-level stats (plans/010) — only rounds logged with detailed scoring
+  // contribute; the section handles the all-empty case itself.
+  const shotLevelStats = useMemo(
+    () => calculateShotLevelStats(filteredScorecards),
+    [filteredScorecards],
   );
   const performanceExtendedStats = useMemo(
     () => ({
@@ -284,6 +291,7 @@ export default function StatisticsScreen() {
         <PerformanceTab
           stats={overviewStats}
           extendedStats={performanceExtendedStats}
+          shotLevelStats={shotLevelStats}
           bestCourse={bestCourse}
         />
       ) : null}

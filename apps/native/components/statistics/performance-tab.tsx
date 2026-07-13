@@ -10,7 +10,9 @@ import { Pressable, Text, View } from "react-native";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { StatDelta } from "@/components/ui/stat-delta";
 import {
+  formatDecimal,
   formatDifferential,
+  formatPercentage,
   formatScore,
   formatWithSign,
   isValidNumber,
@@ -19,6 +21,8 @@ import type {
   CoursePerformance,
   OverviewStats,
   PerformanceExtendedStats,
+  ShotLevelStats,
+  ShotStat,
 } from "@/lib/statistics/types";
 import { cn } from "@/lib/utils";
 
@@ -27,12 +31,20 @@ import { StatCard, StatisticsSection } from "./shared";
 interface PerformanceTabProps {
   stats: OverviewStats;
   extendedStats: PerformanceExtendedStats;
+  shotLevelStats: ShotLevelStats;
   bestCourse?: CoursePerformance;
 }
+
+/** "based on N rounds" subtitle for a shot-level stat card. */
+const basedOn = (stat: ShotStat): string =>
+  stat.sampleSize === 0
+    ? "no data yet"
+    : `based on ${stat.sampleSize} round${stat.sampleSize !== 1 ? "s" : ""}`;
 
 export function PerformanceTab({
   stats,
   extendedStats,
+  shotLevelStats,
   bestCourse,
 }: PerformanceTabProps) {
   const getImprovementMessage = (): string => {
@@ -248,6 +260,67 @@ export function PerformanceTab({
             />
           </View>
         </View>
+      </StatisticsSection>
+
+      <View className="h-px bg-border" />
+
+      {/* Shot-Level Stats Section (plans/010) — mirror of web's */}
+      <StatisticsSection
+        icon="🎯"
+        title="Shot-Level Stats"
+        description="Putts, fairways, and penalties from detailed scoring"
+      >
+        {shotLevelStats.puttsPerRound.sampleSize > 0 ||
+        shotLevelStats.girPercentage.sampleSize > 0 ||
+        shotLevelStats.firPercentage.sampleSize > 0 ||
+        shotLevelStats.penaltiesPerRound.sampleSize > 0 ? (
+          <View className="flex-row flex-wrap gap-md">
+            <View style={{ flexBasis: "45%", flexGrow: 1 }}>
+              <StatCard
+                title="Putts / Round"
+                value={formatDecimal(shotLevelStats.puttsPerRound.value, 1)}
+                subtitle={basedOn(shotLevelStats.puttsPerRound)}
+              />
+            </View>
+            <View style={{ flexBasis: "45%", flexGrow: 1 }}>
+              <StatCard
+                title="GIR"
+                value={formatPercentage(shotLevelStats.girPercentage.value)}
+                subtitle={basedOn(shotLevelStats.girPercentage)}
+              />
+            </View>
+            <View style={{ flexBasis: "45%", flexGrow: 1 }}>
+              <StatCard
+                title="Fairways Hit"
+                value={formatPercentage(shotLevelStats.firPercentage.value)}
+                subtitle={basedOn(shotLevelStats.firPercentage)}
+              />
+            </View>
+            <View style={{ flexBasis: "45%", flexGrow: 1 }}>
+              <StatCard
+                title="Penalties / Round"
+                value={formatDecimal(
+                  shotLevelStats.penaltiesPerRound.value,
+                  1,
+                )}
+                subtitle={basedOn(shotLevelStats.penaltiesPerRound)}
+              />
+            </View>
+          </View>
+        ) : (
+          <Card>
+            <CardContent className="p-md pt-md">
+              <Text className="text-body-sm text-muted-foreground">
+                No shot-level data yet. Turn on{" "}
+                <Text className="text-body-sm font-medium text-foreground">
+                  Detailed scoring
+                </Text>{" "}
+                when adding a round to track putts, greens in regulation,
+                fairways, and penalties.
+              </Text>
+            </CardContent>
+          </Card>
+        )}
       </StatisticsSection>
 
       {extendedStats.bestMonth ? (
