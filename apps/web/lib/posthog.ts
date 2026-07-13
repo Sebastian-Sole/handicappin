@@ -2,7 +2,7 @@
  * Server-side PostHog singleton (posthog-node) — the capture layer for
  * revenue/lifecycle truth: webhooks, tRPC procedures, and route handlers.
  *
- * Fail-open: no `NEXT_PUBLIC_POSTHOG_KEY` → a no-op client with the same
+ * Fail-open: no `NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN` → a no-op client with the same
  * surface, so call sites never branch and never throw. Event names must
  * come from `ANALYTICS_EVENTS` in `@handicappin/analytics` — no string
  * literals at call sites.
@@ -41,8 +41,8 @@ let _posthog: ServerAnalytics | null = null;
 
 export function getPostHogClient(): ServerAnalytics {
   if (!_posthog) {
-    _posthog = env.NEXT_PUBLIC_POSTHOG_KEY
-      ? new PostHog(env.NEXT_PUBLIC_POSTHOG_KEY, {
+    _posthog = env.NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN
+      ? new PostHog(env.NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN, {
           host: env.NEXT_PUBLIC_POSTHOG_HOST ?? DEFAULT_POSTHOG_HOST,
           flushAt: 1,
           flushInterval: 0,

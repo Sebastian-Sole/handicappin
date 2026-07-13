@@ -2,10 +2,11 @@
  * Web analytics client — posthog-js behind the shared `AnalyticsClient`
  * seam from `@handicappin/analytics`.
  *
- * Fail-open by design: no `NEXT_PUBLIC_POSTHOG_KEY` (or a non-browser
+ * Fail-open by design: no `NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN` (or a non-browser
  * runtime) → silent no-op client. Cookieless-leaning config: memory
- * persistence, identified-only person profiles, no autocapture, no session
- * recording, no automatic pageviews — explicit taxonomy events only.
+ * persistence, identified-only person profiles, no autocapture, no automatic
+ * pageviews — explicit taxonomy events only. Session replay is enabled so
+ * PostHog Self-driving can use it as a signal source.
  *
  * PII rule: `identify` takes the Supabase user id ONLY. Never put email,
  * name, or any other PII in identify or capture properties.
@@ -37,7 +38,6 @@ export function createWebAnalyticsClient(
     person_profiles: "identified_only",
     autocapture: false,
     capture_pageview: false,
-    disable_session_recording: true,
   });
 
   return {
@@ -55,6 +55,6 @@ export function createWebAnalyticsClient(
 
 /** App-wide singleton. Safe to import from any client component. */
 export const analytics: AnalyticsClient = createWebAnalyticsClient(
-  env.NEXT_PUBLIC_POSTHOG_KEY,
+  env.NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN,
   env.NEXT_PUBLIC_POSTHOG_HOST,
 );

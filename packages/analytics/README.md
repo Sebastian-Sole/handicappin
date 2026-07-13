@@ -63,7 +63,7 @@ entries).
 ## Owner setup
 
 1. Create a PostHog project on **EU Cloud** (eu.posthog.com).
-2. Web (Vercel): set `NEXT_PUBLIC_POSTHOG_KEY` (project API key, `phc_...`).
+2. Web (Vercel): set `NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN` (project API key, `phc_...`).
    `NEXT_PUBLIC_POSTHOG_HOST` is optional (defaults to the EU host). Both
    are optional everywhere — builds and dev work without them.
 3. Native (EAS): replace the `EXPO_PUBLIC_POSTHOG_API_KEY` `SET-ME`
