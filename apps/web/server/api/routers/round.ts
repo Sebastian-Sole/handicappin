@@ -832,6 +832,11 @@ export const roundRouter = createTRPCRouter({
           holeId: holesToUse[index].id,
           strokes: score.strokes,
           hcpStrokes: score.hcpStrokes,
+          // Optional shot-level detail (plans/010): persisted verbatim,
+          // NULL when not tracked. Never read by the handicap engine.
+          putts: score.putts ?? null,
+          fairwayHit: score.fairwayHit ?? null,
+          penaltyStrokes: score.penaltyStrokes ?? null,
         }));
 
         await tx.insert(score).values(scoreInserts);
