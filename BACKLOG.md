@@ -66,6 +66,14 @@ The OTP-send edge functions (`reset-password`, `resend-verification-otp`, `send-
 
 ---
 
+## Official handicap — owner actions
+
+Official-handicap owner actions (AGA/USGA/England Golf/NGF outreach, Norwegian pilot clubs) are tracked on the wayfinder map [#144](https://github.com/Sebastian-Sole/handicappin/issues/144); see `docs/official-handicap-roadmap.md` for full context.
+
+- **[blocked on owner, no ticket yet]** Decide the peer-attestation question: build `.claude/plans/usga-round-verification.md` as scoped, or formally close it in favor of the shipped admin-approval workflow.
+
+---
+
 ## Rejected Submission Re-submission UX
 
 Users whose submissions are rejected currently have no clear path to resubmit. The rejected round remains in their history with no explanation or action. A future improvement should:
