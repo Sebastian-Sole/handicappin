@@ -1,4 +1,4 @@
-import { Fragment, useRef } from "react";
+import { Fragment, useRef, useState } from "react";
 import {
   Table,
   TableBody,
@@ -21,6 +21,13 @@ export type ScoreDetail = Partial<
 
 const MAX_PUTTS = 20;
 const MAX_PENALTIES = 10;
+
+// Compact input for a scorecard grid cell. The base <Input> ships h-10 with
+// px-md/py-sm padding, which is too tall+wide for a 40px-min cell — the number
+// gets clipped both ways. Drop the vertical padding (the field centers its own
+// text) and tighten horizontal padding so two-digit scores stay fully visible.
+const CELL_INPUT_CLASS =
+  "border border-border h-9 px-xs py-0 text-center w-full leading-none";
 
 interface ScorecardTableProps {
   selectedTee: Tee | undefined;
@@ -99,7 +106,12 @@ function PenaltyControl({
   disabled: boolean;
   onChange: (next: number | undefined) => void;
 }) {
-  if (value == null) {
+  // Revealing the field is local UI state — an empty field must stay empty and
+  // editable, so we can't lean on `value != null` to keep it open (that would
+  // snap a cleared input back to the "+" affordance mid-edit).
+  const [revealed, setRevealed] = useState(false);
+
+  if (value == null && !revealed) {
     return (
       <Button
         type="button"
@@ -108,7 +120,7 @@ function PenaltyControl({
         className="w-full min-w-8 px-sm text-muted-foreground"
         disabled={disabled}
         aria-label={`Add penalty strokes for hole ${holeNumber}`}
-        onClick={() => onChange(0)}
+        onClick={() => setRevealed(true)}
       >
         +
       </Button>
@@ -116,14 +128,15 @@ function PenaltyControl({
   }
   return (
     <Input
-      className="border border-border h-9 text-center w-full"
+      className={CELL_INPUT_CLASS}
       type="number"
       min={0}
       max={MAX_PENALTIES}
+      autoFocus={revealed && value == null}
       aria-label={`Penalty strokes for hole ${holeNumber}`}
-      value={value}
+      value={value ?? ""}
       disabled={disabled}
-      onChange={(e) => onChange(parseDetailValue(e.target.value, MAX_PENALTIES) ?? 0)}
+      onChange={(e) => onChange(parseDetailValue(e.target.value, MAX_PENALTIES))}
       onWheel={(e) => {
         e.currentTarget.blur();
       }}
@@ -338,7 +351,7 @@ export function ScorecardTable({
                       ref={(el) => {
                         desktopInputRefs.current[i] = el;
                       }}
-                      className="border border-border h-full text-center w-full"
+                      className={CELL_INPUT_CLASS}
                       type="number"
                       value={score.strokes || ""}
                       disabled={disabled}
@@ -381,7 +394,7 @@ export function ScorecardTable({
                     {scores.slice(0, holeCount).map((score, i) => (
                       <TableCell key={i} className="p-sm">
                         <Input
-                          className="border border-border h-full text-center w-full"
+                          className={CELL_INPUT_CLASS}
                           type="number"
                           min={0}
                           max={MAX_PUTTS}
@@ -594,7 +607,7 @@ export function ScorecardTable({
                                 Putts
                               </p>
                               <Input
-                                className="border border-border h-9 text-center w-full"
+                                className={CELL_INPUT_CLASS}
                                 type="number"
                                 min={0}
                                 max={MAX_PUTTS}

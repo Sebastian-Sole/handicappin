@@ -6,7 +6,7 @@
  * detail row — same controls as web: numeric putts, tri-state fairway
  * (– → ✓ → ✗, disabled on par 3s), penalties hidden behind a "+".
  */
-import { Fragment, useRef } from "react";
+import { Fragment, useRef, useState } from "react";
 import { Pressable, Text, TextInput, View } from "react-native";
 
 import { Input } from "@/components/ui/input";
@@ -114,14 +114,19 @@ function PenaltyControl({
   disabled: boolean;
   onChange: (next: number | undefined) => void;
 }) {
-  if (value == null) {
+  // Revealing the field is local UI state — an empty field must stay empty and
+  // editable, so we can't lean on `value != null` to keep it open (that would
+  // snap a cleared input back to the "+" affordance mid-edit).
+  const [revealed, setRevealed] = useState(false);
+
+  if (value == null && !revealed) {
     return (
       <Pressable
         testID={`penalty-add-${holeNumber}`}
         accessibilityRole="button"
         accessibilityLabel={`Add penalty strokes for hole ${holeNumber}`}
         disabled={disabled}
-        onPress={() => onChange(0)}
+        onPress={() => setRevealed(true)}
         className={cn(
           "h-9 items-center justify-center rounded-md active:opacity-80",
           disabled && "opacity-50",
@@ -136,11 +141,12 @@ function PenaltyControl({
       testID={`penalty-input-${holeNumber}`}
       accessibilityLabel={`Penalty strokes for hole ${holeNumber}`}
       keyboardType="number-pad"
+      autoFocus={revealed && value == null}
       editable={!disabled}
       textAlign="center"
       className="h-9 w-full"
-      value={String(value)}
-      onChangeText={(raw) => onChange(parseDetailValue(raw, MAX_PENALTIES) ?? 0)}
+      value={value != null ? String(value) : ""}
+      onChangeText={(raw) => onChange(parseDetailValue(raw, MAX_PENALTIES))}
     />
   );
 }
