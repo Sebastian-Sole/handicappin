@@ -47755,6 +47755,24 @@ begin
     values (v_tee_id_1, 8, 3, 93, 17);
     insert into public.hole ("teeId", "holeNumber", par, distance, hcp)
     values (v_tee_id_1, 9, 3, 146, 7);
+    insert into public.hole ("teeId", "holeNumber", par, distance, hcp)
+    values (v_tee_id_1, 10, 3, 153, 6);
+    insert into public.hole ("teeId", "holeNumber", par, distance, hcp)
+    values (v_tee_id_1, 11, 3, 132, 14);
+    insert into public.hole ("teeId", "holeNumber", par, distance, hcp)
+    values (v_tee_id_1, 12, 4, 274, 10);
+    insert into public.hole ("teeId", "holeNumber", par, distance, hcp)
+    values (v_tee_id_1, 13, 3, 144, 2);
+    insert into public.hole ("teeId", "holeNumber", par, distance, hcp)
+    values (v_tee_id_1, 14, 3, 109, 12);
+    insert into public.hole ("teeId", "holeNumber", par, distance, hcp)
+    values (v_tee_id_1, 15, 3, 173, 4);
+    insert into public.hole ("teeId", "holeNumber", par, distance, hcp)
+    values (v_tee_id_1, 16, 4, 220, 16);
+    insert into public.hole ("teeId", "holeNumber", par, distance, hcp)
+    values (v_tee_id_1, 17, 3, 93, 18);
+    insert into public.hole ("teeId", "holeNumber", par, distance, hcp)
+    values (v_tee_id_1, 18, 3, 146, 8);
 
     -- Holes for White (ladies)
     insert into public.hole ("teeId", "holeNumber", par, distance, hcp)
@@ -47775,6 +47793,24 @@ begin
     values (v_tee_id_2, 8, 3, 93, 17);
     insert into public.hole ("teeId", "holeNumber", par, distance, hcp)
     values (v_tee_id_2, 9, 3, 146, 5);
+    insert into public.hole ("teeId", "holeNumber", par, distance, hcp)
+    values (v_tee_id_2, 10, 3, 153, 4);
+    insert into public.hole ("teeId", "holeNumber", par, distance, hcp)
+    values (v_tee_id_2, 11, 3, 132, 8);
+    insert into public.hole ("teeId", "holeNumber", par, distance, hcp)
+    values (v_tee_id_2, 12, 4, 274, 14);
+    insert into public.hole ("teeId", "holeNumber", par, distance, hcp)
+    values (v_tee_id_2, 13, 3, 144, 12);
+    insert into public.hole ("teeId", "holeNumber", par, distance, hcp)
+    values (v_tee_id_2, 14, 3, 109, 10);
+    insert into public.hole ("teeId", "holeNumber", par, distance, hcp)
+    values (v_tee_id_2, 15, 3, 173, 2);
+    insert into public.hole ("teeId", "holeNumber", par, distance, hcp)
+    values (v_tee_id_2, 16, 4, 220, 16);
+    insert into public.hole ("teeId", "holeNumber", par, distance, hcp)
+    values (v_tee_id_2, 17, 3, 93, 18);
+    insert into public.hole ("teeId", "holeNumber", par, distance, hcp)
+    values (v_tee_id_2, 18, 3, 146, 6);
 
     -- Holes for Yellow (mens)
     insert into public.hole ("teeId", "holeNumber", par, distance, hcp)
@@ -47795,6 +47831,24 @@ begin
     values (v_tee_id_3, 8, 3, 78, 17);
     insert into public.hole ("teeId", "holeNumber", par, distance, hcp)
     values (v_tee_id_3, 9, 3, 122, 7);
+    insert into public.hole ("teeId", "holeNumber", par, distance, hcp)
+    values (v_tee_id_3, 10, 3, 91, 6);
+    insert into public.hole ("teeId", "holeNumber", par, distance, hcp)
+    values (v_tee_id_3, 11, 3, 117, 14);
+    insert into public.hole ("teeId", "holeNumber", par, distance, hcp)
+    values (v_tee_id_3, 12, 4, 252, 10);
+    insert into public.hole ("teeId", "holeNumber", par, distance, hcp)
+    values (v_tee_id_3, 13, 3, 93, 2);
+    insert into public.hole ("teeId", "holeNumber", par, distance, hcp)
+    values (v_tee_id_3, 14, 3, 101, 12);
+    insert into public.hole ("teeId", "holeNumber", par, distance, hcp)
+    values (v_tee_id_3, 15, 3, 142, 4);
+    insert into public.hole ("teeId", "holeNumber", par, distance, hcp)
+    values (v_tee_id_3, 16, 4, 180, 16);
+    insert into public.hole ("teeId", "holeNumber", par, distance, hcp)
+    values (v_tee_id_3, 17, 3, 78, 18);
+    insert into public.hole ("teeId", "holeNumber", par, distance, hcp)
+    values (v_tee_id_3, 18, 3, 122, 8);
 
     -- Holes for Yellow (ladies)
     insert into public.hole ("teeId", "holeNumber", par, distance, hcp)
@@ -47815,6 +47869,24 @@ begin
     values (v_tee_id_4, 8, 3, 78, 17);
     insert into public.hole ("teeId", "holeNumber", par, distance, hcp)
     values (v_tee_id_4, 9, 3, 122, 5);
+    insert into public.hole ("teeId", "holeNumber", par, distance, hcp)
+    values (v_tee_id_4, 10, 3, 91, 4);
+    insert into public.hole ("teeId", "holeNumber", par, distance, hcp)
+    values (v_tee_id_4, 11, 3, 117, 8);
+    insert into public.hole ("teeId", "holeNumber", par, distance, hcp)
+    values (v_tee_id_4, 12, 4, 252, 14);
+    insert into public.hole ("teeId", "holeNumber", par, distance, hcp)
+    values (v_tee_id_4, 13, 3, 93, 12);
+    insert into public.hole ("teeId", "holeNumber", par, distance, hcp)
+    values (v_tee_id_4, 14, 3, 101, 10);
+    insert into public.hole ("teeId", "holeNumber", par, distance, hcp)
+    values (v_tee_id_4, 15, 3, 142, 2);
+    insert into public.hole ("teeId", "holeNumber", par, distance, hcp)
+    values (v_tee_id_4, 16, 4, 180, 16);
+    insert into public.hole ("teeId", "holeNumber", par, distance, hcp)
+    values (v_tee_id_4, 17, 3, 78, 18);
+    insert into public.hole ("teeId", "holeNumber", par, distance, hcp)
+    values (v_tee_id_4, 18, 3, 122, 6);
 
     -- Holes for Red (mens)
     insert into public.hole ("teeId", "holeNumber", par, distance, hcp)
@@ -47835,6 +47907,24 @@ begin
     values (v_tee_id_5, 8, 3, 70, 17);
     insert into public.hole ("teeId", "holeNumber", par, distance, hcp)
     values (v_tee_id_5, 9, 3, 96, 7);
+    insert into public.hole ("teeId", "holeNumber", par, distance, hcp)
+    values (v_tee_id_5, 10, 3, 73, 6);
+    insert into public.hole ("teeId", "holeNumber", par, distance, hcp)
+    values (v_tee_id_5, 11, 3, 98, 14);
+    insert into public.hole ("teeId", "holeNumber", par, distance, hcp)
+    values (v_tee_id_5, 12, 4, 213, 10);
+    insert into public.hole ("teeId", "holeNumber", par, distance, hcp)
+    values (v_tee_id_5, 13, 3, 68, 2);
+    insert into public.hole ("teeId", "holeNumber", par, distance, hcp)
+    values (v_tee_id_5, 14, 3, 88, 12);
+    insert into public.hole ("teeId", "holeNumber", par, distance, hcp)
+    values (v_tee_id_5, 15, 3, 115, 4);
+    insert into public.hole ("teeId", "holeNumber", par, distance, hcp)
+    values (v_tee_id_5, 16, 4, 148, 16);
+    insert into public.hole ("teeId", "holeNumber", par, distance, hcp)
+    values (v_tee_id_5, 17, 3, 70, 18);
+    insert into public.hole ("teeId", "holeNumber", par, distance, hcp)
+    values (v_tee_id_5, 18, 3, 96, 8);
 
     -- Holes for Red (ladies)
     insert into public.hole ("teeId", "holeNumber", par, distance, hcp)
@@ -47855,6 +47945,24 @@ begin
     values (v_tee_id_6, 8, 3, 70, 17);
     insert into public.hole ("teeId", "holeNumber", par, distance, hcp)
     values (v_tee_id_6, 9, 3, 96, 5);
+    insert into public.hole ("teeId", "holeNumber", par, distance, hcp)
+    values (v_tee_id_6, 10, 3, 73, 4);
+    insert into public.hole ("teeId", "holeNumber", par, distance, hcp)
+    values (v_tee_id_6, 11, 3, 98, 8);
+    insert into public.hole ("teeId", "holeNumber", par, distance, hcp)
+    values (v_tee_id_6, 12, 4, 213, 14);
+    insert into public.hole ("teeId", "holeNumber", par, distance, hcp)
+    values (v_tee_id_6, 13, 3, 68, 12);
+    insert into public.hole ("teeId", "holeNumber", par, distance, hcp)
+    values (v_tee_id_6, 14, 3, 88, 10);
+    insert into public.hole ("teeId", "holeNumber", par, distance, hcp)
+    values (v_tee_id_6, 15, 3, 115, 2);
+    insert into public.hole ("teeId", "holeNumber", par, distance, hcp)
+    values (v_tee_id_6, 16, 4, 148, 16);
+    insert into public.hole ("teeId", "holeNumber", par, distance, hcp)
+    values (v_tee_id_6, 17, 3, 70, 18);
+    insert into public.hole ("teeId", "holeNumber", par, distance, hcp)
+    values (v_tee_id_6, 18, 3, 96, 6);
 
     raise notice 'Successfully inserted course: %', v_course_id;
 end $$;
