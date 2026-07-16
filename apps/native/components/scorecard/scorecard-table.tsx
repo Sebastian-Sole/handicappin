@@ -1,33 +1,28 @@
 /**
- * Native ScorecardTable — mirror of web's MOBILE table variant (the phone
- * reference): tee info banner, then HOLE/PAR/HCP/SCORE rows with numeric
- * inputs, auto-advance, and OUT/IN/TOTAL summary rows.
+ * Native ScorecardTable — mirror of web's MOBILE scorecard layout (the
+ * phone reference): tee info banner, the one-hole-at-a-time entry pager
+ * (plan 013 D1 — replaces the old HOLE/PAR/HCP/SCORE grid and its inline
+ * detail strip), and OUT/IN/TOTAL summary rows.
  */
-import { useRef } from "react";
-import { Text, TextInput, View } from "react-native";
+import { Text, View } from "react-native";
 
-import { Input } from "@/components/ui/input";
-import type { Hole, Score, Tee } from "@/lib/scorecard";
-import { cn } from "@/lib/utils";
+import { HoleEntryPager } from "@/components/scorecard/hole-entry-pager";
+import type { HoleDetailValue } from "@/lib/hole-detail";
+import type { Hole, ScoreInput, Tee } from "@/lib/scorecard";
 
-const MAX_SCORE_LENGTH = 2;
-const MIN_SCORE = 0;
+/** Shot-level detail fields a hole can edit (plans/010). */
+export type ScoreDetail = HoleDetailValue;
 
 interface ScorecardTableProps {
   selectedTee: Tee | undefined;
   displayedHoles: Hole[];
   holeCount: number;
-  scores: Score[];
+  scores: ScoreInput[];
   onScoreChange: (holeIndex: number, score: number) => void;
   disabled: boolean;
-}
-
-function HeaderCell({ label, wide }: { label: string; wide?: boolean }) {
-  return (
-    <View className={cn("bg-accent py-sm items-center", wide ? "flex-[1.5]" : "flex-1")}>
-      <Text className="text-label-sm text-secondary-foreground">{label}</Text>
-    </View>
-  );
+  /** "Detailed scoring" mode: expose putts/fairway/penalties per hole. */
+  detailedScoring?: boolean;
+  onScoreDetailChange?: (holeIndex: number, detail: ScoreDetail) => void;
 }
 
 export function ScorecardTable({
@@ -37,24 +32,11 @@ export function ScorecardTable({
   scores,
   onScoreChange,
   disabled,
+  detailedScoring = false,
+  onScoreDetailChange,
 }: ScorecardTableProps) {
-  const inputRefs = useRef<(TextInput | null)[]>([]);
-
   const calculateTotal = (start: number, end: number) =>
     scores.slice(start, end).reduce((sum, score) => sum + score.strokes, 0);
-
-  const handleScoreInput = (value: string, holeIndex: number) => {
-    if (value.length > MAX_SCORE_LENGTH) return;
-    let parsed = parseInt(value, 10) || 0;
-    if (parsed < MIN_SCORE) parsed = MIN_SCORE;
-    onScoreChange(holeIndex, parsed);
-
-    const shouldAutoAdvance =
-      (value.length === 1 && parsed >= 2 && parsed <= 9) || value.length === 2;
-    if (shouldAutoAdvance && holeIndex < displayedHoles.length - 1) {
-      inputRefs.current[holeIndex + 1]?.focus();
-    }
-  };
 
   const summaryRow = (label: string, par: number, total: number) => (
     <View className="flex-row border-t border-border bg-accent">
@@ -62,12 +44,11 @@ export function ScorecardTable({
         <Text className="text-label-sm text-secondary-foreground">{label}</Text>
       </View>
       <View className="flex-1 py-sm items-center">
-        <Text className="text-label-sm text-secondary-foreground">{par}</Text>
+        <Text className="text-label-sm text-secondary-foreground">
+          Par {par}
+        </Text>
       </View>
       <View className="flex-1 py-sm items-center">
-        <Text className="text-label-sm text-secondary-foreground"> </Text>
-      </View>
-      <View className="flex-[1.5] py-sm items-center">
         <Text className="text-label-sm text-secondary-foreground">
           {total > 0 ? total : "—"}
         </Text>
@@ -111,60 +92,25 @@ export function ScorecardTable({
         </View>
       </View>
 
-      {/* Score rows */}
+      {/* One-hole-at-a-time entry (plan 013 D1) */}
+      <HoleEntryPager
+        selectedTee={selectedTee}
+        displayedHoles={displayedHoles}
+        holeCount={holeCount}
+        scores={scores}
+        onScoreChange={onScoreChange}
+        disabled={disabled}
+        detailedScoring={detailedScoring}
+        onScoreDetailChange={onScoreDetailChange}
+      />
+
+      {/* Score summary */}
       <View className="rounded-lg border border-border overflow-hidden">
-        <View className="flex-row">
-          <HeaderCell label="HOLE" />
-          <HeaderCell label="PAR" />
-          <HeaderCell label="HCP" />
-          <HeaderCell label="SCORE" wide />
-        </View>
-        {displayedHoles.map((hole, i) => (
-          // Cells stretch to the row height (the SCORE input is the tallest)
-          // and center their own content — items-center on the ROW would
-          // shrink-wrap each cell and leave background gaps in the HOLE strip.
-          <View key={i} className="flex-row border-t border-border">
-            <View className="flex-1 py-sm items-center justify-center bg-accent">
-              <Text className="text-body-sm text-secondary-foreground font-medium">
-                {i + 1}
-              </Text>
-            </View>
-            <View className="flex-1 py-sm items-center justify-center">
-              <Text className="text-body-sm text-foreground">{hole.par}</Text>
-            </View>
-            <View className="flex-1 py-sm items-center justify-center">
-              <Text className="text-body-sm text-foreground">{hole.hcp}</Text>
-            </View>
-            <View className="flex-[1.5] p-xs items-center justify-center">
-              <Input
-                ref={(el) => {
-                  inputRefs.current[i] = el;
-                }}
-                testID={`score-input-${i + 1}`}
-                accessibilityLabel={`Score for hole ${i + 1}`}
-                keyboardType="number-pad"
-                editable={!disabled}
-                textAlign="center"
-                className="h-9 w-16"
-                value={
-                  scores[i] && scores[i].strokes > 0
-                    ? String(scores[i].strokes)
-                    : ""
-                }
-                onChangeText={(value) => handleScoreInput(value, i)}
-              />
-            </View>
-          </View>
-        ))}
         {holeCount === 18 ? (
           <>
             {summaryRow("OUT", outPar, calculateTotal(0, 9))}
             {summaryRow("IN", inPar, calculateTotal(9, 18))}
-            {summaryRow(
-              "TOTAL",
-              outPar + inPar,
-              calculateTotal(0, 18),
-            )}
+            {summaryRow("TOTAL", outPar + inPar, calculateTotal(0, 18))}
           </>
         ) : (
           summaryRow("TOTAL", outPar, calculateTotal(0, 9))

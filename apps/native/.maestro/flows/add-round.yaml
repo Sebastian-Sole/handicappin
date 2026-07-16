@@ -1,6 +1,7 @@
 # ADD-ROUND · the full real write path through the native UI: enter via the
 # tab bar's center (+) action (D17), search a course (live tRPC), pick the
-# auto-selected tee, enter 18 scores (auto-advance), submit via
+# auto-selected tee, enter 18 scores through the one-hole-at-a-time pager
+# (plan 013: "+" seeds par, Next advances), submit via
 # round.submitScorecard, land back on home.
 # PRE-REQUISITE: signed in as the test user; local web + Supabase up.
 appId: com.handicappin.app
@@ -34,28 +35,20 @@ appId: com.handicappin.app
 - extendedWaitUntil:
     visible: ".*TEE.*"
     timeout: 12000
+- scrollUntilVisible:
+    element:
+      id: "hole-entry-pager"
+# One "+" per hole seeds par (the pager's fast path), Next advances; the
+# 18th hole needs no Next (the button is disabled at the last hole).
+- repeat:
+    times: 17
+    commands:
+      - tapOn:
+          id: "entry-score-plus"
+      - tapOn:
+          id: "entry-next-hole"
 - tapOn:
-    id: "score-input-1"
-# 18 single digits in [2..9] auto-advance through every hole.
-- inputText: "4"
-- inputText: "4"
-- inputText: "4"
-- inputText: "4"
-- inputText: "4"
-- inputText: "4"
-- inputText: "4"
-- inputText: "4"
-- inputText: "4"
-- inputText: "5"
-- inputText: "5"
-- inputText: "5"
-- inputText: "5"
-- inputText: "5"
-- inputText: "5"
-- inputText: "5"
-- inputText: "5"
-- inputText: "5"
-- pressKey: Enter
+    id: "entry-score-plus"
 - scrollUntilVisible:
     element:
       id: "submit-round"

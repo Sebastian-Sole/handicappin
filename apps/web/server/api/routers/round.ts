@@ -560,8 +560,12 @@ export const roundRouter = createTRPCRouter({
           } else if (existingTee.length > 0) {
             // Tee is approved and not edited -- reuse as-is
             teeId = existingTee[0]!.id;
-          } else if (teePlayed.id) {
-            // Tee referenced by ID — verify it's actually approved and active in the DB
+          } else if (teePlayed.id && teePlayed.id > 0) {
+            // Tee referenced by a real (positive) DB id — verify it's actually
+            // approved and active. Client-side temp ids are negative (see
+            // useTeeManagement.generateTempId); those are NOT DB references and
+            // must fall through to the brand-new-tee insert branch below. This
+            // guard mirrors block 3a, which already gates on `id > 0`.
             const teeById = await tx
               .select()
               .from(teeInfo)
@@ -832,6 +836,11 @@ export const roundRouter = createTRPCRouter({
           holeId: holesToUse[index].id,
           strokes: score.strokes,
           hcpStrokes: score.hcpStrokes,
+          // Optional shot-level detail (plans/010): persisted verbatim,
+          // NULL when not tracked. Never read by the handicap engine.
+          putts: score.putts ?? null,
+          fairwayHit: score.fairwayHit ?? null,
+          penaltyStrokes: score.penaltyStrokes ?? null,
         }));
 
         await tx.insert(score).values(scoreInserts);

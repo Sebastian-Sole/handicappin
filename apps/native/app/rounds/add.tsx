@@ -23,7 +23,11 @@ import { tokens } from "@handicappin/tokens/tokens";
 import { AddCourseModal } from "@/components/scorecard/add-course-modal";
 import { AddTeeModal } from "@/components/scorecard/add-tee-modal";
 import { CoursePicker } from "@/components/scorecard/course-picker";
-import { ScorecardTable } from "@/components/scorecard/scorecard-table";
+import { DetailedScoringChoice } from "@/components/scorecard/detailed-scoring-choice";
+import {
+  ScorecardTable,
+  type ScoreDetail,
+} from "@/components/scorecard/scorecard-table";
 import { UsageLimitAlert } from "@/components/scorecard/usage-limit-alert";
 import { TeePicker } from "@/components/scorecard/tee-picker";
 import { DataSettledMarker } from "@/components/data-settled";
@@ -43,12 +47,17 @@ import {
 } from "@/lib/api/procedures/scorecard";
 import { useSession } from "@/lib/auth/session-provider";
 import { useColorMode } from "@/lib/color-mode";
+import { clampDetailToStrokes } from "@/lib/hole-detail";
+import {
+  readDetailedScoringDefault,
+  useDetailedScoringDefault,
+} from "@/lib/preferences";
 import { useDataSettled } from "@/lib/query/settle";
 import {
   FREE_TIER_ROUND_LIMIT,
   getDisplayedHoles,
   roundToNearestMinute,
-  type Score,
+  type ScoreInput,
   type Tee,
 } from "@/lib/scorecard";
 import type { CourseForm } from "@/lib/scorecard-form";
@@ -75,7 +84,7 @@ interface FeedbackState {
   message: string;
 }
 
-const emptyScores = (): Score[] =>
+const emptyScores = (): ScoreInput[] =>
   Array.from({ length: 18 }, () => ({ strokes: 0, hcpStrokes: 0 }));
 
 const CLOSE_ICON_SIZE = 20; // allow-hardcoded lucide icon prop inside the 40px close button
@@ -105,7 +114,15 @@ export default function AddRoundScreen() {
   const [nineHoleSection, setNineHoleSection] = useState<"front" | "back">(
     "front",
   );
-  const [scores, setScores] = useState<Score[]>(emptyScores());
+  const [scores, setScores] = useState<ScoreInput[]>(emptyScores());
+  // "Detailed scoring" opt-in (plan 013 D3): pre-selected from the
+  // persisted Settings default, overridable per round; "Remember my
+  // choice" writes the override back.
+  const { setDetailedDefault } = useDetailedScoringDefault();
+  const [detailedScoring, setDetailedScoring] = useState(
+    readDetailedScoringDefault,
+  );
+  const [rememberChoice, setRememberChoice] = useState(true);
   const [notes, setNotes] = useState("");
   const [teeTime, setTeeTime] = useState(() =>
     roundToNearestMinute(new Date()).toISOString(),
@@ -213,9 +230,31 @@ export default function AddRoundScreen() {
   const handleScoreChange = (holeIndex: number, strokes: number) => {
     setScores((prev) => {
       const next = [...prev];
-      next[holeIndex] = { strokes, hcpStrokes: 0 };
+      // Preserve any shot-level detail already entered for this hole, but
+      // re-fit it to the new score (putts + penalties ≤ strokes − 1).
+      const entry = { ...next[holeIndex], strokes, hcpStrokes: 0 };
+      next[holeIndex] = { ...entry, ...clampDetailToStrokes(entry, strokes) };
       return next;
     });
+  };
+
+  const handleScoreDetailChange = (holeIndex: number, detail: ScoreDetail) => {
+    setScores((prev) => {
+      const next = [...prev];
+      next[holeIndex] = { ...next[holeIndex], ...detail };
+      return next;
+    });
+  };
+
+  const handleDetailedScoringToggle = (enabled: boolean) => {
+    setDetailedScoring(enabled);
+    if (rememberChoice) setDetailedDefault(enabled);
+    analytics.capture("detailed_scoring_toggled", { enabled });
+  };
+
+  const handleRememberChange = (remember: boolean) => {
+    setRememberChoice(remember);
+    if (remember) setDetailedDefault(detailedScoring);
   };
 
   const busy = submitState === "loading" || submitState === "success";
@@ -260,7 +299,19 @@ export default function AddRoundScreen() {
           website: selectedCourse.website ?? "",
         },
         teePlayed: selectedTee as Tee,
-        scores: playedScores,
+        // Detailed scoring on: penalties default to 0 for entered holes
+        // (the "+" control means "0 unless stated"). Off: strip any detail
+        // so a toggled-off submission is byte-identical to the old payload.
+        scores: playedScores.map((score) =>
+          detailedScoring
+            ? { ...score, penaltyStrokes: score.penaltyStrokes ?? 0 }
+            : {
+                ...score,
+                putts: undefined,
+                fairwayHit: undefined,
+                penaltyStrokes: undefined,
+              },
+        ),
         teeTime,
         approvalStatus: isAutoApproved ? "approved" : "pending",
         notes,
@@ -344,14 +395,6 @@ export default function AddRoundScreen() {
                 ? "warning"
                 : "default"
           }
-        />
-      ) : null}
-
-      {feedback ? (
-        <FormFeedback
-          type={feedback.type}
-          message={feedback.message}
-          onClose={() => setFeedback(null)}
         />
       ) : null}
 
@@ -480,6 +523,17 @@ export default function AddRoundScreen() {
             />
           </View>
         </View>
+
+        <View className="gap-sm">
+          <Label>Detail tracking</Label>
+          <DetailedScoringChoice
+            value={detailedScoring}
+            onChange={handleDetailedScoringToggle}
+            remember={rememberChoice}
+            onRememberChange={handleRememberChange}
+            disabled={busy}
+          />
+        </View>
       </View>
 
       {selectedTee && displayedHoles.length > 0 ? (
@@ -490,6 +544,8 @@ export default function AddRoundScreen() {
           scores={scores}
           onScoreChange={handleScoreChange}
           disabled={busy}
+          detailedScoring={detailedScoring}
+          onScoreDetailChange={handleScoreDetailChange}
         />
       ) : (
         <View className="rounded-lg border border-border p-lg items-center">
@@ -512,6 +568,16 @@ export default function AddRoundScreen() {
           editable={!busy}
         />
       </View>
+
+      {/* Feedback sits with the submit action it talks about (mirrors web's
+          golf-scorecard placement) — not at the top of a scrolling screen. */}
+      {feedback ? (
+        <FormFeedback
+          type={feedback.type}
+          message={feedback.message}
+          onClose={() => setFeedback(null)}
+        />
+      ) : null}
 
       <Button
         testID="submit-round"

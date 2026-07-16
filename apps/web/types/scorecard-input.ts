@@ -167,6 +167,13 @@ export const scoreSchema = z.object({
   holeId: z.number().optional(),
   strokes: z.number().min(0).max(99),
   hcpStrokes: z.number().min(0).max(99),
+  // Optional shot-level detail (plans/010). `.nullish()` (not `.optional()`)
+  // because the same schema validates rows read back from the DB, where
+  // untracked detail is NULL — `.optional()` alone would reject every
+  // pre-existing round. Informational only; never a handicap-engine input.
+  putts: z.number().int().min(0).max(20).nullish(),
+  fairwayHit: z.boolean().nullish(),
+  penaltyStrokes: z.number().int().min(0).max(10).nullish(),
 });
 
 export const scorecardSchema = z

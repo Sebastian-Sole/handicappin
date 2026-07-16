@@ -322,6 +322,11 @@ export const score = pgTable(
     holeId: integer().notNull(),
     strokes: integer().notNull(),
     hcpStrokes: integer().default(0).notNull(),
+    // Optional shot-level detail (plans/010): nullable, no defaults — NULL
+    // means "not tracked". Informational only; never a handicap-engine input.
+    putts: integer(),
+    fairwayHit: boolean(),
+    penaltyStrokes: integer(),
   },
   (table) => [
     foreignKey({

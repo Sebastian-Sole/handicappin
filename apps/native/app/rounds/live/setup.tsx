@@ -20,6 +20,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { tokens } from "@handicappin/tokens/tokens";
 
 import { CoursePicker } from "@/components/scorecard/course-picker";
+import { DetailedScoringChoice } from "@/components/scorecard/detailed-scoring-choice";
 import { TeePicker } from "@/components/scorecard/tee-picker";
 import { UsageLimitAlert } from "@/components/scorecard/usage-limit-alert";
 import { DataSettledMarker } from "@/components/data-settled";
@@ -37,6 +38,10 @@ import {
 } from "@/lib/api/procedures/scorecard";
 import { useSession } from "@/lib/auth/session-provider";
 import { useColorMode } from "@/lib/color-mode";
+import {
+  readDetailedScoringDefault,
+  useDetailedScoringDefault,
+} from "@/lib/preferences";
 import { useDataSettled } from "@/lib/query/settle";
 import type { SessionCourse } from "@/lib/round-session/types";
 import {
@@ -90,6 +95,11 @@ export default function LiveRoundSetupScreen() {
   const [nineHoleSection, setNineHoleSection] = useState<"front" | "back">(
     lastSetup?.nineHoleSection ?? "front",
   );
+  // Track detailed stats / Scores only (plan 013 D3): pre-selected from
+  // the persisted Settings default; "Remember my choice" writes it back.
+  const { setDetailedDefault } = useDetailedScoringDefault();
+  const [detailed, setDetailed] = useState(readDetailedScoringDefault);
+  const [rememberChoice, setRememberChoice] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const profileQuery = useQuery({
@@ -159,6 +169,7 @@ export default function LiveRoundSetupScreen() {
         tee: selectedTee as Tee,
         holeCount,
         nineHoleSection: holeCount === 9 ? nineHoleSection : undefined,
+        detailed,
         now,
       });
     } catch (e) {
@@ -321,6 +332,22 @@ export default function LiveRoundSetupScreen() {
             </View>
           </View>
         ) : null}
+
+        <View className="gap-sm">
+          <Label>Detail tracking</Label>
+          <DetailedScoringChoice
+            value={detailed}
+            onChange={(value) => {
+              setDetailed(value);
+              if (rememberChoice) setDetailedDefault(value);
+            }}
+            remember={rememberChoice}
+            onRememberChange={(remember) => {
+              setRememberChoice(remember);
+              if (remember) setDetailedDefault(detailed);
+            }}
+          />
+        </View>
       </View>
 
       <Button

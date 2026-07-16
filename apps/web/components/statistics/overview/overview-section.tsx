@@ -8,7 +8,10 @@ import { cn } from "@/lib/utils";
 import { StatisticsSection } from "../shared/statistics-section";
 import { getFlagEmoji } from "@/utils/frivolities/headerGenerator";
 import {
+  formatDecimal,
   formatDifferential,
+  formatPercentage,
+  formatSampleSize,
   formatScore,
   formatWithSign,
   isValidNumber,
@@ -17,17 +20,25 @@ import type {
   OverviewStats,
   CoursePerformance,
   PerformanceExtendedStats,
+  ShotLevelStats,
+  ShotStat,
 } from "@/types/statistics";
 
 interface PerformanceSectionProps {
   stats: OverviewStats;
   extendedStats: PerformanceExtendedStats;
+  shotLevelStats: ShotLevelStats;
   bestCourse?: CoursePerformance;
 }
+
+/** "Based on N of M rounds" subtitle for a shot-level stat card (D6). */
+const basedOn = (stat: ShotStat, totalRounds: number): string =>
+  formatSampleSize(stat.sampleSize, totalRounds);
 
 export function PerformanceSection({
   stats,
   extendedStats,
+  shotLevelStats,
   bestCourse,
 }: PerformanceSectionProps) {
   const getImprovementMessage = (): string => {
@@ -246,6 +257,93 @@ export function PerformanceSection({
             </CardContent>
           </Card>
         </div>
+      </StatisticsSection>
+
+      <Separator />
+
+      {/* Shot-Level Stats Section (plans/010) */}
+      <StatisticsSection
+        icon="🎯"
+        title="Shot-Level Stats"
+        description="Putts, fairways, and penalties from detailed scoring"
+      >
+        {shotLevelStats.puttsPerRound.sampleSize > 0 ||
+        shotLevelStats.girPercentage.sampleSize > 0 ||
+        shotLevelStats.firPercentage.sampleSize > 0 ||
+        shotLevelStats.penaltiesPerRound.sampleSize > 0 ? (
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-md">
+            <Card>
+              <CardContent density="compact">
+                <p className="text-body-sm text-muted-foreground">
+                  Putts / Round
+                </p>
+                <p className="text-figure">
+                  {formatDecimal(shotLevelStats.puttsPerRound.value, 1)}
+                </p>
+                <p className="text-meta text-muted-foreground">
+                  {basedOn(shotLevelStats.puttsPerRound, stats.totalRounds)}
+                </p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent density="compact">
+                <p className="text-body-sm text-muted-foreground">GIR</p>
+                <p className="text-figure">
+                  {formatPercentage(shotLevelStats.girPercentage.value)}
+                </p>
+                <p className="text-meta text-muted-foreground">
+                  {basedOn(shotLevelStats.girPercentage, stats.totalRounds)}
+                </p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent density="compact">
+                <p className="text-body-sm text-muted-foreground">
+                  Fairways Hit
+                </p>
+                <p className="text-figure">
+                  {formatPercentage(shotLevelStats.firPercentage.value)}
+                </p>
+                <p className="text-meta text-muted-foreground">
+                  {basedOn(shotLevelStats.firPercentage, stats.totalRounds)}
+                </p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent density="compact">
+                <p className="text-body-sm text-muted-foreground">
+                  Penalties / Round
+                </p>
+                <p className="text-figure">
+                  {formatDecimal(shotLevelStats.penaltiesPerRound.value, 1)}
+                </p>
+                <p className="text-meta text-muted-foreground">
+                  {basedOn(shotLevelStats.penaltiesPerRound, stats.totalRounds)}
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+        ) : (
+          <Card>
+            <CardContent density="compact">
+              <p className="text-body-sm text-muted-foreground">
+                No shot-level data yet. Choose{" "}
+                <span className="font-medium text-foreground">
+                  Track detailed stats
+                </span>{" "}
+                when logging a round to track putts, greens in regulation,
+                fairways, and penalties.
+              </p>
+            </CardContent>
+          </Card>
+        )}
+        {/* The anti-skew reassurance (plan 013 D6). */}
+        <p className="text-meta text-muted-foreground mt-md">
+          Your handicap uses{" "}
+          <span className="font-medium text-foreground">every</span> round.
+          Detailed stats only use rounds where you logged them — nothing you
+          skip counts against you.
+        </p>
       </StatisticsSection>
 
       {/* Best Month Section (if available) */}

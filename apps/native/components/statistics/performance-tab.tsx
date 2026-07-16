@@ -10,15 +10,20 @@ import { Pressable, Text, View } from "react-native";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { StatDelta } from "@/components/ui/stat-delta";
 import {
+  formatDecimal,
   formatDifferential,
+  formatPercentage,
   formatScore,
   formatWithSign,
   isValidNumber,
+  formatSampleSize,
 } from "@/lib/statistics/format-utils";
 import type {
   CoursePerformance,
   OverviewStats,
   PerformanceExtendedStats,
+  ShotLevelStats,
+  ShotStat,
 } from "@/lib/statistics/types";
 import { cn } from "@/lib/utils";
 
@@ -27,12 +32,18 @@ import { StatCard, StatisticsSection } from "./shared";
 interface PerformanceTabProps {
   stats: OverviewStats;
   extendedStats: PerformanceExtendedStats;
+  shotLevelStats: ShotLevelStats;
   bestCourse?: CoursePerformance;
 }
+
+/** "Based on N of M rounds" subtitle for a shot-level stat card (D6). */
+const basedOn = (stat: ShotStat, totalRounds: number): string =>
+  formatSampleSize(stat.sampleSize, totalRounds);
 
 export function PerformanceTab({
   stats,
   extendedStats,
+  shotLevelStats,
   bestCourse,
 }: PerformanceTabProps) {
   const getImprovementMessage = (): string => {
@@ -248,6 +259,74 @@ export function PerformanceTab({
             />
           </View>
         </View>
+      </StatisticsSection>
+
+      <View className="h-px bg-border" />
+
+      {/* Shot-Level Stats Section (plans/010) — mirror of web's */}
+      <StatisticsSection
+        icon="🎯"
+        title="Shot-Level Stats"
+        description="Putts, fairways, and penalties from detailed scoring"
+      >
+        {shotLevelStats.puttsPerRound.sampleSize > 0 ||
+        shotLevelStats.girPercentage.sampleSize > 0 ||
+        shotLevelStats.firPercentage.sampleSize > 0 ||
+        shotLevelStats.penaltiesPerRound.sampleSize > 0 ? (
+          <View className="flex-row flex-wrap gap-md">
+            <View style={{ flexBasis: "45%", flexGrow: 1 }}>
+              <StatCard
+                title="Putts / Round"
+                value={formatDecimal(shotLevelStats.puttsPerRound.value, 1)}
+                subtitle={basedOn(shotLevelStats.puttsPerRound, stats.totalRounds)}
+              />
+            </View>
+            <View style={{ flexBasis: "45%", flexGrow: 1 }}>
+              <StatCard
+                title="GIR"
+                value={formatPercentage(shotLevelStats.girPercentage.value)}
+                subtitle={basedOn(shotLevelStats.girPercentage, stats.totalRounds)}
+              />
+            </View>
+            <View style={{ flexBasis: "45%", flexGrow: 1 }}>
+              <StatCard
+                title="Fairways Hit"
+                value={formatPercentage(shotLevelStats.firPercentage.value)}
+                subtitle={basedOn(shotLevelStats.firPercentage, stats.totalRounds)}
+              />
+            </View>
+            <View style={{ flexBasis: "45%", flexGrow: 1 }}>
+              <StatCard
+                title="Penalties / Round"
+                value={formatDecimal(
+                  shotLevelStats.penaltiesPerRound.value,
+                  1,
+                )}
+                subtitle={basedOn(shotLevelStats.penaltiesPerRound, stats.totalRounds)}
+              />
+            </View>
+          </View>
+        ) : (
+          <Card>
+            <CardContent className="p-md pt-md">
+              <Text className="text-body-sm text-muted-foreground">
+                No shot-level data yet. Choose{" "}
+                <Text className="text-body-sm font-medium text-foreground">
+                  Track detailed stats
+                </Text>{" "}
+                when logging a round to track putts, greens in regulation,
+                fairways, and penalties.
+              </Text>
+            </CardContent>
+          </Card>
+        )}
+        {/* The anti-skew reassurance (plan 013 D6). */}
+        <Text className="text-meta text-muted-foreground mt-md">
+          Your handicap uses{" "}
+          <Text className="text-meta font-medium text-foreground">every</Text>{" "}
+          round. Detailed stats only use rounds where you logged them —
+          nothing you skip counts against you.
+        </Text>
       </StatisticsSection>
 
       {extendedStats.bestMonth ? (

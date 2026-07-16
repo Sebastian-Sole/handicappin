@@ -41,12 +41,20 @@ import {
 } from "../ui/form";
 import { api } from "@/trpc/react";
 import { useDebounce } from "use-debounce";
-import { Course, Scorecard, scorecardSchema, Tee } from "@/types/scorecard-input";
+import {
+  Course,
+  Scorecard,
+  scorecardSchema,
+  Tee,
+} from "@/types/scorecard-input";
 import { Textarea } from "../ui/textarea";
+import { DetailedScoringChoice } from "./detailed-scoring-choice";
+import { useDetailedScoringDefault } from "@/hooks/useDetailedScoringDefault";
 import { TeeDialog } from "./tee-dialog";
 import { FormFeedback } from "../ui/form-feedback";
 import { getTeeKey, useTeeManagement } from "@/hooks/useTeeManagement";
-import { ScorecardTable } from "./scorecard-table";
+import { ScorecardTable, type ScoreDetail } from "./scorecard-table";
+import { clampDetailToStrokes } from "@/lib/scorecard/hole-detail";
 import {
   getDisplayedHoles,
   roundToNearestMinute,
@@ -104,6 +112,20 @@ export default function GolfScorecard({ profile, access }: GolfScorecardProps) {
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [addCourseDialogOpen, setAddCourseDialogOpen] = useState(false);
+  // "Detailed scoring" opt-in (plan 013 D3): pre-selected from the
+  // persisted Settings default (client-stored, no DB column), overridable
+  // per round; "Remember my choice" writes the override back.
+  const { detailedDefault, setDetailedDefault, hydrated } =
+    useDetailedScoringDefault();
+  const [detailedScoring, setDetailedScoring] = useState(false);
+  const [rememberChoice, setRememberChoice] = useState(true);
+  const [choiceTouched, setChoiceTouched] = useState(false);
+  useEffect(() => {
+    if (hydrated && !choiceTouched) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- pre-select from localStorage after hydration (SSR-safe)
+      setDetailedScoring(detailedDefault);
+    }
+  }, [hydrated, detailedDefault, choiceTouched]);
 
   // Form setup
   const form = useForm<Scorecard>({
@@ -283,14 +305,37 @@ export default function GolfScorecard({ profile, access }: GolfScorecardProps) {
   const handleScoreChange = (holeIndex: number, score: number) => {
     const currentScores = form.getValues("scores");
     const newScores = [...currentScores];
-    newScores[holeIndex] = {
+    const entry = {
+      // Preserve any shot-level detail already entered for this hole, but
+      // re-fit it to the new score (putts + penalties ≤ strokes − 1).
+      ...newScores[holeIndex],
       id: undefined,
       roundId: undefined,
       holeId: undefined,
       strokes: score,
       hcpStrokes: 0,
     };
+    newScores[holeIndex] = { ...entry, ...clampDetailToStrokes(entry, score) };
     form.setValue("scores", newScores);
+  };
+
+  const handleScoreDetailChange = (holeIndex: number, detail: ScoreDetail) => {
+    const currentScores = form.getValues("scores");
+    const newScores = [...currentScores];
+    newScores[holeIndex] = { ...newScores[holeIndex], ...detail };
+    form.setValue("scores", newScores);
+  };
+
+  const handleDetailedScoringToggle = (enabled: boolean) => {
+    setChoiceTouched(true);
+    setDetailedScoring(enabled);
+    if (rememberChoice) setDetailedDefault(enabled);
+    analytics.capture("detailed_scoring_toggled", { enabled });
+  };
+
+  const handleRememberChange = (remember: boolean) => {
+    setRememberChoice(remember);
+    if (remember) setDetailedDefault(detailedScoring);
   };
 
   const displayedHoles = useMemo(() => {
@@ -330,7 +375,19 @@ export default function GolfScorecard({ profile, access }: GolfScorecardProps) {
         teePlayed: {
           ...data.teePlayed,
         },
-        scores: data.scores.slice(0, holeCount),
+        // Detailed scoring on: penalties default to 0 for entered holes
+        // (the "+" control means "0 unless stated"). Off: strip any detail
+        // so a toggled-off submission is byte-identical to the old payload.
+        scores: data.scores.slice(0, holeCount).map((score) =>
+          detailedScoring
+            ? { ...score, penaltyStrokes: score.penaltyStrokes ?? 0 }
+            : {
+                ...score,
+                putts: undefined,
+                fairwayHit: undefined,
+                penaltyStrokes: undefined,
+              }
+        ),
         // Only attach the 9-hole section for 9-hole rounds; 18-hole rounds must omit it.
         nineHoleSection: holeCount === 9 ? nineHoleSection : undefined,
       };
@@ -815,6 +872,23 @@ export default function GolfScorecard({ profile, access }: GolfScorecardProps) {
                       </div>
                     )}
                     <div className="space-y-sm">
+                      <Label>Detail tracking</Label>
+                      {isMounted ? (
+                        <DetailedScoringChoice
+                          value={detailedScoring}
+                          onChange={handleDetailedScoringToggle}
+                          remember={rememberChoice}
+                          onRememberChange={handleRememberChange}
+                          disabled={
+                            submitState === "loading" ||
+                            submitState === "success"
+                          }
+                        />
+                      ) : (
+                        <Skeleton className="h-32 w-full" />
+                      )}
+                    </div>
+                    <div className="space-y-sm">
                       <Label htmlFor="notes">Notes</Label>
                       {isMounted ? (
                         <FormField
@@ -852,6 +926,8 @@ export default function GolfScorecard({ profile, access }: GolfScorecardProps) {
                     scores={scoresValue}
                     onScoreChange={handleScoreChange}
                     disabled={submitState === "loading" || submitState === "success"}
+                    detailedScoring={detailedScoring}
+                    onScoreDetailChange={handleScoreDetailChange}
                   />
                 </div>
               )}

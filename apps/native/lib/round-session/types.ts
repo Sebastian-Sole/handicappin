@@ -31,6 +31,11 @@ export interface HoleEntry {
   updatedAt: string;
   /** GPS seam — never populated today (see geo.ts). */
   location?: GeoStamp | null;
+  /** Shot-level detail captured at hole-out (plan 013 D4). Absent/null =
+      not recorded — never zero-filled. */
+  putts?: number | null;
+  fairwayHit?: boolean | null;
+  penaltyStrokes?: number | null;
 }
 
 export type SessionStatus = "active" | "finishing" | "submitted";
@@ -54,6 +59,9 @@ export interface RoundSession {
   holeCount: 9 | 18;
   /** Required iff holeCount === 9 (mirrors the server superRefine). */
   nineHoleSection?: "front" | "back";
+  /** Detail tracking for this round (plan 013 D3). Absent = false —
+      optional so pre-013 persisted sessions decode unchanged. */
+  detailed?: boolean;
   /** getDisplayedHoles() result frozen at start — for a 9-hole session the
       hcp values are already normalized to 1–9 (USGA 5.1b). */
   displayedHoles: Hole[];
@@ -73,6 +81,16 @@ export type SessionEvent =
       location?: GeoStamp | null;
     }
   | { type: "SCORE_CLEARED"; holeIndex: number; at: string }
+  | {
+      /** Hole-out detail patch (plan 013): a PRESENT key overwrites the
+          field (null clears it); an ABSENT key leaves it unchanged. */
+      type: "HOLE_DETAIL_SET";
+      holeIndex: number;
+      putts?: number | null;
+      fairwayHit?: boolean | null;
+      penaltyStrokes?: number | null;
+      at: string;
+    }
   | { type: "HOLE_SELECTED"; holeIndex: number; at: string }
   | { type: "NOTES_SET"; notes: string; at: string }
   | { type: "FINISH_STARTED"; at: string }

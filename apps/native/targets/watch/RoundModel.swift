@@ -150,6 +150,24 @@ final class RoundModel: ObservableObject {
         store.scoreCurrentHole(strokes: strokes, at: Self.now())
     }
 
+    /// Hole-out commit (plan 013 D5): score + detail in one moment, then
+    /// advance — the watch's explicit "Next". Detail is nil-able (par-3
+    /// fairway, scores-only rounds).
+    func commitHole(score: Int, putts: Int?, fairway: Bool?, penalties: Int?) {
+        store.commitCurrentHole(
+            strokes: score,
+            putts: putts,
+            fairwayHit: fairway,
+            penaltyStrokes: penalties,
+            at: Self.now()
+        )
+    }
+
+    /// Scores-only collapse: same commit-and-advance without detail.
+    func commitScoreOnly(_ score: Int) {
+        commitHole(score: score, putts: nil, fairway: nil, penalties: nil)
+    }
+
     func selectHole(_ index: Int) {
         store.selectHole(index, at: Self.now())
     }

@@ -46,6 +46,17 @@ export const watchSessionEventSchema = z.discriminatedUnion("type", [
     at: isoString,
   }),
   z.object({
+    // Hole-out detail patch (plan 013): PRESENT key overwrites (null
+    // clears), ABSENT key leaves the field unchanged. Clamping/rounding is
+    // the reducer's job — this only shape-checks.
+    type: z.literal("HOLE_DETAIL_SET"),
+    holeIndex: z.number().int(),
+    putts: z.number().nullish(),
+    fairwayHit: z.boolean().nullish(),
+    penaltyStrokes: z.number().nullish(),
+    at: isoString,
+  }),
+  z.object({
     type: z.literal("HOLE_SELECTED"),
     holeIndex: z.number().int(),
     at: isoString,

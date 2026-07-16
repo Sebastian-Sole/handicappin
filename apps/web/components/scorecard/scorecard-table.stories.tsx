@@ -1,6 +1,12 @@
 import type { Meta, StoryObj } from "@storybook/nextjs";
 import { ScorecardTable, TableSkeleton } from "./scorecard-table";
-import { fixtureTee, fixtureHoles, fixtureScores, emptyScores } from "./__fixtures__/tee";
+import {
+  fixtureTee,
+  fixtureHoles,
+  fixtureScores,
+  fixtureDetailedScores,
+  emptyScores,
+} from "./__fixtures__/tee";
 
 const meta = {
   title: "Scorecard/ScorecardTable",
@@ -53,6 +59,19 @@ export const CompleteRound: Story = {
     scores: fixtureScores,
     onScoreChange: () => {},
     disabled: true,
+  },
+};
+
+export const DetailedScoring: Story = {
+  args: {
+    selectedTee: fixtureTee,
+    displayedHoles: fixtureHoles,
+    holeCount: 18,
+    scores: fixtureDetailedScores,
+    onScoreChange: () => {},
+    disabled: false,
+    detailedScoring: true,
+    onScoreDetailChange: () => {},
   },
 };
 

@@ -26,11 +26,25 @@ export const courseInputSchema = z.object({
 
 export type CourseInput = z.infer<typeof courseInputSchema>;
 
+/**
+ * Score with optional shot-level detail (plans/010) — EXTENDS the core
+ * domain shape rather than duplicating it. Mirrors the fields added to
+ * apps/web/types/scorecard-input.ts scoreSchema; the detail is
+ * informational only and never a handicap-engine input.
+ */
+export const scoreInputSchema = scoreSchema.extend({
+  putts: z.number().int().min(0).max(20).nullish(),
+  fairwayHit: z.boolean().nullish(),
+  penaltyStrokes: z.number().int().min(0).max(10).nullish(),
+});
+
+export type ScoreInput = z.infer<typeof scoreInputSchema>;
+
 export const scorecardInputSchema = z.object({
   userId: z.string().uuid(),
   course: courseInputSchema,
   teePlayed: teeSchema,
-  scores: z.array(scoreSchema),
+  scores: z.array(scoreInputSchema),
   teeTime: z.string(),
   approvalStatus: z.literal("pending").or(z.literal("approved")),
   notes: z.string().optional(),

@@ -48,6 +48,30 @@ export const fixtureScores: Score[] = SAMPLE_STROKES.map((strokes, idx) => ({
   hcpStrokes: HCPS[idx] <= 13 ? 1 : 0,
 }));
 
+// Detailed-scoring sample: two-digit strokes/putts (regression guard against
+// digits clipping in the compact cell inputs) plus a mix of set / unset
+// penalties so the "+" affordance and the numeric field both render.
+const SAMPLE_PUTTS = [2, 2, 1, 2, 3, 2, 2, 1, 10, 2, 2, 1, 2, 12, 2, 1, 2, 2];
+const SAMPLE_FAIRWAY = [
+  true, false, null, true, false, true, true, null, false, true, false, null,
+  true, true, false, null, true, false,
+];
+const SAMPLE_PENALTIES = [1, 0, null, null, 2, null, null, null, null, null,
+  null, null, null, null, null, null, null, null];
+
+export const fixtureDetailedScores: Score[] = SAMPLE_STROKES.map(
+  (strokes, idx) => ({
+    id: idx + 1,
+    roundId: 1,
+    holeId: idx + 1,
+    strokes: idx === 8 ? 10 : idx === 13 ? 12 : strokes,
+    hcpStrokes: HCPS[idx] <= 13 ? 1 : 0,
+    putts: SAMPLE_PUTTS[idx],
+    fairwayHit: SAMPLE_FAIRWAY[idx],
+    penaltyStrokes: SAMPLE_PENALTIES[idx],
+  })
+);
+
 export const emptyScores: Score[] = Array(18)
   .fill(null)
   .map((_, idx) => ({

@@ -24,6 +24,12 @@ export const Default: Story = {
       currentHandicap: 12.4,
       handicapChange: -2.1,
     },
+    shotLevelStats: {
+      puttsPerRound: { value: 31.4, sampleSize: 12 },
+      girPercentage: { value: 38.9, sampleSize: 12 },
+      firPercentage: { value: 52.4, sampleSize: 11 },
+      penaltiesPerRound: { value: 1.6, sampleSize: 12 },
+    },
     extendedStats: {
       consistencyRating: 64,
       scoringConsistency: 4.2,
@@ -71,11 +77,49 @@ export const NoExceptionalRounds: Story = {
       currentHandicap: 18.7,
       handicapChange: -0.6,
     },
+    shotLevelStats: {
+      puttsPerRound: { value: 33.0, sampleSize: 2 },
+      girPercentage: { value: 22.2, sampleSize: 2 },
+      firPercentage: { value: null, sampleSize: 0 },
+      penaltiesPerRound: { value: 2.5, sampleSize: 2 },
+    },
     extendedStats: {
       consistencyRating: 38,
       scoringConsistency: 6.8,
       bestMonth: null,
       uniqueCourses: 3,
+      exceptionalRounds: [],
+    },
+  },
+};
+
+/**
+ * Exactly one detailed round — exercises basedOn()'s singular
+ * "Based on 1 round" wording branch (sampleSize === 1).
+ */
+export const SingleDetailedRound: Story = {
+  args: {
+    stats: {
+      totalRounds: 3,
+      avgScore: 89.7,
+      avgPar: 72,
+      bestDifferential: 14.1,
+      worstDifferential: 19.3,
+      improvementRate: 0,
+      currentHandicap: 16.2,
+      handicapChange: 0.3,
+    },
+    shotLevelStats: {
+      puttsPerRound: { value: 34, sampleSize: 1 },
+      girPercentage: { value: 27.8, sampleSize: 1 },
+      firPercentage: { value: 42.9, sampleSize: 1 },
+      penaltiesPerRound: { value: 3, sampleSize: 1 },
+    },
+    extendedStats: {
+      consistencyRating: 41,
+      scoringConsistency: 5.9,
+      bestMonth: null,
+      uniqueCourses: 2,
       exceptionalRounds: [],
     },
   },
@@ -92,6 +136,12 @@ export const EmptyState: Story = {
       improvementRate: 0,
       currentHandicap: 0,
       handicapChange: 0,
+    },
+    shotLevelStats: {
+      puttsPerRound: { value: null, sampleSize: 0 },
+      girPercentage: { value: null, sampleSize: 0 },
+      firPercentage: { value: null, sampleSize: 0 },
+      penaltiesPerRound: { value: null, sampleSize: 0 },
     },
     extendedStats: {
       consistencyRating: 0,

@@ -19,6 +19,33 @@ records what the seam guarantees so the watch work needs no refactor.
   and optimistically applies its own events locally; the authoritative state
   is whatever the phone's reducer produced.
 
+## Shot-level detail (plan 013)
+
+- `RoundSession.detailed` (optional bool, absent = false) marks a round as
+  detail-tracking; it is chosen at start (D3) and frozen for the round.
+  Pre-013 snapshots without the key decode unchanged.
+- `HoleEntry` carries optional `putts` / `fairwayHit` / `penaltyStrokes`
+  (absent/null = not recorded — never zero-filled).
+- New event `HOLE_DETAIL_SET { holeIndex, putts?, fairwayHit?,
+  penaltyStrokes?, at }` with PATCH semantics: a PRESENT key overwrites the
+  field (null clears it); an ABSENT key leaves it unchanged. The reducer
+  clamps putts to 0–20 and penalties to 0–10 and ignores non-finite values.
+- **Detail consistency rule** (both reducers, mirrored in `Engine.swift`):
+  on a SCORED hole, `putts + penaltyStrokes ≤ strokes − 1` (a putt is a
+  stroke, a penalty counts toward the score, and at least one non-putt
+  swing always exists). `HOLE_DETAIL_SET` re-fits incoming detail against
+  the entry's strokes; `SCORE_SET` re-fits existing detail against the new
+  score, putts keeping priority (score 5 with 4 putts re-scored to 4 → 3
+  putts). Unscored holes are unbounded — detail can land before the score.
+  Because of this, the watch's hole-out commit sends `SCORE_SET` BEFORE
+  `HOLE_DETAIL_SET` (both carry an explicit `holeIndex`).
+- `SCORE_SET` preserves an entry's detail fields (re-scoring never wipes
+  captured detail); `SCORE_CLEARED` clears the whole entry, detail included.
+- Submission (`to-scorecard.ts`): detail rides along only when
+  `session.detailed` — penalties default to 0 for entered holes, unrecorded
+  putts/fairway keys are omitted. Non-detailed rounds submit byte-identical
+  payloads to pre-013 rounds.
+
 ## Ordering & conflicts
 
 - `eventSeq` is a monotonic counter bumped on every ACCEPTED event; it is

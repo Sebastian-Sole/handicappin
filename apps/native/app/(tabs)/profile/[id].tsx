@@ -31,6 +31,7 @@ import { Button } from "@/components/ui/button";
 import { FormFeedback } from "@/components/ui/form-feedback";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import { H1, H2, H3 } from "@/components/ui/typography";
 import type { PaidPlan } from "@handicappin/billing-core";
 
@@ -56,6 +57,7 @@ import {
   restorePurchases,
 } from "@/lib/billing/purchase-flow";
 import { useColorMode } from "@/lib/color-mode";
+import { useDetailedScoringDefault } from "@/lib/preferences";
 import { openLegalDocument, SITE_URL } from "@/lib/legal";
 import { useDataSettled } from "@/lib/query/settle";
 import { FREE_TIER_ROUND_LIMIT } from "@/lib/scorecard";
@@ -536,6 +538,8 @@ function BillingTab({
 function SettingsTab({ userId }: { userId: string }) {
   const mode = useColorMode();
   const colors = tokens.colors[mode];
+  // "Detailed logging" default (plan 013 D3) — client-stored, saves on toggle.
+  const { detailedDefault, setDetailedDefault } = useDetailedScoringDefault();
 
   const onSignOut = async () => {
     await supabase.auth.signOut();
@@ -556,6 +560,25 @@ function SettingsTab({ userId }: { userId: string }) {
         <Text className="text-body text-muted-foreground">
           Account security and tools
         </Text>
+      </View>
+
+      {/* Scoring Section (plan 013 D3) */}
+      <View className="surface p-lg rounded-lg gap-md">
+        <H3>Scoring</H3>
+        <View className="flex-row items-center justify-between gap-sm">
+          <View className="flex-1 gap-xs">
+            <Label>Detailed logging</Label>
+            <Text className="text-body-sm text-muted-foreground">
+              Default for new rounds · overridable each time
+            </Text>
+          </View>
+          <Switch
+            testID="detailed-logging-default"
+            accessibilityLabel="Detailed logging default"
+            checked={detailedDefault}
+            onCheckedChange={setDetailedDefault}
+          />
+        </View>
       </View>
 
       <View className="surface p-lg rounded-lg gap-md">

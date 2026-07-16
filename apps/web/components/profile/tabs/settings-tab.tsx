@@ -12,6 +12,7 @@ import { FormFeedback } from "@/components/ui/form-feedback";
 import { SaveStateButton } from "@/components/ui/save-state-button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { H2, H3 } from "@/components/ui/typography";
+import { useDetailedScoringDefault } from "@/hooks/useDetailedScoringDefault";
 import type { FeedbackState } from "@/types/feedback";
 
 const subscribe = () => () => {};
@@ -25,6 +26,8 @@ export function SettingsTab() {
   const { theme, setTheme } = useTheme();
   const mounted = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
   const [feedback, setFeedback] = useState<FeedbackState | null>(null);
+  // "Detailed logging" default (plan 013 D3) — client-stored, saves on toggle.
+  const { detailedDefault, setDetailedDefault } = useDetailedScoringDefault();
 
   // Fetch email preferences on mount
   // Auth is enforced server-side by authedProcedure
@@ -115,6 +118,28 @@ export function SettingsTab() {
             </div>
           </div>
         )}
+      </div>
+
+      {/* Scoring Section (plan 013 D3) */}
+      <div className="surface p-lg">
+        <H3 className="text-heading-4 mb-md">Scoring</H3>
+        <div className="flex items-center justify-between gap-sm">
+          <div className="space-y-xs">
+            <Label htmlFor="detailed-logging-default">Detailed logging</Label>
+            <p className="text-body-sm text-muted-foreground">
+              Default for new rounds · overridable each time
+            </p>
+          </div>
+          {mounted ? (
+            <Switch
+              id="detailed-logging-default"
+              checked={detailedDefault}
+              onCheckedChange={setDetailedDefault}
+            />
+          ) : (
+            <Skeleton className="h-6 w-11 rounded-full" />
+          )}
+        </div>
       </div>
 
       {/* Theme Section */}

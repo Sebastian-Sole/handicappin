@@ -136,6 +136,23 @@ export interface PerformanceExtendedStats {
   exceptionalRounds: ExceptionalRound[];
 }
 
+/**
+ * One shot-level headline stat (plans/010). `value` is null when no data
+ * exists; `sampleSize` is the number of ROUNDS contributing data — surfaced
+ * in the UI as "based on N rounds".
+ */
+export interface ShotStat {
+  value: number | null;
+  sampleSize: number;
+}
+
+export interface ShotLevelStats {
+  puttsPerRound: ShotStat;
+  girPercentage: ShotStat;
+  firPercentage: ShotStat;
+  penaltiesPerRound: ShotStat;
+}
+
 export interface ExceptionalRound {
   roundId: number;
   courseName: string;
