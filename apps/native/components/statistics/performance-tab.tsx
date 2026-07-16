@@ -16,6 +16,7 @@ import {
   formatScore,
   formatWithSign,
   isValidNumber,
+  formatSampleSize,
 } from "@/lib/statistics/format-utils";
 import type {
   CoursePerformance,
@@ -35,11 +36,9 @@ interface PerformanceTabProps {
   bestCourse?: CoursePerformance;
 }
 
-/** "based on N rounds" subtitle for a shot-level stat card. */
-const basedOn = (stat: ShotStat): string =>
-  stat.sampleSize === 0
-    ? "no data yet"
-    : `based on ${stat.sampleSize} round${stat.sampleSize !== 1 ? "s" : ""}`;
+/** "Based on N of M rounds" subtitle for a shot-level stat card (D6). */
+const basedOn = (stat: ShotStat, totalRounds: number): string =>
+  formatSampleSize(stat.sampleSize, totalRounds);
 
 export function PerformanceTab({
   stats,
@@ -279,21 +278,21 @@ export function PerformanceTab({
               <StatCard
                 title="Putts / Round"
                 value={formatDecimal(shotLevelStats.puttsPerRound.value, 1)}
-                subtitle={basedOn(shotLevelStats.puttsPerRound)}
+                subtitle={basedOn(shotLevelStats.puttsPerRound, stats.totalRounds)}
               />
             </View>
             <View style={{ flexBasis: "45%", flexGrow: 1 }}>
               <StatCard
                 title="GIR"
                 value={formatPercentage(shotLevelStats.girPercentage.value)}
-                subtitle={basedOn(shotLevelStats.girPercentage)}
+                subtitle={basedOn(shotLevelStats.girPercentage, stats.totalRounds)}
               />
             </View>
             <View style={{ flexBasis: "45%", flexGrow: 1 }}>
               <StatCard
                 title="Fairways Hit"
                 value={formatPercentage(shotLevelStats.firPercentage.value)}
-                subtitle={basedOn(shotLevelStats.firPercentage)}
+                subtitle={basedOn(shotLevelStats.firPercentage, stats.totalRounds)}
               />
             </View>
             <View style={{ flexBasis: "45%", flexGrow: 1 }}>
@@ -303,7 +302,7 @@ export function PerformanceTab({
                   shotLevelStats.penaltiesPerRound.value,
                   1,
                 )}
-                subtitle={basedOn(shotLevelStats.penaltiesPerRound)}
+                subtitle={basedOn(shotLevelStats.penaltiesPerRound, stats.totalRounds)}
               />
             </View>
           </View>
@@ -311,16 +310,23 @@ export function PerformanceTab({
           <Card>
             <CardContent className="p-md pt-md">
               <Text className="text-body-sm text-muted-foreground">
-                No shot-level data yet. Turn on{" "}
+                No shot-level data yet. Choose{" "}
                 <Text className="text-body-sm font-medium text-foreground">
-                  Detailed scoring
+                  Track detailed stats
                 </Text>{" "}
-                when adding a round to track putts, greens in regulation,
+                when logging a round to track putts, greens in regulation,
                 fairways, and penalties.
               </Text>
             </CardContent>
           </Card>
         )}
+        {/* The anti-skew reassurance (plan 013 D6). */}
+        <Text className="text-meta text-muted-foreground mt-md">
+          Your handicap uses{" "}
+          <Text className="text-meta font-medium text-foreground">every</Text>{" "}
+          round. Detailed stats only use rounds where you logged them —
+          nothing you skip counts against you.
+        </Text>
       </StatisticsSection>
 
       {extendedStats.bestMonth ? (

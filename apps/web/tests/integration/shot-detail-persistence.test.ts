@@ -294,4 +294,83 @@ describeIfLocal("submitScorecard shot-level detail (real local Supabase)", () =>
       Number(plainRound.scoreDifferential),
     );
   }, 60_000);
+
+  test("post-round form and live-round payload shapes are byte-identical and persist identically (plan 013 D1)", async () => {
+    const dbHoles = await db
+      .select({ id: hole.id, holeNumber: hole.holeNumber })
+      .from(hole)
+      .where(eq(hole.teeId, teeId));
+    const holes = buildHoles(dbHoles);
+    const caller = buildCaller();
+
+    // The same logical detailed round captured through both UIs. The
+    // post-round form (golf-scorecard.tsx onSubmit) leaves unrecorded
+    // fields as explicit `undefined`; the live path (to-scorecard.ts)
+    // OMITS unrecorded keys. Both default penalties to 0 for entered
+    // holes. Over the wire (JSON) those must be the same bytes.
+    const formScores = Array.from({ length: 18 }, (_, i) => ({
+      strokes: 5,
+      hcpStrokes: 0,
+      putts: i === 0 ? 2 : undefined,
+      fairwayHit: i === 0 ? true : undefined,
+      penaltyStrokes: i === 3 ? 1 : 0,
+    }));
+    const liveScores = Array.from({ length: 18 }, (_, i) => ({
+      strokes: 5,
+      hcpStrokes: 0,
+      ...(i === 0 ? { putts: 2, fairwayHit: true } : {}),
+      penaltyStrokes: i === 3 ? 1 : 0,
+    }));
+    expect(JSON.stringify(formScores)).toBe(JSON.stringify(liveScores));
+
+    const formRound = await caller.submitScorecard(
+      buildScorecard(formScores, "2026-07-03T10:00:00.000Z", holes),
+    );
+    createdRoundIds.push(formRound.id);
+    const liveRound = await caller.submitScorecard(
+      buildScorecard(liveScores, "2026-07-04T10:00:00.000Z", holes),
+    );
+    createdRoundIds.push(liveRound.id);
+
+    // Persisted rows identical hole-for-hole across the two paths.
+    const byHole = new Map(dbHoles.map((h) => [h.id, h.holeNumber]));
+    const normalize = (
+      rows: (typeof score.$inferSelect)[],
+    ): Array<Record<string, unknown>> =>
+      rows
+        .map((row) => ({
+          holeNumber: byHole.get(row.holeId),
+          strokes: row.strokes,
+          putts: row.putts,
+          fairwayHit: row.fairwayHit,
+          penaltyStrokes: row.penaltyStrokes,
+        }))
+        .sort((a, b) => (a.holeNumber as number) - (b.holeNumber as number));
+    const formRows = normalize(
+      await db.select().from(score).where(eq(score.roundId, formRound.id)),
+    );
+    const liveRows = normalize(
+      await db.select().from(score).where(eq(score.roundId, liveRound.id)),
+    );
+    expect(formRows).toEqual(liveRows);
+    expect(formRows[0]).toEqual({
+      holeNumber: 1,
+      strokes: 5,
+      putts: 2,
+      fairwayHit: true,
+      penaltyStrokes: 0,
+    });
+    // Unrecorded fields land as NULL (never zero-filled) on both paths.
+    expect(formRows[1]).toEqual({
+      holeNumber: 2,
+      strokes: 5,
+      putts: null,
+      fairwayHit: null,
+      penaltyStrokes: 0,
+    });
+    expect(formRound.totalStrokes).toBe(liveRound.totalStrokes);
+    expect(Number(formRound.scoreDifferential)).toBe(
+      Number(liveRound.scoreDifferential),
+    );
+  }, 60_000);
 });

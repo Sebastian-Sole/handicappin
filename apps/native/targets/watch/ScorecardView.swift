@@ -33,7 +33,8 @@ struct ScorecardView: View {
         let isCurrent = index == session.currentHoleIndex
         return Button {
             model.selectHole(index)
-            withAnimation { tab = 0 }
+            // Jump to the SCORE face (tag 1) — tag 0 is the distance face.
+            withAnimation { tab = 1 }
         } label: {
             HStack {
                 Text("\(hole.holeNumber)")

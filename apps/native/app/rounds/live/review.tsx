@@ -23,7 +23,10 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { tokens } from "@handicappin/tokens/tokens";
 
 import { DataSettledMarker } from "@/components/data-settled";
-import { ScorecardTable } from "@/components/scorecard/scorecard-table";
+import {
+  ScorecardTable,
+  type ScoreDetail,
+} from "@/components/scorecard/scorecard-table";
 import { Button } from "@/components/ui/button";
 import { FormFeedback } from "@/components/ui/form-feedback";
 import { Input } from "@/components/ui/input";
@@ -51,7 +54,11 @@ import {
   toScorecardInput,
   type SubmitAs,
 } from "@/lib/round-session/to-scorecard";
-import { roundToNearestMinute, type Score, type Tee } from "@/lib/scorecard";
+import {
+  roundToNearestMinute,
+  type ScoreInput,
+  type Tee,
+} from "@/lib/scorecard";
 import { cn } from "@/lib/utils";
 
 type SubmitState = "idle" | "loading" | "success" | "offline" | "error";
@@ -251,10 +258,39 @@ export default function LiveRoundReviewScreen() {
     );
   };
 
-  const scores: Score[] = session.entries.map((entry) => ({
+  // The scorecard here is EDITABLE (while nothing is in flight): missed a
+  // hole out on the course? Fill it right where the eligibility message
+  // points at it, instead of bouncing back to the live pager. Edits
+  // dispatch through the same reducer as live scoring, so eligibility and
+  // the submit options recompute immediately.
+  const scores: ScoreInput[] = session.entries.map((entry) => ({
     strokes: entry.strokes ?? 0,
     hcpStrokes: 0,
+    putts: entry.putts,
+    fairwayHit: entry.fairwayHit,
+    penaltyStrokes: entry.penaltyStrokes,
   }));
+
+  const handleScoreChange = (holeIndex: number, strokes: number) => {
+    dispatch({ type: "SCORE_SET", holeIndex, strokes, at: nowIso() });
+  };
+
+  // Same patch semantics as the live screen: present key overwrites,
+  // explicit null clears, absent leaves unchanged.
+  const handleScoreDetailChange = (holeIndex: number, detail: ScoreDetail) => {
+    dispatch({
+      type: "HOLE_DETAIL_SET",
+      holeIndex,
+      ...("putts" in detail ? { putts: detail.putts ?? null } : {}),
+      ...("fairwayHit" in detail
+        ? { fairwayHit: detail.fairwayHit ?? null }
+        : {}),
+      ...("penaltyStrokes" in detail
+        ? { penaltyStrokes: detail.penaltyStrokes ?? null }
+        : {}),
+      at: nowIso(),
+    });
+  };
 
   const hasPendingSubmit =
     submitState === "offline" &&
@@ -292,8 +328,10 @@ export default function LiveRoundReviewScreen() {
         displayedHoles={session.displayedHoles}
         holeCount={session.holeCount}
         scores={scores}
-        onScoreChange={() => {}}
-        disabled
+        onScoreChange={handleScoreChange}
+        disabled={busy || parked}
+        detailedScoring={session.detailed === true}
+        onScoreDetailChange={handleScoreDetailChange}
       />
 
       <View className="rounded-lg border border-border bg-card p-md gap-md">

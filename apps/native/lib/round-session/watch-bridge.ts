@@ -141,6 +141,20 @@ export function startWatchBridge(deps: WatchBridgeDeps): () => void {
     WatchBridge.publishContext(JSON.stringify(frame));
   };
 
+  // Store-driven publishes are coalesced: encoding the full session twice
+  // and crossing the native bridge on EVERY dispatch made each logging tap
+  // pay for a watch push. A short trailing timer batches tap bursts; the
+  // publish reads the store at fire time, so the watch always gets the
+  // latest snapshot (frames are complete — skipped intermediates are moot).
+  let publishTimer: ReturnType<typeof setTimeout> | null = null;
+  const schedulePublish = () => {
+    if (publishTimer) return;
+    publishTimer = setTimeout(() => {
+      publishTimer = null;
+      if (!disposed) publish();
+    }, 150);
+  };
+
   /** Fetch the home-screen stats the same way the phone home does (profile
       + rounds + count). Failures keep the previous cache — stale stats on
       the wrist beat an empty home. Returns whether the cache was updated. */
@@ -594,7 +608,7 @@ export function startWatchBridge(deps: WatchBridgeDeps): () => void {
   // "submitted" kicks off the index-recalculation watch.
   let recalcSeenSessionId: string | null = null;
   const storeUnsub = subscribe(() => {
-    publish();
+    schedulePublish();
     const owned = ownedSession(deps.getUserId());
     if (owned?.status === "submitted" && owned.id !== recalcSeenSessionId) {
       recalcSeenSessionId = owned.id;
@@ -607,6 +621,7 @@ export function startWatchBridge(deps: WatchBridgeDeps): () => void {
 
   return () => {
     disposed = true;
+    if (publishTimer) clearTimeout(publishTimer);
     stopRecalcWatch();
     frameSub?.remove();
     reachSub?.remove();

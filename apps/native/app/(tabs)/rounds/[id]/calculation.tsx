@@ -24,6 +24,7 @@ import { tokens } from "@handicappin/tokens/tokens";
 
 import { CalculationStep } from "@/components/round-calculation/calculation-step";
 import { HolesTable } from "@/components/round-calculation/holes-table";
+import { ScorecardAccordion } from "@/components/round-calculation/scorecard-accordion";
 import { CalculationStepper } from "@/components/round-calculation/stepper";
 import { DataSettledMarker } from "@/components/data-settled";
 import { Badge } from "@/components/ui/badge";
@@ -195,6 +196,19 @@ function CalculationContent({
           ) : null}
         </CardHeader>
       </Card>
+
+      {/* Scorecard viewer (plan 013 D2): read-only hole cards with
+          Par · SI · Distance and per-hole detail where captured. */}
+      <View className="gap-md">
+        <H2>Scorecard</H2>
+        <Text className="text-body-sm text-muted-foreground">
+          Every hole you played — tap a hole to see putts, fairway, and
+          penalties where you logged them.
+        </Text>
+        <ScorecardAccordion scorecard={scorecard} />
+      </View>
+
+      <View className="h-px bg-border" />
 
       <CalculationStepper steps={CALCULATION_STEPS} />
 

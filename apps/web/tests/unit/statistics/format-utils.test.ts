@@ -9,6 +9,7 @@ import {
   formatGolfAge,
   formatStrokesPerHole,
   formatWithSign,
+  formatSampleSize,
 } from "@/lib/statistics/format-utils";
 
 describe("Format Utils - Safe Number Formatting", () => {
@@ -219,6 +220,22 @@ describe("Format Utils - Safe Number Formatting", () => {
       expect(formatWithSign(null)).toBe("--");
       expect(formatWithSign(undefined)).toBe("--");
       expect(formatWithSign(NaN)).toBe("--");
+    });
+  });
+
+  describe("formatSampleSize (plan 013 D6)", () => {
+    test("shows 'Based on N of M rounds'", () => {
+      expect(formatSampleSize(6, 20)).toBe("Based on 6 of 20 rounds");
+      expect(formatSampleSize(1, 1)).toBe("Based on 1 of 1 round");
+    });
+
+    test("nudges when no round has the data yet", () => {
+      expect(formatSampleSize(0, 20)).toBe("Track a few rounds to unlock this");
+      expect(formatSampleSize(0, 0)).toBe("Track a few rounds to unlock this");
+    });
+
+    test("never shows a sample larger than the total", () => {
+      expect(formatSampleSize(5, 3)).toBe("Based on 5 of 5 rounds");
     });
   });
 });

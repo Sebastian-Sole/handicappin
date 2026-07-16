@@ -11,6 +11,7 @@ import {
   formatDecimal,
   formatDifferential,
   formatPercentage,
+  formatSampleSize,
   formatScore,
   formatWithSign,
   isValidNumber,
@@ -30,11 +31,9 @@ interface PerformanceSectionProps {
   bestCourse?: CoursePerformance;
 }
 
-/** "based on N rounds" subtitle for a shot-level stat card. */
-const basedOn = (stat: ShotStat): string =>
-  stat.sampleSize === 0
-    ? "no data yet"
-    : `based on ${stat.sampleSize} round${stat.sampleSize !== 1 ? "s" : ""}`;
+/** "Based on N of M rounds" subtitle for a shot-level stat card (D6). */
+const basedOn = (stat: ShotStat, totalRounds: number): string =>
+  formatSampleSize(stat.sampleSize, totalRounds);
 
 export function PerformanceSection({
   stats,
@@ -282,7 +281,7 @@ export function PerformanceSection({
                   {formatDecimal(shotLevelStats.puttsPerRound.value, 1)}
                 </p>
                 <p className="text-meta text-muted-foreground">
-                  {basedOn(shotLevelStats.puttsPerRound)}
+                  {basedOn(shotLevelStats.puttsPerRound, stats.totalRounds)}
                 </p>
               </CardContent>
             </Card>
@@ -293,7 +292,7 @@ export function PerformanceSection({
                   {formatPercentage(shotLevelStats.girPercentage.value)}
                 </p>
                 <p className="text-meta text-muted-foreground">
-                  {basedOn(shotLevelStats.girPercentage)}
+                  {basedOn(shotLevelStats.girPercentage, stats.totalRounds)}
                 </p>
               </CardContent>
             </Card>
@@ -306,7 +305,7 @@ export function PerformanceSection({
                   {formatPercentage(shotLevelStats.firPercentage.value)}
                 </p>
                 <p className="text-meta text-muted-foreground">
-                  {basedOn(shotLevelStats.firPercentage)}
+                  {basedOn(shotLevelStats.firPercentage, stats.totalRounds)}
                 </p>
               </CardContent>
             </Card>
@@ -319,7 +318,7 @@ export function PerformanceSection({
                   {formatDecimal(shotLevelStats.penaltiesPerRound.value, 1)}
                 </p>
                 <p className="text-meta text-muted-foreground">
-                  {basedOn(shotLevelStats.penaltiesPerRound)}
+                  {basedOn(shotLevelStats.penaltiesPerRound, stats.totalRounds)}
                 </p>
               </CardContent>
             </Card>
@@ -328,16 +327,23 @@ export function PerformanceSection({
           <Card>
             <CardContent density="compact">
               <p className="text-body-sm text-muted-foreground">
-                No shot-level data yet. Turn on{" "}
+                No shot-level data yet. Choose{" "}
                 <span className="font-medium text-foreground">
-                  Detailed scoring
+                  Track detailed stats
                 </span>{" "}
-                when adding a round to track putts, greens in regulation,
+                when logging a round to track putts, greens in regulation,
                 fairways, and penalties.
               </p>
             </CardContent>
           </Card>
         )}
+        {/* The anti-skew reassurance (plan 013 D6). */}
+        <p className="text-meta text-muted-foreground mt-md">
+          Your handicap uses{" "}
+          <span className="font-medium text-foreground">every</span> round.
+          Detailed stats only use rounds where you logged them — nothing you
+          skip counts against you.
+        </p>
       </StatisticsSection>
 
       {/* Best Month Section (if available) */}

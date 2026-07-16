@@ -28,6 +28,10 @@ const holeEntrySchema = z.object({
   strokes: z.number().nullable(),
   updatedAt: z.string(),
   location: geoStampSchema.optional(),
+  // Hole-out detail (plan 013) — optional so pre-013 payloads decode.
+  putts: z.number().nullish(),
+  fairwayHit: z.boolean().nullish(),
+  penaltyStrokes: z.number().nullish(),
 });
 
 /** Loose hole/tee shapes: required keys checked, extra keys passed through. */
@@ -68,6 +72,8 @@ const sessionV1Schema = z.object({
   tee: looseTeeSchema,
   holeCount: z.literal(9).or(z.literal(18)),
   nineHoleSection: z.enum(["front", "back"]).optional(),
+  // Detail tracking flag (plan 013 D3) — optional, pre-013 payloads decode.
+  detailed: z.boolean().optional(),
   displayedHoles: z.array(looseHoleSchema),
   currentHoleIndex: z.number().int().min(0),
   entries: z.array(holeEntrySchema),

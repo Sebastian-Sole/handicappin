@@ -64,7 +64,12 @@ export function subscribe(listener: () => void): () => void {
   };
 }
 
-const CONTENT_EVENTS = new Set(["SCORE_SET", "SCORE_CLEARED", "NOTES_SET"]);
+const CONTENT_EVENTS = new Set([
+  "SCORE_SET",
+  "SCORE_CLEARED",
+  "HOLE_DETAIL_SET",
+  "NOTES_SET",
+]);
 
 export function dispatch(event: SessionEvent): RoundSession | null {
   const current = hydrate();

@@ -23,6 +23,7 @@ import { tokens } from "@handicappin/tokens/tokens";
 import { AddCourseModal } from "@/components/scorecard/add-course-modal";
 import { AddTeeModal } from "@/components/scorecard/add-tee-modal";
 import { CoursePicker } from "@/components/scorecard/course-picker";
+import { DetailedScoringChoice } from "@/components/scorecard/detailed-scoring-choice";
 import {
   ScorecardTable,
   type ScoreDetail,
@@ -34,7 +35,6 @@ import { Button } from "@/components/ui/button";
 import { FormFeedback } from "@/components/ui/form-feedback";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
 import { H1 } from "@/components/ui/typography";
 import { analytics } from "@/lib/analytics";
 import { profileQueryOptions } from "@/lib/api/procedures/auth";
@@ -47,6 +47,11 @@ import {
 } from "@/lib/api/procedures/scorecard";
 import { useSession } from "@/lib/auth/session-provider";
 import { useColorMode } from "@/lib/color-mode";
+import { clampDetailToStrokes } from "@/lib/hole-detail";
+import {
+  readDetailedScoringDefault,
+  useDetailedScoringDefault,
+} from "@/lib/preferences";
 import { useDataSettled } from "@/lib/query/settle";
 import {
   FREE_TIER_ROUND_LIMIT,
@@ -110,9 +115,14 @@ export default function AddRoundScreen() {
     "front",
   );
   const [scores, setScores] = useState<ScoreInput[]>(emptyScores());
-  // "Detailed scoring" (plans/010): opt-in putts/fairway/penalty entry.
-  // Off by default every visit (mirrors web: no persisted preference).
-  const [detailedScoring, setDetailedScoring] = useState(false);
+  // "Detailed scoring" opt-in (plan 013 D3): pre-selected from the
+  // persisted Settings default, overridable per round; "Remember my
+  // choice" writes the override back.
+  const { setDetailedDefault } = useDetailedScoringDefault();
+  const [detailedScoring, setDetailedScoring] = useState(
+    readDetailedScoringDefault,
+  );
+  const [rememberChoice, setRememberChoice] = useState(true);
   const [notes, setNotes] = useState("");
   const [teeTime, setTeeTime] = useState(() =>
     roundToNearestMinute(new Date()).toISOString(),
@@ -220,8 +230,10 @@ export default function AddRoundScreen() {
   const handleScoreChange = (holeIndex: number, strokes: number) => {
     setScores((prev) => {
       const next = [...prev];
-      // Preserve any shot-level detail already entered for this hole.
-      next[holeIndex] = { ...next[holeIndex], strokes, hcpStrokes: 0 };
+      // Preserve any shot-level detail already entered for this hole, but
+      // re-fit it to the new score (putts + penalties ≤ strokes − 1).
+      const entry = { ...next[holeIndex], strokes, hcpStrokes: 0 };
+      next[holeIndex] = { ...entry, ...clampDetailToStrokes(entry, strokes) };
       return next;
     });
   };
@@ -236,7 +248,13 @@ export default function AddRoundScreen() {
 
   const handleDetailedScoringToggle = (enabled: boolean) => {
     setDetailedScoring(enabled);
+    if (rememberChoice) setDetailedDefault(enabled);
     analytics.capture("detailed_scoring_toggled", { enabled });
+  };
+
+  const handleRememberChange = (remember: boolean) => {
+    setRememberChoice(remember);
+    if (remember) setDetailedDefault(detailedScoring);
   };
 
   const busy = submitState === "loading" || submitState === "success";
@@ -380,14 +398,6 @@ export default function AddRoundScreen() {
         />
       ) : null}
 
-      {feedback ? (
-        <FormFeedback
-          type={feedback.type}
-          message={feedback.message}
-          onClose={() => setFeedback(null)}
-        />
-      ) : null}
-
       <View className="rounded-lg border border-border bg-card p-md gap-md">
         <View className="gap-sm">
           <Label>Course</Label>
@@ -514,18 +524,13 @@ export default function AddRoundScreen() {
           </View>
         </View>
 
-        <View className="flex-row items-center justify-between gap-sm">
-          <View className="flex-1 gap-xs">
-            <Label>Detailed scoring</Label>
-            <Text className="text-body-sm text-muted-foreground">
-              Track putts, fairways, and penalties per hole
-            </Text>
-          </View>
-          <Switch
-            testID="detailed-scoring-toggle"
-            accessibilityLabel="Detailed scoring"
-            checked={detailedScoring}
-            onCheckedChange={handleDetailedScoringToggle}
+        <View className="gap-sm">
+          <Label>Detail tracking</Label>
+          <DetailedScoringChoice
+            value={detailedScoring}
+            onChange={handleDetailedScoringToggle}
+            remember={rememberChoice}
+            onRememberChange={handleRememberChange}
             disabled={busy}
           />
         </View>
@@ -563,6 +568,16 @@ export default function AddRoundScreen() {
           editable={!busy}
         />
       </View>
+
+      {/* Feedback sits with the submit action it talks about (mirrors web's
+          golf-scorecard placement) — not at the top of a scrolling screen. */}
+      {feedback ? (
+        <FormFeedback
+          type={feedback.type}
+          message={feedback.message}
+          onClose={() => setFeedback(null)}
+        />
+      ) : null}
 
       <Button
         testID="submit-round"

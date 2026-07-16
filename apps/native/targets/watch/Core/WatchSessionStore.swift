@@ -111,6 +111,36 @@ public final class WatchSessionStore {
         }
     }
 
+    /// Hole-out commit (plan 013 D4/D5): score first, then the detail —
+    /// the reducer bounds detail against the hole's score (putts +
+    /// penalties ≤ strokes − 1), so the score must land before the detail
+    /// is judged. Both events carry the captured holeIndex, so the
+    /// auto-advance inside scoreCurrentHole can't misdirect the detail.
+    /// The watch's Next is an EXPLICIT advance: unlike the phone's
+    /// auto-advance (first score only), it always moves to the next
+    /// unscored hole, including after an edit.
+    public func commitCurrentHole(
+        strokes: Int, putts: Int?, fairwayHit: Bool?, penaltyStrokes: Int?, at: String
+    ) {
+        guard let s = session else { return }
+        let index = s.currentHoleIndex
+        scoreCurrentHole(strokes: strokes, at: at)
+        dispatch(
+            .holeDetailSet(
+                holeIndex: index,
+                putts: putts,
+                fairwayHit: fairwayHit,
+                penaltyStrokes: penaltyStrokes,
+                at: at
+            ))
+        if let after = session, after.currentHoleIndex == index {
+            let target = nextHoleAfterScore(after, justScoredIndex: index)
+            if target != index {
+                dispatch(.holeSelected(holeIndex: target, at: at))
+            }
+        }
+    }
+
     public func selectHole(_ index: Int, at: String) {
         dispatch(.holeSelected(holeIndex: index, at: at))
     }

@@ -123,3 +123,18 @@ export function formatWithSign(value: number | null | undefined, precision: numb
   const prefix = value > 0 ? "+" : "";
   return `${prefix}${value.toFixed(safePrecision)}`;
 }
+
+/**
+ * Sample-size subtitle for a shot-level stat (plan 013 D6): honest about
+ * how many of the player's rounds actually contain the field, so starting
+ * to track today never feels like it corrupts existing averages.
+ * Returns the "unlock" nudge when no round has the data yet.
+ */
+export function formatSampleSize(
+  sampleSize: number,
+  totalRounds: number
+): string {
+  if (sampleSize <= 0) return "Track a few rounds to unlock this";
+  const total = Math.max(totalRounds, sampleSize);
+  return `Based on ${sampleSize} of ${total} round${total !== 1 ? "s" : ""}`;
+}

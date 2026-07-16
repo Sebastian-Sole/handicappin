@@ -6,6 +6,7 @@ import { Card, CardHeader } from "./ui/card";
 import { Badge } from "./ui/badge";
 import { CalculationStepper } from "./ui/calculation-stepper";
 import HolesTable from "./round/calculation/holesTable";
+import ScorecardAccordion from "./round/scorecard-accordion";
 import CourseHandicapStep from "./round/calculation/steps/course-handicap-step";
 import AdjustedScoresStep from "./round/calculation/steps/adjusted-scores-step";
 import ScoreDifferentialStep from "./round/calculation/steps/score-differential-step";
@@ -83,6 +84,19 @@ const RoundCalculationContent = () => {
           )}
         </CardHeader>
       </Card>
+
+      {/* Scorecard viewer (plan 013 D2): read-only hole cards with
+          Par · SI · Distance and per-hole detail where captured. */}
+      <section className="space-y-md">
+        <H2>Scorecard</H2>
+        <Muted>
+          Every hole you played — tap a hole to see putts, fairway, and
+          penalties where you logged them.
+        </Muted>
+        <ScorecardAccordion scorecard={scorecard} />
+      </section>
+
+      <Separator />
 
       {/* Stepper Progress */}
       <CalculationStepper steps={CALCULATION_STEPS} className="py-md" />

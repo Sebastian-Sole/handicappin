@@ -5,9 +5,7 @@
  * course + tee approval, and the FROZEN tee snapshot goes up as teePlayed
  * (the server backfills holeIds positionally from it).
  */
-import type { Score } from "@handicappin/handicap-core";
-
-import type { ScorecardInput } from "@/lib/scorecard";
+import type { ScoreInput, ScorecardInput } from "@/lib/scorecard";
 import type { RoundSession } from "@/lib/round-session/types";
 
 export type SubmitAs = "18" | "front9" | "back9" | "nine";
@@ -22,14 +20,29 @@ const entryScores = (
   s: RoundSession,
   start: number,
   end: number,
-): Score[] =>
+): ScoreInput[] =>
   s.entries.slice(start, end).map((entry, offset) => {
     if (entry.strokes === null) {
       throw new Error(
         `Hole ${s.displayedHoles[start + offset]?.holeNumber ?? start + offset + 1} has no score`,
       );
     }
-    return { strokes: entry.strokes, hcpStrokes: 0 };
+    // Detail rides along only for detailed rounds (plan 013), mirroring
+    // add.tsx exactly: penalties default to 0 for entered holes (the
+    // stepper means "0 unless stated"); putts/fairway are OMITTED when not
+    // recorded (keys must survive the pendingSubmit JSON round-trip, so
+    // never an explicit undefined). Non-detailed rounds strip everything —
+    // byte-identical to the pre-013 payload.
+    if (!s.detailed) {
+      return { strokes: entry.strokes, hcpStrokes: 0 };
+    }
+    return {
+      strokes: entry.strokes,
+      hcpStrokes: 0,
+      ...(entry.putts != null ? { putts: entry.putts } : {}),
+      ...(entry.fairwayHit != null ? { fairwayHit: entry.fairwayHit } : {}),
+      penaltyStrokes: entry.penaltyStrokes ?? 0,
+    };
   });
 
 export function toScorecardInput(
@@ -38,7 +51,7 @@ export function toScorecardInput(
 ): ScorecardInput {
   const { teeTime, submitAs } = opts;
 
-  let scores: Score[];
+  let scores: ScoreInput[];
   let nineHoleSection: "front" | "back" | undefined;
 
   switch (submitAs) {

@@ -1,7 +1,9 @@
 /**
  * Bottom bar: progress toward a submittable round and the Finish action.
  * Turns primary once the round can be submitted (18 full, or a complete
- * nine); before that it shows progress and stays secondary.
+ * nine); before that it shows progress and stays secondary. Always
+ * rendered — appearing only after the first score would shift the whole
+ * screen up mid-round.
  */
 import { Text, View } from "react-native";
 
@@ -21,8 +23,6 @@ export function FinishBar({
   holeCount,
   onFinish,
 }: FinishBarProps) {
-  if (scored === 0) return null;
-
   const eligible = eligibility.as18 || eligibility.asNine !== null;
 
   return (
@@ -34,6 +34,9 @@ export function FinishBar({
             ? `${eligibility.asNine === "front" ? "Front" : "Back"} 9 complete`
             : `${scored}/${holeCount} scored`}
       </Text>
+      {/* Always tappable: the review screen explains eligibility and its
+          scorecard is editable, so heading there early is a valid path
+          (and the watch E2E discard flow finishes a 0-scored round). */}
       <Button
         testID="live-finish"
         variant={eligible ? "default" : "outline"}

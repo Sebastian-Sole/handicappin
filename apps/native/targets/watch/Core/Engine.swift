@@ -10,6 +10,8 @@ import Foundation
 
 public let MIN_STROKES = 1
 public let MAX_STROKES = 30
+public let MAX_PUTTS = 20
+public let MAX_PENALTIES = 10
 
 private func clampStrokes(_ strokes: Double) -> Int {
     // JS Math.round rounds half toward +infinity; inputs are clamped to
@@ -41,7 +43,19 @@ public func applyEvent(_ s: RoundSession, _ e: SessionEvent) -> RoundSession? {
         guard s.entries.indices.contains(holeIndex) else { return nil }
         if s.entries[holeIndex].strokes == clamped { return nil }
         var next = accept(s, at)
-        next.entries[holeIndex] = HoleEntry(strokes: clamped, updatedAt: at, location: location)
+        // Preserve hole-out detail on a score edit (mirror of engine.ts),
+        // re-fit to the new score: putts + penalties ≤ strokes − 1 (putts
+        // keep priority).
+        var entry = s.entries[holeIndex]
+        entry.strokes = clamped
+        entry.updatedAt = at
+        entry.location = location
+        let budget = max(0, clamped - 1)
+        if let putts = entry.putts { entry.putts = min(putts, budget) }
+        if let pen = entry.penaltyStrokes {
+            entry.penaltyStrokes = min(pen, budget - (entry.putts ?? 0))
+        }
+        next.entries[holeIndex] = entry
         return next
 
     case let .scoreCleared(holeIndex, at):
@@ -49,7 +63,38 @@ public func applyEvent(_ s: RoundSession, _ e: SessionEvent) -> RoundSession? {
         guard s.entries.indices.contains(holeIndex) else { return nil }
         if s.entries[holeIndex].strokes == nil { return nil }
         var next = accept(s, at)
+        // Clearing a score clears the whole hole, detail included.
         next.entries[holeIndex] = HoleEntry(strokes: nil, updatedAt: at)
+        return next
+
+    case let .holeDetailSet(holeIndex, putts, fairwayHit, penaltyStrokes, at):
+        guard s.status == .active, inRange(s, holeIndex) else { return nil }
+        guard s.entries.indices.contains(holeIndex) else { return nil }
+        // The watch always sends the FULL patch (see Models.swift): every
+        // field is applied, nil = clear. Numeric fields are clamped exactly
+        // like the phone reducer (0–20 putts, 0–10 penalties).
+        let current = s.entries[holeIndex]
+        var entry = current
+        entry.putts = putts.map { min(MAX_PUTTS, max(0, $0)) }
+        entry.fairwayHit = fairwayHit
+        entry.penaltyStrokes = penaltyStrokes.map { min(MAX_PENALTIES, max(0, $0)) }
+        // A scored hole also bounds detail: putts + penalties ≤ strokes − 1
+        // (putts keep priority) — mirror of engine.ts.
+        if let strokes = current.strokes {
+            let budget = max(0, strokes - 1)
+            if let p = entry.putts { entry.putts = min(p, budget) }
+            if let pen = entry.penaltyStrokes {
+                entry.penaltyStrokes = min(pen, budget - (entry.putts ?? 0))
+            }
+        }
+        if entry.putts == current.putts,
+           entry.fairwayHit == current.fairwayHit,
+           entry.penaltyStrokes == current.penaltyStrokes {
+            return nil
+        }
+        entry.updatedAt = at
+        var next = accept(s, at)
+        next.entries[holeIndex] = entry
         return next
 
     case let .holeSelected(holeIndex, at):

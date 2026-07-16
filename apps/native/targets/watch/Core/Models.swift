@@ -77,15 +77,31 @@ public struct HoleEntry: Codable, Equatable, Sendable {
     public var strokes: Int?
     public var updatedAt: String
     public var location: GeoStamp?
+    /// Shot-level detail captured at hole-out (plan 013). nil = not
+    /// recorded — the wire may carry the key as null or omit it; both
+    /// decode to nil.
+    public var putts: Int?
+    public var fairwayHit: Bool?
+    public var penaltyStrokes: Int?
 
-    public init(strokes: Int?, updatedAt: String, location: GeoStamp? = nil) {
+    public init(
+        strokes: Int?,
+        updatedAt: String,
+        location: GeoStamp? = nil,
+        putts: Int? = nil,
+        fairwayHit: Bool? = nil,
+        penaltyStrokes: Int? = nil
+    ) {
         self.strokes = strokes
         self.updatedAt = updatedAt
         self.location = location
+        self.putts = putts
+        self.fairwayHit = fairwayHit
+        self.penaltyStrokes = penaltyStrokes
     }
 
     enum CodingKeys: String, CodingKey {
-        case strokes, updatedAt, location
+        case strokes, updatedAt, location, putts, fairwayHit, penaltyStrokes
     }
 
     public init(from decoder: Decoder) throws {
@@ -93,10 +109,14 @@ public struct HoleEntry: Codable, Equatable, Sendable {
         strokes = try c.decodeIfPresent(Int.self, forKey: .strokes)
         updatedAt = try c.decode(String.self, forKey: .updatedAt)
         location = try c.decodeIfPresent(GeoStamp.self, forKey: .location)
+        putts = try c.decodeIfPresent(Int.self, forKey: .putts)
+        fairwayHit = try c.decodeIfPresent(Bool.self, forKey: .fairwayHit)
+        penaltyStrokes = try c.decodeIfPresent(Int.self, forKey: .penaltyStrokes)
     }
 
     // codec.ts requires `strokes` PRESENT (null when unscored); Swift's
     // synthesized encoder would drop the key, so encode the null explicitly.
+    // Detail keys are nullish in codec.ts — omit when nil.
     public func encode(to encoder: Encoder) throws {
         var c = encoder.container(keyedBy: CodingKeys.self)
         if let strokes {
@@ -106,6 +126,9 @@ public struct HoleEntry: Codable, Equatable, Sendable {
         }
         try c.encode(updatedAt, forKey: .updatedAt)
         try c.encodeIfPresent(location, forKey: .location)
+        try c.encodeIfPresent(putts, forKey: .putts)
+        try c.encodeIfPresent(fairwayHit, forKey: .fairwayHit)
+        try c.encodeIfPresent(penaltyStrokes, forKey: .penaltyStrokes)
     }
 }
 
@@ -122,6 +145,9 @@ public struct RoundSession: Codable, Equatable, Sendable {
     public var tee: SessionTee
     public var holeCount: Int
     public var nineHoleSection: NineHoleSection?
+    /// Detail tracking for this round (plan 013 D3). Absent = false —
+    /// optional so pre-013 snapshots decode unchanged.
+    public var detailed: Bool?
     public var displayedHoles: [SessionHole]
     public var currentHoleIndex: Int
     public var entries: [HoleEntry]
@@ -139,6 +165,7 @@ public struct RoundSession: Codable, Equatable, Sendable {
         tee: SessionTee,
         holeCount: Int,
         nineHoleSection: NineHoleSection? = nil,
+        detailed: Bool? = nil,
         displayedHoles: [SessionHole],
         currentHoleIndex: Int,
         entries: [HoleEntry],
@@ -155,11 +182,15 @@ public struct RoundSession: Codable, Equatable, Sendable {
         self.tee = tee
         self.holeCount = holeCount
         self.nineHoleSection = nineHoleSection
+        self.detailed = detailed
         self.displayedHoles = displayedHoles
         self.currentHoleIndex = currentHoleIndex
         self.entries = entries
         self.notes = notes
     }
+
+    /// Convenience: whether this round tracks hole-out detail.
+    public var isDetailed: Bool { detailed ?? false }
 }
 
 /// types.ts SessionEvent union. `strokes` stays Double through the wire so
@@ -167,6 +198,13 @@ public struct RoundSession: Codable, Equatable, Sendable {
 public enum SessionEvent: Equatable, Sendable {
     case scoreSet(holeIndex: Int, strokes: Double, at: String, location: GeoStamp? = nil)
     case scoreCleared(holeIndex: Int, at: String)
+    /// Hole-out detail patch (plan 013). The watch always sends the FULL
+    /// patch (all three keys present; nil encodes as explicit JSON null =
+    /// clear) — the TS contract's absent-key/"leave unchanged" form is
+    /// never produced on this side.
+    case holeDetailSet(
+        holeIndex: Int, putts: Int?, fairwayHit: Bool?, penaltyStrokes: Int?, at: String
+    )
     case holeSelected(holeIndex: Int, at: String)
     case notesSet(notes: String, at: String)
     case finishStarted(at: String)
@@ -177,6 +215,7 @@ public enum SessionEvent: Equatable, Sendable {
 extension SessionEvent: Codable {
     enum CodingKeys: String, CodingKey {
         case type, holeIndex, strokes, at, location, notes
+        case putts, fairwayHit, penaltyStrokes
     }
 
     public init(from decoder: Decoder) throws {
@@ -193,6 +232,14 @@ extension SessionEvent: Codable {
             )
         case "SCORE_CLEARED":
             self = .scoreCleared(holeIndex: try c.decode(Int.self, forKey: .holeIndex), at: at)
+        case "HOLE_DETAIL_SET":
+            self = .holeDetailSet(
+                holeIndex: try c.decode(Int.self, forKey: .holeIndex),
+                putts: try c.decodeIfPresent(Int.self, forKey: .putts),
+                fairwayHit: try c.decodeIfPresent(Bool.self, forKey: .fairwayHit),
+                penaltyStrokes: try c.decodeIfPresent(Int.self, forKey: .penaltyStrokes),
+                at: at
+            )
         case "HOLE_SELECTED":
             self = .holeSelected(holeIndex: try c.decode(Int.self, forKey: .holeIndex), at: at)
         case "NOTES_SET":
@@ -229,6 +276,14 @@ extension SessionEvent: Codable {
         case let .scoreCleared(holeIndex, at):
             try c.encode("SCORE_CLEARED", forKey: .type)
             try c.encode(holeIndex, forKey: .holeIndex)
+            try c.encode(at, forKey: .at)
+        case let .holeDetailSet(holeIndex, putts, fairwayHit, penaltyStrokes, at):
+            try c.encode("HOLE_DETAIL_SET", forKey: .type)
+            try c.encode(holeIndex, forKey: .holeIndex)
+            // Full patch: every key present; nil = explicit null (clear).
+            if let putts { try c.encode(putts, forKey: .putts) } else { try c.encodeNil(forKey: .putts) }
+            if let fairwayHit { try c.encode(fairwayHit, forKey: .fairwayHit) } else { try c.encodeNil(forKey: .fairwayHit) }
+            if let penaltyStrokes { try c.encode(penaltyStrokes, forKey: .penaltyStrokes) } else { try c.encodeNil(forKey: .penaltyStrokes) }
             try c.encode(at, forKey: .at)
         case let .holeSelected(holeIndex, at):
             try c.encode("HOLE_SELECTED", forKey: .type)

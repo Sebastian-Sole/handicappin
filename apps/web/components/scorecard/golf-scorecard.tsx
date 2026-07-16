@@ -47,12 +47,14 @@ import {
   scorecardSchema,
   Tee,
 } from "@/types/scorecard-input";
-import { Switch } from "@/components/ui/switch";
 import { Textarea } from "../ui/textarea";
+import { DetailedScoringChoice } from "./detailed-scoring-choice";
+import { useDetailedScoringDefault } from "@/hooks/useDetailedScoringDefault";
 import { TeeDialog } from "./tee-dialog";
 import { FormFeedback } from "../ui/form-feedback";
 import { getTeeKey, useTeeManagement } from "@/hooks/useTeeManagement";
 import { ScorecardTable, type ScoreDetail } from "./scorecard-table";
+import { clampDetailToStrokes } from "@/lib/scorecard/hole-detail";
 import {
   getDisplayedHoles,
   roundToNearestMinute,
@@ -110,10 +112,20 @@ export default function GolfScorecard({ profile, access }: GolfScorecardProps) {
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [addCourseDialogOpen, setAddCourseDialogOpen] = useState(false);
-  // "Detailed scoring" (plans/010): opt-in putts/fairway/penalty entry.
-  // Off by default every visit — the form persists no other UI state, and
-  // the preference deliberately has no DB column.
+  // "Detailed scoring" opt-in (plan 013 D3): pre-selected from the
+  // persisted Settings default (client-stored, no DB column), overridable
+  // per round; "Remember my choice" writes the override back.
+  const { detailedDefault, setDetailedDefault, hydrated } =
+    useDetailedScoringDefault();
   const [detailedScoring, setDetailedScoring] = useState(false);
+  const [rememberChoice, setRememberChoice] = useState(true);
+  const [choiceTouched, setChoiceTouched] = useState(false);
+  useEffect(() => {
+    if (hydrated && !choiceTouched) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- pre-select from localStorage after hydration (SSR-safe)
+      setDetailedScoring(detailedDefault);
+    }
+  }, [hydrated, detailedDefault, choiceTouched]);
 
   // Form setup
   const form = useForm<Scorecard>({
@@ -293,8 +305,9 @@ export default function GolfScorecard({ profile, access }: GolfScorecardProps) {
   const handleScoreChange = (holeIndex: number, score: number) => {
     const currentScores = form.getValues("scores");
     const newScores = [...currentScores];
-    newScores[holeIndex] = {
-      // Preserve any shot-level detail already entered for this hole.
+    const entry = {
+      // Preserve any shot-level detail already entered for this hole, but
+      // re-fit it to the new score (putts + penalties ≤ strokes − 1).
       ...newScores[holeIndex],
       id: undefined,
       roundId: undefined,
@@ -302,6 +315,7 @@ export default function GolfScorecard({ profile, access }: GolfScorecardProps) {
       strokes: score,
       hcpStrokes: 0,
     };
+    newScores[holeIndex] = { ...entry, ...clampDetailToStrokes(entry, score) };
     form.setValue("scores", newScores);
   };
 
@@ -313,8 +327,15 @@ export default function GolfScorecard({ profile, access }: GolfScorecardProps) {
   };
 
   const handleDetailedScoringToggle = (enabled: boolean) => {
+    setChoiceTouched(true);
     setDetailedScoring(enabled);
+    if (rememberChoice) setDetailedDefault(enabled);
     analytics.capture("detailed_scoring_toggled", { enabled });
+  };
+
+  const handleRememberChange = (remember: boolean) => {
+    setRememberChoice(remember);
+    if (remember) setDetailedDefault(detailedScoring);
   };
 
   const displayedHoles = useMemo(() => {
@@ -851,29 +872,21 @@ export default function GolfScorecard({ profile, access }: GolfScorecardProps) {
                       </div>
                     )}
                     <div className="space-y-sm">
-                      <div className="flex items-center justify-between gap-sm">
-                        <div className="space-y-xs">
-                          <Label htmlFor="detailed-scoring">
-                            Detailed scoring
-                          </Label>
-                          <p className="text-body-sm text-muted-foreground">
-                            Track putts, fairways, and penalties per hole
-                          </p>
-                        </div>
-                        {isMounted ? (
-                          <Switch
-                            id="detailed-scoring"
-                            checked={detailedScoring}
-                            onCheckedChange={handleDetailedScoringToggle}
-                            disabled={
-                              submitState === "loading" ||
-                              submitState === "success"
-                            }
-                          />
-                        ) : (
-                          <Skeleton className="h-6 w-11" />
-                        )}
-                      </div>
+                      <Label>Detail tracking</Label>
+                      {isMounted ? (
+                        <DetailedScoringChoice
+                          value={detailedScoring}
+                          onChange={handleDetailedScoringToggle}
+                          remember={rememberChoice}
+                          onRememberChange={handleRememberChange}
+                          disabled={
+                            submitState === "loading" ||
+                            submitState === "success"
+                          }
+                        />
+                      ) : (
+                        <Skeleton className="h-32 w-full" />
+                      )}
                     </div>
                     <div className="space-y-sm">
                       <Label htmlFor="notes">Notes</Label>

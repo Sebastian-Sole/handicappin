@@ -1,4 +1,4 @@
-import { Fragment, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import {
   Table,
   TableBody,
@@ -13,6 +13,7 @@ import { Hole, Score, Tee } from "@/types/scorecard-input";
 import { CONSTANTS } from "@/constants/golf";
 import { Skeleton } from "../ui/skeleton";
 import { cn } from "@/lib/utils";
+import { HoleEntryPager } from "./hole-entry-pager";
 
 /** Shot-level detail fields a hole row can edit (plans/010). */
 export type ScoreDetail = Partial<
@@ -155,7 +156,6 @@ export function ScorecardTable({
   onScoreDetailChange,
 }: ScorecardTableProps) {
   const desktopInputRefs = useRef<(HTMLInputElement | null)[]>([]);
-  const mobileInputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
   const calculateTotal = (scores: Score[], start: number, end: number) =>
     scores.slice(start, end).reduce((sum, score) => sum + score.strokes, 0);
@@ -546,126 +546,20 @@ export function ScorecardTable({
           </div>
         </div>
 
-        {/* Score table */}
-        <div className="rounded-lg border overflow-hidden">
-          <div className="overflow-y-auto">
-            <Table className="w-full">
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="bg-accent dark:bg-muted text-secondary-foreground dark:text-primary-foreground text-center w-16">
-                    HOLE
-                  </TableHead>
-                  <TableHead className="bg-accent dark:bg-muted text-secondary-foreground dark:text-primary-foreground text-center w-16">
-                    PAR
-                  </TableHead>
-                  <TableHead className="bg-accent dark:bg-muted text-secondary-foreground dark:text-primary-foreground text-center w-16">
-                    HCP
-                  </TableHead>
-                  <TableHead className="bg-accent dark:bg-muted text-secondary-foreground dark:text-primary-foreground text-center w-24">
-                    SCORE
-                  </TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {displayedHoles.map((hole, i) => (
-                  <Fragment key={i}>
-                    <TableRow className="hover:bg-inherit">
-                      <TableCell className="text-center font-medium bg-accent dark:bg-muted text-secondary-foreground dark:text-primary-foreground">
-                        {i + 1}
-                      </TableCell>
-                      <TableCell className="text-center bg-background-alternate">
-                        {hole.par}
-                      </TableCell>
-                      <TableCell className="text-center bg-background">
-                        {hole.hcp}
-                      </TableCell>
-                      <TableCell className="p-sm bg-background-alternate w-24">
-                        <Input
-                          ref={(el) => {
-                            mobileInputRefs.current[i] = el;
-                          }}
-                          className="border border-border h-12 text-center w-full text-lg"
-                          type="number"
-                          value={scores[i]?.strokes || ""}
-                          disabled={disabled}
-                          onChange={(e) =>
-                            handleScoreInput(e, i, mobileInputRefs, holeCount)
-                          }
-                          onWheel={(e) => {
-                            e.currentTarget.blur();
-                          }}
-                        />
-                      </TableCell>
-                    </TableRow>
-                    {/* Detailed scoring row (plans/010) */}
-                    {detailedScoring && (
-                      <TableRow className="hover:bg-inherit">
-                        <TableCell colSpan={4} className="bg-background p-sm">
-                          <div className="flex items-end gap-sm">
-                            <div className="flex-1 space-y-xs">
-                              <p className="text-meta text-muted-foreground text-center">
-                                Putts
-                              </p>
-                              <Input
-                                className={CELL_INPUT_CLASS}
-                                type="number"
-                                min={0}
-                                max={MAX_PUTTS}
-                                aria-label={`Putts for hole ${i + 1}`}
-                                value={scores[i]?.putts ?? ""}
-                                disabled={disabled}
-                                onChange={(e) =>
-                                  handleDetailChange(i, {
-                                    putts: parseDetailValue(
-                                      e.target.value,
-                                      MAX_PUTTS
-                                    ),
-                                  })
-                                }
-                                onWheel={(e) => {
-                                  e.currentTarget.blur();
-                                }}
-                              />
-                            </div>
-                            <div className="flex-1 space-y-xs">
-                              <p className="text-meta text-muted-foreground text-center">
-                                Fairway
-                              </p>
-                              <FairwayCycle
-                                value={scores[i]?.fairwayHit}
-                                holeNumber={i + 1}
-                                par={hole.par}
-                                disabled={disabled}
-                                onChange={(next) =>
-                                  handleDetailChange(i, { fairwayHit: next })
-                                }
-                              />
-                            </div>
-                            <div className="flex-1 space-y-xs">
-                              <p className="text-meta text-muted-foreground text-center">
-                                Penalties
-                              </p>
-                              <PenaltyControl
-                                value={scores[i]?.penaltyStrokes}
-                                holeNumber={i + 1}
-                                disabled={disabled}
-                                onChange={(next) =>
-                                  handleDetailChange(i, {
-                                    penaltyStrokes: next,
-                                  })
-                                }
-                              />
-                            </div>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    )}
-                  </Fragment>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-        </div>
+        {/* One-hole-at-a-time entry (plan 013 D1) — replaces the inline
+            per-hole table + detail strip on phones. */}
+        <HoleEntryPager
+          selectedTee={selectedTee}
+          displayedHoles={displayedHoles}
+          holeCount={holeCount}
+          scores={scores}
+          onScoreChange={onScoreChange}
+          disabled={disabled}
+          detailedScoring={detailedScoring}
+          onScoreDetailChange={(holeIndex, detail) =>
+            handleDetailChange(holeIndex, detail)
+          }
+        />
 
         {/* Score Summary - Below table */}
         <div className="rounded-lg border bg-background p-sm">

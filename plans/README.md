@@ -23,6 +23,7 @@ Selection note (run 2): executed non-interactively, so plans were written for th
 | 010 | Shot-level stats v1 (putts/FIR/penalties → GIR/FIR%/putts-per-round) ([#140](https://github.com/Sebastian-Sole/handicappin/issues/140)) | P2 | L | 008 (recommended), 009 (useful) | TODO |
 | 011 | Activation: starting-HI seed, CSV import, guided first-run + goal ([#141](https://github.com/Sebastian-Sole/handicappin/issues/141)) | P2 | L | 008 (recommended), 009 (useful), 012 (import replays the ESR bug if run first) | TODO |
 | 012 | ESR gate: no ESR without an established index ([#158](https://github.com/Sebastian-Sole/handicappin/issues/158)) | P1 | S–M | 008 merged (PR #157) ✓ | DONE (merged to main 2026-07-13 via PR [#159](https://github.com/Sebastian-Sole/handicappin/pull/159); recompute decision: default = lazy self-correction unless owner requests proactive recompute) |
+| 013 | Shot-level stats v2: one logging UI, read-only viewer, live + watch capture | P2 | XL (phased) | 010 (DONE) | IMPLEMENTED 2026-07-15 (all 6 phases on branch `advisor/010-shot-level-stats-v1`: shared trio D7, one-hole pager D1 web+native, viewer accordion D2, Settings default + round-start choice D3 + "N of M" stats D6, live hole-out capture D4 with `HOLE_DETAIL_SET` protocol, watch two-face crown grid D5; verified — unit/integration/swift/XCUI tests green, parity clean, sim + browser proof) |
 
 Status values: TODO | IN PROGRESS | DONE | BLOCKED (with one-line reason) | REJECTED (with one-line rationale)
 
