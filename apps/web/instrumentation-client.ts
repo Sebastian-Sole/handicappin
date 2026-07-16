@@ -10,9 +10,8 @@ Sentry.init({
   // Add optional integrations for additional features
   integrations: [Sentry.replayIntegration()],
 
-  // Reduce trace sampling from 100% to 20% for better performance
-  // This matches server-side sampling and reduces client overhead
-  tracesSampleRate: 0.2,
+  // Sample 100% of traces — user base is small enough that full visibility is worth it.
+  tracesSampleRate: 1.0,
 
   // Only enable logs in development to reduce overhead
   enableLogs: true,

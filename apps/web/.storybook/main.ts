@@ -73,6 +73,9 @@ const config: StorybookConfig = {
       "@/server/api/root$": stub,
       "@/app/actions/email-change$": stub,
       postgres$: stub,
+      // posthog-node (via @handicappin/analytics server entry) needs Node
+      // built-ins (async_hooks, readline) that don't exist in the browser.
+      "posthog-node$": stub,
       // Replace the browser Supabase client so stories don't hit the network
       // and don't depend on real NEXT_PUBLIC_SUPABASE_* values working.
       "@/utils/supabase/client": supabaseClientStub,
