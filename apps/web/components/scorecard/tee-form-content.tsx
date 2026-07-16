@@ -460,7 +460,7 @@ function TeeHoleTable({ tee, onTeeChange }: TeeFormContentProps) {
     <div className="space-y-md">
       <Separator />
       <Large>Hole Information</Large>
-      <div className="rounded-lg border max-w-[calc(100vw-5rem)] sm:max-w-sm md:max-w-xl lg:max-w-3xl xl:max-w-5xl 2xl:max-w-[1225px] 3xl:max-w-[1600px]">
+      <div className="rounded-lg border min-w-0">
         <div className="overflow-x-auto max-w-full">
           <Table>
             <TableHeader>

@@ -157,7 +157,9 @@ export function TeeDialog({
             {mode === "edit" ? "Edit Tee Information" : "Add New Tee"}
           </DialogTitle>
         </DialogHeader>
-        <div className="sm:max-w-xs md:max-w-xl">
+        {/* min-w-0 lets this grid item shrink to the dialog's width so the
+            hole table can scroll horizontally instead of overflowing */}
+        <div className="min-w-0">
           <Form {...form}>
             <form onSubmit={handleSubmit}>
               <TeeFormContent
