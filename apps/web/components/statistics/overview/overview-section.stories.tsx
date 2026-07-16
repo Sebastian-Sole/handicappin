@@ -93,6 +93,38 @@ export const NoExceptionalRounds: Story = {
   },
 };
 
+/**
+ * Exactly one detailed round — exercises basedOn()'s singular
+ * "Based on 1 round" wording branch (sampleSize === 1).
+ */
+export const SingleDetailedRound: Story = {
+  args: {
+    stats: {
+      totalRounds: 3,
+      avgScore: 89.7,
+      avgPar: 72,
+      bestDifferential: 14.1,
+      worstDifferential: 19.3,
+      improvementRate: 0,
+      currentHandicap: 16.2,
+      handicapChange: 0.3,
+    },
+    shotLevelStats: {
+      puttsPerRound: { value: 34, sampleSize: 1 },
+      girPercentage: { value: 27.8, sampleSize: 1 },
+      firPercentage: { value: 42.9, sampleSize: 1 },
+      penaltiesPerRound: { value: 3, sampleSize: 1 },
+    },
+    extendedStats: {
+      consistencyRating: 41,
+      scoringConsistency: 5.9,
+      bestMonth: null,
+      uniqueCourses: 2,
+      exceptionalRounds: [],
+    },
+  },
+};
+
 export const EmptyState: Story = {
   args: {
     stats: {

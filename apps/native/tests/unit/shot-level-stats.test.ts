@@ -150,9 +150,47 @@ describe("calculateFIRPercentage (native mirror)", () => {
     assert.equal(result.value, 50);
     assert.equal(result.sampleSize, 1);
   });
+
+  it("excludes holes whose par can't be resolved (unknown holeId)", () => {
+    // An unresolvable hole could be a par 3 for all we know — exclude it
+    // like GIR does, never count it.
+    const overrides: Partial<MockScore>[] = Array.from(
+      { length: 18 },
+      () => ({}),
+    );
+    overrides[0] = { fairwayHit: true }; // resolvable par 4 → counts
+    overrides[3] = { fairwayHit: false, holeId: 9999 }; // no such hole → EXCLUDED
+    const result = calculateFIRPercentage([
+      mockScorecard(1, mockScores(overrides)),
+    ]);
+    assert.equal(result.value, 100); // 1 of 1 eligible — not 1 of 2
+    assert.equal(result.sampleSize, 1);
+  });
+
+  it("zero data → null value, sampleSize 0 (no NaN)", () => {
+    const result = calculateFIRPercentage([mockScorecard(1, mockScores())]);
+    assert.equal(result.value, null);
+    assert.equal(result.sampleSize, 0);
+  });
 });
 
 describe("calculatePenaltiesPerRound (native mirror)", () => {
+  it("averages fully-tracked rounds and skips partial rounds", () => {
+    const tracked = mockScorecard(
+      1,
+      mockScores(
+        Array.from({ length: 18 }, (_, index) => ({
+          penaltyStrokes: index === 0 ? 2 : 0, // 2 total
+        })),
+      ),
+    );
+    const untracked = mockScorecard(2, mockScores());
+
+    const result = calculatePenaltiesPerRound([tracked, untracked]);
+    assert.equal(result.value, 2);
+    assert.equal(result.sampleSize, 1);
+  });
+
   it("averages fully-tracked rounds and scales 9-hole rounds ×2", () => {
     const nineHole = mockScorecard(
       1,
@@ -172,6 +210,19 @@ describe("calculateShotLevelStats (native mirror)", () => {
     const result = calculateShotLevelStats([mockScorecard(1, mockScores())]);
     assert.deepEqual(result.puttsPerRound, { value: null, sampleSize: 0 });
     assert.deepEqual(result.girPercentage, { value: null, sampleSize: 0 });
+    assert.deepEqual(result.firPercentage, { value: null, sampleSize: 0 });
+    assert.deepEqual(result.penaltiesPerRound, { value: null, sampleSize: 0 });
+  });
+
+  it("reports per-stat sample sizes independently", () => {
+    // Round tracked putts only — GIR/putts populate, FIR/penalties stay empty.
+    const puttsOnly = mockScorecard(
+      1,
+      mockScores(Array.from({ length: 18 }, () => ({ putts: 2 }))),
+    );
+    const result = calculateShotLevelStats([puttsOnly]);
+    assert.equal(result.puttsPerRound.sampleSize, 1);
+    assert.equal(result.girPercentage.sampleSize, 1);
     assert.deepEqual(result.firPercentage, { value: null, sampleSize: 0 });
     assert.deepEqual(result.penaltiesPerRound, { value: null, sampleSize: 0 });
   });

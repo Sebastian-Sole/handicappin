@@ -167,6 +167,30 @@ describe("calculateFIRPercentage", () => {
     expect(result.value).toBeNull();
     expect(result.sampleSize).toBe(0);
   });
+
+  it("excludes holes whose par can't be resolved (unknown holeId)", () => {
+    // An unresolvable hole could be a par 3 for all we know — exclude it
+    // like GIR does, never count it. A round with ONLY unresolvable data
+    // contributes nothing to the sample either.
+    const overrides: Partial<Score>[] = Array.from({ length: 18 }, () => ({}));
+    overrides[0] = { fairwayHit: true }; // resolvable par 4 → counts
+    overrides[3] = { fairwayHit: false, holeId: 9999 }; // no such hole → EXCLUDED
+    const scorecard = scorecardWith(1, createMockScores(overrides));
+
+    const result = calculateFIRPercentage([scorecard]);
+    expect(result.value).toBe(100); // 1 of 1 eligible — not 1 of 2
+
+    const onlyUnresolvable: Partial<Score>[] = Array.from(
+      { length: 18 },
+      () => ({})
+    );
+    onlyUnresolvable[0] = { fairwayHit: true, holeId: 9999 };
+    const empty = calculateFIRPercentage([
+      scorecardWith(2, createMockScores(onlyUnresolvable)),
+    ]);
+    expect(empty.value).toBeNull();
+    expect(empty.sampleSize).toBe(0);
+  });
 });
 
 describe("calculatePenaltiesPerRound", () => {

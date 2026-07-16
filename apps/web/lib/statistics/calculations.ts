@@ -1409,7 +1409,7 @@ export function calculateFIRPercentage(
     scorecard.scores.forEach((score) => {
       if (score.fairwayHit == null) return;
       const par = resolveHolePar(scorecard, score);
-      if (par === 3) return;
+      if (par == null || par === 3) return;
       eligibleHoles += 1;
       contributingRounds.add(scorecard.round.id);
       if (score.fairwayHit) fairwaysHit += 1;

@@ -25,6 +25,7 @@ import { eq, inArray } from "drizzle-orm";
 
 import { createCallerFactory } from "@/server/api/trpc";
 import { roundRouter } from "@/server/api/routers/round";
+import { scorecardRouter } from "@/server/api/routers/scorecard";
 import type { Scorecard } from "@/types/scorecard-input";
 
 const { db } = await import("@/db");
@@ -58,6 +59,7 @@ let teeId: number;
 const createdRoundIds: number[] = [];
 
 const createCaller = createCallerFactory(roundRouter);
+const createScorecardCaller = createCallerFactory(scorecardRouter);
 
 /** 18 schema-valid holes: par 4, unique hcp 1..18, 350y each. */
 function buildHoles(withIds: { id: number; holeNumber: number }[] = []) {
@@ -222,6 +224,16 @@ describeIfLocal("submitScorecard shot-level detail (real local Supabase)", () =>
     } as unknown as Parameters<typeof createCaller>[0]);
   }
 
+  function buildScorecardCaller() {
+    const supabase = createClient(supabaseUrl!, serviceRoleKey!, {
+      auth: { autoRefreshToken: false, persistSession: false },
+    });
+    return createScorecardCaller({
+      user: { id: userId },
+      supabase,
+    } as unknown as Parameters<typeof createScorecardCaller>[0]);
+  }
+
   test("detailed scorecard persists putts/fairwayHit/penaltyStrokes; plain scorecard leaves them NULL; handicap math identical", async () => {
     const dbHoles = await db
       .select({ id: hole.id, holeNumber: hole.holeNumber })
@@ -372,5 +384,77 @@ describeIfLocal("submitScorecard shot-level detail (real local Supabase)", () =>
     expect(Number(formRound.scoreDifferential)).toBe(
       Number(liveRound.scoreDifferential),
     );
+  }, 60_000);
+
+  test("NULL-detail round survives the real read path's scorecardSchema parse (.nullish() regression guard)", async () => {
+    // scoreSchema uses .nullish() (not .optional()) BECAUSE the same schema
+    // validates rows read back from the DB, where untracked detail is NULL
+    // (types/scorecard-input.ts). getScorecardByRoundId safeParses the
+    // assembled scorecard and throws INTERNAL_SERVER_ERROR on failure — so
+    // a regression to .optional() makes this test fail loudly.
+    const dbHoles = await db
+      .select({ id: hole.id, holeNumber: hole.holeNumber })
+      .from(hole)
+      .where(eq(hole.teeId, teeId));
+    const holes = buildHoles(dbHoles);
+    const caller = buildCaller();
+
+    const plainRound = await caller.submitScorecard(
+      buildScorecard(
+        Array.from({ length: 18 }, () => ({ strokes: 5, hcpStrokes: 0 })),
+        "2026-07-05T10:00:00.000Z",
+        holes,
+      ),
+    );
+    createdRoundIds.push(plainRound.id);
+
+    const readBack = await buildScorecardCaller().getScorecardByRoundId({
+      id: String(plainRound.id),
+    });
+    expect(readBack).not.toBeNull();
+    expect(readBack!.scores).toHaveLength(18);
+    for (const row of readBack!.scores) {
+      expect(row.putts).toBeNull();
+      expect(row.fairwayHit).toBeNull();
+      expect(row.penaltyStrokes).toBeNull();
+    }
+  }, 60_000);
+
+  test("out-of-range detail is rejected at the tRPC boundary (the only enforcement layer — no DB CHECKs)", async () => {
+    const dbHoles = await db
+      .select({ id: hole.id, holeNumber: hole.holeNumber })
+      .from(hole)
+      .where(eq(hole.teeId, teeId));
+    const holes = buildHoles(dbHoles);
+    const caller = buildCaller();
+
+    const withDetail = (detail: Partial<Scorecard["scores"][number]>) =>
+      buildScorecard(
+        Array.from({ length: 18 }, (_, i) => ({
+          strokes: 5,
+          hcpStrokes: 0,
+          ...(i === 0 ? detail : {}),
+        })),
+        "2026-07-06T10:00:00.000Z",
+        holes,
+      );
+
+    // scoreSchema bounds: putts [0,20], penaltyStrokes [0,10].
+    await expect(
+      caller.submitScorecard(withDetail({ putts: 21 })),
+    ).rejects.toThrow();
+    await expect(
+      caller.submitScorecard(withDetail({ putts: -1 })),
+    ).rejects.toThrow();
+    await expect(
+      caller.submitScorecard(withDetail({ penaltyStrokes: 11 })),
+    ).rejects.toThrow();
+
+    // None of the rejected submissions may have left a round behind.
+    const rows = await db
+      .select({ id: round.id })
+      .from(round)
+      .where(eq(round.userId, userId));
+    expect(rows.map((r) => r.id).sort()).toEqual([...createdRoundIds].sort());
   }, 60_000);
 });
