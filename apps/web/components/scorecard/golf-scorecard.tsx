@@ -154,6 +154,10 @@ export default function GolfScorecard({ profile, access }: GolfScorecardProps) {
       { enabled: !!debouncedSearchTerm }
     );
 
+  // Fetched eagerly (not on popover open) so the list is already there the
+  // instant the picker opens.
+  const { data: recentCourses } = api.course.getRecentCourses.useQuery();
+
   const { data: courseTees, isLoading: isTeesLoading } =
     api.tee.fetchTees.useQuery(
       { courseId: selectedCourseId || 0 },
@@ -192,6 +196,24 @@ export default function GolfScorecard({ profile, access }: GolfScorecardProps) {
       });
     }
   }, [searchedCourses]);
+
+  // Seed the accumulator with recently played courses so the picker has
+  // selectable, tee-fetchable options before the user types anything.
+  useEffect(() => {
+    if (recentCourses) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- Accumulator pattern for search result caching
+      setFetchedCourses((prev) => {
+        const newCourses = recentCourses.filter(
+          (course) => !prev.some((p) => p.id === course.id)
+        );
+        const coursesWithTees: Course[] = newCourses.map((course) => ({
+          ...course,
+          tees: undefined,
+        }));
+        return [...coursesWithTees, ...prev];
+      });
+    }
+  }, [recentCourses]);
 
   // Update fetched tees when they arrive
   useEffect(() => {
@@ -236,9 +258,48 @@ export default function GolfScorecard({ profile, access }: GolfScorecardProps) {
     );
   }, [fetchedCourses, modifications.courses, selectedCourseId]);
 
+  // Partition so recently played courses render under their own heading.
+  // cmdk's client-side filter still narrows both groups while typing and
+  // auto-hides a group once all its items are filtered out.
+  const [recentEffectiveCourses, otherEffectiveCourses] = useMemo(() => {
+    const recentIds = new Set((recentCourses ?? []).map((course) => course.id));
+    const recent: Course[] = [];
+    const other: Course[] = [];
+    for (const course of effectiveCourses) {
+      if (course.id !== undefined && recentIds.has(course.id)) {
+        recent.push(course);
+      } else {
+        other.push(course);
+      }
+    }
+    return [recent, other] as const;
+  }, [effectiveCourses, recentCourses]);
+
   const handleCourseSearch = (searchString: string) => {
     setSearchTerm(searchString);
   };
+
+  const renderCourseItem = (course: Course) => (
+    <CommandItem
+      key={course.id || course.name}
+      onSelect={() => {
+        // Clear the selected tee first
+        selectTee(undefined);
+        // Then set the new course
+        selectCourse(course.id);
+        setOpenCourseSelect(false);
+        form.setValue("course", course);
+      }}
+    >
+      {course.name +
+        " - " +
+        course.city +
+        ", " +
+        course.country +
+        " " +
+        getFlagEmoji(course.country)}
+    </CommandItem>
+  );
 
   const handleAddCourse = (course: Course) => {
     setOpenCourseSelect(false);
@@ -538,43 +599,34 @@ export default function GolfScorecard({ profile, access }: GolfScorecardProps) {
                                           onValueChange={handleCourseSearch}
                                         />
                                         <CommandList>
-                                          <CommandGroup className="py-lg">
-                                            {effectiveCourses.length > 0 &&
-                                              !isLoading &&
-                                              effectiveCourses.map((course) => (
-                                                <CommandItem
-                                                  key={course.id || course.name}
-                                                  onSelect={() => {
-                                                    // Clear the selected tee first
-                                                    selectTee(undefined);
-                                                    // Then set the new course
-                                                    selectCourse(course.id);
-                                                    setOpenCourseSelect(false);
-                                                    form.setValue(
-                                                      "course",
-                                                      course
-                                                    );
-                                                  }}
-                                                >
-                                                  {course.name +
-                                                    " - " +
-                                                    course.city +
-                                                    ", " +
-                                                    course.country +
-                                                    " " +
-                                                    getFlagEmoji(
-                                                      course.country
-                                                    )}
-                                                </CommandItem>
-                                              ))}
-                                            {effectiveCourses.length === 0 &&
-                                              !isLoading &&
-                                              !debouncedSearchTerm && (
+                                          {recentEffectiveCourses.length > 0 &&
+                                            !isLoading && (
+                                              <CommandGroup
+                                                heading="Recent courses"
+                                                className="py-lg"
+                                              >
+                                                {recentEffectiveCourses.map(
+                                                  renderCourseItem
+                                                )}
+                                              </CommandGroup>
+                                            )}
+                                          {otherEffectiveCourses.length > 0 &&
+                                            !isLoading && (
+                                              <CommandGroup className="py-lg">
+                                                {otherEffectiveCourses.map(
+                                                  renderCourseItem
+                                                )}
+                                              </CommandGroup>
+                                            )}
+                                          {effectiveCourses.length === 0 &&
+                                            !isLoading &&
+                                            !debouncedSearchTerm && (
+                                              <CommandGroup className="py-lg">
                                                 <CommandEmpty>
                                                   <P>Search for a course...</P>
                                                 </CommandEmpty>
-                                              )}
-                                          </CommandGroup>
+                                              </CommandGroup>
+                                            )}
 
                                           {(isLoading ||
                                             (!searchedCourses &&

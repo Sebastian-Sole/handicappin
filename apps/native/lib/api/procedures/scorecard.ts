@@ -31,6 +31,25 @@ export const courseSearchQueryOptions = (query: string) =>
       ),
   });
 
+/** Unlike search results, recently played courses may be pending —
+    the user logged rounds on them, so they must stay pickable. */
+export const recentCourseSchema = searchedCourseSchema.extend({
+  approvalStatus: z.union([z.literal("approved"), z.literal("pending")]),
+});
+
+export type RecentCourse = z.infer<typeof recentCourseSchema>;
+
+export const recentCoursesQueryOptions = () =>
+  queryOptions({
+    queryKey: ["course.getRecentCourses"] as const,
+    queryFn: () =>
+      trpcQuery(
+        "course.getRecentCourses",
+        undefined,
+        z.array(recentCourseSchema),
+      ),
+  });
+
 export const fetchedTeeSchema = z.object({
   id: z.number().optional(),
   courseId: z.number().optional(),

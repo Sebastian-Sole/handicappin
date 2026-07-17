@@ -1,7 +1,9 @@
 /**
  * Course picker — native equivalent of web's course combobox (Popover +
  * Command search). A modal sheet with a search field over the REAL
- * course.searchCourses query. Adding new courses is deferred to web
+ * course.searchCourses query; before any term is typed it lists the user's
+ * recently played courses (course.getRecentCourses), mirroring web's
+ * "Recent courses" group. Adding new courses is deferred to web
  * (implementation log), mirroring the dialog web opens from this spot.
  */
 import { useQuery } from "@tanstack/react-query";
@@ -20,7 +22,8 @@ import { Input } from "@/components/ui/input";
 import { tokens } from "@handicappin/tokens/tokens";
 import {
   courseSearchQueryOptions,
-  type SearchedCourse,
+  recentCoursesQueryOptions,
+  type RecentCourse,
 } from "@/lib/api/procedures/scorecard";
 import { useColorMode } from "@/lib/color-mode";
 import { useDebouncedValue } from "@/lib/use-debounced-value";
@@ -29,7 +32,9 @@ const ICON_SIZE = 16; // allow-hardcoded lucide icon prop mirrors web's fixed h-
 
 interface CoursePickerProps {
   selectedLabel: string;
-  onSelect: (course: SearchedCourse) => void;
+  /** Receives the wider RecentCourse shape (approvalStatus may be
+      "pending"); plain search results are a subtype of it. */
+  onSelect: (course: RecentCourse) => void;
   disabled?: boolean;
   /** Opens the add-course dialog, prefilled with the search term (D21). */
   onRequestAddCourse?: (initialName: string) => void;
@@ -50,6 +55,11 @@ export function CoursePicker({
     ...courseSearchQueryOptions(debounced),
     enabled: open && debounced.length > 0,
   });
+
+  // Fetched eagerly (screen mount, not sheet open) so recently played
+  // courses are already listed the instant the sheet opens — mirrors web.
+  const recent = useQuery(recentCoursesQueryOptions());
+  const recentCourses = recent.data ?? [];
 
   return (
     <>
@@ -100,7 +110,12 @@ export function CoursePicker({
               </Text>
             </View>
           ) : null}
-          {!debounced ? (
+          {!debounced && recentCourses.length > 0 ? (
+            <Text className="text-label-sm text-muted-foreground">
+              Recent courses
+            </Text>
+          ) : null}
+          {!debounced && recentCourses.length === 0 ? (
             <Text className="text-body text-muted-foreground text-center py-md">
               Search for a course...
             </Text>
@@ -127,7 +142,7 @@ export function CoursePicker({
           ) : null}
           <FlatList
             keyboardShouldPersistTaps="handled"
-            data={search.data ?? []}
+            data={debounced ? (search.data ?? []) : recentCourses}
             keyExtractor={(item) => String(item.id)}
             renderItem={({ item }) => (
               <Pressable
