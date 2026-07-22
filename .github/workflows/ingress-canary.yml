@@ -1,0 +1,152 @@
+# Ingress canary — external synthetic tripwire for the Vercel/Cloudflare edge.
+#
+# WHY THIS EXISTS: on 2026-07-22 production was found serving a 429
+# `x-vercel-mitigated: challenge` (Vercel Security Checkpoint HTML) to ALL
+# cookie-less requests — breaking the native app's Bearer path and direct API
+# calls. The outage went unnoticed because nothing external was probing the
+# edge from OUTSIDE Vercel's network. This workflow is that probe. GitHub's
+# hosted runners are NOT in Vercel's account boundary, so — unlike Vercel Cron
+# Jobs / Functions, which Attack Mode auto-allows as "internal requests" — these
+# requests are treated exactly like a real external cookie-less client (native
+# app, cURL, a partner integration). If the challenge comes back, this run fails.
+#
+# STATUS: prep only (not yet the alerting control). Workflow failure is the
+# signal for now. See "ADD ALERTING LATER" below to wire Slack/email/PagerDuty.
+#
+# IS:     an external black-box reachability check for the public edge.
+# IS NOT: a functional/business-logic test of tRPC or the API contract.
+
+name: ingress-canary
+
+on:
+  schedule:
+    # Every 15 minutes. GitHub cron is best-effort and can lag several minutes
+    # under load — fine for a tripwire, do not treat cadence as SLA-grade.
+    - cron: "*/15 * * * *"
+  workflow_dispatch: {}
+
+# Don't pile up overlapping runs if a scheduled tick is slow.
+concurrency:
+  group: ingress-canary
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      # ------------------------------------------------------------------
+      # PRIMARY: main-host tRPC public query, cookie-less.
+      #
+      # NOTE ON THE TARGET: the incident brief named `course.getAll`, which
+      # does NOT exist. The public procedures on courseRouter are
+      # getCourseById / getAllUserCourses (needs userId) / searchCourses
+      # (needs query). We use `course.getCourseById` with a trivial input —
+      # it returns JSON (the course row or null) for any caller and needs no
+      # auth. If that procedure is ever renamed, update TRPC_PATH below; any
+      # public procedure that returns JSON works — the canary only cares that
+      # the EDGE let us through, not what the app answered.
+      # ------------------------------------------------------------------
+      - name: Probe main host (handicappin.com/api/trpc)
+        env:
+          # tRPC v11 single-call GET. A superjson-wrapped input is used; if the
+          # transformer ever changes the app still answers with JSON (a tRPC
+          # input error is a PASS — it proves no challenge intercepted us).
+          TRPC_PATH: "course.getCourseById"
+          TRPC_INPUT: '{"json":{"courseId":1}}'
+        run: |
+          set -uo pipefail
+          URL="https://handicappin.com/api/trpc/${TRPC_PATH}?input=$(python3 -c "import urllib.parse,os;print(urllib.parse.quote(os.environ['TRPC_INPUT']))")"
+          echo "Probing (cookie-less): $URL"
+
+          # Capture headers and body separately. No cookies, real external IP.
+          BODY_FILE="$(mktemp)"
+          HEAD_FILE="$(mktemp)"
+          HTTP_CODE="$(curl -sS -o "$BODY_FILE" -D "$HEAD_FILE" -w '%{http_code}' \
+            --max-time 30 \
+            -H 'Accept: application/json' \
+            -A 'ingress-canary/1.0 (+github-actions external tripwire)' \
+            "$URL" || echo "000")"
+
+          echo "--- response status: $HTTP_CODE"
+          echo "--- response headers:"; sed 's/^/    /' "$HEAD_FILE"
+          echo "--- body (first 400 bytes):"; head -c 400 "$BODY_FILE" | sed 's/^/    /'; echo
+
+          FAIL=0
+
+          # (1) Definitive challenge signal — the exact header seen in the incident.
+          if grep -iq '^x-vercel-mitigated:.*challenge' "$HEAD_FILE"; then
+            echo "::error title=Ingress challenge active::x-vercel-mitigated: challenge on handicappin.com/api/trpc (cookie-less). The Vercel edge is challenging external clients — native app + API are broken."
+            FAIL=1
+          fi
+
+          # (2) Blocked/challenged status codes where JSON was expected.
+          if [ "$HTTP_CODE" = "429" ] || [ "$HTTP_CODE" = "403" ]; then
+            echo "::error title=Ingress blocked ($HTTP_CODE)::Expected JSON, got HTTP $HTTP_CODE from handicappin.com/api/trpc."
+            FAIL=1
+          fi
+          if [ "$HTTP_CODE" = "000" ]; then
+            echo "::error title=Ingress unreachable::curl could not complete a request to handicappin.com/api/trpc (timeout/DNS/TLS)."
+            FAIL=1
+          fi
+
+          # (3) HTML where JSON was expected — the Security Checkpoint interstitial.
+          if grep -iqE '<!doctype html|<html|Vercel Security Checkpoint|Attention Required' "$BODY_FILE"; then
+            echo "::error title=Ingress served HTML::Body is an HTML interstitial (challenge/block page), not JSON."
+            FAIL=1
+          fi
+
+          if [ "$FAIL" -ne 0 ]; then
+            echo "CANARY FAILED — the public edge is not serving JSON to cookie-less clients."
+            exit 1
+          fi
+          echo "CANARY OK — main host answered JSON to a cookie-less request (status $HTTP_CODE)."
+
+      # ------------------------------------------------------------------
+      # SECONDARY: the future grey-clouded API host. This host does NOT exist
+      # yet (decision 4 / synthesis Step 4 creates it). Until then this step is
+      # EXPECTED TO FAIL and must not fail the job — hence continue-on-error.
+      #
+      # WHEN api.handicappin.com/health SHIPS: delete `continue-on-error: true`
+      # so a challenge/HTML/4xx on the API host also fails the run, and point it
+      # at the real health route.
+      # ------------------------------------------------------------------
+      - name: Probe API host (api.handicappin.com/health) — expected-fail until created
+        continue-on-error: true
+        run: |
+          set -uo pipefail
+          URL="https://api.handicappin.com/health"
+          echo "Probing (cookie-less, expected-fail until host exists): $URL"
+          HEAD_FILE="$(mktemp)"; BODY_FILE="$(mktemp)"
+          HTTP_CODE="$(curl -sS -o "$BODY_FILE" -D "$HEAD_FILE" -w '%{http_code}' \
+            --max-time 30 -H 'Accept: application/json' \
+            -A 'ingress-canary/1.0 (+github-actions external tripwire)' \
+            "$URL" || echo "000")"
+          echo "--- status: $HTTP_CODE"; sed 's/^/    /' "$HEAD_FILE"
+          if grep -iq '^x-vercel-mitigated:.*challenge' "$HEAD_FILE"; then
+            echo "::warning title=API host challenged::api.handicappin.com is challenging cookie-less traffic. Once the grey-clouded host is live this must be a hard failure (remove continue-on-error)."
+          fi
+          if [ "$HTTP_CODE" = "200" ]; then
+            echo "API host is answering — REMOVE continue-on-error on this step so it becomes a real gate."
+          else
+            echo "API host not serving 200 yet (status $HTTP_CODE) — expected until api.handicappin.com is created."
+          fi
+
+      # ------------------------------------------------------------------
+      # ADD ALERTING LATER:
+      #   A red run in the Actions tab is the only signal today. To page a human,
+      #   add a final step with `if: failure()` that posts to Slack (incoming
+      #   webhook, secret SLACK_WEBHOOK_URL) or email. Recommended once the fix
+      #   is live so a regression (someone re-toggles Attack Mode) pages within
+      #   ~15 min instead of being noticed by users. Example shape:
+      #
+      #   - name: Alert on failure
+      #     if: failure()
+      #     run: |
+      #       curl -sS -X POST -H 'Content-type: application/json' \
+      #         --data '{"text":"INGRESS CANARY FAILED: handicappin.com edge is challenging cookie-less clients. Check Vercel Firewall + the INGRESS_RUNBOOK."}' \
+      #         "${{ secrets.SLACK_WEBHOOK_URL }}"
+      # ------------------------------------------------------------------
