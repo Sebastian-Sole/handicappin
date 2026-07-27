@@ -10,8 +10,9 @@
 # requests are treated exactly like a real external cookie-less client (native
 # app, cURL, a partner integration). If the challenge comes back, this run fails.
 #
-# STATUS: prep only (not yet the alerting control). Workflow failure is the
-# signal for now. See "ADD ALERTING LATER" below to wire Slack/email/PagerDuty.
+# STATUS: permanent infra (subplan 001 / W0). Alerting is wired below and
+# activates once the SLACK_WEBHOOK_URL repo secret is set (OWNER action);
+# until then a red run in the Actions tab is the signal.
 #
 # IS:     an external black-box reachability check for the public edge.
 # IS NOT: a functional/business-logic test of tRPC or the API contract.
@@ -136,17 +137,20 @@ jobs:
           fi
 
       # ------------------------------------------------------------------
-      # ADD ALERTING LATER:
-      #   A red run in the Actions tab is the only signal today. To page a human,
-      #   add a final step with `if: failure()` that posts to Slack (incoming
-      #   webhook, secret SLACK_WEBHOOK_URL) or email. Recommended once the fix
-      #   is live so a regression (someone re-toggles Attack Mode) pages within
-      #   ~15 min instead of being noticed by users. Example shape:
-      #
-      #   - name: Alert on failure
-      #     if: failure()
-      #     run: |
-      #       curl -sS -X POST -H 'Content-type: application/json' \
-      #         --data '{"text":"INGRESS CANARY FAILED: handicappin.com edge is challenging cookie-less clients. Check Vercel Firewall + the INGRESS_RUNBOOK."}' \
-      #         "${{ secrets.SLACK_WEBHOOK_URL }}"
+      # ALERTING: pages Slack within ~15 min when the edge regresses (someone
+      # re-arms the challenge). No-op until the SLACK_WEBHOOK_URL repo secret
+      # exists — OWNER: add an incoming-webhook URL as that secret to activate.
       # ------------------------------------------------------------------
+      - name: Alert on failure (Slack)
+        if: failure()
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        run: |
+          set -uo pipefail
+          if [ -z "${SLACK_WEBHOOK_URL:-}" ]; then
+            echo "::warning title=Canary alerting not wired::SLACK_WEBHOOK_URL secret is not set — this failure only shows in the Actions tab. Add the secret to page on canary failures."
+            exit 0
+          fi
+          curl -sS -X POST -H 'Content-type: application/json' \
+            --data '{"text":"INGRESS CANARY FAILED: handicappin.com edge is not serving JSON to cookie-less clients (challenge regression?). Check Vercel Firewall + docs/ingress-firewall-state.md + the INGRESS_RUNBOOK."}' \
+            "$SLACK_WEBHOOK_URL"

@@ -45,6 +45,46 @@ export const env = createEnv({
     HANDICAP_QUEUE_BATCH_SIZE: z.coerce.number().int().positive().default(25),
     HANDICAP_MAX_RETRIES: z.coerce.number().int().positive().default(3),
 
+    // Rate limiting (lib/rate-limit.ts). RATE_LIMIT_ENABLED must be set
+    // EXPLICITLY in production: the public API surface fails closed when the
+    // limiter cannot run, so an unset flag in a production deploy is treated
+    // as a misconfiguration and fails the build/boot loudly instead of
+    // failing open (or closed) silently at request time. See
+    // docs/ingress-firewall-state.md and api-platform subplan 001 (W0).
+    RATE_LIMIT_ENABLED: z
+      .enum(["true", "false"])
+      .optional()
+      .refine(
+        (value) =>
+          process.env.NODE_ENV !== "production" || value !== undefined,
+        {
+          message:
+            "RATE_LIMIT_ENABLED must be explicitly 'true' or 'false' in production — public API paths fail closed when the limiter is unavailable",
+        }
+      ),
+    RATE_LIMIT_PUBLIC_API_PER_MIN: z.coerce.number().int().positive().default(60),
+    RATE_LIMIT_CHECKOUT_PER_MIN: z.coerce.number().int().positive().default(10),
+    RATE_LIMIT_PORTAL_PER_MIN: z.coerce.number().int().positive().default(5),
+    RATE_LIMIT_WEBHOOK_PER_MIN: z.coerce.number().int().positive().default(100),
+    RATE_LIMIT_CONTACT_PER_MIN: z.coerce.number().int().positive().default(3),
+    RATE_LIMIT_DELETION_PER_HOUR: z.coerce.number().int().positive().default(3),
+    RATE_LIMIT_OAUTH_CALLBACK_PER_MIN: z.coerce
+      .number()
+      .int()
+      .positive()
+      .default(10),
+    RATE_LIMIT_GOOGLE_TOKEN_PER_MIN: z.coerce
+      .number()
+      .int()
+      .positive()
+      .default(10),
+    RATE_LIMIT_CONSENT_PER_HOUR: z.coerce.number().int().positive().default(5),
+    RATE_LIMIT_AI_EXTRACTION_PER_HOUR: z.coerce
+      .number()
+      .int()
+      .positive()
+      .default(20),
+
     NODE_ENV: z
       .enum(["development", "test", "production"])
       .default("development"),
@@ -96,6 +136,20 @@ export const env = createEnv({
     STRIPE_CRON_SECRET: process.env.STRIPE_CRON_SECRET,
     HANDICAP_QUEUE_BATCH_SIZE: process.env.HANDICAP_QUEUE_BATCH_SIZE,
     HANDICAP_MAX_RETRIES: process.env.HANDICAP_MAX_RETRIES,
+    RATE_LIMIT_ENABLED: process.env.RATE_LIMIT_ENABLED,
+    RATE_LIMIT_PUBLIC_API_PER_MIN: process.env.RATE_LIMIT_PUBLIC_API_PER_MIN,
+    RATE_LIMIT_CHECKOUT_PER_MIN: process.env.RATE_LIMIT_CHECKOUT_PER_MIN,
+    RATE_LIMIT_PORTAL_PER_MIN: process.env.RATE_LIMIT_PORTAL_PER_MIN,
+    RATE_LIMIT_WEBHOOK_PER_MIN: process.env.RATE_LIMIT_WEBHOOK_PER_MIN,
+    RATE_LIMIT_CONTACT_PER_MIN: process.env.RATE_LIMIT_CONTACT_PER_MIN,
+    RATE_LIMIT_DELETION_PER_HOUR: process.env.RATE_LIMIT_DELETION_PER_HOUR,
+    RATE_LIMIT_OAUTH_CALLBACK_PER_MIN:
+      process.env.RATE_LIMIT_OAUTH_CALLBACK_PER_MIN,
+    RATE_LIMIT_GOOGLE_TOKEN_PER_MIN:
+      process.env.RATE_LIMIT_GOOGLE_TOKEN_PER_MIN,
+    RATE_LIMIT_CONSENT_PER_HOUR: process.env.RATE_LIMIT_CONSENT_PER_HOUR,
+    RATE_LIMIT_AI_EXTRACTION_PER_HOUR:
+      process.env.RATE_LIMIT_AI_EXTRACTION_PER_HOUR,
     NODE_ENV: process.env.NODE_ENV,
     NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
     NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,

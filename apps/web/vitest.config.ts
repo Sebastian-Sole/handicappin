@@ -10,6 +10,9 @@ export default defineConfig({
   test: {
     globals: true,
     environment: "node",
+    // Default env validation OFF so importing "@/env" never requires a
+    // fully-populated .env.local in tests (see tests/setup-env.ts).
+    setupFiles: ["tests/setup-env.ts"],
     // Workspace packages run their own suites (packages/tokens uses
     // `node --test`, which Vitest can't collect); the root run covers
     // app code only.

@@ -21,6 +21,10 @@ env:
   STRIPE_UNLIMITED_PRICE_ID: ${{ secrets.STRIPE_UNLIMITED_PRICE_ID }}
   STRIPE_UNLIMITED_LIFETIME_PRICE_ID: ${{ secrets.STRIPE_UNLIMITED_LIFETIME_PRICE_ID }}
   REDIS_URL: "redis://localhost:6379"
+  # env.ts requires this to be EXPLICIT in production builds (`next build`
+  # sets NODE_ENV=production) — the public API surface fails closed, so an
+  # unset flag is treated as a misconfigured deploy. See lib/rate-limit.ts.
+  RATE_LIMIT_ENABLED: "false"
   KV_URL: "redis://localhost:6379"
   KV_REST_API_URL: "https://dummy-kv.upstash.io"
   KV_REST_API_TOKEN: "dummy_kv_token"
