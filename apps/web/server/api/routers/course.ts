@@ -1,12 +1,8 @@
 import { z } from "zod";
-import { createTRPCRouter, publicProcedure } from "../trpc";
+import { authedProcedure, createTRPCRouter, publicProcedure } from "../trpc";
 import { db } from "@/db";
-import { course } from "@/db/schema";
-import { ilike, and, eq } from "drizzle-orm";
-
-const courseQuery = z.object({
-  userId: z.string(),
-});
+import { course, round } from "@/db/schema";
+import { ilike, and, eq, desc, max, count } from "drizzle-orm";
 
 export const courseRouter = createTRPCRouter({
   getCourseById: publicProcedure
@@ -24,20 +20,37 @@ export const courseRouter = createTRPCRouter({
       }
       return course;
     }),
-  getAllUserCourses: publicProcedure
-    .input(courseQuery)
-    .query(async ({ ctx, input }) => {
-      const { userId } = input;
-      const { data: courses, error } = await ctx.supabase
-        .from("course")
-        .select("*")
-        .eq("userId", userId);
-      if (error) {
-        console.error(error);
-        throw new Error("Error fetching courses");
-      }
-      return courses;
-    }),
+  /**
+   * Courses the signed-in user has logged rounds on, most recently played
+   * first (round count breaks ties). Powers the course picker's pre-search
+   * "Recent courses" list. Not filtered by approvalStatus: a pending course
+   * the user played is still one they'll want to pick again.
+   */
+  getRecentCourses: authedProcedure.query(async ({ ctx }) => {
+    const results = await db
+      .select({
+        id: course.id,
+        name: course.name,
+        approvalStatus: course.approvalStatus,
+        country: course.country,
+        city: course.city,
+        website: course.website,
+      })
+      .from(round)
+      .innerJoin(course, eq(course.id, round.courseId))
+      .where(eq(round.userId, ctx.user.id))
+      .groupBy(course.id)
+      .orderBy(desc(max(round.teeTime)), desc(count(round.id)))
+      .limit(5);
+    return results.map((c) => ({
+      ...c,
+      website: c.website ?? undefined,
+      approvalStatus:
+        c.approvalStatus === "approved"
+          ? ("approved" as const)
+          : ("pending" as const),
+    }));
+  }),
   searchCourses: publicProcedure
     .input(z.object({ query: z.string().min(1) }))
     .query(async ({ ctx, input }) => {
