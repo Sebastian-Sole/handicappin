@@ -71,6 +71,61 @@ const eslintConfig = [{
       ...headingSelectors,
     ],
   },
+}, {
+  // API-platform import boundary (subplan 002 / DECISIONS §2): services
+  // under `server/services/` are framework-free — a folder convention
+  // without a lint rule rots (see the handicap-shared Deno mirror), so the
+  // boundary is enforced here. Side-effects (db handle, supabase client,
+  // notifications, logging, analytics, env-derived config) are injected
+  // through each service's `deps` parameter instead.
+  files: ["server/services/**/*.{ts,tsx}"],
+  rules: {
+    "no-restricted-imports": [
+      "error",
+      {
+        patterns: [
+          {
+            group: ["next", "next/*"],
+            message:
+              "server/services/** is framework-free: no Next.js imports. Inject side-effects via deps.",
+          },
+          {
+            group: ["@/env"],
+            message:
+              "server/services/** must not read env directly. Pass configuration through deps.",
+          },
+          {
+            group: ["@trpc/*", "@/trpc", "@/trpc/*", "@/server/api", "@/server/api/*"],
+            message:
+              "server/services/** must not import tRPC. The tRPC procedure is a thin adapter over the service, not the other way around.",
+          },
+          {
+            group: ["@sentry/*"],
+            message:
+              "server/services/** must not import Sentry. Observability is injected via deps (logger/analytics).",
+          },
+        ],
+      },
+    ],
+  },
+}, {
+  // Companion boundary (subplan 002): future REST handlers must call the
+  // extracted services, never reach back into the tRPC routers.
+  files: ["app/api/v1/**/*.{ts,tsx}"],
+  rules: {
+    "no-restricted-imports": [
+      "error",
+      {
+        patterns: [
+          {
+            group: ["@/server/api/routers", "@/server/api/routers/*"],
+            message:
+              "app/api/v1/** must not import tRPC routers. Call the framework-free services in server/services/** instead.",
+          },
+        ],
+      },
+    ],
+  },
 }, ...storybook.configs["flat/recommended"]];
 
 export default eslintConfig;
