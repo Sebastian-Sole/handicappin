@@ -15,7 +15,7 @@ as reachable. Subplan 004 requires this blast radius decided **in writing**.
 | `updateUser({ user_metadata })` | **Yes (200, proven)** | None. |
 | `updateUser({ email })` | Yes (request accepted) | `[auth.email] double_confirm_changes = true` — the change only completes after links are clicked at **both** the old and new address. A token alone cannot finish it, and the old-address email tips the user off. |
 | `updateUser({ password })` | Yes (request accepted) | `[auth.email] secure_password_change = true` — GoTrue requires recent re-authentication (nonce) for password changes; a bare access token held server-side by a client app cannot satisfy it silently. **Must be confirmed enabled on the HOSTED project, not just local config.toml.** |
-| `public.profile` row writes via PostgREST | **No — DENIED** | Implemented this subplan: RESTRICTIVE RLS policies (`20260728091000`) deny profile INSERT/UPDATE/DELETE and all access to billing/account tables for `client_id`-bearing tokens. |
+| `public.profile` row access via PostgREST | **No — DENIED** | Implemented this subplan: RESTRICTIVE RLS policies (`20260728091000`) deny ALL direct profile access (including SELECT — the row carries billing columns) and all access to billing/account tables for `client_id`-bearing tokens; round/score DELETE is denied too (write-only posture). Non-billing profile basics are served via `get_connected_profile()`. |
 
 ## Why no code-level deny was shipped for the GoTrue surface
 

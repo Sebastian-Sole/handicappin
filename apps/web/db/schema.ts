@@ -100,9 +100,19 @@ export const profile = pgTable(
       to: ["authenticated"],
       using: sql`(auth.uid()::uuid = id)`,
     }),
-    // OAuth-client (`client_id`-bearing) tokens must never write profile
-    // state — RESTRICTIVE deny mirrors 20260728091000_oauth_client_rls_deny.sql
-    // (SELECT intentionally stays open: /api/v1 needs handicap reads).
+    // OAuth-client (`client_id`-bearing) tokens get NO direct profile access —
+    // RESTRICTIVE denies mirror 20260728091000_oauth_client_rls_deny.sql.
+    // SELECT is denied too (the row exposes billing columns); the non-billing
+    // basics are served by public.get_connected_profile() instead.
+    // (No `(SELECT ...)` initplan wrapper here: the permissive UPDATE
+    // policy's WITH CHECK subqueries profile, and a subquery-qual SELECT
+    // policy then trips Postgres' policy-recursion detector — 42P17.)
+    pgPolicy("OAuth client tokens cannot select profile", {
+      as: "restrictive",
+      for: "select",
+      to: ["authenticated"],
+      using: sql`((auth.jwt() ->> 'client_id') IS NULL)`,
+    }),
     pgPolicy("OAuth client tokens cannot insert profile", {
       as: "restrictive",
       for: "insert",
@@ -328,6 +338,15 @@ export const round = pgTable(
       to: ["authenticated"],
       using: sql`(auth.uid()::uuid = userId)`,
     }),
+    // Connected apps may log/update/read rounds but never destroy them —
+    // write-only-by-default posture (DECISIONS §8). Mirrors
+    // 20260728091000_oauth_client_rls_deny.sql.
+    pgPolicy("OAuth client tokens cannot delete rounds", {
+      as: "restrictive",
+      for: "delete",
+      to: ["authenticated"],
+      using: sql`((SELECT auth.jwt() ->> 'client_id') IS NULL)`,
+    }),
   ]
 );
 
@@ -394,6 +413,15 @@ export const score = pgTable(
       for: "delete",
       to: ["authenticated"],
       using: sql`(auth.uid()::uuid = userId)`,
+    }),
+    // Connected apps may log/update/read scores but never destroy them —
+    // write-only-by-default posture (DECISIONS §8). Mirrors
+    // 20260728091000_oauth_client_rls_deny.sql.
+    pgPolicy("OAuth client tokens cannot delete scores", {
+      as: "restrictive",
+      for: "delete",
+      to: ["authenticated"],
+      using: sql`((SELECT auth.jwt() ->> 'client_id') IS NULL)`,
     }),
   ]
 );

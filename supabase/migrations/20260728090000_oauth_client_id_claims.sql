@@ -17,6 +17,11 @@
 --      (appending `rounds:write` to any GoTrue-granted scopes) per
 --      DECISIONS §3 — so enforcement points don't move when Supabase Phase-2
 --      real scopes ship. First-party tokens get NO scope claim.
+--   3. Skips the `app_metadata.billing` stamping entirely for OAuth-client
+--      tokens: billing state is mandatory-denied to `client_id` principals
+--      (DECISIONS §3), and a connected app must not learn the billing tier
+--      simply by decoding its own access token. First-party tokens keep the
+--      billing claims unchanged.
 --
 -- Security: SECURITY DEFINER with safe search_path (unchanged).
 
@@ -64,6 +69,24 @@ BEGIN
     END IF;
   END LOOP;
 
+  -- OAuth-client tokens: NO billing claims. Billing state is mandatory-denied
+  -- to `client_id` principals (DECISIONS §3) — a connected app must not learn
+  -- the billing tier by decoding its own token. Pass any GoTrue-provided
+  -- app_metadata through untouched, stamp the forward-compatible scope claim
+  -- (appended to GoTrue-granted scopes, space-separated per RFC 6749 §3.3),
+  -- and return early.
+  IF new_claims ? 'client_id' THEN
+    IF original_claims ? 'app_metadata' THEN
+      new_claims := jsonb_set(new_claims, '{app_metadata}', original_claims->'app_metadata');
+    END IF;
+    new_claims := jsonb_set(
+      new_claims,
+      '{scope}',
+      to_jsonb(trim(BOTH ' ' FROM COALESCE(original_claims->>'scope', '') || ' rounds:write'))
+    );
+    RETURN jsonb_build_object('claims', new_claims);
+  END IF;
+
   -- Get user's MINIMAL billing information from profile table
   -- Only select fields that will be in JWT (keep it tiny!)
   SELECT
@@ -106,20 +129,9 @@ BEGIN
     )
   );
 
-  -- Set the complete app_metadata back into claims
+  -- Set the complete app_metadata back into claims (first-party tokens only —
+  -- OAuth-client tokens returned early above, without billing claims).
   new_claims := jsonb_set(new_claims, '{app_metadata}', app_meta);
-
-  -- Forward-compatible scope claim for OAuth-client tokens ONLY (DECISIONS §3).
-  -- Appends the app scope to any GoTrue-granted scopes (space-separated per
-  -- RFC 6749 §3.3) so the OIDC/userinfo scopes remain intact. First-party
-  -- tokens never enter this branch and carry no scope claim.
-  IF new_claims ? 'client_id' THEN
-    new_claims := jsonb_set(
-      new_claims,
-      '{scope}',
-      to_jsonb(trim(BOTH ' ' FROM COALESCE(original_claims->>'scope', '') || ' rounds:write'))
-    );
-  END IF;
 
   -- Return event with modified claims
   RETURN jsonb_build_object('claims', new_claims);
@@ -133,4 +145,4 @@ GRANT SELECT ON public.profile TO supabase_auth_admin;
 REVOKE EXECUTE ON FUNCTION public.custom_access_token_hook(jsonb) FROM PUBLIC;
 
 COMMENT ON FUNCTION public.custom_access_token_hook IS
-  'Custom Access Token Hook: Injects MINIMAL billing information from profile table into JWT claims, preserves OAuth 2.1 server claims (client_id, ref), and stamps a forward-compatible scope claim (rounds:write) on OAuth-client tokens. Runs automatically on token issue/refresh. SECURITY DEFINER with safe search_path.';
+  'Custom Access Token Hook: Injects MINIMAL billing information from profile table into JWT claims for FIRST-PARTY tokens only; preserves OAuth 2.1 server claims (client_id, ref) and stamps a forward-compatible scope claim (rounds:write) on OAuth-client tokens, which get NO billing claims. Runs automatically on token issue/refresh. SECURITY DEFINER with safe search_path.';

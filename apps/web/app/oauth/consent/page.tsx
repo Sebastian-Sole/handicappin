@@ -121,8 +121,6 @@ const OAuthConsentPage = async ({
         authorizationId={data.authorization_id}
         clientName={data.client.name}
         clientUri={data.client.uri}
-        logoUri={data.client.logo_uri}
-        scope={data.scope}
         redirectUri={data.redirect_uri}
         userEmail={data.user.email}
       />

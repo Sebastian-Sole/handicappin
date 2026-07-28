@@ -25,37 +25,34 @@ interface OAuthConsentCardProps {
   authorizationId: string;
   clientName: string;
   clientUri?: string;
-  logoUri?: string;
-  /** Space-separated scope list requested by the client (may be empty). */
-  scope: string;
   redirectUri: string;
   userEmail: string;
 }
 
-/** Human-readable descriptions for the scopes we expect clients to request. */
-const SCOPE_DESCRIPTIONS: Record<string, string> = {
-  profile: "See your basic profile information",
-  email: "See your email address",
-  "rounds:write": "Log golf rounds on your behalf",
-};
-
-function describeScope(scope: string): string {
-  return SCOPE_DESCRIPTIONS[scope] ?? scope;
-}
+/**
+ * What a connected app actually gets, kept in LOCKSTEP with enforcement
+ * (until Supabase Phase-2 scopes ship, every OAuth grant carries the same
+ * capability set, so this list is fixed rather than scope-mapped):
+ * - profile basics via get_connected_profile() — RLS denies direct profile
+ *   reads/writes, billing tables and email preferences (20260728091000);
+ * - round/score INSERT/UPDATE/SELECT — DELETE is RLS-denied.
+ * If the policies change, change this copy in the same PR.
+ */
+const GRANTED_CAPABILITIES = [
+  "Read your basic profile — your name and handicap index only (never your billing details or email preferences)",
+  "Log and update your golf rounds",
+];
 
 export function OAuthConsentCard({
   authorizationId,
   clientName,
   clientUri,
-  logoUri,
-  scope,
   redirectUri,
   userEmail,
 }: OAuthConsentCardProps) {
   const [pending, setPending] = useState<"approve" | "deny" | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  const scopes = scope.split(" ").filter(Boolean);
   const redirectHost = (() => {
     try {
       return new URL(redirectUri).host;
@@ -96,18 +93,8 @@ export function OAuthConsentCard({
   return (
     <Card className="w-full max-w-md">
       <CardHeader className="items-center text-center">
-        {logoUri ? (
-          // Client-supplied logo URI on an external host; next/image would
-          // require whitelisting arbitrary OAuth-client hosts.
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={logoUri}
-            alt=""
-            width={48}
-            height={48}
-            className="mx-auto mb-sm h-12 w-12 rounded-md object-contain"
-          />
-        ) : null}
+        {/* No client logo: it lives on an external host the CSP img-src
+            doesn't allow, so it would never render. */}
         <CardTitle>Connect {clientName}?</CardTitle>
         <CardDescription>
           <strong>{clientName}</strong>
@@ -118,15 +105,14 @@ export function OAuthConsentCard({
       <CardContent>
         <Muted>This will allow {clientName} to:</Muted>
         <ul className="mt-sm list-disc space-y-xs pl-lg text-body-sm">
-          {scopes.length > 0 ? (
-            scopes.map((s) => <li key={s}>{describeScope(s)}</li>)
-          ) : (
-            <li>Access your handicappin data on your behalf</li>
-          )}
+          {GRANTED_CAPABILITIES.map((capability) => (
+            <li key={capability}>{capability}</li>
+          ))}
         </ul>
         <p className="mt-md text-body-sm text-muted-foreground">
-          It will never see your billing details, and you can disconnect it at
-          any time. You will be sent back to {redirectHost}.
+          It cannot delete your rounds and it never sees your billing
+          information. You can disconnect it at any time. You will be sent
+          back to {redirectHost}.
         </p>
         {errorMessage ? (
           <p role="alert" className="mt-md text-body-sm text-destructive">

@@ -34,6 +34,11 @@ const {
   pendingLifetimePurchases,
   emailPreferences,
   legalConsents,
+  course,
+  teeInfo,
+  hole,
+  round,
+  score,
 } = await import("@/db/schema");
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -95,6 +100,11 @@ let decoyId: string;
 let oauthClientId: string;
 let oauthAccessToken: string;
 let firstPartyToken: string;
+let courseId: number;
+let teeId: number;
+let holeId: number;
+let roundId: number;
+let scoreId: number;
 
 const admin = () =>
   createClient(supabaseUrl!, serviceRoleKey!, {
@@ -163,6 +173,78 @@ describeIfLocal("OAuth client tokens (real local Supabase)", () => {
       acceptedAt: new Date(),
       acceptanceMethod: "signup",
     });
+
+    // A round + score for the delete-deny (write-only) posture tests.
+    const [courseRow] = await db
+      .insert(course)
+      .values({
+        name: `OAuth Test Course ${ownerId.slice(0, 8)}`,
+        approvalStatus: "approved",
+        country: "Norway",
+        city: "Testville",
+        source: "user",
+      })
+      .returning({ id: course.id });
+    courseId = courseRow.id;
+    const [teeRow] = await db
+      .insert(teeInfo)
+      .values({
+        courseId,
+        name: "White",
+        gender: "mens",
+        courseRating18: 72.0,
+        slopeRating18: 113,
+        courseRatingFront9: 36.0,
+        slopeRatingFront9: 113,
+        courseRatingBack9: 36.0,
+        slopeRatingBack9: 113,
+        outPar: 36,
+        inPar: 36,
+        totalPar: 72,
+        outDistance: 3000,
+        inDistance: 3000,
+        totalDistance: 6000,
+        approvalStatus: "approved",
+      })
+      .returning({ id: teeInfo.id });
+    teeId = teeRow.id;
+    const [holeRow] = await db
+      .insert(hole)
+      .values({ teeId, holeNumber: 1, par: 4, distance: 350, hcp: 1 })
+      .returning({ id: hole.id });
+    holeId = holeRow.id;
+    const [roundRow] = await db
+      .insert(round)
+      .values({
+        userId: ownerId,
+        courseId,
+        teeId,
+        teeTime: new Date(),
+        totalStrokes: 90,
+        parPlayed: 72,
+        adjustedGrossScore: 90,
+        adjustedPlayedScore: 90,
+        courseHandicap: 18,
+        scoreDifferential: 18.0,
+        existingHandicapIndex: 18.0,
+        updatedHandicapIndex: 18.0,
+        courseRatingUsed: 72.0,
+        slopeRatingUsed: 113,
+        holesPlayed: 18,
+      })
+      .returning({ id: round.id });
+    roundId = roundRow.id;
+    const [scoreRow] = await db
+      .insert(score)
+      .values({
+        userId: ownerId,
+        roundId,
+        holeId,
+        strokes: 5,
+        hcpStrokes: 1,
+      })
+      .returning({ id: score.id });
+    scoreId = scoreRow.id;
 
     // ── First-party session (password sign-in — no client_id expected) ───
     const userClient = createClient(supabaseUrl!, anonKey!, {
@@ -273,6 +355,11 @@ describeIfLocal("OAuth client tokens (real local Supabase)", () => {
     if (oauthClientId) {
       await a.auth.admin.oauth.deleteClient(oauthClientId).catch(() => {});
     }
+    if (scoreId) await db.delete(score).where(eq(score.id, scoreId));
+    if (roundId) await db.delete(round).where(eq(round.id, roundId));
+    if (holeId) await db.delete(hole).where(eq(hole.id, holeId));
+    if (teeId) await db.delete(teeInfo).where(eq(teeInfo.id, teeId));
+    if (courseId) await db.delete(course).where(eq(course.id, courseId));
     if (ownerId) {
       await db
         .delete(emailPreferences)
@@ -291,21 +378,25 @@ describeIfLocal("OAuth client tokens (real local Supabase)", () => {
 
   // ── 1. Custom access token hook: claims contract ───────────────────────
 
-  test("OAuth token carries client_id and the rounds:write scope claim", () => {
+  test("OAuth token carries client_id and the rounds:write scope claim — and NO billing claims", () => {
     const claims = decodeJwtPayload(oauthAccessToken);
     expect(claims.client_id).toBe(oauthClientId);
     expect(String(claims.scope ?? "")).toContain("rounds:write");
-    // Billing claims from the hook still present on OAuth tokens.
-    expect(claims.app_metadata).toMatchObject({
-      billing: expect.objectContaining({ plan: expect.any(String) }),
-    });
+    // A connected app must not learn the billing tier by decoding its own
+    // token: the hook skips billing stamping for client_id tokens.
+    const appMetadata = (claims.app_metadata ?? {}) as Record<string, unknown>;
+    expect(appMetadata.billing).toBeUndefined();
   });
 
-  test("first-party session token carries NEITHER client_id nor scope", () => {
+  test("first-party session token carries NEITHER client_id nor scope — and KEEPS billing claims", () => {
     const claims = decodeJwtPayload(firstPartyToken);
     expect(claims.client_id).toBeUndefined();
     expect(claims.scope).toBeUndefined();
     expect(claims.sub).toBe(ownerId);
+    // First-party billing claims unchanged by the OAuth branch of the hook.
+    expect(claims.app_metadata).toMatchObject({
+      billing: expect.objectContaining({ plan: expect.any(String) }),
+    });
   });
 
   test("auth.getUser accepts the OAuth token and resolves the linked user", async () => {
@@ -319,14 +410,51 @@ describeIfLocal("OAuth client tokens (real local Supabase)", () => {
 
   // ── 2. RLS deny-policies against direct PostgREST access ───────────────
 
-  test("OAuth token can still read profile, RLS-scoped to the token owner", async () => {
-    const { status, json } = await postgrest(
-      oauthAccessToken,
+  test("OAuth token cannot SELECT profile at all (billing columns live there)", async () => {
+    // The whole row — including plan_selected/subscription_status/... — is
+    // off-limits; basics come from get_connected_profile() instead.
+    const { status, json } = await postgrest(oauthAccessToken, "profile");
+    expect(status).toBe(200);
+    expect(json as unknown[]).toEqual([]);
+
+    // Positive control: the same user's first-party token still reads it.
+    const firstParty = await postgrest(
+      firstPartyToken,
       "profile?select=id,name",
     );
+    expect(firstParty.status).toBe(200);
+    expect((firstParty.json as Array<{ id: string }>).map((r) => r.id)).toEqual(
+      [ownerId],
+    );
+  });
+
+  test("get_connected_profile() serves the non-billing basics to the OAuth token", async () => {
+    const { status, json } = await postgrest(
+      oauthAccessToken,
+      "rpc/get_connected_profile",
+      { method: "POST", body: {} },
+    );
     expect(status).toBe(200);
-    const rows = json as Array<{ id: string }>;
-    expect(rows.map((r) => r.id)).toEqual([ownerId]); // decoy row invisible
+    const rows = json as Array<Record<string, unknown>>;
+    expect(rows).toHaveLength(1);
+    expect(rows[0]).toMatchObject({
+      id: ownerId,
+      name: "OAuth Owner",
+      verified: true,
+    });
+    expect(rows[0].handicap_index).toBeDefined();
+    // No billing column escapes by any spelling.
+    const keys = Object.keys(rows[0]).join(",");
+    for (const forbidden of [
+      "plan",
+      "subscription",
+      "period",
+      "cancel",
+      "billing",
+      "email",
+    ]) {
+      expect(keys).not.toContain(forbidden);
+    }
   });
 
   test("OAuth token cannot UPDATE profile (spike criterion vi now denied)", async () => {
@@ -453,5 +581,78 @@ describeIfLocal("OAuth client tokens (real local Supabase)", () => {
       },
     );
     expect(status).toBe(403);
+  });
+
+  // ── 3. Rounds: write-only-by-default (log/update yes, destroy no) ──────
+
+  test("OAuth token can read, log and update rounds/scores", async () => {
+    const read = await postgrest(
+      oauthAccessToken,
+      `round?id=eq.${roundId}&select=id`,
+    );
+    expect(read.status).toBe(200);
+    expect(read.json as unknown[]).toHaveLength(1);
+
+    const patch = await postgrest(oauthAccessToken, `round?id=eq.${roundId}`, {
+      method: "PATCH",
+      body: { notes: "updated by connected app" },
+    });
+    expect(patch.status).toBe(200);
+    expect(patch.json as unknown[]).toHaveLength(1);
+
+    const insert = await postgrest(oauthAccessToken, "score", {
+      method: "POST",
+      body: {
+        userId: ownerId,
+        roundId,
+        holeId,
+        strokes: 4,
+        hcpStrokes: 0,
+      },
+    });
+    expect(insert.status).toBe(201);
+    // Remove the extra score so the delete-deny assertions below stay exact.
+    const [inserted] = insert.json as Array<{ id: number }>;
+    await db.delete(score).where(eq(score.id, inserted.id));
+  });
+
+  test("OAuth token cannot DELETE rounds or scores; first-party still can", async () => {
+    const delScore = await postgrest(
+      oauthAccessToken,
+      `score?id=eq.${scoreId}`,
+      { method: "DELETE" },
+    );
+    expect(Array.isArray(delScore.json) ? delScore.json : []).toEqual([]);
+    expect(
+      await db.select({ id: score.id }).from(score).where(eq(score.id, scoreId)),
+    ).toHaveLength(1);
+
+    const delRound = await postgrest(
+      oauthAccessToken,
+      `round?id=eq.${roundId}`,
+      { method: "DELETE" },
+    );
+    expect(Array.isArray(delRound.json) ? delRound.json : []).toEqual([]);
+    expect(
+      await db.select({ id: round.id }).from(round).where(eq(round.id, roundId)),
+    ).toHaveLength(1);
+
+    // Positive controls: the user's first-party token retains full delete
+    // capability (destructive — this is the last test touching these rows).
+    const fpScore = await postgrest(
+      firstPartyToken,
+      `score?id=eq.${scoreId}`,
+      { method: "DELETE" },
+    );
+    expect(fpScore.status).toBe(200);
+    expect(fpScore.json as unknown[]).toHaveLength(1);
+
+    const fpRound = await postgrest(
+      firstPartyToken,
+      `round?id=eq.${roundId}`,
+      { method: "DELETE" },
+    );
+    expect(fpRound.status).toBe(200);
+    expect(fpRound.json as unknown[]).toHaveLength(1);
   });
 });
