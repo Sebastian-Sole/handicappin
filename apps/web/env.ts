@@ -49,7 +49,11 @@ export const env = createEnv({
     // EXPLICITLY in production: the public API surface fails closed when the
     // limiter cannot run, so an unset flag in a production deploy is treated
     // as a misconfiguration and fails the build/boot loudly instead of
-    // failing open (or closed) silently at request time. See
+    // failing open (or closed) silently at request time.
+    // NOTE: 'false' is NOT "public API without rate limiting" — on the
+    // public API surface ('/api/v1', api.handicappin.com) both 'false' and
+    // unset DENY 100% of requests (fail-closed). 'false' means "public API
+    // disabled"; it only skips limiting on first-party web endpoints. See
     // docs/ingress-firewall-state.md and api-platform subplan 001 (W0).
     RATE_LIMIT_ENABLED: z
       .enum(["true", "false"])

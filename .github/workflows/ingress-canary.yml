@@ -44,8 +44,8 @@ jobs:
       #
       # NOTE ON THE TARGET: the incident brief named `course.getAll`, which
       # does NOT exist. The public procedures on courseRouter are
-      # getCourseById / getAllUserCourses (needs userId) / searchCourses
-      # (needs query). We use `course.getCourseById` with a trivial input —
+      # getCourseById / searchCourses (needs query).
+      # We use `course.getCourseById` with a trivial input —
       # it returns JSON (the course row or null) for any caller and needs no
       # auth. If that procedure is ever renamed, update TRPC_PATH below; any
       # public procedure that returns JSON works — the canary only cares that

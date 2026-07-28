@@ -87,7 +87,7 @@ describe("env.ts — RATE_LIMIT_ENABLED production assertion", () => {
     expect(env.RATE_LIMIT_ENABLED).toBe("true");
   });
 
-  test("production deploy with an explicit 'false' passes (conscious opt-out)", async () => {
+  test("production deploy with an explicit 'false' passes (public API disabled/fail-closed; only first-party limiting is off)", async () => {
     const { env } = await loadEnv({
       NODE_ENV: "production",
       RATE_LIMIT_ENABLED: "false",

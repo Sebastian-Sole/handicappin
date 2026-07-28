@@ -59,6 +59,16 @@ vi.mock("@/lib/sentry-utils", () => ({
   captureSentryError: vi.fn(),
 }));
 
+// Captured so tests can assert what reaches Vercel logs (PII redaction).
+vi.mock("@/lib/logging", () => ({
+  logger: {
+    debug: vi.fn(),
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
+  },
+}));
+
 type RateLimitModule = typeof import("@/lib/rate-limit");
 
 /**
@@ -67,7 +77,7 @@ type RateLimitModule = typeof import("@/lib/rate-limit");
  */
 async function loadRateLimit(
   overrides: Record<string, string> = {}
-): Promise<{ mod: RateLimitModule; capture: Mock }> {
+): Promise<{ mod: RateLimitModule; capture: Mock; loggerError: Mock }> {
   vi.resetModules();
   vi.stubEnv("SKIP_ENV_VALIDATION", "1");
   // Neutralize anything leaked from .env.local (empty string = unset,
@@ -78,14 +88,19 @@ async function loadRateLimit(
   for (const [key, value] of Object.entries(overrides)) {
     vi.stubEnv(key, value);
   }
-  // The mocked sentry module instance survives vi.resetModules() (mock
-  // factories are cached), so clear its call history BEFORE the module under
-  // test runs its init-time code.
+  // The mocked sentry/logging module instances survive vi.resetModules()
+  // (mock factories are cached), so clear their call history BEFORE the
+  // module under test runs its init-time code.
   const sentry = await import("@/lib/sentry-utils");
   const capture = sentry.captureSentryError as unknown as Mock;
   capture.mockClear();
+  const logging = await import("@/lib/logging");
+  const loggerMocks = logging.logger as unknown as Record<string, Mock>;
+  for (const fn of Object.values(loggerMocks)) {
+    fn.mockClear();
+  }
   const mod = await import("@/lib/rate-limit");
-  return { mod, capture };
+  return { mod, capture, loggerError: loggerMocks.error };
 }
 
 const ENABLED_WITH_CREDS = {
@@ -191,8 +206,8 @@ describe("enforcePublicApiRateLimit — fail-closed failure modes", () => {
     });
   });
 
-  test("never sends the raw identifier (IP) to Sentry, only its kind", async () => {
-    const { mod, capture } = await loadRateLimit();
+  test("never sends the raw identifier (IP) to Sentry or the logger, only its kind", async () => {
+    const { mod, capture, loggerError } = await loadRateLimit();
 
     await mod.enforcePublicApiRateLimit(
       publicApiRequest({ "x-real-ip": "203.0.113.7" })
@@ -201,6 +216,13 @@ describe("enforcePublicApiRateLimit — fail-closed failure modes", () => {
     const context = capture.mock.calls[0]?.[1];
     expect(context.extra).toEqual({ identifierKind: "ip" });
     expect(JSON.stringify(context)).not.toContain("203.0.113.7");
+
+    // The logger path (Vercel logs) must also never see the raw IP —
+    // only the identifier kind.
+    expect(loggerError).toHaveBeenCalled();
+    const loggedPayloads = JSON.stringify(loggerError.mock.calls);
+    expect(loggedPayloads).not.toContain("203.0.113.7");
+    expect(loggedPayloads).toContain('"identifierKind":"ip"');
   });
 });
 

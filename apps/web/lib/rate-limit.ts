@@ -273,9 +273,12 @@ function denyClosed(
   identifier: string,
   error?: unknown
 ): PublicApiRateLimitResult {
+  // Only the identifier KIND (user vs ip) is emitted — the raw identifier
+  // carries an IP address, which must reach neither Sentry nor Vercel logs.
+  const identifierKind = identifier.split(":")[0] ?? "unknown";
   logger.error("Rate limit: public API fail-closed", {
     reason,
-    identifier,
+    identifierKind,
     error: error instanceof Error ? error.message : undefined,
   });
   captureSentryError(
@@ -284,8 +287,7 @@ function denyClosed(
       level: "error",
       eventType: "rate-limit-fail-closed",
       tags: { reason },
-      // Only the identifier KIND (user vs ip), never the raw IP, goes to Sentry.
-      extra: { identifierKind: identifier.split(":")[0] ?? "unknown" },
+      extra: { identifierKind },
     }
   );
   return {
