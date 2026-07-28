@@ -39,6 +39,10 @@ export const INTENTIONAL = {
     "billing",
     "billing/success",
     "contact",
+    // OAuth 2.1 consent page (api-platform subplan 004): consent happens in a
+    // browser reached via deeplink from the connecting app (e.g. fitbull), so
+    // a native twin is not applicable — permanently web-only by design.
+    "oauth/consent",
     "privacy-policy",
     "terms-of-service",
     "upgrade",

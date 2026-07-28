@@ -136,6 +136,18 @@ skip_nonce_check=true
 enroll_enabled = true
 verify_enabled = true
 
+# OAuth 2.1 authorization server (beta) — api-platform subplan 004.
+# Enables the local `/auth/v1/oauth/*` endpoints so the Connect flow
+# (consent page, token issuance, grant revocation) is testable against the
+# local stack. Spike-verified 2026-07-28 (docs/research/api-platform/plans/
+# 004-spike-results.md). The app hosts its own consent page at
+# /oauth/consent — Supabase serves no default UI. Enabling this on the
+# HOSTED project is an explicit OWNER action (dashboard or config push).
+[auth.oauth_server]
+enabled = true
+authorization_url_path = "/oauth/consent"
+allow_dynamic_registration = false
+
 [analytics]
 enabled = false
 port = 54327
