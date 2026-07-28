@@ -24,6 +24,10 @@ import { FormFeedback } from "../ui/form-feedback";
 import type { FeedbackState } from "@/types/feedback";
 import { GoogleSignInButton } from "./google-sign-in-button";
 import { getOAuthErrorMessage } from "@/lib/oauth-errors";
+import {
+  LOGIN_REDIRECT_PARAM,
+  safeInternalPath,
+} from "@/lib/oauth/consent-flow";
 import { AuthFormShell } from "@/components/auth/auth-form-shell";
 
 export function Login() {
@@ -136,6 +140,17 @@ export function Login() {
         message: error.message,
       });
       setIsSubmitting(false);
+      return;
+    }
+
+    // Resume an interrupted flow first (e.g. a pending /oauth/consent
+    // request that redirected here) — guarded to internal paths only.
+    const resumePath = safeInternalPath(
+      searchParams.get(LOGIN_REDIRECT_PARAM),
+    );
+    if (resumePath) {
+      router.push(resumePath);
+      router.refresh();
       return;
     }
 

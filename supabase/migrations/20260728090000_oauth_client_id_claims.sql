@@ -75,6 +75,19 @@ BEGIN
   -- app_metadata through untouched, stamp the forward-compatible scope claim
   -- (appended to GoTrue-granted scopes, space-separated per RFC 6749 §3.3),
   -- and return early.
+  --
+  -- Why `rounds:write` is stamped UNCONDITIONALLY (reviewed and accepted,
+  -- PR #167): this is the Phase-1 fixed-capability model. Supabase's OAuth
+  -- beta has no per-client scope management (Phase-2, unshipped — discussion
+  -- #38022), so today EVERY OAuth grant carries the identical capability set,
+  -- enforced uniformly by RLS regardless of this claim; the consent page
+  -- displays that same fixed set rather than scope-derived text, so display
+  -- and enforcement cannot diverge. The claim exists so /api/v1 enforcement
+  -- points (subplan 005) are written against `scope` from day one and do not
+  -- move when real scopes ship. Tripwire (DECISIONS §8): NO external
+  -- third-party client may be onboarded until per-client scopes exist —
+  -- revisit this stamp (derive from the client's granted scopes) the moment
+  -- a second, less-trusted client is contemplated.
   IF new_claims ? 'client_id' THEN
     IF original_claims ? 'app_metadata' THEN
       new_claims := jsonb_set(new_claims, '{app_metadata}', original_claims->'app_metadata');

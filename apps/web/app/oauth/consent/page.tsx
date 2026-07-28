@@ -11,6 +11,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { OAuthConsentCard } from "@/components/auth/oauth-consent-card";
+import { loginPathForConsent } from "@/lib/oauth/consent-flow";
 import { createServerComponentClient } from "@/utils/supabase/server";
 
 /**
@@ -85,13 +86,18 @@ const OAuthConsentPage = async ({
   } = await supabase.auth.getUser();
 
   if (!user) {
+    // The pending authorization survives server-side, so we thread this
+    // consent URL through login (`?redirect=`, open-redirect-guarded by
+    // safeInternalPath on the login surfaces) and resume it after sign-in.
     return (
       <ConsentShell
         title="Sign in to continue"
-        description="An app is asking to connect to your handicappin account. Sign in first, then return to this page (or restart the connection from the app)."
+        description="An app is asking to connect to your handicappin account. Sign in and you'll be brought straight back to this request."
       >
         <Button asChild className="w-full">
-          <Link href="/login">Sign in to handicappin</Link>
+          <Link href={loginPathForConsent(authorizationId)}>
+            Sign in to handicappin
+          </Link>
         </Button>
       </ConsentShell>
     );

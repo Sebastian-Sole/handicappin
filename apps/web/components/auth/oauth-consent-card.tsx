@@ -12,6 +12,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Muted } from "@/components/ui/typography";
+import { deriveHost } from "@/lib/oauth/consent-flow";
 import { createClientComponentClient } from "@/utils/supabase/client";
 
 /**
@@ -35,10 +36,15 @@ interface OAuthConsentCardProps {
  * capability set, so this list is fixed rather than scope-mapped):
  * - profile basics via get_connected_profile() — RLS denies direct profile
  *   reads/writes, billing tables and email preferences (20260728091000);
+ * - the account's email address and basic identity: GoTrue's /auth/v1/user
+ *   endpoint (and the token's own claims) necessarily expose these to any
+ *   session holder — disclosed here rather than pretended away (see
+ *   004-updateuser-decision.md for the accepted GoTrue surface);
  * - round/score INSERT/UPDATE/SELECT — DELETE is RLS-denied.
  * If the policies change, change this copy in the same PR.
  */
 const GRANTED_CAPABILITIES = [
+  "See your email address and basic account identity",
   "Read your basic profile — your name and handicap index only (never your billing details or email preferences)",
   "Log and update your golf rounds",
 ];
@@ -53,13 +59,11 @@ export function OAuthConsentCard({
   const [pending, setPending] = useState<"approve" | "deny" | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  const redirectHost = (() => {
-    try {
-      return new URL(redirectUri).host;
-    } catch {
-      return redirectUri;
-    }
-  })();
+  const redirectHost = deriveHost(redirectUri) ?? redirectUri;
+  // The parenthetical next to the client name shows the CLIENT's own site
+  // host (not the redirect host — that's a different URL, shown in the
+  // "sent back to" line below).
+  const clientHost = deriveHost(clientUri);
 
   const decide = async (decision: "approve" | "deny") => {
     setPending(decision);
@@ -98,7 +102,7 @@ export function OAuthConsentCard({
         <CardTitle>Connect {clientName}?</CardTitle>
         <CardDescription>
           <strong>{clientName}</strong>
-          {clientUri ? <> ({redirectHost})</> : null} wants to connect to the
+          {clientHost ? <> ({clientHost})</> : null} wants to connect to the
           handicappin account for <strong>{userEmail}</strong>.
         </CardDescription>
       </CardHeader>

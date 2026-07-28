@@ -382,6 +382,10 @@ describeIfLocal("OAuth client tokens (real local Supabase)", () => {
     const claims = decodeJwtPayload(oauthAccessToken);
     expect(claims.client_id).toBe(oauthClientId);
     expect(String(claims.scope ?? "")).toContain("rounds:write");
+    // `ref` is deliberately NOT asserted: local GoTrue never stamps it
+    // (hosted-platform claim — verified empirically against this stack), so
+    // only its passthrough is coded in the hook (same FOREACH array as
+    // client_id, which IS asserted above).
     // A connected app must not learn the billing tier by decoding its own
     // token: the hook skips billing stamping for client_id tokens.
     const appMetadata = (claims.app_metadata ?? {}) as Record<string, unknown>;
@@ -484,6 +488,16 @@ describeIfLocal("OAuth client tokens (real local Supabase)", () => {
       .update(profile)
       .set({ name: "OAuth Owner" })
       .where(eq(profile.id, ownerId));
+  });
+
+  test("OAuth token cannot INSERT profile (RLS with-check, 403)", async () => {
+    // 403 comes from the RESTRICTIVE INSERT deny (checked before the unique
+    // constraint — verified empirically, not a 409 masquerading as a pass).
+    const { status } = await postgrest(oauthAccessToken, "profile", {
+      method: "POST",
+      body: { id: ownerId, email: OWNER_EMAIL, name: "inserted-by-oauth" },
+    });
+    expect(status).toBe(403);
   });
 
   test("OAuth token cannot DELETE profile", async () => {
