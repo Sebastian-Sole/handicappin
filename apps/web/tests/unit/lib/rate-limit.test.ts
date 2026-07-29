@@ -318,6 +318,47 @@ describe("first-party limiters keep fail-open behavior", () => {
 
     expect(result.success).toBe(true);
   });
+
+  test("allow when the live limiter throws at request time (transient Upstash blip) and alert Sentry", async () => {
+    const { mod, capture, loggerError } = await loadRateLimit(
+      ENABLED_WITH_CREDS
+    );
+    // Simulate `TypeError: fetch failed` (getaddrinfo ENOTFOUND ...upstash.io)
+    // out of the @upstash/ratelimit pipeline once the client already exists.
+    state.limit.mockRejectedValueOnce(
+      new TypeError("fetch failed")
+    );
+
+    const result = await mod.checkoutRateLimit.limit("user:abc");
+
+    // Fail OPEN: request allowed through despite the runtime throw.
+    expect(result.success).toBe(true);
+    // Outage stays visible.
+    expect(loggerError).toHaveBeenCalled();
+    expect(
+      capture.mock.calls.some(
+        (call) => call[1]?.eventType === "rate-limit-runtime-error"
+      )
+    ).toBe(true);
+  });
+
+  test("uses the live limiter result on the happy path (does not always bypass)", async () => {
+    const { mod, capture } = await loadRateLimit(ENABLED_WITH_CREDS);
+    state.limit.mockResolvedValueOnce({
+      success: false,
+      limit: 5,
+      remaining: 0,
+      reset: 999,
+    });
+
+    const result = await mod.checkoutRateLimit.limit("user:abc");
+
+    // A genuine over-limit denial from the live limiter is passed through
+    // untouched — the runtime wrapper only intercepts throws.
+    expect(result.success).toBe(false);
+    expect(state.limit).toHaveBeenCalledWith("user:abc");
+    expect(capture).not.toHaveBeenCalled();
+  });
 });
 
 describe("isPublicApiRequest", () => {

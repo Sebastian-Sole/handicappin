@@ -128,10 +128,55 @@ function bypassLimiter(limit: number, windowMs: number): Limiter {
 }
 
 /**
+ * Wrap a live first-party limiter so that a throw from `.limit()` at REQUEST
+ * time fails OPEN instead of propagating to the caller.
+ *
+ * The init-time guards above only cover a limiter that never came up. Once the
+ * limiter exists, a transient Upstash DNS/network blip surfaces as
+ * `TypeError: fetch failed` (`getaddrinfo ENOTFOUND ...upstash.io`) out of the
+ * `@upstash/ratelimit` pipeline. Without this wrapper that error propagates and
+ * breaks the documented fail-open contract on revenue-adjacent flows (checkout,
+ * webhooks, contact, AI extraction). We fall back to the bypass response and
+ * still alert Sentry so the outage stays visible.
+ */
+function failOpenAtRuntime(
+  limiter: Limiter,
+  prefix: string,
+  limit: number,
+  windowMs: number
+): Limiter {
+  const bypass = bypassLimiter(limit, windowMs);
+  return {
+    limit: async (identifier: string) => {
+      try {
+        return await limiter.limit(identifier);
+      } catch (error) {
+        logger.error("Rate limit: limiter threw at request time - failing open", {
+          prefix,
+          error: error instanceof Error ? error.message : String(error),
+        });
+        captureSentryError(
+          new Error(
+            `First-party rate limiter threw at request time (${prefix}) — failing open`
+          ),
+          {
+            level: "error",
+            eventType: "rate-limit-runtime-error",
+            tags: { prefix, behavior: "fail-open" },
+          }
+        );
+        return bypass.limit(identifier);
+      }
+    },
+  };
+}
+
+/**
  * Create a first-party rate limiter with sliding window algorithm.
- * FAIL-OPEN: falls back to a bypass limiter when the infrastructure is
- * unavailable (init failures are Sentry-alerted above). Public API traffic
- * must NOT use these — see `enforcePublicApiRateLimit()`.
+ * FAIL-OPEN: falls back to a bypass limiter both when the infrastructure is
+ * unavailable at init (init failures are Sentry-alerted above) AND when the
+ * live limiter throws at request time (see `failOpenAtRuntime`). Public API
+ * traffic must NOT use these — see `enforcePublicApiRateLimit()`.
  *
  * @param limit - Max requests per window
  * @param prefix - Redis key prefix for this limiter
@@ -171,7 +216,9 @@ function createRateLimiter(
       limit,
       window,
     });
-    return limiter;
+    // Wrap so a runtime throw (e.g. a transient Upstash blip) fails open at
+    // request time, not just at init — see failOpenAtRuntime.
+    return failOpenAtRuntime(limiter, prefix, limit, windowMs);
   } catch (error) {
     logger.error("Rate limit: Failed to create limiter", {
       prefix,
