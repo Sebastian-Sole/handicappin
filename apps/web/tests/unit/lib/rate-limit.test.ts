@@ -83,8 +83,8 @@ async function loadRateLimit(
   // Neutralize anything leaked from .env.local (empty string = unset,
   // matching env.ts's emptyStringAsUndefined behavior).
   vi.stubEnv("RATE_LIMIT_ENABLED", "");
-  vi.stubEnv("KV_REST_API_URL", "");
-  vi.stubEnv("KV_REST_API_TOKEN", "");
+  vi.stubEnv("UPSTASH_REDIS_REST_URL", "");
+  vi.stubEnv("UPSTASH_REDIS_REST_TOKEN", "");
   for (const [key, value] of Object.entries(overrides)) {
     vi.stubEnv(key, value);
   }
@@ -105,8 +105,8 @@ async function loadRateLimit(
 
 const ENABLED_WITH_CREDS = {
   RATE_LIMIT_ENABLED: "true",
-  KV_REST_API_URL: "https://dummy-kv.upstash.io",
-  KV_REST_API_TOKEN: "dummy-token",
+  UPSTASH_REDIS_REST_URL: "https://dummy-kv.upstash.io",
+  UPSTASH_REDIS_REST_TOKEN: "dummy-token",
 };
 
 function publicApiRequest(headers: Record<string, string> = {}): Request {
@@ -149,10 +149,10 @@ describe("enforcePublicApiRateLimit — fail-closed failure modes", () => {
     expect(result.reason).toBe("disabled");
   });
 
-  test("denies when KV credentials are missing and alerts Sentry at init + request", async () => {
+  test("denies when Redis credentials are missing and alerts Sentry at init + request", async () => {
     const { mod, capture } = await loadRateLimit({
       RATE_LIMIT_ENABLED: "true",
-      // KV_REST_API_URL / KV_REST_API_TOKEN left unset
+      // UPSTASH_REDIS_REST_URL / UPSTASH_REDIS_REST_TOKEN left unset
     });
 
     // Module init already alerted (rate limiting requested but unavailable).

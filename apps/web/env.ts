@@ -23,11 +23,13 @@ export const env = createEnv({
     REVENUECAT_WEBHOOK_AUTH_TOKEN: z.string().optional(),
     REVENUECAT_API_KEY: z.string().optional(),
 
-    KV_URL: z.url(),
-    KV_REST_API_URL: z.url(),
-    KV_REST_API_TOKEN: z.string(),
-    KV_REST_API_READ_ONLY_TOKEN: z.string(),
-    REDIS_URL: z.url(),
+    // Upstash Redis (rate limiting, lib/rate-limit.ts). Set directly from the
+    // Upstash console — NOT the Vercel KV integration (removed 2026-07). These
+    // are the only two Redis vars the app reads; the former KV_URL /
+    // KV_REST_API_READ_ONLY_TOKEN / REDIS_URL were KV-integration leftovers
+    // used nowhere.
+    UPSTASH_REDIS_REST_URL: z.url(),
+    UPSTASH_REDIS_REST_TOKEN: z.string(),
 
     ADMIN_ALERT_EMAILS: z.string(),
     // Who may moderate (admin console access). Deliberately separate from
@@ -125,11 +127,8 @@ export const env = createEnv({
       process.env.STRIPE_UNLIMITED_LIFETIME_PRICE_ID,
     REVENUECAT_WEBHOOK_AUTH_TOKEN: process.env.REVENUECAT_WEBHOOK_AUTH_TOKEN,
     REVENUECAT_API_KEY: process.env.REVENUECAT_API_KEY,
-    KV_URL: process.env.KV_URL,
-    KV_REST_API_URL: process.env.KV_REST_API_URL,
-    KV_REST_API_TOKEN: process.env.KV_REST_API_TOKEN,
-    KV_REST_API_READ_ONLY_TOKEN: process.env.KV_REST_API_READ_ONLY_TOKEN,
-    REDIS_URL: process.env.REDIS_URL,
+    UPSTASH_REDIS_REST_URL: process.env.UPSTASH_REDIS_REST_URL,
+    UPSTASH_REDIS_REST_TOKEN: process.env.UPSTASH_REDIS_REST_TOKEN,
     ADMIN_ALERT_EMAILS: process.env.ADMIN_ALERT_EMAILS,
     ADMIN_EMAILS: process.env.ADMIN_EMAILS,
     RESET_TOKEN_SECRET: process.env.RESET_TOKEN_SECRET,

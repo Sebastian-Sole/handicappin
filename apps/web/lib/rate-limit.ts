@@ -58,16 +58,16 @@ if (!isEnabled) {
   limiterUnavailableReason = "disabled";
   logger.info("Rate limit: Disabled (RATE_LIMIT_ENABLED is not 'true')");
 } else {
-  // Upstash REST API credentials from Vercel KV. These are required by
-  // env.ts, but a deploy built with SKIP_ENV_VALIDATION could still reach
-  // here without them — hence the runtime check.
-  const restUrl = env.KV_REST_API_URL;
-  const restToken = env.KV_REST_API_TOKEN;
+  // Upstash Redis REST credentials (set directly from the Upstash console).
+  // These are required by env.ts, but a deploy built with SKIP_ENV_VALIDATION
+  // could still reach here without them — hence the runtime check.
+  const restUrl = env.UPSTASH_REDIS_REST_URL;
+  const restToken = env.UPSTASH_REDIS_REST_TOKEN;
 
   if (!restUrl || !restToken) {
     limiterUnavailableReason = "missing-credentials";
     logger.error("Rate limit: No Redis credentials found", {
-      hint: "Set KV_REST_API_URL and KV_REST_API_TOKEN",
+      hint: "Set UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN",
     });
   } else {
     try {
