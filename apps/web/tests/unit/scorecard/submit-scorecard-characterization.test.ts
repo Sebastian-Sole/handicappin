@@ -24,6 +24,10 @@ import { TRPCError } from "@trpc/server";
 import { createCallerFactory } from "@/server/api/trpc";
 import { roundRouter } from "@/server/api/routers/round";
 import {
+  CourseResolutionError,
+  submitScorecard as submitScorecardService,
+} from "@/server/services/scorecard";
+import {
   course as courseTable,
   hole as holeTable,
   profile as profileTable,
@@ -719,5 +723,73 @@ describe("submitScorecard characterization — gates and races", () => {
     // No admin email, no analytics for a rolled-back round.
     expect(notifyMock).not.toHaveBeenCalled();
     expect(h.posthog.capture).not.toHaveBeenCalled();
+  });
+});
+
+/**
+ * The two coverage gaps flagged in PR #165's review, closed here (routed to
+ * subplan 003): a CourseResolutionError characterization and the Part B
+ * `overLimitPolicy` guard.
+ */
+describe("submitScorecard characterization — course resolution failures and the Part B seam", () => {
+  it("approved tee referenced by an id that no longer resolves: INTERNAL_SERVER_ERROR with the exact CourseResolutionError message, nothing persisted", async () => {
+    accessMock.mockResolvedValue(unlimitedAccess);
+    // Catalog course matches, but NO teeInfo rows are seeded, so both the
+    // name+gender lookup (3b) and the by-id verification return empty and
+    // the by-id branch throws CourseResolutionError. The adapter does not
+    // catch it — tRPC's errorFormatter wraps it as INTERNAL_SERVER_ERROR
+    // with the error's own message (pinned pre-refactor behavior).
+    h.fakeDb.seedSelect(profileTable, [profileRow]);
+    h.fakeDb.seedSelect(courseTable, [
+      { id: COURSE_ID, name: "Characterization Course" },
+    ]);
+
+    const error = await buildCaller()
+      .submitScorecard(buildScorecard())
+      .then(
+        () => null,
+        (e: unknown) => e
+      );
+
+    expect(error).toBeInstanceOf(TRPCError);
+    expect((error as TRPCError).code).toBe("INTERNAL_SERVER_ERROR");
+    expect((error as TRPCError).message).toBe(
+      `Approved, non-archived tee with ID ${TEE_ID} not found in database`
+    );
+    expect((error as TRPCError).cause).toBeInstanceOf(CourseResolutionError);
+
+    // The transaction aborted before any round/score/submission insert.
+    expect(h.fakeDb.insertsFor(roundTable)).toHaveLength(0);
+    expect(h.fakeDb.insertsFor(scoreTable)).toHaveLength(0);
+    expect(h.fakeDb.insertsFor(submissionsTable)).toHaveLength(0);
+    expect(notifyMock).not.toHaveBeenCalled();
+    expect(h.posthog.capture).not.toHaveBeenCalled();
+  });
+
+  it('overLimitPolicy "quarantine" is rejected loudly by the Part B guard before any other work', async () => {
+    // Locks in the seam guard (submit-scorecard.ts) so a premature adapter
+    // wire-up cannot silently fall through to reject semantics. The guard
+    // runs first, so every other dependency can be an inert stub.
+    const deps = {
+      db: h.fakeDb,
+      supabase: fakeSupabase(),
+      authUserId: USER_ID,
+      getUserAccess: accessMock,
+      notifyAdmins: notifyMock,
+      logger: logger,
+      analytics: { capture: h.posthog.capture, flush: h.posthog.flush },
+      overLimitPolicy: "quarantine",
+    } as unknown as Parameters<typeof submitScorecardService>[0];
+
+    await expect(
+      submitScorecardService(deps, buildScorecard())
+    ).rejects.toThrow(
+      'overLimitPolicy "quarantine" is not implemented yet (subplan 002 Part B, blocked on 003\'s round.quarantined column)'
+    );
+
+    // The guard fires before the self-submission check, access lookup, and
+    // any db work.
+    expect(accessMock).not.toHaveBeenCalled();
+    expect(h.fakeDb.inserts).toHaveLength(0);
   });
 });

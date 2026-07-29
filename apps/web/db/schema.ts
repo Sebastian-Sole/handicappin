@@ -1,6 +1,7 @@
 import {
   pgTable,
   uniqueIndex,
+  unique,
   foreignKey,
   pgPolicy,
   uuid,
@@ -290,9 +291,38 @@ export const round = pgTable(
     createdAt: timestamp()
       .default(sql`CURRENT_TIMESTAMP`)
       .notNull(),
+    // --- API-platform bundle (subplan 003, DECISIONS #9 + closed billing gate) ---
+    // Client-supplied idempotency key, unique per user (replay-by-lookup;
+    // subplan 005 implements the replay). Null = submitted without a key.
+    externalId: text(),
+    // Self-reported submission attribution, analytics only (no client
+    // registry yet). Null = row predates the column.
+    submittedVia: text("submitted_via"),
+    // Maintained by DB trigger `round_set_updated_at` on every UPDATE — do
+    // not set from app code. Exists so a future sync-cursor retrofit stays
+    // cheap (the cursor endpoint itself is declined).
+    updatedAt: timestamp("updated_at")
+      .default(sql`CURRENT_TIMESTAMP`)
+      .notNull(),
+    // Accept-and-quarantine flag (closed billing gate): true = stored
+    // over-limit round, excluded from the free-tier count and the handicap
+    // computation until upgrade. Written by 002 Part B's in-transaction
+    // check. Distinct axis from approvalStatus (course-data moderation).
+    quarantined: boolean().default(false).notNull(),
   },
   (table) => [
     index("idx_round_userId").on(table.userId),
+    // Strict natural-key duplicate guard for every write path (web, native,
+    // watch, API). NULLS NOT DISTINCT so two 18-hole rounds (null
+    // nineHoleSection) at the same tee time collide too; legitimate
+    // front/back 9-hole pairs at the same teeTime remain distinct. Applied
+    // directly (no dedup) — the 2026-07-29 prod duplicate scan was clean.
+    unique("round_userId_teeId_teeTime_nineHoleSection_key")
+      .on(table.userId, table.teeId, table.teeTime, table.nineHoleSection)
+      .nullsNotDistinct(),
+    // Idempotency: one round per (user, externalId); null externalIds stay
+    // distinct (web/native rows carry null).
+    unique("round_userId_externalId_key").on(table.userId, table.externalId),
     foreignKey({
       columns: [table.courseId],
       foreignColumns: [course.id],

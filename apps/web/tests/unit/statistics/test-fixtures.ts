@@ -68,6 +68,10 @@ export function createMockScorecard(
     slope_rating_used: 113,
     holes_played: 18,
     nine_hole_section: null,
+    externalId: null,
+    submitted_via: null,
+    updated_at: new Date().toISOString(),
+    quarantined: false,
   };
 
   return {

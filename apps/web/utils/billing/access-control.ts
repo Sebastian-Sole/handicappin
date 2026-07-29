@@ -35,12 +35,15 @@ export async function getComprehensiveUserAccess(
     return createNoAccessResponse();
   }
 
-  // 2. Check if user selected free plan - COUNT rounds from database
+  // 2. Check if user selected free plan - COUNT rounds from database.
+  // Quarantined rounds (accept-and-quarantine, subplan 003) are stored but
+  // MUST NOT consume free-tier quota — they unlock on upgrade.
   if (profile.plan_selected === "free") {
     const { count, error: countError } = await supabase
       .from("round")
       .select("*", { count: "exact", head: true })
-      .eq("userId", userId);
+      .eq("userId", userId)
+      .eq("quarantined", false);
 
     if (countError) {
       console.error("Error counting rounds:", countError);

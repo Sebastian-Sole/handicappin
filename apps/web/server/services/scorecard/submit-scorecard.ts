@@ -698,7 +698,9 @@ export async function submitScorecard(
       }, 0);
     }
 
-    // Determine if player has an established handicap (USGA requires 3+ approved rounds)
+    // Determine if player has an established handicap (USGA requires 3+ approved rounds).
+    // Quarantined rounds (accept-and-quarantine, subplan 003) are excluded
+    // from every handicap-computation input, including this count.
     const roundTeeTime = new Date(teeTime);
     const roundsBeforeThis = await tx
       .select({ count: count() })
@@ -707,7 +709,8 @@ export async function submitScorecard(
         and(
           eq(round.userId, userId),
           lt(round.teeTime, roundTeeTime),
-          eq(round.approvalStatus, "approved")
+          eq(round.approvalStatus, "approved"),
+          eq(round.quarantined, false)
         )
       );
     const hasEstablishedHandicap = (roundsBeforeThis[0]?.count ?? 0) >= 3;
