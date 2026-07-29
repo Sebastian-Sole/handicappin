@@ -327,13 +327,30 @@ interface FakeCountResponse {
   error: { message: string } | null;
 }
 
-/** Fake of the one Supabase call the pipeline makes: the post-commit race re-count. */
+/**
+ * Fake of the one Supabase call the pipeline makes: the post-commit race
+ * re-count. `eq` is chainable AND awaitable — the re-check filters on both
+ * `userId` and `quarantined` (subplan 003).
+ */
 function fakeSupabase(response: FakeCountResponse = { count: 0, error: null }) {
+  interface EqChain {
+    eq(...args: unknown[]): EqChain;
+    then<T>(
+      onFulfilled?: ((value: FakeCountResponse) => T) | null,
+      onRejected?: ((reason: unknown) => T) | null
+    ): Promise<T>;
+  }
+  const chain: EqChain = {
+    eq: () => chain,
+    then: (onFulfilled, onRejected) =>
+      Promise.resolve(response).then(
+        onFulfilled ?? undefined,
+        onRejected ?? undefined
+      ),
+  };
   return {
     from: () => ({
-      select: () => ({
-        eq: () => Promise.resolve(response),
-      }),
+      select: () => chain,
     }),
   };
 }

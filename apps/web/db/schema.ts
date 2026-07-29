@@ -299,9 +299,10 @@ export const round = pgTable(
     // registry yet). Null = row predates the column.
     submittedVia: text("submitted_via"),
     // Maintained by DB trigger `round_set_updated_at` on every UPDATE — do
-    // not set from app code. Exists so a future sync-cursor retrofit stays
-    // cheap (the cursor endpoint itself is declined).
-    updatedAt: timestamp("updated_at")
+    // not set from app code. timestamptz (unlike this table's legacy naive
+    // timestamps) because its purpose is a future sync cursor. Exists so the
+    // retrofit stays cheap (the cursor endpoint itself is declined).
+    updatedAt: timestamp("updated_at", { withTimezone: true })
       .default(sql`CURRENT_TIMESTAMP`)
       .notNull(),
     // Accept-and-quarantine flag (closed billing gate): true = stored
@@ -367,6 +368,18 @@ export const round = pgTable(
       for: "delete",
       to: ["authenticated"],
       using: sql`(auth.uid()::uuid = userId)`,
+    }),
+    // Accept-and-quarantine hardening (20260729100000): only service paths
+    // may quarantine/un-quarantine. Column-level UPDATE privileges (grants —
+    // not expressible in Drizzle; see the migration) block PATCHing
+    // `quarantined`/`approvalStatus`/`externalId`/`submitted_via`/`updated_at`
+    // via PostgREST; this restrictive policy blocks INSERTing
+    // `quarantined = true` directly.
+    pgPolicy("Users cannot set quarantine state directly", {
+      as: "restrictive",
+      for: "insert",
+      to: ["authenticated"],
+      withCheck: sql`(quarantined = false)`,
     }),
     // Connected apps may log/update/read rounds but never destroy them —
     // write-only-by-default posture (DECISIONS §8). Mirrors

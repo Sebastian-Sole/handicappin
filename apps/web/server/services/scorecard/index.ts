@@ -17,8 +17,10 @@ export {
 } from "./submit-scorecard";
 export {
   CourseResolutionError,
+  DuplicateRoundError,
   PlanNotSelectedError,
   RoundLimitRaceError,
   RoundLimitReachedError,
   SelfSubmissionError,
+  mapRoundInsertError,
 } from "./errors";

@@ -7,27 +7,54 @@
  *   nine_hole_section) with NULLS NOT DISTINCT — two 18-hole rounds (null
  *   section) collide, front/back 9-hole pairs at the same teeTime do not;
  * - UNIQUE("userId","externalId") idempotency key — per-user, null-tolerant;
- * - `updated_at` maintained by the `round_set_updated_at` trigger;
+ * - `updated_at` (timestamptz) maintained by the `round_set_updated_at`
+ *   trigger;
  * - `quarantined` rounds excluded from the free-tier count
- *   (`getComprehensiveUserAccess`) and from the handicap queue processor's
- *   round fetch (same filter shape as
- *   supabase/functions/process-handicap-queue/index.ts).
+ *   (`getComprehensiveUserAccess`), from `round.getCountByUserId` (the
+ *   billing-facing count native consumes), and from the established-handicap
+ *   count in `scorecard.getScorecardByRoundId` — the latter two through the
+ *   REAL tRPC code paths;
+ * - column-privilege hardening over PostgREST as a real `authenticated`
+ *   user: PATCHing `quarantined`/`approvalStatus`/`externalId` is denied
+ *   (42501), legitimate edits still work, and INSERTing `quarantined: true`
+ *   is blocked by the restrictive policy;
+ * - a duplicate submission through the real `submitScorecard` mutation maps
+ *   the 23505 to CONFLICT with user-facing copy (no raw constraint name).
  *
  * Skips (not fails) without a local `supabase start` stack — same
  * `describeIfLocal` harness as the other integration suites.
  */
-import { describe, test, expect, beforeAll, afterAll } from "vitest";
+import { describe, test, expect, beforeAll, afterAll, vi } from "vitest";
 import { randomUUID } from "crypto";
 import { createClient } from "@supabase/supabase-js";
-import { eq } from "drizzle-orm";
+import { and, asc, eq, lt, count as countFn } from "drizzle-orm";
 
 import type { Database } from "@/types/supabase";
 import { getComprehensiveUserAccess } from "@/utils/billing/access-control";
+import { createCallerFactory } from "@/server/api/trpc";
+import { roundRouter } from "@/server/api/routers/round";
+import { scorecardRouter } from "@/server/api/routers/scorecard";
+import type { Scorecard } from "@/types/scorecard-input";
+
+// submitScorecard captures analytics and may email admins — never ship
+// either from this suite.
+vi.mock("@/lib/posthog", () => ({
+  getPostHogClient: () => ({
+    capture: () => {},
+    flush: async () => {},
+  }),
+}));
+vi.mock("@/lib/email-service", () => ({
+  sendAdminSubmissionNotification: vi.fn(async () => ({ success: true })),
+}));
 
 const { db } = await import("@/db");
-const { profile, course, teeInfo, hole, round } = await import("@/db/schema");
+const { profile, course, teeInfo, hole, round, score } = await import(
+  "@/db/schema"
+);
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const databaseUrl = process.env.DATABASE_URL;
 const isLocalStack =
@@ -36,24 +63,43 @@ const hasRealSupabase =
   !!supabaseUrl &&
   !supabaseUrl.includes("dummy") &&
   !!serviceRoleKey &&
-  !serviceRoleKey.includes("dummy");
+  !serviceRoleKey.includes("dummy") &&
+  !!anonKey;
 
 const describeIfLocal =
   hasRealSupabase && isLocalStack ? describe : describe.skip;
 
 const USER_A_EMAIL = "round-migration-003-a@handicappin.local";
 const USER_B_EMAIL = "round-migration-003-b@handicappin.local";
+const USER_C_EMAIL = "round-migration-003-c@handicappin.local";
 const COURSE_NAME = "Round Migration 003 Course";
+const TEE_NAME = "Blue";
+const FREE_TIER_LIMIT = 25;
 
 let userAId: string;
 let userBId: string;
+let userCId: string;
+let userCPassword: string;
 let courseId: number;
 let teeId: number;
+
+const createRoundCaller = createCallerFactory(roundRouter);
+const createScorecardCaller = createCallerFactory(scorecardRouter);
 
 function adminClient() {
   return createClient<Database>(supabaseUrl!, serviceRoleKey!, {
     auth: { autoRefreshToken: false, persistSession: false },
   });
+}
+
+/** Sign in as a real user so PostgREST sees the `authenticated` role. */
+async function userClient(email: string, password: string) {
+  const client = createClient<Database>(supabaseUrl!, anonKey!, {
+    auth: { autoRefreshToken: false, persistSession: false },
+  });
+  const { error } = await client.auth.signInWithPassword({ email, password });
+  if (error) throw new Error(`signInWithPassword failed: ${error.message}`);
+  return client;
 }
 
 /**
@@ -110,7 +156,19 @@ function baseRound(
   };
 }
 
-async function createTestUser(email: string): Promise<string> {
+/** Count a user's active (non-quarantined) rounds directly in the DB. */
+async function activeRoundCount(userId: string): Promise<number> {
+  const [row] = await db
+    .select({ count: countFn() })
+    .from(round)
+    .where(and(eq(round.userId, userId), eq(round.quarantined, false)));
+  return row?.count ?? 0;
+}
+
+async function createTestUser(
+  email: string,
+  planSelected: "free" | "unlimited"
+): Promise<{ id: string; password: string }> {
   const admin = adminClient();
   const { data: usersPage } = await admin.auth.admin.listUsers();
   const existing = usersPage?.users.find((u) => u.email === email);
@@ -119,10 +177,11 @@ async function createTestUser(email: string): Promise<string> {
     await db.delete(profile).where(eq(profile.id, existing.id));
     await admin.auth.admin.deleteUser(existing.id);
   }
+  const password = randomUUID();
   const { data: created, error } = await admin.auth.admin.createUser({
     email,
     email_confirm: true,
-    password: randomUUID(),
+    password,
   });
   if (error || !created.user) {
     throw new Error(`Failed to create test user: ${error?.message}`);
@@ -133,33 +192,102 @@ async function createTestUser(email: string): Promise<string> {
     name: "Round Migration 003 User",
     verified: true,
     handicapIndex: 10.4,
-    planSelected: "free",
+    planSelected,
+    // subscription_status has a DB check constraint that excludes "free".
+    ...(planSelected === "free" ? {} : { subscriptionStatus: "active" }),
   });
-  return created.user.id;
+  return { id: created.user.id, password };
+}
+
+/** Same asymmetric tee shape as the characterization suites. */
+const TEE_RATINGS = {
+  courseRating18: 71.0,
+  slopeRating18: 130,
+  courseRatingFront9: 36.0,
+  slopeRatingFront9: 130,
+  courseRatingBack9: 35.0,
+  slopeRatingBack9: 120,
+  outPar: 36,
+  inPar: 35,
+  totalPar: 71,
+  outDistance: 3150,
+  inDistance: 3150,
+  totalDistance: 6300,
+  distanceMeasurement: "yards" as const,
+} as const;
+
+function holeSpec(i: number) {
+  return {
+    holeNumber: i + 1,
+    par: i === 17 ? 3 : 4,
+    hcp: i + 1,
+    distance: 350,
+  };
+}
+
+function buildSubmitScorecard(
+  userId: string,
+  teeTime: string,
+  dbHoles: { id: number; holeNumber: number }[]
+): Scorecard {
+  return {
+    userId,
+    course: {
+      id: courseId,
+      name: COURSE_NAME,
+      approvalStatus: "approved",
+      country: "Norway",
+      city: "Oslo",
+      tees: undefined,
+    },
+    teePlayed: {
+      id: teeId,
+      courseId,
+      name: TEE_NAME,
+      gender: "mens",
+      ...TEE_RATINGS,
+      approvalStatus: "approved",
+      holes: Array.from({ length: 18 }, (_, i) => ({
+        id: dbHoles.find((h) => h.holeNumber === i + 1)?.id,
+        teeId,
+        ...holeSpec(i),
+      })),
+    },
+    scores: Array.from({ length: 18 }, () => ({ strokes: 5, hcpStrokes: 0 })),
+    teeTime,
+    approvalStatus: "approved",
+    notes: undefined,
+    nineHoleSection: undefined,
+  };
 }
 
 describeIfLocal(
-  "round bundled migration (natural key, externalId, updated_at, quarantine)",
+  "round bundled migration (natural key, externalId, updated_at, quarantine, grants)",
   () => {
     beforeAll(async () => {
-      userAId = await createTestUser(USER_A_EMAIL);
-      userBId = await createTestUser(USER_B_EMAIL);
+      const a = await createTestUser(USER_A_EMAIL, "free");
+      const b = await createTestUser(USER_B_EMAIL, "free");
+      const c = await createTestUser(USER_C_EMAIL, "unlimited");
+      userAId = a.id;
+      userBId = b.id;
+      userCId = c.id;
+      userCPassword = c.password;
 
       // Clean any leftover course from a previous aborted run.
       const stale = await db
         .select({ id: course.id })
         .from(course)
         .where(eq(course.name, COURSE_NAME));
-      for (const c of stale) {
+      for (const cRow of stale) {
         const staleTees = await db
           .select({ id: teeInfo.id })
           .from(teeInfo)
-          .where(eq(teeInfo.courseId, c.id));
+          .where(eq(teeInfo.courseId, cRow.id));
         for (const t of staleTees) {
           await db.delete(hole).where(eq(hole.teeId, t.id));
           await db.delete(teeInfo).where(eq(teeInfo.id, t.id));
         }
-        await db.delete(course).where(eq(course.id, c.id));
+        await db.delete(course).where(eq(course.id, cRow.id));
       }
 
       const [createdCourse] = await db
@@ -177,46 +305,44 @@ describeIfLocal(
         .insert(teeInfo)
         .values({
           courseId,
-          name: "Blue",
+          name: TEE_NAME,
           gender: "mens",
-          courseRating18: 71.0,
-          slopeRating18: 130,
-          courseRatingFront9: 36.0,
-          slopeRatingFront9: 130,
-          courseRatingBack9: 35.0,
-          slopeRatingBack9: 120,
-          outPar: 36,
-          inPar: 35,
-          totalPar: 71,
-          outDistance: 3150,
-          inDistance: 3150,
-          totalDistance: 6300,
-          distanceMeasurement: "yards",
+          ...TEE_RATINGS,
           approvalStatus: "approved",
           submittedBy: userAId,
         })
         .returning();
       teeId = createdTee!.id;
+
+      await db
+        .insert(hole)
+        .values(
+          Array.from({ length: 18 }, (_, i) => ({ teeId, ...holeSpec(i) }))
+        );
     }, 60_000);
 
     afterAll(async () => {
       const admin = adminClient();
-      for (const uid of [userAId, userBId]) {
+      for (const uid of [userAId, userBId, userCId]) {
         if (!uid) continue;
+        // score rows cascade with the round delete (score_roundId_fkey).
         await db.delete(round).where(eq(round.userId, uid));
       }
       if (teeId) {
+        await db.delete(hole).where(eq(hole.teeId, teeId));
         await db.delete(teeInfo).where(eq(teeInfo.id, teeId));
       }
       if (courseId) {
         await db.delete(course).where(eq(course.id, courseId));
       }
-      for (const uid of [userAId, userBId]) {
+      for (const uid of [userAId, userBId, userCId]) {
         if (!uid) continue;
         await db.delete(profile).where(eq(profile.id, uid));
         await admin.auth.admin.deleteUser(uid);
       }
     }, 60_000);
+
+    // ── Constraint semantics (direct DB level) ────────────────────────────
 
     test("duplicate 18-hole round (null nine_hole_section) violates the natural key — NULLS NOT DISTINCT holds", async () => {
       const teeTime = new Date("2026-07-10T10:00:00.000Z");
@@ -316,8 +442,7 @@ describeIfLocal(
         .returning();
       expect(otherUsers?.externalId).toBe(externalId);
 
-      // Null externalIds never collide (web/native rounds carry null) —
-      // userA already has several null-externalId rounds from prior tests.
+      // Null externalIds never collide (web/native rounds carry null).
       const [nullRow] = await db
         .insert(round)
         .values(baseRound(userAId, new Date("2026-07-14T10:00:00.000Z")))
@@ -325,7 +450,7 @@ describeIfLocal(
       expect(nullRow?.externalId).toBeNull();
     }, 60_000);
 
-    test("updated_at is set on insert and bumped by the round_set_updated_at trigger on update", async () => {
+    test("updated_at (timestamptz) is set on insert and bumped by the round_set_updated_at trigger on update", async () => {
       const [inserted] = await db
         .insert(round)
         .values(baseRound(userAId, new Date("2026-07-15T10:00:00.000Z")))
@@ -351,8 +476,19 @@ describeIfLocal(
       expect(reread!.createdAt.getTime()).toBe(inserted!.createdAt.getTime());
     }, 60_000);
 
-    test("quarantined rounds do not consume free-tier quota and are excluded from the handicap fetch", async () => {
-      // userB has exactly 1 active round so far (from the externalId test).
+    // ── Quarantine exclusion (billing + handicap consumers) ──────────────
+
+    test("quarantined rounds do not consume free-tier quota (getComprehensiveUserAccess); the handicap-processor filter excludes them (query mirrored inline from process-handicap-queue — the edge function itself is not invoked here)", async () => {
+      // Order-independent: read userB's baseline instead of assuming what
+      // earlier tests inserted.
+      const baselineActive = await activeRoundCount(userBId);
+      const baseline = await getComprehensiveUserAccess(
+        userBId,
+        adminClient()
+      );
+      expect(baseline.plan).toBe("free");
+      expect(baseline.remainingRounds).toBe(FREE_TIER_LIMIT - baselineActive);
+
       // Add 2 active + 3 quarantined rounds.
       await db.insert(round).values([
         baseRound(userBId, new Date("2026-07-16T10:00:00.000Z")),
@@ -368,14 +504,14 @@ describeIfLocal(
         }),
       ]);
 
-      // Free-tier count (getComprehensiveUserAccess): 3 active rounds used,
-      // the 3 quarantined ones do NOT burn quota (25-round lifetime limit).
+      // Free-tier count: only the 2 active rounds burn quota.
       const access = await getComprehensiveUserAccess(userBId, adminClient());
       expect(access.plan).toBe("free");
-      expect(access.remainingRounds).toBe(25 - 3);
+      expect(access.remainingRounds).toBe(FREE_TIER_LIMIT - baselineActive - 2);
 
-      // Handicap queue processor fetch shape (process-handicap-queue):
-      // approved + not-quarantined only.
+      // Same filter shape the handicap queue processor now uses
+      // (supabase/functions/process-handicap-queue/index.ts): approved AND
+      // not quarantined.
       const { data: handicapRounds, error } = await adminClient()
         .from("round")
         .select("*")
@@ -384,8 +520,228 @@ describeIfLocal(
         .eq("quarantined", false)
         .order("teeTime", { ascending: true });
       expect(error).toBeNull();
-      expect(handicapRounds).toHaveLength(3);
+      expect(handicapRounds).toHaveLength(baselineActive + 2);
       expect(handicapRounds!.every((r) => r.quarantined === false)).toBe(true);
+    }, 60_000);
+
+    test("round.getCountByUserId (native's quota gate) excludes quarantined rounds — real tRPC path", async () => {
+      const caller = createRoundCaller({
+        user: { id: userCId },
+        supabase: adminClient(),
+      } as unknown as Parameters<typeof createRoundCaller>[0]);
+
+      await db
+        .insert(round)
+        .values(baseRound(userCId, new Date("2026-07-08T10:00:00.000Z")));
+      const baseline = await caller.getCountByUserId({ userId: userCId });
+      expect(baseline).toBe(await activeRoundCount(userCId));
+
+      // Quarantined rounds must not move the count.
+      await db.insert(round).values([
+        baseRound(userCId, new Date("2026-07-08T11:00:00.000Z"), {
+          quarantined: true,
+        }),
+        baseRound(userCId, new Date("2026-07-08T12:00:00.000Z"), {
+          quarantined: true,
+        }),
+      ]);
+
+      const after = await caller.getCountByUserId({ userId: userCId });
+      expect(after).toBe(baseline);
+    }, 60_000);
+
+    test("scorecard.getScorecardByRoundId's established-handicap count excludes quarantined rounds — real tRPC path", async () => {
+      const targetTeeTime = new Date("2026-07-26T10:00:00.000Z");
+
+      // Earlier approved rounds for userC: 1 active + 2 quarantined (the
+      // quarantined ones must NOT count toward the established-handicap
+      // baseline).
+      await db.insert(round).values([
+        baseRound(userCId, new Date("2026-07-21T10:00:00.000Z")),
+        baseRound(userCId, new Date("2026-07-22T10:00:00.000Z"), {
+          quarantined: true,
+        }),
+        baseRound(userCId, new Date("2026-07-23T10:00:00.000Z"), {
+          quarantined: true,
+        }),
+      ]);
+
+      const [expectedRow] = await db
+        .select({ count: countFn() })
+        .from(round)
+        .where(
+          and(
+            eq(round.userId, userCId),
+            lt(round.teeTime, targetTeeTime),
+            eq(round.approvalStatus, "approved"),
+            eq(round.quarantined, false)
+          )
+        );
+      const expected = expectedRow?.count ?? 0;
+
+      // Target round with real score rows so the assembled scorecard passes
+      // zod validation inside the procedure.
+      const [target] = await db
+        .insert(round)
+        .values(baseRound(userCId, targetTeeTime))
+        .returning();
+      const dbHoles = await db
+        .select({ id: hole.id, holeNumber: hole.holeNumber })
+        .from(hole)
+        .where(eq(hole.teeId, teeId))
+        .orderBy(asc(hole.holeNumber));
+      await db.insert(score).values(
+        dbHoles.map((h) => ({
+          userId: userCId,
+          roundId: target!.id,
+          holeId: h.id,
+          strokes: 5,
+          hcpStrokes: 0,
+        }))
+      );
+
+      const caller = createScorecardCaller({
+        user: { id: userCId },
+        supabase: adminClient(),
+      } as unknown as Parameters<typeof createScorecardCaller>[0]);
+      const scorecard = await caller.getScorecardByRoundId({
+        id: String(target!.id),
+      });
+
+      expect(scorecard).not.toBeNull();
+      expect(scorecard!.roundsBeforeTeeTime).toBe(expected);
+      // Sanity: without the quarantine filter the count would be strictly
+      // higher (at least the 2 quarantined rounds inserted above; earlier
+      // tests may have quarantined more userC rounds before the target).
+      const [unfiltered] = await db
+        .select({ count: countFn() })
+        .from(round)
+        .where(
+          and(
+            eq(round.userId, userCId),
+            lt(round.teeTime, targetTeeTime),
+            eq(round.approvalStatus, "approved")
+          )
+        );
+      expect(unfiltered!.count).toBeGreaterThanOrEqual(expected + 2);
+    }, 60_000);
+
+    // ── Duplicate submission through the real mutation ────────────────────
+
+    test("double submitScorecard maps the natural-key 23505 to CONFLICT with user-facing copy (no raw constraint name)", async () => {
+      const dbHoles = await db
+        .select({ id: hole.id, holeNumber: hole.holeNumber })
+        .from(hole)
+        .where(eq(hole.teeId, teeId))
+        .orderBy(asc(hole.holeNumber));
+      const caller = createRoundCaller({
+        user: { id: userCId },
+        supabase: adminClient(),
+      } as unknown as Parameters<typeof createRoundCaller>[0]);
+      const input = buildSubmitScorecard(
+        userCId,
+        "2026-07-27T10:00:00.000Z",
+        dbHoles
+      );
+
+      const first = await caller.submitScorecard(input);
+      expect(first.id).toBeGreaterThan(0);
+
+      const error = await caller.submitScorecard(input).then(
+        () => null,
+        (e: unknown) => e
+      );
+      expect(error).not.toBeNull();
+      expect((error as { code?: string }).code).toBe("CONFLICT");
+      const message = (error as Error).message;
+      expect(message).toBe(
+        "This round has already been submitted. A round with the same course, tee, and tee time already exists."
+      );
+      // The raw Postgres constraint name must never reach the UI.
+      expect(message).not.toContain("round_userId");
+      expect(message).not.toContain("23505");
+    }, 60_000);
+
+    // ── Column-privilege hardening over PostgREST ─────────────────────────
+
+    test("authenticated users cannot PATCH quarantined/approvalStatus/externalId over PostgREST (42501), but legitimate edits still work and bump updated_at", async () => {
+      const [own] = await db
+        .insert(round)
+        .values(baseRound(userCId, new Date("2026-07-28T10:00:00.000Z")))
+        .returning();
+      const client = await userClient(USER_C_EMAIL, userCPassword);
+
+      // Denied columns — each must fail with insufficient_privilege.
+      const quarantinePatch = await client
+        .from("round")
+        .update({ quarantined: false })
+        .eq("id", own!.id);
+      expect(quarantinePatch.error?.code).toBe("42501");
+
+      const approvalPatch = await client
+        .from("round")
+        .update({ approvalStatus: "approved" })
+        .eq("id", own!.id);
+      expect(approvalPatch.error?.code).toBe("42501");
+
+      const externalIdPatch = await client
+        .from("round")
+        .update({ externalId: "spoofed" })
+        .eq("id", own!.id);
+      expect(externalIdPatch.error?.code).toBe("42501");
+
+      // Legitimate edit of allowed columns still works...
+      const notesPatch = await client
+        .from("round")
+        .update({ notes: "edited over PostgREST", totalStrokes: 91 })
+        .eq("id", own!.id)
+        .select("notes, totalStrokes, updated_at")
+        .single();
+      expect(notesPatch.error).toBeNull();
+      expect(notesPatch.data?.notes).toBe("edited over PostgREST");
+      expect(notesPatch.data?.totalStrokes).toBe(91);
+      // ...and the updated_at trigger fires for authenticated writes too.
+      expect(new Date(notesPatch.data!.updated_at).getTime()).toBeGreaterThan(
+        own!.updatedAt.getTime()
+      );
+    }, 60_000);
+
+    test("authenticated INSERT carrying quarantined=true is rejected by the restrictive policy; a normal insert still succeeds", async () => {
+      const client = await userClient(USER_C_EMAIL, userCPassword);
+      const insertPayload = {
+        userId: userCId,
+        courseId,
+        teeId,
+        teeTime: "2026-07-28T12:00:00.000Z",
+        totalStrokes: 90,
+        parPlayed: 71,
+        adjustedGrossScore: 90,
+        adjustedPlayedScore: 90,
+        courseHandicap: 12,
+        scoreDifferential: 16.5,
+        existingHandicapIndex: 10.4,
+        updatedHandicapIndex: 10.4,
+        course_rating_used: 71,
+        slope_rating_used: 130,
+        holes_played: 18,
+        approvalStatus: "approved",
+      };
+
+      // quarantined=true at birth: blocked (only service paths quarantine).
+      const denied = await client
+        .from("round")
+        .insert({ ...insertPayload, quarantined: true });
+      expect(denied.error?.code).toBe("42501");
+
+      // Default (quarantined=false) insert passes the restrictive policy —
+      // proves the hardening didn't break the normal write path.
+      const allowed = await client
+        .from("round")
+        .insert(insertPayload)
+        .select("id, quarantined")
+        .single();
+      expect(allowed.error).toBeNull();
+      expect(allowed.data?.quarantined).toBe(false);
     }, 60_000);
   }
 );
