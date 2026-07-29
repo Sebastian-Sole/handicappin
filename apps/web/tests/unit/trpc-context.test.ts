@@ -51,7 +51,31 @@ vi.mock("@supabase/supabase-js", () => ({
 }));
 
 // Import after mocks are registered.
-const { createTRPCContext, _testables } = await import("@/server/api/trpc");
+const {
+  createTRPCContext,
+  createTRPCRouter,
+  createCallerFactory,
+  authedProcedure,
+  _testables,
+} = await import("@/server/api/trpc");
+
+/** Build an unsigned-but-JWT-shaped token with the given payload claims. */
+function buildJwt(payload: Record<string, unknown>): string {
+  const enc = (obj: Record<string, unknown>) =>
+    Buffer.from(JSON.stringify(obj)).toString("base64url");
+  return `${enc({ alg: "HS256", typ: "JWT" })}.${enc(payload)}.signature`;
+}
+
+const OAUTH_CLIENT_ID = "33333333-3333-4333-8333-333333333333";
+/** First-party session token: no client_id claim (normal web/native session). */
+const FIRST_PARTY_JWT = buildJwt({ sub: BEARER_USER_ID, role: "authenticated" });
+/** External OAuth 2.1 client token: carries the client_id claim. */
+const OAUTH_CLIENT_JWT = buildJwt({
+  sub: BEARER_USER_ID,
+  role: "authenticated",
+  client_id: OAUTH_CLIENT_ID,
+  scope: "rounds:write",
+});
 
 function buildHeaders(init: Record<string, string> = {}): Headers {
   return new Headers(init);
@@ -257,5 +281,86 @@ describe("getUserFromBearerToken direct unit coverage", () => {
     const result = await _testables.getUserFromBearerToken(VALID_BEARER_TOKEN);
 
     expect(result).toBeNull();
+  });
+});
+
+describe("isExternalOAuthClientToken (fail-closed placement, DECISIONS §3)", () => {
+  test("detects the client_id claim on OAuth 2.1 client tokens", () => {
+    expect(_testables.isExternalOAuthClientToken(OAUTH_CLIENT_JWT)).toBe(true);
+  });
+
+  test("passes first-party session tokens (no client_id claim)", () => {
+    expect(_testables.isExternalOAuthClientToken(FIRST_PARTY_JWT)).toBe(false);
+  });
+
+  test("tokens that don't decode locally fall through to Supabase validation", () => {
+    // Not a three-segment JWS / garbage payload — getUser rejects these
+    // upstream, so local screening must not claim they're external.
+    expect(_testables.isExternalOAuthClientToken("not-a-jwt")).toBe(false);
+    expect(_testables.isExternalOAuthClientToken("a.%%%.c")).toBe(false);
+    expect(_testables.decodeJwtPayload("a.b")).toBeNull();
+  });
+});
+
+describe("createTRPCContext - external OAuth client tokens are rejected", () => {
+  test("first-party bearer token (no client_id) still authenticates", async () => {
+    mockCookieUser(null);
+    mockBearerResponse({ user: { id: BEARER_USER_ID } });
+
+    const ctx = await createTRPCContext({
+      headers: buildHeaders({ authorization: `Bearer ${FIRST_PARTY_JWT}` }),
+    });
+
+    expect(ctx.user).toEqual({ id: BEARER_USER_ID });
+    expect(mockBearerGetUser).toHaveBeenCalledWith(FIRST_PARTY_JWT);
+  });
+
+  test("client_id-bearing token yields no user and is never sent to Supabase", async () => {
+    mockCookieUser(null);
+    // Prime a success response that must NOT be consumed — rejection happens
+    // before any network validation (fail-closed, not fail-after-validate).
+    mockBearerResponse({ user: { id: BEARER_USER_ID } });
+
+    const ctx = await createTRPCContext({
+      headers: buildHeaders({ authorization: `Bearer ${OAUTH_CLIENT_JWT}` }),
+    });
+
+    expect(ctx.user).toBeNull();
+    expect(mockBearerGetUser).not.toHaveBeenCalled();
+    // Cookie client stays active — identical to an unauthenticated request.
+    expect((ctx.supabase as unknown as { __clientType: string }).__clientType)
+      .toBe("cookie");
+  });
+
+  test("authed procedure responds UNAUTHORIZED to a client_id token", async () => {
+    mockCookieUser(null);
+    mockBearerResponse({ user: { id: BEARER_USER_ID } });
+
+    const router = createTRPCRouter({
+      whoami: authedProcedure.query(({ ctx }) => ctx.user.id),
+    });
+    const ctx = await createTRPCContext({
+      headers: buildHeaders({ authorization: `Bearer ${OAUTH_CLIENT_JWT}` }),
+    });
+    const caller = createCallerFactory(router)(ctx);
+
+    await expect(caller.whoami()).rejects.toMatchObject({
+      code: "UNAUTHORIZED",
+    });
+  });
+
+  test("authed procedure still works for a first-party bearer token", async () => {
+    mockCookieUser(null);
+    mockBearerResponse({ user: { id: BEARER_USER_ID } });
+
+    const router = createTRPCRouter({
+      whoami: authedProcedure.query(({ ctx }) => ctx.user.id),
+    });
+    const ctx = await createTRPCContext({
+      headers: buildHeaders({ authorization: `Bearer ${FIRST_PARTY_JWT}` }),
+    });
+    const caller = createCallerFactory(router)(ctx);
+
+    await expect(caller.whoami()).resolves.toBe(BEARER_USER_ID);
   });
 });

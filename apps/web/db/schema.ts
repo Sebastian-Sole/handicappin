@@ -100,6 +100,37 @@ export const profile = pgTable(
       to: ["authenticated"],
       using: sql`(auth.uid()::uuid = id)`,
     }),
+    // OAuth-client (`client_id`-bearing) tokens get NO direct profile access —
+    // RESTRICTIVE denies mirror 20260728091000_oauth_client_rls_deny.sql.
+    // SELECT is denied too (the row exposes billing columns); the non-billing
+    // basics are served by public.get_connected_profile() instead.
+    // (No `(SELECT ...)` initplan wrapper here: the permissive UPDATE
+    // policy's WITH CHECK subqueries profile, and a subquery-qual SELECT
+    // policy then trips Postgres' policy-recursion detector — 42P17.)
+    pgPolicy("OAuth client tokens cannot select profile", {
+      as: "restrictive",
+      for: "select",
+      to: ["authenticated"],
+      using: sql`((auth.jwt() ->> 'client_id') IS NULL)`,
+    }),
+    pgPolicy("OAuth client tokens cannot insert profile", {
+      as: "restrictive",
+      for: "insert",
+      to: ["authenticated"],
+      withCheck: sql`((SELECT auth.jwt() ->> 'client_id') IS NULL)`,
+    }),
+    pgPolicy("OAuth client tokens cannot update profile", {
+      as: "restrictive",
+      for: "update",
+      to: ["authenticated"],
+      using: sql`((SELECT auth.jwt() ->> 'client_id') IS NULL)`,
+    }),
+    pgPolicy("OAuth client tokens cannot delete profile", {
+      as: "restrictive",
+      for: "delete",
+      to: ["authenticated"],
+      using: sql`((SELECT auth.jwt() ->> 'client_id') IS NULL)`,
+    }),
   ]
 );
 
@@ -307,6 +338,15 @@ export const round = pgTable(
       to: ["authenticated"],
       using: sql`(auth.uid()::uuid = userId)`,
     }),
+    // Connected apps may log/update/read rounds but never destroy them —
+    // write-only-by-default posture (DECISIONS §8). Mirrors
+    // 20260728091000_oauth_client_rls_deny.sql.
+    pgPolicy("OAuth client tokens cannot delete rounds", {
+      as: "restrictive",
+      for: "delete",
+      to: ["authenticated"],
+      using: sql`((SELECT auth.jwt() ->> 'client_id') IS NULL)`,
+    }),
   ]
 );
 
@@ -374,6 +414,15 @@ export const score = pgTable(
       to: ["authenticated"],
       using: sql`(auth.uid()::uuid = userId)`,
     }),
+    // Connected apps may log/update/read scores but never destroy them —
+    // write-only-by-default posture (DECISIONS §8). Mirrors
+    // 20260728091000_oauth_client_rls_deny.sql.
+    pgPolicy("OAuth client tokens cannot delete scores", {
+      as: "restrictive",
+      for: "delete",
+      to: ["authenticated"],
+      using: sql`((SELECT auth.jwt() ->> 'client_id') IS NULL)`,
+    }),
   ]
 );
 
@@ -439,6 +488,14 @@ export const stripeCustomers = pgTable(
       for: "select",
       to: ["authenticated"],
       using: sql`(auth.uid()::uuid = user_id)`,
+    }),
+    // Billing state is invisible to OAuth-client tokens — mirrors
+    // 20260728091000_oauth_client_rls_deny.sql.
+    pgPolicy("OAuth client tokens have no access to stripe customers", {
+      as: "restrictive",
+      for: "all",
+      to: ["authenticated"],
+      using: sql`((SELECT auth.jwt() ->> 'client_id') IS NULL)`,
     }),
   ]
 );
@@ -524,6 +581,14 @@ export const pendingLifetimePurchases = pgTable(
       using: sql`(auth.uid()::uuid = user_id)`,
     }),
     // Note: Write operations handled by service role via webhooks
+    // Billing state is invisible to OAuth-client tokens — mirrors
+    // 20260728091000_oauth_client_rls_deny.sql.
+    pgPolicy("OAuth client tokens have no access to pending purchases", {
+      as: "restrictive",
+      for: "all",
+      to: ["authenticated"],
+      using: sql`((SELECT auth.jwt() ->> 'client_id') IS NULL)`,
+    }),
   ]
 );
 
@@ -619,6 +684,14 @@ export const emailPreferences = pgTable(
       to: ["authenticated"],
       using: sql`(auth.uid()::uuid = user_id)`,
     }),
+    // Account surface is off-limits to OAuth-client tokens — mirrors
+    // 20260728091000_oauth_client_rls_deny.sql.
+    pgPolicy("OAuth client tokens have no access to email preferences", {
+      as: "restrictive",
+      for: "all",
+      to: ["authenticated"],
+      using: sql`((SELECT auth.jwt() ->> 'client_id') IS NULL)`,
+    }),
   ]
 );
 
@@ -676,6 +749,14 @@ export const pendingEmailChanges = pgTable(
       for: "delete",
       to: ["authenticated"],
       using: sql`(auth.uid()::uuid = user_id)`,
+    }),
+    // Account-takeover surface — off-limits to OAuth-client tokens. Mirrors
+    // 20260728091000_oauth_client_rls_deny.sql.
+    pgPolicy("OAuth client tokens have no access to pending email changes", {
+      as: "restrictive",
+      for: "all",
+      to: ["authenticated"],
+      using: sql`((SELECT auth.jwt() ->> 'client_id') IS NULL)`,
     }),
   ]
 );
@@ -764,6 +845,14 @@ export const legalConsents = pgTable(
       using: sql`((select auth.uid()) = user_id)`,
     }),
     // No direct insert/update/delete - managed by service role via API routes and edge functions
+    // GDPR audit trail is invisible to OAuth-client tokens — mirrors
+    // 20260728091000_oauth_client_rls_deny.sql.
+    pgPolicy("OAuth client tokens have no access to legal consents", {
+      as: "restrictive",
+      for: "all",
+      to: ["authenticated"],
+      using: sql`((SELECT auth.jwt() ->> 'client_id') IS NULL)`,
+    }),
   ]
 );
 

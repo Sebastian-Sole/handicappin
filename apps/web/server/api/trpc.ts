@@ -51,6 +51,49 @@ function extractBearerToken(headers: Headers): string | null {
 }
 
 /**
+ * Best-effort local decode of a JWT payload. Returns null when the token is
+ * not a three-segment JWS or the payload isn't valid base64url JSON.
+ *
+ * This is NOT signature verification — callers must still validate via
+ * Supabase. It exists solely to inspect claims BEFORE deciding whether the
+ * token belongs on this surface at all.
+ */
+function decodeJwtPayload(token: string): Record<string, unknown> | null {
+  const segments = token.split(".");
+  if (segments.length !== 3) {
+    return null;
+  }
+  try {
+    const json = Buffer.from(segments[1], "base64url").toString("utf-8");
+    const payload: unknown = JSON.parse(json);
+    if (typeof payload !== "object" || payload === null || Array.isArray(payload)) {
+      return null;
+    }
+    return payload as Record<string, unknown>;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Fail-closed placement (api-platform DECISIONS §3): external OAuth-client
+ * tokens — Supabase OAuth 2.1 server tokens carrying a `client_id` claim —
+ * are accepted ONLY at the future `/api/v1` mount (subplan 005). tRPC is a
+ * first-party surface, so any `client_id`-bearing token is rejected here and
+ * new procedures stay external-inaccessible by default.
+ *
+ * First-party web/native session tokens never carry `client_id` (the
+ * custom_access_token_hook preserves it only when GoTrue stamped it for an
+ * OAuth client — see 20260728090000_oauth_client_id_claims.sql), so this
+ * check is a no-op for them. Tokens that don't decode locally fall through
+ * to `auth.getUser`, which rejects anything malformed anyway.
+ */
+function isExternalOAuthClientToken(token: string): boolean {
+  const payload = decodeJwtPayload(token);
+  return payload !== null && payload.client_id != null;
+}
+
+/**
  * Validate a Supabase access token via `auth.getUser(token)`.
  *
  * Uses the official Supabase validation path — the token is sent to Supabase Auth,
@@ -165,7 +208,15 @@ export const createTRPCContext = async (opts: { headers: Headers }) => {
   //        cookie branch and ignore the extra header.
   if (!user) {
     const bearerToken = extractBearerToken(opts.headers);
-    if (bearerToken) {
+    if (bearerToken && isExternalOAuthClientToken(bearerToken)) {
+      // External OAuth-client token on a first-party surface: reject without
+      // even validating it upstream. `ctx.user` stays null, so authed
+      // procedures respond UNAUTHORIZED. The /api/v1 mount (subplan 005) is
+      // the only place these tokens are accepted.
+      logger.warn("Rejected OAuth client token on tRPC surface", {
+        reason: "client_id claim present; external tokens are /api/v1-only",
+      });
+    } else if (bearerToken) {
       user = await getUserFromBearerToken(bearerToken);
       if (user) {
         // Swap in a bearer-scoped client so that downstream DB calls (via
@@ -276,4 +327,6 @@ export const _testables = {
   extractBearerToken,
   getUserFromBearerToken,
   createBearerTokenSupabaseClient,
+  decodeJwtPayload,
+  isExternalOAuthClientToken,
 };

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import * as Sentry from "@sentry/nextjs";
 import { GoogleOAuthProvider, useGoogleLogin } from "@react-oauth/google";
 import { Button } from "@/components/ui/button";
@@ -10,6 +10,10 @@ import { createClientComponentClient } from "@/utils/supabase/client";
 import { clientLogger } from "@/lib/client-logger";
 import { getBillingFromJWT } from "@/utils/supabase/jwt";
 import { LEGAL_VERSION } from "@/lib/legal-config";
+import {
+  LOGIN_REDIRECT_PARAM,
+  safeInternalPath,
+} from "@/lib/oauth/consent-flow";
 import {
   Dialog,
   DialogContent,
@@ -73,6 +77,7 @@ function GoogleSignInButtonContent({
   const [showConsentDialog, setShowConsentDialog] = useState(false);
   const [consentChecked, setConsentChecked] = useState(false);
   const router = useRouter();
+  const searchParams = useSearchParams();
   const supabase = createClientComponentClient();
 
   const handleSignIn = useCallback(
@@ -248,6 +253,19 @@ function GoogleSignInButtonContent({
               }
             }
 
+            // Resume an interrupted flow first (e.g. a pending
+            // /oauth/consent request) — guarded to internal paths only.
+            const resumePath = safeInternalPath(
+              searchParams.get(LOGIN_REDIRECT_PARAM),
+            );
+            if (resumePath) {
+              span.setAttribute("auth.result", "resume_redirect");
+              span.setStatus({ code: 1 });
+              router.push(resumePath);
+              router.refresh();
+              return;
+            }
+
             // Determine redirect destination
             const {
               data: { session },
@@ -286,7 +304,7 @@ function GoogleSignInButtonContent({
         setIsLoading(false);
       }
     },
-    [supabase, router, mode]
+    [supabase, router, mode, searchParams]
   );
 
   const login = useGoogleLogin({
