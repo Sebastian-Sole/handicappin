@@ -782,5 +782,63 @@ describeIfLocal(
       expect(explicitPending.error).toBeNull();
       expect(explicitPending.data?.approvalStatus).toBe("pending");
     }, 60_000);
+
+    test("authenticated INSERT cannot name externalId or submitted_via at all (column grants); a legitimate insert leaves both NULL", async () => {
+      const client = await userClient(USER_C_EMAIL, userCPassword);
+      const insertPayload = {
+        userId: userCId,
+        courseId,
+        teeId,
+        teeTime: "2026-07-28T14:00:00.000Z",
+        totalStrokes: 90,
+        parPlayed: 71,
+        adjustedGrossScore: 90,
+        adjustedPlayedScore: 90,
+        courseHandicap: 12,
+        scoreDifferential: 16.5,
+        existingHandicapIndex: 10.4,
+        updatedHandicapIndex: 10.4,
+        course_rating_used: 71,
+        slope_rating_used: 130,
+        holes_played: 18,
+      };
+
+      // externalId squat: pre-inserting a fabricated round under the key a
+      // connected app will derive would make its replay-by-lookup resolve to
+      // the fabrication (falsifying "200 means your round is stored"), or
+      // 409 its genuine round forever on a deterministic key.
+      const externalIdDenied = await client.from("round").insert({
+        ...insertPayload,
+        externalId: "fitbull-workout-123",
+      });
+      expect(externalIdDenied.error?.code).toBe("42501");
+
+      // submitted_via forgery: a client-written value is indistinguishable
+      // from a genuine API submission — forged provenance.
+      const submittedViaDenied = await client.from("round").insert({
+        ...insertPayload,
+        submitted_via: "api:fitness",
+      });
+      expect(submittedViaDenied.error?.code).toBe("42501");
+
+      // Both together (the full squat payload) is likewise denied.
+      const bothDenied = await client.from("round").insert({
+        ...insertPayload,
+        externalId: "fitbull-workout-123",
+        submitted_via: "api:fitness",
+      });
+      expect(bothDenied.error?.code).toBe("42501");
+
+      // A legitimate insert that simply omits them still succeeds, with both
+      // columns NULL — only the server (table owner) may populate them.
+      const allowed = await client
+        .from("round")
+        .insert(insertPayload)
+        .select("id, externalId, submitted_via")
+        .single();
+      expect(allowed.error).toBeNull();
+      expect(allowed.data?.externalId).toBeNull();
+      expect(allowed.data?.submitted_via).toBeNull();
+    }, 60_000);
   }
 );

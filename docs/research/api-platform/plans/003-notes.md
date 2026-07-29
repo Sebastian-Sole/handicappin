@@ -89,12 +89,52 @@ column of their own rows — including `quarantined` (future billing bypass) and
 `approvalStatus` (a **live pre-existing hole**: self-approving rounds into the handicap
 computation past moderation). The migration now:
 
+**Two axes, deliberately hybrid.** Writes to `round` are constrained by two mechanisms with
+different granularity, and both are needed:
+
+| Axis | Mechanism | Question it answers | Right for |
+|---|---|---|---|
+| Existence | column GRANTs | may the client *name* this column at all? | columns with **no** benign client value — `externalId`, `submitted_via`, `updated_at`, `id`, `createdAt` |
+| Value | restrictive INSERT policy | may the client send it carrying *this value*? | columns that **do** have one — `quarantined` (`false`), `approvalStatus` (`'pending'`) |
+
+So `quarantined`/`approvalStatus` stay insertable (the policy vets their values — a normal
+client write legitimately carries them, and one test asserts explicit `'pending'` succeeds),
+while `externalId`/`submitted_via` are not insertable at all.
+
+**The trap** (why every block revokes at table level first): a column-level REVOKE is a
+**no-op while the table-level grant is held** — Postgres allows the write if EITHER the
+table-level OR a column-level privilege matches. `revoke update ("quarantined")` alone
+changes nothing. Demonstrated during verification: re-granting table-level INSERT re-opened
+the squat even with all 20 column grants still in place.
+
+Not done with a BEFORE INSERT trigger: a trigger enumerates columns in its body so it would
+not auto-cover future columns, and silent normalisation is harmful on an API surface — a
+client would send an idempotency key, have it nulled, and get a 201 believing the key was
+registered. A loud 42501 is the correct failure mode.
+
+The migration:
+
 - revokes table-level UPDATE from `authenticated`/`anon` and re-grants **per column**
   (gameplay/rating columns + notes only). A bare `REVOKE UPDATE (col)` is a NO-OP while a
   table-level grant exists — Postgres checks table OR column privilege. Excluded:
   `quarantined`, `approvalStatus`, `externalId`, `submitted_via`, `updated_at`, `userId`,
   `id`, `createdAt`. Fail-safe: future columns are non-updatable by `authenticated` until
   the grant is extended in a migration.
+- revokes table-level INSERT and re-grants **per column** (20 columns: the gameplay/rating
+  set + `notes` + `userId` + `quarantined` + `approvalStatus`). **Non-insertable result:
+  `createdAt`, `externalId`, `id`, `submitted_via`, `updated_at`.** This closes an
+  **idempotency-key squat**, reproduced end-to-end: a user pre-inserts a fabricated round
+  carrying the key a connected app will deterministically derive
+  (`externalId: 'fitbull-workout-123'`, `submitted_via: 'api:fitness'`, 58 strokes, −30.0
+  differential) → 201. The app's replay-by-lookup on `(userId, externalId)` then resolves to
+  the **fabrication** — so a `200` "your round is stored" is returned for a round the app
+  never wrote, making the 005 contract promise falsifiable — or on the other branch its
+  genuine round hits `round_userId_externalId_key` and **409s forever** on a deterministic
+  key. The fabricated row also carried `submitted_via = 'api:fitness'`, i.e. **forged
+  provenance** indistinguishable from a genuine API submission, which is unacceptable in a
+  handicap product with an active official-handicap workstream. (005's plan flagged this
+  class of gap at its line 17.) Both columns are now server-written only — 005's `/v1`
+  handlers write them as the table owner and bypass these grants.
 - adds ONE RESTRICTIVE INSERT policy —
   `quarantined = false and "approvalStatus" <> 'approved'` — because column privileges do
   **not** constrain INSERT payloads (verified: inserts carrying `quarantined: true` *or*
@@ -107,9 +147,10 @@ computation past moderation). The migration now:
 - Integration-tested as a real signed-in user: PATCH `quarantined`/`approvalStatus`/
   `externalId` → 42501; legitimate notes/strokes PATCH → 200 (and the `updated_at` trigger
   fires); INSERT with `quarantined: true` → 42501; INSERT with `approvalStatus: 'approved'`
-  → 42501; both at once → 42501; legitimate insert (defaults) and explicit `'pending'`
-  insert → OK. Each denial was proven real by reverting the policy and watching exactly
-  that assertion fail.
+  → 42501; both at once → 42501; INSERT naming `externalId` → 42501, `submitted_via` →
+  42501, both → 42501; legitimate insert (defaults) and explicit `'pending'` insert → 201,
+  with `externalId`/`submitted_via` NULL. Each denial was proven real by reverting the
+  relevant grant/policy and watching exactly that assertion fail (and nothing else).
 
 **Why this is safe for first-party writes.** `submitScorecard` runs through Drizzle as the
 `postgres` table owner, which bypasses RLS entirely, so the policy never applies to it. Its
@@ -165,5 +206,12 @@ maps the same-key-different-body 409 arm).
   limit check entirely (verified 201 as an authenticated user). The free-tier limit is
   application-layer only today. Explicit open item for 002 Part B / 008 (launch gates) —
   recorded as fact, not assumption.
-- **`submitted_via` spoofing** remains acceptable-by-design (attribution only, and now not
-  even updatable post-insert by `authenticated`).
+- **`submitted_via` / `externalId` are now fully server-written** — neither insertable nor
+  updatable by `authenticated`. My earlier framing (that spoofing them was
+  acceptable-by-design because they are "attribution/idempotency, not authorization") was
+  **wrong** and the review corrected it: `externalId` is load-bearing for the 005 contract's
+  replay-by-lookup, and `submitted_via` is provenance in a sports-integrity product.
+  **Generalised lesson for 008's hardening checklist:** for every sensitive column, reason
+  about existence-vs-value separately and about INSERT and UPDATE separately — a column
+  gated on one verb is not gated on the other. This PR had the same hole in two doors twice
+  (`approvalStatus` UPDATE then INSERT; then `externalId`/`submitted_via` INSERT).
