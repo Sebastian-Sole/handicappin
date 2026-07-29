@@ -423,6 +423,41 @@ export const score = pgTable(
       to: ["authenticated"],
       using: sql`((SELECT auth.jwt() ->> 'client_id') IS NULL)`,
     }),
+    // The permissive policies above are all `auth.uid() = "userId"`: they
+    // constrain who a row says it belongs to, but place no constraint on
+    // `roundId` — the column that decides which round's scorecard, statistics
+    // and handicap the row feeds into. These two restrictive policies add the
+    // missing relational half: a score must attach to a round the caller owns,
+    // on both write axes. Closes a cross-user data-integrity gap; details are
+    // withheld until the fix is deployed. See
+    // 20260730090000_score_round_ownership_and_grants.sql.
+    //
+    // `(SELECT auth.uid())` is deliberate: Postgres hoists the scalar subquery
+    // into an InitPlan and evaluates it once per statement, not once per row —
+    // scorecards are written 18 rows at a time. No recursion hazard, since
+    // `round`'s SELECT policy never references `score`.
+    //
+    // NOTE: the migration also performs a COLUMN-GRANT sweep on `score`
+    // (`id` non-insertable; `roundId`/`holeId`/`userId`/`id` non-updatable by
+    // `authenticated`). Column-level privileges are NOT expressible in
+    // Drizzle, so that half of the fix lives only in the migration and has no
+    // mirror here. Reviewers changing `score` grants must edit the migration
+    // history, and must never restore a blanket `GRANT INSERT/UPDATE ON
+    // public.score` — a table-level grant silently overrides every column
+    // grant.
+    pgPolicy("Scores must attach to a round the caller owns (insert)", {
+      as: "restrictive",
+      for: "insert",
+      to: ["authenticated"],
+      withCheck: sql`(EXISTS (SELECT 1 FROM round r WHERE r.id = "roundId" AND r."userId" = (SELECT auth.uid())))`,
+    }),
+    pgPolicy("Scores must attach to a round the caller owns (update)", {
+      as: "restrictive",
+      for: "update",
+      to: ["authenticated"],
+      using: sql`(EXISTS (SELECT 1 FROM round r WHERE r.id = "roundId" AND r."userId" = (SELECT auth.uid())))`,
+      withCheck: sql`(EXISTS (SELECT 1 FROM round r WHERE r.id = "roundId" AND r."userId" = (SELECT auth.uid())))`,
+    }),
   ]
 );
 
