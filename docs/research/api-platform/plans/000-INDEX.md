@@ -17,6 +17,7 @@ Each subplan is self-contained for an implementing agent with no other context. 
 | 006 | `006-w5-sync-contract.md` | W5 | Polling as the v1 sync contract; measure real recalc latency; evaluate the queue-kick; recalc-pending vs failed; optional non-contractual pg_net→Convex webhook; billing-column exposure decision. |
 | 007 | `007-w6-fitbull-integration-notes.md` | W6 | Handoff doc for the separate Convex repo: base URL `api.handicappin.com`, auth, day-1 calls, idempotency, polling, quarantine-status handling. |
 | 008 | `008-w7-launch-gates.md` | W7 | Pre-launch governance (USGA/NGF fact pattern), demand instrumentation with v1, internal contract doc, dated ADR + review dates. |
+| 009 | `009-oauth-detect-and-revoke.md` | W2 fast-follow | Detective control from the updateUser sign-off (2026-07-29): pg_cron audit-log auto-revoke of OAuth grants on password/email-change events + daily GH-Actions watchdog on the two secure-change auth toggles. Own PR; NOT a launch blocker. |
 
 ## Dependency graph
 
@@ -47,6 +48,7 @@ prod dup scan ──► 003 ─────────────────�
 | W5 (006) | PENDING |
 | W6 (007) | PENDING |
 | W7 (008) | PENDING |
+| W2 fast-follow (009) | PENDING — dispatchable now (PR #167 merged 2026-07-29); trails 004, blocks nothing |
 
 ## Dispatch order
 
