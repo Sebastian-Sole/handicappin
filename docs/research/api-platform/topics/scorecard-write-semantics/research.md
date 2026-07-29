@@ -12,7 +12,7 @@ Research date: 2026-07-20. Topic: what the public round-submission endpoint comm
 
 ## 1. Ground truth from the codebase
 
-All paths relative to `/Users/sebastiansole/Documents/handicappin`.
+All paths relative to the repo root.
 
 ### 1.1 The submission pipeline has zero dedupe
 

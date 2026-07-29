@@ -38,5 +38,5 @@ The research file (155 lines, read in full context) never mentions PostgREST or 
 3. **Define beta exit criteria in advance**: what pricing/GA/breakage outcome triggers migration, and acknowledge the A-fallback fails open (client_id policies stop matching, consent/revocation vanish).
 4. **Make the Cloudflare bypass continuously verified** (scheduled cookie-less probe), not a one-time precondition.
 
-File reviewed: `/Users/sebastiansole/Documents/handicappin/docs/research/api-platform/topics/external-auth-model/research.md`
-Code verified: `/Users/sebastiansole/Documents/handicappin/apps/web/server/api/trpc.ts` (cookie-precedence + Bearer path as described).
+File reviewed: `docs/research/api-platform/topics/external-auth-model/research.md`
+Code verified: `apps/web/server/api/trpc.ts` (cookie-precedence + Bearer path as described).

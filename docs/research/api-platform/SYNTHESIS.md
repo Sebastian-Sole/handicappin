@@ -1,6 +1,8 @@
 # API Platform — Global Synthesis
 
 **Date:** 2026-07-20 · **Scope:** 8 topics, each researched and adversarially panel-reviewed (7 perspectives per topic).
+
+> **Superseded in part — `DECISIONS.md` is the authoritative record.** This is a point-in-time synthesis; the owner gates it lists as open have since been decided: scorecard Q1–Q4 (owner, 2026-07-22, DECISIONS #6) and Billing Gates A/B (§2.6, agenda items 1 and 4 — closed 2026-07-27 as accept-and-quarantine + lifetime-25 unchanged, see DECISIONS "Billing gate — CLOSED"). Read this file for the reasoning and binding conditions, not for current gate status.
 **Goal:** expose the handicappin backend so other apps can integrate; first consumer is the owner's own fitness app; longer-term option on a genuine third-party platform.
 
 **Headline answer to the owner's question:** No stack change is required. Every topic independently concluded the current Next.js 16 + tRPC + Drizzle + Supabase + Vercel stack can host the integration surface. The real work is (1) an ingress incident fix that is due *this week* regardless of the API project, (2) extraction of the `submitScorecard` pipeline into a framework-free service, and (3) a short list of owner product decisions that gate the contract's final shape.

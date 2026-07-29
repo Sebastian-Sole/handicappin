@@ -42,7 +42,7 @@ not suggestions.
 ### Gate 0 — feasibility, before any contract code
 
 1. **Prove the cookie-less prod path end-to-end.** Deploy a stub
-   `/api/v1/ping` and hit it with a bearer curl from outside. Two ways to
+   `/api/v1/health` and hit it with a bearer curl from outside. Two ways to
    clear the Cloudflare/Vercel challenge, decide explicitly between them
    (green-hat's alternative vs the default):
    - a **dedicated API hostname** (`api.handicappin.com`, gray-cloud/DNS-only
