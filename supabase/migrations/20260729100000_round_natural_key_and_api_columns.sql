@@ -168,19 +168,31 @@ grant update (
   nine_hole_section
 ) on public.round to authenticated;
 
--- 6b: column privileges do not constrain INSERT payload values (verified: an
--- insert carrying quarantined = true succeeds under the grants above), so a
--- RESTRICTIVE policy stops authenticated inserts from quarantining or
--- un-quarantining at birth. Service paths (002 Part B) bypass RLS.
-do $$
-begin
-  create policy "Users cannot set quarantine state directly"
-    on public.round
-    as restrictive
-    for insert
-    to authenticated
-    with check (quarantined = false);
-exception
-  when duplicate_object then null;
-end
-$$;
+-- 6b: column privileges do NOT constrain INSERT payload values (verified: an
+-- insert carrying quarantined = true, or approvalStatus = 'approved',
+-- succeeds under the grants above). Without this policy the self-approval
+-- hole closed on UPDATE stays wide open on INSERT: a user submits their own
+-- course/tee with invented ratings and POSTs a pre-approved round against it
+-- directly to PostgREST, which then matches the handicap-processor filter
+-- (approvalStatus = 'approved' AND quarantined = false) having never passed
+-- moderation. Verified end-to-end: 201 with a -21.9 score differential
+-- against an unmoderated tee rated 99.9/155.
+--
+-- ONE restrictive policy covers both columns. An authenticated INSERT may
+-- only create a non-quarantined, non-approved (i.e. pending) round; the
+-- `approvalStatus` default is already 'pending'.
+--
+-- Safe for first-party writes: `submitScorecard` runs through Drizzle as the
+-- `postgres` table owner, which bypasses RLS entirely. Its moderation
+-- invariant is independent and unchanged — `resolvedApprovalStatus` is forced
+-- to 'pending' on every new/edited/pending-tee branch, so a client-supplied
+-- "approved" can only survive when the tee resolves to an existing APPROVED,
+-- non-archived row (otherwise CourseResolutionError). Service paths
+-- (002 Part B, the moderation approval flow) likewise bypass RLS.
+drop policy if exists "Users cannot self-approve or quarantine rounds" on public.round;
+create policy "Users cannot self-approve or quarantine rounds"
+  on public.round
+  as restrictive
+  for insert
+  to authenticated
+  with check (quarantined = false and "approvalStatus" <> 'approved');

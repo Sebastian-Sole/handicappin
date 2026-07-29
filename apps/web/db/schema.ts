@@ -369,17 +369,19 @@ export const round = pgTable(
       to: ["authenticated"],
       using: sql`(auth.uid()::uuid = userId)`,
     }),
-    // Accept-and-quarantine hardening (20260729100000): only service paths
-    // may quarantine/un-quarantine. Column-level UPDATE privileges (grants —
-    // not expressible in Drizzle; see the migration) block PATCHing
-    // `quarantined`/`approvalStatus`/`externalId`/`submitted_via`/`updated_at`
-    // via PostgREST; this restrictive policy blocks INSERTing
-    // `quarantined = true` directly.
-    pgPolicy("Users cannot set quarantine state directly", {
+    // Moderation + quarantine hardening (20260729100000). Column-level UPDATE
+    // privileges (grants — not expressible in Drizzle; see the migration)
+    // block PATCHing `quarantined`/`approvalStatus`/`externalId`/
+    // `submitted_via`/`updated_at` over PostgREST. Column privileges do not
+    // constrain INSERT payloads, so this restrictive policy also stops an
+    // authenticated INSERT from arriving pre-approved (self-approval past
+    // moderation) or pre-quarantined. First-party writes go through Drizzle
+    // as the `postgres` table owner and bypass RLS.
+    pgPolicy("Users cannot self-approve or quarantine rounds", {
       as: "restrictive",
       for: "insert",
       to: ["authenticated"],
-      withCheck: sql`(quarantined = false)`,
+      withCheck: sql`(quarantined = false and "approvalStatus" <> 'approved')`,
     }),
     // Connected apps may log/update/read rounds but never destroy them —
     // write-only-by-default posture (DECISIONS §8). Mirrors

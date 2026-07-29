@@ -95,12 +95,30 @@ computation past moderation). The migration now:
   `quarantined`, `approvalStatus`, `externalId`, `submitted_via`, `updated_at`, `userId`,
   `id`, `createdAt`. Fail-safe: future columns are non-updatable by `authenticated` until
   the grant is extended in a migration.
-- adds a RESTRICTIVE INSERT policy (`quarantined = false`) because column privileges do not
-  constrain INSERT payloads (verified: an insert carrying `quarantined: true` succeeded
-  under grants alone).
+- adds ONE RESTRICTIVE INSERT policy —
+  `quarantined = false and "approvalStatus" <> 'approved'` — because column privileges do
+  **not** constrain INSERT payloads (verified: inserts carrying `quarantined: true` *or*
+  `approvalStatus: 'approved'` both succeeded under grants alone). Closing only the UPDATE
+  side left self-approval wide open on INSERT: verified end-to-end that a user could submit
+  their own unmoderated tee (rated 99.9/155), `POST` a pre-approved round against it, get
+  201, and match the handicap-processor filter with a −21.9 score differential having never
+  passed moderation. `round` has no BEFORE INSERT trigger normalising `approvalStatus`, so
+  the policy is the control.
 - Integration-tested as a real signed-in user: PATCH `quarantined`/`approvalStatus`/
   `externalId` → 42501; legitimate notes/strokes PATCH → 200 (and the `updated_at` trigger
-  fires); INSERT with `quarantined: true` → 42501; normal INSERT → OK.
+  fires); INSERT with `quarantined: true` → 42501; INSERT with `approvalStatus: 'approved'`
+  → 42501; both at once → 42501; legitimate insert (defaults) and explicit `'pending'`
+  insert → OK. Each denial was proven real by reverting the policy and watching exactly
+  that assertion fail.
+
+**Why this is safe for first-party writes.** `submitScorecard` runs through Drizzle as the
+`postgres` table owner, which bypasses RLS entirely, so the policy never applies to it. Its
+own moderation invariant is independent and unchanged: `resolvedApprovalStatus` starts from
+the client's value but is forced to `'pending'` on every new-tee, edited-tee, and
+own-pending-tee branch, and the only branch that preserves a client-supplied `'approved'`
+requires the tee to resolve to an existing **approved, non-archived** row (otherwise
+`CourseResolutionError`). So an approved round can only ever reference a moderated tee. The
+moderation approval flow and 002 Part B likewise run as service paths.
 
 First-party server writes are unaffected (Drizzle connects as the `postgres` table owner);
 `service_role` keeps its own grants.

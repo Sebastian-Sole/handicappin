@@ -706,8 +706,13 @@ describeIfLocal(
       );
     }, 60_000);
 
-    test("authenticated INSERT carrying quarantined=true is rejected by the restrictive policy; a normal insert still succeeds", async () => {
+    test("authenticated INSERT cannot self-approve or quarantine a round; a legitimate pending insert still succeeds", async () => {
       const client = await userClient(USER_C_EMAIL, userCPassword);
+      // Control payload is a LEGITIMATE insert: approvalStatus omitted (the
+      // column defaults to 'pending') and quarantined omitted. It must not
+      // carry "approved" — column privileges do not constrain INSERT
+      // payloads, so a pre-approved insert is exactly the exploit under test
+      // below, never the passing control.
       const insertPayload = {
         userId: userCId,
         courseId,
@@ -724,24 +729,58 @@ describeIfLocal(
         course_rating_used: 71,
         slope_rating_used: 130,
         holes_played: 18,
-        approvalStatus: "approved",
       };
 
       // quarantined=true at birth: blocked (only service paths quarantine).
-      const denied = await client
+      const quarantineDenied = await client
         .from("round")
         .insert({ ...insertPayload, quarantined: true });
-      expect(denied.error?.code).toBe("42501");
+      expect(quarantineDenied.error?.code).toBe("42501");
 
-      // Default (quarantined=false) insert passes the restrictive policy —
-      // proves the hardening didn't break the normal write path.
+      // approvalStatus='approved' at birth: blocked. This is the INSERT half
+      // of the self-approval hole — a user could otherwise submit their own
+      // unmoderated course/tee with invented ratings and POST a pre-approved
+      // round straight into the handicap computation.
+      const selfApproveDenied = await client
+        .from("round")
+        .insert({ ...insertPayload, approvalStatus: "approved" });
+      expect(selfApproveDenied.error?.code).toBe("42501");
+
+      // Belt and braces: an explicit 'pending' is allowed (only 'approved'
+      // is forbidden), and both flags at once is still denied.
+      const bothDenied = await client
+        .from("round")
+        .insert({
+          ...insertPayload,
+          approvalStatus: "approved",
+          quarantined: true,
+        });
+      expect(bothDenied.error?.code).toBe("42501");
+
+      // Legitimate insert (defaults: pending + not quarantined) passes the
+      // restrictive policy — proves the hardening didn't break the normal
+      // write path.
       const allowed = await client
         .from("round")
         .insert(insertPayload)
-        .select("id, quarantined")
+        .select("id, quarantined, approvalStatus")
         .single();
       expect(allowed.error).toBeNull();
       expect(allowed.data?.quarantined).toBe(false);
+      expect(allowed.data?.approvalStatus).toBe("pending");
+
+      // An explicitly-'pending' insert is also fine.
+      const explicitPending = await client
+        .from("round")
+        .insert({
+          ...insertPayload,
+          teeTime: "2026-07-28T13:00:00.000Z",
+          approvalStatus: "pending",
+        })
+        .select("id, approvalStatus")
+        .single();
+      expect(explicitPending.error).toBeNull();
+      expect(explicitPending.data?.approvalStatus).toBe("pending");
     }, 60_000);
   }
 );
