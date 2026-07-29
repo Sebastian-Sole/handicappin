@@ -8,6 +8,7 @@
 > |---|---|---|
 > | Governance fact pattern + risk posture (blocking vs monitor) + NGF question draft | [`../GOVERNANCE.md`](../GOVERNANCE.md) | DRAFT — gate closes on owner sign-off (§7 there) |
 > | Dated ADR: triggers with thresholds, 2026-10-15 review, 2027-03-31 hard re-decide | [`../ADR-2026-07-29-launch-gates.md`](../ADR-2026-07-29-launch-gates.md) | PROPOSED — thresholds need owner ratification |
+> | PostgREST column-grant invariant (pre-launch gate G4) | [`../ADR-2026-07-29-launch-gates.md`](../ADR-2026-07-29-launch-gates.md) §5.1 | Backstop checklist — the primary control is the column-grant default |
 > | Demand instrumentation spec (PostHog events + interest form) | [`../DEMAND_INSTRUMENTATION.md`](../DEMAND_INSTRUMENTATION.md) | SPEC — implement with v1 (no code yet) |
 > | Internal `/v1` contract doc | [`005-phase0-contract.md`](005-phase0-contract.md) (005 Phase 0, PR #174) | Owned by 005 — referenced, not duplicated. C.15's requirement is that it stays **current**; the maintenance rule + CI spec-parity backstop are recorded in the ADR §5 (G3). |
 >

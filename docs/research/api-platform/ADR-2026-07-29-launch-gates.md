@@ -56,7 +56,25 @@ Both dates go in the owner's calendar and are referenced from the strategy track
 
 - **G1 — Governance.** `GOVERNANCE.md` LB-1 (no index display to US-market users while the GPA track is open, or GPA explicitly parked), LB-2 (zero WHS marks in fitbull UI/store/marketing), LB-3 (owner sign-off on the fact pattern + the negotiation-posture call). Shipping /v1 into a private fitbull dev/TestFlight build is not gated.
 - **G2 — Demand instrumentation live.** The interest form + `api_access_interest_submitted` (and the view event) shipping **with** v1, per `DEMAND_INSTRUMENTATION.md`. Condition C.12: without it, T2 and T3 are unfalsifiable.
+- **G4 — PostgREST column-grant sweep.** See §5.1. The primary control is the column-grant default; this gate is the backstop that confirms it held.
 - **G3 — Contract doc current.** The frozen `/v1` contract lives in `plans/005-phase0-contract.md` (005 Phase 0, PR #174) and is the single source of truth; OpenAPI 3.1 is generated from the shared zod schemas with a CI regen-and-diff gate (DECISIONS §5). Condition C.15's requirement is that this doc stays **current**, not that a second doc exists — so the maintenance rule is: any `/v1` shape change updates `005-phase0-contract.md` in the same PR, and the CI spec-parity gate is the mechanical backstop. This ADR does not restate the contract.
+
+### 5.1 PostgREST hardening invariant (G4)
+
+Added 2026-07-30 out of this cycle's security work, where the same class of hole was found behind **four different doors on two tables**. Encoded as an invariant rather than a per-column reminder, because per-column reminders are what let it recur.
+
+> **For every server-owned column on a PostgREST-reachable table, confirm it is absent from BOTH the INSERT and the UPDATE column-grant lists.** Restrictive policies govern *values*; column grants govern *which columns a client may name at all*. A column gated on one verb is not gated on the other.
+
+Two traps, each of which produced a wrong first answer during this cycle:
+
+1. **Column-level revokes are no-ops while the table-level grant is held.** Postgres permits an INSERT/UPDATE if **either** the table-level **or** a column-level privilege matches, so revoking a single column while the blanket table grant stands changes nothing. Each block must `revoke <verb> on <table>` first, then re-grant per column. **Prod corollary:** that revoke also destroys the existing column grants, so revoke and re-grant must run in **one transaction** (`psql -1`) or the surface is briefly wide open — or permanently narrow if the re-grant fails.
+2. **Row-local ownership checks are not relational ownership checks.** A policy of the form `WITH CHECK (auth.uid() = "userId")` proves who owns the *row*, not what the row *points at* — a client-supplied foreign key is unconstrained by it. Where a child row's ownership derives through a parent, the policy must assert that relationship with an `EXISTS` against the parent. One instance of this class was found and remediated during this cycle; the concrete case is documented in the PR on branch `fix/score-cross-user-roundid`.
+
+One caveat on generalizing results: a value-axis check on a `uuid` column is safe partly *because* of the type's canonicalizing coercion. The same pattern on a `text` column is bypassable via case or whitespace variation. Do not carry a uuid-column pass over to a text column.
+
+Fixes, not restated here: the trap-2 instance is remediated on branch `fix/score-cross-user-roundid`; the `round` hardening landed in the 003 migration (`plans/003-w3-bundled-migration.md`).
+
+**Deliberate omission:** the worked example for trap 2 — table, column, and reproduction path — is withheld from this public repo until its remediation is merged. This is not an oversight; do not re-add it before then. Restoring a fuller example once the fix has shipped would be reasonable.
 
 ## 6. Consequences
 
