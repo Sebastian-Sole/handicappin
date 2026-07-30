@@ -1,6 +1,18 @@
 # 008 — W7: Launch gates (governance + demand instrumentation + contract doc)
 
-**Workstream:** W7 · **Status:** PENDING · **Billing-gated:** No (governance/demand independent of billing)
+**Workstream:** W7 · **Status:** DOCS LANDED 2026-07-29 — awaiting owner sign-off + implementation · **Billing-gated:** No (governance/demand independent of billing)
+
+> **Deliverables (2026-07-29).** The doc-only parts of this subplan are written; what remains is owner judgment and the code that ships with v1.
+>
+> | Item | Where | State |
+> |---|---|---|
+> | Governance fact pattern + risk posture (blocking vs monitor) + NGF question draft | [`../GOVERNANCE.md`](../GOVERNANCE.md) | DRAFT — gate closes on owner sign-off (§7 there) |
+> | Dated ADR: triggers with thresholds, 2026-10-15 review, 2027-03-31 hard re-decide | [`../ADR-2026-07-29-launch-gates.md`](../ADR-2026-07-29-launch-gates.md) | PROPOSED — thresholds need owner ratification |
+> | PostgREST column-grant invariant (pre-launch gate G4) | [`../ADR-2026-07-29-launch-gates.md`](../ADR-2026-07-29-launch-gates.md) §5.1 (invariant), §5.2 (what has shipped) | Backstop checklist — the primary control is the column-grant default. **G4 itself is still open:** `round` and `score` are hardened, merged and live in production (PRs #173/#176), but the at-launch sweep across the remaining PostgREST-reachable tables has not been run |
+> | Demand instrumentation spec (PostHog events + interest form) | [`../DEMAND_INSTRUMENTATION.md`](../DEMAND_INSTRUMENTATION.md) | SPEC — implement with v1 (no code yet) |
+> | Internal `/v1` contract doc | [`005-phase0-contract.md`](005-phase0-contract.md) (005 Phase 0, merged 2026-07-30 in PR #174) | Owned by 005 — referenced, not duplicated. C.15's requirement is that it stays **current**; the maintenance rule + CI spec-parity backstop are recorded in the ADR §5 (G3). |
+>
+> Nothing here is implemented: no analytics constants, no form, no route. That work rides with the v1 surface (005/006).
 **Depends on:** 005 (W4) — the surface must exist to instrument and to govern. Runs in parallel with 006/007; the governance check is a hard **pre-launch** gate that must not be discovered late.
 **Blocks:** prod launch.
 
@@ -36,8 +48,9 @@ Open gate (DECISIONS §Open gates): the governance check is a **pre-launch block
 
 ## OWNER (judgment calls — not agent work)
 
-- [ ] **Governance posture:** whether to proactively raise the fitbull surfacing in the USGA #151 / NGF #147 threads, and how. Negotiation-posture call only the owner can make.
-- [ ] **Trigger thresholds:** what specifically counts as "a named partner with users asks" and what user-base level anchors the demand trigger.
+- [ ] **Governance posture:** whether to proactively raise the fitbull surfacing in the USGA #151 / NGF #147 threads, and how. Negotiation-posture call only the owner can make. → recommendation + drafted NGF question in `../GOVERNANCE.md` §7.3 / §8.
+- [ ] **Trigger thresholds:** what specifically counts as "a named partner with users asks" and what user-base level anchors the demand trigger. → proposed numbers with reasoning in `../ADR-2026-07-29-launch-gates.md` §3 (T2/T3), ratify or replace.
+- [ ] **Unknowns the docs cannot resolve:** has NGF replied to the 2026-07-13 enquiry (and was the ~07-20 Gmail follow-up sent)? will fitbull be distributed to US users? will fitbull display the index at all? → `../GOVERNANCE.md` §5 (U1–U3). U3 is a real design lever: no index display collapses most of the exposure.
 
 ## Non-goals
 
