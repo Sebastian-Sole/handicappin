@@ -5,6 +5,27 @@ on:
     branches: [main]
     paths:
       - "supabase/migrations/**"
+  # Manual runs exist for two reasons the push trigger cannot serve:
+  #
+  #   1. DRIFT CHECK. With `apply: false` (the default) this job stops after the
+  #      dry run and prints what production is missing, using the stored
+  #      credentials — no local database connection, and no password handling on
+  #      anyone's laptop. Note the direct host is IPv6-only, so `--linked` fails
+  #      from most local networks; this is the reliable way to ask.
+  #
+  #   2. APPLY BEFORE MERGE. Some migrations must reach production BEFORE the code
+  #      that depends on them deploys — merging first means the app queries a
+  #      column that does not exist yet. Run this workflow on the PR's branch,
+  #      verify the result against a dump, then merge.
+  #
+  # Running on a branch uses that branch's copy of this file, so a branch created
+  # before this trigger existed must be rebased onto main before it can be used.
+  workflow_dispatch:
+    inputs:
+      apply:
+        description: "Apply the migrations. Leave unchecked to only report what is pending."
+        type: boolean
+        default: false
 
 jobs:
   migrate:
@@ -12,7 +33,11 @@ jobs:
     environment: production
     concurrency:
       group: ${{ github.workflow }}-migrate
-      cancel-in-progress: true
+      # Never cancel a run that may be mid-apply. `db push` wraps each migration
+      # file in its own transaction, so an interrupted run leaves some files
+      # applied and some not — recoverable, but it is drift, and drift on this
+      # database has cost us before. Queue instead.
+      cancel-in-progress: false
     steps:
       - uses: actions/checkout@v4
 
@@ -35,8 +60,22 @@ jobs:
           SEND_EMAIL_HOOK_SECRET: ${{ secrets.SEND_EMAIL_HOOK_SECRET }}
 
       - name: Push migrations to production
+        if: ${{ github.event_name == 'push' || inputs.apply }}
         run: supabase db push
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
           SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
           SEND_EMAIL_HOOK_SECRET: ${{ secrets.SEND_EMAIL_HOOK_SECRET }}
+
+      - name: Report what this run did
+        if: always()
+        run: |
+          if [ "${{ github.event_name }}" = "push" ] || [ "${{ inputs.apply }}" = "true" ]; then
+            echo "Migrations were **applied** to production from \`${{ github.ref_name }}\`." >> "$GITHUB_STEP_SUMMARY"
+            echo "" >> "$GITHUB_STEP_SUMMARY"
+            echo "Verify the result against a database dump, not this log and not the migration history table — a history row can exist for DDL that never ran." >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "Report only — **nothing was applied**. The dry run above lists what production is missing." >> "$GITHUB_STEP_SUMMARY"
+            echo "" >> "$GITHUB_STEP_SUMMARY"
+            echo "Re-run with \`apply\` checked to push them." >> "$GITHUB_STEP_SUMMARY"
+          fi
