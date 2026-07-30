@@ -5,6 +5,24 @@ Status: LOCKED except §Open gates
 Process: 8-topic research → 7-perspective review panels (6 thinking hats + pre-mortem) → per-topic + global synthesis (`SYNTHESIS.md`) → owner Q&A (2 rounds, 2026-07-20/22).
 Full conditions per topic live in `topics/<id>/synthesis.md` — this file records the outcomes; the synthesis conditions are binding unless explicitly overridden here.
 
+## Sign-off: updateUser residual (owner, 2026-07-29) — ACCEPTED + detect-and-revoke
+
+Empirically tested on local stack (secure_password_change + double_confirm both ON). Residual: a leaked/compromised `client_id` token can change the account password with no reauth ONLY within **24h of the user's original consent** — window is **non-renewable** (refresh keeps the same session created_at; new session needs the user's browser), **email change is blocked** (double-confirm), the change is **self-signaling** (kills other sessions), and **recoverable** (email reset). Passwordless users more exposed inside the window. No PREVENTIVE lever exists — GoTrue mutates auth.users over its own privileged connection, invisible to RLS/triggers at updateUser time.
+
+**Decision: accept-with-mitigations + build the detective control.** Load-bearing prod settings (verified ON by owner 2026-07-29): "secure password change" (reauth for sessions >24h) and "secure email change" (double-confirm). NOTE: the "double confirm email changes" label the plan referenced is surfaced as **secure email change** in the current dashboard — same mechanism, verified enabled.
+
+**Fast-follow subplan (NEW, own PR — NOT a blocker for #167):** (1) audit-log auto-revoke — scheduled job watching `auth.audit_log_entries` for password/email-change events on users holding an active session `WHERE oauth_client_id IS NOT NULL` → `revokeGrant()` + alert (collapses the 24h window to minutes-to-detection); (2) toggle watchdog — daily check that secure-password-change + secure-email-change remain ON, alert if either flips off (the two settings are the whole defense; guard against silent drift). Both ride the existing cron.
+
+Decision rationale recorded: no managed auth provider (Auth0/Clerk/WorkOS) or backend swap (Neon = Postgres-only, no auth; Convex = full data-layer rewrite, app-code authz is a downgrade from RLS) removes this — it is inherent to OAuth-delegated bearer access. Fix where it lives, don't migrate. [[api-platform-fitbull-integration]]
+
+## Sign-off: overlap-audience-only v1 (owner, 2026-07-29) — ACCEPTED
+
+v1 Connect flow serves only users who already have a handicappin account (consent page shows sign-in, not inline sign-up). fitbull users without a handicappin account must self-serve create one (sign-in card links to sign-up) then return; the pending authorization survives. Inline sign-up-inside-authorization deferred until fitbull is shown to drive handicappin signups. No sign-up-in-consent to build for v1.
+
+## api.handicappin.com — LIVE (2026-07-29)
+
+Grey-cloud CNAME + Vercel domain confirmed serving: TLS valid, cookie-less GET returns 200/204 with NO x-vercel-mitigated challenge on both `/` and `/api/trpc/*`. Closes the ingress host work and the OAuth spike custom-domain criterion. This is fitbull's base URL from its first commit.
+
 ## Owner facts established (2026-07-20/22)
 
 - The first consumer is **fitbull**, the owner's fitness app: **separate product** with its own auth, billing, and DB, running on **Convex** (has a real backend).
