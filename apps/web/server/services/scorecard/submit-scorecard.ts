@@ -44,6 +44,7 @@ import {
   RoundLimitRaceError,
   RoundLimitReachedError,
   SelfSubmissionError,
+  mapRoundInsertError,
 } from "./errors";
 
 /** The drizzle handle shape the service needs (the app's `db` satisfies it). */
@@ -698,7 +699,9 @@ export async function submitScorecard(
       }, 0);
     }
 
-    // Determine if player has an established handicap (USGA requires 3+ approved rounds)
+    // Determine if player has an established handicap (USGA requires 3+ approved rounds).
+    // Quarantined rounds (accept-and-quarantine, subplan 003) are excluded
+    // from every handicap-computation input, including this count.
     const roundTeeTime = new Date(teeTime);
     const roundsBeforeThis = await tx
       .select({ count: count() })
@@ -707,7 +710,8 @@ export async function submitScorecard(
         and(
           eq(round.userId, userId),
           lt(round.teeTime, roundTeeTime),
-          eq(round.approvalStatus, "approved")
+          eq(round.approvalStatus, "approved"),
+          eq(round.quarantined, false)
         )
       );
     const hasEstablishedHandicap = (roundsBeforeThis[0]?.count ?? 0) >= 3;
@@ -749,8 +753,16 @@ export async function submitScorecard(
         scores.length === 9 ? (nineHoleSection ?? null) : null,
     };
 
-    // 5. Insert round
-    const [insertedRound] = await tx.insert(round).values(roundInsert).returning();
+    // 5. Insert round. A duplicate submission (double-click, watch sync
+    // replay, native offline retry) surfaces here as a 23505 on one of the
+    // subplan-003 unique keys — map it to a typed DuplicateRoundError so the
+    // raw Postgres constraint message never reaches the UI.
+    let insertedRound;
+    try {
+      [insertedRound] = await tx.insert(round).values(roundInsert).returning();
+    } catch (error) {
+      throw mapRoundInsertError(error);
+    }
 
     if (!insertedRound) {
       throw new Error("Failed to insert round");
@@ -909,10 +921,14 @@ export async function submitScorecard(
   // entire block in favor of an in-transaction active-vs-quarantined
   // decision — until then it is preserved verbatim.
   if (access.plan === "free") {
+    // Must count the SAME population as the primary gate
+    // (access-control.ts): quarantined rounds are excluded, otherwise the
+    // re-check could diverge and delete a legitimate committed round.
     const { count: roundCount, error: countError } = await deps.supabase
       .from("round")
       .select("*", { count: "exact", head: true })
-      .eq("userId", userId);
+      .eq("userId", userId)
+      .eq("quarantined", false);
 
     if (countError) {
       deps.logger.error("Error re-checking round count", {

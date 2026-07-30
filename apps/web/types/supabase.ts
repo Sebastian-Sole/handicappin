@@ -425,16 +425,20 @@ export type Database = {
           createdAt: string
           exceptionalScoreAdjustment: number
           existingHandicapIndex: number
+          externalId: string | null
           holes_played: number
           id: number
           nine_hole_section: string | null
           notes: string | null
           parPlayed: number
+          quarantined: boolean
           scoreDifferential: number
           slope_rating_used: number
+          submitted_via: string | null
           teeId: number
           teeTime: string
           totalStrokes: number
+          updated_at: string
           updatedHandicapIndex: number
           userId: string
         }
@@ -448,16 +452,20 @@ export type Database = {
           createdAt?: string
           exceptionalScoreAdjustment?: number
           existingHandicapIndex: number
+          externalId?: string | null
           holes_played?: number
           id?: number
           nine_hole_section?: string | null
           notes?: string | null
           parPlayed: number
+          quarantined?: boolean
           scoreDifferential: number
           slope_rating_used: number
+          submitted_via?: string | null
           teeId: number
           teeTime: string
           totalStrokes: number
+          updated_at?: string
           updatedHandicapIndex: number
           userId: string
         }
@@ -471,16 +479,20 @@ export type Database = {
           createdAt?: string
           exceptionalScoreAdjustment?: number
           existingHandicapIndex?: number
+          externalId?: string | null
           holes_played?: number
           id?: number
           nine_hole_section?: string | null
           notes?: string | null
           parPlayed?: number
+          quarantined?: boolean
           scoreDifferential?: number
           slope_rating_used?: number
+          submitted_via?: string | null
           teeId?: number
           teeTime?: string
           totalStrokes?: number
+          updated_at?: string
           updatedHandicapIndex?: number
           userId?: string
         }
@@ -818,6 +830,16 @@ export type Database = {
       }
       custom_access_token_hook: { Args: { event: Json }; Returns: Json }
       delete_empty_course: { Args: { p_course_id: number }; Returns: undefined }
+      get_connected_profile: {
+        Args: never
+        Returns: {
+          created_at: string
+          handicap_index: number
+          id: string
+          name: string
+          verified: boolean
+        }[]
+      }
       get_public_course_count: { Args: never; Returns: number }
       get_public_round_count: { Args: never; Returns: number }
       get_public_user_count: { Args: never; Returns: number }

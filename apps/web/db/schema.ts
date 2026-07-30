@@ -1,6 +1,7 @@
 import {
   pgTable,
   uniqueIndex,
+  unique,
   foreignKey,
   pgPolicy,
   uuid,
@@ -290,9 +291,39 @@ export const round = pgTable(
     createdAt: timestamp()
       .default(sql`CURRENT_TIMESTAMP`)
       .notNull(),
+    // --- API-platform bundle (subplan 003, DECISIONS #9 + closed billing gate) ---
+    // Client-supplied idempotency key, unique per user (replay-by-lookup;
+    // subplan 005 implements the replay). Null = submitted without a key.
+    externalId: text(),
+    // Self-reported submission attribution, analytics only (no client
+    // registry yet). Null = row predates the column.
+    submittedVia: text("submitted_via"),
+    // Maintained by DB trigger `round_set_updated_at` on every UPDATE — do
+    // not set from app code. timestamptz (unlike this table's legacy naive
+    // timestamps) because its purpose is a future sync cursor. Exists so the
+    // retrofit stays cheap (the cursor endpoint itself is declined).
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .default(sql`CURRENT_TIMESTAMP`)
+      .notNull(),
+    // Accept-and-quarantine flag (closed billing gate): true = stored
+    // over-limit round, excluded from the free-tier count and the handicap
+    // computation until upgrade. Written by 002 Part B's in-transaction
+    // check. Distinct axis from approvalStatus (course-data moderation).
+    quarantined: boolean().default(false).notNull(),
   },
   (table) => [
     index("idx_round_userId").on(table.userId),
+    // Strict natural-key duplicate guard for every write path (web, native,
+    // watch, API). NULLS NOT DISTINCT so two 18-hole rounds (null
+    // nineHoleSection) at the same tee time collide too; legitimate
+    // front/back 9-hole pairs at the same teeTime remain distinct. Applied
+    // directly (no dedup) — the 2026-07-29 prod duplicate scan was clean.
+    unique("round_userId_teeId_teeTime_nineHoleSection_key")
+      .on(table.userId, table.teeId, table.teeTime, table.nineHoleSection)
+      .nullsNotDistinct(),
+    // Idempotency: one round per (user, externalId); null externalIds stay
+    // distinct (web/native rows carry null).
+    unique("round_userId_externalId_key").on(table.userId, table.externalId),
     foreignKey({
       columns: [table.courseId],
       foreignColumns: [course.id],
@@ -337,6 +368,40 @@ export const round = pgTable(
       for: "delete",
       to: ["authenticated"],
       using: sql`(auth.uid()::uuid = userId)`,
+    }),
+    // Write-privilege hardening (20260730120000). `round` is SERVER-WRITTEN —
+    // PostgREST is a read surface for it. Privileges (grants — not expressible
+    // in Drizzle; see the migration) give `authenticated`/`anon` NO INSERT on
+    // `round` at all, and UPDATE on `notes` ALONE. No client code in apps/web
+    // or apps/native ever inserted or PATCHed a round over PostgREST; every
+    // legitimate write (submitScorecard, the moderation approval flow,
+    // process_handicap_updates, 002 Part B, 005's /v1 handlers) runs as the
+    // `postgres` table owner through Drizzle or as `service_role`, bypassing
+    // grants entirely. Server-written only, therefore: the handicap
+    // computation's durable inputs (`teeTime` — round ordering and the
+    // 20-round window; `nine_hole_section` — front/back rating selection;
+    // `teeId`, `courseId`, `holes_played`, `parPlayed`), its derived outputs
+    // (`scoreDifferential`, `adjustedGrossScore`, `adjustedPlayedScore`,
+    // `courseHandicap`, `existingHandicapIndex`, `updatedHandicapIndex`,
+    // `exceptionalScoreAdjustment`), the ratings audit record
+    // (`course_rating_used`, `slope_rating_used`), plus `quarantined`,
+    // `approvalStatus`, `externalId`, `submitted_via`, `updated_at`, `userId`,
+    // `id` and `createdAt`.
+    //
+    // The permissive INSERT/UPDATE policies above remain but are now
+    // unreachable (INSERT) or `notes`-scoped (UPDATE) for client roles —
+    // privileges are checked before policies. The restrictive policy below is
+    // kept as DEFENSE IN DEPTH: privileges cannot constrain payload VALUES, so
+    // if a future migration ever blanket-restores `grant insert on
+    // public.round` (a table-level grant overrides every column-level
+    // decision), this is what still refuses a pre-approved or pre-quarantined
+    // round. First-party writes go through Drizzle as the `postgres` table
+    // owner and bypass RLS.
+    pgPolicy("Users cannot self-approve or quarantine rounds", {
+      as: "restrictive",
+      for: "insert",
+      to: ["authenticated"],
+      withCheck: sql`(quarantined = false and "approvalStatus" <> 'approved')`,
     }),
     // Connected apps may log/update/read rounds but never destroy them —
     // write-only-by-default posture (DECISIONS §8). Mirrors

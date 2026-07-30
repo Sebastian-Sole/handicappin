@@ -11,6 +11,7 @@ import { sendAdminSubmissionNotification } from "@/lib/email-service";
 import { getPostHogClient } from "@/lib/posthog";
 import {
   submitScorecard,
+  DuplicateRoundError,
   PlanNotSelectedError,
   RoundLimitRaceError,
   RoundLimitReachedError,
@@ -86,10 +87,15 @@ export const roundRouter = createTRPCRouter({
           message: "Cannot access another user's data",
         });
       }
+      // Billing-facing count: native consumes this as its quota gate and the
+      // homepage as totalRounds. Quarantined rounds (accept-and-quarantine,
+      // subplan 003) never consume quota, so exclude them here exactly like
+      // the free-tier count in `utils/billing/access-control.ts`.
       const { count, error } = await ctx.supabase
         .from("round")
         .select("*", { count: "exact", head: true })
-        .eq("userId", input.userId);
+        .eq("userId", input.userId)
+        .eq("quarantined", false);
 
       if (error) {
         Sentry.captureException(error, {
@@ -189,6 +195,12 @@ export const roundRouter = createTRPCRouter({
           error instanceof RoundLimitRaceError
         ) {
           throw new TRPCError({ code: "FORBIDDEN", message: error.message });
+        }
+        // Duplicate submission (double-click, watch sync replay, native
+        // offline retry) — surface as CONFLICT with user-facing copy, never
+        // the raw Postgres constraint message.
+        if (error instanceof DuplicateRoundError) {
+          throw new TRPCError({ code: "CONFLICT", message: error.message });
         }
         throw error;
       }

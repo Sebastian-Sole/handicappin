@@ -69,7 +69,10 @@ export const scorecardRouter = createTRPCRouter({
         .where(eq(score.roundId, roundData.id));
 
       // 7. Count approved rounds played before this round's tee time (for determining established handicap)
-      // Must match Edge Function logic which uses position in array of approved rounds only
+      // Must match Edge Function logic which uses position in array of approved rounds only.
+      // Quarantined rounds (accept-and-quarantine, subplan 003) are excluded
+      // from every handicap-computation input — same filter as the
+      // submit-scorecard service and the handicap queue processor.
       const roundsBeforeResult = await db
         .select({ count: count() })
         .from(round)
@@ -77,7 +80,8 @@ export const scorecardRouter = createTRPCRouter({
           and(
             eq(round.userId, roundData.userId),
             lt(round.teeTime, roundData.teeTime),
-            eq(round.approvalStatus, "approved")
+            eq(round.approvalStatus, "approved"),
+            eq(round.quarantined, false)
           )
         );
       const roundsBeforeTeeTime = roundsBeforeResult[0]?.count ?? 0;
@@ -125,6 +129,8 @@ export const scorecardRouter = createTRPCRouter({
           slope_rating_used: roundData.slopeRatingUsed,
           holes_played: roundData.holesPlayed,
           nine_hole_section: roundData.nineHoleSection ?? null,
+          submitted_via: roundData.submittedVia,
+          updated_at: roundData.updatedAt.toISOString(),
         },
         roundsBeforeTeeTime,
       };
@@ -280,6 +286,8 @@ export const scorecardRouter = createTRPCRouter({
               slope_rating_used: roundData.slopeRatingUsed ?? 0,
               holes_played: roundData.holesPlayed ?? 0,
               nine_hole_section: roundData.nineHoleSection ?? null,
+              submitted_via: roundData.submittedVia,
+              updated_at: roundData.updatedAt.toISOString(),
             },
           };
         })

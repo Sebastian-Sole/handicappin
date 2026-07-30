@@ -184,12 +184,15 @@ async function processUserHandicap(
         ? Number(userProfile.initialHandicapIndex)
         : MAX_SCORE_DIFFERENTIAL;
 
-    // 2. Fetch all approved rounds for user
+    // 2. Fetch all approved rounds for user.
+    // Quarantined rounds (accept-and-quarantine, subplan 003) are stored but
+    // excluded from the handicap computation until the user upgrades.
     const { data: userRoundsRaw, error: roundsError } = await supabase
       .from("round")
       .select("*")
       .eq("userId", userId)
       .eq("approvalStatus", "approved")
+      .eq("quarantined", false)
       .order("teeTime", { ascending: true });
 
     if (roundsError) {

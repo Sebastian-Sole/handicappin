@@ -63,3 +63,66 @@ export class CourseResolutionError extends Error {
     this.name = "CourseResolutionError";
   }
 }
+
+/**
+ * The round insert hit one of the unique keys added by subplan 003's
+ * migration — a duplicate submission (double-click, watch sync replay,
+ * native offline retry). Maps to CONFLICT in the tRPC adapter; the /v1 REST
+ * adapter (005) maps the same error per the recorded duplicate semantics
+ * (200-replay for identical body, 409 otherwise — see plans/003-notes.md).
+ */
+export class DuplicateRoundError extends Error {
+  constructor(readonly key: "natural-key" | "external-id") {
+    super(
+      key === "external-id"
+        ? "This round has already been submitted. A round with the same submission reference already exists."
+        : "This round has already been submitted. A round with the same course, tee, and tee time already exists."
+    );
+    this.name = "DuplicateRoundError";
+  }
+}
+
+/** SQLSTATE for unique_violation. */
+const UNIQUE_VIOLATION = "23505";
+
+const NATURAL_KEY_CONSTRAINT = "round_userId_teeId_teeTime_nineHoleSection_key";
+const EXTERNAL_ID_CONSTRAINT = "round_userId_externalId_key";
+
+/**
+ * Walk an error's `cause` chain to the underlying Postgres error fields
+ * (Drizzle wraps driver failures in DrizzleQueryError with the PostgresError
+ * as `cause`).
+ */
+function unwrapPgError(
+  error: unknown
+): { code?: string; constraint_name?: string } | undefined {
+  let current = error;
+  for (let depth = 0; current && depth < 5; depth++) {
+    const candidate = current as {
+      code?: string;
+      constraint_name?: string;
+      cause?: unknown;
+    };
+    if (typeof candidate.code === "string") return candidate;
+    current = candidate.cause;
+  }
+  return undefined;
+}
+
+/**
+ * Translate a failed round INSERT into a typed domain error when it is a
+ * unique violation on one of the round dedupe keys; return the original
+ * error untouched otherwise (so unrelated failures keep their behavior).
+ */
+export function mapRoundInsertError(error: unknown): unknown {
+  const pg = unwrapPgError(error);
+  if (pg?.code === UNIQUE_VIOLATION) {
+    if (pg.constraint_name === EXTERNAL_ID_CONSTRAINT) {
+      return new DuplicateRoundError("external-id");
+    }
+    if (pg.constraint_name === NATURAL_KEY_CONSTRAINT) {
+      return new DuplicateRoundError("natural-key");
+    }
+  }
+  return error;
+}

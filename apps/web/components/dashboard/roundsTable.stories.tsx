@@ -54,13 +54,17 @@ const buildRound = (
   courseHandicap: 14,
   exceptionalScoreAdjustment: exceptionalAdj,
   existingHandicapIndex: 12.4,
+  externalId: null,
   holes_played: 18,
   nine_hole_section: null,
   notes: null,
   parPlayed: par,
+  quarantined: false,
   scoreDifferential: differential,
   slope_rating_used: 128,
+  submitted_via: null,
   totalStrokes: score,
+  updated_at: teeTime,
   updatedHandicapIndex: 12.4,
 });
 
