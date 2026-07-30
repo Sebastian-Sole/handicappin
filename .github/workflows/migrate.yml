@@ -53,29 +53,60 @@ jobs:
           SEND_EMAIL_HOOK_SECRET: ${{ secrets.SEND_EMAIL_HOOK_SECRET }}
 
       - name: Validate migrations (dry run)
+        id: dry_run
         run: supabase db push --dry-run
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
           SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
           SEND_EMAIL_HOOK_SECRET: ${{ secrets.SEND_EMAIL_HOOK_SECRET }}
 
+      # `success() &&` is load-bearing: a step's `if:` REPLACES the implicit
+      # success() gate, so without it a failed dry run would no longer stop the
+      # push — the opposite of what validating first is for.
       - name: Push migrations to production
-        if: ${{ github.event_name == 'push' || inputs.apply }}
+        id: apply
+        if: ${{ success() && (github.event_name == 'push' || inputs.apply) }}
         run: supabase db push
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
           SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
           SEND_EMAIL_HOOK_SECRET: ${{ secrets.SEND_EMAIL_HOOK_SECRET }}
 
+      # Keyed on what the apply step ACTUALLY did, never on the trigger. An
+      # intent-based summary would report "applied" for a run that failed
+      # part-way, which is the one outcome most in need of an honest report.
       - name: Report what this run did
         if: always()
+        env:
+          APPLY_OUTCOME: ${{ steps.apply.outcome }}
+          DRY_RUN_OUTCOME: ${{ steps.dry_run.outcome }}
+          REF: ${{ github.ref_name }}
         run: |
-          if [ "${{ github.event_name }}" = "push" ] || [ "${{ inputs.apply }}" = "true" ]; then
-            echo "Migrations were **applied** to production from \`${{ github.ref_name }}\`." >> "$GITHUB_STEP_SUMMARY"
-            echo "" >> "$GITHUB_STEP_SUMMARY"
-            echo "Verify the result against a database dump, not this log and not the migration history table — a history row can exist for DDL that never ran." >> "$GITHUB_STEP_SUMMARY"
-          else
-            echo "Report only — **nothing was applied**. The dry run above lists what production is missing." >> "$GITHUB_STEP_SUMMARY"
-            echo "" >> "$GITHUB_STEP_SUMMARY"
-            echo "Re-run with \`apply\` checked to push them." >> "$GITHUB_STEP_SUMMARY"
-          fi
+          {
+            case "$APPLY_OUTCOME" in
+              success)
+                echo "Migrations were applied to production from \`$REF\`."
+                echo
+                echo "Confirm the result against a database **dump**. Neither this log nor the migration history table is proof: a history row can exist for DDL that never ran."
+                ;;
+              failure)
+                echo "### The apply failed part-way"
+                echo
+                echo "\`db push\` wraps each migration file in its own transaction but does **not** wrap the set, so production may now hold some of these migrations and not others."
+                echo
+                echo "Establish the real state from a **dump** before re-running — a second run trusts the history table, which is exactly what may now be wrong."
+                ;;
+              skipped)
+                if [ "$DRY_RUN_OUTCOME" = "success" ]; then
+                  echo "Report only — **nothing was applied**. The dry run above lists what production is missing."
+                  echo
+                  echo "Re-run with \`apply\` checked to push them."
+                else
+                  echo "**Nothing was applied** — the run did not get past validation. The failing step above says why."
+                fi
+                ;;
+              *)
+                echo "**Nothing was applied** — the run stopped before reaching the apply step."
+                ;;
+            esac
+          } >> "$GITHUB_STEP_SUMMARY"
