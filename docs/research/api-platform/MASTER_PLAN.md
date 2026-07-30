@@ -95,7 +95,7 @@ owner-executed.
 
 **Definition of done.**
 - Cookie-less `curl` with a valid Bearer token against `api.handicappin.com/api/trpc/*` (or a
-  `/api/v1/ping` stub) returns JSON, not a 429 HTML challenge.
+  `/api/v1/health` stub) returns JSON, not a 429 HTML challenge.
 - Canary is live and paging; dashboard state documented in `docs/`.
 - Webhook-delivery audit conclusion recorded (no silent Stripe/RevenueCat loss, or the losses
   enumerated).

@@ -115,7 +115,10 @@ export function CoursePicker({
               Recent courses
             </Text>
           ) : null}
-          {!debounced && recentCourses.length === 0 ? (
+          {/* Deferred until the eager recent-courses query settles so the
+              empty prompt doesn't flash before recents load (PR 163
+              follow-up). */}
+          {!debounced && !recent.isLoading && recentCourses.length === 0 ? (
             <Text className="text-body text-muted-foreground text-center py-md">
               Search for a course...
             </Text>

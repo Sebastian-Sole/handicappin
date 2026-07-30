@@ -8,7 +8,7 @@
 
 ## 1. Ground truth from the codebase
 
-All paths relative to `/Users/sebastiansole/Documents/handicappin`.
+All paths relative to the repo root.
 
 - **tRPC v11.10.0** (`@trpc/client`/`react-query`/`server` all pinned `11.10.0`), **superjson ^2.2.6** as the wire transformer (`apps/web/server/api/trpc.ts:194`), **zod ^4.3.6**, Next 16.1.6 (`apps/web/package.json`).
 - **Bearer auth already works**: `apps/web/server/api/trpc.ts` extracts `Authorization: Bearer <supabase access token>`, validates via `supabase.auth.getUser(token)`, and builds an RLS-scoped Supabase client (`createBearerTokenSupabaseClient`, line 108). Cookie auth takes precedence (line 153). Built for the native app; reusable by any server-side contract surface.

@@ -63,7 +63,7 @@ HTTP layer will follow it whatever it looks like.
 ## Must address before locking
 
 1. Prove the Cloudflare/Vercel challenge bypass end-to-end on prod (cookie-less bearer request to a
-   stub `/api/v1/ping`) before any contract code is written.
+   stub `/api/v1/health`) before any contract code is written.
 2. Cut the ops package to what's structural (problem+json shape, `/v1`, stable error codes);
    explicitly defer the deprecation policy/Sunset-header machinery until a non-owned consumer exists.
 3. Sequence the `submitScorecard` extraction as its own PR ahead of any REST handler — that's where

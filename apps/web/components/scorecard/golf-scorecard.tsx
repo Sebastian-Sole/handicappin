@@ -155,8 +155,10 @@ export default function GolfScorecard({ profile, access }: GolfScorecardProps) {
     );
 
   // Fetched eagerly (not on popover open) so the list is already there the
-  // instant the picker opens.
-  const { data: recentCourses } = api.course.getRecentCourses.useQuery();
+  // instant the picker opens. Loading state is kept so the pre-search empty
+  // prompt doesn't flash before recent courses resolve (PR #163 follow-up).
+  const { data: recentCourses, isLoading: isRecentCoursesLoading } =
+    api.course.getRecentCourses.useQuery();
 
   const { data: courseTees, isLoading: isTeesLoading } =
     api.tee.fetchTees.useQuery(
@@ -620,6 +622,7 @@ export default function GolfScorecard({ profile, access }: GolfScorecardProps) {
                                             )}
                                           {effectiveCourses.length === 0 &&
                                             !isLoading &&
+                                            !isRecentCoursesLoading &&
                                             !debouncedSearchTerm && (
                                               <CommandGroup className="py-lg">
                                                 <CommandEmpty>

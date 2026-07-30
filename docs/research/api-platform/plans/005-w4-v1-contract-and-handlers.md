@@ -99,6 +99,8 @@ From **hosting-stack-decision §C.9**:
 
 > 9. **State eventual consistency explicitly in the API contract**: POST returns 200 while the handicap is stale until pg_cron fires. Add queue-lag/failure alerting.
 
+**Correction note:** the "POST returns 200" wording above is the research quote, not the contract. The LOCKED contract (DECISIONS #6 + billing-gate closure, 2026-07-27) is a synchronous **201** from `POST /rounds` — with a **distinguishable status** for the over-limit quarantine outcome (201 + quarantined status, never a 403). Only the eventual-consistency point (provisional index, queue-lag/failure alerting) carries over from this quote.
+
 ## Non-goals
 
 - Deprecation/Sunset header machinery, a developer portal, self-serve keys, public docs — deferred until a non-owned consumer exists.
