@@ -81,31 +81,34 @@ subplan). Excluded in this subplan from **every counting/handicap site**:
 
 `approvalStatus` (course-data moderation) is a different axis and was not overloaded.
 
-## Column-privilege hardening (review fix round — IN the migration)
+## Write-privilege hardening (review fix rounds — IN the migration)
 
-The review's security pass verified over PostgREST that the permissive "Users can update
-their own rounds" policy + the table-level UPDATE grant let an authenticated user PATCH any
-column of their own rows — including `quarantined` (future billing bypass) and
-`approvalStatus` (a **live pre-existing hole**: self-approving rounds into the handicap
-computation past moderation). The migration now:
+The review's security pass verified over PostgREST that the permissive RLS policies + the
+table-level grants let an authenticated user INSERT rounds and PATCH any column of their own
+rows — including `quarantined` (future billing bypass), `approvalStatus` (a **live
+pre-existing hole**: self-approving rounds into the handicap computation past moderation), and
+the handicap computation's own inputs. **Final posture: `round` is server-written** — no
+INSERT for client roles, UPDATE on `notes` only.
 
-**Two axes, deliberately hybrid.** Writes to `round` are constrained by two mechanisms with
-different granularity, and both are needed:
+**Two axes.** Privileges and policies answer different questions, and the second is retained
+even though the first now does all the work:
 
-| Axis | Mechanism | Question it answers | Right for |
+| Axis | Mechanism | Question it answers | Role here |
 |---|---|---|---|
-| Existence | column GRANTs | may the client *name* this column at all? | columns with **no** benign client value — `externalId`, `submitted_via`, `updated_at`, `id`, `createdAt` |
-| Value | restrictive INSERT policy | may the client send it carrying *this value*? | columns that **do** have one — `quarantined` (`false`), `approvalStatus` (`'pending'`) |
+| Existence | privileges (table + column GRANTs) | may the client use this verb / name this column at all? | **the live control** — no INSERT at all, UPDATE on `notes` only |
+| Value | restrictive INSERT policy | may the client send a column carrying *this value*? | **defense in depth** — unreachable today; the backstop if INSERT is ever re-granted |
 
-So `quarantined`/`approvalStatus` stay insertable (the policy vets their values — a normal
-client write legitimately carries them, and one test asserts explicit `'pending'` succeeds),
-while `externalId`/`submitted_via` are not insertable at all.
+Privileges cannot express a value constraint, which is why the policy exists at all; the
+policy cannot express "no INSERT ever", which is why the revoke exists. Keeping both means
+neither a careless re-grant nor a payload trick is sufficient on its own.
 
 **The trap** (why every block revokes at table level first): a column-level REVOKE is a
 **no-op while the table-level grant is held** — Postgres allows the write if EITHER the
 table-level OR a column-level privilege matches. `revoke update ("quarantined")` alone
 changes nothing. Demonstrated during verification: re-granting table-level INSERT re-opened
-the squat even with all 20 column grants still in place.
+the squat even with all 20 column grants still in place. The converse also holds and is
+relied on: `REVOKE <verb> ON <table>` cascades to every column-level privilege for that verb,
+which is what makes a bare `revoke insert` complete.
 
 Not done with a BEFORE INSERT trigger: a trigger enumerates columns in its body so it would
 not auto-cover future columns, and silent normalisation is harmful on an API surface — a
@@ -119,40 +122,32 @@ The migration:
   Postgres checks table OR column privilege — hence revoke-at-table-level-then-regrant.
   Fail-safe: future columns are non-updatable by `authenticated` until the grant is extended
   in a migration. Rationale in **The UPDATE grant is `notes` only** below.
-- revokes table-level INSERT and re-grants **per column** (20 columns: the gameplay/rating
-  set + `notes` + `userId` + `quarantined` + `approvalStatus`). **Non-insertable result:
-  `createdAt`, `externalId`, `id`, `submitted_via`, `updated_at`.** This closes an
-  **idempotency-key squat**, reproduced end-to-end: a user pre-inserts a fabricated round
-  carrying the key a connected app will deterministically derive
-  (`externalId: 'fitbull-workout-123'`, `submitted_via: 'api:fitness'`, 58 strokes, −30.0
-  differential) → 201. The app's replay-by-lookup on `(userId, externalId)` then resolves to
-  the **fabrication** — so a `200` "your round is stored" is returned for a round the app
-  never wrote, making the 005 contract promise falsifiable — or on the other branch its
-  genuine round hits `round_userId_externalId_key` and **409s forever** on a deterministic
-  key. The fabricated row also carried `submitted_via = 'api:fitness'`, i.e. **forged
-  provenance** indistinguishable from a genuine API submission, which is unacceptable in a
-  handicap product with an active official-handicap workstream. (005's plan flagged this
-  class of gap at its line 17.) Both columns are now server-written only — 005's `/v1`
-  handlers write them as the table owner and bypass these grants.
-- adds ONE RESTRICTIVE INSERT policy —
-  `quarantined = false and "approvalStatus" <> 'approved'` — because column privileges do
-  **not** constrain INSERT payloads (verified: inserts carrying `quarantined: true` *or*
-  `approvalStatus: 'approved'` both succeeded under grants alone). Closing only the UPDATE
-  side left self-approval wide open on INSERT: verified end-to-end that a user could submit
-  their own unmoderated tee (rated 99.9/155), `POST` a pre-approved round against it, get
-  201, and match the handicap-processor filter with a −21.9 score differential having never
-  passed moderation. `round` has no BEFORE INSERT trigger normalising `approvalStatus`, so
-  the policy is the control.
-- Integration-tested as a real signed-in user: PATCH `quarantined`/`approvalStatus`/
-  `externalId` → 42501; PATCH `teeTime`, `nine_hole_section`, `teeId`, `scoreDifferential`,
-  `course_rating_used`, `totalStrokes` → 42501 (each also asserting the stored value did not
-  move); a `notes`-only PATCH → 200, with the `updated_at` trigger firing and `createdAt`
-  untouched; INSERT with `quarantined: true` → 42501; INSERT with
-  `approvalStatus: 'approved'` → 42501; both at once → 42501; INSERT naming `externalId` →
-  42501, `submitted_via` → 42501, both → 42501; legitimate insert (defaults) and explicit
-  `'pending'` insert → 201, with `externalId`/`submitted_via` NULL. Each denial was proven
-  real by reverting the relevant grant/policy and watching exactly that assertion fail (and
-  nothing else) — for all six UPDATE denials the reverted run reported
+- **revokes INSERT outright, with no re-grant** (`revoke insert on public.round from
+  authenticated, anon`). Rationale in **INSERT is revoked outright** below. Fail-safe:
+  there is no grant list to keep in sync, so future columns are non-insertable by default.
+- **keeps ONE RESTRICTIVE INSERT policy** —
+  `quarantined = false and "approvalStatus" <> 'approved'` — as **defense in depth**, not as
+  the live control. Column privileges do **not** constrain INSERT payload values (verified:
+  under a grant, inserts carrying `quarantined: true` *or* `approvalStatus: 'approved'` both
+  succeeded), so a grant alone could never have been the whole answer. The hole it guards was
+  verified end-to-end before the fix: a user could submit their own unmoderated tee (rated
+  99.9/155), `POST` a pre-approved round against it, get 201, and match the
+  handicap-processor filter with a −21.9 score differential having never passed moderation.
+  `round` has no BEFORE INSERT trigger normalising `approvalStatus`, so the policy is the
+  only value-level control if INSERT is ever re-granted.
+- Integration-tested as a real signed-in user (18 tests): PATCH
+  `quarantined`/`approvalStatus`/`externalId` → 42501; PATCH `teeTime`, `nine_hole_section`,
+  `teeId`, `scoreDifferential`, `course_rating_used`, `totalStrokes` → 42501 (each also
+  asserting the stored value did not move); a `notes`-only PATCH → 200, with the `updated_at`
+  trigger firing and `createdAt` untouched; **every** authenticated INSERT → 42501, including
+  a fully well-formed payload and explicitly-benign `approvalStatus: 'pending'` /
+  `quarantined: false`, with a follow-up count proving nothing landed; and the restrictive
+  policy exercised on its own by temporarily re-granting column-level INSERT inside one test,
+  asserting a self-approved and a pre-quarantined insert are refused **with a
+  `row-level security policy` message** (distinguishing a policy refusal from a privilege
+  refusal — both are 42501) while a pending insert succeeds, then revoking again in a
+  `finally`. Each denial was proven real by reverting the relevant grant/policy and watching
+  exactly that assertion fail and nothing else — every reverted run reported
   `expected undefined to be '42501'`, i.e. the write had succeeded outright.
 
 ## The UPDATE grant is `notes` only (review fix round 2) — DECIDED
@@ -188,17 +183,56 @@ is not a mitigation: in a product with an official-handicap workstream, a user f
 own index **is** the threat. "Only your own rows" is the definition of the problem, not a
 bound on it.
 
-**What this closes and what stays open.** This closes the **UPDATE half** of the previously
-open "tee ratings recorded on the round are client-writable" item. The **INSERT half remains
-open**: 6b still grants INSERT on `course_rating_used`/`slope_rating_used` (and on the
-gameplay and derived-output columns), because a first-INSERT posture decision is genuinely
-harder — a client write path that legitimately creates rounds has to supply *something*, and
-which side of the wire computes it is the open question. Deliberately **not** decided here;
-carried to 008's hardening checklist.
+**What this closes.** This closed the **UPDATE half** of the previously open "tee ratings
+recorded on the round are client-writable" item. The INSERT half was left open at the time
+pending a posture decision — it is now closed too; see the next section.
 
 **Generalised rule for 008.** Before granting a column privilege, ask whether any client code
 actually exercises it. If none does, the grant is surface with no upside — do not grant it,
 and let the fail-safe (no grant → no write) carry future columns too.
+
+## INSERT is revoked outright (owner decision, 2026-07-30) — DECIDED
+
+`round` is **server-written. PostgREST is a read surface for it.** The whole decision follows
+from counting the write paths:
+
+| Path | Real? | Runs as |
+|---|---|---|
+| User logs a round in the app (`submitScorecard`) | yes | `postgres` table owner, via Drizzle |
+| Connected app logs a round through `/v1` (005's handlers) | yes, once built | `postgres` table owner, server-side |
+| A client role INSERTs straight into the table over PostgREST | **no — never was** | `authenticated`/`anon` |
+
+Two of the three are real and neither touches these grants. The third was never a supported
+path and no code in `apps/web/**` or `apps/native/**` has ever used it. So it is closed:
+
+```sql
+revoke insert on public.round from authenticated, anon;
+```
+
+**Stated as an explicit revoke on purpose.** The same practical effect is reachable by leaving
+the NOT NULL columns out of a grant list and letting nullability do the refusing — but that
+hides the decision inside an accident of the schema, where adding a column default or a new
+nullable column silently re-opens the door. Same discipline as the UPDATE block: say what is
+meant, so the next reader can tell intent from side effect.
+
+**The restrictive policy (6c) stays, as a second layer.** It is unreachable today —
+privileges are checked before policies, so an authenticated insert is refused on privilege
+before the policy is evaluated. It is kept because the failure mode it guards is realistic and
+one line wide: a future migration (or a Supabase-side default-privilege sweep) that
+blanket-restores `grant insert on public.round to authenticated` re-opens the whole table at
+once. That is exactly what the table-level-grant trap makes easy. If that happens, the policy
+is what still refuses a pre-approved or pre-quarantined round. Tested independently of the
+grant — see the integration-test bullet above.
+
+**Unaffected:** the `postgres` table owner and `service_role` keep their own INSERT
+privileges, so `submitScorecard`, the moderation approval flow, `process_handicap_updates`,
+002 Part B and 005's `/v1` handlers are all untouched. The permissive "Users can insert their
+own rounds" RLS policy remains on the table but is now dead code for client roles.
+
+**Note on `REVOKE` semantics** (relied on by both 6a and 6b, and confirmed live):
+`REVOKE <verb> ON <table> FROM <role>` removes the table-level privilege **and** cascades to
+every column-level privilege for that verb. That is what makes revoke-then-regrant work, and
+it is also why a stray column grant cannot survive a table-level revoke.
 
 **Why this is safe for first-party writes.** `submitScorecard` runs through Drizzle as the
 `postgres` table owner, which bypasses RLS entirely, so the policy never applies to it. Its
@@ -247,22 +281,36 @@ maps the same-key-different-body 409 arm).
    leave columns without constraints/grants. The file's `set local lock_timeout = '5s'`
    only takes effect inside a transaction (the CLI warns 25P01 and no-ops it when applying
    non-transactionally — another reason `psql -1` is required).
-3. Idempotency is **partial, and that is fine for a single transactional apply.** The
-   `ADD COLUMN`s use `IF NOT EXISTS`; the policy is recreated via
-   `drop policy if exists` + `create policy`. The two `ADD CONSTRAINT`s sit in DO blocks that
-   swallow `duplicate_object` — but **re-adding an existing UNIQUE constraint actually raises
-   `duplicate_table` (42P07)** from its backing index, not `duplicate_object` (42710), so
-   those blocks do **not** make a re-run succeed. (The idiom was borrowed from
-   `20260501001627_add_round_nine_hole_section.sql`, where the constraints are CHECKs and
-   `duplicate_object` **is** the right handler.) Consequence: a second run aborts loudly and,
-   because of step 2, rolls back whole — a safe failure, not a partial apply. Do not treat
-   "re-run to be sure" as a no-op.
+3. **The file is idempotent — a re-run is a genuine no-op.** Verified by applying the whole
+   file twice against the local DB, each time in one transaction: both runs completed and
+   the second reported no errors. `ADD COLUMN` uses `IF NOT EXISTS`; the policy is recreated
+   via `drop policy if exists` + `create policy` (no exception handler needed, and none is
+   used); the trigger via `drop trigger if exists` + `create trigger`; the function via
+   `create or replace`; grants and revokes are naturally idempotent.
+
+   This was **not** true until 2026-07-30 and the fix is worth knowing. Both `ADD CONSTRAINT`
+   DO blocks caught only `duplicate_object` (42710), but `ADD CONSTRAINT ... UNIQUE` builds a
+   backing index named after the constraint, and on a re-run it is that **index** name that
+   collides first — raising `duplicate_table` (**42P07**, `relation "..." already exists`),
+   which the handler never caught. A re-run aborted on the first constraint. The idiom had
+   been transplanted from `20260501001627_add_round_nine_hole_section.sql`, where the
+   constraints are **CHECK**s — no backing index, so 42710 is the only thing they can raise
+   and `duplicate_object` alone is correct *there*. Both handlers are now
+   `when duplicate_table or duplicate_object then null`. Generalised: a UNIQUE/PRIMARY KEY
+   constraint needs `duplicate_table`; a CHECK/FOREIGN KEY constraint needs
+   `duplicate_object`; catching both is the safe default.
 4. Post-deploy: verify the DDL via a prod **dump** (information_schema /
    `pg_constraint` / `pg_policy` over the session pooler), not migration history —
-   shot-level-stats lesson. Verified locally against the live local DB on 2026-07-30
-   (columns incl. `updated_at timestamptz`, both constraints, trigger, restrictive INSERT
-   policy, and `information_schema.column_privileges` showing `authenticated` with UPDATE on
-   **`notes` only** and no table-level UPDATE grant for `authenticated`/`anon`).
+   shot-level-stats lesson. Verified locally against the live local DB on 2026-07-30:
+   columns incl. `updated_at timestamptz`, both constraints, the trigger, and —
+   - `information_schema.column_privileges`: `authenticated` has **UPDATE on `notes` only**
+     and **no INSERT on any column**; `anon` has neither. Both roles retain SELECT (25
+     columns) and REFERENCES, which is expected.
+   - `information_schema.table_privileges`: INSERT and UPDATE on `round` are held **only** by
+     `postgres` and `service_role`.
+   - `pg_policy` + `pg_get_expr`: the restrictive INSERT policy is present with
+     `polpermissive = false`, `polcmd = 'a'`, role `authenticated`, and with-check
+     `((quarantined = false) AND ("approvalStatus" <> 'approved'::text))`.
 
 ### Lock duration — accepted, because `round` is small
 
@@ -305,10 +353,20 @@ concurrent build with a multi-step (non-atomic) apply.
   after each submission. Any 006 cursor built on `updated_at` will therefore full-re-sync a
   user's history per submission — fine for polling-snapshot v1, but a real cursor needs
   either a separate column or trigger suppression for the recompute path.
-- **No DB-level free-tier quota enforcement:** a direct PostgREST INSERT bypasses the tRPC
-  limit check entirely (verified 201 as an authenticated user). The free-tier limit is
-  application-layer only today. Explicit open item for 002 Part B / 008 (launch gates) —
-  recorded as fact, not assumption.
+- ~~**No DB-level free-tier quota enforcement:** a direct PostgREST INSERT bypasses the tRPC
+  limit check entirely (verified 201 as an authenticated user).~~ **CLOSED 2026-07-30 by
+  mechanism, not by policy:** `authenticated`/`anon` hold no INSERT on `round` at any
+  granularity, so there is no longer a client-reachable path that creates a round without
+  passing through `submitScorecard`'s limit check. Be precise about the scope of the claim:
+  - What is closed is the **client-role side door**. Every round a client can cause to exist
+    now goes through server code that performs the check.
+  - The **table owner (`postgres`) and `service_role` are unaffected** — they retain INSERT and
+    bypass RLS entirely. Anything running with those credentials (the seed loader, admin
+    scripts, service paths, 002 Part B) can still create rounds without a limit check, by
+    design. This is *not* a database-level quota **constraint**; nothing stops a server bug
+    from over-inserting.
+  - The limit itself is still enforced in application code. The change is that application
+    code is now the only reachable path, which is what the open item was actually about.
 - **`submitted_via` / `externalId` are now fully server-written** — neither insertable nor
   updatable by `authenticated`. My earlier framing (that spoofing them was
   acceptable-by-design because they are "attribution/idempotency, not authorization") was
@@ -318,3 +376,54 @@ concurrent build with a multi-step (non-atomic) apply.
   about existence-vs-value separately and about INSERT and UPDATE separately — a column
   gated on one verb is not gated on the other. This PR had the same hole in two doors twice
   (`approvalStatus` UPDATE then INSERT; then `externalId`/`submitted_via` INSERT).
+
+## Carry-forward: three stale statements in the frozen `/v1` contract (fix on PR #174)
+
+`005-phase0-contract.md` lives on `api-platform/005-phase0-contract` and was **not** edited
+from this branch — the contract is frozen and owned there. Three of its statements are now
+factually stale because of this migration and need correcting on **PR #174**. Line numbers are
+against `005-phase0-contract.md` as of commit `a601774`.
+
+1. **§249 — "the RLS insert side door recorded as a shipping gate" is CLOSED.** The paragraph
+   states that the same OAuth token can `INSERT` directly into `round` via PostgREST and that
+   such a row lands `quarantined = false`, active for counting, having never passed the limit
+   check — and that closing this door "remains a precondition for the token-bearing consumer
+   going live." That precondition is met: `authenticated`/`anon` hold no INSERT on `round`.
+   The quarantine guarantee no longer needs to be stated as a property of the `/v1` path only;
+   it now holds for every client-reachable path, because `/v1` is the only client-reachable
+   write path.
+2. **§256 — "Net residual, unchanged in substance" is no longer a residual.** It says a direct
+   PostgREST INSERT "still creates a round that never passed the limit check and lands
+   active-for-counting. That is the shipping-gate item." There is no such INSERT any more. The
+   paragraph's own caveat ("003 is under active hardening, so anyone acting on this paragraph
+   should re-read the branch") is what applies here.
+3. **§162 — the 409 rule's stated rationale is wrong, though the rule itself is fine.** It
+   justifies treating post-hoc body divergence as a genuine conflict on the premise that
+   "Rounds are editable after creation (by the user in the web app, and by the OAuth token
+   itself via PostgREST, where `round` UPDATE remains open for the non-protected columns)."
+   **Both halves of that premise are false.** Verified on this branch:
+   - *No round-edit flow exists anywhere.* `round`'s tRPC router has five queries plus
+     `submitScorecard`; there is no `updateRound`/`editRound` procedure, and the only Drizzle
+     `.update(round)` in `apps/web/**` is inside an integration test. Nothing in
+     `apps/native/**` either. A user cannot "correct a score in the handicappin UI" — the
+     example sequence the paragraph gives cannot happen today.
+   - *The PostgREST half is now definitively false.* UPDATE is `notes`-only, so no compared
+     field is client-writable over PostgREST.
+
+   **The `409 idempotency_conflict` rule is unaffected and should stay.** Its conclusion even
+   survives on a narrower, still-true premise: `notes` **is** a compared field (§157) and is
+   the one column still client-writable over PostgREST, so a `notes` PATCH can genuinely make
+   a resubmitted body diverge from the stored round. That is the accurate version of "the
+   comparison is against mutable state" — one field, not "the non-protected columns". And the
+   asymmetry argument in the same paragraph (a spurious 409 costs a log line; an identity-only
+   200 costs a round) stands on its own regardless. Note for whoever edits this: do **not**
+   substitute "the recompute rewrites derived fields" as the justification — §162 already
+   excludes handicap outputs and server metadata from the comparison, so the recompute cannot
+   cause divergence.
+
+4. **Bonus, same pass: §253 is now imprecise.** It describes the UPDATE hardening as "a
+   column-level `grant update (...)` whose list **excludes** `quarantined`, `approvalStatus`,
+   `externalId`, `submitted_via`, and `updated_at`." Still technically true, but the grant is
+   now `notes` and nothing else, which is a much stronger statement than "excludes those
+   five" — and §253's framing invites the reader to assume the gameplay and rating columns are
+   still writable. Worth tightening while touching the other three.

@@ -14,12 +14,17 @@
  *   billing-facing count native consumes), and from the established-handicap
  *   count in `scorecard.getScorecardByRoundId` — the latter two through the
  *   REAL tRPC code paths;
- * - column-privilege hardening over PostgREST as a real `authenticated`
- *   user: `round` is server-written, so `notes` is the ONLY column an
- *   authenticated PATCH may name — every other column (billing/moderation
+ * - write-privilege hardening over PostgREST as a real `authenticated` user:
+ *   `round` is server-written, so no authenticated INSERT reaches the table at
+ *   all (42501, even for a well-formed payload) and `notes` is the ONLY column
+ *   an authenticated PATCH may name — every other column (billing/moderation
  *   state, the idempotency key, the handicap computation's durable inputs and
- *   derived outputs, the ratings audit record) is refused with 42501 — and
- *   INSERTing `quarantined: true` is blocked by the restrictive policy;
+ *   derived outputs, the ratings audit record) is refused with 42501;
+ * - the restrictive INSERT policy as a SECOND layer: exercised by temporarily
+ *   re-granting column-level INSERT inside one test, asserting the policy
+ *   refuses a self-approved / pre-quarantined row (42501 with a
+ *   row-level-security message, distinguishing it from a privilege refusal)
+ *   while permitting a pending one, then revoking again;
  * - a duplicate submission through the real `submitScorecard` mutation maps
  *   the 23505 to CONFLICT with user-facing copy (no raw constraint name).
  *
@@ -29,7 +34,7 @@
 import { describe, test, expect, beforeAll, afterAll, vi } from "vitest";
 import { randomUUID } from "crypto";
 import { createClient } from "@supabase/supabase-js";
-import { and, asc, eq, lt, count as countFn } from "drizzle-orm";
+import { and, asc, eq, lt, sql, count as countFn } from "drizzle-orm";
 
 import type { Database } from "@/types/supabase";
 import { getComprehensiveUserAccess } from "@/utils/billing/access-control";
@@ -162,6 +167,7 @@ function baseRound(
 }
 
 type RoundUpdate = Database["public"]["Tables"]["round"]["Update"];
+type RoundInsert = Database["public"]["Tables"]["round"]["Insert"];
 
 /**
  * Insert a round owned by user C, then PATCH it over PostgREST as that signed-in
@@ -848,14 +854,19 @@ describeIfLocal(
       expect(after.totalStrokes).toBe(before.totalStrokes);
     }, 60_000);
 
-    test("authenticated INSERT cannot self-approve or quarantine a round; a legitimate pending insert still succeeds", async () => {
+    // ── INSERT: two layers, proven separately ────────────────────────────
+    //
+    // Layer 1 (privileges, 6b) is the live control: `authenticated`/`anon` hold
+    // no INSERT on `round` at any granularity, so nothing gets in. Layer 2
+    // (the restrictive policy, 6c) is defense-in-depth for the day a migration
+    // blanket-restores `grant insert on public.round` — a table-level grant
+    // overrides every column-level decision at once. Because layer 1 refuses
+    // first, layer 2 can only be exercised by temporarily granting INSERT, so
+    // the second test does exactly that and puts it back.
+
+    test("round is server-written: no authenticated PostgREST insert reaches the table, however well-formed", async () => {
       const client = await userClient(USER_C_EMAIL, userCPassword);
-      // Control payload is a LEGITIMATE insert: approvalStatus omitted (the
-      // column defaults to 'pending') and quarantined omitted. It must not
-      // carry "approved" — column privileges do not constrain INSERT
-      // payloads, so a pre-approved insert is exactly the exploit under test
-      // below, never the passing control.
-      const insertPayload = {
+      const wellFormed = {
         userId: userCId,
         courseId,
         teeId,
@@ -873,65 +884,55 @@ describeIfLocal(
         holes_played: 18,
       };
 
-      // quarantined=true at birth: blocked (only service paths quarantine).
-      const quarantineDenied = await client
-        .from("round")
-        .insert({ ...insertPayload, quarantined: true });
-      expect(quarantineDenied.error?.code).toBe("42501");
+      // The control case is the one that used to SUCCEED: a payload with
+      // nothing wrong with it, owned by the caller, pending by default. Users
+      // log rounds through submitScorecard (server-side, table owner); this
+      // door is simply not a supported path.
+      const wellFormedDenied = await client.from("round").insert(wellFormed);
+      expect(wellFormedDenied.error?.code).toBe("42501");
 
-      // approvalStatus='approved' at birth: blocked. This is the INSERT half
-      // of the self-approval hole — a user could otherwise submit their own
-      // unmoderated course/tee with invented ratings and POST a pre-approved
-      // round straight into the handicap computation.
-      const selfApproveDenied = await client
-        .from("round")
-        .insert({ ...insertPayload, approvalStatus: "approved" });
-      expect(selfApproveDenied.error?.code).toBe("42501");
+      // Payloads that were individually refused before are still refused —
+      // now by privilege rather than by column grant or policy.
+      const cases: RoundInsert[] = [
+        // Idempotency-key squat: a fabricated row under the key a connected
+        // app derives would answer that app's replay for a round it never
+        // wrote, or collide with its genuine deterministic key.
+        { ...wellFormed, externalId: "fitbull-workout-123" },
+        // Forged provenance: indistinguishable from a genuine API submission.
+        { ...wellFormed, submitted_via: "api:fitness" },
+        // Billing state at birth.
+        { ...wellFormed, quarantined: true },
+        // Self-approval past moderation.
+        { ...wellFormed, approvalStatus: "approved" },
+        // Explicitly benign values are refused too — the door is shut, not
+        // filtered.
+        { ...wellFormed, approvalStatus: "pending", quarantined: false },
+      ];
+      for (const payload of cases) {
+        const denied = await client.from("round").insert(payload);
+        expect(denied.error?.code).toBe("42501");
+      }
 
-      // Belt and braces: an explicit 'pending' is allowed (only 'approved'
-      // is forbidden), and both flags at once is still denied.
-      const bothDenied = await client
-        .from("round")
-        .insert({
-          ...insertPayload,
-          approvalStatus: "approved",
-          quarantined: true,
-        });
-      expect(bothDenied.error?.code).toBe("42501");
-
-      // Legitimate insert (defaults: pending + not quarantined) passes the
-      // restrictive policy — proves the hardening didn't break the normal
-      // write path.
-      const allowed = await client
-        .from("round")
-        .insert(insertPayload)
-        .select("id, quarantined, approvalStatus")
-        .single();
-      expect(allowed.error).toBeNull();
-      expect(allowed.data?.quarantined).toBe(false);
-      expect(allowed.data?.approvalStatus).toBe("pending");
-
-      // An explicitly-'pending' insert is also fine.
-      const explicitPending = await client
-        .from("round")
-        .insert({
-          ...insertPayload,
-          teeTime: "2026-07-28T13:00:00.000Z",
-          approvalStatus: "pending",
-        })
-        .select("id, approvalStatus")
-        .single();
-      expect(explicitPending.error).toBeNull();
-      expect(explicitPending.data?.approvalStatus).toBe("pending");
+      // Nothing landed.
+      const [row] = await db
+        .select({ count: countFn() })
+        .from(round)
+        .where(
+          and(
+            eq(round.userId, userCId),
+            eq(round.teeTime, new Date("2026-07-28T12:00:00.000Z"))
+          )
+        );
+      expect(row?.count).toBe(0);
     }, 60_000);
 
-    test("authenticated INSERT cannot name externalId or submitted_via at all (column grants); a legitimate insert leaves both NULL", async () => {
+    test("the restrictive INSERT policy still refuses self-approved and self-un-quarantined rounds if INSERT is ever re-granted", async () => {
       const client = await userClient(USER_C_EMAIL, userCPassword);
-      const insertPayload = {
+      const payload = {
         userId: userCId,
         courseId,
         teeId,
-        teeTime: "2026-07-28T14:00:00.000Z",
+        teeTime: "2026-07-28T13:00:00.000Z",
         totalStrokes: 90,
         parPlayed: 71,
         adjustedGrossScore: 90,
@@ -945,42 +946,61 @@ describeIfLocal(
         holes_played: 18,
       };
 
-      // externalId squat: pre-inserting a fabricated round under the key a
-      // connected app will derive would make its replay-by-lookup resolve to
-      // the fabrication (falsifying "200 means your round is stored"), or
-      // 409 its genuine round forever on a deterministic key.
-      const externalIdDenied = await client.from("round").insert({
-        ...insertPayload,
-        externalId: "fitbull-workout-123",
-      });
-      expect(externalIdDenied.error?.code).toBe("42501");
+      // Grant only the columns this payload names — deliberately NOT a
+      // table-level grant, so the test cannot mask a 6b regression.
+      await db.execute(sql`
+        grant insert (
+          "userId", "courseId", "teeId", "teeTime", "totalStrokes", "parPlayed",
+          "adjustedGrossScore", "adjustedPlayedScore", "courseHandicap",
+          "scoreDifferential", "existingHandicapIndex", "updatedHandicapIndex",
+          course_rating_used, slope_rating_used, holes_played,
+          quarantined, "approvalStatus"
+        ) on public.round to authenticated
+      `);
+      try {
+        // Value axis: a restrictive-policy refusal is also 42501, so assert the
+        // MESSAGE to prove it was the policy and not a privilege refusal.
+        const selfApproved = await client
+          .from("round")
+          .insert({ ...payload, approvalStatus: "approved" });
+        expect(selfApproved.error?.code).toBe("42501");
+        expect(selfApproved.error?.message).toContain(
+          "row-level security policy"
+        );
 
-      // submitted_via forgery: a client-written value is indistinguishable
-      // from a genuine API submission — forged provenance.
-      const submittedViaDenied = await client.from("round").insert({
-        ...insertPayload,
-        submitted_via: "api:fitness",
-      });
-      expect(submittedViaDenied.error?.code).toBe("42501");
+        const preQuarantined = await client
+          .from("round")
+          .insert({ ...payload, quarantined: true });
+        expect(preQuarantined.error?.code).toBe("42501");
+        expect(preQuarantined.error?.message).toContain(
+          "row-level security policy"
+        );
 
-      // Both together (the full squat payload) is likewise denied.
-      const bothDenied = await client.from("round").insert({
-        ...insertPayload,
-        externalId: "fitbull-workout-123",
-        submitted_via: "api:fitness",
-      });
-      expect(bothDenied.error?.code).toBe("42501");
+        // ...and it permits the benign values, so it is a value filter rather
+        // than a blanket denial. This is what proves 6c does real work.
+        const pending = await client
+          .from("round")
+          .insert({ ...payload, approvalStatus: "pending", quarantined: false })
+          .select("id, approvalStatus, quarantined")
+          .single();
+        expect(pending.error).toBeNull();
+        expect(pending.data?.approvalStatus).toBe("pending");
+        expect(pending.data?.quarantined).toBe(false);
+      } finally {
+        // Always put 6b back, even if an assertion above threw.
+        await db.execute(
+          sql`revoke insert on public.round from authenticated, anon`
+        );
+      }
 
-      // A legitimate insert that simply omits them still succeeds, with both
-      // columns NULL — only the server (table owner) may populate them.
-      const allowed = await client
-        .from("round")
-        .insert(insertPayload)
-        .select("id, externalId, submitted_via")
-        .single();
-      expect(allowed.error).toBeNull();
-      expect(allowed.data?.externalId).toBeNull();
-      expect(allowed.data?.submitted_via).toBeNull();
+      // The door is shut again — guards against this test leaking privilege
+      // into the rest of the suite.
+      const reclosed = await client.from("round").insert({
+        ...payload,
+        teeTime: "2026-07-28T15:00:00.000Z",
+      });
+      expect(reclosed.error?.code).toBe("42501");
+      expect(reclosed.error?.message).not.toContain("row-level security policy");
     }, 60_000);
   }
 );

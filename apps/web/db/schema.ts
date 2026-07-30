@@ -369,27 +369,34 @@ export const round = pgTable(
       to: ["authenticated"],
       using: sql`(auth.uid()::uuid = userId)`,
     }),
-    // Moderation + quarantine hardening (20260729100000). Column-level
-    // privileges (grants — not expressible in Drizzle; see the migration)
-    // reduce `authenticated`'s UPDATE on `round` to `notes` ALONE. `round` is
-    // server-written: no client code PATCHes it, and every legitimate write
-    // (submitScorecard, the moderation approval flow,
+    // Write-privilege hardening (20260729100000). `round` is SERVER-WRITTEN —
+    // PostgREST is a read surface for it. Privileges (grants — not expressible
+    // in Drizzle; see the migration) give `authenticated`/`anon` NO INSERT on
+    // `round` at all, and UPDATE on `notes` ALONE. No client code in apps/web
+    // or apps/native ever inserted or PATCHed a round over PostgREST; every
+    // legitimate write (submitScorecard, the moderation approval flow,
     // process_handicap_updates, 002 Part B, 005's /v1 handlers) runs as the
     // `postgres` table owner through Drizzle or as `service_role`, bypassing
-    // grants. Server-written only, therefore: the handicap computation's
-    // durable inputs (`teeTime` — round ordering and the 20-round window;
-    // `nine_hole_section` — front/back rating selection; `teeId`, `courseId`,
-    // `holes_played`, `parPlayed`), its derived outputs (`scoreDifferential`,
-    // `adjustedGrossScore`, `adjustedPlayedScore`, `courseHandicap`,
-    // `existingHandicapIndex`, `updatedHandicapIndex`,
+    // grants entirely. Server-written only, therefore: the handicap
+    // computation's durable inputs (`teeTime` — round ordering and the
+    // 20-round window; `nine_hole_section` — front/back rating selection;
+    // `teeId`, `courseId`, `holes_played`, `parPlayed`), its derived outputs
+    // (`scoreDifferential`, `adjustedGrossScore`, `adjustedPlayedScore`,
+    // `courseHandicap`, `existingHandicapIndex`, `updatedHandicapIndex`,
     // `exceptionalScoreAdjustment`), the ratings audit record
     // (`course_rating_used`, `slope_rating_used`), plus `quarantined`,
     // `approvalStatus`, `externalId`, `submitted_via`, `updated_at`, `userId`,
-    // `id` and `createdAt`. Column privileges do not constrain INSERT
-    // payloads, so this restrictive policy also stops an authenticated INSERT
-    // from arriving pre-approved (self-approval past moderation) or
-    // pre-quarantined. First-party writes go through Drizzle as the
-    // `postgres` table owner and bypass RLS.
+    // `id` and `createdAt`.
+    //
+    // The permissive INSERT/UPDATE policies above remain but are now
+    // unreachable (INSERT) or `notes`-scoped (UPDATE) for client roles —
+    // privileges are checked before policies. The restrictive policy below is
+    // kept as DEFENSE IN DEPTH: privileges cannot constrain payload VALUES, so
+    // if a future migration ever blanket-restores `grant insert on
+    // public.round` (a table-level grant overrides every column-level
+    // decision), this is what still refuses a pre-approved or pre-quarantined
+    // round. First-party writes go through Drizzle as the `postgres` table
+    // owner and bypass RLS.
     pgPolicy("Users cannot self-approve or quarantine rounds", {
       as: "restrictive",
       for: "insert",
