@@ -1,6 +1,15 @@
 # 003 — W3 workstream notes (bundled migration)
 
-**Date:** 2026-07-29 · **Migration:** `supabase/migrations/20260729100000_round_natural_key_and_api_columns.sql`
+**Date:** 2026-07-29 · **Migration:** `supabase/migrations/20260730120000_round_natural_key_and_api_columns.sql`
+
+> **Renumbered 2026-07-30, from `20260729100000`.** `20260730090000_score_round_ownership_and_grants.sql`
+> (PR #176) merged and reached production first, so this file's original timestamp sat *behind* the
+> last applied migration and `db push` refused it — correctly — rather than inserting out of order.
+> Renumbering keeps the remote history monotonic instead of forcing it with `--include-all`, which
+> matters on a database that has already suffered history drift once. The comment cross-reference in
+> `20260730090000` still names the old filename **deliberately**: that migration has already been
+> executed against production, and editing an applied file would make the repo's record diverge from
+> what actually ran.
 
 ## Prod duplicate scan (C2) — result
 

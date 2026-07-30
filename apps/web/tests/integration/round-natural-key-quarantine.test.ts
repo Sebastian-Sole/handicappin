@@ -1,6 +1,6 @@
 /**
  * Integration tests for subplan 003's bundled `round` migration
- * (20260729100000_round_natural_key_and_api_columns.sql) against the REAL
+ * (20260730120000_round_natural_key_and_api_columns.sql) against the REAL
  * local Supabase stack:
  *
  * - strict natural-key unique constraint ("userId","teeId","teeTime",

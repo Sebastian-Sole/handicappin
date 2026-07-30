@@ -369,7 +369,7 @@ export const round = pgTable(
       to: ["authenticated"],
       using: sql`(auth.uid()::uuid = userId)`,
     }),
-    // Write-privilege hardening (20260729100000). `round` is SERVER-WRITTEN —
+    // Write-privilege hardening (20260730120000). `round` is SERVER-WRITTEN —
     // PostgREST is a read surface for it. Privileges (grants — not expressible
     // in Drizzle; see the migration) give `authenticated`/`anon` NO INSERT on
     // `round` at all, and UPDATE on `notes` ALONE. No client code in apps/web
