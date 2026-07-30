@@ -369,14 +369,27 @@ export const round = pgTable(
       to: ["authenticated"],
       using: sql`(auth.uid()::uuid = userId)`,
     }),
-    // Moderation + quarantine hardening (20260729100000). Column-level UPDATE
+    // Moderation + quarantine hardening (20260729100000). Column-level
     // privileges (grants — not expressible in Drizzle; see the migration)
-    // block PATCHing `quarantined`/`approvalStatus`/`externalId`/
-    // `submitted_via`/`updated_at` over PostgREST. Column privileges do not
-    // constrain INSERT payloads, so this restrictive policy also stops an
-    // authenticated INSERT from arriving pre-approved (self-approval past
-    // moderation) or pre-quarantined. First-party writes go through Drizzle
-    // as the `postgres` table owner and bypass RLS.
+    // reduce `authenticated`'s UPDATE on `round` to `notes` ALONE. `round` is
+    // server-written: no client code PATCHes it, and every legitimate write
+    // (submitScorecard, the moderation approval flow,
+    // process_handicap_updates, 002 Part B, 005's /v1 handlers) runs as the
+    // `postgres` table owner through Drizzle or as `service_role`, bypassing
+    // grants. Server-written only, therefore: the handicap computation's
+    // durable inputs (`teeTime` — round ordering and the 20-round window;
+    // `nine_hole_section` — front/back rating selection; `teeId`, `courseId`,
+    // `holes_played`, `parPlayed`), its derived outputs (`scoreDifferential`,
+    // `adjustedGrossScore`, `adjustedPlayedScore`, `courseHandicap`,
+    // `existingHandicapIndex`, `updatedHandicapIndex`,
+    // `exceptionalScoreAdjustment`), the ratings audit record
+    // (`course_rating_used`, `slope_rating_used`), plus `quarantined`,
+    // `approvalStatus`, `externalId`, `submitted_via`, `updated_at`, `userId`,
+    // `id` and `createdAt`. Column privileges do not constrain INSERT
+    // payloads, so this restrictive policy also stops an authenticated INSERT
+    // from arriving pre-approved (self-approval past moderation) or
+    // pre-quarantined. First-party writes go through Drizzle as the
+    // `postgres` table owner and bypass RLS.
     pgPolicy("Users cannot self-approve or quarantine rounds", {
       as: "restrictive",
       for: "insert",

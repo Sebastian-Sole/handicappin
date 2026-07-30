@@ -15,9 +15,11 @@
  *   count in `scorecard.getScorecardByRoundId` — the latter two through the
  *   REAL tRPC code paths;
  * - column-privilege hardening over PostgREST as a real `authenticated`
- *   user: PATCHing `quarantined`/`approvalStatus`/`externalId` is denied
- *   (42501), legitimate edits still work, and INSERTing `quarantined: true`
- *   is blocked by the restrictive policy;
+ *   user: `round` is server-written, so `notes` is the ONLY column an
+ *   authenticated PATCH may name — every other column (billing/moderation
+ *   state, the idempotency key, the handicap computation's durable inputs and
+ *   derived outputs, the ratings audit record) is refused with 42501 — and
+ *   INSERTing `quarantined: true` is blocked by the restrictive policy;
  * - a duplicate submission through the real `submitScorecard` mutation maps
  *   the 23505 to CONFLICT with user-facing copy (no raw constraint name).
  *
@@ -74,6 +76,7 @@ const USER_B_EMAIL = "round-migration-003-b@handicappin.local";
 const USER_C_EMAIL = "round-migration-003-c@handicappin.local";
 const COURSE_NAME = "Round Migration 003 Course";
 const TEE_NAME = "Blue";
+const SECOND_TEE_NAME = "White";
 const FREE_TIER_LIMIT = 25;
 
 let userAId: string;
@@ -82,6 +85,8 @@ let userCId: string;
 let userCPassword: string;
 let courseId: number;
 let teeId: number;
+/** A second real tee, so the teeId-retarget denial patches a VALID target. */
+let secondTeeId: number;
 
 const createRoundCaller = createCallerFactory(roundRouter);
 const createScorecardCaller = createCallerFactory(scorecardRouter);
@@ -154,6 +159,35 @@ function baseRound(
     approvalStatus: "approved",
     ...overrides,
   };
+}
+
+type RoundUpdate = Database["public"]["Tables"]["round"]["Update"];
+
+/**
+ * Insert a round owned by user C, then PATCH it over PostgREST as that signed-in
+ * user. Returns the row as inserted, the row as it stands afterwards, and the
+ * PostgREST error — so a caller can assert both the refusal and the fact that
+ * nothing moved.
+ */
+async function patchOwnRoundAsUserC(
+  teeTime: string,
+  patch: RoundUpdate,
+  seed: Partial<typeof round.$inferInsert> = {}
+) {
+  const [before] = await db
+    .insert(round)
+    .values(baseRound(userCId, new Date(teeTime), seed))
+    .returning();
+  const client = await userClient(USER_C_EMAIL, userCPassword);
+  const { error } = await client
+    .from("round")
+    .update(patch)
+    .eq("id", before!.id);
+  const [after] = await db
+    .select()
+    .from(round)
+    .where(eq(round.id, before!.id));
+  return { before: before!, after: after!, error };
 }
 
 /** Count a user's active (non-quarantined) rounds directly in the DB. */
@@ -319,6 +353,23 @@ describeIfLocal(
         .values(
           Array.from({ length: 18 }, (_, i) => ({ teeId, ...holeSpec(i) }))
         );
+
+      // A second tee on the same course. Only the teeId-retarget denial uses
+      // it: patching to a real, FK-valid tee means the refusal can only come
+      // from the column grant (a bogus id would be refused by the foreign key
+      // regardless of privileges, which proves nothing).
+      const [createdSecondTee] = await db
+        .insert(teeInfo)
+        .values({
+          courseId,
+          name: SECOND_TEE_NAME,
+          gender: "mens",
+          ...TEE_RATINGS,
+          approvalStatus: "approved",
+          submittedBy: userAId,
+        })
+        .returning();
+      secondTeeId = createdSecondTee!.id;
     }, 60_000);
 
     afterAll(async () => {
@@ -331,6 +382,9 @@ describeIfLocal(
       if (teeId) {
         await db.delete(hole).where(eq(hole.teeId, teeId));
         await db.delete(teeInfo).where(eq(teeInfo.id, teeId));
+      }
+      if (secondTeeId) {
+        await db.delete(teeInfo).where(eq(teeInfo.id, secondTeeId));
       }
       if (courseId) {
         await db.delete(course).where(eq(course.id, courseId));
@@ -664,7 +718,7 @@ describeIfLocal(
 
     // ── Column-privilege hardening over PostgREST ─────────────────────────
 
-    test("authenticated users cannot PATCH quarantined/approvalStatus/externalId over PostgREST (42501), but legitimate edits still work and bump updated_at", async () => {
+    test("billing state, moderation state and the idempotency key are server-written — an authenticated PATCH of quarantined/approvalStatus/externalId is refused", async () => {
       const [own] = await db
         .insert(round)
         .values(baseRound(userCId, new Date("2026-07-28T10:00:00.000Z")))
@@ -689,21 +743,109 @@ describeIfLocal(
         .update({ externalId: "spoofed" })
         .eq("id", own!.id);
       expect(externalIdPatch.error?.code).toBe("42501");
+    }, 60_000);
 
-      // Legitimate edit of allowed columns still works...
+    test("notes is the only client-editable round column — a notes-only PATCH succeeds, bumps updated_at, and leaves createdAt untouched", async () => {
+      const [own] = await db
+        .insert(round)
+        .values(baseRound(userCId, new Date("2026-07-28T11:00:00.000Z")))
+        .returning();
+      const client = await userClient(USER_C_EMAIL, userCPassword);
+
       const notesPatch = await client
         .from("round")
-        .update({ notes: "edited over PostgREST", totalStrokes: 91 })
+        .update({ notes: "edited over PostgREST" })
         .eq("id", own!.id)
-        .select("notes, totalStrokes, updated_at")
+        .select("notes, updated_at")
         .single();
       expect(notesPatch.error).toBeNull();
       expect(notesPatch.data?.notes).toBe("edited over PostgREST");
-      expect(notesPatch.data?.totalStrokes).toBe(91);
-      // ...and the updated_at trigger fires for authenticated writes too.
+      // The updated_at trigger fires for authenticated writes too. `updated_at`
+      // is timestamptz, so the PostgREST string carries its offset and parses
+      // unambiguously.
       expect(new Date(notesPatch.data!.updated_at).getTime()).toBeGreaterThan(
         own!.updatedAt.getTime()
       );
+
+      // ...while createdAt is untouched (it is not in the grant at all).
+      // Compared through Drizzle on both sides: `createdAt` is a NAIVE
+      // timestamp, so a PostgREST round-trip yields a zone-less string that
+      // `new Date()` would read as local time and spuriously fail.
+      const [after] = await db
+        .select()
+        .from(round)
+        .where(eq(round.id, own!.id));
+      expect(after!.createdAt.getTime()).toBe(own!.createdAt.getTime());
+    }, 60_000);
+
+    // Every other `round` column is server-written: the handicap computation's
+    // durable inputs, its derived outputs, and the ratings audit record. Each
+    // test below asserts the PATCH is refused (42501) AND that the stored value
+    // did not move.
+
+    test("round ordering in the handicap window is server-owned — an authenticated PATCH of teeTime is refused", async () => {
+      const { before, after, error } = await patchOwnRoundAsUserC(
+        "2026-08-01T10:00:00.000Z",
+        { teeTime: "2020-01-02T08:00:00.000Z" }
+      );
+      expect(error?.code).toBe("42501");
+      expect(after.teeTime.getTime()).toBe(before.teeTime.getTime());
+    }, 60_000);
+
+    test("9-hole front/back rating selection is server-owned — an authenticated PATCH of nine_hole_section is refused", async () => {
+      // Seeded as a real 9-hole 'front' round: the section only selects
+      // ratings for 9-hole rounds, and an 18-hole row would be rejected by
+      // round_nine_hole_section_requires_9 regardless of privileges.
+      const { before, after, error } = await patchOwnRoundAsUserC(
+        "2026-08-02T10:00:00.000Z",
+        { nine_hole_section: "back" },
+        {
+          holesPlayed: 9,
+          nineHoleSection: "front",
+          parPlayed: 36,
+          courseRatingUsed: 36,
+        }
+      );
+      expect(error?.code).toBe("42501");
+      expect(after.nineHoleSection).toBe(before.nineHoleSection);
+      expect(after.nineHoleSection).toBe("front");
+    }, 60_000);
+
+    test("the tee a round was played from is server-owned — an authenticated PATCH of teeId is refused", async () => {
+      const { before, after, error } = await patchOwnRoundAsUserC(
+        "2026-08-03T10:00:00.000Z",
+        { teeId: secondTeeId }
+      );
+      expect(error?.code).toBe("42501");
+      expect(after.teeId).toBe(before.teeId);
+      expect(after.teeId).toBe(teeId);
+    }, 60_000);
+
+    test("derived handicap outputs are server-owned — an authenticated PATCH of scoreDifferential is refused", async () => {
+      const { before, after, error } = await patchOwnRoundAsUserC(
+        "2026-08-04T10:00:00.000Z",
+        { scoreDifferential: -30 }
+      );
+      expect(error?.code).toBe("42501");
+      expect(after.scoreDifferential).toBe(before.scoreDifferential);
+    }, 60_000);
+
+    test("the ratings audit record is server-owned — an authenticated PATCH of course_rating_used is refused", async () => {
+      const { before, after, error } = await patchOwnRoundAsUserC(
+        "2026-08-05T10:00:00.000Z",
+        { course_rating_used: 99.9 }
+      );
+      expect(error?.code).toBe("42501");
+      expect(after.courseRatingUsed).toBe(before.courseRatingUsed);
+    }, 60_000);
+
+    test("the scored gross total is server-owned — an authenticated PATCH of totalStrokes is refused", async () => {
+      const { before, after, error } = await patchOwnRoundAsUserC(
+        "2026-08-06T10:00:00.000Z",
+        { totalStrokes: 58 }
+      );
+      expect(error?.code).toBe("42501");
+      expect(after.totalStrokes).toBe(before.totalStrokes);
     }, 60_000);
 
     test("authenticated INSERT cannot self-approve or quarantine a round; a legitimate pending insert still succeeds", async () => {

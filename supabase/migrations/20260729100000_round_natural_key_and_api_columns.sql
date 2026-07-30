@@ -53,6 +53,10 @@
 -- New columns inherit round's existing RLS policies unchanged.
 --
 -- PROD APPLY (by hand — the migrate workflow is broken; see 003-notes.md):
+--   * ORDERING: apply and verify this in prod BEFORE the PR merges, and deploy
+--     process-handicap-queue only after. Merging auto-deploys web code that
+--     queries `quarantined`; without the column the round count throws and the
+--     billing access check fails OPEN. Full rationale in 003-notes.md.
 --   * `select version();` first — NULLS NOT DISTINCT requires PG >= 15.
 --   * Apply transactionally (`psql -1` or `supabase db push`) so a partial
 --     run can never leave columns without their constraints or grants.
@@ -145,7 +149,7 @@ create trigger round_set_updated_at
 --
 -- Hence the deliberately HYBRID shape below: `quarantined`/`approvalStatus`
 -- ARE insertable (the policy vets their values); `externalId`/`submitted_via`
--- are NOT insertable at all, and NOTHING sensitive is updatable.
+-- are NOT insertable at all, and on UPDATE only `notes` is writable (6a).
 --
 -- THE TRAP (this is why each block revokes at table level first): a
 -- column-level REVOKE is a NO-OP while the table-level grant is still held —
@@ -160,38 +164,57 @@ create trigger round_set_updated_at
 -- idempotency key, have it nulled, and get a 201 believing the key was
 -- registered. A loud 42501 is the correct failure mode.
 --
--- 6a: UPDATE.
+-- 6a: UPDATE — `notes` and nothing else.
 --
--- The grant below intentionally EXCLUDES: "quarantined" (billing state —
--- service paths only), "approvalStatus" (moderation — closes the pre-existing
--- self-approval hole), "externalId" (idempotency keys are immutable),
--- "submitted_via" (attribution is write-once by the server), "updated_at"
--- (trigger-maintained), "userId", "id", "createdAt".
+-- THE INVARIANT: `round` is server-written. No client code — web, native, or
+-- watch — issues a PostgREST UPDATE against this table. Every legitimate round
+-- write (`submitScorecard`, the moderation approval flow,
+-- `process_handicap_updates`, 002 Part B's quarantine check, 005's `/v1`
+-- handlers) runs server-side as the `postgres` table owner through Drizzle, or
+-- as `service_role`, and bypasses these grants entirely. A broad UPDATE grant
+-- to `authenticated` therefore buys no functionality — it is pure surface, so
+-- it is not granted.
 --
--- First-party server writes go through Drizzle as the `postgres` table owner
--- and are unaffected; `service_role` retains its own grants. FAIL-SAFE BY
--- DESIGN: any future round column is NOT updatable by `authenticated` until
--- this grant is explicitly extended in a migration.
+-- Why each excluded group is server-written only:
+--
+--   * DURABLE INPUTS to the handicap computation. `teeTime` fixes a user's
+--     round ORDERING, and the index is derived from a 20-round sliding window
+--     over that ordering; `nine_hole_section` selects the front-vs-back course
+--     rating, slope and par for a 9-hole round
+--     (supabase/functions/handicap-shared/timeline.ts). `teeId`, `courseId`,
+--     `holes_played` and `parPlayed` likewise scope which ratings and holes
+--     the recompute reads. A client-authored value here re-derives a
+--     DIFFERENT, internally self-consistent `profile.handicapIndex` — nothing
+--     errors and nothing looks wrong afterwards. In a product with an
+--     official-handicap workstream, a user forging their OWN index is the
+--     threat model, so these columns are the server's to write.
+--   * DERIVED OUTPUTS: `scoreDifferential`, `adjustedGrossScore`,
+--     `adjustedPlayedScore`, `courseHandicap`, `existingHandicapIndex`,
+--     `updatedHandicapIndex`, `exceptionalScoreAdjustment`. The recompute
+--     computes and rewrites all of them; `profile.handicapIndex` is only ever
+--     written by `process_handicap_updates`. A client value is at best noise
+--     until the next recompute overwrites it, and at worst a misleading
+--     display — either way it has no legitimate author but the server.
+--   * RATINGS AUDIT: `course_rating_used` / `slope_rating_used` record the
+--     ratings applied at time of play. The recompute reads live tee ratings
+--     and never rewrites these, so a client edit persists indefinitely as a
+--     falsified provenance record of how the round was rated.
+--   * `quarantined` (billing state — service paths only), `approvalStatus`
+--     (moderation — closes the pre-existing self-approval hole), `externalId`
+--     (idempotency keys are immutable), `submitted_via` (attribution is
+--     write-once by the server), `updated_at` (trigger-maintained), `userId`,
+--     `id`, `createdAt`.
+--
+-- `notes` is the sole column with a plausible direct-edit affordance: free
+-- text the player authored, read back only to the player, and an input to no
+-- computation. It is the whole grant.
+--
+-- First-party server writes are unaffected (see the invariant above);
+-- `service_role` retains its own grants. FAIL-SAFE BY DESIGN: any future
+-- round column is NOT updatable by `authenticated` until this grant is
+-- explicitly extended in a migration.
 revoke update on public.round from authenticated, anon;
-grant update (
-  "courseId",
-  "teeId",
-  "teeTime",
-  "totalStrokes",
-  "parPlayed",
-  "adjustedGrossScore",
-  "adjustedPlayedScore",
-  "courseHandicap",
-  "scoreDifferential",
-  "existingHandicapIndex",
-  "updatedHandicapIndex",
-  "exceptionalScoreAdjustment",
-  notes,
-  course_rating_used,
-  slope_rating_used,
-  holes_played,
-  nine_hole_section
-) on public.round to authenticated;
+grant update (notes) on public.round to authenticated;
 
 -- 6b: INSERT. Same table-level-revoke-then-regrant shape as 6a (see THE TRAP
 -- above). Non-insertable result: createdAt, externalId, id, submitted_via,

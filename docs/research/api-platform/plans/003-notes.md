@@ -114,12 +114,11 @@ registered. A loud 42501 is the correct failure mode.
 
 The migration:
 
-- revokes table-level UPDATE from `authenticated`/`anon` and re-grants **per column**
-  (gameplay/rating columns + notes only). A bare `REVOKE UPDATE (col)` is a NO-OP while a
-  table-level grant exists — Postgres checks table OR column privilege. Excluded:
-  `quarantined`, `approvalStatus`, `externalId`, `submitted_via`, `updated_at`, `userId`,
-  `id`, `createdAt`. Fail-safe: future columns are non-updatable by `authenticated` until
-  the grant is extended in a migration.
+- revokes table-level UPDATE from `authenticated`/`anon` and re-grants **`notes` and nothing
+  else**. A bare `REVOKE UPDATE (col)` is a NO-OP while a table-level grant exists —
+  Postgres checks table OR column privilege — hence revoke-at-table-level-then-regrant.
+  Fail-safe: future columns are non-updatable by `authenticated` until the grant is extended
+  in a migration. Rationale in **The UPDATE grant is `notes` only** below.
 - revokes table-level INSERT and re-grants **per column** (20 columns: the gameplay/rating
   set + `notes` + `userId` + `quarantined` + `approvalStatus`). **Non-insertable result:
   `createdAt`, `externalId`, `id`, `submitted_via`, `updated_at`.** This closes an
@@ -145,12 +144,61 @@ The migration:
   passed moderation. `round` has no BEFORE INSERT trigger normalising `approvalStatus`, so
   the policy is the control.
 - Integration-tested as a real signed-in user: PATCH `quarantined`/`approvalStatus`/
-  `externalId` → 42501; legitimate notes/strokes PATCH → 200 (and the `updated_at` trigger
-  fires); INSERT with `quarantined: true` → 42501; INSERT with `approvalStatus: 'approved'`
-  → 42501; both at once → 42501; INSERT naming `externalId` → 42501, `submitted_via` →
-  42501, both → 42501; legitimate insert (defaults) and explicit `'pending'` insert → 201,
-  with `externalId`/`submitted_via` NULL. Each denial was proven real by reverting the
-  relevant grant/policy and watching exactly that assertion fail (and nothing else).
+  `externalId` → 42501; PATCH `teeTime`, `nine_hole_section`, `teeId`, `scoreDifferential`,
+  `course_rating_used`, `totalStrokes` → 42501 (each also asserting the stored value did not
+  move); a `notes`-only PATCH → 200, with the `updated_at` trigger firing and `createdAt`
+  untouched; INSERT with `quarantined: true` → 42501; INSERT with
+  `approvalStatus: 'approved'` → 42501; both at once → 42501; INSERT naming `externalId` →
+  42501, `submitted_via` → 42501, both → 42501; legitimate insert (defaults) and explicit
+  `'pending'` insert → 201, with `externalId`/`submitted_via` NULL. Each denial was proven
+  real by reverting the relevant grant/policy and watching exactly that assertion fail (and
+  nothing else) — for all six UPDATE denials the reverted run reported
+  `expected undefined to be '42501'`, i.e. the write had succeeded outright.
+
+## The UPDATE grant is `notes` only (review fix round 2) — DECIDED
+
+The re-granted UPDATE column list started at 17 columns (the gameplay/rating set + `notes`).
+A review flagged that as too wide, and it was — for a reason worth writing down, because the
+reasoning generalises to every table this API surface touches.
+
+**The invariant that makes the grant unnecessary:** `round` is server-written. No client code
+in `apps/web/**` or `apps/native/**` issues a PostgREST UPDATE against `round` — every
+`.from("round")` call site is a SELECT, plus one account-deletion DELETE. Every legitimate
+round write (`submitScorecard`, the moderation approval flow, `process_handicap_updates`,
+002 Part B's quarantine check, 005's `/v1` handlers) runs server-side as the `postgres` table
+owner through Drizzle or as `service_role`, and bypasses column grants entirely. The 17-column
+grant bought **no functionality at all**; it was pure surface.
+
+**Why the excluded columns are the server's to write:**
+
+| Group | Columns | Why |
+|---|---|---|
+| Durable inputs to the handicap computation | `teeTime`, `nine_hole_section`, `teeId`, `courseId`, `holes_played`, `parPlayed` | `teeTime` fixes a user's round ORDERING and the index is derived from a 20-round sliding window over it; `nine_hole_section` selects the front-vs-back rating, slope and par for a 9-hole round (`supabase/functions/handicap-shared/timeline.ts`). A client-authored value re-derives a **different, internally self-consistent** `profile.handicapIndex` with nothing erroring. |
+| Derived outputs | `scoreDifferential`, `adjustedGrossScore`, `adjustedPlayedScore`, `courseHandicap`, `existingHandicapIndex`, `updatedHandicapIndex`, `exceptionalScoreAdjustment` | Computed and rewritten by the recompute; `profile.handicapIndex` is only ever written by `process_handicap_updates`. A client value is noise until the next recompute, and misleading until then. |
+| Ratings audit record | `course_rating_used`, `slope_rating_used` | Not inputs to the recompute (it reads live tee ratings), so nothing ever rewrites them — a client edit persists indefinitely as a falsified record of how the round was rated. |
+| Already excluded | `quarantined`, `approvalStatus`, `externalId`, `submitted_via`, `updated_at`, `userId`, `id`, `createdAt` | See the two-axes note above. |
+
+`notes` is the only `round` column with a plausible direct-edit affordance: free text the
+player authored, read back only to the player, input to no computation. So it is the whole
+grant.
+
+**Threat model note.** Every one of these writes is scoped to the user's OWN rows by the
+permissive `auth.uid() = "userId"` UPDATE policy — there is no cross-user exposure here. That
+is not a mitigation: in a product with an official-handicap workstream, a user forging their
+own index **is** the threat. "Only your own rows" is the definition of the problem, not a
+bound on it.
+
+**What this closes and what stays open.** This closes the **UPDATE half** of the previously
+open "tee ratings recorded on the round are client-writable" item. The **INSERT half remains
+open**: 6b still grants INSERT on `course_rating_used`/`slope_rating_used` (and on the
+gameplay and derived-output columns), because a first-INSERT posture decision is genuinely
+harder — a client write path that legitimately creates rounds has to supply *something*, and
+which side of the wire computes it is the open question. Deliberately **not** decided here;
+carried to 008's hardening checklist.
+
+**Generalised rule for 008.** Before granting a column privilege, ask whether any client code
+actually exercises it. If none does, the grant is surface with no upside — do not grant it,
+and let the fail-safe (no grant → no write) carry future columns too.
 
 **Why this is safe for first-party writes.** `submitScorecard` runs through Drizzle as the
 `postgres` table owner, which bypasses RLS entirely, so the policy never applies to it. Its
@@ -175,27 +223,82 @@ maps the same-key-different-body 409 arm).
 
 ## Prod apply checklist (migrate workflow is broken — this runs BY HAND)
 
+> **ORDERING — apply and verify in prod BEFORE this PR is merged, not after.**
+>
+> Merging to `main` auto-deploys web code that queries the new `quarantined` column. If the
+> column is not there yet:
+>
+> - `round.getCountByUserId` (`apps/web/server/api/routers/round.ts`) **throws** on the query
+>   error → the homepage round count and native's quota gate break outright;
+> - `apps/web/utils/billing/access-control.ts` fails **OPEN** on error and reports "0 rounds
+>   used" to every free-tier user → a silent **quota bypass**, which is worse than the loud
+>   failure because nothing pages anyone.
+>
+> The `process-handicap-queue` edge function must likewise be deployed **only after** the
+> migration is live — it filters on `quarantined`, and it is deployed **manually** (there is
+> no functions deploy workflow), so nothing enforces this for you. A missing column there
+> means every queued handicap job fails through the retry path to `MAX_RETRIES`.
+>
+> Sequence: **migration → verify against a prod dump → merge PR → deploy the edge function.**
+
 1. `select version();` — NULLS NOT DISTINCT requires PG **>= 15** (local 15.x governs local
    only; confirm prod).
 2. Apply **transactionally** (`psql -1` or `supabase db push`) so a partial run can never
    leave columns without constraints/grants. The file's `set local lock_timeout = '5s'`
    only takes effect inside a transaction (the CLI warns 25P01 and no-ops it when applying
    non-transactionally — another reason `psql -1` is required).
-3. Both ADD CONSTRAINTs and the CREATE POLICY are wrapped in `duplicate_object`-swallowing
-   DO blocks, so a re-run is safe.
+3. Idempotency is **partial, and that is fine for a single transactional apply.** The
+   `ADD COLUMN`s use `IF NOT EXISTS`; the policy is recreated via
+   `drop policy if exists` + `create policy`. The two `ADD CONSTRAINT`s sit in DO blocks that
+   swallow `duplicate_object` — but **re-adding an existing UNIQUE constraint actually raises
+   `duplicate_table` (42P07)** from its backing index, not `duplicate_object` (42710), so
+   those blocks do **not** make a re-run succeed. (The idiom was borrowed from
+   `20260501001627_add_round_nine_hole_section.sql`, where the constraints are CHECKs and
+   `duplicate_object` **is** the right handler.) Consequence: a second run aborts loudly and,
+   because of step 2, rolls back whole — a safe failure, not a partial apply. Do not treat
+   "re-run to be sure" as a no-op.
 4. Post-deploy: verify the DDL via a prod **dump** (information_schema /
    `pg_constraint` / `pg_policy` over the session pooler), not migration history —
-   shot-level-stats lesson. Verified locally against the live local DB on 2026-07-29
-   (columns incl. `updated_at timestamptz`, both constraints, trigger, 17-column UPDATE
-   grant, restrictive INSERT policy).
+   shot-level-stats lesson. Verified locally against the live local DB on 2026-07-30
+   (columns incl. `updated_at timestamptz`, both constraints, trigger, restrictive INSERT
+   policy, and `information_schema.column_privileges` showing `authenticated` with UPDATE on
+   **`notes` only** and no table-level UPDATE grant for `authenticated`/`anon`).
+
+### Lock duration — accepted, because `round` is small
+
+Both `ALTER TABLE ... ADD CONSTRAINT ... UNIQUE` statements **build their unique index while
+holding ACCESS EXCLUSIVE on `round`**, so the table is unavailable for the whole scan-and-
+build, not merely for the moment of locking. `set local lock_timeout = '5s'` bounds only lock
+*acquisition* — it does not cap how long the index build then holds that lock. Accepted as-is:
+prod `round` is small enough that the build is sub-second. The scale-out alternative is
+`CREATE INDEX CONCURRENTLY` followed by `ADD CONSTRAINT ... USING INDEX`, and it is
+**incompatible with this checklist**, because `CONCURRENTLY` cannot run inside a transaction
+block while step 2 requires the entire apply to be one transaction. Anyone repeating this
+shape against a large table must pick one or the other: single-transaction safety, or a
+concurrent build with a multi-step (non-atomic) apply.
 
 ## Open items / risks carried forward
 
 - **Quarantined rounds still SURFACE in the UI** — round lists and stats
-  (`round.getAllByUserId`, `scorecard.getAllScorecardsByUserId`, homepage `influencesHcp`
-  labeling) do not filter or badge `quarantined = true` rows. They no longer count toward
-  quota or handicap, but a quarantined round renders like any other. Hide-vs-badge is a
-  **002 Part B decision** (deliberately not made here).
+  (`round.getAllByUserId`, `round.getBestRound`, `scorecard.getAllScorecardsByUserId`,
+  homepage `influencesHcp` labeling) do not filter or badge `quarantined = true` rows. They no
+  longer count toward quota or handicap, but a quarantined round renders like any other.
+  Two concrete consequences once Part B starts writing `quarantined = true`, both documented
+  here and deliberately **not** fixed in this subplan:
+  - **`round.getBestRound`** orders by `scoreDifferential` with no quarantine filter, so a
+    quarantined round — one that contributes nothing to the index — can be returned and shown
+    as the user's **best round**.
+  - **`round.getCountByUserId` now excludes quarantined rounds, but `getAllByUserId` does
+    not**, and the homepage fetches both together (`components/homepage/home-page.tsx`),
+    passing the count as `totalRounds` into `transformRoundsToActivities` to number round
+    milestones while the activity rows come from the unfiltered list. So the total describing
+    the list is computed over a **different population** than the list itself — the count
+    is billing-correct and the rows are not. Splitting the billing count from a display count
+    (or filtering the display queries) is the fix; which one is the **002 Part B**
+    hide-vs-badge decision, since that determines whether quarantined rounds belong to the
+    display population at all.
+
+  Hide-vs-badge remains a **002 Part B decision** (deliberately not made here).
 - **`updated_at` churn vs a future sync cursor (006 must know):**
   `process_handicap_updates` rewrites `updatedHandicapIndex` across a user's whole round
   history on every recompute, so the trigger mass-bumps `updated_at` on all those rows
