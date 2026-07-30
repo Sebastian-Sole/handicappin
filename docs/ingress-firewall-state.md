@@ -1,6 +1,6 @@
 # Ingress Firewall & Edge State (handicappin.com / api.handicappin.com)
 
-**Last updated:** 2026-07-27 (api-platform subplan 001 / W0)
+**Last updated:** 2026-07-29 (api.handicappin.com live; canary hard-gates it)
 **Why this file exists:** Vercel firewall/bot-management rules and Cloudflare
 proxy modes **cannot be expressed in `vercel.json`** — they are dashboard
 state. Until the ruleset is scripted (Vercel REST API / Terraform), this
@@ -18,7 +18,7 @@ Companion research corpus (incident narrative, evidence, audit queries):
 ```
 Browsers/native  ──▶  Cloudflare (zone handicappin.com)  ──▶  Vercel (project: handicappin)
                        - handicappin.com / www: ORANGE-CLOUD (proxied)
-                       - api.handicappin.com:  GREY-CLOUD (DNS-only CNAME → Vercel)  [owner: pending]
+                       - api.handicappin.com:  GREY-CLOUD (DNS-only CNAME → Vercel)  [LIVE 2026-07-29]
 ```
 
 - `handicappin.com` / `www.handicappin.com`: web product + the shipped native
@@ -89,12 +89,14 @@ happens, use an explicit origin allowlist, never `*` — and note `*` with
 ## Monitoring
 
 - **External canary:** `.github/workflows/ingress-canary.yml` (merged PR
-  #162) probes the main host cookie-less every 15 min from a GitHub runner
-  and fails on any challenge/HTML response. Slack alerting is wired in the
-  workflow and activates once the `SLACK_WEBHOOK_URL` repo secret is set
-  (owner item). When `api.handicappin.com` is live, remove
-  `continue-on-error` from its probe step so the API host becomes a hard
-  gate.
+  #162) probes cookie-less every 15 min from a GitHub runner and fails on
+  any challenge/blocked response. Coverage (all hard gates since
+  2026-07-29): `handicappin.com/api/trpc/...` (JSON expected),
+  `api.handicappin.com/api/trpc/...` (JSON expected), and
+  `api.handicappin.com/` (200 expected, no challenge interstitial). TLS
+  failures surface as unreachable → hard fail. Slack alerting is wired in
+  the workflow and activates once the `SLACK_WEBHOOK_URL` repo secret is
+  set (owner item).
 - **Sentry:** `rate-limit-fail-closed` / `rate-limit-unavailable` events
   fire whenever the limiter infrastructure is down (see
   `apps/web/lib/rate-limit.ts`).
@@ -117,10 +119,10 @@ product; and shipped native binaries pin `handicappin.com`. Neither flips
 the decision — but the shared-project blast radius is the first thing to
 revisit if a real third-party consumer appears.
 
-## Owner checklist (dashboard actions still open as of 2026-07-27)
+## Owner checklist (dashboard actions still open as of 2026-07-29)
 
-- [ ] Grey-clouded (DNS-only) `api.handicappin.com` CNAME → Vercel + add as
-      Vercel custom domain.
+- [x] Grey-clouded (DNS-only) `api.handicappin.com` CNAME → Vercel + add as
+      Vercel custom domain. (Done 2026-07-29 — TLS valid, serving the app.)
 - [ ] Vercel spend limits/alerts on project `handicappin`.
 - [ ] One WAF rate-limit rule (429 backstop) on the API host.
 - [ ] Stage (do not apply) the `Host = handicappin.com` challenge rule.

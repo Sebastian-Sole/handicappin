@@ -14,6 +14,9 @@
 # activates once the SLACK_WEBHOOK_URL repo secret is set (OWNER action);
 # until then a red run in the Actions tab is the signal.
 #
+# COVERAGE: handicappin.com (tRPC path) and api.handicappin.com (tRPC path +
+# root) — the API host went live 2026-07-29 and is a hard gate.
+#
 # IS:     an external black-box reachability check for the public edge.
 # IS NOT: a functional/business-logic test of tRPC or the API contract.
 
@@ -107,34 +110,116 @@ jobs:
           echo "CANARY OK — main host answered JSON to a cookie-less request (status $HTTP_CODE)."
 
       # ------------------------------------------------------------------
-      # SECONDARY: the future grey-clouded API host. This host does NOT exist
-      # yet (decision 4 / synthesis Step 4 creates it). Until then this step is
-      # EXPECTED TO FAIL and must not fail the job — hence continue-on-error.
-      #
-      # WHEN api.handicappin.com/health SHIPS: delete `continue-on-error: true`
-      # so a challenge/HTML/4xx on the API host also fails the run, and point it
-      # at the real health route.
+      # SECONDARY: the grey-clouded API host — LIVE since 2026-07-29
+      # (DNS-only Cloudflare CNAME → Vercel, same project as www for now).
+      # This is the future base URL for the public /api/v1 REST API (fitbull)
+      # and the native app, so a challenge/block here is a HARD FAILURE —
+      # no continue-on-error. Two probes:
+      #   (a) the same public tRPC procedure as the main-host probe (JSON
+      #       expected — proves the API path serves machine clients), and
+      #   (b) the root `/` (the host currently serves the whole app, so 200
+      #       HTML is the healthy answer; the check is that it's the APP's
+      #       HTML, not a challenge interstitial).
+      # TLS is asserted implicitly: curl verifies certificates by default, and
+      # any TLS/DNS/timeout failure surfaces as HTTP_CODE=000 → hard fail.
       # ------------------------------------------------------------------
-      - name: Probe API host (api.handicappin.com/health) — expected-fail until created
-        continue-on-error: true
+      - name: Probe API host (api.handicappin.com/api/trpc)
+        env:
+          TRPC_PATH: "course.getCourseById"
+          TRPC_INPUT: '{"json":{"courseId":1}}'
         run: |
           set -uo pipefail
-          URL="https://api.handicappin.com/health"
-          echo "Probing (cookie-less, expected-fail until host exists): $URL"
-          HEAD_FILE="$(mktemp)"; BODY_FILE="$(mktemp)"
+          URL="https://api.handicappin.com/api/trpc/${TRPC_PATH}?input=$(python3 -c "import urllib.parse,os;print(urllib.parse.quote(os.environ['TRPC_INPUT']))")"
+          echo "Probing (cookie-less): $URL"
+
+          BODY_FILE="$(mktemp)"
+          HEAD_FILE="$(mktemp)"
           HTTP_CODE="$(curl -sS -o "$BODY_FILE" -D "$HEAD_FILE" -w '%{http_code}' \
-            --max-time 30 -H 'Accept: application/json' \
+            --max-time 30 \
+            -H 'Accept: application/json' \
             -A 'ingress-canary/1.0 (+github-actions external tripwire)' \
             "$URL" || echo "000")"
-          echo "--- status: $HTTP_CODE"; sed 's/^/    /' "$HEAD_FILE"
+
+          echo "--- response status: $HTTP_CODE"
+          echo "--- response headers:"; sed 's/^/    /' "$HEAD_FILE"
+          echo "--- body (first 400 bytes):"; head -c 400 "$BODY_FILE" | sed 's/^/    /'; echo
+
+          FAIL=0
+
+          # (1) Definitive challenge signal — the exact header seen in the incident.
           if grep -iq '^x-vercel-mitigated:.*challenge' "$HEAD_FILE"; then
-            echo "::warning title=API host challenged::api.handicappin.com is challenging cookie-less traffic. Once the grey-clouded host is live this must be a hard failure (remove continue-on-error)."
+            echo "::error title=API host challenged::x-vercel-mitigated: challenge on api.handicappin.com/api/trpc (cookie-less). The grey-clouded API host is being challenged — fitbull + native Bearer paths are broken. This host must NEVER be challenged (see docs/ingress-firewall-state.md standing rule)."
+            FAIL=1
           fi
-          if [ "$HTTP_CODE" = "200" ]; then
-            echo "API host is answering — REMOVE continue-on-error on this step so it becomes a real gate."
-          else
-            echo "API host not serving 200 yet (status $HTTP_CODE) — expected until api.handicappin.com is created."
+
+          # (2) Blocked/challenged status codes where JSON was expected.
+          if [ "$HTTP_CODE" = "429" ] || [ "$HTTP_CODE" = "403" ]; then
+            echo "::error title=API host blocked ($HTTP_CODE)::Expected JSON, got HTTP $HTTP_CODE from api.handicappin.com/api/trpc."
+            FAIL=1
           fi
+          if [ "$HTTP_CODE" = "000" ]; then
+            echo "::error title=API host unreachable::curl could not complete a request to api.handicappin.com/api/trpc (timeout/DNS/TLS)."
+            FAIL=1
+          fi
+
+          # (3) HTML where JSON was expected — the Security Checkpoint interstitial.
+          if grep -iqE '<!doctype html|<html|Vercel Security Checkpoint|Attention Required' "$BODY_FILE"; then
+            echo "::error title=API host served HTML::Body from api.handicappin.com/api/trpc is an HTML interstitial (challenge/block page), not JSON."
+            FAIL=1
+          fi
+
+          if [ "$FAIL" -ne 0 ]; then
+            echo "CANARY FAILED — api.handicappin.com is not serving JSON to cookie-less clients."
+            exit 1
+          fi
+          echo "CANARY OK — API host answered JSON to a cookie-less request (status $HTTP_CODE)."
+
+      - name: Probe API host root (api.handicappin.com/)
+        run: |
+          set -uo pipefail
+          URL="https://api.handicappin.com/"
+          echo "Probing (cookie-less): $URL"
+
+          BODY_FILE="$(mktemp)"
+          HEAD_FILE="$(mktemp)"
+          HTTP_CODE="$(curl -sS -o "$BODY_FILE" -D "$HEAD_FILE" -w '%{http_code}' \
+            --max-time 30 \
+            -A 'ingress-canary/1.0 (+github-actions external tripwire)' \
+            "$URL" || echo "000")"
+
+          echo "--- response status: $HTTP_CODE"
+          echo "--- response headers:"; sed 's/^/    /' "$HEAD_FILE"
+
+          FAIL=0
+
+          # (1) Definitive challenge signal.
+          if grep -iq '^x-vercel-mitigated:.*challenge' "$HEAD_FILE"; then
+            echo "::error title=API host root challenged::x-vercel-mitigated: challenge on api.handicappin.com/ (cookie-less)."
+            FAIL=1
+          fi
+
+          # (2) Expected status is 200 (the host currently serves the whole
+          # app at /). 429/403 = challenged/blocked; 000 = DNS/TLS/timeout;
+          # anything else non-200 = the host stopped serving — all hard fails.
+          # If the root's behavior is ever intentionally changed (e.g. a
+          # redirect to API docs), update this assertion alongside.
+          if [ "$HTTP_CODE" != "200" ]; then
+            echo "::error title=API host root not serving 200::Expected HTTP 200 from api.handicappin.com/, got $HTTP_CODE."
+            FAIL=1
+          fi
+
+          # (3) Root legitimately serves HTML, so only fail on the known
+          # challenge/interstitial page markers — not on HTML per se.
+          if grep -iqE 'Vercel Security Checkpoint|Attention Required' "$BODY_FILE"; then
+            echo "::error title=API host root served interstitial::Body from api.handicappin.com/ is a challenge/block page."
+            FAIL=1
+          fi
+
+          if [ "$FAIL" -ne 0 ]; then
+            echo "CANARY FAILED — api.handicappin.com root is not healthy for cookie-less clients."
+            exit 1
+          fi
+          echo "CANARY OK — API host root answered (status $HTTP_CODE, no challenge)."
 
       # ------------------------------------------------------------------
       # ALERTING: pages Slack within ~15 min when the edge regresses (someone
@@ -152,5 +237,5 @@ jobs:
             exit 0
           fi
           curl -sS -X POST -H 'Content-type: application/json' \
-            --data '{"text":"INGRESS CANARY FAILED: handicappin.com edge is not serving JSON to cookie-less clients (challenge regression?). Check Vercel Firewall + docs/ingress-firewall-state.md + the INGRESS_RUNBOOK."}' \
+            --data '{"text":"INGRESS CANARY FAILED: handicappin.com or api.handicappin.com edge is not serving cookie-less clients (challenge regression / host down?). Check Vercel Firewall + docs/ingress-firewall-state.md + the INGRESS_RUNBOOK."}' \
             "$SLACK_WEBHOOK_URL"
