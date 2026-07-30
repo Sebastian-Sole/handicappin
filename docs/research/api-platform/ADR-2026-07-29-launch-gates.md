@@ -1,6 +1,6 @@
 # ADR 2026-07-29 — Platform distribution deferred; launch gates and re-decide dates
 
-**Date:** 2026-07-29 · **Status:** PROPOSED (owner ratification required — see §7) · **Workstream:** W7 / subplan `plans/008-w7-launch-gates.md`
+**Date:** 2026-07-29 · **Amended:** 2026-07-30 (§5.1 added; G3/G4 status lines updated to name merged PRs — see §5.2) · **Status:** PROPOSED (owner ratification required — see §7) · **Workstream:** W7 / subplan `plans/008-w7-launch-gates.md`
 **Supersedes nothing.** Records, dates, and makes falsifiable the strategy already locked in `DECISIONS.md` §8.
 **Binding source:** golf-api-landscape synthesis §C.12–15; DECISIONS §8 + §Open gates.
 
@@ -56,8 +56,8 @@ Both dates go in the owner's calendar and are referenced from the strategy track
 
 - **G1 — Governance.** `GOVERNANCE.md` LB-1 (no index display to US-market users while the GPA track is open, or GPA explicitly parked), LB-2 (zero WHS marks in fitbull UI/store/marketing), LB-3 (owner sign-off on the fact pattern + the negotiation-posture call). Shipping /v1 into a private fitbull dev/TestFlight build is not gated.
 - **G2 — Demand instrumentation live.** The interest form + `api_access_interest_submitted` (and the view event) shipping **with** v1, per `DEMAND_INSTRUMENTATION.md`. Condition C.12: without it, T2 and T3 are unfalsifiable.
-- **G4 — PostgREST column-grant sweep.** See §5.1. The primary control is the column-grant default; this gate is the backstop that confirms it held.
-- **G3 — Contract doc current.** The frozen `/v1` contract lives in `plans/005-phase0-contract.md` (005 Phase 0, PR #174) and is the single source of truth; OpenAPI 3.1 is generated from the shared zod schemas with a CI regen-and-diff gate (DECISIONS §5). Condition C.15's requirement is that this doc stays **current**, not that a second doc exists — so the maintenance rule is: any `/v1` shape change updates `005-phase0-contract.md` in the same PR, and the CI spec-parity gate is the mechanical backstop. This ADR does not restate the contract.
+- **G4 — PostgREST column-grant sweep.** See §5.1 for the invariant and §5.2 for what has already shipped against it. The primary control is the column-grant default; this gate is the backstop sweep, run **at launch across every PostgREST-reachable table**, confirming the invariant held. The two tables audited during this cycle (`round`, `score`) are done; the sweep itself is not, so G4 is **open**.
+- **G3 — Contract doc current.** The frozen `/v1` contract lives in `plans/005-phase0-contract.md` (005 Phase 0, merged 2026-07-30 in PR #174) and is the single source of truth; OpenAPI 3.1 is generated from the shared zod schemas with a CI regen-and-diff gate (DECISIONS §5). Condition C.15's requirement is that this doc stays **current**, not that a second doc exists — so the maintenance rule is: any `/v1` shape change updates `005-phase0-contract.md` in the same PR, and the CI spec-parity gate is the mechanical backstop. This ADR does not restate the contract.
 
 ### 5.1 PostgREST hardening invariant (G4)
 
@@ -68,13 +68,22 @@ Added 2026-07-30 out of this cycle's security work, where the same class of hole
 Two traps, each of which produced a wrong first answer during this cycle:
 
 1. **Column-level revokes are no-ops while the table-level grant is held.** Postgres permits an INSERT/UPDATE if **either** the table-level **or** a column-level privilege matches, so revoking a single column while the blanket table grant stands changes nothing. Each block must `revoke <verb> on <table>` first, then re-grant per column. **Prod corollary:** that revoke also destroys the existing column grants, so revoke and re-grant must run in **one transaction** (`psql -1`) or the surface is briefly wide open — or permanently narrow if the re-grant fails.
-2. **Row-local ownership checks are not relational ownership checks.** A policy of the form `WITH CHECK (auth.uid() = "userId")` proves who owns the *row*, not what the row *points at* — a client-supplied foreign key is unconstrained by it. Where a child row's ownership derives through a parent, the policy must assert that relationship with an `EXISTS` against the parent. One instance of this class was found and remediated during this cycle; the concrete case is documented in the PR on branch `fix/score-cross-user-roundid`.
+2. **Row-local ownership checks are not relational ownership checks.** A policy of the form `WITH CHECK (auth.uid() = "userId")` proves who owns the *row*, not what the row *points at* — a client-supplied foreign key is unconstrained by it. Where a child row's ownership derives through a parent, the policy must assert that relationship with an `EXISTS` against the parent. One instance of this class was found and remediated during this cycle; the concrete case is documented in PR #176 (see §5.2).
 
 One caveat on generalizing results: a value-axis check on a `uuid` column is safe partly *because* of the type's canonicalizing coercion. The same pattern on a `text` column is bypassable via case or whitespace variation. Do not carry a uuid-column pass over to a text column.
 
-Fixes, not restated here: the trap-2 instance is remediated on branch `fix/score-cross-user-roundid`; the `round` hardening landed in the 003 migration (`plans/003-w3-bundled-migration.md`).
+### 5.2 Status of the fixes (verified 2026-07-30)
 
-**Deliberate omission:** the worked example for trap 2 — table, column, and reproduction path — is withheld from this public repo until its remediation is merged. This is not an oversight; do not re-add it before then. Restoring a fuller example once the fix has shipped would be reasonable.
+Both instances found this cycle are **merged and live in production**. Named by merged PR rather than by branch, because a branch reference stops being checkable the moment the branch is deleted.
+
+| Instance | Fix | Merged | In production |
+|---|---|---|---|
+| Trap 2 — child-row ownership on `score` | PR #176: restrictive `EXISTS`-against-parent policies on INSERT and UPDATE, plus a column-grant sweep on `score` | 2026-07-30 | Yes — applied 2026-07-30 |
+| Trap 1 — column grants on `round` | PR #173: `supabase/migrations/20260730120000_round_natural_key_and_api_columns.sql` (renumbered from `20260729100000` so the remote history stays monotonic). Client roles hold **no INSERT** on `round` and UPDATE on `notes` alone | 2026-07-30 | Yes — applied 2026-07-30 |
+
+**How that "in production" claim was established, because the distinction is the point of G4:** the new columns were confirmed to resolve through the live PostgREST API with a deliberately non-existent control column proving the check discriminates, and the resulting privileges were read back from `information_schema.column_privileges` on the production database. Neither a workflow log nor a row in the migration-history table was treated as proof — this database has carried a history row for DDL that never ran.
+
+**On the withheld worked example:** the earlier omission was conditioned on the remediation being unmerged, and that condition has now lapsed. This ADR is nonetheless kept at the invariant level deliberately — the invariant is what generalizes, and the repository is public. Adding a worked example is now permissible, but it should be a deliberate choice, not a default.
 
 ## 6. Consequences
 
@@ -103,5 +112,5 @@ This ADR is **PROPOSED** until these are done; change Status to LOCKED (dated) w
 - `topics/golf-api-landscape/research.md` + `synthesis.md` (2026-07-20) — landscape evidence and conditions C.12–15
 - `GOVERNANCE.md` (2026-07-29) — WHS/USGA/NGF fact pattern, blocking vs monitor risks, NGF question draft
 - `DEMAND_INSTRUMENTATION.md` (2026-07-29) — event taxonomy, form spec, dashboard
-- `plans/005-phase0-contract.md` (PR #174) — the frozen `/v1` contract, source of truth for G3
+- `plans/005-phase0-contract.md` (merged 2026-07-30, PR #174) — the frozen `/v1` contract, source of truth for G3
 - Issues #144 (strategy tracker), #147 (NGF Leverandør), #151 (USGA GPA), #148 (ladder/claims grilling)
