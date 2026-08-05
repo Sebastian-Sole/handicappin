@@ -125,6 +125,7 @@ const OAuthConsentPage = async ({
     <main className="flex min-h-screen items-center justify-center p-md">
       <OAuthConsentCard
         authorizationId={data.authorization_id}
+        clientId={data.client.id}
         clientName={data.client.name}
         clientUri={data.client.uri}
         redirectUri={data.redirect_uri}

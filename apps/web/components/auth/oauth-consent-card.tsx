@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/card";
 import { Muted } from "@/components/ui/typography";
 import { deriveHost } from "@/lib/oauth/consent-flow";
+import { api } from "@/trpc/react";
 import { createClientComponentClient } from "@/utils/supabase/client";
 
 /**
@@ -24,6 +25,8 @@ import { createClientComponentClient } from "@/utils/supabase/client";
 
 interface OAuthConsentCardProps {
   authorizationId: string;
+  /** GoTrue OAuth client id (UUID) — analytics attribution only. */
+  clientId: string;
   clientName: string;
   clientUri?: string;
   redirectUri: string;
@@ -51,6 +54,7 @@ const GRANTED_CAPABILITIES = [
 
 export function OAuthConsentCard({
   authorizationId,
+  clientId,
   clientName,
   clientUri,
   redirectUri,
@@ -58,6 +62,7 @@ export function OAuthConsentCard({
 }: OAuthConsentCardProps) {
   const [pending, setPending] = useState<"approve" | "deny" | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const connectCompleted = api.oauth.connectCompleted.useMutation();
 
   const redirectHost = deriveHost(redirectUri) ?? redirectUri;
   // The parenthetical next to the client name shows the CLIENT's own site
@@ -84,6 +89,17 @@ export function OAuthConsentCard({
         );
         setPending(null);
         return;
+      }
+      if (decision === "approve") {
+        // Server-side `api_connect_completed` capture (T12/D9): the approval
+        // hop is browser -> GoTrue, so the server learns about the completed
+        // Connect here. Fail-open — a lost analytics event must never delay
+        // or break the redirect back to the connecting app.
+        try {
+          await connectCompleted.mutateAsync({ clientId });
+        } catch {
+          // Ignore: analytics only.
+        }
       }
       window.location.assign(data.redirect_url);
     } catch {

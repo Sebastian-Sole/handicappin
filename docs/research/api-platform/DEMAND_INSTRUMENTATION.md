@@ -96,6 +96,8 @@ api_round_submitted: {
 
 Ownership note: `round_submitted` already fires inside the shared submission service; this event is the **API-transport** fact, not a second round event. Whichever way 005 wires it, the rule is: exactly one `round_submitted` per round, and `api_round_submitted` only for `/v1`-originated writes. If 005 instead adds a `submitted_via` property to `round_submitted` (the `submitted_via` column is already in 003's migration bundle), that satisfies this requirement and `api_round_submitted` should be dropped rather than duplicated — decide it in 005, record the choice here.
 
+> **Decision recorded (T12, 2026-08-05): keep `api_round_submitted` as its own event** (D9 locked it by name; the `submitted_via`-breakdown alternative is not taken). The event is in the taxonomy and its capture helper `captureApiRoundSubmitted` lives in `apps/web/lib/api-platform/analytics.ts` — the shared service cannot emit it because `consumer` (the OAuth client_id) exists only at the `/v1` transport layer. The wave-2 route task (010 T13) owes exactly one line in `apps/web/app/api/v1/rounds/route.ts` after a successful write: `await captureApiRoundSubmitted({ userId, consumer: clientId, quarantined, holesPlayed })`. A unit test (`tests/unit/analytics/api-platform-events.test.ts`) guards that nothing under `apps/web/server/` — the web/native path — ever references the event.
+
 ### 3.4 `api_connect_completed` — server (funnel, optional-but-cheap)
 
 ```ts
@@ -104,6 +106,8 @@ api_connect_completed: { consumer: string };
 ```
 
 Only meaningful once the Connect flow exists (004). Included because "how many users connected fitbull" is the other half of the October question and it is one line at a handler that already exists.
+
+> **Implemented (T12, 2026-08-05), with one placement nuance:** the 004 consent approval is a browser → GoTrue hop (`supabase.auth.oauth.approveAuthorization` in the consent card) — there is no first-party server handler on that hop. The event is therefore captured by the tRPC mutation `oauth.connectCompleted` (`apps/web/server/api/routers/oauth.ts`), which the consent card calls after a successful approval and which **re-verifies the grant against GoTrue (`listGrants`) before capturing** — the event stays a server-verified fact, not a client-reported claim. `consumer` is the GoTrue OAuth client id; `distinctId` is the Supabase user id.
 
 ## 4. The interest form (surface)
 
