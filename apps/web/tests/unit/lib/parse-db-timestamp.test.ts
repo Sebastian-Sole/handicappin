@@ -1,13 +1,18 @@
-// Pin the process timezone to Norway before any date formatting happens.
-// Node (>=13) re-reads TZ on subsequent date operations, and the load-bearing
-// assertions additionally pass `timeZone: "Europe/Oslo"` explicitly so the
-// suite stays deterministic even if another file in the worker touched TZ.
-process.env.TZ = "Europe/Oslo";
-
-import { describe, expect, it } from "vitest";
+import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import { parseDbTimestamp } from "@/lib/parse-db-timestamp";
 import { transformRoundsToActivities } from "@/utils/activity-transform";
 import type { Tables } from "@/types/supabase";
+
+// Pin the process timezone to Norway for the one ambient-TZ assertion below
+// (Node >=13 re-reads TZ on subsequent date operations), and restore it so
+// no other suite in the worker inherits it. The load-bearing assertions all
+// pass `timeZone: "Europe/Oslo"` explicitly and don't depend on ambient TZ.
+beforeAll(() => {
+  vi.stubEnv("TZ", "Europe/Oslo");
+});
+afterAll(() => {
+  vi.unstubAllEnvs();
+});
 
 const osloClock = new Intl.DateTimeFormat("en-GB", {
   timeZone: "Europe/Oslo",

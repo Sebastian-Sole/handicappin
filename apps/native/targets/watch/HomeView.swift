@@ -44,8 +44,11 @@ private func holesLabel(holesPlayed: Int, section: NineHoleSection?) -> String {
 }
 
 /// ISO teeTime → "Jul 6" (or "" when unparsable — the row just omits it).
-/// PostgREST timestamps come without a timezone suffix ("2026-07-07T19:33:00"),
-/// which ISO8601DateFormatter rejects — hence the plain-format fallback.
+/// The phone now sends `playedAt` as a Z-suffixed UTC instant, so the
+/// primary ISO8601 parse succeeds. Zone-less strings ("2026-07-07T19:33:00",
+/// e.g. from a stale cached frame) are UTC renderings of the instant, so the
+/// plain-format fallback parses them as UTC — never device-local, which
+/// shifted late-evening rounds onto the previous date east of UTC.
 private func shortDate(_ iso: String) -> String {
     var parsed = ISO8601DateFormatter.shared.date(from: iso)
         ?? ISO8601DateFormatter().date(from: iso)
@@ -53,6 +56,7 @@ private func shortDate(_ iso: String) -> String {
         let plain = DateFormatter()
         plain.locale = Locale(identifier: "en_US_POSIX")
         plain.dateFormat = "yyyy-MM-dd'T'HH:mm:ss"
+        plain.timeZone = TimeZone(identifier: "UTC")
         parsed = plain.date(from: String(iso.prefix(19)))
     }
     guard let parsed else { return "" }
