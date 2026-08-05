@@ -18,6 +18,7 @@ Each subplan is self-contained for an implementing agent with no other context. 
 | 007 | `007-w6-fitbull-integration-notes.md` | W6 | Handoff doc for the separate Convex repo: base URL `api.handicappin.com`, auth, day-1 calls, idempotency, polling, quarantine-status handling. |
 | 008 | `008-w7-launch-gates.md` | W7 | Pre-launch governance (USGA/NGF fact pattern), demand instrumentation with v1, internal contract doc, dated ADR + review dates. |
 | 009 | `009-oauth-detect-and-revoke.md` | W2 fast-follow | Detective control from the updateUser sign-off (2026-07-29): pg_cron auto-revoke of OAuth grants on password/email-change signals (`user_updated_password` audit action + `auth.users` email snapshot-compare) + daily GH-Actions watchdog on the two secure-change auth toggles. Own PR; NOT a launch blocker. |
+| 010 | `010-v1-implementation.md` | **Master sequence** | **START HERE.** Executes owner decisions D1–D9 (2026-08-05): 12 parallel wave-1 tasks, then the five day-one `/v1` routes. Supersedes the dispatch order below for all remaining work. |
 
 ## Dependency graph
 
@@ -38,17 +39,19 @@ prod dup scan ──► 003 ─────────────────�
 
 ## Current status
 
+**Updated 2026-08-05.** Nine owner decisions (D1–D9) are locked in `DECISIONS.md`; the implementation sequence now lives in **`010-v1-implementation.md`** — read that for what happens next, not the dispatch order below (which is retained as the historical plan).
+
 | Workstream | Status |
 |---|---|
-| W0 (001) | **PARTIAL** — challenge flipped to Log; canary merged (PR #162, green); Stripe live audit done. Remaining: `rate-limit.ts` fail-closed + `getIdentifier` fix (code), host-guard negative tests (code), firewall-state + rollback-rule docs; OWNER: Vercel spend alerts, `api.handicappin.com` CNAME + Vercel domain, one WAF rate rule, RevenueCat delivery check, Stripe resends. |
-| W1 (002) | PENDING |
-| W2 (004) | PENDING |
-| W3 (003) | PENDING (blocked on the OWNER prod duplicate scan) |
-| W4 (005) | PENDING |
-| W5 (006) | PENDING |
-| W6 (007) | PENDING |
-| W7 (008) | PENDING |
-| W2 fast-follow (009) | PENDING — dispatchable now (PR #167 merged 2026-07-29); trails 004, blocks nothing |
+| W0 (001) | **PARTIAL** — challenge flipped to Log; canary merged (PR #162); `api.handicappin.com` LIVE 2026-07-29; Stripe live audit done. Remaining OWNER items only: Vercel spend alerts, one WAF rate rule. |
+| W1 (002) | **PART A MERGED** — service extracted to `server/services/scorecard/`. **Part B (accept-and-quarantine) NOT built** — `submit-scorecard.ts:281` still throws. Now task T1 in 010. |
+| W2 (004) | **MERGED** — OAuth consent flow live in production (`app/oauth/consent/page.tsx`). One change pending: gate it on plan selection (D3 → task T5 in 010). |
+| W3 (003) | **MERGED + APPLIED TO PROD** (PR #173) — migration `20260730120000`, plus column-grant hardening `20260730090000`. |
+| W4 (005) | **PHASE 0 MERGED** (PR #174) — contract frozen; all four owner sign-off items closed 2026-08-05. **No `/v1` route exists yet.** Day-one surface reduced to five endpoints per D9 → task T13 in 010. |
+| W5 (006) | **OFF THE CRITICAL PATH** (D9) — fitbull does not display the index, so there is no staleness problem to solve at launch. The contract still reserves the `handicapRevision` enum; 006 wires it if something ever displays an index. |
+| W6 (007) | PENDING — task T14 in 010; must carry the LB-1/LB-2 obligations and the polling-cadence ceiling. |
+| W7 (008) | **MERGED** (PR #175). G1 substantially closed by D7/D8; **G2 descoped to server events only** (D9 — no interest form); G3 and G4 still open. |
+| W2 fast-follow (009) | PENDING — dispatchable now; task T9 in 010. Blocks nothing. |
 
 ## Dispatch order
 

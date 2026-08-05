@@ -292,7 +292,16 @@ Grounding, so the statement matches what shipped rather than what was planned:
 
 ---
 
-## OWNER SIGN-OFF REQUIRED
+## OWNER SIGN-OFF REQUIRED — ALL FOUR CLOSED 2026-08-05
+
+> **STATUS: SIGNED OFF.** All four items below were decided by the owner on 2026-08-05 and are recorded as D5/D6/D3/D9 in `DECISIONS.md` (§Sign-off: pre-implementation decision set). Resolutions are inlined per item. The original text is retained verbatim beneath each resolution because it records *why* the item was owner-level.
+>
+> | Item | Resolution | Record |
+> |---|---|---|
+> | 1. Numeric rate budgets | 60/min writes · 120/min reads · 10/hr course-submit · 5/hr provision | D6 |
+> | 2. Rate-limit key wording | **`(client_id, user)` pair confirmed** — §3's reading wins over the plan's "client_id as the key" | D6 |
+> | 3. `teeTime` sanity window | **`1990-01-01` → `now + 24h`**, `422`, enforced at the `/v1` boundary only (shared schema untouched) | D5 |
+> | 4. `POST /v1/profile/provision` scope | **Stays first-party-only.** The dead-end is closed at its source instead: the OAuth consent page now gates on plan selection (D3), so a plan-less account cannot obtain a token. No second RPC. Endpoint additionally **deferred out of the day-one build** (D9) | D3 + D9 |
 
 Only genuinely owner-level items — everything else above is frozen under this gate's delegated authority:
 
