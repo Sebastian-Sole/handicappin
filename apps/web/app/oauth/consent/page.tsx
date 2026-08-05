@@ -112,13 +112,21 @@ const OAuthConsentPage = async ({
   // plan_required`. Same profile-driven check and onboarding target as the
   // sign-in path (app/auth/callback/route.ts), with this consent URL threaded
   // through the `?redirect=` resume param (guarded by safeInternalPath on the
-  // onboarding page). A query error or missing profile row fails closed into
-  // onboarding rather than minting a dead-end grant.
-  const { data: profileRow } = await supabase
+  // onboarding page).
+  const { data: profileRow, error: profileError } = await supabase
     .from("profile")
     .select("planSelected: plan_selected")
     .eq("id", user.id)
     .maybeSingle();
+
+  if (profileError) {
+    // A failed read is NOT "no plan": bouncing to onboarding here could
+    // ping-pong against its JWT shortcut while the DB is unhealthy. Throw to
+    // the Next error boundary instead — still fail-closed (no token minted).
+    throw new Error(
+      `Consent plan gate could not read the profile: ${profileError.message}`,
+    );
+  }
 
   if (!hasSelectedPlan(profileRow?.planSelected)) {
     redirect(onboardingPathForConsent(authorizationId));

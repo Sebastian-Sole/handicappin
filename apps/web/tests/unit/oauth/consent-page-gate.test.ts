@@ -100,13 +100,23 @@ describe("consent page plan-selection gate (D3)", () => {
     expect(mocks.getAuthorizationDetails).not.toHaveBeenCalled();
   });
 
-  test("profile query error redirects to onboarding (fail closed, no dead-end grant)", async () => {
+  test("profile query error throws to the error boundary — no redirect, no grant", async () => {
+    // A failed read is NOT "no plan": redirecting to onboarding here could
+    // ping-pong against its JWT shortcut during a transient DB outage. The
+    // page must throw (error boundary) while still never reaching consent.
     mocks.maybeSingle.mockResolvedValue({
       data: null,
       error: { message: "boom" },
     });
 
-    expect(await redirectedTo()).toBe(EXPECTED_ONBOARDING_REDIRECT);
+    await expect(renderPage()).rejects.toSatisfy((err: unknown) => {
+      const digest = (err as { digest?: string }).digest;
+      const message = (err as { message?: string }).message ?? "";
+      return (
+        (typeof digest !== "string" || !digest.startsWith("NEXT_REDIRECT")) &&
+        message.includes("boom")
+      );
+    });
     expect(mocks.getAuthorizationDetails).not.toHaveBeenCalled();
   });
 

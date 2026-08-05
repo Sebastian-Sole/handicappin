@@ -243,4 +243,23 @@ describeIfLocal("consent plan-selection gate (real local Supabase)", () => {
     const destination = await redirectedTo(renderConsentPage);
     expect(destination).toContain("/onboarding?");
   });
+
+  test("stale JWT plan + plan-less profile does NOT ping-pong: onboarding re-shows plan selection", async () => {
+    // State from the previous test: profile.plan_selected is NULL again, but
+    // the session's JWT (refreshed while the plan existed) still claims
+    // plan=free — the exact contradictory state behind the redirect loop.
+    // Onboarding must re-verify against the table and fall through to plan
+    // selection instead of bouncing back to the consent resume path.
+    const { data: sessionData } = await userClient.auth.getSession();
+    expect(sessionData.session).not.toBeNull();
+
+    const destination = await redirectedTo(() =>
+      OnboardingPage({
+        searchParams: Promise.resolve({
+          redirect: consentPath(authorizationId),
+        }),
+      }),
+    );
+    expect(destination).toBeNull(); // rendered plan selection, no redirect
+  });
 });
