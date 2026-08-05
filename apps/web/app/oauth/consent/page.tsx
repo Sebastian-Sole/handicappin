@@ -11,7 +11,11 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { OAuthConsentCard } from "@/components/auth/oauth-consent-card";
-import { loginPathForConsent } from "@/lib/oauth/consent-flow";
+import {
+  hasSelectedPlan,
+  loginPathForConsent,
+  onboardingPathForConsent,
+} from "@/lib/oauth/consent-flow";
 import { createServerComponentClient } from "@/utils/supabase/server";
 
 /**
@@ -101,6 +105,23 @@ const OAuthConsentPage = async ({
         </Button>
       </ConsentShell>
     );
+  }
+
+  // D3 gate: a signed-in but plan-less account must not approve an
+  // authorization — any token minted for it could only ever `403
+  // plan_required`. Same profile-driven check and onboarding target as the
+  // sign-in path (app/auth/callback/route.ts), with this consent URL threaded
+  // through the `?redirect=` resume param (guarded by safeInternalPath on the
+  // onboarding page). A query error or missing profile row fails closed into
+  // onboarding rather than minting a dead-end grant.
+  const { data: profileRow } = await supabase
+    .from("profile")
+    .select("planSelected: plan_selected")
+    .eq("id", user.id)
+    .maybeSingle();
+
+  if (!hasSelectedPlan(profileRow?.planSelected)) {
+    redirect(onboardingPathForConsent(authorizationId));
   }
 
   const { data, error } =
