@@ -130,7 +130,9 @@ const ids: Record<keyof typeof EMAILS, string> = {
   premium: "",
 };
 const tokens: Record<keyof typeof EMAILS, string> = { ...ids };
-let freeUserClient: ReturnType<typeof createClient>;
+let freeUserClient: Awaited<
+  ReturnType<typeof createUserWithToken>
+>["userClient"];
 let oauthClientId: string;
 let oauthAccessToken: string;
 let courseId: number;
@@ -140,6 +142,19 @@ const roundIds: number[] = [];
 
 describeIfLocal("get_connected_entitlement (real local Supabase)", () => {
   beforeAll(async () => {
+    // Fail loudly (not obscurely) when the migration has not been applied to
+    // the local stack: PostgREST answers 404/PGRST202 for an unknown RPC,
+    // 401/403 (42501) for an existing one the anon role may not execute.
+    const probe = await callEntitlement(null);
+    if (probe.status === 404) {
+      throw new Error(
+        "get_connected_entitlement() does not exist on the local stack " +
+          "(PostgREST 404/PGRST202). Apply " +
+          "supabase/migrations/20260805120000_get_connected_entitlement.sql " +
+          "via `supabase migration up`, then re-run this suite.",
+      );
+    }
+
     for (const email of Object.values(EMAILS)) {
       await deleteUserByEmail(email);
     }
