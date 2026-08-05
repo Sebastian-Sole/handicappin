@@ -13,6 +13,7 @@ const activities: ActivityItem[] = [
     handicapChange: -0.3,
     isPersonalBest: true,
     approvalStatus: "approved",
+    quarantined: false,
   },
   {
     id: 109,
@@ -24,6 +25,7 @@ const activities: ActivityItem[] = [
     handicapChange: 0.1,
     isPersonalBest: false,
     approvalStatus: "approved",
+    quarantined: false,
   },
   {
     id: 108,
@@ -35,6 +37,7 @@ const activities: ActivityItem[] = [
     handicapChange: -0.4,
     isPersonalBest: false,
     approvalStatus: "approved",
+    quarantined: false,
   },
   {
     id: 107,
@@ -46,6 +49,7 @@ const activities: ActivityItem[] = [
     handicapChange: -0.2,
     isPersonalBest: false,
     approvalStatus: "approved",
+    quarantined: false,
   },
   {
     id: 106,
@@ -57,6 +61,7 @@ const activities: ActivityItem[] = [
     handicapChange: 0.3,
     isPersonalBest: false,
     approvalStatus: "approved",
+    quarantined: false,
   },
 ];
 

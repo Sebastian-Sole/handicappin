@@ -60,6 +60,12 @@ export const roundRouter = createTRPCRouter({
           message: "Cannot access another user's data",
         });
       }
+      // Deliberately NO `quarantined` filter (decision D4): a round the API
+      // accepted with 201 must remain visible in lists — hiding it would
+      // reintroduce at the display layer the rejection the billing gate
+      // explicitly refused. `select(*)` includes the `quarantined` column so
+      // the UI can badge those rounds ("not counted — free-tier limit
+      // reached") and exclude them from client-side statistics.
       const { data: rounds, error } = await ctx.supabase
         .from("round")
         .select(`*`)
@@ -142,10 +148,15 @@ export const roundRouter = createTRPCRouter({
           message: "Cannot access another user's data",
         });
       }
+      // Quarantined rounds (accept-and-quarantine, decision D4) are excluded
+      // from every handicap-derived statistic: a quarantined round cannot be
+      // the user's "best", since it is excluded from the handicap that
+      // `scoreDifferential` exists to feed.
       const { data: round, error } = await ctx.supabase
         .from("round")
         .select("*")
         .eq("userId", input.userId)
+        .eq("quarantined", false)
         .order("scoreDifferential", { ascending: true })
         .limit(1)
         .single();

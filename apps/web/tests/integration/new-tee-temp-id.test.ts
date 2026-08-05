@@ -129,6 +129,26 @@ describeIfLocal("submitScorecard new tee with temp id (real local Supabase)", ()
       subscriptionStatus: "active",
     });
 
+    // Clean any leftover course from a previous aborted run — same
+    // self-healing pattern as the other integration suites; without it the
+    // course_name_country_city_key unique constraint fails the insert below.
+    const stale = await db
+      .select({ id: course.id })
+      .from(course)
+      .where(eq(course.name, "New Tee Temp Id Test Course"));
+    for (const cRow of stale) {
+      await db.delete(round).where(eq(round.courseId, cRow.id));
+      const staleTees = await db
+        .select({ id: teeInfo.id })
+        .from(teeInfo)
+        .where(eq(teeInfo.courseId, cRow.id));
+      for (const t of staleTees) {
+        await db.delete(hole).where(eq(hole.teeId, t.id));
+        await db.delete(teeInfo).where(eq(teeInfo.id, t.id));
+      }
+      await db.delete(course).where(eq(course.id, cRow.id));
+    }
+
     // An approved course with NO matching approved tee — so resolution can't
     // find an existing tee and must insert the submitted one.
     const [createdCourse] = await db

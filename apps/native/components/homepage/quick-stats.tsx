@@ -54,9 +54,12 @@ export function QuickStats({
       ? dateFormat.format(activities[0].date)
       : null;
 
+  // Quarantined rounds (decision D4) can't be the "best" — they are excluded
+  // from the handicap the differential feeds. Mirrors web quick-stats.
+  const countedActivities = activities.filter((a) => !a.quarantined);
   const fallbackBestRoundDate =
-    activities.length > 0
-      ? activities.reduce((best, activity) =>
+    countedActivities.length > 0
+      ? countedActivities.reduce((best, activity) =>
           activity.scoreDifferential < best.scoreDifferential
             ? activity
             : best,

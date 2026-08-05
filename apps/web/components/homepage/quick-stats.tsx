@@ -35,9 +35,12 @@ export function QuickStats({
     : null;
 
   // Use the best round date from props (fetched from DB across all rounds)
-  // Fall back to computing from activities if prop not provided
-  const fallbackBestRoundDate = activities.length > 0
-    ? activities.reduce((best, activity) =>
+  // Fall back to computing from activities if prop not provided.
+  // Quarantined rounds (decision D4) can't be the "best" — they are excluded
+  // from the handicap the differential feeds.
+  const countedActivities = activities.filter((a) => !a.quarantined);
+  const fallbackBestRoundDate = countedActivities.length > 0
+    ? countedActivities.reduce((best, activity) =>
         activity.scoreDifferential < best.scoreDifferential ? activity : best
       ).date
     : null;

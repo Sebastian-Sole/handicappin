@@ -34,7 +34,12 @@ export const HomePage = async ({ profile }: HomepageProps) => {
     return a.id - b.id;
   });
 
-  const relevantRoundsList = getRelevantRounds(sortedRounds);
+  // Quarantined rounds (accept-and-quarantine, decision D4) stay visible in
+  // lists and charts but are excluded from every handicap-derived statistic:
+  // handicap relevance, best differential, and the hero's average-score stat.
+  const countedSortedRounds = sortedRounds.filter((r) => !r.quarantined);
+
+  const relevantRoundsList = getRelevantRounds(countedSortedRounds);
 
   const previousHandicaps = sortedRounds.slice(-10).map((round) => ({
     key: `${round.id}`,
@@ -69,10 +74,17 @@ export const HomePage = async ({ profile }: HomepageProps) => {
       )
       : 0;
 
-  // Calculate lowest differential for QuickStats
+  // Hero's average-score/rounds-played stats count only non-quarantined
+  // rounds; the score bar chart below keeps ALL rounds visible.
+  const countedPreviousScores = countedSortedRounds
+    .slice(-10)
+    .map((round) => round.scoreDifferential);
+
+  // Calculate lowest differential for QuickStats (counted rounds only — a
+  // quarantined round cannot be the "best" of a handicap it doesn't feed)
   const lowestDifferential =
-    rounds.length > 0
-      ? Math.min(...rounds.map((r) => r.scoreDifferential))
+    countedSortedRounds.length > 0
+      ? Math.min(...countedSortedRounds.map((r) => r.scoreDifferential))
       : null;
 
   // Fetch course info for best round and activity feed
@@ -119,7 +131,7 @@ export const HomePage = async ({ profile }: HomepageProps) => {
           <div className="relative">
             <Hero
               profile={profile}
-              previousScores={previousScores.map((s) => s.score)}
+              previousScores={countedPreviousScores}
               initialHandicapIndex={initialHandicapIndex}
               bestRound={bestRound}
               bestRoundTee={bestRoundTee}
