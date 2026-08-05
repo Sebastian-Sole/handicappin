@@ -22,6 +22,7 @@ import {
   sessionPersistence,
 } from "@/lib/round-session/store";
 import type { ScorecardInput } from "@/lib/scorecard";
+import { parseDbTimestamp } from "@/lib/parse-db-timestamp";
 
 /** Transport failure (offline/DNS/timeout) vs. a server response. tRPC
     server responses always carry `data` (code, httpStatus); pure transport
@@ -46,7 +47,8 @@ export async function roundAlreadyLanded(
     const total = payload.scores.reduce((sum, s) => sum + s.strokes, 0);
     return rounds.some(
       (r) =>
-        new Date(r.teeTime).getTime() === target && r.totalStrokes === total,
+        parseDbTimestamp(r.teeTime).getTime() === target &&
+        r.totalStrokes === total,
     );
   } catch {
     // Can't check (probably still offline) — don't block the retry on it;

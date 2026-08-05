@@ -8,6 +8,7 @@ import DashboardSkeleton from "./dashboardSkeleton";
 import { getRelevantRounds } from "@handicappin/handicap-core";
 import { ScorecardWithRound } from "@/types/scorecard-input";
 import { RoundsTable } from "./roundsTable";
+import { parseDbTimestamp } from "@/lib/parse-db-timestamp";
 
 interface DashboardProps {
   profile: Tables<"profile">;
@@ -21,7 +22,9 @@ export function Dashboard({ profile, scorecards, header }: DashboardProps) {
   // Sort scorecards by teeTime before mapping (matches homepage behavior)
   // Use round.id as secondary sort for stable ordering when teeTimes are identical
   const sortedScorecards = [...scorecards].sort((a, b) => {
-    const timeComparison = new Date(a.teeTime).getTime() - new Date(b.teeTime).getTime();
+    const timeComparison =
+      parseDbTimestamp(a.teeTime).getTime() -
+      parseDbTimestamp(b.teeTime).getTime();
     if (timeComparison !== 0) return timeComparison;
     // If teeTimes are equal, sort by round ID
     return a.round.id - b.round.id;
@@ -47,8 +50,8 @@ export function Dashboard({ profile, scorecards, header }: DashboardProps) {
   // Map to graph data
   const graphData = recentScorecards.map((scorecard) => ({
     key: `${scorecard.round.id}`, // Unique key for recharts
-    roundDate: new Date(scorecard.teeTime).toLocaleDateString(),
-    roundTime: new Date(scorecard.teeTime).toLocaleTimeString([], {
+    roundDate: parseDbTimestamp(scorecard.teeTime).toLocaleDateString(),
+    roundTime: parseDbTimestamp(scorecard.teeTime).toLocaleTimeString([], {
       hour: "2-digit",
       minute: "2-digit",
     }),

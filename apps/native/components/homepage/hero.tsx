@@ -21,6 +21,7 @@ import { Button } from "@/components/ui/button";
 import { H1 } from "@/components/ui/typography";
 import { tokens } from "@handicappin/tokens/tokens";
 import type { RoundRow, TeeInfoRow } from "@/lib/api/schemas/round";
+import { parseDbTimestamp } from "@/lib/parse-db-timestamp";
 import type { Profile } from "@/lib/api/schemas/profile";
 import { useColorMode } from "@/lib/color-mode";
 import {
@@ -127,7 +128,7 @@ export function Hero({
             Welcome back, {profile.name?.split(" ")[0] || "Golfer"}
           </H1>
           <Text className="text-body-sm text-muted-foreground mt-xs">
-            Member since {new Date(profile.createdAt).getFullYear()}
+            Member since {parseDbTimestamp(profile.createdAt).getFullYear()}
           </Text>
         </View>
 

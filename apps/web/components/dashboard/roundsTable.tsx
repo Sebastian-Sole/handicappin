@@ -17,6 +17,7 @@ import { ScorecardWithRound } from "@/types/scorecard-input";
 import { H2 } from "../ui/typography";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ListChecks } from "lucide-react";
+import { parseDbTimestamp } from "@/lib/parse-db-timestamp";
 
 interface RoundsTableProps {
   scorecards: ScorecardWithRound[];
@@ -170,7 +171,7 @@ export function RoundsTable({
             {filteredAndSortedScorecards.map((scorecard, index) => (
               <TableRow key={index} className="hover:bg-accent/20">
                 <TableCell>
-                  {new Date(scorecard.teeTime).toLocaleString()}
+                  {parseDbTimestamp(scorecard.teeTime).toLocaleString()}
                 </TableCell>
                 <TableCell>{scorecard.course.name}</TableCell>
                 <TableCell>{scorecard.round.adjustedGrossScore}</TableCell>

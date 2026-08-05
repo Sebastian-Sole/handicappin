@@ -16,6 +16,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { Input } from "@/components/ui/input";
 import { tokens } from "@handicappin/tokens/tokens";
 import type { ScorecardWithRound } from "@/lib/api/schemas/scorecard";
+import { parseDbTimestamp } from "@/lib/parse-db-timestamp";
 import { useColorMode } from "@/lib/color-mode";
 
 const ICON_SIZE = 20; // allow-hardcoded lucide icon prop mirrors web's fixed h-5 w-5 icon box
@@ -175,11 +176,11 @@ export function RoundsTable({
               >
                 <Text
                   accessibilityRole="button"
-                  accessibilityLabel={`View calculation for ${scorecard.course.name}, ${new Date(scorecard.teeTime).toLocaleDateString()}`}
+                  accessibilityLabel={`View calculation for ${scorecard.course.name}, ${parseDbTimestamp(scorecard.teeTime).toLocaleDateString()}`}
                   className="text-body-sm text-foreground px-md py-sm"
                   style={{ width: 110 }}
                 >
-                  {new Date(scorecard.teeTime).toLocaleDateString()}
+                  {parseDbTimestamp(scorecard.teeTime).toLocaleDateString()}
                 </Text>
                 <Text
                   className="text-body-sm text-foreground px-md py-sm"

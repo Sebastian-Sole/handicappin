@@ -13,6 +13,7 @@ import {
   getAverageScoreChangeDescription,
   getHandicapChangeDescription,
 } from "@/utils/golf-stats";
+import { parseDbTimestamp } from "@/lib/parse-db-timestamp";
 
 interface HeroProps {
   profile: Tables<"profile">;
@@ -82,7 +83,7 @@ const Hero = ({
             Welcome back, {profile.name?.split(" ")[0] || "Golfer"}
           </H1>
           <p className="text-body-sm text-muted-foreground mt-xs">
-            Member since {new Date(profile.createdAt).getFullYear()}
+            Member since {parseDbTimestamp(profile.createdAt).getFullYear()}
           </p>
         </div>
 

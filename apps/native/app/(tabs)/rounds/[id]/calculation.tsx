@@ -34,6 +34,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { H2 } from "@/components/ui/typography";
 import { trpcQuery } from "@/lib/api/client";
+import { parseDbTimestamp } from "@/lib/parse-db-timestamp";
 import {
   scorecardWithRoundSchema,
   type ScorecardWithRound,
@@ -124,7 +125,7 @@ function CalculationContent({
 }) {
   const insets = useSafeAreaInsets();
   const calc = useRoundCalculation(scorecard);
-  const roundDate = new Date(scorecard.teeTime).toLocaleDateString("en-US", {
+  const roundDate = parseDbTimestamp(scorecard.teeTime).toLocaleDateString("en-US", {
     weekday: "long",
     year: "numeric",
     month: "long",

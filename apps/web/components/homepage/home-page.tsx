@@ -11,6 +11,7 @@ import { H2 } from "@/components/ui/typography";
 import { getRelevantRounds } from "@handicappin/handicap-core";
 import { transformRoundsToActivities } from "@/utils/activity-transform";
 import { HOMEPAGE_ROUNDS_LIMIT } from "@/utils/golf-stats";
+import { parseDbTimestamp } from "@/lib/parse-db-timestamp";
 
 interface HomepageProps {
   profile: Tables<"profile">;
@@ -29,7 +30,8 @@ export const HomePage = async ({ profile }: HomepageProps) => {
   // Process data for charts and activity feed
   const sortedRounds = [...rounds].sort((a, b) => {
     const timeComparison =
-      new Date(a.teeTime).getTime() - new Date(b.teeTime).getTime();
+      parseDbTimestamp(a.teeTime).getTime() -
+      parseDbTimestamp(b.teeTime).getTime();
     if (timeComparison !== 0) return timeComparison;
     return a.id - b.id;
   });
@@ -38,8 +40,8 @@ export const HomePage = async ({ profile }: HomepageProps) => {
 
   const previousHandicaps = sortedRounds.slice(-10).map((round) => ({
     key: `${round.id}`,
-    roundDate: new Date(round.teeTime).toLocaleDateString(),
-    roundTime: new Date(round.teeTime).toLocaleTimeString([], {
+    roundDate: parseDbTimestamp(round.teeTime).toLocaleDateString(),
+    roundTime: parseDbTimestamp(round.teeTime).toLocaleTimeString([], {
       hour: "2-digit",
       minute: "2-digit",
     }),
@@ -48,8 +50,8 @@ export const HomePage = async ({ profile }: HomepageProps) => {
 
   const previousScores = sortedRounds.slice(-10).map((round) => ({
     key: `${round.id}`,
-    roundDate: new Date(round.teeTime).toLocaleDateString(),
-    roundTime: new Date(round.teeTime).toLocaleTimeString([], {
+    roundDate: parseDbTimestamp(round.teeTime).toLocaleDateString(),
+    roundTime: parseDbTimestamp(round.teeTime).toLocaleTimeString([], {
       hour: "2-digit",
       minute: "2-digit",
     }),
@@ -143,7 +145,9 @@ export const HomePage = async ({ profile }: HomepageProps) => {
                 <QuickStats
                   activities={activities}
                   lowestDifferential={lowestDifferential}
-                  bestRoundDate={bestRound ? new Date(bestRound.teeTime) : null}
+                  bestRoundDate={
+                    bestRound ? parseDbTimestamp(bestRound.teeTime) : null
+                  }
                 />
               </div>
             </div>
