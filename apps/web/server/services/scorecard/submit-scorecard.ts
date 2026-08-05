@@ -43,6 +43,7 @@ import {
   PlanNotSelectedError,
   RoundLimitRaceError,
   RoundLimitReachedError,
+  ScoreHoleMismatchError,
   SelfSubmissionError,
   mapRoundInsertError,
 } from "./errors";
@@ -325,10 +326,20 @@ export async function submitScorecard(
     let courseId = coursePlayed.id;
     let courseIsNew = false;
 
+    // Match on the FULL natural key — (name, country, city) is the unique
+    // index on `course` (course_name_country_city_key). A name-only lookup
+    // silently rebinds the round to whichever same-name course sorts first,
+    // e.g. two "Royal Golf Club"s in different countries.
     const existingCourse = await tx
       .select()
       .from(course)
-      .where(eq(course.name, coursePlayed.name))
+      .where(
+        and(
+          eq(course.name, coursePlayed.name),
+          eq(course.country, coursePlayed.country),
+          eq(course.city, coursePlayed.city)
+        )
+      )
       .limit(1);
 
     if (existingCourse[0]) {
@@ -797,6 +808,21 @@ export async function submitScorecard(
       throw new Error(
         `Selected ${holesToUse.length} holes for ${scores.length} scores (section=${nineHoleSection ?? "n/a"})`
       );
+    }
+
+    // Insert-time integrity: when a client supplies an explicit score.holeId
+    // (web/native submit `holeId: undefined` and rely on the positional
+    // assignment below), it must reference one of the resolved tee's holes
+    // for the played section. Anything else is a cross-tee or cross-section
+    // claim that the positional overwrite would otherwise silently mask.
+    const sectionHoleIds = new Set(holesToUse.map((dbHole) => dbHole.id));
+    for (const submitted of scores) {
+      if (
+        submitted.holeId !== undefined &&
+        !sectionHoleIds.has(submitted.holeId)
+      ) {
+        throw new ScoreHoleMismatchError(submitted.holeId, teeId);
+      }
     }
 
     const scoreInserts = scores.map((score, index) => ({

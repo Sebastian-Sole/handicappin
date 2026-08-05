@@ -810,3 +810,83 @@ describe("submitScorecard characterization — course resolution failures and th
     expect(h.fakeDb.inserts).toHaveLength(0);
   });
 });
+
+describe("submitScorecard — score.holeId insert-time integrity", () => {
+  it("accepts explicit holeIds that match the played tee's db holes", async () => {
+    accessMock.mockResolvedValue(unlimitedAccess);
+    seedApprovedCourseAndTee();
+
+    // Same ids as the db holes (9501..9518), submitted explicitly.
+    const result = await buildCaller().submitScorecard(
+      buildScorecard({
+        scores: Array.from({ length: 18 }, (_, i) => ({
+          holeId: 9501 + i,
+          strokes: 5,
+          hcpStrokes: 0,
+        })),
+      })
+    );
+
+    expect(result.id).toBe(9301);
+    const scoreRows = h.fakeDb.insertsFor(scoreTable)[0] as Row[];
+    expect(scoreRows.map((r) => r.holeId)).toEqual(
+      Array.from({ length: 18 }, (_, i) => 9501 + i)
+    );
+  });
+
+  it("rejects a score whose holeId belongs to a different tee (BAD_REQUEST, nothing persisted)", async () => {
+    accessMock.mockResolvedValue(unlimitedAccess);
+    seedApprovedCourseAndTee();
+
+    // The client's teePlayed.holes and score holeIds are internally
+    // consistent (8001..8018), so the pre-insert handicap calculation
+    // succeeds — but they are NOT the resolved tee's db holes (9501..9518).
+    // Before the fix this cross-tee claim was silently masked by the
+    // positional overwrite; now it must surface as a typed rejection.
+    const spoofedTee = buildTee(true);
+    spoofedTee.holes = spoofedTee.holes.map((holeRow, i) => ({
+      ...holeRow,
+      id: 8001 + i,
+    }));
+
+    await expect(
+      buildCaller().submitScorecard(
+        buildScorecard({
+          teePlayed: spoofedTee,
+          scores: Array.from({ length: 18 }, (_, i) => ({
+            holeId: 8001 + i,
+            strokes: 5,
+            hcpStrokes: 0,
+          })),
+        })
+      )
+    ).rejects.toMatchObject({
+      code: "BAD_REQUEST",
+      message: expect.stringContaining("does not belong to the played section"),
+    });
+
+    expect(h.fakeDb.insertsFor(scoreTable)).toHaveLength(0);
+  });
+
+  it("rejects a back-9 round claiming a front-9 hole of the same tee", async () => {
+    accessMock.mockResolvedValue(unlimitedAccess);
+    seedApprovedCourseAndTee();
+
+    // Scores claim holes 1..9 (ids 9501..9509) but the round is section
+    // "back", whose db slice is holes 10..18 (ids 9510..9518).
+    await expect(
+      buildCaller().submitScorecard(
+        buildScorecard({
+          scores: Array.from({ length: 9 }, (_, i) => ({
+            holeId: 9501 + i,
+            strokes: 5,
+            hcpStrokes: 0,
+          })),
+          nineHoleSection: "back",
+        })
+      )
+    ).rejects.toMatchObject({ code: "BAD_REQUEST" });
+
+    expect(h.fakeDb.insertsFor(scoreTable)).toHaveLength(0);
+  });
+});

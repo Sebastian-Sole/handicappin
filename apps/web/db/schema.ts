@@ -14,6 +14,7 @@ import {
   timestamp,
   pgSchema,
   index,
+  check,
 } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
 import { createSelectSchema } from "drizzle-zod";
@@ -313,6 +314,13 @@ export const round = pgTable(
   },
   (table) => [
     index("idx_round_userId").on(table.userId),
+    // Domain guard (20260805150000): the only values any write path produces.
+    // Consumers fail closed on 'approved' filters; the activity transform
+    // additionally fails closed in code. This pins the domain at the source.
+    check(
+      "round_approval_status_check",
+      sql`"approvalStatus" in ('pending', 'approved', 'rejected')`
+    ),
     // Strict natural-key duplicate guard for every write path (web, native,
     // watch, API). NULLS NOT DISTINCT so two 18-hole rounds (null
     // nineHoleSection) at the same tee time collide too; legitimate
