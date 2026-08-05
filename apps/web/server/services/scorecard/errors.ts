@@ -38,21 +38,6 @@ export class RoundLimitReachedError extends Error {
 }
 
 /**
- * Free-tier limit exceeded by a concurrent submission, detected by the
- * post-commit re-check; the just-committed round was compensated away.
- * Part B (behind subplan 003's `quarantined` column) replaces this whole
- * path with an in-transaction active-vs-quarantined decision.
- */
-export class RoundLimitRaceError extends Error {
-  constructor() {
-    super(
-      "Round limit exceeded due to concurrent submissions. Your submission was not saved. Please try again."
-    );
-    this.name = "RoundLimitRaceError";
-  }
-}
-
-/**
  * Course/tee resolution failed (e.g. a referenced tee id does not exist as
  * an approved, non-archived row). Maps to INTERNAL_SERVER_ERROR in the tRPC
  * adapter exactly like the plain `Error` it replaces.

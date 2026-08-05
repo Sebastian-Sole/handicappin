@@ -13,7 +13,6 @@ import {
   submitScorecard,
   DuplicateRoundError,
   PlanNotSelectedError,
-  RoundLimitRaceError,
   RoundLimitReachedError,
   SelfSubmissionError,
 } from "@/server/services/scorecard";
@@ -173,16 +172,16 @@ export const roundRouter = createTRPCRouter({
         return await submitScorecard(
           {
             db,
-            supabase: ctx.supabase,
             authUserId: ctx.user.id,
+            // The service reads only { hasAccess, plan, remainingRounds };
+            // the full FeatureAccess satisfies that Pick structurally.
             getUserAccess: (userId) =>
               getComprehensiveUserAccess(userId, ctx.supabase),
             notifyAdmins: sendAdminSubmissionNotification,
             logger,
             analytics: getPostHogClient(),
-            // Part B seam: web/native keeps reject-at-limit; the /v1 REST
-            // adapter (subplan 005) passes "quarantine" once subplan 003's
-            // `quarantined` column lands.
+            // Web/native keeps reject-at-limit; the /v1 REST adapter
+            // (subplan 005) passes "quarantine" (002 Part B).
             overLimitPolicy: "reject",
           },
           input
@@ -191,8 +190,7 @@ export const roundRouter = createTRPCRouter({
         if (
           error instanceof SelfSubmissionError ||
           error instanceof PlanNotSelectedError ||
-          error instanceof RoundLimitReachedError ||
-          error instanceof RoundLimitRaceError
+          error instanceof RoundLimitReachedError
         ) {
           throw new TRPCError({ code: "FORBIDDEN", message: error.message });
         }
