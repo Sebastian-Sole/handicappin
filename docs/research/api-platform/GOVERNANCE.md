@@ -83,6 +83,13 @@ Read together (per #151's analysis, which we adopt): the enforcement ask is **US
 
 **fitbull (the actual exposure):** a separate, public consumer app by the same owner that — per the working premise of plan 008 — will surface the connected user's WHS-method unofficial index. That premise has two unconfirmed parameters that materially move the risk (§5, U2/U3): whether fitbull is distributed in the **US** market, and whether it **displays the index** at all versus using rounds/sync silently.
 
+> **AMENDMENT (owner, 2026-08-05 — U2/U3 answered; `DECISIONS.md` D8).** **The working premise above is false.** fitbull ships to the US **and does not display the index at all** — it writes rounds into handicappin and shows fitness data back, never rendering a handicap number. Read the three aggravations below with that correction applied:
+> - **(1) Distribution across a product boundary** — survives unchanged. The index still crosses from one product to another over the API, even though the receiving product never renders it. AM-3 (third-party scope creep) remains the live control.
+> - **(2) US-market contradiction** — **largely evaporates.** There is no index display to US users, in fitbull or anywhere else, because there is no index display at all. What remains is narrower and non-obvious: fitbull must not *advertise handicap features* into the US market while the GPA track is open (store listing, screenshots, marketing copy). The exposure moved from the product surface to the **marketing** surface.
+> - **(3) Terminology propagation** — survives, and is now easier to satisfy: with no index screen there is no natural place for a WHS mark to appear, but store copy and marketing still must carry none (LB-2).
+>
+> The §4 conclusion below therefore holds *a fortiori* for the display question and should be ratified with that reading: the private API transport changes nothing, and the US fact pattern is no longer changed by index display because no such display exists.
+
 The three aggravations relative to today's fact pattern — [inference]:
 
 1. **Distribution across a product boundary.** The index now flows from one product to another. For a *first-party* pair under one owner with per-user OAuth consent, this is organizationally the same actor and does not create the "providing a handicap value [as a service to others]" pattern the GPA clause targets — but it is a step in that direction, and it is exactly the surface that must not extend to third parties without revisiting this document (§6, AM-3).
@@ -107,8 +114,8 @@ The three aggravations relative to today's fact pattern — [inference]:
 | I2 | First-party fitbull display ≈ same Norwegian fact pattern as handicappin.com itself | [inference] §4 |
 | I3 | Private first-party API transport is governance-neutral | [inference] §4 |
 | U1 | Has NGF replied to the 2026-07-13 enquiry? Was the ~07-20 Gmail follow-up sent? | [unknown] — **owner: check inbox + #147, record status** |
-| U2 | Will fitbull be distributed to US users (store regions, web availability)? | [unknown] — **owner input** |
-| U3 | Will fitbull display the index, or consume rounds/sync without showing the number? | [unknown] — **owner/product input; a real design lever: no display ⇒ most of §4 evaporates** |
+| U2 | Will fitbull be distributed to US users (store regions, web availability)? | **ANSWERED 2026-08-05 — YES.** fitbull ships to the US market. |
+| U3 | Will fitbull display the index, or consume rounds/sync without showing the number? | **ANSWERED 2026-08-05 — NO DISPLAY.** fitbull consumes rounds and never renders a handicap number. The design lever was taken: most of §4 evaporates. |
 | U4 | NGF's actual position on unofficial WHS-method estimates in Norwegian apps | [unknown] — only NGF can answer; draft question in §8 |
 | U5 | Legal enforceability of the "calculation formula" claim | [unknown] — deliberately not pursued |
 
@@ -118,7 +125,10 @@ The three aggravations relative to today's fact pattern — [inference]:
 
 ### Launch-blocking (v1 does not ship to a *publicly released* fitbull until closed)
 
-- **LB-1 — US index display.** fitbull must not display the handicap index (nor advertise handicap features) to US-market users while the GPA track is open. Close by: (a) geo-gating index display in fitbull (mirror of the geo-gated-estimator shape #151 already identified for handicappin), or (b) owner decision to park/abandon GPA, recorded in #151/#148. Note: shipping /v1 into a private fitbull dev/TestFlight build is **not** blocked — the gate binds at fitbull's public availability.
+- **LB-1 — US index display. DISPLAY HALF CLOSED BY CONSTRUCTION (owner, 2026-08-05 — U3/D8).** fitbull will not display the handicap index **in any market**, so there is no index display to geo-gate and closure route (a) is moot. The originally-envisaged geo-gating work is **not required**.
+  - **What survives:** the parenthetical clause — fitbull must not **advertise handicap features** to US-market users while the GPA track is open. This binds fitbull's App Store listing, screenshots, and marketing copy in US-available regions (U2 = yes, fitbull ships to the US). Silent round-syncing is fine; a store screenshot captioned "track your handicap" is not.
+  - **Owner:** fitbull-repo release checklist, at public availability. Shipping /v1 into a private fitbull dev/TestFlight build remains **not** blocked.
+  - Route (b) — parking/abandoning GPA — remains available and would close the advertise-clause too, but is no longer needed to close the display exposure.
 - **LB-2 — Trademark audit of fitbull surfaces.** Before fitbull's public release: zero WHS marks (list in §2.2) in fitbull UI, store listings, or marketing. Use descriptive language ("handicap estimate (unofficial), calculated by handicappin from your rounds"), mirroring handicappin's disclaimer posture. One-pass audit, checklist kept with fitbull's release notes.
 - **LB-3 — Owner sign-off on this document** (§7), including the negotiation-posture call (raise fitbull proactively in the live threads, or not — §7.3). The A.5 condition requires the conclusion *documented*; it is the sign-off that makes it so.
 
@@ -133,25 +143,29 @@ The three aggravations relative to today's fact pattern — [inference]:
 
 ## 7. Owner sign-off checklist (closes the pre-launch gate)
 
-1. [ ] Ratify the §4 conclusion (or amend it) — this is the "documented conclusion that a first-party app does or does not trip the boundary" required by condition A.5.
-2. [ ] Answer U1–U3 (§5) and record them here.
-3. [ ] **Negotiation-posture call:** whether to proactively raise fitbull in the live threads. Our recommendation, for what it's worth: **do not proactively raise it with the USGA** (their answer is already on record — "not in the US market"; proactive disclosure of a non-US companion app adds nothing and risks re-opening the maximal global claim), and **fold it into the NGF conversation naturally once NGF replies** (§8) rather than nudging with new scope. The call is the owner's.
-4. [ ] Confirm LB-1/LB-2 closure plan (geo-gate decision + trademark audit owner).
-5. [ ] Ratify the ADR trigger thresholds (`ADR-2026-07-29-launch-gates.md`) and put the two review dates in a calendar.
+1. [ ] Ratify the §4 conclusion (or amend it) — this is the "documented conclusion that a first-party app does or does not trip the boundary" required by condition A.5. **Note: §4's working premise ("fitbull will surface the index") is now false per U3 — read the amendment note under §4 before ratifying.**
+2. [x] **Answer U1–U3 (§5) and record them here.** U2/U3 answered 2026-08-05 (see ledger). **U1 still open** — owner to check whether the ~07-20 NGF Gmail follow-up actually sent.
+3. [x] **Negotiation-posture call — DECIDED 2026-08-05: do not proactively disclose fitbull to the USGA *or* to NGF.** Owner's reasoning: they are two separate applications, and neither body needs to be told about the second. Consistent with I2 (no change in kind to the Norwegian fact pattern ⇒ no new fact to report). This goes **further than the recommendation offered**, which was to disclose to NGF once a real conversation existed. **Consequences:** §8's draft question is superseded and rewritten below; if either body asks directly, answer honestly — the decision is about not volunteering, not about withholding under question. Recorded in `DECISIONS.md` D7.
+4. [x] **Confirm LB-1/LB-2 closure plan.** LB-1 display half closed by construction (U3); LB-1 advertise-clause + LB-2 marks audit are fitbull-repo release-checklist items, owner-executed at fitbull's public release.
+5. [ ] Ratify the ADR trigger thresholds (`ADR-2026-07-29-launch-gates.md`) and put the two review dates in a calendar. **Note: per `DECISIONS.md` D9 the demand instrumentation was descoped, so the 2026-10-15 review has no interest data to weigh — ratify it as a "still first-party only" default rather than a data review.**
 
-## 8. The NGF question (draft — use only per the owner's §7.3 call)
+## 8. The NGF question (REWRITTEN 2026-08-05 per D7 — fitbull is not disclosed)
 
-Context: the live thread is the A-scoped Leverandør enquiry to Rasmus Nybø (cc Martin Dølerud), sent 2026-07-13. Recommendation: do **not** bundle this into a courtesy nudge; ask it once a real conversation exists (their reply, or a call). Keep it A-scoped — guidance-seeking, not permission-seeking, and framed as the same developer's companion app, not a third-party integration.
+**Supersession notice.** The prior draft of this section disclosed fitbull explicitly ("Vi bygger også en treningsapp fra samme utvikler…"). Owner decision D7 (2026-08-05) is **not to proactively disclose fitbull to NGF or the USGA**. That draft must not be sent. The question below is rewritten to cover handicappin only — which is truthful and complete as a question about handicappin, and volunteers nothing about a second product.
+
+Context: the live thread is the A-scoped Leverandør enquiry to Rasmus Nybø (cc Martin Dølerud), sent 2026-07-13. Recommendation unchanged: do **not** bundle this into a courtesy nudge; ask once a real conversation exists (their reply, or a call). Keep it A-scoped — guidance-seeking, not permission-seeking.
 
 Norwegian (primary):
 
-> Et lite tilleggsspørsmål mens vi venter på sertifiseringsløpet: Handicappin' viser i dag et **uoffisielt** handicap-estimat (tydelig merket som uoffisielt, med full utregning synlig). Vi bygger også en treningsapp fra samme utvikler, der brukeren kan koble til Handicappin'-kontoen sin og se det samme estimatet der. Har NGF retningslinjer for hvordan uoffisielle handicap-estimater bør merkes eller presenteres i norske apper i påvente av en eventuell Leverandør-sertifisering? Vi vil gjerne legge oss så tett på forbundets forventninger som mulig allerede nå.
+> Et lite tilleggsspørsmål mens vi venter på sertifiseringsløpet: Handicappin' viser i dag et **uoffisielt** handicap-estimat til den enkelte brukeren (tydelig merket som uoffisielt, med full utregning synlig, og uten at vi utsteder noe offisielt handicap). Har NGF retningslinjer for hvordan uoffisielle handicap-estimater bør merkes eller presenteres i norske apper i påvente av en eventuell Leverandør-sertifisering? Vi vil gjerne legge oss så tett på forbundets forventninger som mulig allerede nå.
 
 English (for the record):
 
-> A small additional question while the certification track is pending: Handicappin' today shows an **unofficial** handicap estimate (clearly labelled unofficial, with the full calculation visible). We are also building a fitness app from the same developer, where a user can connect their Handicappin' account and see the same estimate there. Does NGF have guidelines for how unofficial handicap estimates should be labelled or presented in Norwegian apps pending any Leverandør certification? We'd like to align with the federation's expectations as closely as possible already now.
+> A small additional question while the certification track is pending: Handicappin' today shows an **unofficial** handicap estimate to the individual user (clearly labelled unofficial, with the full calculation visible, and without us issuing any official handicap). Does NGF have guidelines for how unofficial handicap estimates should be labelled or presented in Norwegian apps pending any Leverandør certification? We'd like to align with the federation's expectations as closely as possible already now.
 
-Why this shape: it discloses fitbull honestly (no ambush risk later), asks for *labelling guidance* (an answerable, low-stakes question) instead of a yes/no permission (which invites a reflexive "no" from a federation mid-procurement), and reinforces the good-citizen posture the whole #144 strategy depends on.
+Why this shape: it asks for *labelling guidance* (an answerable, low-stakes question) rather than a yes/no permission (which invites a reflexive "no" from a federation mid-procurement), and reinforces the good-citizen posture the whole #144 strategy depends on.
+
+**What changed and the trade being accepted.** The prior draft's stated virtue was "no ambush risk later." D7 accepts that residual knowingly: if NGF certifies handicappin as Leverandør and subsequently notices fitbull, it is discovered rather than disclosed. The answer at that point is I2 — a first-party companion app that does not display the index does not change the Norwegian fact pattern in kind. If NGF asks directly about companion apps or data sharing at any point, **answer honestly and fully**; D7 governs volunteering, not candour under question.
 
 ## 9. Review dates
 
