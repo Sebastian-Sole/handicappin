@@ -10,20 +10,26 @@ import { ChevronLeft } from "lucide-react-native";
 import { useState } from "react";
 import { Pressable, ScrollView, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { z } from "zod";
 
 import { tokens } from "@handicappin/tokens/tokens";
 
+import { QuarantineBadge } from "@/components/billing/quarantine-badge";
 import { DataSettledMarker } from "@/components/data-settled";
 import { SegmentedTabs, StatCard } from "@/components/statistics/shared";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Card, CardContent } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { H1, H2 } from "@/components/ui/typography";
 import { trpcQuery } from "@/lib/api/client";
+import {
+  courseDetailSchema,
+  type CourseDetailRound,
+} from "@/lib/api/schemas/stats";
 import { useSession } from "@/lib/auth/session-provider";
 import { useColorMode } from "@/lib/color-mode";
 import { getFlagEmoji } from "@/lib/frivolities";
 import { useDataSettled } from "@/lib/query/settle";
+import { getCourseDetailDisplay } from "@/lib/statistics/course-detail-display";
 import {
   formatDifferential,
   formatScore,
@@ -31,53 +37,6 @@ import {
 } from "@/lib/statistics/format-utils";
 
 const ICON_SIZE = 16; // allow-hardcoded lucide icon prop mirrors web's fixed h-4 w-4 icon box
-
-const courseDetailSchema = z
-  .object({
-    course: z.object({
-      id: z.coerce.number(),
-      name: z.string(),
-      city: z.string(),
-      country: z.string(),
-    }),
-    summary: z.object({
-      roundCount: z.coerce.number(),
-      avgScore: z.coerce.number().nullable(),
-      avgDifferential: z.coerce.number().nullable(),
-      bestDifferential: z.coerce.number().nullable(),
-      worstDifferential: z.coerce.number().nullable(),
-    }),
-    rounds: z.array(
-      z
-        .object({
-          id: z.coerce.number(),
-          teeTime: z.union([z.string(), z.date()]).transform((v) =>
-            typeof v === "string" ? v : v.toISOString(),
-          ),
-          totalStrokes: z.coerce.number(),
-          parPlayed: z.coerce.number(),
-          scoreDifferential: z.coerce.number(),
-          holesPlayed: z.coerce.number(),
-          nineHoleSection: z.enum(["front", "back"]).nullable(),
-          teeName: z.string(),
-        })
-        .passthrough(),
-    ),
-    holes: z.array(
-      z
-        .object({
-          holeNumber: z.coerce.number(),
-          par: z.coerce.number(),
-          playCount: z.coerce.number(),
-          avgStrokes: z.coerce.number(),
-          avgVsPar: z.coerce.number(),
-          best: z.coerce.number(),
-          worst: z.coerce.number(),
-        })
-        .passthrough(),
-    ),
-  })
-  .nullable();
 
 const courseDetailQueryOptions = (courseId: number) =>
   queryOptions({
@@ -137,7 +96,10 @@ export default function CourseDetailScreen() {
   }
 
   const { course, summary, rounds, holes } = detail;
-  const hasData = summary.roundCount > 0;
+  // Quarantined rounds are listed but not counted (D4) — the two populations
+  // differ, so the empty state keys off the LIST and the statistics key off
+  // the counted total.
+  const display = getCourseDetailDisplay(rounds.length, summary.roundCount);
   const visibleHoles = holes.filter((hole) =>
     holeHalf === "front" ? hole.holeNumber <= 9 : hole.holeNumber > 9,
   );
@@ -179,7 +141,7 @@ export default function CourseDetailScreen() {
         </Text>
       </View>
 
-      {!hasData ? (
+      {display.state === "empty" ? (
         <Card>
           <CardContent>
             <EmptyState
@@ -188,6 +150,24 @@ export default function CourseDetailScreen() {
             />
           </CardContent>
         </Card>
+      ) : display.state === "all-quarantined" ? (
+        <>
+          {/* Every round here is quarantined: there is nothing to aggregate,
+              but the rounds themselves must stay visible (D4). */}
+          <Alert>
+            <AlertTitle>No stats for this course yet</AlertTitle>
+            <AlertDescription>
+              {display.listedRounds === 1
+                ? "Your round here was saved past the free-tier limit, so it doesn't count toward your handicap or these statistics. Upgrade to unlock it."
+                : `All ${display.listedRounds} of your rounds here were saved past the free-tier limit, so they don't count toward your handicap or these statistics. Upgrade to unlock them.`}
+            </AlertDescription>
+          </Alert>
+          <RoundsSection
+            rounds={rounds}
+            quarantinedRounds={display.quarantinedRounds}
+            listedRounds={display.listedRounds}
+          />
+        </>
       ) : (
         <>
           <View className="flex-row flex-wrap gap-md">
@@ -289,50 +269,86 @@ export default function CourseDetailScreen() {
 
           <View className="h-px bg-border" />
 
-          <View className="gap-md">
-            <H2 className="text-heading-3 pb-0">Rounds here</H2>
-            <View className="gap-sm">
-              {rounds.map((round) => (
-                <Pressable
-                  key={round.id}
-                  accessibilityRole="link"
-                  onPress={() =>
-                    router.push(`/rounds/${round.id}/calculation` as Href)
-                  }
-                >
-                  <Card>
-                    <CardContent className="p-md pt-md">
-                      <View className="flex-row items-center justify-between">
-                        <View>
-                          <Text className="text-body font-medium text-foreground">
-                            {formatDate(round.teeTime)}
-                          </Text>
-                          <Text className="text-meta text-muted-foreground">
-                            {round.teeName} ·{" "}
-                            {holesPlayedLabel(
-                              round.holesPlayed,
-                              round.nineHoleSection,
-                            )}{" "}
-                            holes
-                          </Text>
-                        </View>
-                        <View className="items-end">
-                          <Text className="text-figure-sm text-foreground">
-                            {round.totalStrokes}
-                          </Text>
-                          <Text className="text-meta text-muted-foreground">
-                            {formatDifferential(round.scoreDifferential)} diff
-                          </Text>
-                        </View>
-                      </View>
-                    </CardContent>
-                  </Card>
-                </Pressable>
-              ))}
-            </View>
-          </View>
+          <RoundsSection
+            rounds={rounds}
+            quarantinedRounds={display.quarantinedRounds}
+            listedRounds={display.listedRounds}
+          />
         </>
       )}
     </ScrollView>
+  );
+}
+
+/**
+ * Per-course rounds list — native twin of RoundsSection in
+ * apps/web/app/statistics/courses/[courseId]/page.tsx. Shows EVERY round at
+ * the course, quarantined ones included (D4), each badged the same way the
+ * activity feed badges them so a non-counting round is never displayed as if
+ * it counts.
+ */
+function RoundsSection({
+  rounds,
+  quarantinedRounds,
+  listedRounds,
+}: {
+  rounds: CourseDetailRound[];
+  quarantinedRounds: number;
+  listedRounds: number;
+}) {
+  return (
+    <View className="gap-md">
+      <View>
+        <H2 className="text-heading-3 pb-0">Rounds here</H2>
+        {quarantinedRounds > 0 ? (
+          <Text className="text-body-sm text-muted-foreground mt-xs">
+            {quarantinedRounds} of {listedRounds} don&apos;t count toward the
+            stats above.
+          </Text>
+        ) : null}
+      </View>
+      <View className="gap-sm">
+        {rounds.map((round) => (
+          <Pressable
+            key={round.id}
+            accessibilityRole="link"
+            onPress={() =>
+              router.push(`/rounds/${round.id}/calculation` as Href)
+            }
+          >
+            <Card>
+              <CardContent className="p-md pt-md">
+                <View className="flex-row items-center justify-between">
+                  <View>
+                    <Text className="text-body font-medium text-foreground">
+                      {formatDate(round.teeTime)}
+                    </Text>
+                    <Text className="text-meta text-muted-foreground">
+                      {round.teeName} ·{" "}
+                      {holesPlayedLabel(
+                        round.holesPlayed,
+                        round.nineHoleSection,
+                      )}{" "}
+                      holes
+                    </Text>
+                  </View>
+                  <View className="items-end">
+                    <Text className="text-figure-sm text-foreground">
+                      {round.totalStrokes}
+                    </Text>
+                    <Text className="text-meta text-muted-foreground">
+                      {formatDifferential(round.scoreDifferential)} diff
+                    </Text>
+                  </View>
+                </View>
+                {round.quarantined ? (
+                  <QuarantineBadge className="mt-sm" />
+                ) : null}
+              </CardContent>
+            </Card>
+          </Pressable>
+        ))}
+      </View>
+    </View>
   );
 }

@@ -11,11 +11,10 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { Trophy, ChevronRight, Lock } from "lucide-react";
+import { Trophy, ChevronRight } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { analytics } from "@/lib/analytics";
+import { QuarantineBadge } from "@/components/billing/quarantine-badge";
 import { ActivityItem } from "@/utils/activity-transform";
 
 interface ActivityFeedProps {
@@ -88,7 +87,6 @@ function ActivityItemRow({
   isLast: boolean;
   profileId: string;
 }) {
-  const router = useRouter();
   const formattedDate = new Intl.DateTimeFormat("en-US", {
     month: "short",
     day: "numeric",
@@ -202,39 +200,7 @@ function ActivityItemRow({
 
           {/* Accept-and-quarantine (decision D4): the round stays visible but
               is excluded from handicap and statistics until upgrade. */}
-          {activity.quarantined && (
-            <div className="flex flex-wrap items-center gap-sm mt-sm">
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Badge
-                    variant="secondary"
-                    className="bg-warning/20 text-warning text-meta shrink-0 px-sm"
-                  >
-                    <Lock className="h-3 w-3 mr-xs" />
-                    Not counted — free-tier limit reached
-                  </Badge>
-                </TooltipTrigger>
-                <TooltipContent side="top">
-                  This round was saved but doesn&apos;t count toward your
-                  handicap or statistics. Upgrade to unlock it.
-                </TooltipContent>
-              </Tooltip>
-              <button
-                type="button"
-                onClick={(event) => {
-                  event.preventDefault();
-                  event.stopPropagation();
-                  analytics.capture("upgrade_clicked", {
-                    surface: "quarantined_round_badge",
-                  });
-                  router.push("/upgrade");
-                }}
-                className="text-meta-strong text-primary underline underline-offset-2 hover:text-primary-alternate focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-sm"
-              >
-                Upgrade to count it
-              </button>
-            </div>
-          )}
+          {activity.quarantined && <QuarantineBadge className="mt-sm" />}
         </div>
 
         <ChevronRight className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity mt-sm" />

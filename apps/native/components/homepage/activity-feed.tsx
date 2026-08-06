@@ -6,10 +6,10 @@
  */
 import { router } from "expo-router";
 import type { Href } from "expo-router";
-import { ChevronRight, Lock, Trophy } from "lucide-react-native";
-import * as WebBrowser from "expo-web-browser";
+import { ChevronRight, Trophy } from "lucide-react-native";
 import { Pressable, Text, View } from "react-native";
 
+import { QuarantineBadge } from "@/components/billing/quarantine-badge";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
@@ -17,14 +17,11 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { StatDelta } from "@/components/ui/stat-delta";
 import { tokens } from "@handicappin/tokens/tokens";
 import type { ActivityItem } from "@/lib/activity-transform";
-import { analytics } from "@/lib/analytics";
 import { useColorMode } from "@/lib/color-mode";
-import { SITE_URL } from "@/lib/legal";
 import { cn } from "@/lib/utils";
 
 const TROPHY_SIZE = 12; // allow-hardcoded lucide icon prop mirrors web's fixed h-3 w-3 icon box
 const CHEVRON_SIZE = 16; // allow-hardcoded lucide icon prop mirrors web's fixed h-4 w-4 icon box
-const LOCK_SIZE = 12; // allow-hardcoded lucide icon prop mirrors web's fixed h-3 w-3 icon box
 
 interface ActivityFeedProps {
   activities: ActivityItem[];
@@ -192,40 +189,8 @@ function ActivityItemRow({
         ) : null}
 
         {/* Accept-and-quarantine (decision D4): the round stays visible but
-            is excluded from handicap and statistics until upgrade. Upgrade is
-            a web-only route (ledger §1) — CTA opens the browser, mirroring
-            the native UsageLimitAlert. */}
-        {activity.quarantined ? (
-          <View className="flex-row flex-wrap items-center gap-sm mt-sm">
-            <Badge
-              variant="outline"
-              className="tint-warning border px-sm"
-            >
-              <View
-                className="flex-row items-center gap-xs"
-                accessibilityLabel="Not counted — free-tier limit reached. This round doesn't count toward your handicap or statistics until you upgrade."
-              >
-                <Lock size={LOCK_SIZE} color={warningColor} />
-                <Text className="text-meta text-warning">
-                  Not counted — free-tier limit reached
-                </Text>
-              </View>
-            </Badge>
-            <Pressable
-              accessibilityRole="link"
-              onPress={() => {
-                analytics.capture("upgrade_clicked", {
-                  surface: "quarantined_round_badge",
-                });
-                void WebBrowser.openBrowserAsync(`${SITE_URL}/upgrade`);
-              }}
-            >
-              <Text className="text-meta-strong text-primary underline">
-                Upgrade to count it
-              </Text>
-            </Pressable>
-          </View>
-        ) : null}
+            is excluded from handicap and statistics until upgrade. */}
+        {activity.quarantined ? <QuarantineBadge className="mt-sm" /> : null}
       </View>
 
       <View className="mt-sm">
