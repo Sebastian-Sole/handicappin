@@ -121,6 +121,54 @@ async function getProbeToken(): Promise<{ token: string; userId: string }> {
   return { token: session.access_token, userId };
 }
 
+/**
+ * A brand-new confirmed user with NO profile row, so the first-party OAuth
+ * signup INSERT can be probed as a real insert rather than a no-op conflict.
+ * Returns a disposer that removes the user again (this stack is shared).
+ */
+async function getFreshSignupToken(): Promise<{
+  token: string;
+  userId: string;
+  dispose: () => Promise<void>;
+}> {
+  const email = `g4-signup-${Date.now()}-${Math.floor(Math.random() * 1e6)}@handicappin.test`;
+  const password = "g4-probe-password-123456";
+
+  const created = await fetch(`${AUTH}/admin/users`, {
+    method: "POST",
+    headers: {
+      apikey: SERVICE,
+      Authorization: `Bearer ${SERVICE}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ email, password, email_confirm: true }),
+  });
+  if (!created.ok) {
+    throw new Error(`fresh probe user create failed: ${created.status}`);
+  }
+  const { id: userId } = (await created.json()) as { id: string };
+
+  const signin = await fetch(`${AUTH}/token?grant_type=password`, {
+    method: "POST",
+    headers: { apikey: ANON, "Content-Type": "application/json" },
+    body: JSON.stringify({ email, password }),
+  });
+  if (!signin.ok) {
+    throw new Error(`fresh probe sign-in failed: ${signin.status}`);
+  }
+  const session = (await signin.json()) as { access_token: string };
+
+  const dispose = async () => {
+    await serviceFetch(`/profile?id=eq.${userId}`, { method: "DELETE" });
+    await fetch(`${AUTH}/admin/users/${userId}`, {
+      method: "DELETE",
+      headers: { apikey: SERVICE, Authorization: `Bearer ${SERVICE}` },
+    });
+  };
+
+  return { token: session.access_token, userId, dispose };
+}
+
 async function probe(
   token: string,
   table: string,
@@ -128,7 +176,7 @@ async function probe(
   label: string,
   init: RequestInit
 ): Promise<ProbeResult> {
-  const res = await fetch(`${REST}${init.method === "GET" || !init.method ? "" : ""}${table}`, {
+  const res = await fetch(`${REST}${table}`, {
     ...init,
     headers: {
       apikey: ANON,
@@ -200,6 +248,42 @@ async function main() {
     })
   );
 
+  results.push(
+    await probe(token, `/profile?id=eq.${userId}`, "positive", "PATCH profile.verified (verify-email flow)", {
+      method: "PATCH",
+      body: JSON.stringify({ verified: true }),
+    })
+  );
+
+  // The OAuth signup upsert (app/auth/callback/route.ts,
+  // components/auth/google-sign-in-button.tsx): the exact payload, as a real
+  // INSERT on a user that has no profile row yet. If any of the five granted
+  // columns were missing, first sign-in would break with 42501.
+  const fresh = await getFreshSignupToken();
+  try {
+    results.push(
+      await probe(
+        fresh.token,
+        "/profile?on_conflict=id",
+        "positive",
+        "INSERT profile — first-party OAuth signup payload",
+        {
+          method: "POST",
+          headers: { Prefer: "resolution=ignore-duplicates,return=representation" },
+          body: JSON.stringify({
+            id: fresh.userId,
+            email: `g4-signup-${fresh.userId}@handicappin.test`,
+            name: "G4 Signup Probe",
+            verified: true,
+            handicapIndex: 54,
+          }),
+        }
+      )
+    );
+  } finally {
+    await fresh.dispose();
+  }
+
   // ── email_preferences: legit upsert must still work ──
   results.push(
     await probe(token, `/email_preferences?user_id=eq.${userId}`, "positive", "PATCH email_preferences.feature_updates", {
@@ -207,8 +291,52 @@ async function main() {
       body: JSON.stringify({ feature_updates: false }),
     })
   );
+  // The real shape the auth router uses: POST + merge-duplicates, which
+  // PostgREST compiles to INSERT ... ON CONFLICT DO UPDATE — so it needs the
+  // three columns on BOTH verbs, not just UPDATE.
+  results.push(
+    await probe(token, "/email_preferences?on_conflict=user_id", "positive", "UPSERT email_preferences (auth router)", {
+      method: "POST",
+      headers: { Prefer: "resolution=merge-duplicates,return=representation" },
+      body: JSON.stringify({
+        user_id: userId,
+        feature_updates: true,
+        updated_at: new Date().toISOString(),
+      }),
+    })
+  );
 
   // ── pending_email_changes: no client INSERT; UPDATE only attempts col ──
+  // Seed a row as service_role (clients legitimately cannot create one) so the
+  // OTP verifier's own two client operations are probed against a real row.
+  await serviceFetch("/pending_email_changes?on_conflict=user_id", {
+    method: "POST",
+    headers: { Prefer: "resolution=merge-duplicates" },
+    body: JSON.stringify({
+      user_id: userId,
+      old_email: "g4-probe@handicappin.test",
+      new_email: "g4-probe-new@handicappin.test",
+      token_hash: "probe",
+      expires_at: new Date(Date.now() + 3600_000).toISOString(),
+    }),
+  });
+  results.push(
+    await probe(token, `/pending_email_changes?user_id=eq.${userId}`, "positive", "PATCH pending_email_changes.verification_attempts", {
+      method: "PATCH",
+      body: JSON.stringify({ verification_attempts: 1 }),
+    })
+  );
+  results.push(
+    await probe(token, `/pending_email_changes?user_id=eq.${userId}&select=verification_attempts`, "positive", "SELECT own pending_email_changes", {
+      method: "GET",
+    })
+  );
+  results.push(
+    await probe(token, `/pending_email_changes?user_id=eq.${userId}`, "positive", "DELETE own pending_email_changes (expiry cleanup)", {
+      method: "DELETE",
+    })
+  );
+
   results.push(
     await probe(token, q("pending_email_changes"), "attack", "INSERT pending_email_changes (server-only)", {
       method: "POST",
@@ -283,6 +411,33 @@ async function main() {
   );
   results.push(
     await probe(token, `/hole?select=id,par&limit=1`, "positive", "SELECT hole", { method: "GET" })
+  );
+
+  // ── reads on the tables that lost every write verb must survive ──
+  results.push(
+    await probe(token, `/submissions?select=id,status&limit=1`, "positive", "SELECT submissions (own, round router)", {
+      method: "GET",
+    })
+  );
+  results.push(
+    await probe(token, `/stripe_customers?select=stripe_customer_id&limit=1`, "positive", "SELECT stripe_customers (stripe router)", {
+      method: "GET",
+    })
+  );
+  results.push(
+    await probe(token, `/pending_lifetime_purchases?select=id&limit=1`, "positive", "SELECT pending_lifetime_purchases", {
+      method: "GET",
+    })
+  );
+  results.push(
+    await probe(token, `/legal_consents?select=consent_type&limit=1`, "positive", "SELECT legal_consents", {
+      method: "GET",
+    })
+  );
+  results.push(
+    await probe(token, `/email_preferences?user_id=eq.${userId}&select=feature_updates`, "positive", "SELECT own email_preferences", {
+      method: "GET",
+    })
   );
 
   if (process.argv.includes("--json")) {
