@@ -314,7 +314,7 @@ export const round = pgTable(
   },
   (table) => [
     index("idx_round_userId").on(table.userId),
-    // Domain guard (20260805150000): the only values any write path produces.
+    // Domain guard (20260806150000): the only values any write path produces.
     // Consumers fail closed on 'approved' filters; the activity transform
     // additionally fails closed in code. This pins the domain at the source.
     check(
