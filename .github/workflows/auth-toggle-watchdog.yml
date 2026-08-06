@@ -64,7 +64,10 @@ jobs:
           URL="https://api.supabase.com/v1/projects/${PROJECT_REF}/config/auth"
           echo "Reading auth config: $URL"
 
+          # The body carries SMTP/provider secrets — remove it on every exit
+          # path, not just the happy one.
           BODY_FILE="$(mktemp)"
+          trap 'rm -f "$BODY_FILE"' EXIT
           HTTP_CODE="$(curl -sS -o "$BODY_FILE" -w '%{http_code}' \
             --max-time 30 \
             -H "Authorization: Bearer ${SUPABASE_MGMT_PAT}" \

@@ -486,4 +486,187 @@ describeIfLocal("OAuth detect-and-revoke (real local Supabase)", () => {
     await expect(runDetector()).resolves.not.toThrow();
     expect(await ledgerRows(s.userId)).toHaveLength(1);
   }, 90_000);
+
+  // ── False negative: the grant -> first-tick window (review #187) ────────
+  //
+  // Signal B seeds a snapshot the first time it sees a user and takes no
+  // action. A grant created between two ticks is therefore first seen with
+  // whatever the email columns ALREADY say — so an email change driven in
+  // that sub-minute window is baked into the seed and never fires. The
+  // audit signal does not cover it either: GoTrue v2.183.0 emits no
+  // email-change audit action (that is the whole reason Signal B exists).
+  test("email change BEFORE the first tick after consent is still detected (no seed-swallow)", async () => {
+    const email = `${EMAIL_PREFIX}seedgap-${randomUUID().slice(0, 8)}@handicappin.local`;
+    const s = await mintOAuthSession(email);
+
+    // Deliberately NO seeding tick here — this is the gap under test.
+    const a = admin();
+    const { error: lErr } = await a.auth.admin.generateLink({
+      type: "email_change_new",
+      email,
+      newEmail: `${EMAIL_PREFIX}seedgap-new-${randomUUID().slice(0, 8)}@handicappin.local`,
+    });
+    expect(lErr).toBeNull();
+
+    await runDetector();
+
+    const ledger = await ledgerRows(s.userId);
+    expect(ledger).toHaveLength(1);
+    expect(ledger[0].signal).toBe("email_snapshot");
+    expect(await oauthTokenAlive(s.oauthAccessToken)).toBe(false);
+    expect(await oauthSessions(s.userId)).toHaveLength(0);
+
+    // Idempotent: the grant is gone, so the next tick finds nothing.
+    await runDetector();
+    expect(await ledgerRows(s.userId)).toHaveLength(1);
+  }, 90_000);
+
+  // A change REQUESTED BEFORE the grant existed is outside the threat model
+  // (the token cannot have driven it) and must NOT fire on first sight —
+  // the guard above must not become a blanket "any pending change revokes".
+  test("pre-existing pending email change does NOT fire when the grant is created afterwards", async () => {
+    const a = admin();
+    const email = `${EMAIL_PREFIX}pre-${randomUUID().slice(0, 8)}@handicappin.local`;
+    const password = randomUUID();
+    const { data: created, error: cErr } = await a.auth.admin.createUser({
+      email,
+      email_confirm: true,
+      password,
+    });
+    expect(cErr).toBeNull();
+    const userId = created!.user!.id;
+
+    // Pending email change FIRST...
+    const { error: lErr } = await a.auth.admin.generateLink({
+      type: "email_change_new",
+      email,
+      newEmail: `${EMAIL_PREFIX}pre-new-${randomUUID().slice(0, 8)}@handicappin.local`,
+    });
+    expect(lErr).toBeNull();
+
+    // ...then the OAuth grant.
+    const userClient = createClient(supabaseUrl!, anonKey!, {
+      auth: { autoRefreshToken: false, persistSession: false },
+    });
+    const { error: sErr } = await userClient.auth.signInWithPassword({
+      email,
+      password,
+    });
+    expect(sErr).toBeNull();
+    const { data: client, error: clErr } = await a.auth.admin.oauth.createClient({
+      client_name: `detect-client-${randomUUID().slice(0, 8)}`,
+      redirect_uris: [REDIRECT_URI],
+    });
+    expect(clErr).toBeNull();
+    const oauthAccessToken = await consentAndExchange(
+      userClient,
+      client!.client_id,
+      client!.client_secret!,
+    );
+
+    await runDetector();
+
+    expect(await ledgerRows(userId)).toHaveLength(0);
+    expect(await oauthTokenAlive(oauthAccessToken)).toBe(true);
+  }, 90_000);
+
+  // ── The audit scan must survive a malformed actor_id (review #187) ──────
+  //
+  // `(payload->>'actor_id')::uuid` sits in the JOIN, so it is only reached by
+  // rows that already passed the action filter at the scan node — a `login`
+  // row with a junk actor_id cannot reach it. A `user_updated_password` row
+  // with one CAN, and because the whole function is one transaction the throw
+  // rolls back the watermark advance too: every later tick re-reads the same
+  // window and fails identically. That is a silent, permanent wedge of the
+  // control, so the cast must never see a non-uuid.
+  test("a malformed actor_id on a watched audit action does not wedge the scan", async () => {
+    const s = await mintOAuthSession(`${EMAIL_PREFIX}badactor-${randomUUID().slice(0, 8)}@handicappin.local`);
+
+    // Poison rows: the watched action, unparseable actor_id, inside the scan
+    // window. Written directly because GoTrue will not emit one. ALWAYS
+    // removed again — the every-minute cron job runs against this same shared
+    // stack, and a surviving poison row is exactly the wedge under test.
+    const poisonTag = `poison-${randomUUID()}`;
+    try {
+      for (const actor of ["", "not-a-uuid"]) {
+        await sql`
+          INSERT INTO auth.audit_log_entries (id, instance_id, payload, created_at)
+          VALUES (gen_random_uuid(), '00000000-0000-0000-0000-000000000000',
+                  json_build_object('action', 'user_updated_password',
+                                    'actor_id', ${actor}::text,
+                                    'probe_tag', ${poisonTag}::text),
+                  now())`;
+      }
+
+      // The real attack, in the same window as the poison rows.
+      expect(await putUser(s.oauthAccessToken, { password: randomUUID() })).toBe(200);
+
+      // Must not throw, and must still catch the real hit.
+      await expect(runDetector()).resolves.not.toThrow();
+      const ledger = await ledgerRows(s.userId);
+      expect(ledger).toHaveLength(1);
+      expect(ledger[0].signal).toBe("audit:user_updated_password");
+      expect(await oauthTokenAlive(s.oauthAccessToken)).toBe(false);
+
+      // The watermark advanced, i.e. the transaction committed.
+      const wm = await sql<{ behind_seconds: number }[]>`
+        SELECT extract(epoch FROM now() - last_processed_at)::int AS behind_seconds
+        FROM public.oauth_watch_state WHERE k = 'audit'`;
+      expect(wm[0].behind_seconds).toBeLessThan(30);
+    } finally {
+      await sql`
+        DELETE FROM auth.audit_log_entries
+        WHERE payload->>'probe_tag' = ${poisonTag}`;
+    }
+  }, 90_000);
+
+  // ── What actually happens with MULTIPLE live grants (review #187) ───────
+  //
+  // Review read Signal A's join (it matches on user_id alone, so one hit row
+  // per client) as "revokes every live grant". It does not, because GoTrue
+  // gets there first: PUT /user {password} runs LogoutAllExceptMe, which
+  // deletes every session EXCEPT the acting one before the detector ever
+  // scans. So the detector sees — and revokes — exactly the acting grant.
+  // The bystander's ACCESS is already dead (session gone -> refresh tokens
+  // cascade), but its consent row stays revoked_at NULL: the same documented
+  // scope gap as the first-party-password-change test above. Pinning it.
+  test("a password change: GoTrue kills bystander sessions, the detector revokes the acting grant", async () => {
+    const email = `${EMAIL_PREFIX}multi-${randomUUID().slice(0, 8)}@handicappin.local`;
+    const s = await mintOAuthSession(email);
+
+    // A second, independent OAuth client consented by the same user.
+    const a = admin();
+    const { data: client2, error: cl2Err } = await a.auth.admin.oauth.createClient({
+      client_name: `detect-client-${randomUUID().slice(0, 8)}`,
+      redirect_uris: [REDIRECT_URI],
+    });
+    expect(cl2Err).toBeNull();
+    const token2 = await consentAndExchange(
+      s.userClient,
+      client2!.client_id,
+      client2!.client_secret!,
+    );
+    expect(await oauthSessions(s.userId)).toHaveLength(2);
+
+    // Attack drives through client 1 only.
+    expect(await putUser(s.oauthAccessToken, { password: randomUUID() })).toBe(200);
+
+    // GoTrue already removed the bystander session; only the acting one is
+    // left for the detector to find.
+    const survivors = await oauthSessions(s.userId);
+    expect(survivors).toHaveLength(1);
+    expect(await oauthTokenAlive(token2)).toBe(false);
+
+    await runDetector();
+
+    const ledger = await ledgerRows(s.userId);
+    expect(ledger).toHaveLength(1);
+    expect(ledger[0].oauth_client_id).toBe(s.clientId);
+    expect(await oauthSessions(s.userId)).toHaveLength(0);
+    expect(await oauthTokenAlive(s.oauthAccessToken)).toBe(false);
+    expect((await consentRow(s.userId, s.clientId)).revoked_at).not.toBeNull();
+    // Accepted scope gap (same as the first-party case): the bystander's
+    // access is dead but its consent row is not marked revoked.
+    expect((await consentRow(s.userId, client2!.client_id)).revoked_at).toBeNull();
+  }, 120_000);
 });

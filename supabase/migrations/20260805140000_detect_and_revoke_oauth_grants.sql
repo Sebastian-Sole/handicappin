@@ -26,8 +26,16 @@
 --   benign op the refresh-claims route performs) and MUST NOT be matched, or
 --   the job self-triggers.
 --
+--   Signal A is guarded against a malformed `actor_id` on a WATCHED action:
+--   the cast that reads it would otherwise throw and, since the body is one
+--   transaction, roll back the watermark advance with it — wedging the
+--   control permanently. See the guard comment on the scan itself.
+--
 --   Signal B — EMAIL: GoTrue v2.183.0 has NO email-change audit action, so
 --   email changes are detected by snapshot-comparing `auth.users` columns.
+--   Snapshot seeding on first sight does NOT blindly skip: a change requested
+--   after the grant was created is in the threat model and fires on the same
+--   tick, closing the grant -> first-tick window. See the seeding comment.
 --   Verified column lifecycle on the local stack (admin.generateLink
 --   email_change_new -> email_change set to the new address,
 --   email_change_sent_at set; `email` unchanged until final confirm):
@@ -126,6 +134,7 @@ DECLARE
   v_username    text;
   v_summary     text := '';
   v_webhook     text;
+  v_fire        boolean;
 BEGIN
   -- ── Signal A: password audit scan (watermark-bounded) ──────────────────
   SELECT last_processed_at INTO v_watermark
@@ -150,6 +159,19 @@ BEGIN
   -- `actor_id` is the user id (verified). No created_at index on
   -- audit_log_entries -> this is a bounded sequential scan; acceptable at
   -- current scale (revisit tripwire in the plan: ~100ms sustained / ~5M rows).
+  --
+  -- The `actor_id ~* <uuid shape>` guard is LOAD-BEARING, not decoration.
+  -- `(payload->>'actor_id')::uuid` throws on any non-uuid text, and the whole
+  -- function body is ONE transaction — a throw rolls back the watermark
+  -- advance below too, so the next tick re-reads the identical window and
+  -- fails identically: a silent, permanent wedge of the control. The guard
+  -- must sit in the WHERE (a restriction qual on `a` alone) rather than in
+  -- the JOIN: restriction quals are applied at the scan node, strictly below
+  -- the join node where the cast lives, so the cast provably never sees a row
+  -- the guard rejected. (This is also why an unwatched action with a junk
+  -- actor_id — e.g. a `login` row — cannot reach the cast: the action filter
+  -- is a restriction qual too.) Skipping a malformed row costs at most one
+  -- detection; throwing costs every future one.
   FOR v_hit IN
     SELECT DISTINCT
       s.user_id          AS user_id,
@@ -162,6 +184,8 @@ BEGIN
      AND s.created_at < a.created_at
     WHERE a.created_at > v_watermark - interval '2 minutes'
       AND a.payload->>'action' = 'user_updated_password'
+      AND a.payload->>'actor_id' ~*
+          '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'
   LOOP
     -- Gate FIRST (second line of defense behind the ordering predicate): the
     -- insert-time ON CONFLICT protects bookkeeping only; an ordered
@@ -231,13 +255,17 @@ BEGIN
   -- ── Signal B: email snapshot-compare over the live OAuth-session set ────
   FOR v_hit IN
     WITH live AS (
-      SELECT DISTINCT user_id FROM auth.sessions WHERE oauth_client_id IS NOT NULL
+      SELECT user_id, min(created_at) AS first_session_at
+      FROM auth.sessions
+      WHERE oauth_client_id IS NOT NULL
+      GROUP BY user_id
     )
     SELECT
       u.id                     AS user_id,
       u.email                  AS email,
       u.email_change           AS email_change,
       u.email_change_sent_at   AS email_change_sent_at,
+      live.first_session_at    AS first_session_at,
       snap.user_id             AS snap_user_id,
       snap.email               AS snap_email,
       snap.email_change        AS snap_email_change,
@@ -246,7 +274,21 @@ BEGIN
     JOIN auth.users u ON u.id = live.user_id
     LEFT JOIN public.oauth_watch_email_state snap ON snap.user_id = u.id
   LOOP
-    -- First sight of a user: seed the snapshot, take no action.
+    -- First sight of a user: seed the snapshot. Normally that is all — there
+    -- is no prior state to compare against.
+    --
+    -- But seeding must NOT swallow a change that happened inside the
+    -- grant -> first-tick window. A grant created between two ticks is first
+    -- seen with whatever the email columns already say, so an email change
+    -- driven by the leaked token in that sub-minute window would be baked
+    -- into the seed and never fire — and Signal A does not cover it (GoTrue
+    -- v2.183.0 emits no email-change audit action; that is why Signal B
+    -- exists). So on first sight we apply the same ordering test Signal A
+    -- uses (`s.created_at < a.created_at`): a change REQUESTED after the
+    -- oldest live grant was created is in the threat model and fires.
+    -- min(created_at) mirrors Signal A, which matches on ANY session older
+    -- than the event. A change requested BEFORE the grant existed cannot
+    -- have been driven by its token and is left alone.
     IF v_hit.snap_user_id IS NULL THEN
       INSERT INTO public.oauth_watch_email_state
         (user_id, email, email_change, email_change_sent_at, captured_at)
@@ -254,26 +296,35 @@ BEGIN
         (v_hit.user_id, v_hit.email, v_hit.email_change,
          v_hit.email_change_sent_at, now())
       ON CONFLICT (user_id) DO NOTHING;
-      CONTINUE;
+
+      IF NOT (
+        v_hit.email_change_sent_at IS NOT NULL
+        AND v_hit.email_change_sent_at > v_hit.first_session_at
+      ) THEN
+        CONTINUE;
+      END IF;
+
+      v_fire := true;
+    ELSE
+      -- Trigger rules (precise — naive IS DISTINCT FROM false-triggers):
+      --   (a) email differs                                 -> change completed
+      --   (b) email_change is a DIFFERENT non-empty value   -> change requested
+      --       (non-empty test is coalesce<>'' because the default is '')
+      --   (c) email_change_sent_at makes a FORWARD move only (never on clearing
+      --       — a password change with a pending email NULLs it while leaving
+      --       email_change populated: null-ward transition must NOT fire)
+      v_fire := (
+          v_hit.email IS DISTINCT FROM v_hit.snap_email
+        ) OR (
+          coalesce(v_hit.email_change, '') <> ''
+          AND v_hit.email_change IS DISTINCT FROM v_hit.snap_email_change
+        ) OR (
+          v_hit.email_change_sent_at IS NOT NULL
+          AND (v_hit.snap_sent_at IS NULL OR v_hit.email_change_sent_at > v_hit.snap_sent_at)
+        );
     END IF;
 
-    -- Trigger rules (precise — naive IS DISTINCT FROM false-triggers):
-    --   (a) email differs                                 -> change completed
-    --   (b) email_change is a DIFFERENT non-empty value   -> change requested
-    --       (non-empty test is coalesce<>'' because the default is '')
-    --   (c) email_change_sent_at makes a FORWARD move only (never on clearing
-    --       — a password change with a pending email NULLs it while leaving
-    --       email_change populated: null-ward transition must NOT fire)
-    IF (
-        v_hit.email IS DISTINCT FROM v_hit.snap_email
-      ) OR (
-        coalesce(v_hit.email_change, '') <> ''
-        AND v_hit.email_change IS DISTINCT FROM v_hit.snap_email_change
-      ) OR (
-        v_hit.email_change_sent_at IS NOT NULL
-        AND (v_hit.snap_sent_at IS NULL OR v_hit.email_change_sent_at > v_hit.snap_sent_at)
-      )
-    THEN
+    IF v_fire THEN
       -- Revoke every live OAuth grant for this user.
       SELECT u.email INTO v_username FROM auth.users u WHERE u.id = v_hit.user_id;
 
