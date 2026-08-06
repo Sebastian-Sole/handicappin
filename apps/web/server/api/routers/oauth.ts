@@ -44,7 +44,15 @@ export const oauthRouter = createTRPCRouter({
         (grant) => grant.client.id === input.clientId,
       );
       if (!grantExists) {
-        // No grant for the claimed client — nothing to record.
+        // No grant for the claimed client — nothing to record. Logged, not
+        // silent: this branch is also where a systemic undercount would hide
+        // if the post-approval `listGrants` read ever stopped observing the
+        // just-written grant, and a silently-dropped event is exactly the
+        // kind of analytics gap that is impossible to notice after the fact.
+        logger.warn("connectCompleted: no OAuth grant for the claimed client", {
+          clientId: input.clientId,
+          grantCount: grants.length,
+        });
         return { captured: false };
       }
 

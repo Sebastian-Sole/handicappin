@@ -21,11 +21,12 @@ vi.mock("@/lib/posthog", () => ({
   }),
 }));
 
+const mockWarn = vi.fn();
 vi.mock("@/lib/logging", () => ({
   logger: {
     debug: vi.fn(),
     info: vi.fn(),
-    warn: vi.fn(),
+    warn: (...args: unknown[]) => mockWarn(...args),
     error: vi.fn(),
   },
 }));
@@ -92,7 +93,7 @@ describe("oauthRouter.connectCompleted", () => {
     expect(mockFlush).toHaveBeenCalledTimes(1);
   });
 
-  it("does NOT capture when no grant exists for the claimed client", async () => {
+  it("does NOT capture when no grant exists for the claimed client, and says so in the log", async () => {
     const caller = createCaller(buildCtx());
     const result = await caller.connectCompleted({
       clientId: OTHER_CLIENT_ID,
@@ -100,6 +101,13 @@ describe("oauthRouter.connectCompleted", () => {
 
     expect(result).toStrictEqual({ captured: false });
     expect(mockCapture).not.toHaveBeenCalled();
+    // The drop must be visible: a systemic undercount (e.g. the grant read
+    // no longer observing the just-written grant) would otherwise be silent.
+    expect(mockWarn).toHaveBeenCalledTimes(1);
+    expect(mockWarn.mock.calls[0][1]).toStrictEqual({
+      clientId: OTHER_CLIENT_ID,
+      grantCount: 1,
+    });
   });
 
   it("fails open (no capture, no throw) when GoTrue grant listing errors", async () => {

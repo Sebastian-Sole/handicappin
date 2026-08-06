@@ -7,14 +7,16 @@
  * DOM-render test infra (vitest runs in the node environment); page behavior
  * belongs to e2e per .claude/rules/coding-conventions.md.
  */
-import { describe, expect, test } from "vitest";
+import { describe, expect, test, vi } from "vitest";
 
 import {
+  CONNECT_ANALYTICS_DEADLINE_MS,
   LOGIN_REDIRECT_PARAM,
   consentPath,
   deriveHost,
   loginPathForConsent,
   safeInternalPath,
+  settleWithin,
 } from "@/lib/oauth/consent-flow";
 
 describe("safeInternalPath (open-redirect guard)", () => {
@@ -86,5 +88,58 @@ describe("deriveHost (consent card display)", () => {
     expect(deriveHost("")).toBeNull();
     expect(deriveHost(null)).toBeNull();
     expect(deriveHost(undefined)).toBeNull();
+  });
+});
+
+/**
+ * The consent card gates its redirect on this helper (T12/D9 review
+ * follow-up): the `api_connect_completed` capture is worth waiting for
+ * (`window.location.assign` aborts in-flight fetches, so fire-and-forget
+ * drops it) but must never hold the user — nothing in the tRPC link chain
+ * sets a timeout.
+ */
+describe("settleWithin (bounded analytics wait before the consent redirect)", () => {
+  test("resolves as soon as the work settles, well before the deadline", async () => {
+    vi.useFakeTimers();
+    try {
+      const settled = vi.fn();
+      const promise = settleWithin(
+        Promise.resolve("captured"),
+        CONNECT_ANALYTICS_DEADLINE_MS,
+      ).then(settled);
+      await vi.advanceTimersByTimeAsync(0);
+      expect(settled).toHaveBeenCalledTimes(1);
+      await promise;
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  test("resolves (never rejects) when the work rejects", async () => {
+    await expect(
+      settleWithin(Promise.reject(new Error("trpc down")), 50),
+    ).resolves.toBeUndefined();
+  });
+
+  test("resolves at the deadline when the work never settles", async () => {
+    vi.useFakeTimers();
+    try {
+      const settled = vi.fn();
+      const promise = settleWithin(new Promise<void>(() => {}), 2_000).then(
+        settled,
+      );
+      await vi.advanceTimersByTimeAsync(1_999);
+      expect(settled).not.toHaveBeenCalled();
+      await vi.advanceTimersByTimeAsync(1);
+      expect(settled).toHaveBeenCalledTimes(1);
+      await promise;
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  test("the deadline is a real bound, not an accidental zero", () => {
+    expect(CONNECT_ANALYTICS_DEADLINE_MS).toBeGreaterThan(0);
+    expect(CONNECT_ANALYTICS_DEADLINE_MS).toBeLessThanOrEqual(5_000);
   });
 });

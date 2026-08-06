@@ -108,6 +108,10 @@ api_connect_completed: { consumer: string };
 Only meaningful once the Connect flow exists (004). Included because "how many users connected fitbull" is the other half of the October question and it is one line at a handler that already exists.
 
 > **Implemented (T12, 2026-08-05), with one placement nuance:** the 004 consent approval is a browser → GoTrue hop (`supabase.auth.oauth.approveAuthorization` in the consent card) — there is no first-party server handler on that hop. The event is therefore captured by the tRPC mutation `oauth.connectCompleted` (`apps/web/server/api/routers/oauth.ts`), which the consent card calls after a successful approval and which **re-verifies the grant against GoTrue (`listGrants`) before capturing** — the event stays a server-verified fact, not a client-reported claim. `consumer` is the GoTrue OAuth client id; `distinctId` is the Supabase user id.
+>
+> **Counting semantics — read it as distinct users, not raw events.** The event fires once per *successful approval*, so a user who disconnects and later reconnects the same client (or is re-prompted by GoTrue for any reason) produces a second event. It does not fire on ordinary revisits: the consent page redirects straight through when GoTrue has already resolved the decision (`apps/web/app/oauth/consent/page.tsx`). The October question ("how many users connected fitbull") should therefore be answered with a **distinct-`distinctId` count** per `consumer`; a raw event count is an upper bound that includes reconnects.
+>
+> **Redirect timing.** The consent card waits for this capture for at most `CONNECT_ANALYTICS_DEADLINE_MS` (`apps/web/lib/oauth/consent-flow.ts`) and then redirects regardless. Waiting at all is deliberate — `window.location.assign` aborts in-flight fetches, so a fire-and-forget capture would be dropped most of the time — and the deadline is equally deliberate, because nothing in the tRPC link chain sets a timeout. Under a PostHog/GoTrue stall the event is lost, never the redirect.
 
 ## 4. The interest form (surface)
 
