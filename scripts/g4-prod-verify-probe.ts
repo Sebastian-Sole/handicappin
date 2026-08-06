@@ -2,7 +2,7 @@
  * G4 prod verification probe — credential-less (anon key only).
  *
  * For the OWNER to run AFTER applying
- * supabase/migrations/20260805130000_g4_column_grant_sweep.sql to prod, per
+ * supabase/migrations/20260806130000_g4_column_grant_sweep.sql to prod, per
  * plan 010 §T6 / "Verifying DDL without credentials": probe PostgREST with the
  * public anon key alone. No user session, no service-role key.
  *
