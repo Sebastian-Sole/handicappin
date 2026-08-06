@@ -20,6 +20,7 @@ export {
   DuplicateRoundError,
   PlanNotSelectedError,
   RoundLimitReachedError,
+  ScoreHoleMismatchError,
   SelfSubmissionError,
   mapRoundInsertError,
 } from "./errors";

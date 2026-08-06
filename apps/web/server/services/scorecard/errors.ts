@@ -67,6 +67,26 @@ export class DuplicateRoundError extends Error {
   }
 }
 
+/**
+ * A submitted score carries a `holeId` that does not belong to the resolved
+ * tee's holes for the played section. Web/native submit scores with
+ * `holeId: undefined` (the service assigns holes positionally), so this only
+ * fires for clients that claim an explicit hole — a cross-tee or
+ * cross-section reference the positional insert would otherwise silently
+ * mask. Maps to BAD_REQUEST in the tRPC adapter.
+ */
+export class ScoreHoleMismatchError extends Error {
+  constructor(
+    readonly holeId: number,
+    readonly teeId: number
+  ) {
+    super(
+      `Score references hole ${holeId}, which does not belong to the played section of tee ${teeId}`
+    );
+    this.name = "ScoreHoleMismatchError";
+  }
+}
+
 /** SQLSTATE for unique_violation. */
 const UNIQUE_VIOLATION = "23505";
 

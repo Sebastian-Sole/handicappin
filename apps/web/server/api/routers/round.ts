@@ -14,6 +14,7 @@ import {
   DuplicateRoundError,
   PlanNotSelectedError,
   RoundLimitReachedError,
+  ScoreHoleMismatchError,
   SelfSubmissionError,
 } from "@/server/services/scorecard";
 
@@ -199,6 +200,11 @@ export const roundRouter = createTRPCRouter({
         // the raw Postgres constraint message.
         if (error instanceof DuplicateRoundError) {
           throw new TRPCError({ code: "CONFLICT", message: error.message });
+        }
+        // A submitted score claims a hole outside the played tee/section —
+        // malformed client payload, not a server fault.
+        if (error instanceof ScoreHoleMismatchError) {
+          throw new TRPCError({ code: "BAD_REQUEST", message: error.message });
         }
         throw error;
       }

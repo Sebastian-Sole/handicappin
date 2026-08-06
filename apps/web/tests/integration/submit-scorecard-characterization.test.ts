@@ -609,5 +609,61 @@ describeIfLocal(
         .where(eq(round.userId, freeUserId));
       expect(rows).toHaveLength(25);
     }, 60_000);
+
+    test("cross-section score.holeId is rejected with BAD_REQUEST and the round row is rolled back", async () => {
+      const dbHoles = await db
+        .select({ id: hole.id, holeNumber: hole.holeNumber })
+        .from(hole)
+        .where(eq(hole.teeId, teeId));
+      const backNineHoleId = dbHoles.find((h) => h.holeNumber === 18)!.id;
+      const caller = buildCaller(goldenUserId);
+
+      const roundsBefore = await db
+        .select({ id: round.id })
+        .from(round)
+        .where(eq(round.userId, goldenUserId));
+
+      // A front-9 round whose first score claims hole 18 of the same tee.
+      // The hole exists on `teePlayed.holes` so the handicap calculation
+      // still resolves it — only the DB-hole set for the played section
+      // rejects it, and that check runs AFTER the round row is inserted.
+      // Real Postgres must therefore roll the round back; the unit
+      // characterization suite's fake `transaction()` cannot prove this.
+      const scores: Scorecard["scores"] = Array.from({ length: 9 }, (_, i) => ({
+        strokes: 5,
+        hcpStrokes: 0,
+        ...(i === 0 ? { holeId: backNineHoleId } : {}),
+      }));
+
+      const error = await caller
+        .submitScorecard(
+          buildScorecard(
+            goldenUserId,
+            scores,
+            "2026-07-09T10:00:00.000Z",
+            buildHoles(dbHoles),
+            "front"
+          )
+        )
+        .then(
+          () => null,
+          (e: unknown) => e
+        );
+
+      expect(error).not.toBeNull();
+      expect((error as { code?: string }).code).toBe("BAD_REQUEST");
+      expect((error as Error).message).toContain(
+        `Score references hole ${backNineHoleId}`
+      );
+
+      // The round insert that preceded the check must not have survived.
+      const roundsAfter = await db
+        .select({ id: round.id })
+        .from(round)
+        .where(eq(round.userId, goldenUserId));
+      expect(roundsAfter.map((r) => r.id).sort()).toEqual(
+        roundsBefore.map((r) => r.id).sort()
+      );
+    }, 60_000);
   }
 );

@@ -82,10 +82,15 @@ export function transformRoundsToActivities(
       handicapAfter: round.updatedHandicapIndex,
       handicapChange,
       isPersonalBest: personalBestIds.has(round.id),
+      // Fail CLOSED on unknown values: only an exact "approved" or "rejected"
+      // passes through; anything else (including junk that predates the
+      // round_approvalStatus_check DB constraint) is treated as "pending" so
+      // it is never badged as approved.
       approvalStatus:
-        round.approvalStatus === "pending" || round.approvalStatus === "rejected"
+        round.approvalStatus === "approved" ||
+        round.approvalStatus === "rejected"
           ? round.approvalStatus
-          : "approved",
+          : "pending",
       isMilestone: milestone,
     };
   });
