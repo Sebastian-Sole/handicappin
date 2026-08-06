@@ -33,12 +33,15 @@ const CALCULATION_STEPS = [
 
 const RoundCalculationContent = () => {
   const { scorecard, isNineHoles } = useRoundCalculationContext();
-  const roundDate = parseDbTimestamp(scorecard.teeTime).toLocaleDateString("en-US", {
-    weekday: "long",
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  });
+  const roundDate = parseDbTimestamp(scorecard.teeTime).toLocaleDateString(
+    "en-US",
+    {
+      weekday: "long",
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    },
+  );
 
   return (
     <div className="space-y-xl">

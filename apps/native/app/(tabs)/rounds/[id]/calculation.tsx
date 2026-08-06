@@ -125,12 +125,15 @@ function CalculationContent({
 }) {
   const insets = useSafeAreaInsets();
   const calc = useRoundCalculation(scorecard);
-  const roundDate = parseDbTimestamp(scorecard.teeTime).toLocaleDateString("en-US", {
-    weekday: "long",
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  });
+  const roundDate = parseDbTimestamp(scorecard.teeTime).toLocaleDateString(
+    "en-US",
+    {
+      weekday: "long",
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    },
+  );
   const mode = useColorMode();
   const mutedColor = tokens.colors[mode]["muted-foreground"];
 
