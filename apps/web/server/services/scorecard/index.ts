@@ -19,7 +19,6 @@ export {
   CourseResolutionError,
   DuplicateRoundError,
   PlanNotSelectedError,
-  RoundLimitRaceError,
   RoundLimitReachedError,
   SelfSubmissionError,
   mapRoundInsertError,
