@@ -5,15 +5,14 @@
  *
  * Framework-free by construction (enforced by the import boundary in
  * `eslint.config.mjs`): no Next.js, no tRPC, no Sentry, no `@/env`. All
- * side-effects — the drizzle handle, the request-scoped Supabase client,
- * the access check, admin notification, logging, and analytics — are
- * injected through `SubmitScorecardDeps`, and failures surface as the typed
- * domain errors in `./errors`. The tRPC procedure is a thin adapter over
- * this function; the `/v1` REST handler (subplan 005) will be another.
+ * side-effects — the drizzle handle, the access check, admin notification,
+ * logging, and analytics — are injected through `SubmitScorecardDeps`, and
+ * failures surface as the typed domain errors in `./errors`. The tRPC
+ * procedure is a thin adapter over this function; the `/v1` REST handler
+ * (subplan 005) will be another.
  */
-import { eq, and, lt, count, or, inArray } from "drizzle-orm";
+import { eq, and, lt, count, or } from "drizzle-orm";
 import type { PostgresJsDatabase } from "drizzle-orm/postgres-js";
-import type { SupabaseClient } from "@supabase/supabase-js";
 
 import {
   round,
@@ -24,7 +23,6 @@ import {
   hole,
   submissions,
 } from "@/db/schema";
-import type { Database } from "@/types/supabase";
 import type { FeatureAccess } from "@/types/billing";
 import type { Scorecard } from "@/types/scorecard-input";
 import { FREE_TIER_ROUND_LIMIT } from "@/utils/billing/constants";
@@ -41,8 +39,8 @@ import { ANALYTICS_EVENTS } from "@handicappin/analytics";
 import {
   CourseResolutionError,
   PlanNotSelectedError,
-  RoundLimitRaceError,
   RoundLimitReachedError,
+  ScoreHoleMismatchError,
   SelfSubmissionError,
   mapRoundInsertError,
 } from "./errors";
@@ -93,28 +91,34 @@ export interface ScorecardAnalytics {
 }
 
 /**
- * What happens to a round submitted over the free-tier limit.
+ * What happens to a round submitted over the free-tier limit (subplan 002
+ * Part B, accept-and-quarantine).
  *
- * Part B seam (subplan 002 Part B, blocked on subplan 003's
- * `round.quarantined` column): under `"quarantine"`, an over-limit round is
- * accepted and stored with `quarantined = true` — decided by an
- * in-transaction check that replaces both the pre-transaction reject and
- * the post-commit delete-on-race below. Until 003 lands, only `"reject"`
- * (the current web/native behavior) is implemented.
+ * - `"reject"` — the web/native behavior: an at-limit submission is refused
+ *   up front with `RoundLimitReachedError`.
+ * - `"quarantine"` — the `/v1` behavior (billing gate, DECISIONS
+ *   2026-07-27): an over-limit round is accepted and stored with
+ *   `quarantined = true`, excluded from the free-tier count and from every
+ *   handicap input until the account upgrades.
+ *
+ * Under BOTH policies the authoritative active-vs-quarantined decision is
+ * made inside the transaction, so an at-limit race quarantines the loser —
+ * it is never deleted post-commit and never double-counted as active.
  */
 export type OverLimitPolicy = "reject" | "quarantine";
 
 export interface SubmitScorecardDeps {
   db: ScorecardDb;
-  /**
-   * Request-scoped Supabase client authenticated as the submitting user
-   * (used for the post-commit free-tier race re-count).
-   */
-  supabase: SupabaseClient<Database>;
   /** The authenticated user's id from the session — never trust `input.userId`. */
   authUserId: string;
-  /** Plan/limit lookup (`getComprehensiveUserAccess` in the web adapter). */
-  getUserAccess(userId: string): Promise<FeatureAccess>;
+  /**
+   * Plan/limit lookup (`getComprehensiveUserAccess` in the web adapter).
+   * Deliberately narrowed to the three fields the service reads, so a
+   * non-web adapter (the `/v1` entitlement RPC) only has to supply those.
+   */
+  getUserAccess(
+    userId: string
+  ): Promise<Pick<FeatureAccess, "hasAccess" | "plan" | "remainingRounds">>;
   /** Best-effort admin notification for pending course/tee submissions. */
   notifyAdmins(notification: AdminSubmissionNotification): Promise<unknown>;
   logger: ScorecardLogger;
@@ -276,15 +280,6 @@ export async function submitScorecard(
     nineHoleSection,
   } = input;
 
-  // Part B seam: "quarantine" lands behind subplan 003's `quarantined`
-  // column. Guard loudly so a premature adapter wire-up cannot silently
-  // fall through to reject semantics.
-  if (deps.overLimitPolicy !== "reject") {
-    throw new Error(
-      'overLimitPolicy "quarantine" is not implemented yet (subplan 002 Part B, blocked on 003\'s round.quarantined column)'
-    );
-  }
-
   // Prevent submitting on behalf of another user — input.userId must match
   // the authenticated session.
   if (userId !== deps.authUserId) {
@@ -303,32 +298,76 @@ export async function submitScorecard(
     throw new PlanNotSelectedError();
   }
 
-  // 0b. Second check: Free tier round limit
-  if (access.plan === "free" && access.remainingRounds <= 0) {
+  // 0b. Second check: free-tier round limit. Under "reject" (web/native)
+  // an at-limit submission is refused up front. Under "quarantine" (/v1)
+  // it is accepted — the in-transaction decision below stores it with
+  // `quarantined = true` instead (billing gate: over-limit is not an
+  // error on that surface).
+  if (
+    deps.overLimitPolicy === "reject" &&
+    access.plan === "free" &&
+    access.remainingRounds <= 0
+  ) {
     throw new RoundLimitReachedError(FREE_TIER_ROUND_LIMIT);
   }
 
   // Wrap all database mutations in a transaction so partial failures roll back
   const newRound = await deps.db.transaction(async (tx) => {
-    // 1. Get user profile for handicap calculations
-    const userProfile = await tx
+    // 1. Get user profile for handicap calculations. For free-tier users
+    // the row is locked FOR UPDATE so concurrent submissions by the same
+    // user serialize on it — the active-vs-quarantined count below then
+    // cannot race: at the limit, exactly one concurrent submission lands
+    // active and the rest land quarantined.
+    const profileQuery = tx
       .select()
       .from(profile)
       .where(eq(profile.id, userId))
       .limit(1);
+    const userProfile =
+      access.plan === "free"
+        ? await profileQuery.for("update")
+        : await profileQuery;
 
     if (!userProfile[0]) {
       throw new Error("User profile not found");
+    }
+
+    // 1b. In-transaction active-vs-quarantined decision (subplan 002
+    // Part B). The authoritative free-tier count lives HERE, under the
+    // profile lock — it replaces the old pre-commit trust in
+    // `access.remainingRounds` alone and the old post-commit
+    // delete-on-race. An over-limit round is stored with
+    // `quarantined = true`: excluded from the free-tier count
+    // (`utils/billing/access-control.ts`, `round.getCountByUserId`) and
+    // from every handicap input, and unlocked by upgrading — never
+    // rejected here (the billing gate refused rejection), never deleted.
+    let quarantined = false;
+    if (access.plan === "free") {
+      const activeRounds = await tx
+        .select({ count: count() })
+        .from(round)
+        .where(and(eq(round.userId, userId), eq(round.quarantined, false)));
+      quarantined = (activeRounds[0]?.count ?? 0) >= FREE_TIER_ROUND_LIMIT;
     }
 
     // 2. Handle course
     let courseId = coursePlayed.id;
     let courseIsNew = false;
 
+    // Match on the FULL natural key — (name, country, city) is the unique
+    // index on `course` (course_name_country_city_key). A name-only lookup
+    // silently rebinds the round to whichever same-name course sorts first,
+    // e.g. two "Royal Golf Club"s in different countries.
     const existingCourse = await tx
       .select()
       .from(course)
-      .where(eq(course.name, coursePlayed.name))
+      .where(
+        and(
+          eq(course.name, coursePlayed.name),
+          eq(course.country, coursePlayed.country),
+          eq(course.city, coursePlayed.city)
+        )
+      )
       .limit(1);
 
     if (existingCourse[0]) {
@@ -751,6 +790,7 @@ export async function submitScorecard(
       holesPlayed: tempHolesPlayed,
       nineHoleSection:
         scores.length === 9 ? (nineHoleSection ?? null) : null,
+      quarantined,
     };
 
     // 5. Insert round. A duplicate submission (double-click, watch sync
@@ -797,6 +837,21 @@ export async function submitScorecard(
       throw new Error(
         `Selected ${holesToUse.length} holes for ${scores.length} scores (section=${nineHoleSection ?? "n/a"})`
       );
+    }
+
+    // Insert-time integrity: when a client supplies an explicit score.holeId
+    // (web/native submit `holeId: undefined` and rely on the positional
+    // assignment below), it must reference one of the resolved tee's holes
+    // for the played section. Anything else is a cross-tee or cross-section
+    // claim that the positional overwrite would otherwise silently mask.
+    const sectionHoleIds = new Set(holesToUse.map((dbHole) => dbHole.id));
+    for (const submitted of scores) {
+      if (
+        submitted.holeId !== undefined &&
+        !sectionHoleIds.has(submitted.holeId)
+      ) {
+        throw new ScoreHoleMismatchError(submitted.holeId, teeId);
+      }
     }
 
     const scoreInserts = scores.map((score, index) => ({
@@ -915,53 +970,12 @@ export async function submitScorecard(
     };
   });
 
-  // Race condition protection: re-check count for free tier users
-  // This runs outside the transaction since it uses the Supabase REST API.
-  // Part B (subplan 002, behind 003's `quarantined` column) deletes this
-  // entire block in favor of an in-transaction active-vs-quarantined
-  // decision — until then it is preserved verbatim.
-  if (access.plan === "free") {
-    // Must count the SAME population as the primary gate
-    // (access-control.ts): quarantined rounds are excluded, otherwise the
-    // re-check could diverge and delete a legitimate committed round.
-    const { count: roundCount, error: countError } = await deps.supabase
-      .from("round")
-      .select("*", { count: "exact", head: true })
-      .eq("userId", userId)
-      .eq("quarantined", false);
-
-    if (countError) {
-      deps.logger.error("Error re-checking round count", {
-        error: countError.message,
-        userId,
-      });
-    } else if (roundCount && roundCount > FREE_TIER_ROUND_LIMIT) {
-      deps.logger.warn("Race condition detected: rolling back over-limit round", {
-        userId,
-        roundCount,
-        limit: FREE_TIER_ROUND_LIMIT,
-        roundId: newRound.round.id,
-      });
-
-      // Clean up all entities created by this transaction
-      await deps.db.delete(submissions).where(eq(submissions.roundId, newRound.round.id));
-      await deps.db.delete(round).where(eq(round.id, newRound.round.id));
-
-      if (newRound.additionalTeeIds.length > 0) {
-        await deps.db.delete(hole).where(inArray(hole.teeId, newRound.additionalTeeIds));
-        await deps.db.delete(teeInfo).where(inArray(teeInfo.id, newRound.additionalTeeIds));
-      }
-      if (newRound.createdTeeId) {
-        await deps.db.delete(hole).where(eq(hole.teeId, newRound.createdTeeId));
-        await deps.db.delete(teeInfo).where(eq(teeInfo.id, newRound.createdTeeId));
-      }
-      if (newRound.createdCourseId) {
-        await deps.db.delete(course).where(eq(course.id, newRound.createdCourseId));
-      }
-
-      throw new RoundLimitRaceError();
-    }
-  }
+  // NOTE (subplan 002 Part B): the post-commit "race condition protection"
+  // re-count that used to live here — delete the committed round when a
+  // concurrent submission pushed the user over the limit — is gone. The
+  // active-vs-quarantined decision inside the transaction above is
+  // authoritative: a race loser is stored quarantined, never deleted and
+  // never double-counted as active.
 
   // Notify admins (best-effort) if this round produced any pending submissions.
   if (newRound.submissionSummaries.length > 0) {
