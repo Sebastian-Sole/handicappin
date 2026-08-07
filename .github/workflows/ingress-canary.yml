@@ -15,10 +15,11 @@
 # until then a red run in the Actions tab is the signal.
 #
 # COVERAGE: handicappin.com (tRPC path) and api.handicappin.com (tRPC path +
-# `/api/v1/health` + root) — the API host went live 2026-07-29 and is a hard
-# gate. `/api/v1/health` was added with the route itself (T13.1, api-platform
-# plan 011 §Wave 2): it is the only probe that exercises the REST surface
-# fitbull and the native app will actually call.
+# root + `/api/v1/health`, in that order) — the API host went live 2026-07-29
+# and is a hard gate. `/api/v1/health` was added with the route itself (T13.1,
+# api-platform plan 011 §Wave 2): it is the only probe that exercises the REST
+# surface fitbull and the native app will actually call, and it runs LAST so a
+# failure there does not suppress the broader edge signals (see that step).
 #
 # IS:     an external black-box reachability check for the public edge.
 # IS NOT: a functional/business-logic test of tRPC or the API contract.
@@ -177,6 +178,53 @@ jobs:
           fi
           echo "CANARY OK — API host answered JSON to a cookie-less request (status $HTTP_CODE)."
 
+      - name: Probe API host root (api.handicappin.com/)
+        run: |
+          set -uo pipefail
+          URL="https://api.handicappin.com/"
+          echo "Probing (cookie-less): $URL"
+
+          BODY_FILE="$(mktemp)"
+          HEAD_FILE="$(mktemp)"
+          HTTP_CODE="$(curl -sS -o "$BODY_FILE" -D "$HEAD_FILE" -w '%{http_code}' \
+            --max-time 30 \
+            -A 'ingress-canary/1.0 (+github-actions external tripwire)' \
+            "$URL" || echo "000")"
+
+          echo "--- response status: $HTTP_CODE"
+          echo "--- response headers:"; sed 's/^/    /' "$HEAD_FILE"
+
+          FAIL=0
+
+          # (1) Definitive challenge signal.
+          if grep -iq '^x-vercel-mitigated:.*challenge' "$HEAD_FILE"; then
+            echo "::error title=API host root challenged::x-vercel-mitigated: challenge on api.handicappin.com/ (cookie-less)."
+            FAIL=1
+          fi
+
+          # (2) Expected status is 200 (the host currently serves the whole
+          # app at /). 429/403 = challenged/blocked; 000 = DNS/TLS/timeout;
+          # anything else non-200 = the host stopped serving — all hard fails.
+          # If the root's behavior is ever intentionally changed (e.g. a
+          # redirect to API docs), update this assertion alongside.
+          if [ "$HTTP_CODE" != "200" ]; then
+            echo "::error title=API host root not serving 200::Expected HTTP 200 from api.handicappin.com/, got $HTTP_CODE."
+            FAIL=1
+          fi
+
+          # (3) Root legitimately serves HTML, so only fail on the known
+          # challenge/interstitial page markers — not on HTML per se.
+          if grep -iqE 'Vercel Security Checkpoint|Attention Required' "$BODY_FILE"; then
+            echo "::error title=API host root served interstitial::Body from api.handicappin.com/ is a challenge/block page."
+            FAIL=1
+          fi
+
+          if [ "$FAIL" -ne 0 ]; then
+            echo "CANARY FAILED — api.handicappin.com root is not healthy for cookie-less clients."
+            exit 1
+          fi
+          echo "CANARY OK — API host root answered (status $HTTP_CODE, no challenge)."
+
       # ------------------------------------------------------------------
       # THE /v1 REST PROBE: api.handicappin.com/api/v1/health.
       #
@@ -184,6 +232,14 @@ jobs:
       # one proves the /v1 REST surface — the thing fitbull and the native app
       # actually call — is alive end to end: edge → Next.js route handler →
       # fail-closed rate limiter → RFC 9457 envelope.
+      #
+      # KEEP THIS STEP LAST. Steps stop the job on first failure, so whichever
+      # probe runs first suppresses every one after it. This is the narrowest
+      # and most application-specific probe (and the most likely to go red),
+      # while the edge probes above are the ones that DIAGNOSE why. Running
+      # health first would cost us the edge and root signals on exactly the run
+      # where both are wanted; running it last means a red run reports every
+      # reason at once.
       #
       # NO SECRET, BY DESIGN. `GET /v1/health` is deliberately unauthenticated
       # (see the decision recorded in apps/web/app/api/v1/health/route.ts):
@@ -269,53 +325,6 @@ jobs:
             exit 1
           fi
           echo "CANARY OK — /v1/health answered 200 with the liveness body and the /v1 envelope header."
-
-      - name: Probe API host root (api.handicappin.com/)
-        run: |
-          set -uo pipefail
-          URL="https://api.handicappin.com/"
-          echo "Probing (cookie-less): $URL"
-
-          BODY_FILE="$(mktemp)"
-          HEAD_FILE="$(mktemp)"
-          HTTP_CODE="$(curl -sS -o "$BODY_FILE" -D "$HEAD_FILE" -w '%{http_code}' \
-            --max-time 30 \
-            -A 'ingress-canary/1.0 (+github-actions external tripwire)' \
-            "$URL" || echo "000")"
-
-          echo "--- response status: $HTTP_CODE"
-          echo "--- response headers:"; sed 's/^/    /' "$HEAD_FILE"
-
-          FAIL=0
-
-          # (1) Definitive challenge signal.
-          if grep -iq '^x-vercel-mitigated:.*challenge' "$HEAD_FILE"; then
-            echo "::error title=API host root challenged::x-vercel-mitigated: challenge on api.handicappin.com/ (cookie-less)."
-            FAIL=1
-          fi
-
-          # (2) Expected status is 200 (the host currently serves the whole
-          # app at /). 429/403 = challenged/blocked; 000 = DNS/TLS/timeout;
-          # anything else non-200 = the host stopped serving — all hard fails.
-          # If the root's behavior is ever intentionally changed (e.g. a
-          # redirect to API docs), update this assertion alongside.
-          if [ "$HTTP_CODE" != "200" ]; then
-            echo "::error title=API host root not serving 200::Expected HTTP 200 from api.handicappin.com/, got $HTTP_CODE."
-            FAIL=1
-          fi
-
-          # (3) Root legitimately serves HTML, so only fail on the known
-          # challenge/interstitial page markers — not on HTML per se.
-          if grep -iqE 'Vercel Security Checkpoint|Attention Required' "$BODY_FILE"; then
-            echo "::error title=API host root served interstitial::Body from api.handicappin.com/ is a challenge/block page."
-            FAIL=1
-          fi
-
-          if [ "$FAIL" -ne 0 ]; then
-            echo "CANARY FAILED — api.handicappin.com root is not healthy for cookie-less clients."
-            exit 1
-          fi
-          echo "CANARY OK — API host root answered (status $HTTP_CODE, no challenge)."
 
       # ------------------------------------------------------------------
       # ALERTING: pages Slack within ~15 min when the edge regresses (someone

@@ -130,13 +130,22 @@ describe("GET /v1/health — §4 stability header", () => {
   });
 
   test("X-API-Stability: internal on the 429 and the 503 too", async () => {
+    // The status assertions are load-bearing, not decoration. Without them a
+    // route that answered 200 to everything — i.e. one with the rate-limit
+    // call deleted — satisfies this test, because `X-API-Stability` is on the
+    // 200 as well. A test named for the 429 and the 503 must first establish
+    // that it is looking at a 429 and a 503.
     enforcePublicApiRateLimit.mockResolvedValue(exhausted());
-    expect((await GET(healthRequest())).headers.get(API_STABILITY_HEADER)).toBe(
+    const exhaustedResponse = await GET(healthRequest());
+    expect(exhaustedResponse.status).toBe(429);
+    expect(exhaustedResponse.headers.get(API_STABILITY_HEADER)).toBe(
       "internal"
     );
 
     enforcePublicApiRateLimit.mockResolvedValue(failedClosed("disabled"));
-    expect((await GET(healthRequest())).headers.get(API_STABILITY_HEADER)).toBe(
+    const failedClosedResponse = await GET(healthRequest());
+    expect(failedClosedResponse.status).toBe(503);
+    expect(failedClosedResponse.headers.get(API_STABILITY_HEADER)).toBe(
       "internal"
     );
   });
@@ -269,6 +278,9 @@ describe("GET /v1/health — failure containment", () => {
     expect(response.headers.get("content-type")).toBe(
       `${PROBLEM_CONTENT_TYPE}; charset=utf-8`
     );
+    // §4 applies to the catch-all branch too — the 500 is built by
+    // `errorResponse`, a different path from the 429/503 above.
+    expect(response.headers.get(API_STABILITY_HEADER)).toBe("internal");
     expect(raw).not.toContain("sk_live_leaky");
     await expect(response.json()).resolves.toMatchObject({
       code: "internal_error",

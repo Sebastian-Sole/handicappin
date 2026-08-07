@@ -34,16 +34,18 @@
  *     detect.** The incident was an EDGE-layer block of cookie-less,
  *     credential-less requests. A probe that carries credentials is not the
  *     traffic shape that broke; only an anonymous request reproduces it.
- *  3. **There is nothing to protect.** The response body is a fixed literal.
- *     No user data, no configuration, no version string, no timestamp, no
- *     dependency status — see the next section. Authentication would guard a
- *     constant.
+ *  3. **There is nothing in the body to protect.** The response body is a
+ *     fixed literal. No user data, no configuration, no version string, no
+ *     timestamp, no dependency roll-up. Authentication would guard a
+ *     constant. (The *status code* is not equally inert — see the next
+ *     section.)
  *
  * **What the decision costs, stated plainly:** an anonymous caller learns that
  * `api.handicappin.com` runs an application that answers `/api/v1/health`.
  * That is already inferable from the host's DNS record and from any `/v1`
- * 401. No further capability is granted, and the route is still rate-limited
- * (below), so it is not a free amplification vector.
+ * 401. No further capability is granted. The route is rate-limited (below),
+ * but that limiter is not what makes it safe from amplification — the next
+ * section says what is.
  *
  * **Consequence for §6's two-principal-class test requirement:** it does not
  * apply here. §6 requires integration tests over both principal classes
@@ -51,13 +53,32 @@
  * data and never constructs a principal, so there is no asymmetry to cover.
  * Every route that *does* touch data still owes those tests.
  *
- * ── WHAT THIS ROUTE DELIBERATELY DOES NOT DO ──────────────────────────────
+ * ── WHAT THIS ROUTE TOUCHES, AND WHAT IT DELIBERATELY DOES NOT ────────────
  *
- * It does not touch Postgres, Supabase Auth, Redis, Stripe, or any other
- * dependency. An unauthenticated endpoint that probes dependencies on demand
- * is (a) a free amplification vector — one cheap anonymous request turns into
- * a database round-trip — and (b) an information oracle that reports which of
- * our dependencies is currently down to anyone who asks. Dependency health
+ * It touches exactly one dependency: `enforcePublicApiRateLimit` below is an
+ * Upstash Redis REST round-trip on **every** request, uncredentialed. Two
+ * consequences follow, stated rather than disclaimed:
+ *
+ *  1. **Amplification is real.** One cheap anonymous request does become a
+ *     network call. The cost is bounded — a single Redis op, no fan-out — and
+ *     accepted. The backstop is the **Vercel WAF**, not this limiter:
+ *     `getIdentifier` trusts `cf-connecting-ip` first (`lib/rate-limit.ts`)
+ *     and `api.handicappin.com` is grey-clouded — DNS-only to Vercel, with no
+ *     Cloudflare hop to overwrite that header — so a caller hitting the API
+ *     host directly can mint a fresh bucket per request by varying it.
+ *     `lib/rate-limit.ts` documents that trade-off deliberately; it is not
+ *     this route's to fix, but nothing here should be read as claiming the IP
+ *     limiter carries flood protection on this host. It does not.
+ *  2. **The 503 is a one-bit dependency oracle.** It tells any stranger the
+ *     limiter is unavailable, and health is the ONLY `/v1` route where an
+ *     anonymous caller can observe that — every other route authenticates
+ *     first, so an anonymous caller 401s and learns nothing. Accepted: one
+ *     bit about one dependency, and it is the exact bit the canary exists to
+ *     read.
+ *
+ * What stays out is fan-out. This route does NOT probe Postgres, Supabase
+ * Auth, or Stripe: that would multiply the per-request cost and widen (2)
+ * from one bit into a report of WHICH dependency is down. Dependency health
  * belongs to internal monitoring, not to a public liveness probe.
  *
  * ── RATE LIMIT: the `reads` family, keyed by IP ───────────────────────────
