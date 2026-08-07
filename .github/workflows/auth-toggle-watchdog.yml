@@ -1,0 +1,142 @@
+# Auth toggle watchdog — daily assertion that the two updateUser defenses stay ON.
+#
+# WHY THIS EXISTS: the OAuth updateUser residual (docs/research/api-platform/
+# DECISIONS.md §Sign-off, 2026-07-29) is accepted ONLY because two hosted-project
+# auth settings are ON:
+#   - security_update_password_require_reauthentication ("secure password change")
+#   - mailer_secure_email_change_enabled              ("secure email change")
+# These two settings ARE the whole defense. A dashboard-side flip silently
+# re-opens the account-takeover surface. This job reads the hosted project's
+# auth config via the Supabase Management API once a day and fails (paging Slack)
+# if either flag is no longer exactly `true` — modeled line-for-line on
+# ingress-canary.yml (subplan 001 / W0), the same class of external tripwire.
+#
+# It NEVER writes config (GET only) and never prints the response body wholesale
+# (auth config carries SMTP/provider secrets) — it extracts exactly the two
+# booleans with jq.
+#
+# IS:     a read-only settings-drift tripwire for the two secure-change toggles.
+# IS NOT: a functional auth test, and NOT the auto-revoke detector (that is the
+#         every-minute pg_cron job in supabase/migrations, a separate control).
+#
+# OWNER SETUP (see subplan 009 OWNER checklist):
+#   - SUPABASE_MGMT_PAT  repo secret: a Supabase personal access token (sbp_…)
+#     with Management API read scope. MUST NOT live in the project DB Vault —
+#     the DB is part of what this watchdog guards.
+#   - SLACK_WEBHOOK_URL  repo secret: shared with ingress-canary; alerting is a
+#     no-op (::warning only) until it is set.
+
+name: auth-toggle-watchdog
+
+on:
+  schedule:
+    # Daily at 06:17 UTC. GitHub cron is best-effort and can lag; daily cadence
+    # tolerates that (a settings flip is not a seconds-matter event).
+    - cron: "17 6 * * *"
+  workflow_dispatch: {}
+
+concurrency:
+  group: auth-toggle-watchdog
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+env:
+  PROJECT_REF: lssnaapatrurmhbbqadb
+
+jobs:
+  watchdog:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Assert secure-password-change and secure-email-change are ON
+        env:
+          SUPABASE_MGMT_PAT: ${{ secrets.SUPABASE_MGMT_PAT }}
+        run: |
+          set -uo pipefail
+
+          if [ -z "${SUPABASE_MGMT_PAT:-}" ]; then
+            echo "::error title=Watchdog not configured::SUPABASE_MGMT_PAT repo secret is missing — cannot read the hosted auth config. Add a Supabase personal access token (Management API read) as SUPABASE_MGMT_PAT."
+            exit 1
+          fi
+
+          URL="https://api.supabase.com/v1/projects/${PROJECT_REF}/config/auth"
+          echo "Reading auth config: $URL"
+
+          # The body carries SMTP/provider secrets — remove it on every exit
+          # path, not just the happy one.
+          BODY_FILE="$(mktemp)"
+          trap 'rm -f "$BODY_FILE"' EXIT
+          HTTP_CODE="$(curl -sS -o "$BODY_FILE" -w '%{http_code}' \
+            --max-time 30 \
+            -H "Authorization: Bearer ${SUPABASE_MGMT_PAT}" \
+            -H 'Accept: application/json' \
+            "$URL" || echo "000")"
+
+          # NEVER print the body wholesale — it carries SMTP/provider secrets.
+          echo "--- Management API status: $HTTP_CODE"
+
+          if [ "$HTTP_CODE" != "200" ]; then
+            echo "::error title=Auth config unreadable::Management API returned HTTP $HTTP_CODE for ${PROJECT_REF}/config/auth (PAT invalid/expired, project ref wrong, or API down). The two secure-change settings could not be verified."
+            exit 1
+          fi
+
+          # Extract EXACTLY the two booleans as one of: true / false / null /
+          # absent. Do NOT use jq's `//` alternative operator here — it treats
+          # `false` as empty and would coerce a FLIPPED-OFF setting into the
+          # "absent" bucket, hiding the exact regression this job exists to
+          # catch. `has()` separates a present-but-null field from a
+          # missing/renamed one; `tostring` renders true/false/null verbatim.
+          PW="$(jq -r 'if has("security_update_password_require_reauthentication") then (.security_update_password_require_reauthentication|tostring) else "absent" end' "$BODY_FILE")"
+          EM="$(jq -r 'if has("mailer_secure_email_change_enabled") then (.mailer_secure_email_change_enabled|tostring) else "absent" end' "$BODY_FILE")"
+          echo "secure_password_change = $PW"
+          echo "secure_email_change    = $EM"
+
+          FAIL=0
+
+          # Branch the failure message per flag: `false` (flipped off) vs
+          # null/absent (unverifiable) — both booleans are nullable in the spec,
+          # and the two situations demand different responses. Only `true` passes.
+          check_flag() {
+            local name="$1" value="$2"
+            case "$value" in
+              true)
+                echo "  OK: $name is ON."
+                ;;
+              false)
+                echo "::error title=$name FLIPPED OFF::The updateUser defense is DOWN — a leaked OAuth-client token can now change the account password/email with no reauth. Re-enable '$name' in the Supabase dashboard NOW (see DECISIONS.md §Sign-off + subplan 009)."
+                FAIL=1
+                ;;
+              *)
+                echo "::error title=$name null/absent::'$name' returned null or is absent (field renamed? config unreadable?) — the setting is UNVERIFIABLE. Investigate the Management API schema and confirm the toggle by hand."
+                FAIL=1
+                ;;
+            esac
+          }
+
+          check_flag "security_update_password_require_reauthentication" "$PW"
+          check_flag "mailer_secure_email_change_enabled" "$EM"
+
+          if [ "$FAIL" -ne 0 ]; then
+            echo "WATCHDOG FAILED — at least one secure-change setting is not verifiably ON."
+            exit 1
+          fi
+          echo "WATCHDOG OK — both secure-change settings are ON."
+
+      # Pages Slack when a setting regresses. No-op until SLACK_WEBHOOK_URL is
+      # set (shared with ingress-canary). Distinct-per-flag detail already
+      # lives in the ::error annotations above; the Slack line is the summary.
+      - name: Alert on failure (Slack)
+        if: failure()
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        run: |
+          set -uo pipefail
+          if [ -z "${SLACK_WEBHOOK_URL:-}" ]; then
+            echo "::warning title=Watchdog alerting not wired::SLACK_WEBHOOK_URL secret is not set — this failure only shows in the Actions tab. Add the secret to page on watchdog failures."
+            exit 0
+          fi
+          curl -sS -X POST -H 'Content-type: application/json' \
+            --data '{"text":"AUTH TOGGLE WATCHDOG FAILED: a secure-change setting on the hosted project is not verifiably ON (secure password change / secure email change), or the auth config was unreadable. The OAuth updateUser defense may be down. Check the Actions run + Supabase dashboard Auth settings + DECISIONS.md §Sign-off."}' \
+            "$SLACK_WEBHOOK_URL"

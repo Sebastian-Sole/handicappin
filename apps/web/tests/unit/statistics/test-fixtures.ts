@@ -8,6 +8,14 @@ import type { Tables } from "@/types/supabase";
 
 type RoundRow = Tables<"round">;
 
+/**
+ * Deterministic round-id source. `Math.random()` here made the fixtures
+ * non-deterministic AND could collide (two rounds with the same id break
+ * id-keyed logic like personal-best tracking). A monotonic counter keeps ids
+ * unique and every run identical.
+ */
+let nextMockRoundId = 1;
+
 interface MockScorecardOptions {
   teeTime?: string;
   scoreDifferential?: number;
@@ -47,7 +55,7 @@ export function createMockScorecard(
   } = options;
 
   const round: RoundRow = {
-    id: Math.floor(Math.random() * 10000),
+    id: nextMockRoundId++,
     userId: "test-user-id",
     courseId,
     teeId: 1,
@@ -174,10 +182,14 @@ export function createMockScorecardSet(count: number): ScorecardWithRound[] {
     const date = new Date("2024-01-01");
     date.setDate(date.getDate() + index * 7); // Weekly rounds
 
+    // Deterministic variation in the same ranges the old Math.random()
+    // produced (differential 10–15, gross 80–94): coprime multipliers keep
+    // the spread/variance the consistency and averaging tests exercise,
+    // without run-to-run flakiness.
     return createMockScorecard({
       teeTime: date.toISOString(),
-      scoreDifferential: 10 + Math.random() * 5,
-      adjustedGrossScore: 80 + Math.floor(Math.random() * 15),
+      scoreDifferential: 10 + ((index * 7) % 10) * 0.5,
+      adjustedGrossScore: 80 + ((index * 11) % 15),
       courseId: (index % 5) + 1, // Rotate through 5 courses
     });
   });

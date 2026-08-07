@@ -445,4 +445,46 @@ describe("transformRoundsToActivities", () => {
       expect(result[3].isMilestone).toBe("First round!");
     });
   });
+
+  describe("approval status (fail closed)", () => {
+    test("passes through approved, pending, and rejected verbatim", () => {
+      const rounds = [
+        createMockRound({
+          id: 1,
+          teeTime: "2024-01-01T10:00:00Z",
+          approvalStatus: "approved",
+        }),
+        createMockRound({
+          id: 2,
+          teeTime: "2024-01-02T10:00:00Z",
+          approvalStatus: "pending",
+        }),
+        createMockRound({
+          id: 3,
+          teeTime: "2024-01-03T10:00:00Z",
+          approvalStatus: "rejected",
+        }),
+      ];
+
+      const result = transformRoundsToActivities(rounds, new Map());
+
+      expect(result.find((r) => r.id === 1)?.approvalStatus).toBe("approved");
+      expect(result.find((r) => r.id === 2)?.approvalStatus).toBe("pending");
+      expect(result.find((r) => r.id === 3)?.approvalStatus).toBe("rejected");
+    });
+
+    test("never badges an unknown value as approved", () => {
+      // The column is text in the DB; junk that predates the CHECK
+      // constraint must fail CLOSED (shown as pending), never as approved.
+      const junkValues = ["APPROVED", "Approved ", "garbage", ""];
+
+      junkValues.forEach((junk, i) => {
+        const rounds = [
+          createMockRound({ id: i + 1, approvalStatus: junk }),
+        ];
+        const result = transformRoundsToActivities(rounds, new Map());
+        expect(result[0].approvalStatus).toBe("pending");
+      });
+    });
+  });
 });
