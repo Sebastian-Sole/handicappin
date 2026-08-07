@@ -91,6 +91,39 @@ export const env = createEnv({
       .positive()
       .default(20),
 
+    // Public API (`/api/v1`) per-route-family budgets. Each drives one
+    // fail-closed sliding-window limiter with its own Redis prefix
+    // (`ratelimit:public-api:<family>`), keyed on the (client_id, user)
+    // pair — see lib/rate-limit.ts and api-platform plans/005 §3.
+    //
+    // These four names and defaults are FROZEN by the owner and already set
+    // in Vercel Production and Preview: renaming one costs a code change
+    // plus two Vercel environment changes. Do not rename, do not add a
+    // fifth without the same coordination.
+    //
+    // COURSE_SUBMIT and PROVISION have no day-one consumer (D9 defers the
+    // endpoints they guard); they are declared because they exist in Vercel.
+    RATE_LIMIT_ROUNDS_WRITE_PER_MIN: z.coerce
+      .number()
+      .int()
+      .positive()
+      .default(60),
+    RATE_LIMIT_API_READS_PER_MIN: z.coerce
+      .number()
+      .int()
+      .positive()
+      .default(120),
+    RATE_LIMIT_COURSE_SUBMIT_PER_HOUR: z.coerce
+      .number()
+      .int()
+      .positive()
+      .default(10),
+    RATE_LIMIT_PROVISION_PER_HOUR: z.coerce
+      .number()
+      .int()
+      .positive()
+      .default(5),
+
     NODE_ENV: z
       .enum(["development", "test", "production"])
       .default("development"),
@@ -153,6 +186,12 @@ export const env = createEnv({
     RATE_LIMIT_CONSENT_PER_HOUR: process.env.RATE_LIMIT_CONSENT_PER_HOUR,
     RATE_LIMIT_AI_EXTRACTION_PER_HOUR:
       process.env.RATE_LIMIT_AI_EXTRACTION_PER_HOUR,
+    RATE_LIMIT_ROUNDS_WRITE_PER_MIN:
+      process.env.RATE_LIMIT_ROUNDS_WRITE_PER_MIN,
+    RATE_LIMIT_API_READS_PER_MIN: process.env.RATE_LIMIT_API_READS_PER_MIN,
+    RATE_LIMIT_COURSE_SUBMIT_PER_HOUR:
+      process.env.RATE_LIMIT_COURSE_SUBMIT_PER_HOUR,
+    RATE_LIMIT_PROVISION_PER_HOUR: process.env.RATE_LIMIT_PROVISION_PER_HOUR,
     NODE_ENV: process.env.NODE_ENV,
     NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
     NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,

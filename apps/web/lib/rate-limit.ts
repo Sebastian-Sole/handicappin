@@ -18,7 +18,9 @@ import { captureSentryError } from "@/lib/sentry-utils";
  *   host) FAILS CLOSED via `enforcePublicApiRateLimit()`: if
  *   `RATE_LIMIT_ENABLED` is not "true", KV credentials are missing, Redis
  *   init throws, or the limiter errors at request time, the request is
- *   DENIED and Sentry is alerted.
+ *   DENIED and Sentry is alerted. That surface is split into per-route
+ *   FAMILIES (`PUBLIC_API_RATE_LIMIT_FAMILIES`), one Redis bucket each, keyed
+ *   on the `(client_id, user)` pair — see `getIdentifier`.
  *
  * `RATE_LIMIT_ENABLED` is asserted at startup for production deploys in
  * `apps/web/env.ts` (it must be explicitly "true" or "false"), so a
@@ -38,6 +40,12 @@ const OAUTH_CALLBACK_LIMIT = env.RATE_LIMIT_OAUTH_CALLBACK_PER_MIN;
 const GOOGLE_TOKEN_LIMIT = env.RATE_LIMIT_GOOGLE_TOKEN_PER_MIN;
 const CONSENT_LIMIT = env.RATE_LIMIT_CONSENT_PER_HOUR;
 const AI_EXTRACTION_LIMIT = env.RATE_LIMIT_AI_EXTRACTION_PER_HOUR;
+
+// Public API (`/api/v1`) per-route-family budgets. Names frozen in env.ts.
+const V1_ROUNDS_WRITE_LIMIT = env.RATE_LIMIT_ROUNDS_WRITE_PER_MIN;
+const V1_READS_LIMIT = env.RATE_LIMIT_API_READS_PER_MIN;
+const V1_COURSE_SUBMIT_LIMIT = env.RATE_LIMIT_COURSE_SUBMIT_PER_HOUR;
+const V1_PROVISION_LIMIT = env.RATE_LIMIT_PROVISION_PER_HOUR;
 
 /** Why the shared limiter infrastructure is unavailable, if it is. */
 export type RateLimiterUnavailableReason =
@@ -285,8 +293,60 @@ export function isPublicApiRequest(request: Request): boolean {
   );
 }
 
+/**
+ * Route families of the public `/v1` surface, each with its own budget and
+ * its own Redis bucket (api-platform plans/005-phase0-contract.md §3).
+ *
+ * One `Ratelimit` per family, prefixed `ratelimit:public-api:<family>`, so a
+ * burst of reads cannot consume a user's write budget (and vice versa). This
+ * replaces the single global `ratelimit:public-api` bucket for every route
+ * that names a family; the unfamilied bucket survives only as the legacy
+ * default of `enforcePublicApiRateLimit()` (see its JSDoc).
+ *
+ * `course-submit` and `provision` have no day-one route (D9 defers the
+ * endpoints they guard) — their limiters exist so the route PR is a one-line
+ * change rather than a limiter design discussion.
+ */
+export const PUBLIC_API_RATE_LIMIT_FAMILIES = {
+  /** `POST /v1/rounds` — the round write path. */
+  "rounds-write": { limit: V1_ROUNDS_WRITE_LIMIT, window: "1 m" },
+  /** Every `/v1` GET (health, courses, tees, rounds). */
+  reads: { limit: V1_READS_LIMIT, window: "1 m" },
+  /** Deferred (D9): client-submitted course data. */
+  "course-submit": { limit: V1_COURSE_SUBMIT_LIMIT, window: "1 h" },
+  /** Deferred (D9): `POST /v1/profile/provision`. */
+  provision: { limit: V1_PROVISION_LIMIT, window: "1 h" },
+} as const satisfies Record<
+  string,
+  { limit: number; window: "1 m" | "1 h" }
+>;
+
+/** Name of a `/v1` route family — the unit a budget is enforced against. */
+export type PublicApiRateLimitFamily =
+  keyof typeof PUBLIC_API_RATE_LIMIT_FAMILIES;
+
+const PUBLIC_API_FAMILY_NAMES = Object.keys(
+  PUBLIC_API_RATE_LIMIT_FAMILIES
+) as PublicApiRateLimitFamily[];
+
+/** Redis key prefix for a family's bucket. */
+export function publicApiFamilyPrefix(
+  family: PublicApiRateLimitFamily
+): string {
+  return `ratelimit:public-api:${family}`;
+}
+
+/**
+ * `Retry-After` advertised when the limiter itself is unavailable. Fixed at
+ * 60s by the contract (§3) rather than derived, so a 503 never leaks how the
+ * infrastructure failed through a distinctive backoff value.
+ */
+const FAIL_CLOSED_RETRY_AFTER_SECONDS = 60;
+
 // The real fail-closed limiter for the public surface (null when unavailable).
 let publicApiLimiter: Limiter | null = null;
+/** One fail-closed limiter per route family (empty when unavailable). */
+const publicApiFamilyLimiters = new Map<PublicApiRateLimitFamily, Limiter>();
 if (redis && !limiterUnavailableReason) {
   try {
     publicApiLimiter = new Ratelimit({
@@ -295,12 +355,47 @@ if (redis && !limiterUnavailableReason) {
       analytics: false,
       prefix: "ratelimit:public-api",
     });
+    for (const family of PUBLIC_API_FAMILY_NAMES) {
+      const { limit, window } = PUBLIC_API_RATE_LIMIT_FAMILIES[family];
+      publicApiFamilyLimiters.set(
+        family,
+        new Ratelimit({
+          redis,
+          limiter: Ratelimit.slidingWindow(limit, window),
+          analytics: false,
+          prefix: publicApiFamilyPrefix(family),
+        })
+      );
+    }
   } catch (error) {
     limiterUnavailableReason = "init-error";
+    publicApiLimiter = null;
+    publicApiFamilyLimiters.clear();
     logger.error("Rate limit: Failed to create public API limiter", {
       error: error instanceof Error ? error.message : String(error),
     });
   }
+}
+
+/**
+ * The authenticated principal behind a `/v1` request, as read from the
+ * validated Bearer token's claims.
+ *
+ * Principal CLASS is decided by `clientId` presence, never by the absence of
+ * some other claim (contract §6): an OAuth-client token carries `client_id`,
+ * a first-party web/native token does not.
+ */
+export interface PublicApiPrincipal {
+  /** `sub` claim — the Supabase user id. */
+  userId: string;
+  /**
+   * `client_id` claim — present only on OAuth-client tokens. The claim is
+   * stamped by GoTrue's `custom_access_token_hook`
+   * (`supabase/migrations/20260728090000_oauth_client_id_claims.sql`) and is
+   * read from the token by the caller, not here; `isExternalOAuthClientToken`
+   * (`apps/web/server/api/trpc.ts:91`) is the existing precedent.
+   */
+  clientId?: string;
 }
 
 export interface PublicApiRateLimitResult {
@@ -310,6 +405,8 @@ export interface PublicApiRateLimitResult {
   failedClosed: boolean;
   /** Set when `success` is false due to infrastructure failure. */
   reason?: PublicApiRateLimitFailure;
+  /** Family whose bucket was consulted (absent on the legacy global bucket). */
+  family?: PublicApiRateLimitFamily;
   limit: number;
   remaining: number;
   reset: number;
@@ -318,14 +415,17 @@ export interface PublicApiRateLimitResult {
 function denyClosed(
   reason: PublicApiRateLimitFailure,
   identifier: string,
+  family?: PublicApiRateLimitFamily,
   error?: unknown
 ): PublicApiRateLimitResult {
-  // Only the identifier KIND (user vs ip) is emitted — the raw identifier
-  // carries an IP address, which must reach neither Sentry nor Vercel logs.
+  // Only the identifier KIND (client vs user vs ip) is emitted — the raw
+  // identifier carries an IP address or a user id, neither of which may
+  // reach Sentry or Vercel logs.
   const identifierKind = identifier.split(":")[0] ?? "unknown";
   logger.error("Rate limit: public API fail-closed", {
     reason,
     identifierKind,
+    family,
     error: error instanceof Error ? error.message : undefined,
   });
   captureSentryError(
@@ -333,7 +433,7 @@ function denyClosed(
     {
       level: "error",
       eventType: "rate-limit-fail-closed",
-      tags: { reason },
+      tags: { reason, ...(family ? { family } : {}) },
       extra: { identifierKind },
     }
   );
@@ -341,9 +441,10 @@ function denyClosed(
     success: false,
     failedClosed: true,
     reason,
+    family,
     limit: 0,
     remaining: 0,
-    reset: Date.now() + 60_000,
+    reset: Date.now() + FAIL_CLOSED_RETRY_AFTER_SECONDS * 1000,
   };
 }
 
@@ -355,35 +456,122 @@ function denyClosed(
  * - Redis/limiter init threw                 → deny (`reason: "init-error"`)
  * - limiter throws at request time           → deny (`reason: "runtime-error"`)
  *
- * Every fail-closed denial is Sentry-alerted. Callers should map
- * `success: false` to a 429 (with `Retry-After` derived from `reset`), or a
- * 503 when `failedClosed` is true.
+ * Every fail-closed denial is Sentry-alerted. Callers turn the result into a
+ * response with `rateLimitDenialStatus()` + `rateLimitHeaders()` below; the
+ * problem body belongs to the `/v1` error mapper, not to this module.
  *
  * @param request - Incoming request (used to derive the anonymous identifier)
- * @param userId - Authenticated principal, preferred over IP when present
+ * @param principal - Authenticated principal, preferred over IP when present.
+ *   A bare string is accepted as the user id for pre-`/v1` callers.
+ * @param family - Route family whose bucket to consult. OMITTING IT falls
+ *   back to the legacy global `ratelimit:public-api` bucket, which exists
+ *   only for callers that predate the families — every `/v1` route names one.
  */
 export async function enforcePublicApiRateLimit(
   request: Request,
-  userId?: string
+  principal?: string | PublicApiPrincipal,
+  family?: PublicApiRateLimitFamily
 ): Promise<PublicApiRateLimitResult> {
-  const identifier = getIdentifier(request, userId);
+  const resolved: Partial<PublicApiPrincipal> =
+    typeof principal === "string" ? { userId: principal } : principal ?? {};
+  const identifier = getIdentifier(
+    request,
+    resolved.userId,
+    resolved.clientId
+  );
 
-  if (limiterUnavailableReason || !publicApiLimiter) {
-    return denyClosed(limiterUnavailableReason ?? "init-error", identifier);
+  const limiter = family
+    ? publicApiFamilyLimiters.get(family) ?? null
+    : publicApiLimiter;
+
+  if (limiterUnavailableReason || !limiter) {
+    return denyClosed(
+      limiterUnavailableReason ?? "init-error",
+      identifier,
+      family
+    );
   }
 
   try {
-    const result = await publicApiLimiter.limit(identifier);
+    const result = await limiter.limit(identifier);
     return {
       success: result.success,
       failedClosed: false,
+      family,
       limit: result.limit,
       remaining: result.remaining,
       reset: result.reset,
     };
   } catch (error) {
-    return denyClosed("runtime-error", identifier, error);
+    return denyClosed("runtime-error", identifier, family, error);
   }
+}
+
+// ---------------------------------------------------------------------------
+// Response seam (consumed by the /v1 RFC 9457 error mapper — T13.0b)
+// ---------------------------------------------------------------------------
+
+/** Response header names of the `/v1` rate-limit contract (§3). */
+export const RATE_LIMIT_HEADERS = {
+  limit: "X-RateLimit-Limit",
+  remaining: "X-RateLimit-Remaining",
+  reset: "X-RateLimit-Reset",
+  retryAfter: "Retry-After",
+} as const;
+
+/**
+ * HTTP status a denial maps to, or `null` when the request may proceed.
+ *
+ * - budget exhausted        → **429** (mapper body: `code: "rate_limited"`)
+ * - limiter unavailable     → **503** (mapper body: `code: "service_unavailable"`)
+ *
+ * The internal `reason` never leaves this module's result object: it goes to
+ * Sentry (see `denyClosed`) and must not reach the response body.
+ */
+export function rateLimitDenialStatus(
+  result: PublicApiRateLimitResult
+): 429 | 503 | null {
+  if (result.success) {
+    return null;
+  }
+  return result.failedClosed ? 503 : 429;
+}
+
+/**
+ * Headers to merge into the response for a rate-limited request.
+ *
+ * - allowed / genuinely over-limit → the `X-RateLimit-*` trio, plus
+ *   `Retry-After` (whole seconds, >= 1) when over-limit.
+ * - fail-closed (503) → `Retry-After: 60` ONLY. The `X-RateLimit-*` trio is
+ *   deliberately withheld: a zeroed budget on a 503 would describe the
+ *   outage, and the contract specifies only `Retry-After` for that case.
+ *
+ * @param now - Injectable clock, for deterministic tests.
+ */
+export function rateLimitHeaders(
+  result: PublicApiRateLimitResult,
+  now: number = Date.now()
+): Record<string, string> {
+  if (result.failedClosed) {
+    return {
+      [RATE_LIMIT_HEADERS.retryAfter]: String(FAIL_CLOSED_RETRY_AFTER_SECONDS),
+    };
+  }
+
+  const headers: Record<string, string> = {
+    [RATE_LIMIT_HEADERS.limit]: String(result.limit),
+    [RATE_LIMIT_HEADERS.remaining]: String(Math.max(0, result.remaining)),
+    // Unix SECONDS, per the contract — the limiter reports milliseconds.
+    [RATE_LIMIT_HEADERS.reset]: String(Math.ceil(result.reset / 1000)),
+  };
+
+  if (!result.success) {
+    headers[RATE_LIMIT_HEADERS.retryAfter] = String(
+      Math.max(1, Math.ceil((result.reset - now) / 1000))
+    );
+  }
+
+  return headers;
 }
 
 // ---------------------------------------------------------------------------
@@ -412,18 +600,38 @@ export async function enforcePublicApiRateLimit(
 const CLIENT_IP_HEADERS = ["cf-connecting-ip", "x-real-ip"] as const;
 
 /**
- * Extract identifier for rate limiting
- * - Authenticated requests: Use user ID (per-user limits)
- * - Unauthenticated requests: Use client IP address (per-IP limits)
+ * Extract identifier for rate limiting. Three principal shapes, three keys
+ * (api-platform plans/005-phase0-contract.md §3):
+ *
+ * - **OAuth-client token** (`client_id` + `sub` claims) → the
+ *   `(client_id, user)` PAIR, encoded `client:{clientId}:user:{userId}`.
+ *   Keying on `client_id` alone would collapse every user of a connected app
+ *   into one shared bucket; keying on the user alone would lose per-client
+ *   attribution the moment a second client exists.
+ * - **First-party token** (no `client_id`) → `user:{userId}`, unchanged.
+ * - **Pre-auth / invalid token** (no principal) → `ip:{ip}` via the
+ *   `CLIENT_IP_HEADERS` trust order below. Authenticated traffic is NEVER
+ *   keyed per-IP — a `userId` always wins over every IP header.
+ *
+ * `clientId` without a `userId` is not a real principal (an OAuth token
+ * always carries `sub`); it falls through to the IP key rather than minting
+ * a per-client bucket that any caller could claim.
  *
  * @param request - Next.js request object
- * @param userId - Optional user ID from auth
+ * @param userId - Optional `sub` claim from the validated token
+ * @param clientId - Optional `client_id` claim; OAuth-client tokens only
  * @returns Identifier string for rate limiting
  */
-export function getIdentifier(request: Request, userId?: string): string {
+export function getIdentifier(
+  request: Request,
+  userId?: string,
+  clientId?: string
+): string {
   // Prefer the authenticated principal for authenticated requests
   if (userId) {
-    return `user:${userId}`;
+    return clientId
+      ? `client:${clientId}:user:${userId}`
+      : `user:${userId}`;
   }
 
   for (const header of CLIENT_IP_HEADERS) {
