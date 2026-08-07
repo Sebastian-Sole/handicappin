@@ -74,6 +74,9 @@ const { POST, GET } = await import("@/app/api/v1/rounds/route");
 const { serializeV1Round } = await import(
   "@/app/api/v1/_lib/serializers/round"
 );
+const { V1_SUBMITTED_VIA } = await import(
+  "@/app/api/v1/rounds/create-round"
+);
 const { db } = await import("@/db");
 const { profile, course, teeInfo, hole, round, score } = await import(
   "@/db/schema"
@@ -381,6 +384,40 @@ describeIfLocal("POST /v1/rounds (real local Supabase)", () => {
         // §5 rejects a raw boolean; the DB column name stays out of the wire.
         expect(body).not.toHaveProperty("quarantined");
         expect(body).not.toHaveProperty("userId");
+      }, 90_000);
+
+      test("submitted_via records WHICH client wrote the round, not just the surface", async () => {
+        const { response, body } = await post(
+          principalFor(),
+          submission({
+            userId: firstParty.userId,
+            externalId: `${className}-provenance-${randomUUID()}`,
+            teeTime: `2026-0${className === "oauth" ? 3 : 2}-01T11:00:00.000Z`,
+          })
+        );
+        expect(response.status).toBe(201);
+
+        const [row] = await db
+          .select({ submittedVia: round.submittedVia })
+          .from(round)
+          .where(eq(round.id, body.id as number));
+
+        // `20260730120000` calls this column PROVENANCE that "a handicap
+        // product with an official-handicap workstream cannot accept" being
+        // forgeable. A value that says only "some /v1 token" cannot answer
+        // WHICH connected app wrote a round — an answer nothing else on the
+        // row records, and which is unrecoverable once the token is gone.
+        //
+        // Safe to shape freely: the column is server-set (the migration's
+        // INSERT grant excludes it) and `serializeV1Round` omits it, so it has
+        // no wire contract and §4 does not freeze it. The assertion below is
+        // the one that must hold — the surface prefix, then the client id.
+        expect(row!.submittedVia).toBe(
+          className === "oauth"
+            ? `${V1_SUBMITTED_VIA}:${principalFor().clientId}`
+            : V1_SUBMITTED_VIA
+        );
+        expect(body).not.toHaveProperty("submittedVia");
       }, 90_000);
 
       test("the limiter gets the principal PARTS and the 'rounds-write' family — after an IP-keyed pre-auth call", async () => {
@@ -712,7 +749,19 @@ describeIfLocal("POST /v1/rounds (real local Supabase)", () => {
     let blockedPeak = 0;
 
     try {
-      await holder.begin(async (tx) => {
+      await holder.begin(async (rawTx) => {
+        // postgres.js declares `TransactionSql` as `Omit<Sql, …>`, and `Omit`
+        // over an interface produces a MAPPED type — which drops call
+        // signatures. So the tagged-template form, the library's own
+        // documented API and the only form that parameterizes safely, is
+        // untypeable on a transaction handle (TS2349).
+        //
+        // Widening back to the callable `Sql` shape fixes the TYPE only:
+        // `rawTx` is the same handle, the statement still runs on the
+        // transaction's own connection, and that connection is what holds the
+        // row lock this whole barrier depends on. Using `tx.unsafe()` instead
+        // would typecheck, but it would change the mechanism.
+        const tx = rawTx as unknown as postgres.Sql;
         await tx`select id from profile where id = ${race.userId} for update`;
 
         winner = POST(postRequest(race, payload));

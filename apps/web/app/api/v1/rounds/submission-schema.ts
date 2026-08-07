@@ -69,13 +69,63 @@ export const V1_EXTERNAL_ID_MAX_LENGTH = 255;
 export const V1_EXTERNAL_ID_FIELD_CODE = "external_id_invalid";
 export const V1_TEE_HOLES_FIELD_CODE = "tee_holes_required";
 
+/**
+ * C0 control characters (U+0000–U+001F) and DEL (U+007F).
+ *
+ * The one character class an opaque key may not contain. See
+ * `v1ExternalIdSchema` for why this is the boundary and why it has to be drawn
+ * before ship rather than after.
+ */
+const CONTROL_CHARACTERS = /[\u0000-\u001f\u007f]/;
+
 export const v1ExternalIdSchema = z
   .string()
   .min(1, "externalId must not be empty")
   .max(
     V1_EXTERNAL_ID_MAX_LENGTH,
     `externalId must be at most ${V1_EXTERNAL_ID_MAX_LENGTH} characters`
-  );
+  )
+  // ── Why a character class at all, on a key documented as opaque ──────────
+  // A `U+0000` reaches Postgres, which cannot represent it in `text`, and the
+  // resulting driver error is not in any mapper — so it surfaces as **500
+  // `internal_error` plus a Sentry alert** on a body that was the client's own
+  // fault. That is the same defect this file already fixes one field over for
+  // `teePlayed.holes`: "telling a client its own malformed body was a server
+  // fault, and burning a Sentry alert on it". Any token holder could mint
+  // unlimited alerts on the highest-value route of the surface.
+  //
+  // ── Why the whole C0 range + DEL, and not only NUL ───────────────────────
+  // Only NUL is a storage fault, so only NUL is strictly forced. The range is
+  // wider for one reason: §4 makes this decision ONE-WAY. Adding the rejection
+  // later is a tightening on a shipped field, which is a `/v2`. So the choice
+  // is not "NUL now, the rest later" — it is "NUL forever, or the class now".
+  //
+  // The rest of the class earns inclusion on its own: `\r`, `\n` and `\t` in a
+  // value that is echoed into logs and matched EXACTLY by
+  // `GET /v1/rounds?externalId=` are log-injection-shaped and make a key
+  // whose printed form is not its stored form. No real key contains one —
+  // fitbull sends its own round UUID — so nothing legitimate is refused, and
+  // the day-one boundary costs a live client nothing.
+  //
+  // ── What deliberately stays LEGAL ────────────────────────────────────────
+  // Whitespace-only keys (`"   "`) and leading/trailing spaces. They are not a
+  // server-integrity problem: `"   "` is neither NULL nor empty, so
+  // `NULLS DISTINCT` stays coherent, and it round-trips through the write and
+  // read paths byte-identically. Refusing it would be a taste judgement about
+  // the CONTENT of a key §2 defines as opaque, and it would sit badly beside
+  // this file's own rule that `/v1` performs no normalization — a schema that
+  // will not trim a key has no standing to reject one for being all spaces.
+  // The `.min(1)` rejection above is mechanical (empty vs. NULL), not
+  // aesthetic, which is why the two are not inconsistent.
+  .superRefine((value, ctx) => {
+    if (CONTROL_CHARACTERS.test(value)) {
+      ctx.addIssue({
+        code: "custom",
+        message: "externalId must not contain control characters",
+        params: { v1Code: V1_EXTERNAL_ID_FIELD_CODE },
+      });
+    }
+  });
 
 /**
  * An ISO-8601 date-time ending in a `±HH:MM` / `±HHMM` UTC offset — the form

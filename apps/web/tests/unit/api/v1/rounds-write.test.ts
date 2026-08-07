@@ -10,6 +10,7 @@
 import { describe, expect, test } from "vitest";
 
 import {
+  V1_EXTERNAL_ID_FIELD_CODE,
   V1_EXTERNAL_ID_MAX_LENGTH,
   V1_TEE_HOLES_FIELD_CODE,
   hasTeeHoles,
@@ -143,6 +144,59 @@ describe("v1RoundSubmissionSchema", () => {
         body({ externalId: "k".repeat(V1_EXTERNAL_ID_MAX_LENGTH) })
       ).success
     ).toBe(true);
+  });
+
+  test("rejects a NUL byte in externalId — a 422, never the 500 it used to be", () => {
+    // The defect this closes: Postgres cannot represent U+0000 in `text`, the
+    // driver's refusal is in no mapper, and the client's own malformed body
+    // therefore came back as `500 internal_error` WITH a Sentry alert. Any
+    // token holder could mint unlimited alerts on the most valuable route.
+    const key = `fitbull${String.fromCharCode(0)}9c3`;
+    const codes = fieldCodes(body({ externalId: key }));
+    expect(codes).toContain(V1_EXTERNAL_ID_FIELD_CODE);
+  });
+
+  test("rejects the whole C0 range and DEL, not only NUL", () => {
+    // Wider than the storage fault strictly forces, because §4 makes the
+    // decision ONE-WAY: adding this rejection after ship is a tightening on a
+    // live field. The choice is "the class now" or "NUL forever".
+    for (const code of [0x00, 0x01, 0x09, 0x0a, 0x0d, 0x1f, 0x7f]) {
+      const key = `fitbull${String.fromCharCode(code)}9c3`;
+      expect(
+        v1RoundSubmissionSchema.safeParse(body({ externalId: key })).success,
+        `U+${code.toString(16).padStart(4, "0")} must be rejected`
+      ).toBe(false);
+    }
+  });
+
+  test("a whitespace-only externalId stays LEGAL, deliberately", () => {
+    // Not a server-integrity problem: "   " is neither NULL nor empty, so
+    // NULLS DISTINCT stays coherent and the key round-trips byte-identically
+    // through the write and read paths. Rejecting it would be a judgement
+    // about the CONTENT of a key §2 defines as opaque — and would contradict
+    // this schema's own refusal to trim. Frozen by §4 either way, so it is
+    // recorded here as a decision rather than left as an accident.
+    const parsed = parse(body({ externalId: "   " }));
+    expect(parsed.externalId).toBe("   ");
+  });
+
+  test("non-ASCII and other printable characters remain legal", () => {
+    // The rejection is a control-character class, NOT an alphabet. An opaque
+    // key may be any printable text a client likes.
+    // The last entry is NBSP (U+00A0): a whitespace character, but NOT a C0
+    // control character, so it is accepted.
+    const printable = [
+      "rønd-æøå",
+      "键-9c3",
+      "a b/c:d?e#f",
+      "a" + String.fromCharCode(0x00a0) + "b",
+    ];
+    for (const key of printable) {
+      expect(
+        v1RoundSubmissionSchema.safeParse(body({ externalId: key })).success,
+        `${JSON.stringify(key)} must be accepted`
+      ).toBe(true);
+    }
   });
 
   test("strips unknown top-level keys instead of rejecting them", () => {

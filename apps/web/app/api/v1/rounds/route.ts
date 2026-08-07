@@ -271,7 +271,14 @@ export async function POST(request: Request): Promise<Response> {
     // fully provisioned user on every fitbull request (§1). The service
     // raises `PlanNotSelectedError` from it, which the central mapper turns
     // into 403 `plan_required`.
-    const supabase = createBearerTokenSupabaseClient(principal.token);
+    //
+    // `rlsScopedClient` (T13.3's branded seam), not
+    // `createBearerTokenSupabaseClient`: `get_connected_entitlement()` filters
+    // its row on `auth.uid()`, which only resolves when the client carries
+    // THIS principal's token. The brand is what makes that mechanical rather
+    // than documentary — an admin client is not assignable, so the swap
+    // cannot happen invisibly here any more than it can on the GET.
+    const supabase = rlsScopedClient(principal.token);
     const getUserAccess = createV1UserAccess(
       v1EntitlementRpcFromSupabase(supabase),
       { userId: principal.userId }

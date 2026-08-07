@@ -329,8 +329,20 @@ export async function findRoundIdByNaturalKey(
  * unmapped to `500 internal_error` + Sentry rather than naming a round we are
  * not certain about.
  *
- * Unreachable for the documented consumer: fitbull resolves tees through the
- * catalog and always sends an id.
+ * **That 500 is REACHABLE — calling it unreachable was wrong.** The path is: a
+ * round on tee A at T, a round on tee B at T, then a re-submit on tee A at T
+ * with NO asserted `teeId`. Two rows match the fallback key, the lookup returns
+ * null, the error is rethrown, and the client gets `500` where `409
+ * duplicate_round` is the correct answer. It has been driven end to end.
+ *
+ * What is actually true is narrower: reaching it needs a client that NAMES tees
+ * instead of resolving them through the catalog, and fitbull always sends an
+ * id — so no traffic we know of takes this branch today. That is a claim about
+ * one consumer's behaviour, not about the mechanism, and it stops holding the
+ * moment a second consumer submits by tee name.
+ *
+ * Left as-is deliberately: the alternative is naming a round we are not
+ * certain about on the product's core artifact, which is worse than a 500.
  */
 export async function findRoundIdByNaturalKeyWithoutTee(
   db: ScorecardDb,

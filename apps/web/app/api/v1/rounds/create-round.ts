@@ -75,12 +75,42 @@ import {
 const UNIQUE_VIOLATION = "23505";
 
 /**
- * Attribution written to `round.submitted_via`. A single constant rather than
- * the `client_id`: the column is analytics-only, there is no client registry
- * yet, and putting a client identifier in a data column would give it a
- * second, unversioned life outside the token.
+ * The surface prefix written to `round.submitted_via`, and the whole value for
+ * a first-party principal (which has no `client_id`).
  */
 export const V1_SUBMITTED_VIA = "api-v1";
+
+/**
+ * Attribution written to `round.submitted_via` — `api-v1` for a first-party
+ * principal, `api-v1:{client_id}` for an OAuth one.
+ *
+ * ── Why the client id belongs here after all ──────────────────────────────
+ * The earlier reasoning for a bare constant was that a client identifier in a
+ * data column would acquire "a second, unversioned life outside the token".
+ * That worry does not survive contact with this column: `submitted_via` is
+ * server-set (the migration's INSERT grant excludes it, so no client can
+ * author it), and `serializeV1Round` deliberately omits it, so it never
+ * reaches the wire. It has no contract surface at all, which means changing
+ * its shape later is not a §4 breaking change.
+ *
+ * What does not survive is the AUDIT TRAIL. `20260730120000`'s own comment
+ * calls this column PROVENANCE that "a handicap product with an
+ * official-handicap workstream cannot accept" being forgeable — and a value
+ * that says only "some /v1 token" cannot answer WHICH connected app wrote a
+ * round. That answer is unrecoverable after the fact: nothing else on the row
+ * records it, and the token that carried the claim is long gone. So the cost
+ * of deferring is real and permanent, while the cost of writing it now is
+ * this function.
+ *
+ * The `api-v1` prefix is kept so the surface stays greppable and any
+ * `like 'api-v1%'` analytics keeps matching; the existing `api:fitness`
+ * precedent uses the same colon-separated shape.
+ */
+export function v1SubmittedVia(principal: V1Principal): string {
+  return principal.clientId === null
+    ? V1_SUBMITTED_VIA
+    : `${V1_SUBMITTED_VIA}:${principal.clientId}`;
+}
 
 export interface CreateV1RoundOptions {
   db: ScorecardDb;
@@ -247,7 +277,7 @@ export async function createV1Round(
         // `round_limit_reached` code — there is none.
         overLimitPolicy: "quarantine",
         externalId,
-        submittedVia: V1_SUBMITTED_VIA,
+        submittedVia: v1SubmittedVia(principal),
       },
       derived
     );
