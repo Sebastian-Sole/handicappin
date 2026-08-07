@@ -22,7 +22,9 @@
  * below into a 503. `tests/unit/api/v1/catalog-routes.test.ts` covers the
  * denial paths; here the mock also records what the handlers passed it, so
  * the "principal parts + named family" contract is asserted against tokens
- * GoTrue really minted rather than hand-built ones.
+ * GoTrue really minted rather than hand-built ones. Note that each allowed
+ * request now records TWO calls — the pre-auth `ip:{ip}` bucket, then the
+ * per-principal one (§3) — so the recorded-call indices below are paired.
  */
 import { afterAll, beforeAll, describe, expect, test, vi } from "vitest";
 import { randomUUID } from "crypto";
@@ -41,6 +43,7 @@ vi.mock("@/lib/rate-limit", async (importOriginal) => {
 import { courseRouter } from "@/server/api/routers/course";
 import { teeRouter } from "@/server/api/routers/tee";
 import { createCallerFactory } from "@/server/api/trpc";
+import { searchCatalogCourses } from "@/server/services/catalog";
 import {
   deleteAuthUserByEmail,
   hasLocalStack,
@@ -124,17 +127,42 @@ function allowed() {
   };
 }
 
-/** Ratings the fixture uses, chosen so a string/number confusion is visible. */
+/**
+ * Ratings the fixture uses, chosen so a string/number confusion is visible:
+ * every `courseRating*` is a non-integer, so a missing `Number()` coercion
+ * shows up as `"71.4" !== 71.4` rather than passing by luck.
+ *
+ * They are written as NUMBERS, matching `decimal<"number">()` in the schema.
+ * The insert form does not weaken the assertions: the columns are postgres
+ * `decimal`, and the driver hands them back as **strings either way**
+ * (verified against the local stack — inserting `71.4` and `"71.4"` both read
+ * back as the string `"71.4"`). So `listCourseTees`'s coercion is still the
+ * thing under test, and the declared type no longer has to be cast around.
+ */
 const RATINGS = {
-  courseRating18: "71.4",
+  courseRating18: 71.4,
   slopeRating18: 129,
-  courseRatingFront9: "35.6",
+  courseRatingFront9: 35.6,
   slopeRatingFront9: 127,
-  courseRatingBack9: "35.8",
+  courseRatingBack9: 35.8,
   slopeRatingBack9: 131,
 } as const;
 
-function teeValues(overrides: Record<string, unknown>) {
+/**
+ * The insert shape, taken from the schema rather than restated.
+ *
+ * `Record<string, unknown>` overrides used to make `teeValues` return a
+ * widened object — `gender: string`, `distanceMeasurement: string`, and no
+ * `name` at all — which is five `TS2769`s at the `db.insert` call sites. They
+ * never surfaced because Vitest transpiles without type-checking and
+ * `next build` does not compile tests. Typing the return pins the enum
+ * columns to their unions and makes `name` a required override.
+ */
+type TeeInsert = typeof teeInfo.$inferInsert;
+
+function teeValues(
+  overrides: Partial<TeeInsert> & { name: string }
+): TeeInsert {
   return {
     courseId: approvedCourseId,
     gender: "mens",
@@ -369,13 +397,19 @@ describeIfLocal("/v1 catalog reads (real local Supabase)", () => {
       await getCourses(v1Request(firstParty, `/courses?q=${FIXTURE}`));
       await getTees(v1Request(oauth, `/tees?courseId=${approvedCourseId}`));
 
+      // Two calls per allowed request: the pre-auth IP bucket (no principal),
+      // then the per-principal one. Indices 0 and 2 are the pre-auth pair.
+      expect(enforcePublicApiRateLimit).toHaveBeenCalledTimes(4);
+      expect(enforcePublicApiRateLimit.mock.calls[0][1]).toBeUndefined();
+      expect(enforcePublicApiRateLimit.mock.calls[2][1]).toBeUndefined();
+
       const [, firstPartyParts, firstPartyFamily] =
-        enforcePublicApiRateLimit.mock.calls[0];
+        enforcePublicApiRateLimit.mock.calls[1];
       expect(firstPartyParts).toEqual({ userId: firstParty.userId });
       expect(firstPartyFamily).toBe("reads");
 
       const [, oauthParts, oauthFamily] =
-        enforcePublicApiRateLimit.mock.calls[1];
+        enforcePublicApiRateLimit.mock.calls[3];
       expect(oauthParts).toEqual({
         userId: oauth.userId,
         clientId: oauth.clientId,
@@ -383,6 +417,36 @@ describeIfLocal("/v1 catalog reads (real local Supabase)", () => {
       expect(oauthFamily).toBe("reads");
       // The double-prefix trap: a composed key would arrive as a string.
       expect(typeof oauthParts).toBe("object");
+    });
+
+    test("a REAL token GoTrue would reject never reaches GoTrue once the pre-auth budget is spent", async () => {
+      // The amplification shape, against the live stack: a token minted by
+      // this suite's own GoTrue and then mangled, so the signature is real
+      // enough to be worth checking and wrong enough to fail. With the
+      // pre-auth bucket exhausted the answer must be 429 — a 401 would mean
+      // `supabase.auth.getUser` ran first, i.e. the request bought a GoTrue
+      // round trip before anything metered it.
+      enforcePublicApiRateLimit.mockResolvedValue({
+        success: false,
+        failedClosed: false,
+        family: "reads" as const,
+        limit: 120,
+        remaining: 0,
+        reset: Date.now() + 30_000,
+      });
+
+      const forged = `${firstParty.token.slice(0, -4)}zzzz`;
+      const response = await getCourses(
+        new Request(
+          `https://api.handicappin.com/api/v1/courses?q=${FIXTURE}`,
+          { headers: { authorization: `Bearer ${forged}` } }
+        )
+      );
+
+      expect(response.status).toBe(429);
+      expect(await response.json()).toMatchObject({ code: "rate_limited" });
+
+      enforcePublicApiRateLimit.mockResolvedValue(allowed());
     });
 
     test.each(["first-party", "oauth"] as const)(
@@ -492,6 +556,41 @@ describeIfLocal("/v1 catalog reads (real local Supabase)", () => {
       expect(raw).not.toContain("submittedBy");
       expect(raw).not.toContain(firstParty.userId);
       expect(raw).not.toContain(otherUserId);
+    });
+  });
+
+  /**
+   * The one input postgres cannot carry. `?q=%00` used to reach the driver,
+   * raise SQLSTATE 22021 ("invalid byte sequence for encoding UTF8: 0x00"),
+   * and come back as a 500 `internal_error` plus a Sentry alert — unlimited
+   * alerts from inside a token's 120/min budget, and (per §4) a status we
+   * could never have narrowed to a 422 after ship.
+   */
+  describe("a NUL byte in q is rejected at the boundary", () => {
+    test.each([
+      ["a lone NUL", "%00"],
+      ["an embedded NUL", "ab%00cd"],
+    ])("q=%s is 422 validation_failed against the real DB", async (_l, enc) => {
+      enforcePublicApiRateLimit.mockResolvedValue(allowed());
+
+      const response = await getCourses(
+        v1Request(oauth, `/courses?q=${enc}`)
+      );
+
+      expect(response.status).toBe(422);
+      const body = await response.json();
+      expect(body.code).toBe("validation_failed");
+      expect(body.errors).toContainEqual(
+        expect.objectContaining({ path: "q", code: "q_contains_nul" })
+      );
+    });
+
+    test("the guard is load-bearing: the same byte still breaks the query", async () => {
+      // Without this, the assertions above could pass against a database
+      // that happily accepts NULs and the guard would be ceremony.
+      await expect(
+        searchCatalogCourses({ query: `${FIXTURE}\u0000` })
+      ).rejects.toThrow();
     });
   });
 

@@ -56,6 +56,19 @@ export const DEFAULT_COURSE_SEARCH_LIMIT = 10;
  * wildcards, which is a documented property of the search rather than a bug:
  * both surfaces have the same semantics, and neither promises literal
  * matching.
+ *
+ * **The one place the two surfaces differ:** `/v1/courses` TRIMS `q` before
+ * calling this, and `course.searchCourses` does not — so `" foo "` searches
+ * `'%foo%'` on `/v1` and `'% foo %'` on tRPC. Harmless, arguably better on
+ * `/v1`, and left as-is deliberately (tightening tRPC would change app
+ * behaviour on an API PR; loosening `/v1` after ship is barred by contract
+ * §4). Recorded because the whole point of this module is that the two
+ * surfaces answer identically, so the exception should not have to be
+ * rediscovered.
+ *
+ * A `query` containing a NUL byte (`U+0000`) makes postgres reject the bind
+ * parameter with SQLSTATE `22021`; `/v1/courses` rejects it as a 422 before
+ * it gets here, and tRPC still surfaces the error (pre-existing, unchanged).
  */
 export async function searchCatalogCourses(options: {
   query: string;

@@ -59,11 +59,25 @@
  * catalog is a public, approved-only view, and whether some user has a
  * pending submission is not a connected app's business.
  *
+ * ── RATE LIMITING: TWO buckets, IP first and then principal (§3) ──────────
+ * The handler's FIRST statement is a limiter call with no principal, so
+ * `getIdentifier` keys it `ip:{ip}`; the per-principal call stays where it
+ * was, after authentication. §3 requires both, and the pre-auth one has to
+ * come first because `authenticateV1Request` is a NETWORK round trip to
+ * GoTrue for any token that is merely well-formed. `../courses/route.ts`
+ * writes out the full reasoning, the disjoint-key-space argument and the
+ * NAT trade-off; both routes are wired identically.
+ *
+ * `courseId` needs no NUL guard, unlike `../courses/route.ts`'s `q`: it is
+ * coerced to a number before it reaches postgres, so a NUL byte fails
+ * validation as "not an integer" long before any bind parameter exists.
+ *
  * ── What this route does NOT do ───────────────────────────────────────────
  * No entitlement check and no scope check, for the reasons written out in
- * `../courses/route.ts`. Handler responsibilities are authenticate,
- * rate-limit, validate, call the shared service, serialize, map errors; the
- * queries live in `@/server/services/catalog`, shared with tRPC.
+ * `../courses/route.ts`. Handler responsibilities are rate-limit,
+ * authenticate, rate-limit again, validate, call the shared service,
+ * serialize, map errors; the queries live in `@/server/services/catalog`,
+ * shared with tRPC.
  */
 import { z } from "zod";
 
@@ -105,6 +119,13 @@ const teeQuerySchema = z.object({
  * The wire shape. Explicit field-by-field rather than a spread — the catalog
  * type carries moderation columns that must not cross this boundary, and a
  * spread would publish any column added to `teeInfo` later.
+ *
+ * That is a guarantee of THIS FUNCTION — of the `/v1` boundary — and not of
+ * the catalog module. `listCourseTees` itself returns `{ ...tee }`, the whole
+ * row, so a column added to `teeInfo` DOES silently join the **tRPC**
+ * response (see the note on `CatalogTee`). Faithful pre-refactor behaviour,
+ * not a regression, and the reason the `/v1` promise has to be stated here
+ * rather than one layer down.
  */
 function serializeTee(tee: CatalogTee) {
   return {
@@ -137,12 +158,21 @@ function serializeTee(tee: CatalogTee) {
 export async function GET(request: Request): Promise<Response> {
   const instance = crypto.randomUUID();
   try {
+    // BUCKET 1 — pre-auth, keyed `ip:{ip}` (§3). FIRST statement on purpose:
+    // `authenticateV1Request` below is a NETWORK call to GoTrue for every
+    // well-FORMED token, so limiting after it leaves that round trip
+    // unmetered for callers holding no valid credential. No principal
+    // argument, so `getIdentifier` falls through to the IP key.
+    const preAuth = await enforcePublicApiRateLimit(request, undefined, "reads");
+    if (!preAuth.success) return rateLimitResponse(preAuth, { instance });
+
     const auth = await authenticateV1Request(request, { instance });
     if (!auth.ok) return problemResponse(auth.problem);
 
-    // Principal PARTS, never a composed key, and the family is ALWAYS named:
-    // omitting it silently falls back to the legacy 60/min shared bucket
-    // instead of the 120/min reads budget (see `_lib/rate-limit-seam.ts`).
+    // BUCKET 2 — per principal. Principal PARTS, never a composed key, and
+    // the family is ALWAYS named: omitting it silently falls back to the
+    // legacy 60/min shared bucket instead of the 120/min reads budget (see
+    // `_lib/rate-limit-seam.ts`). Disjoint key space from bucket 1.
     const limit = await enforcePublicApiRateLimit(
       request,
       v1RateLimitPrincipal(auth.principal),

@@ -30,6 +30,15 @@ export interface CatalogHole {
  * `submittedBy`, `parentTeeId`), which the web and native scorecards read.
  * `/v1` projects a narrower public shape from it; see
  * `app/api/v1/tees/route.ts`.
+ *
+ * ⚠️ **This interface is a floor, not a ceiling.** `listCourseTees` builds its
+ * result with `{ ...tee }` — a spread of the full `teeInfo` row, extracted
+ * verbatim from the procedure — so a column added to that table joins the
+ * runtime object, and the tRPC response, WITHOUT appearing here and without a
+ * type error (TypeScript checks excess properties on object literals, not on
+ * spreads). That is faithful pre-refactor behaviour and not a regression, but
+ * it means the "a new column cannot silently join the contract" guarantee is
+ * `serializeTee`'s alone, at the `/v1` boundary — never this module's.
  */
 export interface CatalogTee {
   id: number;

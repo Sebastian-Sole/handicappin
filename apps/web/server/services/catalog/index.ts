@@ -37,10 +37,29 @@
  * Adding an "ignore approval" flag here would put the catalog boundary one
  * boolean away from being bypassed by a caller that did not mean to.
  *
+ * ── The safety boundary is the CALL SITES, not the client ─────────────────
  * Reads go through Drizzle's pooled `db` client, matching the procedures this
- * was extracted from. That client is not RLS-scoped, which is why every
- * exported function applies the visibility filter itself rather than relying
- * on a policy to do it.
+ * was extracted from. **That client is not RLS-scoped**: it authenticates as
+ * the database role, so nothing outside this module stops it returning a
+ * pending or archived row.
+ *
+ * What makes the module safe is therefore an invariant over its call sites,
+ * not a property of the client: **every exported function ANDs
+ * `catalogVisible()` into its `where`** — all three of them today
+ * (`searchCatalogCourses`, `findCatalogCourse`, `listCourseTees`). Add a
+ * fourth exported read without it and there is no policy, no type and no test
+ * to catch it; unapproved, user-submitted rows simply start reaching `/v1`.
+ * If that ever feels like too thin a guarantee, the fix is to funnel the
+ * reads through one helper that applies the predicate — not to assume the
+ * client will.
+ *
+ * ── Projection: `CatalogTee` is a floor, not a ceiling ────────────────────
+ * `listCourseTees` returns `{ ...tee }` — a SPREAD of the whole `teeInfo`
+ * row, extracted verbatim from `tee.fetchTees`. So a column added to
+ * `teeInfo` silently joins the tRPC response, and the declared interface will
+ * not complain. `/v1` is unaffected because its handlers enumerate fields in
+ * `serializeTee` / `serializeCourse`; that "a new column cannot silently join
+ * the contract" guarantee belongs to those serializers, NOT to this module.
  */
 
 export {

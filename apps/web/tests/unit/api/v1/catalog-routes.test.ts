@@ -2,17 +2,23 @@
  * `GET /v1/courses` and `GET /v1/tees` — handler contract.
  *
  * These are the assertions that do not need a database: the auth guard, the
- * rate-limit seam (principal PARTS + the named `reads` family), the frozen
- * query-parameter validation, the frozen response shape, and the two limiter
- * denial outcomes. The catalog service is mocked here so the wire contract is
- * tested independently of the query; `tests/integration/v1-catalog.test.ts`
- * runs the same routes against a real stack with real tokens of BOTH
- * principal classes.
+ * rate-limit seam (the pre-auth IP bucket, then principal PARTS + the named
+ * `reads` family), the frozen query-parameter validation, the frozen response
+ * shape, and the two limiter denial outcomes. The catalog service is mocked
+ * here so the wire contract is tested independently of the query;
+ * `tests/integration/v1-catalog.test.ts` runs the same routes against a real
+ * stack with real tokens of BOTH principal classes.
  *
  * The network token validator is stubbed, but classification is NOT: real
  * JWT-shaped tokens go through the real `authenticateV1Request`, so a
  * first-party token and an OAuth token really do produce different principal
  * parts at the limiter — the thing the double-prefix trap corrupts.
+ *
+ * That depth of mocking is load-bearing for one more reason. `networkValidator`
+ * stands exactly where the GoTrue round trip is, so ORDERING between the
+ * limiter and token validation is observable from here — see "the pre-auth IP
+ * bucket runs BEFORE token validation". Stubbing `authenticateV1Request`
+ * wholesale would make that claim untestable in this file.
  */
 import { beforeEach, describe, expect, test, vi } from "vitest";
 
@@ -172,8 +178,9 @@ describe("rate-limit seam — the two traps the barrel documents", () => {
     "%s passes first-party principal PARTS and names the reads family",
     async (_name, call) => {
       await call();
-      expect(enforcePublicApiRateLimit).toHaveBeenCalledTimes(1);
-      const [, principal, family] = enforcePublicApiRateLimit.mock.calls[0];
+      // Two buckets per allowed request: the pre-auth IP one, then this.
+      expect(enforcePublicApiRateLimit).toHaveBeenCalledTimes(2);
+      const [, principal, family] = enforcePublicApiRateLimit.mock.calls[1];
       // PARTS, not a composed `user:{sub}` string.
       expect(principal).toEqual({ userId: USER_ID });
       expect(typeof principal).toBe("object");
@@ -191,7 +198,7 @@ describe("rate-limit seam — the two traps the barrel documents", () => {
     "%s passes OAuth principal PARTS — never the composed pair key",
     async (_name, call) => {
       await call();
-      const [, principal, family] = enforcePublicApiRateLimit.mock.calls[0];
+      const [, principal, family] = enforcePublicApiRateLimit.mock.calls[1];
       expect(principal).toEqual({ userId: USER_ID, clientId: CLIENT_ID });
       // The double-prefix trap: a composed key would arrive as a string and
       // be re-prefixed to `user:client:…:user:…` by the limiter.
@@ -200,7 +207,99 @@ describe("rate-limit seam — the two traps the barrel documents", () => {
     }
   );
 
-  test("the limiter runs BEFORE the catalog is touched", async () => {
+  test.each([
+    ["GET /v1/courses", () => getCourses(request("/courses?q=st"))],
+    ["GET /v1/tees", () => getTees(request("/tees?courseId=4"))],
+  ])(
+    "%s a limiter denial short-circuits before any catalog read",
+    async (_name, call) => {
+      // Renamed from "the limiter runs BEFORE the catalog is touched", which
+      // over-claimed: this asserts only that a 429 skips the catalog, which
+      // was never the ordering at risk. The auth-vs-limiter ordering is
+      // pinned by "the pre-auth IP bucket" below.
+      enforcePublicApiRateLimit.mockResolvedValue({
+        success: false,
+        failedClosed: false,
+        family: "reads",
+        limit: 120,
+        remaining: 0,
+        reset: Date.now() + 30_000,
+      });
+      await call();
+      expect(searchCatalogCourses).not.toHaveBeenCalled();
+      expect(findCatalogCourse).not.toHaveBeenCalled();
+      expect(listCourseTees).not.toHaveBeenCalled();
+    }
+  );
+});
+
+/**
+ * §3: "**Pre-auth / invalid-token requests** (which still cost validation
+ * work and must be limited): keyed `ip:{ip}`".
+ *
+ * The cost being metered is `supabase.auth.getUser(token)`, a NETWORK round
+ * trip to GoTrue. `extractBearerToken` short-circuits without any network
+ * ONLY for an absent / unsplittable / wrongly-schemed / empty header —
+ * `Bearer garbage-not-even-a-jwt` and a well-formed JWT with a bogus
+ * signature both reach the validator. `networkValidator` above IS that call,
+ * so "the limiter ran before validation" is directly observable here: these
+ * assertions are the reason the mock exists at that depth rather than
+ * stubbing `authenticateV1Request` wholesale.
+ */
+describe("the pre-auth IP bucket runs BEFORE token validation", () => {
+  test.each([
+    ["GET /v1/courses", () => getCourses(request("/courses?q=st"))],
+    ["GET /v1/tees", () => getTees(request("/tees?courseId=4"))],
+  ])(
+    "%s calls the limiter with NO principal first, then with the parts",
+    async (_name, call) => {
+      await call();
+      expect(enforcePublicApiRateLimit).toHaveBeenCalledTimes(2);
+
+      const [, preAuthPrincipal, preAuthFamily] =
+        enforcePublicApiRateLimit.mock.calls[0];
+      // `undefined`, so `getIdentifier` falls through to `ip:{ip}`. A
+      // hand-composed string here would take the limiter's string branch and
+      // be re-prefixed to `user:…`.
+      expect(preAuthPrincipal).toBeUndefined();
+      expect(preAuthFamily).toBe("reads");
+
+      const [, principal] = enforcePublicApiRateLimit.mock.calls[1];
+      expect(principal).toEqual({ userId: USER_ID });
+    }
+  );
+
+  test.each([
+    ["GET /v1/courses", () => getCourses(request("/courses?q=st"))],
+    ["GET /v1/tees", () => getTees(request("/tees?courseId=4"))],
+  ])(
+    "%s never reaches token validation once the pre-auth budget is spent",
+    async (_name, call) => {
+      enforcePublicApiRateLimit.mockResolvedValue({
+        success: false,
+        failedClosed: false,
+        family: "reads",
+        limit: 120,
+        remaining: 0,
+        reset: Date.now() + 30_000,
+      });
+
+      const response = await call();
+
+      expect(response.status).toBe(429);
+      // THE assertion: the GoTrue round trip never happened.
+      expect(networkValidator).not.toHaveBeenCalled();
+      // …and the per-principal bucket was never consulted either, because
+      // there is no principal to key it on.
+      expect(enforcePublicApiRateLimit).toHaveBeenCalledTimes(1);
+    }
+  );
+
+  test("a syntactically valid but REJECTED token is limited, not validated", async () => {
+    // The amplification shape: a JWT-shaped token whose signature GoTrue
+    // would reject. Without a pre-auth bucket this is one network call per
+    // request, unmetered, from a caller holding no credential at all.
+    networkValidator.mockResolvedValue(null);
     enforcePublicApiRateLimit.mockResolvedValue({
       success: false,
       failedClosed: false,
@@ -209,9 +308,59 @@ describe("rate-limit seam — the two traps the barrel documents", () => {
       remaining: 0,
       reset: Date.now() + 30_000,
     });
-    await getTees(request("/tees?courseId=4"));
-    expect(findCatalogCourse).not.toHaveBeenCalled();
-    expect(listCourseTees).not.toHaveBeenCalled();
+
+    const forged = jwt({ sub: "11111111-1111-4111-8111-111111111111" });
+    const response = await getCourses(request("/courses?q=st", forged));
+
+    // 429, not 401 — proof the limiter decided before authentication did.
+    expect(response.status).toBe(429);
+    expect(await response.json()).toMatchObject({ code: "rate_limited" });
+    expect(networkValidator).not.toHaveBeenCalled();
+  });
+
+  test("garbage that is not even a JWT is limited before validation too", async () => {
+    enforcePublicApiRateLimit.mockResolvedValue({
+      success: false,
+      failedClosed: false,
+      family: "reads",
+      limit: 120,
+      remaining: 0,
+      reset: Date.now() + 30_000,
+    });
+
+    const response = await getTees(
+      request("/tees?courseId=4", "garbage-not-even-a-jwt")
+    );
+
+    expect(response.status).toBe(429);
+    expect(networkValidator).not.toHaveBeenCalled();
+  });
+
+  test("an ABSENT Authorization header still costs a pre-auth bucket slot", async () => {
+    // It cannot amplify — `extractBearerToken` short-circuits with no
+    // network — but it is still a request the origin served, and §3 keys
+    // pre-auth traffic on IP without carving out the cheap shapes.
+    const response = await getCourses(request("/courses?q=st", null));
+    expect(response.status).toBe(401);
+    expect(enforcePublicApiRateLimit).toHaveBeenCalledTimes(1);
+    expect(enforcePublicApiRateLimit.mock.calls[0][1]).toBeUndefined();
+    expect(networkValidator).not.toHaveBeenCalled();
+  });
+
+  test("a fail-closed pre-auth limiter is 503, and still skips validation", async () => {
+    enforcePublicApiRateLimit.mockResolvedValue({
+      success: false,
+      failedClosed: true,
+      reason: "missing-credentials",
+      family: "reads",
+      limit: 0,
+      remaining: 0,
+      reset: Date.now() + 60_000,
+    });
+
+    const response = await getCourses(request("/courses?q=st"));
+    expect(response.status).toBe(503);
+    expect(networkValidator).not.toHaveBeenCalled();
   });
 });
 
@@ -335,6 +484,32 @@ describe("GET /v1/courses — frozen query parameters", () => {
       limit: 10,
     });
   });
+
+  test.each([
+    ["a lone NUL", "%00"],
+    ["an embedded NUL", "ab%00cd"],
+    ["a NUL with surrounding whitespace", "%20%00%20"],
+  ])(
+    "q containing %s is 422 validation_failed, never a 500",
+    async (_label, encoded) => {
+      // Postgres rejects a NUL inside a `text` bind parameter with SQLSTATE
+      // 22021, which the central mapper turns into 500 internal_error + a
+      // Sentry alert — i.e. any token holder could mint unlimited alerts
+      // from inside its 120/min budget. §4 also makes turning a shipped 500
+      // into a 422 breaking, so this has to be right on day one.
+      const response = await getCourses(request(`/courses?q=${encoded}`));
+      expect(response.status).toBe(422);
+
+      const body = await response.json();
+      expect(body.code).toBe("validation_failed");
+      const issue = body.errors.find((e: { path: string }) => e.path === "q");
+      expect(issue).toBeDefined();
+      expect(issue.code).toBe("q_contains_nul");
+
+      // The byte never reaches the driver.
+      expect(searchCatalogCourses).not.toHaveBeenCalled();
+    }
+  );
 
   test("q longer than 100 characters is rejected", async () => {
     const response = await getCourses(
