@@ -91,6 +91,31 @@ export interface AnalyticsEventMap {
   /** id from apps/web/lib/calculator-registry.ts */
   calculator_used: { calculator: string };
 
+  // --- api platform (server; D9: G2 ships as server events only) ---
+  /**
+   * server: apps/web/app/api/v1/rounds/route.ts (wave 2, T13) via
+   * `captureApiRoundSubmitted` in apps/web/lib/api-platform/analytics.ts.
+   * The API-transport fact for a successful /v1 round write — NOT a second
+   * `round_submitted` (the shared service owns that one, exactly once per
+   * round). Fires ONLY for /v1-originated writes, never for web/native
+   * submissions. `distinctId` is the Supabase user id.
+   */
+  api_round_submitted: {
+    /** OAuth client_id of the calling consumer — attribution, not identity. */
+    consumer: string;
+    quarantined: boolean;
+    holes_played: number;
+  };
+  /**
+   * server: apps/web/server/api/routers/oauth.ts (connectCompleted), fired
+   * at the end of the OAuth consent approval flow ("Connect handicappin").
+   * `distinctId` is the Supabase user id; `consumer` is the OAuth client id.
+   */
+  api_connect_completed: {
+    /** OAuth client id of the connected consumer — attribution, not identity. */
+    consumer: string;
+  };
+
   // --- misc (server) ---
   /** server: apps/web/server/api/routers/contact.ts */
   contact_form_submitted: { subject: string };
@@ -132,6 +157,8 @@ export const ANALYTICS_EVENTS = {
   STATS_VIEWED: "stats_viewed",
   DETAILED_SCORING_TOGGLED: "detailed_scoring_toggled",
   CALCULATOR_USED: "calculator_used",
+  API_ROUND_SUBMITTED: "api_round_submitted",
+  API_CONNECT_COMPLETED: "api_connect_completed",
   CONTACT_FORM_SUBMITTED: "contact_form_submitted",
   ACCOUNT_DELETED: "account_deleted",
   AI_SCORECARD_EXTRACTED: "ai_scorecard_extracted",

@@ -47,6 +47,46 @@ export function loginPathForConsent(authorizationId: string): string {
 }
 
 /**
+ * How long the consent card is willing to wait for the server-side
+ * `api_connect_completed` capture (T12/D9) before redirecting anyway.
+ */
+export const CONNECT_ANALYTICS_DEADLINE_MS = 2_000;
+
+/**
+ * Wait for `work`, but never longer than `deadlineMs`; resolves either way and
+ * never rejects.
+ *
+ * This exists for the one spot where the consent card fires the server-side
+ * `api_connect_completed` capture and then hands control back to the
+ * connecting app via `window.location.assign`:
+ *
+ * - Fire-and-forget is wrong here — the navigation on the very next line
+ *   aborts in-flight fetches, so the capture would be dropped most of the
+ *   time, and this is the event's only call site.
+ * - An unbounded `await` is also wrong — nothing in the tRPC link chain
+ *   (`@/trpc/react`, `@/trpc/query-client`) sets a timeout or AbortSignal, so
+ *   a stalled analytics call would hold the user on the consent page instead
+ *   of returning them to the app.
+ *
+ * Bounding the wait keeps the capture in the normal case and caps the
+ * pathological one.
+ */
+export function settleWithin(
+  work: Promise<unknown>,
+  deadlineMs: number,
+): Promise<void> {
+  return new Promise<void>((resolve) => {
+    const timer = setTimeout(resolve, deadlineMs);
+    void work
+      .catch(() => undefined)
+      .then(() => {
+        clearTimeout(timer);
+        resolve();
+      });
+  });
+}
+
+/**
  * Onboarding URL that resumes the pending consent request after plan
  * selection (decision D3): a signed-in but plan-less account must pick a plan
  * before it can approve an authorization — any token minted for it could only
