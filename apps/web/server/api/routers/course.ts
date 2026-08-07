@@ -2,7 +2,8 @@ import { z } from "zod";
 import { authedProcedure, createTRPCRouter, publicProcedure } from "../trpc";
 import { db } from "@/db";
 import { course, round } from "@/db/schema";
-import { ilike, and, eq, desc, max, count } from "drizzle-orm";
+import { eq, desc, max, count } from "drizzle-orm";
+import { searchCatalogCourses } from "@/server/services/catalog";
 
 export const courseRouter = createTRPCRouter({
   getCourseById: publicProcedure
@@ -51,31 +52,22 @@ export const courseRouter = createTRPCRouter({
           : ("pending" as const),
     }));
   }),
+  /**
+   * Course name search over the catalog — approved courses only.
+   *
+   * The query itself lives in `@/server/services/catalog`, shared with
+   * `GET /v1/courses` so the two surfaces cannot resolve the same course
+   * name differently. This procedure only re-projects into the shape its
+   * existing clients read: `website` as `undefined` rather than `null`, and
+   * the literal `approvalStatus` the catalog drops because it is constant.
+   */
   searchCourses: publicProcedure
     .input(z.object({ query: z.string().min(1) }))
-    .query(async ({ ctx, input }) => {
-      const searchQuery = `%${input.query}%`;
-      const results = await db
-        .select({
-          id: course.id,
-          name: course.name,
-          approvalStatus: course.approvalStatus,
-          country: course.country,
-          city: course.city,
-          website: course.website,
-        })
-        .from(course)
-        .where(
-          and(
-            ilike(course.name, searchQuery),
-            eq(course.approvalStatus, "approved")
-          )
-        )
-        .limit(10);
+    .query(async ({ input }) => {
+      const results = await searchCatalogCourses({ query: input.query });
       return results.map((course) => ({
         ...course,
         website: course.website ?? undefined,
-        city: course.city,
         approvalStatus: "approved" as const,
       }));
     }),
