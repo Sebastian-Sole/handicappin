@@ -22,6 +22,7 @@ import {
   type BillingFact,
   type BillingProjection,
 } from "@/utils/billing/apply-billing-event";
+import { unlockQuarantinedRoundsOnUpgrade } from "@/utils/billing/unlock-quarantined-rounds";
 
 export type StripeWriteVerdict =
   | { allowed: true; decision: ApplyDecision }
@@ -104,5 +105,17 @@ export async function guardedStripeProfileWrite(params: {
   }
 
   await params.write();
+
+  // Contract 005 §5: an upgrade unlocks the account's quarantined rounds
+  // automatically. The helper self-guards on "apply + paid projection", so
+  // this site does not repeat the paid-plan test; the resulting round UPDATE
+  // is what enqueues the handicap recomputation (via
+  // trigger_handicap_recalculation) rather than computing it in the webhook.
+  await unlockQuarantinedRoundsOnUpgrade({
+    userId: params.userId,
+    decision: verdict.decision,
+    handler: params.handler,
+  });
+
   return { written: true, verdict };
 }

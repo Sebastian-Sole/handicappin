@@ -41,6 +41,7 @@ import {
   type BillingProjection,
   type CurrentBillingState,
 } from "@/utils/billing/apply-billing-event";
+import { unlockQuarantinedRoundsOnUpgrade } from "@/utils/billing/unlock-quarantined-rounds";
 
 const PROVIDER = "apple" as const;
 
@@ -530,6 +531,21 @@ export async function POST(request: NextRequest) {
         `RevenueCat ${event.type} for user ${userId} produced no projection change (${decision.reason})`,
       );
     }
+
+    // Contract 005 §5: an upgrade unlocks the account's quarantined rounds
+    // automatically. Deliberately OUTSIDE the `decision.changed` branch — a
+    // redelivery after a partial failure produces an unchanged projection but
+    // must still converge the round state. The helper self-guards on
+    // "apply + paid projection", so this site does not repeat the paid-plan
+    // test; the resulting round UPDATE is what enqueues the handicap
+    // recomputation (via trigger_handicap_recalculation) rather than
+    // computing it inside the webhook. On replay it matches zero rows and
+    // therefore enqueues nothing.
+    await unlockQuarantinedRoundsOnUpgrade({
+      userId,
+      decision,
+      handler: `revenuecat.${event.type}`,
+    });
 
     await recordEvent({
       event,
