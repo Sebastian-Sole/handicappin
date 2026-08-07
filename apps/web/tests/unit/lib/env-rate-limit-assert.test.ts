@@ -55,6 +55,10 @@ async function loadEnv(overrides: Record<string, string>) {
     "RATE_LIMIT_GOOGLE_TOKEN_PER_MIN",
     "RATE_LIMIT_CONSENT_PER_HOUR",
     "RATE_LIMIT_AI_EXTRACTION_PER_HOUR",
+    "RATE_LIMIT_ROUNDS_WRITE_PER_MIN",
+    "RATE_LIMIT_API_READS_PER_MIN",
+    "RATE_LIMIT_COURSE_SUBMIT_PER_HOUR",
+    "RATE_LIMIT_PROVISION_PER_HOUR",
   ]) {
     vi.stubEnv(key, "");
   }
@@ -114,5 +118,34 @@ describe("env.ts — RATE_LIMIT_ENABLED production assertion", () => {
     expect(env.RATE_LIMIT_PUBLIC_API_PER_MIN).toBe(120);
     expect(env.RATE_LIMIT_CHECKOUT_PER_MIN).toBe(10);
     expect(env.RATE_LIMIT_DELETION_PER_HOUR).toBe(3);
+  });
+
+  /**
+   * The four `/v1` family budgets. Names and defaults are FROZEN by the owner
+   * and already set in Vercel Production + Preview — a rename here costs a
+   * code change plus two Vercel environment changes. This test is the tripwire.
+   */
+  test("the four frozen /v1 family budgets default to 60/120/10/5", async () => {
+    const { env } = await loadEnv({ NODE_ENV: "development" });
+
+    expect(env.RATE_LIMIT_ROUNDS_WRITE_PER_MIN).toBe(60);
+    expect(env.RATE_LIMIT_API_READS_PER_MIN).toBe(120);
+    expect(env.RATE_LIMIT_COURSE_SUBMIT_PER_HOUR).toBe(10);
+    expect(env.RATE_LIMIT_PROVISION_PER_HOUR).toBe(5);
+  });
+
+  test("the /v1 family budgets coerce from strings and reject non-positive values", async () => {
+    const { env } = await loadEnv({
+      NODE_ENV: "development",
+      RATE_LIMIT_ROUNDS_WRITE_PER_MIN: "30",
+      RATE_LIMIT_API_READS_PER_MIN: "240",
+    });
+
+    expect(env.RATE_LIMIT_ROUNDS_WRITE_PER_MIN).toBe(30);
+    expect(env.RATE_LIMIT_API_READS_PER_MIN).toBe(240);
+
+    await expect(
+      loadEnv({ NODE_ENV: "development", RATE_LIMIT_PROVISION_PER_HOUR: "0" })
+    ).rejects.toThrow(/invalid environment variables/i);
   });
 });

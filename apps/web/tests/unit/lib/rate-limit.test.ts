@@ -26,10 +26,21 @@ import {
   type Mock,
 } from "vitest";
 
+/** Sliding-window descriptor produced by the mocked `Ratelimit.slidingWindow`. */
+interface WindowSpec {
+  kind: "sliding-window";
+  limit: unknown;
+  window: unknown;
+}
+
 const state = vi.hoisted(() => ({
   redisCtorThrows: false,
   ratelimitCtorThrows: false,
   limit: vi.fn(),
+  /** Every Ratelimit constructed at module init, in order. */
+  constructed: [] as { prefix?: string; window?: unknown }[],
+  /** Every `.limit()` call, tagged with the bucket it landed in. */
+  calls: [] as { prefix?: string; identifier?: unknown }[],
 }));
 
 vi.mock("@upstash/redis", () => ({
@@ -42,15 +53,28 @@ vi.mock("@upstash/redis", () => ({
 
 vi.mock("@upstash/ratelimit", () => {
   class MockRatelimit {
-    constructor() {
+    prefix?: string;
+    constructor(config?: { prefix?: string; limiter?: unknown }) {
       if (state.ratelimitCtorThrows) {
         throw new Error("ratelimit init boom");
       }
+      this.prefix = config?.prefix;
+      state.constructed.push({
+        prefix: config?.prefix,
+        window: config?.limiter,
+      });
     }
     limit(...args: unknown[]) {
+      state.calls.push({ prefix: this.prefix, identifier: args[0] });
       return state.limit(...args);
     }
-    static slidingWindow = vi.fn(() => "sliding-window");
+    // Returns a descriptor rather than an opaque string so tests can assert
+    // WHICH budget/window each prefix was built with.
+    static slidingWindow = vi.fn((limit: unknown, window: unknown) => ({
+      kind: "sliding-window" as const,
+      limit,
+      window,
+    }));
   }
   return { Ratelimit: MockRatelimit };
 });
@@ -72,6 +96,17 @@ vi.mock("@/lib/logging", () => ({
 type RateLimitModule = typeof import("@/lib/rate-limit");
 
 /**
+ * The four FROZEN `/v1` family budgets. Neutralized on every load so a value
+ * leaking from `.env.local` can't move an assertion.
+ */
+const V1_FAMILY_ENV_VARS = [
+  "RATE_LIMIT_ROUNDS_WRITE_PER_MIN",
+  "RATE_LIMIT_API_READS_PER_MIN",
+  "RATE_LIMIT_COURSE_SUBMIT_PER_HOUR",
+  "RATE_LIMIT_PROVISION_PER_HOUR",
+] as const;
+
+/**
  * Re-import the module under a controlled env. Returns the fresh module and
  * the `captureSentryError` mock belonging to the same module registry.
  */
@@ -85,6 +120,9 @@ async function loadRateLimit(
   vi.stubEnv("RATE_LIMIT_ENABLED", "");
   vi.stubEnv("UPSTASH_REDIS_REST_URL", "");
   vi.stubEnv("UPSTASH_REDIS_REST_TOKEN", "");
+  for (const key of V1_FAMILY_ENV_VARS) {
+    vi.stubEnv(key, "");
+  }
   for (const [key, value] of Object.entries(overrides)) {
     vi.stubEnv(key, value);
   }
@@ -117,6 +155,8 @@ beforeEach(() => {
   state.redisCtorThrows = false;
   state.ratelimitCtorThrows = false;
   state.limit.mockReset();
+  state.constructed.length = 0;
+  state.calls.length = 0;
 });
 
 afterEach(() => {
@@ -462,5 +502,346 @@ describe("getIdentifier — real client IP resolution", () => {
 
   test("returns ip:unknown when no IP information exists", () => {
     expect(getIdentifier(publicApiRequest())).toBe("ip:unknown");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// /v1 rate-limit principal + per-family buckets (contract 005 §3)
+// ---------------------------------------------------------------------------
+
+describe("getIdentifier — the (client_id, user) pair key", () => {
+  let getIdentifier: RateLimitModule["getIdentifier"];
+
+  beforeEach(async () => {
+    ({
+      mod: { getIdentifier },
+    } = await loadRateLimit());
+  });
+
+  test("OAuth-client principal keys on the PAIR, not on client_id alone", () => {
+    // client_id alone would collapse every user of a connected app into one
+    // shared bucket — the failure this encoding exists to prevent.
+    expect(getIdentifier(publicApiRequest(), "user-1", "fitbull")).toBe(
+      "client:fitbull:user:user-1"
+    );
+    expect(getIdentifier(publicApiRequest(), "user-2", "fitbull")).toBe(
+      "client:fitbull:user:user-2"
+    );
+  });
+
+  test("first-party principal (no client_id claim) keys as user:{sub}, unchanged", () => {
+    expect(getIdentifier(publicApiRequest(), "user-1")).toBe("user:user-1");
+    expect(getIdentifier(publicApiRequest(), "user-1", undefined)).toBe(
+      "user:user-1"
+    );
+  });
+
+  test("pre-auth / invalid-token request keys per-IP via the trust order", () => {
+    expect(
+      getIdentifier(
+        publicApiRequest({
+          "cf-connecting-ip": "198.51.100.1",
+          "x-real-ip": "172.71.0.1",
+        })
+      )
+    ).toBe("ip:198.51.100.1");
+  });
+
+  test("authenticated traffic is NEVER keyed per-IP, whatever the IP headers say", () => {
+    const request = publicApiRequest({
+      "cf-connecting-ip": "198.51.100.1",
+      "x-real-ip": "203.0.113.7",
+      "x-forwarded-for": "6.6.6.6, 203.0.113.7",
+    });
+
+    expect(getIdentifier(request, "user-1", "fitbull")).toBe(
+      "client:fitbull:user:user-1"
+    );
+    expect(getIdentifier(request, "user-1")).toBe("user:user-1");
+  });
+
+  test("a client_id with no user falls back to the IP key, not a per-client bucket", () => {
+    // Not a real principal (an OAuth token always carries `sub`); minting a
+    // client-wide bucket here would be a bucket any caller could claim.
+    expect(
+      getIdentifier(publicApiRequest({ "x-real-ip": "203.0.113.7" }), undefined, "fitbull")
+    ).toBe("ip:203.0.113.7");
+  });
+});
+
+describe("per-route-family buckets", () => {
+  /** Distinct budgets so each prefix's wiring is individually observable. */
+  const DISTINCT_BUDGETS = {
+    ...ENABLED_WITH_CREDS,
+    RATE_LIMIT_ROUNDS_WRITE_PER_MIN: "61",
+    RATE_LIMIT_API_READS_PER_MIN: "121",
+    RATE_LIMIT_COURSE_SUBMIT_PER_HOUR: "11",
+    RATE_LIMIT_PROVISION_PER_HOUR: "6",
+  };
+
+  function constructedFor(prefix: string) {
+    return state.constructed.find((entry) => entry.prefix === prefix);
+  }
+
+  test("every family gets its own Redis prefix under ratelimit:public-api:", async () => {
+    const { mod } = await loadRateLimit(ENABLED_WITH_CREDS);
+
+    const families = Object.keys(mod.PUBLIC_API_RATE_LIMIT_FAMILIES);
+    expect(families.sort()).toEqual([
+      "course-submit",
+      "provision",
+      "reads",
+      "rounds-write",
+    ]);
+
+    const prefixes = families.map((family) =>
+      mod.publicApiFamilyPrefix(family as keyof typeof mod.PUBLIC_API_RATE_LIMIT_FAMILIES)
+    );
+    expect(prefixes.sort()).toEqual([
+      "ratelimit:public-api:course-submit",
+      "ratelimit:public-api:provision",
+      "ratelimit:public-api:reads",
+      "ratelimit:public-api:rounds-write",
+    ]);
+    // Every prefix distinct, and none equal to the legacy global bucket.
+    expect(new Set(prefixes).size).toBe(prefixes.length);
+    expect(prefixes).not.toContain("ratelimit:public-api");
+
+    for (const prefix of prefixes) {
+      expect(constructedFor(prefix)).toBeDefined();
+    }
+  });
+
+  test("each family is driven by its own env var and window", async () => {
+    await loadRateLimit(DISTINCT_BUDGETS);
+
+    // SKIP_ENV_VALIDATION passes raw strings through @t3-oss/env (no zod
+    // coercion), so compare stringified — the point is WHICH var reached
+    // WHICH prefix, which the numeric defaults are asserted for separately
+    // in env-rate-limit-assert.test.ts.
+    const expectations: [string, string, string][] = [
+      ["ratelimit:public-api:rounds-write", "61", "1 m"],
+      ["ratelimit:public-api:reads", "121", "1 m"],
+      ["ratelimit:public-api:course-submit", "11", "1 h"],
+      ["ratelimit:public-api:provision", "6", "1 h"],
+    ];
+
+    for (const [prefix, limit, window] of expectations) {
+      const spec = constructedFor(prefix)?.window as WindowSpec | undefined;
+      expect(spec?.kind).toBe("sliding-window");
+      expect(String(spec?.limit)).toBe(limit);
+      expect(spec?.window).toBe(window);
+    }
+  });
+
+  test("two families do NOT share a bucket for the same principal", async () => {
+    const { mod } = await loadRateLimit(ENABLED_WITH_CREDS);
+    state.limit.mockResolvedValue({
+      success: true,
+      limit: 60,
+      remaining: 59,
+      reset: 1234,
+    });
+    const principal = { userId: "user-1", clientId: "fitbull" };
+
+    const write = await mod.enforcePublicApiRateLimit(
+      publicApiRequest(),
+      principal,
+      "rounds-write"
+    );
+    const read = await mod.enforcePublicApiRateLimit(
+      publicApiRequest(),
+      principal,
+      "reads"
+    );
+
+    expect(write.family).toBe("rounds-write");
+    expect(read.family).toBe("reads");
+    expect(state.calls).toEqual([
+      {
+        prefix: "ratelimit:public-api:rounds-write",
+        identifier: "client:fitbull:user:user-1",
+      },
+      {
+        prefix: "ratelimit:public-api:reads",
+        identifier: "client:fitbull:user:user-1",
+      },
+    ]);
+  });
+
+  test("omitting the family falls back to the legacy global bucket", async () => {
+    const { mod } = await loadRateLimit(ENABLED_WITH_CREDS);
+    state.limit.mockResolvedValue({
+      success: true,
+      limit: 60,
+      remaining: 59,
+      reset: 1234,
+    });
+
+    const result = await mod.enforcePublicApiRateLimit(
+      publicApiRequest(),
+      "user-1"
+    );
+
+    expect(result.family).toBeUndefined();
+    expect(state.calls).toEqual([
+      { prefix: "ratelimit:public-api", identifier: "user:user-1" },
+    ]);
+  });
+
+  test("family limiters fail CLOSED when the limiter is unavailable", async () => {
+    // RATE_LIMIT_ENABLED unset — the trap that denies 100% of /v1 traffic.
+    const { mod, capture } = await loadRateLimit();
+
+    for (const family of ["rounds-write", "reads", "course-submit", "provision"] as const) {
+      capture.mockClear();
+      const result = await mod.enforcePublicApiRateLimit(
+        publicApiRequest(),
+        { userId: "user-1", clientId: "fitbull" },
+        family
+      );
+
+      expect(result.success).toBe(false);
+      expect(result.failedClosed).toBe(true);
+      expect(result.reason).toBe("disabled");
+      expect(result.family).toBe(family);
+      expect(capture.mock.calls[0]?.[1]).toMatchObject({
+        eventType: "rate-limit-fail-closed",
+        tags: { reason: "disabled", family },
+      });
+      // Never the raw principal — only its kind.
+      expect(capture.mock.calls[0]?.[1].extra).toEqual({
+        identifierKind: "client",
+      });
+    }
+    // No live bucket was consulted.
+    expect(state.calls).toEqual([]);
+  });
+
+  test("family limiters fail CLOSED when the limiter throws at request time", async () => {
+    const { mod, capture } = await loadRateLimit(ENABLED_WITH_CREDS);
+    state.limit.mockRejectedValueOnce(new Error("upstash down"));
+
+    const result = await mod.enforcePublicApiRateLimit(
+      publicApiRequest(),
+      { userId: "user-1" },
+      "rounds-write"
+    );
+
+    expect(result.success).toBe(false);
+    expect(result.failedClosed).toBe(true);
+    expect(result.reason).toBe("runtime-error");
+    expect(capture.mock.calls[0]?.[1]).toMatchObject({
+      eventType: "rate-limit-fail-closed",
+      tags: { reason: "runtime-error", family: "rounds-write" },
+    });
+  });
+
+  test("family limiters fail CLOSED when Redis init throws (no bucket exists)", async () => {
+    state.redisCtorThrows = true;
+    const { mod } = await loadRateLimit(ENABLED_WITH_CREDS);
+
+    const result = await mod.enforcePublicApiRateLimit(
+      publicApiRequest(),
+      { userId: "user-1" },
+      "reads"
+    );
+
+    expect(result.success).toBe(false);
+    expect(result.failedClosed).toBe(true);
+    expect(result.reason).toBe("init-error");
+  });
+
+  test("a genuine over-limit denial on a family is not a fail-closed denial", async () => {
+    const { mod, capture } = await loadRateLimit(ENABLED_WITH_CREDS);
+    state.limit.mockResolvedValueOnce({
+      success: false,
+      limit: 60,
+      remaining: 0,
+      reset: 1234,
+    });
+
+    const result = await mod.enforcePublicApiRateLimit(
+      publicApiRequest(),
+      { userId: "user-1", clientId: "fitbull" },
+      "rounds-write"
+    );
+
+    expect(result.success).toBe(false);
+    expect(result.failedClosed).toBe(false);
+    expect(result.reason).toBeUndefined();
+    expect(capture).not.toHaveBeenCalled();
+  });
+});
+
+describe("response seam for the /v1 error mapper", () => {
+  let mod: RateLimitModule;
+
+  beforeEach(async () => {
+    ({ mod } = await loadRateLimit(ENABLED_WITH_CREDS));
+  });
+
+  test("an allowed request maps to no status and the X-RateLimit trio only", () => {
+    const result = {
+      success: true,
+      failedClosed: false,
+      limit: 60,
+      remaining: 59,
+      // 2026-01-01T00:00:30.500Z — proves ms→s conversion, not a passthrough.
+      reset: 1_767_225_630_500,
+    };
+
+    expect(mod.rateLimitDenialStatus(result)).toBeNull();
+    expect(mod.rateLimitHeaders(result)).toEqual({
+      "X-RateLimit-Limit": "60",
+      "X-RateLimit-Remaining": "59",
+      "X-RateLimit-Reset": "1767225631",
+    });
+  });
+
+  test("budget exhausted maps to 429 with Retry-After derived from reset", () => {
+    const now = 1_767_225_600_000;
+    const result = {
+      success: false,
+      failedClosed: false,
+      limit: 60,
+      remaining: 0,
+      reset: now + 30_000,
+    };
+
+    expect(mod.rateLimitDenialStatus(result)).toBe(429);
+    expect(mod.rateLimitHeaders(result, now)).toEqual({
+      "X-RateLimit-Limit": "60",
+      "X-RateLimit-Remaining": "0",
+      "X-RateLimit-Reset": "1767225630",
+      "Retry-After": "30",
+    });
+  });
+
+  test("Retry-After is never 0 or negative for an already-elapsed window", () => {
+    const now = 1_767_225_600_000;
+    const headers = mod.rateLimitHeaders(
+      { success: false, failedClosed: false, limit: 60, remaining: 0, reset: now - 5_000 },
+      now
+    );
+
+    expect(headers["Retry-After"]).toBe("1");
+  });
+
+  test("fail-closed maps to 503 with Retry-After: 60 and no budget headers", async () => {
+    const { mod: disabled } = await loadRateLimit();
+    const result = await disabled.enforcePublicApiRateLimit(
+      publicApiRequest(),
+      { userId: "user-1", clientId: "fitbull" },
+      "rounds-write"
+    );
+
+    expect(disabled.rateLimitDenialStatus(result)).toBe(503);
+    // Only Retry-After: a zeroed budget on a 503 would describe the outage,
+    // and the internal reason must never leave via a header either.
+    expect(disabled.rateLimitHeaders(result)).toEqual({ "Retry-After": "60" });
+    expect(JSON.stringify(disabled.rateLimitHeaders(result))).not.toContain(
+      "disabled"
+    );
   });
 });
