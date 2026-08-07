@@ -407,11 +407,22 @@ describeIfLocal("GET /v1/rounds (real local Supabase)", () => {
         });
       }, 60_000);
 
-      test("the limiter is called with the principal PARTS and the 'reads' family", async () => {
+      test("TWO limiter calls: pre-auth IP-keyed, then per-principal — both in the 'reads' family", async () => {
         await getRounds(principalFor());
 
-        expect(limiter.calls).toHaveLength(1);
-        const call = limiter.calls[0]!;
+        expect(limiter.calls).toHaveLength(2);
+
+        // 1. Pre-auth, BEFORE `authenticateV1Request`. No principal argument
+        //    at all ⇒ `getIdentifier` falls through to `ip:{ip}` (§3). This is
+        //    what keeps an unauthenticated caller from turning a `Bearer
+        //    <garbage>` into an unlimited 1:1 amplifier against GoTrue.
+        const preAuth = limiter.calls[0]!;
+        expect(preAuth.principal).toBeUndefined();
+        expect(preAuth.family).toBe("reads");
+
+        // 2. Per-principal, after auth + scope. Disjoint key space from the
+        //    IP bucket, so the two never contend despite sharing the family.
+        const call = limiter.calls[1]!;
         // Named family — omitting it falls back to the legacy 60/min bucket.
         expect(call.family).toBe("reads");
         // PARTS, never a composed key string.
@@ -428,21 +439,58 @@ describeIfLocal("GET /v1/rounds (real local Supabase)", () => {
   }
 
   // ── The serializer reuse guarantee (§2 rule 2 / §5) ─────────────────────
-  test("a list entry is byte-identical to serializeV1Round of the stored row — the shape POST /v1/rounds returns", async () => {
-    const [storedRow] = await db
-      .select()
-      .from(round)
-      .where(eq(round.id, ids.quarantined));
+  //
+  // The live comparison runs over EVERY seeded round shape, not just one.
+  // Both sides are real: the left is the PostgREST → handler → JSON
+  // round-trip, the right is `serializeV1Round` over the Drizzle row
+  // `submitScorecard` returns. Comparing a single shape leaves the fields
+  // that only VARY between shapes — a non-null `externalId`, a non-null
+  // `nineHoleSection`, `holesPlayed: 9`, `status: "active"` — pinned on both
+  // sides only by hand-written fixtures, i.e. by nothing. This is the exact
+  // guarantee `POST /v1/rounds` (T13.4) inherits, so it is worth the loop.
+  const parityShapes = [
+    { name: "quarantined · null externalId · 18 holes", id: () => ids.quarantined },
+    { name: "active · real externalId · 18 holes", id: () => ids.oldest },
+    { name: "active · 9-hole 'back' section", id: () => ids.newest },
+  ] as const;
 
+  for (const shape of parityShapes) {
+    test(`a list entry is byte-identical to serializeV1Round of the stored row — ${shape.name}`, async () => {
+      const roundId = shape.id();
+      const [storedRow] = await db
+        .select()
+        .from(round)
+        .where(eq(round.id, roundId));
+
+      const { body } = await getRounds(oauth);
+      const entry = body.data.find((r) => r.id === roundId);
+
+      expect(entry, "the round must be present in the page").toBeDefined();
+      // `storedRow` is exactly what `submitScorecard` returns as `round`, so
+      // this is the assertion that T13.4's 201 body and this list entry
+      // cannot diverge.
+      expect(entry).toEqual(
+        JSON.parse(JSON.stringify(serializeV1Round(storedRow!)))
+      );
+    }, 60_000);
+  }
+
+  test("the three compared shapes really are distinct — the loop above is not one case run three times", async () => {
     const { body } = await getRounds(oauth);
-    const entry = body.data.find((r) => r.id === ids.quarantined);
+    const byId = (id: number) => body.data.find((r) => r.id === id)!;
 
-    // `storedRow` is exactly what `submitScorecard` returns as `round`, so
-    // this is the assertion that T13.4's 201 body and this list entry cannot
-    // diverge.
-    expect(entry).toEqual(
-      JSON.parse(JSON.stringify(serializeV1Round(storedRow!)))
-    );
+    expect(byId(ids.quarantined).externalId).toBeNull();
+    expect(byId(ids.quarantined).status).toBe("quarantined");
+    expect(byId(ids.quarantined).nineHoleSection).toBeNull();
+    expect(byId(ids.quarantined).holesPlayed).toBe(18);
+
+    expect(byId(ids.oldest).externalId).toBe(EXTERNAL_ID);
+    expect(byId(ids.oldest).status).toBe("active");
+    expect(byId(ids.oldest).nineHoleSection).toBeNull();
+
+    expect(byId(ids.newest).nineHoleSection).toBe("back");
+    expect(byId(ids.newest).holesPlayed).toBe(9);
+    expect(byId(ids.newest).status).toBe("active");
   }, 60_000);
 
   test("teeTime round-trips as the UTC instant it was stored as", async () => {
@@ -462,8 +510,14 @@ describeIfLocal("GET /v1/rounds (real local Supabase)", () => {
     );
     expect(response.headers.get("X-API-Stability")).toBe("internal");
     expect(await response.json()).toMatchObject({ code: "unauthorized" });
-    // Rejected before the limiter is consulted.
-    expect(limiter.calls).toHaveLength(0);
+    // ONE limiter call, and it is the pre-auth IP-keyed one: an
+    // unauthenticated request must still be limited (§3), because deciding
+    // whether it is authenticated is itself a network call to GoTrue for any
+    // non-empty `Bearer` value. The per-principal call is never reached —
+    // there is no principal.
+    expect(limiter.calls).toHaveLength(1);
+    expect(limiter.calls[0]!.principal).toBeUndefined();
+    expect(limiter.calls[0]!.family).toBe("reads");
   }, 60_000);
 
   test("an account that never completed plan selection → 403 plan_required", async () => {

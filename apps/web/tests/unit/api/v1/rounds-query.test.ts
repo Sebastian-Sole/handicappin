@@ -50,7 +50,11 @@ describe("defaults", () => {
 
 describe("limit", () => {
   test("accepts 1 through the maximum", () => {
-    expect(parse("?limit=1").success && parse("?limit=1").data.limit).toBe(1);
+    // Bind ONCE and narrow that binding: `parse(…).success && parse(…).data`
+    // calls the parser twice, so `.success` narrows the first result while
+    // `.data` is read off a second, unnarrowed one — TS2532 under `strict`.
+    const atMin = parse("?limit=1");
+    expect(atMin.success && atMin.data.limit).toBe(1);
     const atMax = parse(`?limit=${V1_ROUNDS_MAX_LIMIT}`);
     expect(atMax.success && atMax.data.limit).toBe(V1_ROUNDS_MAX_LIMIT);
   });
@@ -68,7 +72,8 @@ describe("limit", () => {
 
 describe("offset", () => {
   test("accepts 0 and large values", () => {
-    expect(parse("?offset=0").success && parse("?offset=0").data.offset).toBe(0);
+    const zero = parse("?offset=0");
+    expect(zero.success && zero.data.offset).toBe(0);
     const deep = parse("?offset=100000");
     expect(deep.success && deep.data.offset).toBe(100000);
   });
