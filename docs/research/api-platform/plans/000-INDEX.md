@@ -51,7 +51,7 @@ prod dup scan ──► 003 ─────────────────�
 | W5 (006) | **OFF THE CRITICAL PATH** (D9) — fitbull does not display the index, so there is no staleness problem to solve at launch. The contract still reserves the `handicapRevision` enum; 006 wires it if something ever displays an index. |
 | W6 (007) | PENDING — task T14 in 010; must carry the LB-1/LB-2 obligations and the polling-cadence ceiling. |
 | W7 (008) | **MERGED** (PR #175). G1 substantially closed by D7/D8; **G2 descoped to server events only** (D9 — no interest form); G3 and G4 still open. |
-| W2 fast-follow (009) | PENDING — dispatchable now; task T9 in 010. Blocks nothing. |
+| W2 fast-follow (009) | **BUILT — PR open** (task T9 in 010). Migration `20260807100000_detect_and_revoke_oauth_grants.sql` (every-minute pg_cron detective control: `user_updated_password` audit scan + `auth.users` email snapshot-compare → SQL replica of `revokeGrant` + Slack alert) and `.github/workflows/auth-toggle-watchdog.yml` (daily Management-API read of the two secure-change toggles, false-vs-null branched). Integration test incl. revert-the-fix + both no-self-trigger criteria green (9/9). Blocks nothing. OWNER: `alerting_slack_webhook` Vault secret, `SUPABASE_MGMT_PAT` repo secret, prod migration apply, cron/watchdog verify. |
 
 ## Dispatch order
 
