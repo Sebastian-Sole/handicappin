@@ -2,7 +2,7 @@
  * G4 column-grant sweep probe (plan 010 §T6, ADR §5.1).
  *
  * Re-runnable evidence generator for the column-grant sweep in
- * supabase/migrations/20260806130000_g4_column_grant_sweep.sql.
+ * supabase/migrations/20260807090000_g4_column_grant_sweep.sql.
  *
  * For each hardened table it runs, over the LOCAL PostgREST endpoint as the
  * `authenticated` role (a real signed-in probe user):
