@@ -44,10 +44,12 @@
  * this module deliberately does not alert again.
  *
  * ── What this module does NOT do ──────────────────────────────────────────
- * It does not create limiters, read env vars, or touch Redis. That is
- * T13.0a's half. The one thing it contributes to the key is
- * `v1RateLimitIdentifier()`, because the `(client_id, user)` pair is derived
- * from the PRINCIPAL, which is this PR's piece.
+ * It does not create limiters, read env vars, touch Redis, or ENCODE the
+ * identifier. That is T13.0a's half. The one thing it contributes to the key
+ * is `v1RateLimitPrincipal()` — the `(client_id, user)` pair derived from the
+ * PRINCIPAL, which is this PR's piece; the limiter composes the §3 key from
+ * that pair itself. (`v1RateLimitIdentifier()` below states the resulting
+ * encoding for reference only — it is never what a handler passes.)
  */
 
 import { createProblem, type ProblemDocument } from "@/lib/api/problem";
@@ -176,6 +178,14 @@ export function v1RateLimitPrincipal(principal: V1Principal): {
  * Kept exported because it states the frozen encoding in one place, and a
  * unit test asserts the limiter's own `getIdentifier` composes exactly this
  * from `v1RateLimitPrincipal`'s parts — pinning the seam from both sides.
+ *
+ * ⚠️ **Never pass this to `enforcePublicApiRateLimit`.** Its principal
+ * parameter is `string | PublicApiPrincipal` and the string branch means
+ * `{ userId: <that string> }`, so this key would be re-prefixed into
+ * `user:client:{id}:user:{sub}` — off §3's encoding, and collapsing the
+ * `identifierKind` of every OAuth fail-closed Sentry alert to `"user"`.
+ * `v1RateLimitPrincipal` is the only thing a handler passes. This function
+ * is for asserting and documenting the encoding, nothing else.
  *
  * Pre-auth / invalid-token requests are keyed `ip:{ip}` — that path never
  * has a principal, so it is the limiter's own `getIdentifier` fallback and
