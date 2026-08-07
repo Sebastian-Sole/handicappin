@@ -721,6 +721,45 @@ describeIfLocal("quarantine unlock on upgrade (T15, real local Supabase)", () =>
     expect(await queueRows(stripeUserId)).toHaveLength(1);
   });
 
+  test("a blocked write on a still-FREE account unlocks nothing", async () => {
+    // The failure mode the blocked-branch unlock call could have introduced:
+    // it runs on EVERY blocked verdict, not just lifetime ones. The helper
+    // must reject this one on the resulting projection alone.
+    //
+    // `inactive-foreign-contract` is the only blocked reason that can reach a
+    // free projection from this call site: `guardedStripeProfileWrite` always
+    // passes `lastApplied: null`, which makes `idempotent-duplicate` and
+    // `stale-out-of-order` unreachable, and both `lifetime-locked` and
+    // `double-contract-current-wins` require an already-paid current
+    // contract. So: a free profile still stamped with the OTHER provider,
+    // plus an inactive stripe fact.
+    await db
+      .update(profile)
+      .set({
+        planSelected: "free",
+        subscriptionStatus: "canceled",
+        billingProvider: "apple",
+      })
+      .where(eq(profile.id, stripeUserId));
+    await clearQueue(stripeUserId);
+
+    const result = await runStripeEvent(
+      stripeUserId,
+      stripeFact({ plan: "premium", status: "canceled", currentPeriodEnd: null })
+    );
+    expect(result.written).toBe(false);
+    expect(result.verdict?.decision.action).toBe("ignore");
+    expect(result.verdict?.decision.reason).toBe("inactive-foreign-contract");
+
+    // The resulting projection is still free, so the free-tier cap still
+    // applies and the rounds stay exactly where they were.
+    expect(result.verdict?.decision.projection.plan).toBe("free");
+    const counts = await quarantineCounts(stripeUserId);
+    expect(counts.quarantined).toBe(QUARANTINED_COUNT);
+    expect(await countedRounds(stripeUserId)).toBe(FREE_TIER_ROUND_LIMIT);
+    expect(await queueRows(stripeUserId)).toHaveLength(0);
+  });
+
   // -------------------------------------------------------------------------
   // MERGE-BLOCKING: convergence after a failed unlock — the LIFETIME case
   //
