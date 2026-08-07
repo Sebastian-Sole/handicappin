@@ -22,6 +22,7 @@ import {
   type BillingFact,
   type BillingProjection,
 } from "@/utils/billing/apply-billing-event";
+import { unlockQuarantinedRoundsOnUpgrade } from "@/utils/billing/unlock-quarantined-rounds";
 
 export type StripeWriteVerdict =
   | { allowed: true; decision: ApplyDecision }
@@ -100,9 +101,34 @@ export async function guardedStripeProfileWrite(params: {
       `[${params.handler}] Stripe write BLOCKED by precedence guard (${verdict.blockedBy}) for user ${params.userId}: ` +
         `current=${projection.provider}/${projection.plan}/${projection.status} incoming=${params.fact.plan}/${params.fact.status}`,
     );
+    // A BLOCKED write still runs the unlock. The projection is untouched,
+    // but the ROUND state may not have converged with it yet: if an earlier
+    // delivery committed the profile and then died before finishing the
+    // unlock, every redelivery lands HERE (lifetime is absorbing, so it is
+    // decided `lifetime-locked` → ignore, never `apply`) and this is the only
+    // remaining place that can finish the job. The helper tests the RESULTING
+    // projection, so a blocked decision on a still-free account unlocks
+    // nothing, and one on an already-unlocked account matches zero rows.
+    await unlockQuarantinedRoundsOnUpgrade({
+      userId: params.userId,
+      decision: verdict.decision,
+      handler: params.handler,
+    });
     return { written: false, verdict };
   }
 
   await params.write();
+
+  // Contract 005 §5: an upgrade unlocks the account's quarantined rounds
+  // automatically. The helper self-guards on the resulting projection being
+  // paid, so this site does not repeat the paid-plan test; the resulting
+  // round UPDATE is what enqueues the handicap recomputation (via
+  // trigger_handicap_recalculation) rather than computing it in the webhook.
+  await unlockQuarantinedRoundsOnUpgrade({
+    userId: params.userId,
+    decision: verdict.decision,
+    handler: params.handler,
+  });
+
   return { written: true, verdict };
 }

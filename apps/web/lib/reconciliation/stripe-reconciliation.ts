@@ -231,6 +231,7 @@ async function reconcileSubscription(
     );
 
     // Auto-fix: Restore active status
+    // NOTE: bypasses @/utils/billing/unlock-quarantined-rounds — inert only because this sweep selects users already on a paid plan.
     const priceId = activeSubscription.items.data[0]?.price.id;
     const plan = mapPriceToPlan(priceId);
 
