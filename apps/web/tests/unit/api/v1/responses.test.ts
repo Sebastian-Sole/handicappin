@@ -23,6 +23,8 @@ import {
   rateLimitProblem,
   rateLimitResponse,
   retryAfterSeconds,
+  v1RateLimitIdentifier,
+  v1RateLimitPrincipal,
   type V1RateLimitOutcome,
 } from "@/app/api/v1/_lib/rate-limit-seam";
 
@@ -201,6 +203,67 @@ describe("rate-limit seam (§3)", () => {
   test("only rate_limited and service_unavailable are reachable from the seam", () => {
     expect(rateLimitProblem(exhausted).code).toBe("rate_limited");
     expect(rateLimitProblem(failedClosed).code).toBe("service_unavailable");
+  });
+
+  test("the limiter composes §3's exact key from v1RateLimitPrincipal's parts", () => {
+    // Pins the seam from BOTH sides: `v1RateLimitIdentifier` states the
+    // frozen encoding, and this reproduces `getIdentifier`'s composition
+    // (`lib/rate-limit.ts`, T13.0a) from the parts a handler actually passes.
+    // If either side drifts, this fails.
+    const getIdentifier = (userId?: string, clientId?: string) =>
+      userId
+        ? clientId
+          ? `client:${clientId}:user:${userId}`
+          : `user:${userId}`
+        : "ip:unknown";
+
+    const oauth = {
+      class: "oauth" as const,
+      userId: "u1",
+      token: "t",
+      clientId: "c1",
+      scopes: ["rounds:write"],
+    };
+    const firstParty = {
+      class: "first-party" as const,
+      userId: "u1",
+      token: "t",
+      clientId: null,
+      scopes: null,
+    };
+
+    for (const principal of [oauth, firstParty]) {
+      const parts = v1RateLimitPrincipal(principal);
+      expect(getIdentifier(parts.userId, parts.clientId)).toBe(
+        v1RateLimitIdentifier(principal)
+      );
+    }
+
+    expect(v1RateLimitIdentifier(oauth)).toBe("client:c1:user:u1");
+    expect(v1RateLimitIdentifier(firstParty)).toBe("user:u1");
+  });
+
+  test("passing the COMPOSED key instead of the parts double-prefixes it", () => {
+    // Documents the trap `v1RateLimitPrincipal` exists to prevent: the
+    // limiter's string branch means `{ userId: <string> }`, so a composed key
+    // becomes `user:client:…:user:…` and `identifierKind` (split on ":")
+    // reports "user" for OAuth traffic — losing principal-class attribution
+    // in every fail-closed Sentry alert.
+    const oauth = {
+      class: "oauth" as const,
+      userId: "u1",
+      token: "t",
+      clientId: "c1",
+      scopes: [],
+    };
+    const asString = `user:${v1RateLimitIdentifier(oauth)}`;
+    expect(asString).toBe("user:client:c1:user:u1");
+    expect(asString.split(":")[0]).toBe("user");
+
+    const parts = v1RateLimitPrincipal(oauth);
+    expect(`client:${parts.clientId}:user:${parts.userId}`.split(":")[0]).toBe(
+      "client"
+    );
   });
 
   test("a shipped PublicApiRateLimitResult satisfies the seam structurally", () => {

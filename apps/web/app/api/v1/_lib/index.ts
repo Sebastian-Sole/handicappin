@@ -17,7 +17,14 @@
  *       const denied = requireScope(auth.principal, V1_SCOPES.roundsWrite, { instance });
  *       if (denied) return problemResponse(denied);
  *
- *       const limit = await <T13.0a's limiter>(request, v1RateLimitIdentifier(auth.principal));
+ *       // Pass the principal PARTS (never a composed key) and ALWAYS name
+ *       // the family — both fail quietly if you get them wrong. See
+ *       // `rate-limit-seam.ts` for exactly how.
+ *       const limit = await enforcePublicApiRateLimit(
+ *         request,
+ *         v1RateLimitPrincipal(auth.principal),
+ *         "rounds-write",
+ *       );
  *       if (!limit.success) return rateLimitResponse(limit, { instance });
  *
  *       const body = await readJsonBody(request, { instance });
@@ -87,6 +94,7 @@ export {
   rateLimitResponse,
   retryAfterSeconds,
   v1RateLimitIdentifier,
+  v1RateLimitPrincipal,
   type V1RateLimitOutcome,
 } from "./rate-limit-seam";
 

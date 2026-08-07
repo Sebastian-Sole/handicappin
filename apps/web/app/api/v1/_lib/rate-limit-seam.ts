@@ -17,8 +17,17 @@
  * A route handler calls T13.0a's fail-closed limiter, gets back a result
  * carrying limit / remaining / reset, and hands it to `rateLimitResponse()`:
  *
- *   const limit = await enforce<Family>RateLimit(request, identifier);
+ *   const limit = await enforcePublicApiRateLimit(
+ *     request,
+ *     v1RateLimitPrincipal(principal),  // PARTS, never a composed key
+ *     "rounds-write",                   // ALWAYS name the family
+ *   );
  *   if (!limit.success) return rateLimitResponse(limit);
+ *
+ * Both arguments are load-bearing and both fail quietly if omitted — see
+ * `v1RateLimitPrincipal` for the principal one. Omitting the FAMILY falls
+ * back to the legacy unfamilied bucket, so every `/v1` route would share one
+ * budget and reads would get the writes number instead of 120/min.
  *
  * That renders exactly two outcomes, and no others:
  *
@@ -126,14 +135,47 @@ export function rateLimitResponse(
 }
 
 /**
- * The `/v1` rate-limit identifier (§3, and D6 which ratifies it).
+ * The principal PARTS to hand T13.0a's limiter — **this is what a handler
+ * passes**, not a pre-composed key.
+ *
+ * Structurally assignable to its `PublicApiPrincipal`
+ * (`{ userId: string; clientId?: string }`), so the seam still needs no
+ * import. The limiter's `getIdentifier(request, userId, clientId)` composes
+ * the §3 encoding itself.
+ *
+ * **Why parts and not a string.** `enforcePublicApiRateLimit`'s second
+ * parameter is `string | PublicApiPrincipal`, and the string branch means
+ * `{ userId: <that string> }`. Passing the composed
+ * `client:{id}:user:{sub}` key therefore yields
+ * `user:client:{id}:user:{sub}` — double-prefixed, not §3's frozen encoding.
+ * It still buckets uniquely per pair and still fails closed, so it is not a
+ * security hole, but `denyClosed` derives `identifierKind` from
+ * `identifier.split(":")[0]`, so **every OAuth fail-closed alert would
+ * report `identifierKind: "user"`** and OAuth-vs-first-party attribution in
+ * Sentry would be lost. Passing the parts keeps that attribution.
+ */
+export function v1RateLimitPrincipal(principal: V1Principal): {
+  userId: string;
+  clientId?: string;
+} {
+  return principal.class === "oauth"
+    ? { userId: principal.userId, clientId: principal.clientId }
+    : { userId: principal.userId };
+}
+
+/**
+ * The §3 identifier encoding, spelled out — the REFERENCE, not the thing a
+ * handler passes to the limiter (use `v1RateLimitPrincipal` for that).
  *
  * - OAuth principal  → `client:{client_id}:user:{sub}` — the PAIR. Keying on
  *   `client_id` alone would collapse every fitbull user into one bucket so a
  *   single heavy user throttles everyone; keying on the user alone loses
  *   per-client attribution the moment a second client exists.
- * - First-party principal → `user:{sub}`, matching `getIdentifier`'s existing
- *   authenticated encoding (`lib/rate-limit.ts:423-427`) exactly.
+ * - First-party principal → `user:{sub}`.
+ *
+ * Kept exported because it states the frozen encoding in one place, and a
+ * unit test asserts the limiter's own `getIdentifier` composes exactly this
+ * from `v1RateLimitPrincipal`'s parts — pinning the seam from both sides.
  *
  * Pre-auth / invalid-token requests are keyed `ip:{ip}` — that path never
  * has a principal, so it is the limiter's own `getIdentifier` fallback and

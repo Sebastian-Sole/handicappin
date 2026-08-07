@@ -210,6 +210,71 @@ describe("RPC plumbing", () => {
     ).rejects.toThrow();
   });
 
+  test("RPC shape drift is a 500, NOT a client-facing 422", async () => {
+    // A raw ZodError would hit `mapErrorToProblem`'s `instanceof ZodError`
+    // branch first and surface as 422 validation_failed carrying the
+    // internal column name and row index — telling a client its body was
+    // invalid when the body was fine, and alerting nobody.
+    const { mapErrorToProblem } = await import("@/lib/api/problem-mapper");
+    const drifted = rpcReturning([{ ...row(), rounds_limit: "25" }]);
+
+    let thrown: unknown;
+    try {
+      await fetchV1Entitlement(drifted);
+    } catch (error) {
+      thrown = error;
+    }
+    expect(thrown).toBeInstanceOf(V1EntitlementRpcError);
+
+    const problem = mapErrorToProblem(thrown);
+    expect(problem.code).toBe("internal_error");
+    expect(problem.status).toBe(500);
+    expect(problem.status).not.toBe(422);
+    // The alert is the point: a silent 422 fired none.
+    expect(captureSentryError).toHaveBeenCalledTimes(1);
+  });
+
+  test("shape drift leaks no RPC column name or row index onto the wire", async () => {
+    const { mapErrorToProblem } = await import("@/lib/api/problem-mapper");
+    let thrown: unknown;
+    try {
+      await fetchV1Entitlement(
+        rpcReturning([{ ...row(), rounds_limit: "25" }])
+      );
+    } catch (error) {
+      thrown = error;
+    }
+    const body = JSON.stringify(mapErrorToProblem(thrown));
+    for (const leak of ["rounds_limit", "rounds_used", "is_provisioned", "0."]) {
+      expect(body).not.toContain(leak);
+    }
+    expect(body).not.toContain("errors");
+  });
+
+  test("the wrapped ZodError cause is never mistaken for a SQLSTATE", async () => {
+    // `unwrapSqlState` walks the cause chain for a STRING `code`. A ZodError
+    // carries none today; if zod ever adds one, this catches it before a
+    // shape drift starts rendering as 403 forbidden.
+    const { mapErrorToProblem } = await import("@/lib/api/problem-mapper");
+    let thrown: unknown;
+    try {
+      await fetchV1Entitlement(rpcReturning([{ bogus: true }]));
+    } catch (error) {
+      thrown = error;
+    }
+    expect(mapErrorToProblem(thrown).code).toBe("internal_error");
+  });
+
+  test("extra RPC columns are stripped, so a future billing column cannot leak", async () => {
+    const access = await createV1UserAccess(
+      rpcReturning([{ ...row(), plan_selected: "lifetime", stripe_id: "cus_x" }]),
+      { userId: USER_ID }
+    )(USER_ID);
+    expect(JSON.stringify(access)).not.toContain("cus_x");
+    expect(access).not.toHaveProperty("plan_selected");
+    expect(access.plan).toBe("free");
+  });
+
   test("null data is treated as zero rows", async () => {
     await expect(fetchV1Entitlement(rpcReturning(null))).resolves.toBeNull();
   });

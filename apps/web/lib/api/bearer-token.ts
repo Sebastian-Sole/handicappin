@@ -166,7 +166,7 @@ export async function getUserFromBearerToken(
  * on a server-only access token.
  */
 export function createBearerTokenSupabaseClient(
-  accessToken: string
+  accessToken: string,
 ): SupabaseClient<Database> {
   return createClient<Database>(
     env.NEXT_PUBLIC_SUPABASE_URL,

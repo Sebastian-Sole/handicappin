@@ -81,9 +81,10 @@ export type EntitlementRpcCaller = () => Promise<EntitlementRpcResponse>;
 export class V1EntitlementRpcError extends Error {
   constructor(
     message: string,
-    readonly code?: string
+    readonly code?: string,
+    options?: { cause?: unknown }
   ) {
-    super(message);
+    super(message, options);
     this.name = "V1EntitlementRpcError";
   }
 }
@@ -127,8 +128,28 @@ export async function fetchV1Entitlement(
     );
   }
 
-  const rows = z.array(v1EntitlementRowSchema).parse(data ?? []);
-  return rows[0] ?? null;
+  // The parse failure must NOT escape as a ZodError. `mapErrorToProblem`
+  // checks `instanceof ZodError` first, so a raw one would surface as a
+  // client-facing **422 validation_failed** carrying the internal RPC column
+  // name and row index — telling a client its body was invalid when the body
+  // was fine (so a correct client stops retrying a purely server-side fault),
+  // and firing NO Sentry alert, because the ZodError branch does not alert.
+  //
+  // Rethrown as `V1EntitlementRpcError`, RPC shape drift routes to
+  // `internal_error` + Sentry like any other server fault. The ZodError is
+  // kept as `cause` for the alert; `unwrapSqlState` walks the chain looking
+  // for a STRING `code`, which a ZodError does not carry, so this cannot be
+  // mistaken for a SQLSTATE. A test pins that.
+  try {
+    const rows = z.array(v1EntitlementRowSchema).parse(data ?? []);
+    return rows[0] ?? null;
+  } catch (error) {
+    throw new V1EntitlementRpcError(
+      "get_connected_entitlement returned an unexpected shape",
+      undefined,
+      { cause: error },
+    );
+  }
 }
 
 /**
