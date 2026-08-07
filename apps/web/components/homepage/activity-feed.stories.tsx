@@ -16,6 +16,7 @@ const activities: ActivityItem[] = [
     isPersonalBest: true,
     approvalStatus: "approved",
     isMilestone: "10th round",
+    quarantined: false,
   },
   {
     id: 109,
@@ -27,6 +28,7 @@ const activities: ActivityItem[] = [
     handicapChange: 0.1,
     isPersonalBest: false,
     approvalStatus: "pending",
+    quarantined: false,
   },
   {
     id: 108,
@@ -38,6 +40,7 @@ const activities: ActivityItem[] = [
     handicapChange: -0.4,
     isPersonalBest: false,
     approvalStatus: "approved",
+    quarantined: false,
   },
   {
     id: 107,
@@ -49,6 +52,7 @@ const activities: ActivityItem[] = [
     handicapChange: -0.2,
     isPersonalBest: false,
     approvalStatus: "approved",
+    quarantined: false,
   },
   {
     id: 106,
@@ -60,6 +64,7 @@ const activities: ActivityItem[] = [
     handicapChange: 0.3,
     isPersonalBest: false,
     approvalStatus: "rejected",
+    quarantined: false,
   },
 ];
 
@@ -83,4 +88,21 @@ export const Empty: Story = {
 
 export const SingleActivity: Story = {
   args: { activities: activities.slice(0, 1), profileId: USER_ID },
+};
+
+/** Accept-and-quarantine (D4): visible, badged, not counted, upgrade CTA. */
+export const WithQuarantinedRound: Story = {
+  args: {
+    activities: [
+      {
+        ...activities[1],
+        id: 111,
+        date: new Date("2025-05-28T10:00:00.000Z"),
+        courseName: "Ballerud Golfklubb",
+        quarantined: true,
+      },
+      ...activities.slice(0, 3),
+    ],
+    profileId: USER_ID,
+  },
 };

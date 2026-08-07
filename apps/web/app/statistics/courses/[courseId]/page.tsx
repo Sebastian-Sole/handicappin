@@ -3,21 +3,15 @@ import { notFound, redirect } from "next/navigation";
 import { ChevronLeft } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { EmptyState } from "@/components/ui/empty-state";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { H1, H2, Muted } from "@/components/ui/typography";
 import { CourseHoleTabs } from "@/components/statistics/courses/course-hole-tabs";
+import { CourseRoundsTable } from "@/components/statistics/courses/course-rounds-table";
+import { getCourseDetailDisplay } from "@/lib/statistics/course-detail-display";
 import {
   formatDifferential,
   formatScore,
-  formatWithSign,
 } from "@/lib/statistics/format-utils";
 import { api } from "@/trpc/server";
 import { createServerComponentClient } from "@/utils/supabase/server";
@@ -27,21 +21,6 @@ import { PageContainer } from "@/components/layout/page-container";
 interface PageProps {
   params: Promise<{ courseId: string }>;
 }
-
-const formatDate = (iso: string) =>
-  new Date(iso).toLocaleDateString(undefined, {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-  });
-
-const holesPlayedLabel = (
-  holesPlayed: number,
-  section: "front" | "back" | null,
-) => {
-  if (holesPlayed === 18) return "18";
-  return section === "back" ? "9 (back)" : "9 (front)";
-};
 
 export default async function CourseDetailPage({ params }: PageProps) {
   const { courseId: courseIdParam } = await params;
@@ -56,7 +35,10 @@ export default async function CourseDetailPage({ params }: PageProps) {
   if (!detail) notFound();
 
   const { course, summary, rounds, holes } = detail;
-  const hasData = summary.roundCount > 0;
+  // Quarantined rounds are listed but not counted (D4) — the two populations
+  // differ, so the empty state keys off the LIST and the statistics key off
+  // the counted total.
+  const display = getCourseDetailDisplay(rounds.length, summary.roundCount);
 
   return (
     <PageContainer className="space-y-xl">
@@ -81,7 +63,7 @@ export default async function CourseDetailPage({ params }: PageProps) {
         </Muted>
       </header>
 
-      {!hasData ? (
+      {display.state === "empty" ? (
         <Card>
           <CardContent>
             <EmptyState
@@ -91,6 +73,26 @@ export default async function CourseDetailPage({ params }: PageProps) {
             />
           </CardContent>
         </Card>
+      ) : display.state === "all-quarantined" ? (
+        <>
+          {/* Every round here is quarantined: there is nothing to aggregate,
+              but the rounds themselves must stay visible (D4). */}
+          <Alert>
+            <AlertTitle>No stats for this course yet</AlertTitle>
+            <AlertDescription>
+              {display.listedRounds === 1
+                ? "Your round here was saved past the free-tier limit, so it doesn't count toward your handicap or these statistics."
+                : `All ${display.listedRounds} of your rounds here were saved past the free-tier limit, so they don't count toward your handicap or these statistics.`}{" "}
+              Upgrade to unlock them.
+            </AlertDescription>
+          </Alert>
+          <CourseRoundsTable
+            courseName={course.name}
+            rounds={rounds}
+            quarantinedRounds={display.quarantinedRounds}
+            listedRounds={display.listedRounds}
+          />
+        </>
       ) : (
         <>
           <section className="grid grid-cols-2 md:grid-cols-4 gap-md">
@@ -149,59 +151,12 @@ export default async function CourseDetailPage({ params }: PageProps) {
 
           <Separator />
 
-          <section className="space-y-md">
-            <div>
-              <H2 className="text-heading-3 pb-0">Rounds at {course.name}</H2>
-              <Muted className="mt-xs">
-                Click a round to view the full scorecard.
-              </Muted>
-            </div>
-            <Card>
-              <CardContent className="p-0 overflow-x-auto">
-                <Table className="min-w-xl">
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Date</TableHead>
-                      <TableHead>Tee</TableHead>
-                      <TableHead className="text-right">Holes</TableHead>
-                      <TableHead className="text-right">Score</TableHead>
-                      <TableHead className="text-right">vs Par</TableHead>
-                      <TableHead className="text-right">Differential</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {rounds.map((r) => (
-                      <TableRow key={r.id}>
-                        <TableCell>
-                          <Link
-                            href={`/rounds/${r.id}/calculation`}
-                            className="underline-offset-2 hover:underline"
-                          >
-                            {formatDate(r.teeTime)}
-                          </Link>
-                        </TableCell>
-                        <TableCell className="text-muted-foreground">
-                          {r.teeName}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          {holesPlayedLabel(r.holesPlayed, r.nineHoleSection)}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          {r.totalStrokes}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          {formatWithSign(r.totalStrokes - r.parPlayed, 0)}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          {formatDifferential(r.scoreDifferential)}
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </CardContent>
-            </Card>
-          </section>
+          <CourseRoundsTable
+            courseName={course.name}
+            rounds={rounds}
+            quarantinedRounds={display.quarantinedRounds}
+            listedRounds={display.listedRounds}
+          />
         </>
       )}
     </PageContainer>

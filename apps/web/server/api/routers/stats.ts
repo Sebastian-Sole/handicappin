@@ -57,6 +57,12 @@ export const statsRouter = createTRPCRouter({
         .where(and(eq(round.userId, userId), eq(round.courseId, courseId)))
         .orderBy(asc(round.teeTime));
 
+      // Quarantined rounds (accept-and-quarantine, decision D4) stay VISIBLE
+      // in the per-course rounds list but are excluded from every derived
+      // statistic (summary + per-hole aggregates) — same split as the
+      // homepage: lists show, stats don't count.
+      const countedRounds = rounds.filter((r) => !r.quarantined);
+
       if (rounds.length === 0) {
         return {
           course: {
@@ -81,6 +87,7 @@ export const statsRouter = createTRPCRouter({
             holesPlayed: number;
             nineHoleSection: "front" | "back" | null;
             teeName: string;
+            quarantined: boolean;
           }>,
           holes: [] as Array<{
             holeNumber: number;
@@ -95,11 +102,15 @@ export const statsRouter = createTRPCRouter({
         };
       }
 
-      const roundIds = rounds.map((r) => r.id);
+      // Per-hole aggregates are statistics too — only counted rounds' scores
+      // feed them. Tee names cover ALL rounds since the list shows all.
+      const countedRoundIds = countedRounds.map((r) => r.id);
       const teeIds = Array.from(new Set(rounds.map((r) => r.teeId)));
 
       const [scores, holes, tees] = await Promise.all([
-        db.select().from(score).where(inArray(score.roundId, roundIds)),
+        countedRoundIds.length > 0
+          ? db.select().from(score).where(inArray(score.roundId, countedRoundIds))
+          : Promise.resolve([] as (typeof score.$inferSelect)[]),
         db.select().from(hole).where(inArray(hole.teeId, teeIds)),
         db.select().from(teeInfo).where(inArray(teeInfo.id, teeIds)),
       ]);
@@ -161,8 +172,8 @@ export const statsRouter = createTRPCRouter({
         })
         .sort((a, b) => a.holeNumber - b.holeNumber);
 
-      const diffs = rounds.map((r) => Number(r.scoreDifferential));
-      const totals = rounds.map((r) => r.totalStrokes);
+      const diffs = countedRounds.map((r) => Number(r.scoreDifferential));
+      const totals = countedRounds.map((r) => r.totalStrokes);
 
       return {
         course: {
@@ -171,12 +182,20 @@ export const statsRouter = createTRPCRouter({
           city: courseRow.city,
           country: courseRow.country,
         },
+        // Every round at this course could be quarantined — the summary then
+        // has no counted data (nulls), while the list below still shows all.
         summary: {
-          roundCount: rounds.length,
-          avgScore: totals.reduce((a, b) => a + b, 0) / totals.length,
-          avgDifferential: diffs.reduce((a, b) => a + b, 0) / diffs.length,
-          bestDifferential: Math.min(...diffs),
-          worstDifferential: Math.max(...diffs),
+          roundCount: countedRounds.length,
+          avgScore:
+            totals.length > 0
+              ? totals.reduce((a, b) => a + b, 0) / totals.length
+              : null,
+          avgDifferential:
+            diffs.length > 0
+              ? diffs.reduce((a, b) => a + b, 0) / diffs.length
+              : null,
+          bestDifferential: diffs.length > 0 ? Math.min(...diffs) : null,
+          worstDifferential: diffs.length > 0 ? Math.max(...diffs) : null,
         },
         rounds: rounds.map((r) => ({
           id: r.id,
@@ -187,6 +206,7 @@ export const statsRouter = createTRPCRouter({
           holesPlayed: r.holesPlayed,
           nineHoleSection: r.nineHoleSection,
           teeName: teeById.get(r.teeId)?.name ?? "—",
+          quarantined: r.quarantined,
         })),
         holes: holeStats,
       };

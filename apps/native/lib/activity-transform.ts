@@ -18,6 +18,8 @@ export interface ActivityItem {
   isPersonalBest: boolean;
   approvalStatus: "approved" | "pending" | "rejected";
   isMilestone?: string;
+  /** Accept-and-quarantine (decision D4): visible but not counted. */
+  quarantined: boolean;
 }
 
 export function transformRoundsToActivities(
@@ -33,10 +35,13 @@ export function transformRoundsToActivities(
       parseDbTimestamp(a.teeTime).getTime(),
   );
 
+  // Quarantined rounds (decision D4) are excluded from the personal-best
+  // scan — they don't feed the handicap, so they can't claim "Best".
   let bestDifferential = Infinity;
   const personalBestIds = new Set<number>();
   const chronologicalRounds = [...sortedRounds].reverse();
   chronologicalRounds.forEach((round) => {
+    if (round.quarantined) return;
     if (round.scoreDifferential < bestDifferential) {
       bestDifferential = round.scoreDifferential;
       personalBestIds.add(round.id);
@@ -49,13 +54,20 @@ export function transformRoundsToActivities(
       ? round.updatedHandicapIndex - previousRound.updatedHandicapIndex
       : 0;
 
+    // Quarantined rounds don't count toward milestones (totalRounds — the
+    // server count — already excludes them), so the position arithmetic
+    // skips them and a quarantined round never carries a milestone itself.
     let milestone: string | undefined;
-    const actualTotal = totalRounds ?? rounds.length;
+    const countedInList = sortedRounds.filter((r) => !r.quarantined).length;
+    const actualTotal = totalRounds ?? countedInList;
     const isTruncated =
       totalRounds === undefined && rounds.length === HOMEPAGE_ROUNDS_LIMIT;
 
-    if (!isTruncated) {
-      const roundNumber = actualTotal - index;
+    if (!isTruncated && !round.quarantined) {
+      const countedBefore = sortedRounds
+        .slice(0, index)
+        .filter((r) => !r.quarantined).length;
+      const roundNumber = actualTotal - countedBefore;
       if (roundNumber === 1) milestone = "First round!";
       else if (roundNumber === 10) milestone = "10th round";
       else if (roundNumber === 20) milestone = "Full handicap index";
@@ -81,6 +93,7 @@ export function transformRoundsToActivities(
           ? round.approvalStatus
           : "pending",
       isMilestone: milestone,
+      quarantined: round.quarantined,
     };
   });
 }

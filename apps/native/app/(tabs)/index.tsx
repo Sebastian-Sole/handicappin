@@ -126,7 +126,12 @@ export default function HomeScreen() {
     return a.id - b.id;
   });
 
-  const previousScores = sortedRounds
+  // Quarantined rounds (accept-and-quarantine, decision D4) stay visible in
+  // the activity feed but are excluded from every handicap-derived statistic
+  // — mirrors web's home-page.tsx.
+  const countedSortedRounds = sortedRounds.filter((r) => !r.quarantined);
+
+  const previousScores = countedSortedRounds
     .slice(-10)
     .map((round) => round.scoreDifferential);
 
@@ -141,8 +146,8 @@ export default function HomeScreen() {
       : 0;
 
   const lowestDifferential =
-    rounds.length > 0
-      ? Math.min(...rounds.map((r) => r.scoreDifferential))
+    countedSortedRounds.length > 0
+      ? Math.min(...countedSortedRounds.map((r) => r.scoreDifferential))
       : null;
 
   const courseMap = new Map<number, string>();

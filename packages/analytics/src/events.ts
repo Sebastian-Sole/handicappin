@@ -21,7 +21,9 @@ export type PaywallSurface =
   | "upgrade_page"
   | "round_limit"
   | "stats_gate"
-  | "native_paywall";
+  | "native_paywall"
+  /** "Not counted — free-tier limit reached" badge on a quarantined round (D4). */
+  | "quarantined_round_badge";
 
 export type RoundEntryMethod = "manual" | "live";
 

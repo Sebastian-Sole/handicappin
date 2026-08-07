@@ -14,6 +14,7 @@ import {
 import { Trophy, ChevronRight } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
+import { QuarantineBadge } from "@/components/billing/quarantine-badge";
 import { ActivityItem } from "@/utils/activity-transform";
 
 interface ActivityFeedProps {
@@ -196,6 +197,10 @@ function ActivityItemRow({
               {activity.isMilestone}
             </Badge>
           )}
+
+          {/* Accept-and-quarantine (decision D4): the round stays visible but
+              is excluded from handicap and statistics until upgrade. */}
+          {activity.quarantined && <QuarantineBadge className="mt-sm" />}
         </div>
 
         <ChevronRight className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity mt-sm" />

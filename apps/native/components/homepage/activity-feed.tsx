@@ -9,6 +9,7 @@ import type { Href } from "expo-router";
 import { ChevronRight, Trophy } from "lucide-react-native";
 import { Pressable, Text, View } from "react-native";
 
+import { QuarantineBadge } from "@/components/billing/quarantine-badge";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
@@ -186,6 +187,10 @@ function ActivityItemRow({
             </Badge>
           </View>
         ) : null}
+
+        {/* Accept-and-quarantine (decision D4): the round stays visible but
+            is excluded from handicap and statistics until upgrade. */}
+        {activity.quarantined ? <QuarantineBadge className="mt-sm" /> : null}
       </View>
 
       <View className="mt-sm">

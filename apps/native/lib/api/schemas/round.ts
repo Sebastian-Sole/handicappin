@@ -21,6 +21,9 @@ export const roundRowSchema = z.object({
   updatedHandicapIndex: z.number(),
   exceptionalScoreAdjustment: z.number(),
   approvalStatus: z.string(),
+  // Accept-and-quarantine (decision D4): true = round accepted over the
+  // free-tier limit — visible in lists, excluded from handicap/statistics.
+  quarantined: z.boolean(),
   notes: z.string().nullable(),
   createdAt: z.string(),
   course_rating_used: z.number(),
