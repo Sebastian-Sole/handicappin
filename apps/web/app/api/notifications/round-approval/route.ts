@@ -4,6 +4,7 @@ import { timingSafeEqual } from "node:crypto";
 import { createAdminClient } from "@/utils/supabase/admin";
 import { env } from "@/env";
 import { logger } from "@/lib/logging";
+import { parseDbTimestamp } from "@/lib/parse-db-timestamp";
 import { captureSentryError } from "@/lib/sentry-utils";
 import {
   sendRoundApprovedEmail,
@@ -204,7 +205,10 @@ export async function POST(request: NextRequest) {
         name: profile.name,
         courseName: course?.name ?? "your course",
         teeName: tee?.name,
-        teePlayedAt: round.teeTime,
+        // `round.teeTime` is a naive `timestamp` column read via PostgREST,
+        // so it arrives zone-less; the email templates would parse it as
+        // process-local time. Normalize to the UTC instant it actually is.
+        teePlayedAt: parseDbTimestamp(round.teeTime),
         adjustedGrossScore: round.adjustedGrossScore,
         scoreDifferential:
           round.scoreDifferential !== null
@@ -245,7 +249,8 @@ export async function POST(request: NextRequest) {
         name: profile.name,
         courseName: course?.name ?? "your course",
         teeName: tee?.name,
-        teePlayedAt: round.teeTime,
+        // Same naive-timestamp normalization as the approved branch above.
+        teePlayedAt: parseDbTimestamp(round.teeTime),
         roundsUrl: `${baseUrl}/rounds/add`,
         rejectionReason,
       });

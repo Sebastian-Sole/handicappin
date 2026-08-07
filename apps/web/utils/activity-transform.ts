@@ -1,5 +1,6 @@
 import { Tables } from "@/types/supabase";
 import { HOMEPAGE_ROUNDS_LIMIT } from "@/utils/golf-stats";
+import { parseDbTimestamp } from "@/lib/parse-db-timestamp";
 
 export interface ActivityItem {
   id: number;
@@ -25,7 +26,9 @@ export function transformRoundsToActivities(
 
   // Sort by date descending (most recent first)
   const sortedRounds = [...rounds].sort(
-    (a, b) => new Date(b.teeTime).getTime() - new Date(a.teeTime).getTime()
+    (a, b) =>
+      parseDbTimestamp(b.teeTime).getTime() -
+      parseDbTimestamp(a.teeTime).getTime()
   );
 
   // Track personal best differential
@@ -75,7 +78,7 @@ export function transformRoundsToActivities(
 
     return {
       id: round.id,
-      date: new Date(round.teeTime),
+      date: parseDbTimestamp(round.teeTime),
       courseName: courses.get(round.courseId) || "Unknown Course",
       score: round.adjustedGrossScore,
       scoreDifferential: round.scoreDifferential,

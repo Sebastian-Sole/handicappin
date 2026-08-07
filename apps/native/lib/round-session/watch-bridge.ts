@@ -40,6 +40,7 @@ import {
   subscribe,
 } from "@/lib/round-session/store";
 import { toScorecardInput, type SubmitAs } from "@/lib/round-session/to-scorecard";
+import { seasonRounds, toWatchLastRound } from "@/lib/round-session/watch-stats";
 import type { RoundSession, SessionEvent } from "@/lib/round-session/types";
 import {
   decodeWatchFrame,
@@ -187,24 +188,10 @@ export function startWatchBridge(deps: WatchBridgeDeps): () => void {
         } catch {
           // Course name is cosmetic — the card degrades to scores only.
         }
-        lastRound = {
-          courseName,
-          totalStrokes: latest.totalStrokes,
-          toPar: latest.totalStrokes - latest.parPlayed,
-          differential: latest.scoreDifferential,
-          playedAt: latest.teeTime,
-          holesPlayed: latest.holes_played,
-          ...(latest.nine_hole_section === "front" ||
-          latest.nine_hole_section === "back"
-            ? { nineHoleSection: latest.nine_hole_section }
-            : {}),
-        };
+        lastRound = toWatchLastRound(latest, courseName);
       }
 
-      const year = new Date().getFullYear();
-      const season = rounds.filter(
-        (r) => new Date(r.teeTime).getFullYear() === year,
-      );
+      const season = seasonRounds(rounds, new Date().getFullYear());
       const seasonBest = season.length
         ? Math.min(...season.map((r) => r.scoreDifferential))
         : undefined;

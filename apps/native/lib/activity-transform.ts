@@ -5,6 +5,7 @@
  */
 import type { RoundRow } from "@/lib/api/schemas/round";
 import { HOMEPAGE_ROUNDS_LIMIT } from "./golf-stats";
+import { parseDbTimestamp } from "@/lib/parse-db-timestamp";
 
 export interface ActivityItem {
   id: number;
@@ -27,7 +28,9 @@ export function transformRoundsToActivities(
   if (rounds.length === 0) return [];
 
   const sortedRounds = [...rounds].sort(
-    (a, b) => new Date(b.teeTime).getTime() - new Date(a.teeTime).getTime(),
+    (a, b) =>
+      parseDbTimestamp(b.teeTime).getTime() -
+      parseDbTimestamp(a.teeTime).getTime(),
   );
 
   let bestDifferential = Infinity;
@@ -62,7 +65,7 @@ export function transformRoundsToActivities(
 
     return {
       id: round.id,
-      date: new Date(round.teeTime),
+      date: parseDbTimestamp(round.teeTime),
       courseName: courses.get(round.courseId) || "Unknown Course",
       score: round.adjustedGrossScore,
       scoreDifferential: round.scoreDifferential,
