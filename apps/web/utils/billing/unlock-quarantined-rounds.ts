@@ -68,30 +68,49 @@ const PAID_PLANS: ReadonlySet<PlanType> = new Set([
 ]);
 
 /**
- * Does this decision represent an account arriving at (or staying on) a paid
- * plan? Only an `apply` decision reaches a write site, and only a paid
- * resulting projection lifts the free-tier cap that caused the quarantine.
+ * Does this decision leave the account ON a paid plan? The test is the
+ * RESULTING projection, deliberately NOT `decision.action === "apply"`.
+ *
+ * `decision.projection` is the state the profile holds once this event has
+ * been processed: the newly merged projection on an `apply`, and the
+ * already-stored projection on an `ignore`. Either way it answers the only
+ * question the quarantine cares about — is the free-tier cap lifted for this
+ * account right now? — so both shapes must unlock.
+ *
+ * Gating on `action === "apply"` broke convergence for LIFETIME, and only for
+ * lifetime. `applyBillingEvent` makes lifetime ABSORBING: once the profile
+ * says lifetime, step 3 returns `ignore(projection, "lifetime-locked")`
+ * before the same-provider `apply` at step 5. So if the profile write commits
+ * and the unlock then throws, the redelivery this module relies on decides
+ * `ignore`, the old guard rejected it, and the rounds stayed quarantined
+ * FOREVER — no re-quarantine or re-unlock path exists to correct it later.
+ * premium/unlimited never hit that: their redelivery re-decides
+ * `same-provider-update` → `apply`, which the old guard accepted.
+ *
+ * Widening the guard is free because the UPDATE below is predicated on
+ * `quarantined = true`: a decision that unlocks nothing matches zero rows,
+ * fires no trigger and enqueues nothing. And it cannot unlock an account that
+ * should stay capped — a downgrade `apply` carries a free/null projection and
+ * is rejected here exactly as before.
  */
 export function decisionGrantsPaidEntitlement(
   decision: ApplyDecision,
 ): boolean {
   return (
-    decision.action === "apply" &&
-    decision.projection.plan !== null &&
-    PAID_PLANS.has(decision.projection.plan)
+    decision.projection.plan !== null && PAID_PLANS.has(decision.projection.plan)
   );
 }
 
 export interface UnlockQuarantinedRoundsResult {
-  /** True when the decision was a paid `apply` and the UPDATE actually ran. */
+  /** True when the resulting projection was paid and the UPDATE actually ran. */
   evaluated: boolean;
   /** Ids of the rounds this call flipped to `quarantined = false`. */
   unlockedRoundIds: number[];
 }
 
 /**
- * Unlock every quarantined round for `userId` when `decision` grants a paid
- * entitlement. A no-op for non-paid or ignored decisions, and a no-op on
+ * Unlock every quarantined round for `userId` when `decision` leaves the
+ * account on a paid plan. A no-op for non-paid decisions, and a no-op on
  * replay (nothing is quarantined the second time).
  *
  * Deliberately NOT swallowed on failure: if the unlock throws, the caller's
@@ -99,7 +118,9 @@ export interface UnlockQuarantinedRoundsResult {
  * read → decide → write → unlock and converges. Swallowing the error would
  * leave the rounds locked forever — the exact bug this helper exists to fix.
  * The unlock is not in the same transaction as the profile write for the same
- * reason: provider redelivery is the repair mechanism.
+ * reason: provider redelivery is the repair mechanism. That repair only works
+ * because `decisionGrantsPaidEntitlement` tests the resulting projection
+ * rather than `action === "apply"` — see the note there.
  */
 export async function unlockQuarantinedRoundsOnUpgrade(params: {
   userId: string;

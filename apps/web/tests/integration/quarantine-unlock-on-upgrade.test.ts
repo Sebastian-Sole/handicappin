@@ -690,10 +690,15 @@ describeIfLocal("quarantine unlock on upgrade (T15, real local Supabase)", () =>
   });
 
   // -------------------------------------------------------------------------
-  // A blocked write must not unlock either
+  // A blocked write must not WRITE — but it must still converge the rounds
   // -------------------------------------------------------------------------
 
-  test("a Stripe write blocked by the lifetime guard does not unlock", async () => {
+  test("a Stripe write blocked by the lifetime guard writes nothing but still unlocks", async () => {
+    // The account is already lifetime. Under the OLD guard
+    // (`decision.action === "apply"`) this decision — `lifetime-locked` →
+    // ignore — unlocked nothing, which is exactly what stranded the rounds
+    // when the unlock failed after the profile write committed. The blocked
+    // write must still leave the projection untouched...
     await db
       .update(profile)
       .set({ planSelected: "lifetime", billingProvider: "apple" })
@@ -704,12 +709,132 @@ describeIfLocal("quarantine unlock on upgrade (T15, real local Supabase)", () =>
     expect(result.written).toBe(false);
     expect(result.verdict?.decision.reason).toBe("lifetime-locked");
 
-    // The decision was "ignore" — no write, and therefore no unlock. (The
-    // account is already lifetime; the real unlock happened on the event
-    // that granted it.)
-    expect((await quarantineCounts(stripeUserId)).quarantined).toBe(
-      QUARANTINED_COUNT
+    // ...the incoming stripe/premium fact did NOT overwrite the lifetime
+    // projection (the whole point of the precedence guard).
+    const after = await getProfileRow(stripeUserId);
+    expect(after.planSelected).toBe("lifetime");
+    expect(after.billingProvider).toBe("apple");
+
+    // ...and the rounds converged with the paid projection the profile
+    // already holds, because the guard now tests the RESULTING projection.
+    expect((await quarantineCounts(stripeUserId)).quarantined).toBe(0);
+    expect(await queueRows(stripeUserId)).toHaveLength(1);
+  });
+
+  // -------------------------------------------------------------------------
+  // MERGE-BLOCKING: convergence after a failed unlock — the LIFETIME case
+  //
+  // The helper deliberately does not share a transaction with the profile
+  // write and deliberately does not swallow errors: a throw returns non-2xx
+  // and the provider redelivers. Lifetime is the one plan where that
+  // redelivery can never produce an `apply` again (applyBillingEvent step 3
+  // returns `lifetime-locked` before the same-provider apply at step 5), so
+  // the post-failure state is seeded directly here: profile ALREADY lifetime,
+  // rounds STILL quarantined, no successful event recorded.
+  // -------------------------------------------------------------------------
+
+  /** The exact state a crash between the profile write and the unlock leaves. */
+  async function seedFailedUnlockState(
+    userId: string,
+    provider: "stripe" | "apple"
+  ) {
+    await db
+      .update(profile)
+      .set({
+        planSelected: "lifetime",
+        subscriptionStatus: "active",
+        currentPeriodEnd: null,
+        cancelAtPeriodEnd: false,
+        billingProvider: provider,
+      })
+      .where(eq(profile.id, userId));
+    // No webhook_events row: recordEvent never ran, so the provider redelivers.
+    await db.delete(webhookEvents).where(eq(webhookEvents.userId, userId));
+    await clearQueue(userId);
+    // Precondition: the rounds really are still stranded.
+    expect((await quarantineCounts(userId)).quarantined).toBe(QUARANTINED_COUNT);
+  }
+
+  test("Stripe: redelivery after a failed unlock converges a LIFETIME account", async () => {
+    await seedFailedUnlockState(stripeUserId, "stripe");
+
+    // Stripe redelivers the very event that granted lifetime. The profile is
+    // already lifetime, so the decision is now `lifetime-locked` → ignore.
+    const result = await runStripeEvent(
+      stripeUserId,
+      stripeFact({ plan: "lifetime", status: "active", currentPeriodEnd: null })
     );
+    expect(result.written).toBe(false);
+    expect(result.verdict?.decision.action).toBe("ignore");
+    expect(result.verdict?.decision.reason).toBe("lifetime-locked");
+
+    // Converged: the rounds are unlocked, they count, and the recomputation
+    // was enqueued exactly once (all QUARANTINED_COUNT rows collapse into one
+    // queue row via trigger_handicap_recalculation's unique user_id upsert).
+    const counts = await quarantineCounts(stripeUserId);
+    expect(counts.quarantined).toBe(0);
+    expect(counts.active).toBe(FREE_TIER_ROUND_LIMIT + QUARANTINED_COUNT);
+    expect(await countedRounds(stripeUserId)).toBe(
+      FREE_TIER_ROUND_LIMIT + QUARANTINED_COUNT
+    );
+    expect(await queueRows(stripeUserId)).toHaveLength(1);
+  });
+
+  test("RevenueCat: redelivery after a failed unlock converges a LIFETIME account", async () => {
+    await seedFailedUnlockState(rcUserId, "apple");
+
+    // A fresh event id: RevenueCat's redelivery of an unrecorded event is not
+    // caught by the idempotency check, and reaches the chokepoint — which now
+    // decides `lifetime-locked` → ignore against the committed profile.
+    const res = await POST(
+      makeRequest(
+        rcPayload("NON_RENEWING_PURCHASE", { product_id: APPLE_SKUS.lifetime })
+      )
+    );
+    expect(res.status).toBe(200);
+    await expect(res.json()).resolves.toMatchObject({
+      applied: false,
+      changed: false,
+      reason: "lifetime-locked",
+    });
+
+    // The projection is untouched (it was already correct) and the rounds
+    // caught up with it.
+    expect((await getProfileRow(rcUserId)).planSelected).toBe("lifetime");
+    const counts = await quarantineCounts(rcUserId);
+    expect(counts.quarantined).toBe(0);
+    expect(counts.active).toBe(FREE_TIER_ROUND_LIMIT + QUARANTINED_COUNT);
+    expect(await countedRounds(rcUserId)).toBe(
+      FREE_TIER_ROUND_LIMIT + QUARANTINED_COUNT
+    );
+    expect(await queueRows(rcUserId)).toHaveLength(1);
+  });
+
+  test("the convergence pass is itself idempotent: a second redelivery enqueues nothing", async () => {
+    await seedFailedUnlockState(stripeUserId, "stripe");
+
+    const lifetimeFact = () =>
+      stripeFact({
+        plan: "lifetime",
+        status: "active",
+        currentPeriodEnd: null,
+      });
+
+    await runStripeEvent(stripeUserId, lifetimeFact());
+    expect((await quarantineCounts(stripeUserId)).quarantined).toBe(0);
+    expect(await queueRows(stripeUserId)).toHaveLength(1);
+
+    // Drop the queue row so a second enqueue would be unmistakable, then let
+    // the provider redeliver once more. The UPDATE is predicated on
+    // `quarantined = true`, so this pass matches zero rows, fires no trigger
+    // and enqueues nothing.
+    await clearQueue(stripeUserId);
+    await runStripeEvent(stripeUserId, lifetimeFact());
+
     expect(await queueRows(stripeUserId)).toHaveLength(0);
+    const counts = await quarantineCounts(stripeUserId);
+    expect(counts.total).toBe(FREE_TIER_ROUND_LIMIT + QUARANTINED_COUNT);
+    expect(counts.quarantined).toBe(0);
+    expect((await getProfileRow(stripeUserId)).planSelected).toBe("lifetime");
   });
 });
