@@ -15,8 +15,11 @@
  *
  * Golden fixtures (per the subplan): 18-hole, 9-hole front, 9-hole back,
  * course-in-catalog, course-missing-→-pending, free-tier at/over limit,
- * plus the plan gates, the self-submission guard, and the post-commit
- * delete-on-race (which Part A preserves verbatim; Part B deletes it).
+ * plus the plan gates and the self-submission guard. Part B
+ * (accept-and-quarantine) replaced the post-commit delete-on-race with an
+ * in-transaction active-vs-quarantined decision — covered below for both
+ * policies ("reject" keeps the pre-transaction refusal; "quarantine"
+ * accepts and stores over-limit rounds with `quarantined = true`).
  */
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { TRPCError } from "@trpc/server";
@@ -56,16 +59,18 @@ const h = vi.hoisted(() => {
     where(...args: unknown[]): SelectChain;
     limit(...args: unknown[]): SelectChain;
     orderBy(...args: unknown[]): SelectChain;
+    for(...args: unknown[]): SelectChain;
     then: Resolver<unknown>;
   }
 
   /**
    * Minimal fake of the drizzle postgres-js handle, faithful to exactly the
    * fluent surface `submitScorecard` uses:
-   *   select(...).from(t).where(...)[.limit(...)|.orderBy(...)] -> awaited
-   *   insert(t).values(v)[.returning(...)]                     -> awaited
-   *   delete(t).where(...)                                     -> awaited
+   *   select(...).from(t).where(...)[.limit(...)|.orderBy(...)|.for(...)] -> awaited
+   *   insert(t).values(v)[.returning(...)]                               -> awaited
    *   transaction(fn) -> fn(this)
+   * (`delete` is retained so a regression back to the removed post-commit
+   * delete-on-race would be recorded and caught by the no-delete asserts.)
    */
   class FakeDb {
     selectQueues = new Map<object, HoistedRow[][]>();
@@ -117,6 +122,9 @@ const h = vi.hoisted(() => {
           return chain;
         },
         orderBy() {
+          return chain;
+        },
+        for() {
           return chain;
         },
         then(onFulfilled, onRejected) {
@@ -322,58 +330,54 @@ function buildScorecard(overrides: Partial<Scorecard> = {}): Scorecard {
   };
 }
 
-interface FakeCountResponse {
-  count: number | null;
-  error: { message: string } | null;
-}
-
-/**
- * Fake of the one Supabase call the pipeline makes: the post-commit race
- * re-count. `eq` is chainable AND awaitable — the re-check filters on both
- * `userId` and `quarantined` (subplan 003).
- */
-function fakeSupabase(response: FakeCountResponse = { count: 0, error: null }) {
-  interface EqChain {
-    eq(...args: unknown[]): EqChain;
-    then<T>(
-      onFulfilled?: ((value: FakeCountResponse) => T) | null,
-      onRejected?: ((reason: unknown) => T) | null
-    ): Promise<T>;
-  }
-  const chain: EqChain = {
-    eq: () => chain,
-    then: (onFulfilled, onRejected) =>
-      Promise.resolve(response).then(
-        onFulfilled ?? undefined,
-        onRejected ?? undefined
-      ),
-  };
-  return {
-    from: () => ({
-      select: () => chain,
-    }),
-  };
-}
-
 const createCaller = createCallerFactory(roundRouter);
 
-function buildCaller(
-  supabase: ReturnType<typeof fakeSupabase> = fakeSupabase(),
-  authUserId: string = USER_ID
-) {
+function buildCaller(authUserId: string = USER_ID) {
+  // Part B removed the service's post-commit Supabase re-count; the only
+  // remaining ctx.supabase consumer in this flow is the (mocked)
+  // getComprehensiveUserAccess, so an inert stub suffices.
   return createCaller({
     user: { id: authUserId },
-    supabase,
+    supabase: {},
   } as unknown as Parameters<typeof createCaller>[0]);
 }
 
-/** Seed the queues for the course-in-catalog + approved-tee happy path. */
-function seedApprovedCourseAndTee({ priorApprovedRounds = 5 } = {}) {
+/**
+ * Deps for calling the service directly with a non-default
+ * `overLimitPolicy` (the tRPC adapter is pinned to "reject").
+ */
+function serviceDeps(overLimitPolicy: "reject" | "quarantine") {
+  return {
+    db: h.fakeDb,
+    authUserId: USER_ID,
+    getUserAccess: accessMock,
+    notifyAdmins: notifyMock,
+    logger,
+    analytics: { capture: h.posthog.capture, flush: h.posthog.flush },
+    overLimitPolicy,
+  } as unknown as Parameters<typeof submitScorecardService>[0];
+}
+
+/**
+ * Seed the queues for the course-in-catalog + approved-tee happy path.
+ *
+ * `activeRoundCount` seeds the FIRST round-table select — the
+ * in-transaction active (non-quarantined) count that Part B's
+ * active-vs-quarantined decision runs for free-plan users. Leave it
+ * undefined for non-free plans, which skip that count entirely.
+ */
+function seedApprovedCourseAndTee({
+  priorApprovedRounds = 5,
+  activeRoundCount,
+}: { priorApprovedRounds?: number; activeRoundCount?: number } = {}) {
   h.fakeDb.setIdBase(roundTable, 9301);
   h.fakeDb.setIdBase(submissionsTable, 9401);
   h.fakeDb.seedSelect(profileTable, [profileRow]);
   h.fakeDb.seedSelect(courseTable, [{ id: COURSE_ID, name: "Characterization Course" }]);
   h.fakeDb.seedSelect(teeInfoTable, [{ id: TEE_ID, approvalStatus: "approved" }]);
+  if (activeRoundCount !== undefined) {
+    h.fakeDb.seedSelect(roundTable, [{ count: activeRoundCount }]);
+  }
   h.fakeDb.seedSelect(roundTable, [{ count: priorApprovedRounds }]);
   h.fakeDb.seedSelect(holeTable, dbHoleRows(TEE_ID));
 }
@@ -419,6 +423,7 @@ describe("submitScorecard characterization — golden rounds", () => {
       slopeRatingUsed: 130,
       holesPlayed: 18,
       nineHoleSection: null,
+      quarantined: false,
     });
 
     // Score rows: one per hole, paired positionally to db holes 1..18.
@@ -645,7 +650,7 @@ describe("submitScorecard characterization — gates and races", () => {
   it("rejects submitting on behalf of another user with FORBIDDEN before any db work", async () => {
     accessMock.mockResolvedValue(unlimitedAccess);
 
-    const error = await buildCaller(fakeSupabase(), OTHER_USER_ID)
+    const error = await buildCaller(OTHER_USER_ID)
       .submitScorecard(buildScorecard())
       .then(
         () => null,
@@ -697,58 +702,48 @@ describe("submitScorecard characterization — gates and races", () => {
     expect(h.fakeDb.inserts).toHaveLength(0);
   });
 
-  it("free-tier user under the limit submits successfully and the race re-check passes", async () => {
+  it("free-tier user under the limit submits successfully and lands active (quarantined = false)", async () => {
     accessMock.mockResolvedValue(freeAccess(5));
-    seedApprovedCourseAndTee();
+    seedApprovedCourseAndTee({ activeRoundCount: 20 });
 
-    const result = await buildCaller(
-      fakeSupabase({ count: 21, error: null })
-    ).submitScorecard(buildScorecard());
+    const result = await buildCaller().submitScorecard(buildScorecard());
 
     expect(result.id).toBe(9301);
+    expect(result.quarantined).toBe(false);
     expect(h.fakeDb.deletes).toHaveLength(0);
   });
 
-  it("free-tier race detected post-commit: compensating deletes run and FORBIDDEN is thrown (current delete-on-race behavior, removed in Part B)", async () => {
+  it("at-limit race under 'reject': the in-transaction re-count quarantines the loser — stored, never deleted (Part B replaces the delete-on-race)", async () => {
+    // The pre-transaction gate saw 1 remaining round (a stale read: a
+    // concurrent submission commits first), but the authoritative
+    // in-transaction count already reports the limit reached.
     accessMock.mockResolvedValue(freeAccess(1));
-    seedApprovedCourseAndTee();
+    seedApprovedCourseAndTee({ activeRoundCount: 25 });
 
-    const error = await buildCaller(fakeSupabase({ count: 26, error: null }))
-      .submitScorecard(buildScorecard())
-      .then(
-        () => null,
-        (e: unknown) => e
-      );
+    const result = await buildCaller().submitScorecard(buildScorecard());
 
-    expect(error).toBeInstanceOf(TRPCError);
-    expect((error as TRPCError).code).toBe("FORBIDDEN");
-    expect((error as TRPCError).message).toBe(
-      "Round limit exceeded due to concurrent submissions. Your submission was not saved. Please try again."
-    );
+    // Accepted and stored quarantined — no FORBIDDEN, no compensation.
+    expect(result.id).toBe(9301);
+    expect(result.quarantined).toBe(true);
+    expect(h.fakeDb.deletes).toHaveLength(0);
+    expect(loggerMock.warn).not.toHaveBeenCalled();
 
-    // The round was committed, then compensated: submissions + round deletes
-    // (no created course/tee in this scenario, so exactly two deletes).
-    expect(h.fakeDb.deletes).toHaveLength(2);
-    expect(h.fakeDb.deletes[0]).toBe(submissionsTable);
-    expect(h.fakeDb.deletes[1]).toBe(roundTable);
+    const [roundInsert] = h.fakeDb.insertsFor(roundTable) as Row[];
+    expect(roundInsert.quarantined).toBe(true);
 
-    expect(loggerMock.warn).toHaveBeenCalledWith(
-      "Race condition detected: rolling back over-limit round",
-      expect.objectContaining({ userId: USER_ID, roundCount: 26, limit: 25 })
-    );
-
-    // No admin email, no analytics for a rolled-back round.
-    expect(notifyMock).not.toHaveBeenCalled();
-    expect(h.posthog.capture).not.toHaveBeenCalled();
+    // A quarantined round is a real round: scores stored, analytics fired.
+    expect(h.fakeDb.insertsFor(scoreTable)).toHaveLength(1);
+    expect(h.posthog.capture).toHaveBeenCalledTimes(1);
   });
 });
 
 /**
- * The two coverage gaps flagged in PR #165's review, closed here (routed to
- * subplan 003): a CourseResolutionError characterization and the Part B
- * `overLimitPolicy` guard.
+ * CourseResolutionError characterization (a PR #165 coverage gap) plus the
+ * Part B `overLimitPolicy` behaviors: "quarantine" accepts over-limit
+ * rounds and stores them quarantined; "reject" (web/native) still refuses
+ * them up front.
  */
-describe("submitScorecard characterization — course resolution failures and the Part B seam", () => {
+describe("submitScorecard characterization — course resolution failures and the Part B policies", () => {
   it("approved tee referenced by an id that no longer resolves: INTERNAL_SERVER_ERROR with the exact CourseResolutionError message, nothing persisted", async () => {
     accessMock.mockResolvedValue(unlimitedAccess);
     // Catalog course matches, but NO teeInfo rows are seeded, so both the
@@ -783,30 +778,129 @@ describe("submitScorecard characterization — course resolution failures and th
     expect(h.posthog.capture).not.toHaveBeenCalled();
   });
 
-  it('overLimitPolicy "quarantine" is rejected loudly by the Part B guard before any other work', async () => {
-    // Locks in the seam guard (submit-scorecard.ts) so a premature adapter
-    // wire-up cannot silently fall through to reject semantics. The guard
-    // runs first, so every other dependency can be an inert stub.
-    const deps = {
-      db: h.fakeDb,
-      supabase: fakeSupabase(),
-      authUserId: USER_ID,
-      getUserAccess: accessMock,
-      notifyAdmins: notifyMock,
-      logger: logger,
-      analytics: { capture: h.posthog.capture, flush: h.posthog.flush },
-      overLimitPolicy: "quarantine",
-    } as unknown as Parameters<typeof submitScorecardService>[0];
+  it('policy "quarantine": an over-limit submission is accepted and stored with quarantined = true', async () => {
+    accessMock.mockResolvedValue(freeAccess(0));
+    seedApprovedCourseAndTee({ activeRoundCount: 25 });
 
-    await expect(
-      submitScorecardService(deps, buildScorecard())
-    ).rejects.toThrow(
-      'overLimitPolicy "quarantine" is not implemented yet (subplan 002 Part B, blocked on 003\'s round.quarantined column)'
+    const result = await submitScorecardService(
+      serviceDeps("quarantine"),
+      buildScorecard()
     );
 
-    // The guard fires before the self-submission check, access lookup, and
-    // any db work.
-    expect(accessMock).not.toHaveBeenCalled();
+    expect(result.id).toBe(9301);
+    expect(result.quarantined).toBe(true);
+
+    const [roundInsert] = h.fakeDb.insertsFor(roundTable) as Row[];
+    expect(roundInsert.quarantined).toBe(true);
+
+    // Stored as a full round: scores persisted, nothing deleted.
+    expect(h.fakeDb.insertsFor(scoreTable)).toHaveLength(1);
+    expect(h.fakeDb.deletes).toHaveLength(0);
+  });
+
+  it('policy "quarantine": an under-limit submission lands active (quarantined = false)', async () => {
+    accessMock.mockResolvedValue(freeAccess(3));
+    seedApprovedCourseAndTee({ activeRoundCount: 22 });
+
+    const result = await submitScorecardService(
+      serviceDeps("quarantine"),
+      buildScorecard()
+    );
+
+    expect(result.quarantined).toBe(false);
+    const [roundInsert] = h.fakeDb.insertsFor(roundTable) as Row[];
+    expect(roundInsert.quarantined).toBe(false);
+    expect(h.fakeDb.deletes).toHaveLength(0);
+  });
+
+  it('policy "reject" is unchanged: an at-limit submission is refused before any db work', async () => {
+    accessMock.mockResolvedValue(freeAccess(0));
+
+    await expect(
+      submitScorecardService(serviceDeps("reject"), buildScorecard())
+    ).rejects.toThrow(
+      "You've reached your free tier limit of 25 rounds. Please upgrade to continue tracking rounds."
+    );
     expect(h.fakeDb.inserts).toHaveLength(0);
+  });
+});
+
+describe("submitScorecard — score.holeId insert-time integrity", () => {
+  it("accepts explicit holeIds that match the played tee's db holes", async () => {
+    accessMock.mockResolvedValue(unlimitedAccess);
+    seedApprovedCourseAndTee();
+
+    // Same ids as the db holes (9501..9518), submitted explicitly.
+    const result = await buildCaller().submitScorecard(
+      buildScorecard({
+        scores: Array.from({ length: 18 }, (_, i) => ({
+          holeId: 9501 + i,
+          strokes: 5,
+          hcpStrokes: 0,
+        })),
+      })
+    );
+
+    expect(result.id).toBe(9301);
+    const scoreRows = h.fakeDb.insertsFor(scoreTable)[0] as Row[];
+    expect(scoreRows.map((r) => r.holeId)).toEqual(
+      Array.from({ length: 18 }, (_, i) => 9501 + i)
+    );
+  });
+
+  it("rejects a score whose holeId belongs to a different tee (BAD_REQUEST, nothing persisted)", async () => {
+    accessMock.mockResolvedValue(unlimitedAccess);
+    seedApprovedCourseAndTee();
+
+    // The client's teePlayed.holes and score holeIds are internally
+    // consistent (8001..8018), so the pre-insert handicap calculation
+    // succeeds — but they are NOT the resolved tee's db holes (9501..9518).
+    // Before the fix this cross-tee claim was silently masked by the
+    // positional overwrite; now it must surface as a typed rejection.
+    const spoofedTee = buildTee(true);
+    spoofedTee.holes = spoofedTee.holes.map((holeRow, i) => ({
+      ...holeRow,
+      id: 8001 + i,
+    }));
+
+    await expect(
+      buildCaller().submitScorecard(
+        buildScorecard({
+          teePlayed: spoofedTee,
+          scores: Array.from({ length: 18 }, (_, i) => ({
+            holeId: 8001 + i,
+            strokes: 5,
+            hcpStrokes: 0,
+          })),
+        })
+      )
+    ).rejects.toMatchObject({
+      code: "BAD_REQUEST",
+      message: expect.stringContaining("does not belong to the played section"),
+    });
+
+    expect(h.fakeDb.insertsFor(scoreTable)).toHaveLength(0);
+  });
+
+  it("rejects a back-9 round claiming a front-9 hole of the same tee", async () => {
+    accessMock.mockResolvedValue(unlimitedAccess);
+    seedApprovedCourseAndTee();
+
+    // Scores claim holes 1..9 (ids 9501..9509) but the round is section
+    // "back", whose db slice is holes 10..18 (ids 9510..9518).
+    await expect(
+      buildCaller().submitScorecard(
+        buildScorecard({
+          scores: Array.from({ length: 9 }, (_, i) => ({
+            holeId: 9501 + i,
+            strokes: 5,
+            hcpStrokes: 0,
+          })),
+          nineHoleSection: "back",
+        })
+      )
+    ).rejects.toMatchObject({ code: "BAD_REQUEST" });
+
+    expect(h.fakeDb.insertsFor(scoreTable)).toHaveLength(0);
   });
 });

@@ -87,6 +87,31 @@ export function settleWithin(
 }
 
 /**
+ * Onboarding URL that resumes the pending consent request after plan
+ * selection (decision D3): a signed-in but plan-less account must pick a plan
+ * before it can approve an authorization — any token minted for it could only
+ * ever `403 plan_required`. Mirrors `loginPathForConsent`: the pending
+ * authorization survives server-side and the consent path rides the same
+ * `?redirect=` param the login surfaces honor (guarded by `safeInternalPath`).
+ */
+export function onboardingPathForConsent(authorizationId: string): string {
+  return `/onboarding?${LOGIN_REDIRECT_PARAM}=${encodeURIComponent(
+    consentPath(authorizationId),
+  )}`;
+}
+
+/**
+ * D3 gate predicate: has this account completed plan selection? A missing
+ * profile row or a NULL `plan_selected` both mean "not provisioned" — the
+ * consent page must send the user to onboarding, not mint a dead-end grant.
+ */
+export function hasSelectedPlan(
+  planSelected: string | null | undefined,
+): boolean {
+  return typeof planSelected === "string" && planSelected.length > 0;
+}
+
+/**
  * Best-effort host extraction for display ("You will be sent back to X").
  * Returns null when the value isn't an absolute URL with a host.
  */

@@ -63,10 +63,13 @@ jobs:
       # `success() &&` is load-bearing: a step's `if:` REPLACES the implicit
       # success() gate, so without it a failed dry run would no longer stop the
       # push — the opposite of what validating first is for.
+      # `--yes` makes the no-prompt behavior explicit. Today's CLI happens to
+      # auto-confirm when stdin is not a TTY, but a CLI that ever treated EOF
+      # as "no" would silently skip the apply while this step still exits 0.
       - name: Push migrations to production
         id: apply
         if: ${{ success() && (github.event_name == 'push' || inputs.apply) }}
-        run: supabase db push
+        run: supabase db push --yes
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
           SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
