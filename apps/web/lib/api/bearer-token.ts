@@ -8,9 +8,13 @@
  * implementation of "is this an OAuth-client token?" is exactly how the two
  * surfaces would drift apart on a security-relevant question.
  *
- * The extraction is behaviour-preserving: each body is unchanged apart from
- * the added `export` keyword, re-wrapped signatures, and doc-comment rewraps.
- * The executable token streams are identical to `origin/main`'s.
+ * The extraction was behaviour-preserving. `isExternalOAuthClientToken` has
+ * since been re-expressed on top of `readClientIdClaim`/`hasClientIdClaim`
+ * so `/v1` reads the same claim through the same code — also
+ * behaviour-preserving for tRPC (`payload.client_id != null` and
+ * `hasClientIdClaim` accept exactly the same set), but no longer a second
+ * reading of the claim. The other bodies are unchanged apart from the added
+ * `export` keyword, re-wrapped signatures, and doc-comment rewraps.
  *
  * The validation path is deliberately NETWORK-based (`auth.getUser(token)`).
  * Local JWKS / `getClaims()` validation is PROHIBITED for external tokens
@@ -90,6 +94,71 @@ export function decodeJwtPayload(
 }
 
 /**
+ * How a decoded token's `client_id` claim reads. THE single source of truth
+ * for principal provenance, consumed by both surfaces:
+ * `isExternalOAuthClientToken` below (tRPC's fail-closed placement) and
+ * `authenticateV1Request` (`/v1`'s class assignment). They must agree by
+ * construction, not by convention — two independent readings of "does this
+ * token carry a client_id?" is exactly the drift this module exists to
+ * prevent.
+ *
+ *   - `absent`      — no `client_id`, or an explicit `null`/`undefined`. The
+ *                     shape a first-party web/native session token has.
+ *   - `oauth-client`— a usable, non-empty string. A genuine OAuth 2.1 token.
+ *   - `malformed`   — the claim IS there but is not a usable string (`0`,
+ *                     `false`, `""`, `"   "`, `[]`, `{}`, …).
+ *
+ * The third state is the whole point of modelling this as three values rather
+ * than a boolean. Contract §6 keys principal class on `client_id` PRESENCE
+ * and states that "absence of a claim is not evidence of provenance". A
+ * present-but-unusable `client_id` is neither cleanly present nor cleanly
+ * absent, so **it is not first-party**: it is an anomalous token (a
+ * custom_access_token_hook regression stamping a non-string, say) and must
+ * never receive full first-party capability by default. Callers route it to
+ * rejection, never to the first-party branch.
+ */
+export type ClientIdClaim =
+  | { kind: "absent" }
+  | { kind: "oauth-client"; clientId: string }
+  | { kind: "malformed" };
+
+/**
+ * Read the `client_id` claim off already-decoded claims. Pure; does no
+ * validation — the caller is responsible for having verified the token.
+ */
+export function readClientIdClaim(
+  claims: Record<string, unknown> | null
+): ClientIdClaim {
+  const value = claims?.client_id;
+
+  // `null`/`undefined` are treated as absent, matching a token that simply
+  // never carried the claim: JSON cannot distinguish "omitted" from
+  // "explicitly null" in a way that says anything about provenance.
+  if (value === null || value === undefined) {
+    return { kind: "absent" };
+  }
+
+  if (typeof value === "string" && value.trim().length > 0) {
+    return { kind: "oauth-client", clientId: value.trim() };
+  }
+
+  return { kind: "malformed" };
+}
+
+/**
+ * Does this token carry a `client_id` claim at all — usable or not?
+ *
+ * The shared predicate. `malformed` counts as PRESENT: a token whose
+ * `client_id` is type-confused is not evidence of first-party provenance, so
+ * neither surface may treat it as one.
+ */
+export function hasClientIdClaim(
+  claims: Record<string, unknown> | null
+): boolean {
+  return readClientIdClaim(claims).kind !== "absent";
+}
+
+/**
  * Fail-closed placement (api-platform DECISIONS §3): external OAuth-client
  * tokens — Supabase OAuth 2.1 server tokens carrying a `client_id` claim —
  * are accepted ONLY at the `/api/v1` mount. tRPC is a first-party surface, so
@@ -103,8 +172,7 @@ export function decodeJwtPayload(
  * to `auth.getUser`, which rejects anything malformed anyway.
  */
 export function isExternalOAuthClientToken(token: string): boolean {
-  const payload = decodeJwtPayload(token);
-  return payload !== null && payload.client_id != null;
+  return hasClientIdClaim(decodeJwtPayload(token));
 }
 
 /**

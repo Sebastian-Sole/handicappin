@@ -89,6 +89,7 @@ export { isAcceptedJsonContentType, readJsonBody, type JsonBodyResult } from "./
 
 export {
   SERVICE_UNAVAILABLE_RETRY_AFTER_SECONDS,
+  UNKNOWN_RESET_RETRY_AFTER_SECONDS,
   rateLimitHeaders,
   rateLimitProblem,
   rateLimitResponse,

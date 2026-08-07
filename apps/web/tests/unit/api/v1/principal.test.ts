@@ -21,12 +21,22 @@ vi.mock("@/lib/sentry-utils", () => ({
 const networkValidator = vi.fn(
   async (_token: string): Promise<{ id: string } | null> => null
 );
+/**
+ * Delegating spy over the SHARED provenance predicate. It behaves exactly
+ * like the real `readClientIdClaim`; it exists so a test can prove `/v1`
+ * routes its class decision through the shared export rather than reading
+ * `claims.client_id` itself.
+ */
+const readClientIdClaimSpy = vi.fn();
 vi.mock("@/lib/api/bearer-token", async (importOriginal) => {
   const actual =
     await importOriginal<typeof import("@/lib/api/bearer-token")>();
+  readClientIdClaimSpy.mockImplementation(actual.readClientIdClaim);
   return {
     ...actual,
     getUserFromBearerToken: (token: string) => networkValidator(token),
+    readClientIdClaim: (claims: Record<string, unknown> | null) =>
+      readClientIdClaimSpy(claims),
   };
 });
 
@@ -36,6 +46,8 @@ const {
   hasScope,
   requireScope,
 } = await import("@/app/api/v1/_lib/principal");
+const { decodeJwtPayload, hasClientIdClaim, isExternalOAuthClientToken } =
+  await import("@/lib/api/bearer-token");
 const { v1RateLimitIdentifier } = await import(
   "@/app/api/v1/_lib/rate-limit-seam"
 );
@@ -65,6 +77,7 @@ beforeEach(() => {
   accepts.mockClear();
   rejects.mockClear();
   networkValidator.mockClear();
+  readClientIdClaimSpy.mockClear();
 });
 
 describe("shape 1 — no client_id ⇒ first-party principal", () => {
@@ -206,6 +219,133 @@ describe("shape 3 — client_id present, scope ABSENT ⇒ 401 + alert", () => {
     );
     if (result.ok) throw new Error("expected rejection");
     expect(result.problem.status).not.toBe(403);
+  });
+});
+
+/**
+ * The shape §6 does not enumerate and the two surfaces used to disagree
+ * about: `client_id` PRESENT but not a usable string.
+ *
+ * tRPC's `payload.client_id != null` counted `0` / `false` / `""` / `[]` /
+ * `{}` as "has client_id" and rejected the token as external. `/v1` read the
+ * same values through a non-empty-string test, saw ABSENT, and handed the
+ * token first-party class — full capability, no scope check. One token, two
+ * verdicts, in the module extracted precisely so that could not happen.
+ *
+ * Both surfaces now consume `readClientIdClaim` from `@/lib/api/bearer-token`,
+ * so the agreement below holds by construction rather than by convention.
+ */
+describe("shape 5 — client_id present but unusable ⇒ never first-party", () => {
+  type Expected = "first-party" | "rejected";
+  const cases: Array<[string, unknown, Expected]> = [
+    ["number 0", 0, "rejected"],
+    ["number 1", 1, "rejected"],
+    ["boolean false", false, "rejected"],
+    ["empty string", "", "rejected"],
+    ["whitespace-only string", "   ", "rejected"],
+    ["empty array", [], "rejected"],
+    ["array of ids", ["fitbull"], "rejected"],
+    ["empty object", {}, "rejected"],
+    // The two genuinely-absent readings. Kept in the SAME table so the
+    // equivalence below is asserted across the whole value space, not only
+    // where it is convenient.
+    ["explicit null", null, "first-party"],
+    ["claim omitted (undefined)", undefined, "first-party"],
+  ];
+
+  test.each(cases)(
+    "client_id = %s → %s, and tRPC's verdict agrees",
+    async (_label, clientId, expected) => {
+      const token = jwt({ sub: USER_ID, client_id: clientId });
+      const result = await authenticateV1Request(requestWith(token), {
+        validateToken: accepts,
+      });
+
+      if (expected === "first-party") {
+        if (!result.ok) throw new Error("expected ok");
+        expect(result.principal.class).toBe("first-party");
+      } else {
+        expect(result.ok).toBe(false);
+        if (result.ok) return;
+        expect(result.problem.code).toBe("unauthorized");
+        expect(result.problem.status).toBe(401);
+      }
+
+      // The invariant, stated as an equivalence: "tRPC rejects this token as
+      // external" ⟺ "/v1 does NOT grant it first-party capability". Any
+      // divergence — in either direction — fails here.
+      const grantedFirstParty =
+        result.ok && result.principal.class === "first-party";
+      expect(isExternalOAuthClientToken(token)).toBe(!grantedFirstParty);
+      expect(hasClientIdClaim(decodeJwtPayload(token))).toBe(!grantedFirstParty);
+    }
+  );
+
+  test.each(cases.filter(([, , expected]) => expected === "rejected"))(
+    "client_id = %s never yields a principal at all",
+    async (_label, clientId) => {
+      // Stronger than "not first-party": an unusable client_id must not
+      // produce an OAuth principal either, whatever `scope` says.
+      const result = await authenticateV1Request(
+        requestWith(
+          jwt({ sub: USER_ID, client_id: clientId, scope: "rounds:write" })
+        ),
+        { validateToken: accepts }
+      );
+      expect(result.ok).toBe(false);
+    }
+  );
+
+  test("raises the hook-regression alert, naming the offending claim type", async () => {
+    await authenticateV1Request(
+      requestWith(jwt({ sub: USER_ID, client_id: 0 })),
+      { validateToken: accepts }
+    );
+    expect(captureSentryError).toHaveBeenCalledTimes(1);
+    const [error, context] = captureSentryError.mock.calls[0] as [
+      Error,
+      { eventType?: string; extra?: Record<string, unknown> },
+    ];
+    expect(error.message).toMatch(/client_id/);
+    expect(context.eventType).toBe("v1-auth-malformed-client-id");
+    expect(context.extra?.claimType).toBe("number");
+  });
+
+  test("an array client_id is reported as an array, not as 'object'", async () => {
+    await authenticateV1Request(
+      requestWith(jwt({ sub: USER_ID, client_id: ["fitbull"] })),
+      { validateToken: accepts }
+    );
+    const [, context] = captureSentryError.mock.calls[0] as [
+      Error,
+      { extra?: Record<string, unknown> },
+    ];
+    expect(context.extra?.claimType).toBe("array");
+  });
+
+  test("classification runs through @/lib/api/bearer-token's readClientIdClaim", async () => {
+    // The mechanical proof that `/v1` has no private reading of the claim.
+    const claims = { sub: USER_ID, client_id: CLIENT_ID, scope: "rounds:write" };
+    const result = await authenticateV1Request(requestWith(jwt(claims)), {
+      validateToken: accepts,
+    });
+    expect(readClientIdClaimSpy).toHaveBeenCalledTimes(1);
+    expect(readClientIdClaimSpy).toHaveBeenCalledWith(claims);
+    if (!result.ok) throw new Error("expected ok");
+    // …and the usable case still classifies oauth: the fix narrows nothing.
+    expect(result.principal.class).toBe("oauth");
+    expect(result.principal.clientId).toBe(CLIENT_ID);
+  });
+
+  test("a whitespace-padded client_id is trimmed, not rejected", async () => {
+    const result = await authenticateV1Request(
+      requestWith(
+        jwt({ sub: USER_ID, client_id: `  ${CLIENT_ID}  `, scope: "rounds:write" })
+      ),
+      { validateToken: accepts }
+    );
+    if (!result.ok) throw new Error("expected ok");
+    expect(result.principal.clientId).toBe(CLIENT_ID);
   });
 });
 

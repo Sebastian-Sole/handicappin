@@ -31,7 +31,9 @@ const {
   decodeJwtPayload,
   extractBearerToken,
   getUserFromBearerToken,
+  hasClientIdClaim,
   isExternalOAuthClientToken,
+  readClientIdClaim,
 } = await import("@/lib/api/bearer-token");
 
 const USER = { id: "33333333-3333-4333-8333-333333333333" };
@@ -90,6 +92,93 @@ describe("decodeJwtPayload / isExternalOAuthClientToken", () => {
     expect(isExternalOAuthClientToken(jwt({ client_id: "c" }))).toBe(true);
     expect(isExternalOAuthClientToken(jwt({ sub: "u" }))).toBe(false);
     expect(isExternalOAuthClientToken("not-a-jwt")).toBe(false);
+  });
+});
+
+/**
+ * The shared provenance predicate.
+ *
+ * Both surfaces that accept a bearer token classify it by whether it carries
+ * `client_id`, and they used to answer that question with two different
+ * expressions — `payload.client_id != null` here, a non-empty-trimmed-string
+ * test in `/v1`. The values where those disagree (`0`, `false`, `""`, `[]`,
+ * `{}`) were rejected by tRPC as external AND granted unscoped first-party
+ * authority by `/v1`. This suite pins the single reading; `principal.test.ts`
+ * pins that `/v1` consumes it.
+ */
+describe("readClientIdClaim / hasClientIdClaim", () => {
+  test.each([
+    ["undecodable claims (null)", null],
+    ["claim omitted", {}],
+    ["explicit null", { client_id: null }],
+    ["explicit undefined", { client_id: undefined }],
+  ])("%s → absent (⇒ first-party is a legitimate reading)", (_label, claims) => {
+    expect(readClientIdClaim(claims)).toEqual({ kind: "absent" });
+    expect(hasClientIdClaim(claims)).toBe(false);
+  });
+
+  test.each([
+    ["a plain id", "fitbull", "fitbull"],
+    ["surrounding whitespace is trimmed", "  fitbull  ", "fitbull"],
+  ])("%s → oauth-client", (_label, value, expected) => {
+    expect(readClientIdClaim({ client_id: value })).toEqual({
+      kind: "oauth-client",
+      clientId: expected,
+    });
+    expect(hasClientIdClaim({ client_id: value })).toBe(true);
+  });
+
+  test.each([
+    ["number 0", 0],
+    ["number 1", 1],
+    ["boolean false", false],
+    ["boolean true", true],
+    ["empty string", ""],
+    ["whitespace-only string", "   "],
+    ["empty array", []],
+    ["array of ids", ["fitbull"]],
+    ["empty object", {}],
+  ])(
+    "%s → malformed, and counts as PRESENT — never evidence of first-party provenance",
+    (_label, value) => {
+      const claims = { sub: "u", client_id: value };
+      expect(readClientIdClaim(claims)).toEqual({ kind: "malformed" });
+      expect(hasClientIdClaim(claims)).toBe(true);
+    }
+  );
+
+  test("isExternalOAuthClientToken is exactly hasClientIdClaim ∘ decodeJwtPayload", () => {
+    // The tRPC surface has no second reading of its own — this is the
+    // structural half of the agreement `/v1` relies on.
+    const payloads: Array<Record<string, unknown>> = [
+      { sub: "u" },
+      { sub: "u", client_id: null },
+      { sub: "u", client_id: "fitbull" },
+      { sub: "u", client_id: 0 },
+      { sub: "u", client_id: false },
+      { sub: "u", client_id: "" },
+      { sub: "u", client_id: "   " },
+      { sub: "u", client_id: [] },
+      { sub: "u", client_id: {} },
+    ];
+    for (const payload of payloads) {
+      const token = jwt(payload);
+      expect(isExternalOAuthClientToken(token)).toBe(
+        hasClientIdClaim(decodeJwtPayload(token))
+      );
+    }
+  });
+
+  test("the pre-existing tRPC verdicts are unchanged by the refactor", () => {
+    // `payload.client_id != null` accepted exactly this set as "external".
+    // If the shared predicate had narrowed it, tRPC would have started
+    // ADMITTING type-confused OAuth tokens — the opposite fail-open.
+    for (const value of [0, 1, false, true, "", "   ", [], {}, "fitbull"]) {
+      expect(isExternalOAuthClientToken(jwt({ client_id: value }))).toBe(true);
+    }
+    for (const payload of [{ sub: "u" }, { sub: "u", client_id: null }]) {
+      expect(isExternalOAuthClientToken(jwt(payload))).toBe(false);
+    }
   });
 });
 

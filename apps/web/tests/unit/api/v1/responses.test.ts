@@ -19,6 +19,7 @@ import {
 } from "@/app/api/v1/_lib/request";
 import {
   SERVICE_UNAVAILABLE_RETRY_AFTER_SECONDS,
+  UNKNOWN_RESET_RETRY_AFTER_SECONDS,
   rateLimitHeaders,
   rateLimitProblem,
   rateLimitResponse,
@@ -72,6 +73,75 @@ describe("problem responses", () => {
     );
     expect(response.headers.get("Retry-After")).toBe("30");
     expect(response.headers.get(API_STABILITY_HEADER)).toBe("internal");
+  });
+
+  describe("the two mandatory headers are NOT overridable", () => {
+    // §1's media type and §4's stability marker are contract requirements,
+    // not defaults. A header contributor — `rateLimitHeaders()` today, any
+    // future one — must not be able to displace them, and the failure would
+    // be silent: a problem document served as `text/html`, or a surface
+    // advertising itself as stable before a second consumer exists.
+    const hostile: Record<string, string> = {
+      // Both casings, because header names are case-insensitive: an
+      // object-spread merge would keep `content-type` alongside
+      // `Content-Type` and the Response constructor COMBINES them.
+      "Content-Type": "text/html",
+      "content-type": "text/html",
+      [API_STABILITY_HEADER]: "stable",
+      "x-api-stability": "stable",
+      "Retry-After": "30",
+    };
+
+    test("problemResponse pins application/problem+json and internal", () => {
+      const response = problemResponse(createProblem({ code: "rate_limited" }), {
+        headers: hostile,
+      });
+      expect(response.headers.get("content-type")).toBe(
+        "application/problem+json; charset=utf-8"
+      );
+      expect(response.headers.get(API_STABILITY_HEADER)).toBe(
+        API_STABILITY_VALUE
+      );
+      // Non-mandatory extras still merge — this is a floor, not a filter.
+      expect(response.headers.get("Retry-After")).toBe("30");
+    });
+
+    test("problemResponseFor and errorResponse pin them too", () => {
+      for (const response of [
+        problemResponseFor({ code: "not_found" }, { headers: hostile }),
+        errorResponse(new Error("boom"), {}, { headers: hostile }),
+      ]) {
+        expect(response.headers.get("content-type")).toBe(
+          "application/problem+json; charset=utf-8"
+        );
+        expect(response.headers.get(API_STABILITY_HEADER)).toBe(
+          API_STABILITY_VALUE
+        );
+      }
+    });
+
+    test("jsonResponse pins application/json and internal", () => {
+      const response = jsonResponse({ ok: true }, 201, { headers: hostile });
+      expect(response.headers.get("content-type")).toBe(
+        "application/json; charset=utf-8"
+      );
+      expect(response.headers.get(API_STABILITY_HEADER)).toBe(
+        API_STABILITY_VALUE
+      );
+    });
+
+    test("a clobber attempt leaves no trace of the caller's value", () => {
+      // Guards the case-insensitive combining trap specifically: a merged
+      // `text/html, application/problem+json` would satisfy a naive
+      // `toContain` assertion but is not the contract's media type.
+      const response = problemResponse(createProblem({ code: "forbidden" }), {
+        headers: hostile,
+      });
+      expect(response.headers.get("content-type")).not.toContain("text/html");
+      expect(response.headers.get(API_STABILITY_HEADER)).not.toContain(
+        "stable"
+      );
+    });
   });
 });
 
@@ -264,6 +334,71 @@ describe("rate-limit seam (§3)", () => {
     expect(`client:${parts.clientId}:user:${parts.userId}`.split(":")[0]).toBe(
       "client"
     );
+  });
+
+  describe("a malformed outcome never puts NaN on the wire", () => {
+    // The seam is coupled STRUCTURALLY, not statically (see the module
+    // header), so nothing type-checks T13.0a's numbers on the way in. An
+    // undefined-derived `reset` would render as the literal string "NaN" —
+    // not a valid `Retry-After`, and free to be read as "retry immediately".
+    test.each([
+      ["NaN", Number.NaN],
+      ["Infinity", Number.POSITIVE_INFINITY],
+      ["-Infinity", Number.NEGATIVE_INFINITY],
+    ])("reset = %s → Retry-After falls back to the known-nothing value", (_label, reset) => {
+      expect(retryAfterSeconds({ ...exhausted, reset }, NOW)).toBe(
+        UNKNOWN_RESET_RETRY_AFTER_SECONDS
+      );
+      expect(rateLimitHeaders({ ...exhausted, reset }, NOW)["Retry-After"]).toBe(
+        String(UNKNOWN_RESET_RETRY_AFTER_SECONDS)
+      );
+    });
+
+    test.each([
+      ["reset", { reset: Number.NaN }],
+      ["limit", { limit: Number.NaN }],
+      ["remaining", { remaining: Number.NaN }],
+    ])(
+      "a non-finite %s omits the whole trio — a budget we cannot state is not stated",
+      (_label, override) => {
+        const headers = rateLimitHeaders({ ...exhausted, ...override }, NOW);
+        expect(headers).not.toHaveProperty("X-RateLimit-Limit");
+        expect(headers).not.toHaveProperty("X-RateLimit-Remaining");
+        expect(headers).not.toHaveProperty("X-RateLimit-Reset");
+        // Retry-After survives: the client still gets a backoff instruction.
+        expect(headers["Retry-After"]).toBeDefined();
+      }
+    );
+
+    test("no header on a malformed 429 response is ever the text NaN", async () => {
+      const response = rateLimitResponse(
+        {
+          success: false,
+          failedClosed: false,
+          limit: Number.NaN,
+          remaining: Number.NaN,
+          reset: Number.NaN,
+        },
+        { now: NOW }
+      );
+      expect(response.status).toBe(429);
+      for (const [, value] of response.headers) {
+        expect(value).not.toContain("NaN");
+        expect(value).not.toContain("Infinity");
+      }
+      await expect(response.json()).resolves.toMatchObject({
+        code: "rate_limited",
+      });
+    });
+
+    test("a well-formed outcome is unaffected by the guard", () => {
+      expect(rateLimitHeaders(exhausted, NOW)).toEqual({
+        "Retry-After": "45",
+        "X-RateLimit-Limit": "60",
+        "X-RateLimit-Remaining": "0",
+        "X-RateLimit-Reset": String(Math.ceil((NOW + 45_000) / 1000)),
+      });
+    });
   });
 
   test("a shipped PublicApiRateLimitResult satisfies the seam structurally", () => {

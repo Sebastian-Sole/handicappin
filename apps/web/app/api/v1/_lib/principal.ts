@@ -17,10 +17,19 @@
  *   |                                    | outside scope → 403 forbidden   |
  *   | `client_id`, `scope` ABSENT        | 401 unauthorized + Sentry alert |
  *
- * A fourth shape exists that §6 does not enumerate — a token whose claims do
- * not decode at all (opaque, or a JWS with a non-object payload). It is
- * treated as **401 unauthorized**, because an unclassifiable token must not
- * fall into the first-party branch by default. See the inline note below.
+ * Two further shapes exist that §6 does not enumerate, and both are
+ * **401 unauthorized** for the same reason — an UNCLASSIFIABLE token must not
+ * fall into the first-party branch by default:
+ *
+ *   | a token whose claims do not decode at all (opaque, or a JWS whose
+ *   | payload is not a JSON object)
+ *   | `client_id` present but not a usable string (`0`, `false`, `""`, `[]`,
+ *   | `{}`) — 401 + Sentry alert
+ *
+ * The second is read through `readClientIdClaim` in `@/lib/api/bearer-token`,
+ * the SAME predicate tRPC's `isExternalOAuthClientToken` uses, so the two
+ * surfaces cannot disagree about what "carries a client_id" means. See the
+ * inline notes below.
  *
  * **Principal class keys on `client_id` PRESENCE, never on the absence of a
  * claim.** An earlier draft of the contract said "a token with no `scope`
@@ -51,6 +60,7 @@ import {
   decodeJwtPayload,
   extractBearerToken,
   getUserFromBearerToken,
+  readClientIdClaim,
 } from "@/lib/api/bearer-token";
 
 /** The scope the custom_access_token_hook stamps unconditionally today. */
@@ -101,7 +111,14 @@ function unauthorized(instance?: string): AuthenticateResult {
   };
 }
 
-/** Read a non-empty string claim, treating everything else as absent. */
+/**
+ * Read a non-empty string claim, treating everything else as absent.
+ *
+ * Used for `scope` ONLY. `client_id` goes through `readClientIdClaim`, which
+ * distinguishes absent from present-but-unusable — a distinction `scope` does
+ * not need, because every non-string `scope` on a `client_id` token already
+ * lands in the same 401 branch.
+ */
 function stringClaim(
   claims: Record<string, unknown> | null,
   name: string
@@ -159,9 +176,46 @@ export async function authenticateV1Request(
     return unauthorized(instance);
   }
 
-  const clientId = stringClaim(claims, "client_id");
+  // Provenance is read through the SHARED predicate (`@/lib/api/bearer-token`)
+  // — the same call tRPC's `isExternalOAuthClientToken` makes. Reading the
+  // claim independently here is what let the two surfaces disagree about a
+  // type-confused `client_id`: tRPC's `!= null` rejected `0`/`false`/`""`/
+  // `[]`/`{}` as external while a local non-empty-string test read them as
+  // absent and handed them FULL first-party capability. Same class of
+  // fail-open as the unreadable-claims case above, in the exact mechanism
+  // extracted so the two could not drift.
+  const clientIdClaim = readClientIdClaim(claims);
 
-  if (clientId === null) {
+  if (clientIdClaim.kind === "malformed") {
+    // Present but not a usable string. §6 keys class on `client_id` PRESENCE
+    // and warns that "absence of a claim is not evidence of provenance" — a
+    // present-but-unusable claim is neither cleanly present nor cleanly
+    // absent, so the safe reading is NOT first-party. The token is anomalous
+    // (the hook stamping a non-string is the reachable cause), and an
+    // anomalous token gets rejection, never full capability. Alerted for the
+    // same reason the scope-less case is: it can only mean the token-minting
+    // path regressed. Network validation already ran, so a stranger cannot
+    // mint these alerts with a hand-crafted JWT.
+    captureSentryError(
+      new Error("Token carried an unusable client_id claim — rejected"),
+      {
+        level: "error",
+        eventType: "v1-auth-malformed-client-id",
+        userId: user.id,
+        tags: { surface: "api-v1" },
+        extra: {
+          reason:
+            "client_id was present but not a non-empty string; classification is undecidable, so the token is not granted first-party capability",
+          claimType: Array.isArray(claims.client_id)
+            ? "array"
+            : typeof claims.client_id,
+        },
+      }
+    );
+    return unauthorized(instance);
+  }
+
+  if (clientIdClaim.kind === "absent") {
     // No `client_id` ⇒ first-party. Full capability on its own user, exactly
     // as on tRPC. No scope check applies.
     return {
@@ -176,6 +230,7 @@ export async function authenticateV1Request(
     };
   }
 
+  const clientId = clientIdClaim.clientId;
   const scope = stringClaim(claims, "scope");
   if (scope === null) {
     // THE FAIL-OPEN FIX. A `client_id` token without `scope` is rejected —

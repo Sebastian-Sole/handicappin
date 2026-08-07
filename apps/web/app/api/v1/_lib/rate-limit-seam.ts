@@ -77,6 +77,16 @@ export interface V1RateLimitOutcome {
 export const SERVICE_UNAVAILABLE_RETRY_AFTER_SECONDS = 60;
 
 /**
+ * `Retry-After` when the outcome's `reset` is not a finite number. The seam
+ * is coupled STRUCTURALLY (see the header), so nothing statically stops
+ * T13.0a — or a future limiter — from handing over a `NaN`/`Infinity`
+ * `reset`; without a guard `String()` puts the literal text `NaN` on the
+ * wire, which is not a valid `Retry-After` and which a conforming client is
+ * free to interpret as "retry immediately".
+ */
+export const UNKNOWN_RESET_RETRY_AFTER_SECONDS = 60;
+
+/**
  * Seconds until the window resets, floored at 1 — a `Retry-After: 0` invites
  * an immediate retry into the same exhausted bucket.
  */
@@ -86,6 +96,9 @@ export function retryAfterSeconds(
 ): number {
   if (outcome.failedClosed) {
     return SERVICE_UNAVAILABLE_RETRY_AFTER_SECONDS;
+  }
+  if (!Number.isFinite(outcome.reset)) {
+    return UNKNOWN_RESET_RETRY_AFTER_SECONDS;
   }
   return Math.max(1, Math.ceil((outcome.reset - now) / 1000));
 }
@@ -98,6 +111,14 @@ export function retryAfterSeconds(
  * and publishing them would state a budget that does not exist. `Retry-After`
  * is emitted in both cases. (`X-RateLimit-Reset` is unix SECONDS — the
  * convention of the target fitness-API domain — while `reset` is millis.)
+ *
+ * The trio is ALSO omitted when any of the three numbers is not finite. Same
+ * principle, one step further: the seam is coupled structurally, so a
+ * malformed outcome is reachable without a type error, and `String(NaN)`
+ * would put the literal text `NaN` on the wire as a budget. Omitting is the
+ * only honest answer — we cannot state a budget we do not have — and
+ * `Retry-After` still goes out, falling back to
+ * `UNKNOWN_RESET_RETRY_AFTER_SECONDS`.
  */
 export function rateLimitHeaders(
   outcome: V1RateLimitOutcome,
@@ -106,7 +127,12 @@ export function rateLimitHeaders(
   const headers: Record<string, string> = {
     "Retry-After": String(retryAfterSeconds(outcome, now)),
   };
-  if (!outcome.failedClosed) {
+  const trioIsReportable =
+    !outcome.failedClosed &&
+    Number.isFinite(outcome.limit) &&
+    Number.isFinite(outcome.remaining) &&
+    Number.isFinite(outcome.reset);
+  if (trioIsReportable) {
     headers["X-RateLimit-Limit"] = String(outcome.limit);
     headers["X-RateLimit-Remaining"] = String(Math.max(0, outcome.remaining));
     headers["X-RateLimit-Reset"] = String(Math.ceil(outcome.reset / 1000));

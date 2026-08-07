@@ -69,13 +69,92 @@ export interface TestPrincipal {
   cleanup: () => Promise<void>;
 }
 
-/** Delete an auth user and its OAuth grants, if it exists. */
+/** Page size for the admin list scans below. */
+const ADMIN_PAGE_SIZE = 1000;
+
+/**
+ * Delete an auth user and its OAuth grants, if it exists.
+ *
+ * `listUsers()` is PAGINATED (50 per page by default) and `auth-js` exposes no
+ * email filter, so an unpaged single call silently misses its target the
+ * moment a local auth DB has accumulated more than a page of users from
+ * earlier crashed runs — cleanup then no-ops, `createUser` fails on the
+ * duplicate email, and the suite fails for a reason that has nothing to do
+ * with the code under test. Walk every page until `nextPage` runs out.
+ */
 export async function deleteAuthUserByEmail(email: string): Promise<void> {
   const admin = adminClient();
-  const { data } = await admin.auth.admin.listUsers();
-  const existing = data?.users.find((user) => user.email === email);
-  if (existing) {
-    await admin.auth.admin.deleteUser(existing.id);
+  const target = email.toLowerCase();
+
+  for (let page = 1; ; page += 1) {
+    const { data, error } = await admin.auth.admin.listUsers({
+      page,
+      perPage: ADMIN_PAGE_SIZE,
+    });
+    if (error) {
+      throw new Error(`listUsers(page ${page}) failed: ${error.message}`);
+    }
+
+    const existing = data.users.find(
+      (user) => user.email?.toLowerCase() === target
+    );
+    if (existing) {
+      await admin.auth.admin.deleteUser(existing.id);
+      return;
+    }
+
+    const nextPage = "nextPage" in data ? data.nextPage : null;
+    if (!nextPage) {
+      return;
+    }
+  }
+}
+
+/** Prefix every OAuth client these helpers mint carries, so it is sweepable. */
+export const OAUTH_TEST_CLIENT_PREFIX = "v1-test-client-";
+
+/**
+ * Delete every leftover OAuth test client whose name starts with `prefix`.
+ *
+ * `mintOAuthPrincipal` returns a `cleanup` closure, but a closure only runs if
+ * the process lives long enough to call it: a crash, a timeout kill, or a
+ * failing `beforeAll` leaks the client into the local GoTrue forever. Suites
+ * call this on setup so a previous run's wreckage cannot accumulate.
+ *
+ * Best-effort by design — a sweep failure must never fail the suite that was
+ * merely being tidy on the way in.
+ */
+export async function sweepStaleOAuthTestClients(
+  prefix: string = OAUTH_TEST_CLIENT_PREFIX
+): Promise<number> {
+  const admin = adminClient();
+  let deleted = 0;
+
+  try {
+    for (let page = 1; ; page += 1) {
+      const { data, error } = await admin.auth.admin.oauth.listClients({
+        page,
+        perPage: ADMIN_PAGE_SIZE,
+      });
+      if (error) {
+        return deleted;
+      }
+
+      for (const client of data.clients) {
+        if (client.client_name?.startsWith(prefix)) {
+          const { error: deleteError } =
+            await admin.auth.admin.oauth.deleteClient(client.client_id);
+          if (!deleteError) deleted += 1;
+        }
+      }
+
+      const nextPage = "nextPage" in data ? data.nextPage : null;
+      if (!nextPage) {
+        return deleted;
+      }
+    }
+  } catch {
+    return deleted;
   }
 }
 
@@ -123,6 +202,11 @@ export async function mintFirstPartyPrincipal(
  *
  * `userClient` must be the signed-in client returned by
  * `mintFirstPartyPrincipal` — consent is granted as that user.
+ *
+ * The default `clientName` carries `OAUTH_TEST_CLIENT_PREFIX` so
+ * `sweepStaleOAuthTestClients` can reclaim it after a crash. A caller passing
+ * its own name should keep that prefix, or accept that a leaked client is
+ * unsweepable.
  */
 export async function mintOAuthPrincipal(options: {
   userClient: SupabaseClient;
@@ -133,7 +217,7 @@ export async function mintOAuthPrincipal(options: {
   const {
     userClient,
     userId,
-    clientName = `v1-test-client-${randomUUID().slice(0, 8)}`,
+    clientName = `${OAUTH_TEST_CLIENT_PREFIX}${randomUUID().slice(0, 8)}`,
     redirectUri = "http://localhost:9999/v1-test-callback",
   } = options;
 

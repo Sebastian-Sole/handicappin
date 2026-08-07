@@ -37,11 +37,14 @@ import {
 import { v1RateLimitIdentifier } from "@/app/api/v1/_lib/rate-limit-seam";
 import { createBearerTokenSupabaseClient } from "@/lib/api/bearer-token";
 import {
+  OAUTH_TEST_CLIENT_PREFIX,
+  adminClient,
   decodeTokenClaims,
   deleteAuthUserByEmail,
   hasLocalStack,
   mintFirstPartyPrincipal,
   mintOAuthPrincipal,
+  sweepStaleOAuthTestClients,
   v1Request,
   type TestPrincipal,
 } from "./helpers/v1-principals";
@@ -76,6 +79,12 @@ function entitlementFor(principal: TestPrincipal) {
 
 describeIfLocal("/v1 scaffolding (real local Supabase)", () => {
   beforeAll(async () => {
+    // Reclaim anything a previous run leaked. `mintOAuthPrincipal`'s cleanup
+    // is an in-process closure, so a crash or a timeout kill strands its
+    // OAuth client in the local GoTrue; sweeping on the way IN is the only
+    // teardown that survives the process dying.
+    await sweepStaleOAuthTestClients();
+
     for (const email of Object.values(EMAILS)) {
       await deleteAuthUserByEmail(email);
     }
@@ -207,6 +216,18 @@ describeIfLocal("/v1 scaffolding (real local Supabase)", () => {
     // hasAccess:false is what the 002 service turns into
     // PlanNotSelectedError → 403 plan_required.
     expect(access.hasAccess).toBe(false);
+  }, 30_000);
+
+  test("every minted OAuth client is name-prefixed, so the sweep can reclaim it", async () => {
+    // `mintOAuthPrincipal`'s `cleanup` is an in-process closure and dies with
+    // the process. `sweepStaleOAuthTestClients` is the crash-proof teardown,
+    // and it matches on `client_name` — so this prefix is load-bearing, not
+    // cosmetic. Drop it and leaked clients accumulate invisibly forever.
+    const { data, error } = await adminClient().auth.admin.oauth.getClient(
+      oauth.clientId!
+    );
+    expect(error).toBeNull();
+    expect(data?.client_name.startsWith(OAUTH_TEST_CLIENT_PREFIX)).toBe(true);
   }, 30_000);
 
   test("the RPC exposes only the four derived facts — no billing identity", async () => {

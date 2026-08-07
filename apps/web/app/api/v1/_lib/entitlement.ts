@@ -167,10 +167,10 @@ export async function fetchV1Entitlement(
  * | currentPeriodEnd   | `null` (synthesized)                              |
  *
  * **`plan` is the load-bearing line.** The service's free-tier branch keys on
- * `access.plan === "free"` (`submit-scorecard.ts:305-307` and the profile
- * `FOR UPDATE` lock at `:325-327`), so a wrong value here silently skips or
+ * `access.plan === "free"` (`submit-scorecard.ts:306-312` and the profile
+ * `FOR UPDATE` lock at `:326-329`), so a wrong value here silently skips or
  * wrongly applies the round-limit branch. `"lifetime"` is the only acceptable
- * unlimited stand-in: `access-control.ts:71-73` treats BOTH `"premium"` and
+ * unlimited stand-in: `access-control.ts:74-77` treats BOTH `"premium"` and
  * `"unlimited"` as recurring subscriptions — requiring `subscription_status`
  * of active/trialing, returning a real `currentPeriodEnd`, and
  * `isLifetime: false` — i.e. exactly the period/renewal semantics the RPC
@@ -210,7 +210,7 @@ export function toV1FeatureAccess(row: V1EntitlementRow): FeatureAccess {
  * The record used when the RPC returns ZERO ROWS (no profile row at all).
  *
  * `hasAccess: false` is what carries the frozen mapping: the service reads it
- * at `submit-scorecard.ts:300-303` and throws `PlanNotSelectedError`, which
+ * at `submit-scorecard.ts:297-299` and throws `PlanNotSelectedError`, which
  * the central mapper turns into **403 `plan_required`** — the same response
  * as `is_provisioned = false`, exactly as §1 requires. From a client's
  * perspective both mean "this account cannot write rounds until it is set
