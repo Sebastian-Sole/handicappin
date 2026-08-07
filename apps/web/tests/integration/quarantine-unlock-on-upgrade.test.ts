@@ -40,7 +40,7 @@ import {
 import { randomUUID } from "crypto";
 import { NextRequest } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-import { eq, inArray } from "drizzle-orm";
+import { eq, inArray, sql } from "drizzle-orm";
 
 import { createCallerFactory } from "@/server/api/trpc";
 import { roundRouter } from "@/server/api/routers/round";
@@ -144,20 +144,35 @@ function adminClient() {
   });
 }
 
+/**
+ * Targeted lookup of a leftover auth user by email.
+ *
+ * Deliberately NOT `admin.auth.admin.listUsers()`: that is paginated and
+ * returns only the first page, so on a busy local stack a stale test user
+ * could sit beyond page 1, go unseen, and make the cleanup below silently
+ * no-op — leaving `createUser` to fail on the unique email. (@supabase/auth-js
+ * 2.95.3 exposes `getUserById` but no `getUserByEmail`, and `PageParams`
+ * carries no filter, so the direct `auth.users` read is the targeted lookup
+ * available here.) Returns null when no user matches.
+ */
+async function findAuthUserIdByEmail(email: string): Promise<string | null> {
+  const rows = await db.execute<{ id: string }>(
+    sql`select id from auth.users where email = ${email} limit 1`
+  );
+  return rows.length > 0 ? rows[0].id : null;
+}
+
 async function createTestUser(email: string) {
   const admin = adminClient();
-  const { data: usersPage } = await admin.auth.admin.listUsers();
-  const existing = usersPage?.users.find((u) => u.email === email);
-  if (existing) {
-    await db.delete(round).where(eq(round.userId, existing.id));
-    await db
-      .delete(webhookEvents)
-      .where(eq(webhookEvents.userId, existing.id));
+  const existingId = await findAuthUserIdByEmail(email);
+  if (existingId) {
+    await db.delete(round).where(eq(round.userId, existingId));
+    await db.delete(webhookEvents).where(eq(webhookEvents.userId, existingId));
     await db
       .delete(handicapCalculationQueue)
-      .where(eq(handicapCalculationQueue.userId, existing.id));
-    await db.delete(profile).where(eq(profile.id, existing.id));
-    await admin.auth.admin.deleteUser(existing.id);
+      .where(eq(handicapCalculationQueue.userId, existingId));
+    await db.delete(profile).where(eq(profile.id, existingId));
+    await admin.auth.admin.deleteUser(existingId);
   }
   const { data: created, error } = await admin.auth.admin.createUser({
     email,
@@ -875,5 +890,148 @@ describeIfLocal("quarantine unlock on upgrade (T15, real local Supabase)", () =>
     expect(counts.total).toBe(FREE_TIER_ROUND_LIMIT + QUARANTINED_COUNT);
     expect(counts.quarantined).toBe(0);
     expect((await getProfileRow(stripeUserId)).planSelected).toBe("lifetime");
+  });
+
+  // -------------------------------------------------------------------------
+  // MERGE-BLOCKING: the unlock must NOT swallow its own failure.
+  //
+  // Every convergence test above depends on ONE unstated property: when the
+  // unlock fails, the webhook must fail with it. `unlockQuarantinedRoundsOnUpgrade`
+  // deliberately lets the error escape, and the caller's catch turns it into a
+  // non-2xx so the provider redelivers — that redelivery IS the repair
+  // mechanism, and it only happens if the request failed AND no `success` row
+  // was recorded (a success row makes the idempotency check short-circuit the
+  // redelivery into a 200 no-op, stranding the rounds forever).
+  //
+  // Nothing above would notice a `try { ... } catch {}` around the unlock:
+  // every other test runs on a healthy database where the UPDATE succeeds.
+  // These two tests are the only thing standing between that one-line change
+  // and silently re-introducing the exact bug this feature fixes.
+  //
+  // FAILURE INJECTION: a real BEFORE UPDATE trigger on `public.round`, scoped
+  // by its WHEN clause to this user's quarantined rows, that RAISEs. The
+  // UPDATE genuinely fails in Postgres and the error propagates through
+  // drizzle exactly as a lock timeout, permission error or constraint
+  // violation would in production. No production code is touched, no module is
+  // mocked, and the helper gets no test-only branch — the test-only artifact
+  // lives entirely in the database and is dropped in a `finally`.
+  // -------------------------------------------------------------------------
+
+  const BLOCK_TRIGGER = "__test_block_quarantine_unlock";
+
+  async function withBlockedRoundUnlock<T>(
+    userId: string,
+    fn: () => Promise<T>
+  ): Promise<T> {
+    await db.execute(
+      sql.raw(`
+        create or replace function public.${BLOCK_TRIGGER}() returns trigger
+        language plpgsql as $trg$
+        begin
+          raise exception 'injected failure: quarantine unlock UPDATE blocked';
+        end;
+        $trg$
+      `)
+    );
+    // The WHEN clause keeps the injection surgical: only THIS user's
+    // still-quarantined rows fail, so the seeding and assertions around it
+    // (and the other test user) are untouched. `userId` is a uuid minted by
+    // `admin.auth.admin.createUser`, and the ::uuid cast rejects anything else.
+    await db.execute(
+      sql.raw(`
+        create trigger ${BLOCK_TRIGGER}
+          before update on public.round
+          for each row
+          when (old."userId" = '${userId}'::uuid and old.quarantined = true)
+          execute function public.${BLOCK_TRIGGER}()
+      `)
+    );
+    try {
+      return await fn();
+    } finally {
+      await db.execute(
+        sql.raw(`drop trigger if exists ${BLOCK_TRIGGER} on public.round`)
+      );
+      await db.execute(
+        sql.raw(`drop function if exists public.${BLOCK_TRIGGER}()`)
+      );
+    }
+  }
+
+  async function webhookEventRows(eventId: string) {
+    return db
+      .select({
+        eventId: webhookEvents.eventId,
+        status: webhookEvents.status,
+        eventTimeMs: webhookEvents.eventTimeMs,
+      })
+      .from(webhookEvents)
+      .where(eq(webhookEvents.eventId, eventId));
+  }
+
+  test("RevenueCat: a failing unlock returns 500 and records NO success event", async () => {
+    const payload = rcPayload("INITIAL_PURCHASE", {
+      product_id: APPLE_SKUS.premiumYearly,
+      expiration_at_ms: FUTURE_MS,
+    });
+    const eventId = (payload.event as { id: string }).id;
+
+    const res = await withBlockedRoundUnlock(rcUserId, () =>
+      POST(makeRequest(payload))
+    );
+
+    // 1. The failure is NOT swallowed: non-2xx is what makes RevenueCat
+    //    redeliver (5/10/20/40/80 min). A 200 here means the rounds are
+    //    stranded with nobody coming back for them.
+    expect(res.status).toBe(500);
+
+    // 2. No success row for this event id. The route's idempotency check
+    //    short-circuits any event already recorded `success` into a 200
+    //    no-op, so a success row would neutralize the redelivery even though
+    //    the rounds never unlocked. (A `failed` row is expected and fine —
+    //    the route only skips on `success`.)
+    const rows = await webhookEventRows(eventId);
+    expect(rows.filter((r) => r.status === "success")).toHaveLength(0);
+
+    // The split-transaction shape this whole design rests on: the profile
+    // write COMMITTED (it does not share a transaction with the unlock) while
+    // the rounds stayed quarantined. That divergence is exactly what the
+    // redelivery has to repair.
+    expect((await getProfileRow(rcUserId)).planSelected).toBe("premium");
+    expect((await quarantineCounts(rcUserId)).quarantined).toBe(
+      QUARANTINED_COUNT
+    );
+    expect(await queueRows(rcUserId)).toHaveLength(0);
+  });
+
+  test("RevenueCat: the redelivery after a failed unlock converges", async () => {
+    const payload = rcPayload("INITIAL_PURCHASE", {
+      product_id: APPLE_SKUS.premiumYearly,
+      expiration_at_ms: FUTURE_MS,
+    });
+
+    const failed = await withBlockedRoundUnlock(rcUserId, () =>
+      POST(makeRequest(payload))
+    );
+    expect(failed.status).toBe(500);
+    expect((await quarantineCounts(rcUserId)).quarantined).toBe(
+      QUARANTINED_COUNT
+    );
+
+    // RevenueCat redelivers the SAME event id. Because no `success` row was
+    // written, the idempotency check lets it through to the chokepoint, which
+    // re-decides against the now-committed premium profile and re-runs the
+    // unlock — this time against a healthy table.
+    const retry = await POST(makeRequest(payload));
+    expect(retry.status).toBe(200);
+    await expect(retry.json()).resolves.not.toMatchObject({ duplicate: true });
+
+    const counts = await quarantineCounts(rcUserId);
+    expect(counts.quarantined).toBe(0);
+    expect(counts.active).toBe(FREE_TIER_ROUND_LIMIT + QUARANTINED_COUNT);
+    expect(await countedRounds(rcUserId)).toBe(
+      FREE_TIER_ROUND_LIMIT + QUARANTINED_COUNT
+    );
+    expect(await queueRows(rcUserId)).toHaveLength(1);
   });
 });
