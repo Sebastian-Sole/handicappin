@@ -139,4 +139,26 @@ describe("transformRoundsToActivities", () => {
     assert.equal(activities.find((a) => a.id === 2)?.isMilestone, undefined);
     assert.equal(activities.find((a) => a.id === 3)?.isMilestone, undefined);
   });
+
+  it("passes through approved, pending, and rejected verbatim", () => {
+    for (const status of ["approved", "pending", "rejected"] as const) {
+      const activities = transformRoundsToActivities(
+        [baseRound({ approvalStatus: status })],
+        new Map(),
+        1,
+      );
+      assert.equal(activities[0].approvalStatus, status);
+    }
+  });
+
+  it("never badges an unknown approval value as approved (fails closed to pending)", () => {
+    for (const junk of ["APPROVED", "garbage", ""]) {
+      const activities = transformRoundsToActivities(
+        [baseRound({ approvalStatus: junk as RoundRow["approvalStatus"] })],
+        new Map(),
+        1,
+      );
+      assert.equal(activities[0].approvalStatus, "pending");
+    }
+  });
 });

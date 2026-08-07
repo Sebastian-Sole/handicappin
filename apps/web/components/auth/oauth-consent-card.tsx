@@ -12,7 +12,12 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Muted } from "@/components/ui/typography";
-import { deriveHost } from "@/lib/oauth/consent-flow";
+import {
+  CONNECT_ANALYTICS_DEADLINE_MS,
+  deriveHost,
+  settleWithin,
+} from "@/lib/oauth/consent-flow";
+import { api } from "@/trpc/react";
 import { createClientComponentClient } from "@/utils/supabase/client";
 
 /**
@@ -24,6 +29,8 @@ import { createClientComponentClient } from "@/utils/supabase/client";
 
 interface OAuthConsentCardProps {
   authorizationId: string;
+  /** GoTrue OAuth client id (UUID) — analytics attribution only. */
+  clientId: string;
   clientName: string;
   clientUri?: string;
   redirectUri: string;
@@ -51,6 +58,7 @@ const GRANTED_CAPABILITIES = [
 
 export function OAuthConsentCard({
   authorizationId,
+  clientId,
   clientName,
   clientUri,
   redirectUri,
@@ -58,6 +66,7 @@ export function OAuthConsentCard({
 }: OAuthConsentCardProps) {
   const [pending, setPending] = useState<"approve" | "deny" | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const connectCompleted = api.oauth.connectCompleted.useMutation();
 
   const redirectHost = deriveHost(redirectUri) ?? redirectUri;
   // The parenthetical next to the client name shows the CLIENT's own site
@@ -84,6 +93,20 @@ export function OAuthConsentCard({
         );
         setPending(null);
         return;
+      }
+      if (decision === "approve") {
+        // Server-side `api_connect_completed` capture (T12/D9): the approval
+        // hop is browser -> GoTrue, so the server learns about the completed
+        // Connect here. Bounded wait, not fire-and-forget: the redirect on
+        // the next line aborts in-flight fetches (so a `void`-ed mutation
+        // would drop the event), while an unbounded `await` could hold the
+        // user here — nothing in the tRPC link chain sets a timeout.
+        // `settleWithin` swallows failures, so analytics can never delay the
+        // redirect past the deadline or break the Connect flow.
+        await settleWithin(
+          connectCompleted.mutateAsync({ clientId }),
+          CONNECT_ANALYTICS_DEADLINE_MS,
+        );
       }
       window.location.assign(data.redirect_url);
     } catch {

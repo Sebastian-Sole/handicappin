@@ -30,6 +30,7 @@ import {
 } from "@/lib/api/procedures/round";
 import { useUserId } from "@/lib/auth/session-provider";
 import { transformRoundsToActivities } from "@/lib/activity-transform";
+import { parseDbTimestamp } from "@/lib/parse-db-timestamp";
 import { HOMEPAGE_ROUNDS_LIMIT } from "@/lib/golf-stats";
 import { useDataSettled } from "@/lib/query/settle";
 import { isAutoResumable } from "@/lib/round-session/selectors";
@@ -119,7 +120,8 @@ export default function HomeScreen() {
 
   const sortedRounds = [...rounds].sort((a, b) => {
     const timeComparison =
-      new Date(a.teeTime).getTime() - new Date(b.teeTime).getTime();
+      parseDbTimestamp(a.teeTime).getTime() -
+      parseDbTimestamp(b.teeTime).getTime();
     if (timeComparison !== 0) return timeComparison;
     return a.id - b.id;
   });
@@ -208,7 +210,9 @@ export default function HomeScreen() {
           <QuickStats
             activities={activities}
             lowestDifferential={lowestDifferential}
-            bestRoundDate={bestRound ? new Date(bestRound.teeTime) : null}
+            bestRoundDate={
+              bestRound ? parseDbTimestamp(bestRound.teeTime) : null
+            }
           />
         </View>
       </View>

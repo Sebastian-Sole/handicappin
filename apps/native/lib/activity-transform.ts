@@ -5,6 +5,7 @@
  */
 import type { RoundRow } from "@/lib/api/schemas/round";
 import { HOMEPAGE_ROUNDS_LIMIT } from "./golf-stats";
+import { parseDbTimestamp } from "@/lib/parse-db-timestamp";
 
 export interface ActivityItem {
   id: number;
@@ -29,7 +30,9 @@ export function transformRoundsToActivities(
   if (rounds.length === 0) return [];
 
   const sortedRounds = [...rounds].sort(
-    (a, b) => new Date(b.teeTime).getTime() - new Date(a.teeTime).getTime(),
+    (a, b) =>
+      parseDbTimestamp(b.teeTime).getTime() -
+      parseDbTimestamp(a.teeTime).getTime(),
   );
 
   // Quarantined rounds (decision D4) are excluded from the personal-best
@@ -74,18 +77,21 @@ export function transformRoundsToActivities(
 
     return {
       id: round.id,
-      date: new Date(round.teeTime),
+      date: parseDbTimestamp(round.teeTime),
       courseName: courses.get(round.courseId) || "Unknown Course",
       score: round.adjustedGrossScore,
       scoreDifferential: round.scoreDifferential,
       handicapAfter: round.updatedHandicapIndex,
       handicapChange,
       isPersonalBest: personalBestIds.has(round.id),
+      // Fail CLOSED on unknown values (mirror of the web transform): only an
+      // exact "approved" or "rejected" passes through; anything else is
+      // treated as "pending" so it is never badged as approved.
       approvalStatus:
-        round.approvalStatus === "pending" ||
+        round.approvalStatus === "approved" ||
         round.approvalStatus === "rejected"
           ? round.approvalStatus
-          : "approved",
+          : "pending",
       isMilestone: milestone,
       quarantined: round.quarantined,
     };

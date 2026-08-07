@@ -47,6 +47,71 @@ export function loginPathForConsent(authorizationId: string): string {
 }
 
 /**
+ * How long the consent card is willing to wait for the server-side
+ * `api_connect_completed` capture (T12/D9) before redirecting anyway.
+ */
+export const CONNECT_ANALYTICS_DEADLINE_MS = 2_000;
+
+/**
+ * Wait for `work`, but never longer than `deadlineMs`; resolves either way and
+ * never rejects.
+ *
+ * This exists for the one spot where the consent card fires the server-side
+ * `api_connect_completed` capture and then hands control back to the
+ * connecting app via `window.location.assign`:
+ *
+ * - Fire-and-forget is wrong here — the navigation on the very next line
+ *   aborts in-flight fetches, so the capture would be dropped most of the
+ *   time, and this is the event's only call site.
+ * - An unbounded `await` is also wrong — nothing in the tRPC link chain
+ *   (`@/trpc/react`, `@/trpc/query-client`) sets a timeout or AbortSignal, so
+ *   a stalled analytics call would hold the user on the consent page instead
+ *   of returning them to the app.
+ *
+ * Bounding the wait keeps the capture in the normal case and caps the
+ * pathological one.
+ */
+export function settleWithin(
+  work: Promise<unknown>,
+  deadlineMs: number,
+): Promise<void> {
+  return new Promise<void>((resolve) => {
+    const timer = setTimeout(resolve, deadlineMs);
+    void work
+      .catch(() => undefined)
+      .then(() => {
+        clearTimeout(timer);
+        resolve();
+      });
+  });
+}
+
+/**
+ * Onboarding URL that resumes the pending consent request after plan
+ * selection (decision D3): a signed-in but plan-less account must pick a plan
+ * before it can approve an authorization — any token minted for it could only
+ * ever `403 plan_required`. Mirrors `loginPathForConsent`: the pending
+ * authorization survives server-side and the consent path rides the same
+ * `?redirect=` param the login surfaces honor (guarded by `safeInternalPath`).
+ */
+export function onboardingPathForConsent(authorizationId: string): string {
+  return `/onboarding?${LOGIN_REDIRECT_PARAM}=${encodeURIComponent(
+    consentPath(authorizationId),
+  )}`;
+}
+
+/**
+ * D3 gate predicate: has this account completed plan selection? A missing
+ * profile row or a NULL `plan_selected` both mean "not provisioned" — the
+ * consent page must send the user to onboarding, not mint a dead-end grant.
+ */
+export function hasSelectedPlan(
+  planSelected: string | null | undefined,
+): boolean {
+  return typeof planSelected === "string" && planSelected.length > 0;
+}
+
+/**
  * Best-effort host extraction for display ("You will be sent back to X").
  * Returns null when the value isn't an absolute URL with a host.
  */

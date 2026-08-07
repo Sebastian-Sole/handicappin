@@ -190,7 +190,8 @@ export interface WatchLastRound {
   /** totalStrokes - parPlayed (signed; 0 = level). */
   toPar: number;
   differential: number;
-  /** Round teeTime, ISO. */
+  /** Round teeTime as the canonical UTC instant (Z-suffixed ISO — the
+      phone normalizes the zone-less PostgREST value before sending). */
   playedAt: string;
   holesPlayed: number;
   nineHoleSection?: "front" | "back";

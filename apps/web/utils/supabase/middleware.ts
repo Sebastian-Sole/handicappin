@@ -179,8 +179,23 @@ export async function updateSession(request: NextRequest) {
       }
 
       // Check if user needs onboarding (no plan selected)
-      // Only redirect if not already on onboarding to prevent loops
-      if (!plan && !pathname.startsWith("/onboarding")) {
+      // Only redirect if not already on onboarding to prevent loops.
+      //
+      // /oauth/consent is exempt: this redirect only rewrites `.pathname`, so
+      // a pending authorization arriving as `?authorization_id=…` would ride
+      // along untouched and `/onboarding` would never receive the `?redirect=`
+      // resume param — abandoning the authorization after plan selection. The
+      // page-level D3 gate (app/oauth/consent/page.tsx) runs the same no-plan
+      // check against the `profile` table (source of truth, not a possibly
+      // stale JWT claim) and builds that resume URL via
+      // onboardingPathForConsent(). Letting the request through costs nothing:
+      // /oauth/consent is neither a premium nor an unlimited path, and no
+      // token can be minted for a plan-less account either way.
+      if (
+        !plan &&
+        !pathname.startsWith("/onboarding") &&
+        !normalizedPathname.startsWith("/oauth/consent")
+      ) {
         const url = request.nextUrl.clone();
         url.pathname = "/onboarding";
         return NextResponse.redirect(url);

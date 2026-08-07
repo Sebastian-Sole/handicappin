@@ -39,7 +39,7 @@ prod dup scan ──► 003 ─────────────────�
 
 ## Current status
 
-**Updated 2026-08-05.** Nine owner decisions (D1–D9) are locked in `DECISIONS.md`; the implementation sequence now lives in **`010-v1-implementation.md`** — read that for what happens next, not the dispatch order below (which is retained as the historical plan).
+**Updated 2026-08-05.** Nine owner decisions (D1–D9) are locked in `DECISIONS.md`; the implementation sequence now lives in **`010-v1-implementation.md`** — read that for what happens next, not the dispatch order below (which is retained as the historical plan). 010's wave-1 work is **in flight** as PRs #180–#188 (all open at the time of this update — none merged; do not treat the tasks they carry as landed).
 
 | Workstream | Status |
 |---|---|
@@ -51,19 +51,21 @@ prod dup scan ──► 003 ─────────────────�
 | W5 (006) | **OFF THE CRITICAL PATH** (D9) — fitbull does not display the index, so there is no staleness problem to solve at launch. The contract still reserves the `handicapRevision` enum; 006 wires it if something ever displays an index. |
 | W6 (007) | PENDING — task T14 in 010; must carry the LB-1/LB-2 obligations and the polling-cadence ceiling. |
 | W7 (008) | **MERGED** (PR #175). G1 substantially closed by D7/D8; **G2 descoped to server events only** (D9 — no interest form); G3 and G4 still open. |
-| W2 fast-follow (009) | PENDING — dispatchable now; task T9 in 010. Blocks nothing. |
+| W2 fast-follow (009) | **BUILT — PR open** (task T9 in 010). Migration `20260807100000_detect_and_revoke_oauth_grants.sql` (every-minute pg_cron detective control: `user_updated_password` audit scan + `auth.users` email snapshot-compare → SQL replica of `revokeGrant` + Slack alert) and `.github/workflows/auth-toggle-watchdog.yml` (daily Management-API read of the two secure-change toggles, false-vs-null branched). Integration test incl. revert-the-fix + both no-self-trigger criteria green (9/9). Blocks nothing. OWNER: `alerting_slack_webhook` Vault secret, `SUPABASE_MGMT_PAT` repo secret, prod migration apply, cron/watchdog verify. |
 
-## Dispatch order
+## Dispatch order (historical — superseded by 010)
 
-1. **M0 — Incident (now):** finish **001**. Independent of everything. OWNER dashboard items in parallel.
+**Superseded 2026-08-05.** M0–M2 below are complete except the noted owner items and 002 Part B (see the status table); the remaining sequence — wave-1 tasks, then the five `/v1` routes, then the trailing docs — lives in **`010-v1-implementation.md`**. Retained for the record:
+
+1. **M0 — Incident:** finish **001**. — DONE: code items merged (PRs #162, #164, #170); OWNER dashboard items remain.
 2. **M1 — Foundations (parallel, after 001's canary):**
-   - **004** — the OAuth spike (hard 2-day gate; record pass/fail).
-   - **003** — the prod duplicate scan (OWNER), then the bundled migration.
-   - **002** — characterization tests + behavior-preserving extraction (**Part A**, no schema dep, merges immediately); **Part B** (accept-and-quarantine) lands behind 003's `quarantined` column.
-3. **M2 — Contract-design gate:** **005 Phase 0** (one session; freezes error envelope, idempotency, rate-limit principal, versioning, eventual-consistency + quarantine-status statements).
-4. **M3 — /v1 build:** **005** route-by-route, each with rate limit + error mapping + spec parity + canary.
-5. **M4 — Sync + integration:** **006** (polling contract, queue-kick decision), then **007** (fitbull notes).
-6. **M5 — Launch gates:** **008** (governance documented — pre-launch blocker; demand instrumentation live; contract doc + dated ADR). Then prod launch.
+   - **004** — the OAuth spike (hard 2-day gate; record pass/fail). — DONE: merged (PR #167).
+   - **003** — the prod duplicate scan (OWNER), then the bundled migration. — DONE: merged + applied to prod (PR #173).
+   - **002** — characterization tests + behavior-preserving extraction (**Part A**, no schema dep, merges immediately); **Part B** (accept-and-quarantine) lands behind 003's `quarantined` column. — Part A MERGED (PR #165); Part B is 010's T1, in flight.
+3. **M2 — Contract-design gate:** **005 Phase 0** (one session; freezes error envelope, idempotency, rate-limit principal, versioning, eventual-consistency + quarantine-status statements). — DONE: merged (PR #174), sign-offs closed 2026-08-05.
+4. **M3 — /v1 build:** **005** route-by-route, each with rate limit + error mapping + spec parity + canary. → now 010's T13 (five endpoints per D9).
+5. **M4 — Sync + integration:** **006** (polling contract, queue-kick decision), then **007** (fitbull notes). → 006 is off the critical path (D9); 007 is 010's T14.
+6. **M5 — Launch gates:** **008** (governance documented — pre-launch blocker; demand instrumentation live; contract doc + dated ADR). Then prod launch. — doc MERGED (PR #175); open gates G2–G4 are 010's T12/T6 and owner items.
 
 ## Conflicts found between the master plan and the closed billing gate (and how resolved)
 

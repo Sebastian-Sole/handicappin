@@ -227,6 +227,75 @@ export type Database = {
           },
         ]
       }
+      oauth_auto_revocations: {
+        Row: {
+          audit_entry_id: string | null
+          detected_at: string
+          id: number
+          oauth_client_id: string
+          sessions_deleted: number
+          signal: string
+          user_id: string
+        }
+        Insert: {
+          audit_entry_id?: string | null
+          detected_at?: string
+          id?: never
+          oauth_client_id: string
+          sessions_deleted?: number
+          signal: string
+          user_id: string
+        }
+        Update: {
+          audit_entry_id?: string | null
+          detected_at?: string
+          id?: never
+          oauth_client_id?: string
+          sessions_deleted?: number
+          signal?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      oauth_watch_email_state: {
+        Row: {
+          captured_at: string
+          email: string | null
+          email_change: string | null
+          email_change_sent_at: string | null
+          user_id: string
+        }
+        Insert: {
+          captured_at?: string
+          email?: string | null
+          email_change?: string | null
+          email_change_sent_at?: string | null
+          user_id: string
+        }
+        Update: {
+          captured_at?: string
+          email?: string | null
+          email_change?: string | null
+          email_change_sent_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      oauth_watch_state: {
+        Row: {
+          k: string
+          last_processed_at: string
+        }
+        Insert: {
+          k: string
+          last_processed_at?: string
+        }
+        Update: {
+          k?: string
+          last_processed_at?: string
+        }
+        Relationships: []
+      }
       otp_verifications: {
         Row: {
           created_at: string
@@ -830,6 +899,7 @@ export type Database = {
       }
       custom_access_token_hook: { Args: { event: Json }; Returns: Json }
       delete_empty_course: { Args: { p_course_id: number }; Returns: undefined }
+      detect_and_revoke_oauth_grants: { Args: never; Returns: undefined }
       get_connected_profile: {
         Args: never
         Returns: {
@@ -877,6 +947,7 @@ export type Database = {
         }
         Returns: undefined
       }
+      setup_detect_and_revoke_oauth_cron: { Args: never; Returns: undefined }
       setup_handicap_queue_cron: { Args: never; Returns: undefined }
     }
     Enums: {

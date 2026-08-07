@@ -1,5 +1,6 @@
 import { Tables } from "@/types/supabase";
 import { HOMEPAGE_ROUNDS_LIMIT } from "@/utils/golf-stats";
+import { parseDbTimestamp } from "@/lib/parse-db-timestamp";
 
 export interface ActivityItem {
   id: number;
@@ -27,7 +28,9 @@ export function transformRoundsToActivities(
 
   // Sort by date descending (most recent first)
   const sortedRounds = [...rounds].sort(
-    (a, b) => new Date(b.teeTime).getTime() - new Date(a.teeTime).getTime()
+    (a, b) =>
+      parseDbTimestamp(b.teeTime).getTime() -
+      parseDbTimestamp(a.teeTime).getTime()
   );
 
   // Track personal best differential. Quarantined rounds (decision D4) are
@@ -86,17 +89,22 @@ export function transformRoundsToActivities(
 
     return {
       id: round.id,
-      date: new Date(round.teeTime),
+      date: parseDbTimestamp(round.teeTime),
       courseName: courses.get(round.courseId) || "Unknown Course",
       score: round.adjustedGrossScore,
       scoreDifferential: round.scoreDifferential,
       handicapAfter: round.updatedHandicapIndex,
       handicapChange,
       isPersonalBest: personalBestIds.has(round.id),
+      // Fail CLOSED on unknown values: only an exact "approved" or "rejected"
+      // passes through; anything else (including junk that predates the
+      // round_approvalStatus_check DB constraint) is treated as "pending" so
+      // it is never badged as approved.
       approvalStatus:
-        round.approvalStatus === "pending" || round.approvalStatus === "rejected"
+        round.approvalStatus === "approved" ||
+        round.approvalStatus === "rejected"
           ? round.approvalStatus
-          : "approved",
+          : "pending",
       isMilestone: milestone,
       quarantined: round.quarantined,
     };

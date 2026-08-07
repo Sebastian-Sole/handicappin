@@ -11,7 +11,11 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { OAuthConsentCard } from "@/components/auth/oauth-consent-card";
-import { loginPathForConsent } from "@/lib/oauth/consent-flow";
+import {
+  hasSelectedPlan,
+  loginPathForConsent,
+  onboardingPathForConsent,
+} from "@/lib/oauth/consent-flow";
 import { createServerComponentClient } from "@/utils/supabase/server";
 
 /**
@@ -103,6 +107,31 @@ const OAuthConsentPage = async ({
     );
   }
 
+  // D3 gate: a signed-in but plan-less account must not approve an
+  // authorization — any token minted for it could only ever `403
+  // plan_required`. Same profile-driven check and onboarding target as the
+  // sign-in path (app/auth/callback/route.ts), with this consent URL threaded
+  // through the `?redirect=` resume param (guarded by safeInternalPath on the
+  // onboarding page).
+  const { data: profileRow, error: profileError } = await supabase
+    .from("profile")
+    .select("planSelected: plan_selected")
+    .eq("id", user.id)
+    .maybeSingle();
+
+  if (profileError) {
+    // A failed read is NOT "no plan": bouncing to onboarding here could
+    // ping-pong against its JWT shortcut while the DB is unhealthy. Throw to
+    // the Next error boundary instead — still fail-closed (no token minted).
+    throw new Error(
+      `Consent plan gate could not read the profile: ${profileError.message}`,
+    );
+  }
+
+  if (!hasSelectedPlan(profileRow?.planSelected)) {
+    redirect(onboardingPathForConsent(authorizationId));
+  }
+
   const { data, error } =
     await supabase.auth.oauth.getAuthorizationDetails(authorizationId);
 
@@ -125,6 +154,7 @@ const OAuthConsentPage = async ({
     <main className="flex min-h-screen items-center justify-center p-md">
       <OAuthConsentCard
         authorizationId={data.authorization_id}
+        clientId={data.client.id}
         clientName={data.client.name}
         clientUri={data.client.uri}
         redirectUri={data.redirect_uri}

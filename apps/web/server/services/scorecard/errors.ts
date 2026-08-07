@@ -38,21 +38,6 @@ export class RoundLimitReachedError extends Error {
 }
 
 /**
- * Free-tier limit exceeded by a concurrent submission, detected by the
- * post-commit re-check; the just-committed round was compensated away.
- * Part B (behind subplan 003's `quarantined` column) replaces this whole
- * path with an in-transaction active-vs-quarantined decision.
- */
-export class RoundLimitRaceError extends Error {
-  constructor() {
-    super(
-      "Round limit exceeded due to concurrent submissions. Your submission was not saved. Please try again."
-    );
-    this.name = "RoundLimitRaceError";
-  }
-}
-
-/**
  * Course/tee resolution failed (e.g. a referenced tee id does not exist as
  * an approved, non-archived row). Maps to INTERNAL_SERVER_ERROR in the tRPC
  * adapter exactly like the plain `Error` it replaces.
@@ -79,6 +64,26 @@ export class DuplicateRoundError extends Error {
         : "This round has already been submitted. A round with the same course, tee, and tee time already exists."
     );
     this.name = "DuplicateRoundError";
+  }
+}
+
+/**
+ * A submitted score carries a `holeId` that does not belong to the resolved
+ * tee's holes for the played section. Web/native submit scores with
+ * `holeId: undefined` (the service assigns holes positionally), so this only
+ * fires for clients that claim an explicit hole — a cross-tee or
+ * cross-section reference the positional insert would otherwise silently
+ * mask. Maps to BAD_REQUEST in the tRPC adapter.
+ */
+export class ScoreHoleMismatchError extends Error {
+  constructor(
+    readonly holeId: number,
+    readonly teeId: number
+  ) {
+    super(
+      `Score references hole ${holeId}, which does not belong to the played section of tee ${teeId}`
+    );
+    this.name = "ScoreHoleMismatchError";
   }
 }
 

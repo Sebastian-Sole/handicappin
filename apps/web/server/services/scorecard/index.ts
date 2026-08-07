@@ -19,8 +19,8 @@ export {
   CourseResolutionError,
   DuplicateRoundError,
   PlanNotSelectedError,
-  RoundLimitRaceError,
   RoundLimitReachedError,
+  ScoreHoleMismatchError,
   SelfSubmissionError,
   mapRoundInsertError,
 } from "./errors";
