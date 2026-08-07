@@ -45,6 +45,14 @@ interface PlanSelectorProps {
   currentPlan?: "free" | "premium" | "unlimited" | "lifetime" | null;
   mode?: "onboarding" | "upgrade";
   onPlanChange?: (plan: string) => void;
+  /**
+   * Internal path to resume after plan selection (e.g. a pending
+   * /oauth/consent request gated on plan selection — decision D3). Must
+   * already be validated server-side with `safeInternalPath` by the page that
+   * renders this selector; only the free-plan path navigates in-app (paid
+   * plans hand off to Stripe checkout, which returns to its own success URL).
+   */
+  resumePath?: string | null;
 }
 
 // Helper function to filter available plans based on current plan and mode
@@ -64,6 +72,7 @@ export function PlanSelector({
   userId,
   currentPlan = null,
   mode = "onboarding",
+  resumePath = null,
 }: PlanSelectorProps) {
   const router = useRouter();
   const [loading, setLoading] = useState<string | null>(null);
@@ -162,7 +171,7 @@ export function PlanSelector({
         clientLogger.warn("JWT claims not updated after polling, BillingSync will catch up");
       }
 
-      router.push("/");
+      router.push(resumePath ?? "/");
       router.refresh();
     } catch (error: unknown) {
       clientLogger.error("Error selecting free plan", error);

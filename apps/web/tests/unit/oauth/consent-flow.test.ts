@@ -13,7 +13,9 @@ import {
   LOGIN_REDIRECT_PARAM,
   consentPath,
   deriveHost,
+  hasSelectedPlan,
   loginPathForConsent,
+  onboardingPathForConsent,
   safeInternalPath,
 } from "@/lib/oauth/consent-flow";
 
@@ -70,6 +72,61 @@ describe("consent resume paths", () => {
     expect(safeInternalPath(redirect)).toBe(
       "/oauth/consent?authorization_id=xyz789",
     );
+  });
+});
+
+describe("plan-selection gate (decision D3)", () => {
+  test("onboardingPathForConsent nests the consent path in the redirect param", () => {
+    const path = onboardingPathForConsent("xyz789");
+    expect(path).toBe(
+      `/onboarding?${LOGIN_REDIRECT_PARAM}=%2Foauth%2Fconsent%3Fauthorization_id%3Dxyz789`,
+    );
+    // Round-trip: the decoded redirect param must survive the guard, exactly
+    // like the login resume path does.
+    const url = new URL(`http://localhost${path}`);
+    const redirect = url.searchParams.get(LOGIN_REDIRECT_PARAM);
+    expect(safeInternalPath(redirect)).toBe(
+      "/oauth/consent?authorization_id=xyz789",
+    );
+  });
+
+  test("onboardingPathForConsent URL-encodes hostile authorization ids", () => {
+    // An id crafted to smuggle its own redirect param must stay one value.
+    const path = onboardingPathForConsent("a&redirect=https://evil.example");
+    const url = new URL(`http://localhost${path}`);
+    expect(url.searchParams.getAll(LOGIN_REDIRECT_PARAM)).toHaveLength(1);
+    expect(safeInternalPath(url.searchParams.get(LOGIN_REDIRECT_PARAM))).toBe(
+      "/oauth/consent?authorization_id=a%26redirect%3Dhttps%3A%2F%2Fevil.example",
+    );
+  });
+
+  test("a malicious ?redirect= on /onboarding does not survive the guard", () => {
+    // What the onboarding page does with an attacker-supplied param.
+    for (const evil of [
+      "https://evil.example/phish",
+      "//evil.example",
+      "/\\evil.example",
+      "javascript:alert(1)",
+    ]) {
+      const url = new URL(
+        `http://localhost/onboarding?${LOGIN_REDIRECT_PARAM}=${encodeURIComponent(evil)}`,
+      );
+      expect(
+        safeInternalPath(url.searchParams.get(LOGIN_REDIRECT_PARAM)),
+      ).toBeNull();
+    }
+  });
+
+  test("hasSelectedPlan treats NULL and missing profile rows as plan-less", () => {
+    expect(hasSelectedPlan(null)).toBe(false);
+    expect(hasSelectedPlan(undefined)).toBe(false);
+    expect(hasSelectedPlan("")).toBe(false);
+  });
+
+  test("hasSelectedPlan accepts any selected plan", () => {
+    for (const plan of ["free", "premium", "unlimited", "lifetime"]) {
+      expect(hasSelectedPlan(plan)).toBe(true);
+    }
   });
 });
 
