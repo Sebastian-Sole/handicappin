@@ -20,9 +20,8 @@
  */
 
 import { z } from "zod";
-import type { SupabaseClient } from "@supabase/supabase-js";
 
-import type { Database } from "@/types/supabase";
+import type { RlsScopedClient } from "@/app/api/v1/_lib/rls-client";
 import {
   serializeV1Round,
   v1RoundSourceFromTableRow,
@@ -207,11 +206,18 @@ export class V1RoundsReadError extends Error {
 /**
  * Read one page of the principal's rounds.
  *
- * `client` MUST be an RLS-scoped, bearer-token client
- * (`createBearerTokenSupabaseClient`), never the service-role client and
- * never the Drizzle connection: RLS's `auth.uid() = "userId"` policy is the
- * control that actually holds cross-user isolation, and it only holds when
- * the request carries the principal's own token.
+ * `client` MUST be an RLS-scoped, bearer-token client, never the service-role
+ * client and never the Drizzle connection: RLS's `auth.uid() = "userId"`
+ * policy is the control that actually holds cross-user isolation, and it only
+ * holds when the request carries the principal's own token.
+ *
+ * That requirement is TYPED, not just documented. `RlsScopedClient`
+ * (`../_lib/rls-client`) is a branded `SupabaseClient<Database>` whose only
+ * constructor takes an access token, so `createAdminClient()` — which is the
+ * same nominal type and bypasses RLS completely — does not compile here. A
+ * paragraph asking the caller to pass the right client is exactly the kind of
+ * constraint a one-line edit erases silently; this one cannot be erased
+ * without writing a visible cast.
  *
  * **`userId` is a second, independent scoping predicate.** It is redundant
  * while the RLS policy stands, and that is the point — it is the layer that
@@ -236,7 +242,7 @@ export class V1RoundsReadError extends Error {
  * pagination silently drop and duplicate rows.
  */
 export async function listV1Rounds(
-  client: SupabaseClient<Database>,
+  client: RlsScopedClient,
   userId: string,
   query: V1RoundsQuery
 ): Promise<V1RoundsPage> {

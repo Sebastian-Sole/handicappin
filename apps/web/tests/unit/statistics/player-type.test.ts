@@ -7,6 +7,26 @@ import {
 import type { ScorecardWithRound } from "@/types/scorecard-input";
 import { createMockScorecard } from "./test-fixtures";
 
+/**
+ * A tee time expressed in the runner's LOCAL wall clock — deliberately with
+ * no `Z` and no offset.
+ *
+ * `calculatePlayerType` classifies time of day with
+ * `new Date(scorecard.teeTime).getHours()` (`lib/statistics/player-type.ts`),
+ * which is LOCAL hours by design: a golfer's "morning round" means morning
+ * where the golfer is, not 07:00 UTC. These fixtures previously wrote
+ * `…T07:00:00Z` and asserted `EARLY_BIRD`, which only holds while the runner's
+ * offset is zero — the assertion silently encoded "CI is UTC" rather than the
+ * property it meant to test. An offset-less ISO date-time is defined to parse
+ * as local time, so this states the intended input directly and the tests hold
+ * in every zone. (The suite now runs pinned to `Asia/Tokyo` — see
+ * `vitest.config.ts`.)
+ */
+function localTeeTime(dayOfMonth: number, hour: number): string {
+  const day = String(dayOfMonth).padStart(2, "0");
+  return `2024-01-${day}T${String(hour).padStart(2, "0")}:00:00`;
+}
+
 describe("Player Type Classification", () => {
   describe("PLAYER_TYPE_THRESHOLDS", () => {
     test("should have correct minimum rounds threshold", () => {
@@ -165,7 +185,8 @@ describe("Player Type Classification", () => {
       // 10 rounds, all before noon with varied differentials
       const scorecards = Array.from({ length: 10 }, (_, index) =>
         createMockScorecard({
-          teeTime: `2024-01-${String(index + 1).padStart(2, "0")}T07:00:00Z`, // 7 AM
+          // LOCAL wall clock, no `Z` — see `localTeeTime`.
+          teeTime: localTeeTime(index + 1, 7), // 7 AM
           scoreDifferential: 8 + index, // Varied: 8-17
           courseId: index + 1, // Different courses
         })
@@ -179,7 +200,7 @@ describe("Player Type Classification", () => {
       // 10 rounds, all in evening (very few morning) with varied differentials
       const scorecards = Array.from({ length: 10 }, (_, index) =>
         createMockScorecard({
-          teeTime: `2024-01-${String(index + 1).padStart(2, "0")}T17:00:00Z`, // 5 PM
+          teeTime: localTeeTime(index + 1, 17), // 5 PM local
           scoreDifferential: 8 + index, // Varied: 8-17
           courseId: index + 1,
         })
@@ -197,7 +218,7 @@ describe("Player Type Classification", () => {
       const hours = [7, 14, 8, 15, 9, 16, 10, 14, 11, 13]; // 5 morning (<12), 5 afternoon
       const scorecards = Array.from({ length: 10 }, (_, index) =>
         createMockScorecard({
-          teeTime: `2024-01-${String(index + 1).padStart(2, "0")}T${String(hours[index]).padStart(2, "0")}:00:00Z`,
+          teeTime: localTeeTime(index + 1, hours[index]!),
           scoreDifferential: 8 + index, // Varied: 8-17
           courseId: index + 1, // Each round at different course
         })
@@ -213,7 +234,7 @@ describe("Player Type Classification", () => {
       const hours = [9, 14, 10, 15, 8, 13, 11, 16, 7, 12];
       const scorecards = Array.from({ length: 10 }, (_, index) =>
         createMockScorecard({
-          teeTime: `2024-01-${String(index + 1).padStart(2, "0")}T${String(hours[index]).padStart(2, "0")}:00:00Z`,
+          teeTime: localTeeTime(index + 1, hours[index]!),
           scoreDifferential: 8 + index, // Varied: 8-17
           courseId: 1, // Same course every time
         })
