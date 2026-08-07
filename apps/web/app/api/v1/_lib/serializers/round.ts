@@ -15,16 +15,25 @@
  *     the generated Supabase types use. It calls
  *     `serializeV1Round(v1RoundSourceFromTableRow(row))`.
  *
- *   POST /v1/rounds  (T13.4)           — `submitScorecard` returns
- *     `{ round: insertedRound, … }`, a **Drizzle** row whose property names
- *     are already this module's camelCase `V1RoundSource` and whose
- *     timestamps are `Date`s. It is structurally assignable, so T13.4 writes:
+ *   POST /v1/rounds  (T13.4)           — `submitScorecard` returns **the
+ *     inserted `round` row ITSELF** (`server/services/scorecard/
+ *     submit-scorecard.ts`, `return newRound.round`), not a wrapper object.
+ *     It is a **Drizzle** row whose property names are already this module's
+ *     camelCase `V1RoundSource` and whose timestamps are `Date`s, so it is
+ *     structurally assignable and T13.4 writes:
  *
- *       const { round } = await submitScorecard(deps, parsed);
+ *       const round = await submitScorecard(deps, parsed);
  *       return jsonResponse(serializeV1Round(round), 201);
  *
  *     …and the 200 replay path serializes the row its replay lookup found the
  *     same way. No adapter, no cast, no second field list.
+ *
+ *     An earlier revision of this comment said `submitScorecard` returns
+ *     `{ round: insertedRound, … }` and prescribed
+ *     `const { round } = await submitScorecard(…)`. That was wrong and does
+ *     not compile — `newRound` is the service's internal wrapper and is
+ *     unwrapped before returning. Corrected here because this paragraph is
+ *     the instruction the next route author follows.
  *
  * `V1RoundSource` is deliberately a STRUCTURAL interface rather than an
  * import of either row type: it accepts `Date | string` timestamps and
