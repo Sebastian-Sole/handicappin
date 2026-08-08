@@ -124,6 +124,29 @@ export interface SubmitScorecardDeps {
   logger: ScorecardLogger;
   analytics: ScorecardAnalytics;
   overLimitPolicy: OverLimitPolicy;
+  /**
+   * Client-supplied idempotency key, persisted on the round (subplan 003's
+   * `UNIQUE("userId","externalId")`, NULLS DISTINCT; the replay semantics are
+   * contract `005-phase0-contract.md` §2 and live in the `/v1` handler).
+   *
+   * A DEP rather than a field on `input` on purpose: `input` is the SHARED
+   * `Scorecard` (`types/scorecard-input.ts`), which the web and native submit
+   * paths also consume and which §4 forbids changing for an API concern. The
+   * key is also not client data in the ordinary sense — a client role cannot
+   * set `externalId` through PostgREST at all (the INSERT grant excludes it),
+   * so it is deliberately something only server code supplies.
+   *
+   * Absent/null on the web and native paths, which submit no key: with NULLS
+   * DISTINCT many rows may carry `("userId", NULL)`, so a key-less insert
+   * cannot violate that constraint.
+   */
+  externalId?: string | null;
+  /**
+   * Self-reported submission attribution (analytics only). Same reasoning as
+   * `externalId`: server-set, never client-set — the INSERT column grant
+   * excludes `submitted_via` precisely so attribution cannot be forged.
+   */
+  submittedVia?: string | null;
 }
 
 type RoundCalculations = {
@@ -791,6 +814,10 @@ export async function submitScorecard(
       nineHoleSection:
         scores.length === 9 ? (nineHoleSection ?? null) : null,
       quarantined,
+      // Both are server-supplied (see `SubmitScorecardDeps`) and both default
+      // to NULL, which is what every web/native submission stores today.
+      externalId: deps.externalId ?? null,
+      submittedVia: deps.submittedVia ?? null,
     };
 
     // 5. Insert round. A duplicate submission (double-click, watch sync

@@ -424,6 +424,11 @@ describe("submitScorecard characterization — golden rounds", () => {
       holesPlayed: 18,
       nineHoleSection: null,
       quarantined: false,
+      // Both are server-supplied deps (T13.4). The tRPC adapter passes
+      // neither, so the web/native path stores NULL — unchanged behaviour,
+      // now stated explicitly rather than by the column's absence.
+      externalId: null,
+      submittedVia: null,
     });
 
     // Score rows: one per hole, paired positionally to db holes 1..18.
