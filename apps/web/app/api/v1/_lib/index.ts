@@ -6,20 +6,29 @@
  * `POST /rounds`. `_lib` is a Next.js private folder — the leading underscore
  * keeps it out of the router, so nothing here is ever addressable.
  *
- * Shape of a route handler built on this scaffolding:
+ * Shape of a route handler built on this scaffolding. **The order of the
+ * first four guards is load-bearing** — see the note under the snippet:
  *
  *   export async function POST(request: Request) {
  *     const instance = crypto.randomUUID();
  *     try {
+ *       // 1. PRE-AUTH limit, IP-keyed. `undefined` principal ⇒ `getIdentifier`
+ *       //    falls through to `ip:{ip}`, which is what §3 prescribes for
+ *       //    pre-auth / invalid-token traffic.
+ *       const preAuth = await enforcePublicApiRateLimit(request, undefined, "reads");
+ *       if (!preAuth.success) return rateLimitResponse(preAuth, { instance });
+ *
+ *       // 2. Authenticate — this is the step the call above is protecting.
  *       const auth = await authenticateV1Request(request, { instance });
  *       if (!auth.ok) return problemResponse(auth.problem);
  *
+ *       // 3. Scope.
  *       const denied = requireScope(auth.principal, V1_SCOPES.roundsWrite, { instance });
  *       if (denied) return problemResponse(denied);
  *
- *       // Pass the principal PARTS (never a composed key) and ALWAYS name
- *       // the family — both fail quietly if you get them wrong. See
- *       // `rate-limit-seam.ts` for exactly how.
+ *       // 4. PER-PRINCIPAL limit. Pass the principal PARTS (never a composed
+ *       //    key) and ALWAYS name the family — both fail quietly if you get
+ *       //    them wrong. See `rate-limit-seam.ts` for exactly how.
  *       const limit = await enforcePublicApiRateLimit(
  *         request,
  *         v1RateLimitPrincipal(auth.principal),
@@ -39,6 +48,21 @@
  *       return errorResponse(error, { instance, route: "POST /v1/rounds" });
  *     }
  *   }
+ *
+ * **Why TWO limiter calls, and why the first one comes before
+ * `authenticateV1Request`.** `authenticateV1Request` → `extractBearerToken`
+ * short-circuits without a network call only when the `Authorization` header
+ * is absent, has no space, carries the wrong scheme, or has an empty token.
+ * Any non-empty `Bearer <anything>` reaches `supabase.auth.getUser(token)`,
+ * an HTTP call to GoTrue — so a handler that authenticates first is a 1:1
+ * unauthenticated amplifier against the identity service that web sign-in,
+ * native, the watch bridge and the OAuth token exchange all share. Contract
+ * §3 requires both buckets: `ip:{ip}` for "pre-auth / invalid-token requests
+ * (which still cost validation work and must be limited)", and the
+ * per-principal key for authenticated traffic. They do not contend —
+ * `ip:{…}` and `user:{…}` / `client:{…}:user:{…}` are disjoint key spaces, so
+ * an anonymous flood cannot exhaust a real client's budget even when both
+ * calls name the same family.
  *
  * Invariants the scaffolding enforces so routes cannot relitigate them:
  *   - every application-emitted non-2xx is RFC 9457 `application/problem+json`

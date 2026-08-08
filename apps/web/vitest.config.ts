@@ -13,6 +13,35 @@ export default defineConfig({
     // Default env validation OFF so importing "@/env" never requires a
     // fully-populated .env.local in tests (see tests/setup-env.ts).
     setupFiles: ["tests/setup-env.ts"],
+    env: {
+      /**
+       * The test run is pinned to a NON-UTC zone, on purpose.
+       *
+       * `toUtcIsoString` (`app/api/v1/_lib/serializers/round.ts`) exists
+       * because `round.teeTime` / `createdAt` are `timestamp` WITHOUT time
+       * zone: PostgREST returns `"2026-07-01T10:00:00"` with no designator,
+       * and `new Date()` on an offset-less ISO date-time is defined to be
+       * LOCAL time. A regression in that canonicalization — deleting the
+       * designator check outright, for instance — is **entirely invisible
+       * under UTC**: the suite stays green. GitHub runners are UTC, so CI
+       * would never catch a reintroduction, on the exact field the round
+       * natural key and §2's replay comparison both key on.
+       *
+       * Pinned HERE rather than as a `TZ=` prefix on `test:unit` or as a CI
+       * matrix leg, for two reasons: it is one place that covers every
+       * entrypoint (`test`, `test:unit`, `test:integration`, `test:coverage`,
+       * `test:watch`) and every runner including a developer's laptop, so the
+       * guarantee cannot be lost by someone adding a script; and a CI-only
+       * matrix leg would surface the failure after push instead of before
+       * commit.
+       *
+       * `Asia/Tokyo` specifically: +09:00 year-round with NO daylight saving,
+       * so the offset is a constant. A DST zone would make the local offset
+       * depend on the date in each fixture and could turn a genuine assertion
+       * into a seasonal flake.
+       */
+      TZ: "Asia/Tokyo",
+    },
     // Workspace packages run their own suites (packages/tokens uses
     // `node --test`, which Vitest can't collect); the root run covers
     // app code only.
