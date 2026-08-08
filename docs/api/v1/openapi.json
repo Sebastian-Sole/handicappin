@@ -1,0 +1,1643 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "handicappin API",
+    "version": "1.0.0",
+    "description": "**Internal / unstable surface.** This API is internal until a second consumer exists. Every application-emitted response carries `X-API-Stability: internal` (contract §4). While internal, breaking changes are permitted only with same-owner coordination and a dated changelog entry.\n\n**Tolerant reader requirement (contract §4):** clients MUST ignore unknown response fields. String fields annotated `x-extensible-enum` are extensible enums: clients must tolerate values not listed, applying the fallback reading given in the field's description. New endpoints, new optional request fields, new response fields, and new error codes are added without a version bump.\n\n**Non-contractual responses (contract §1):** clients must tolerate a non-`application/problem+json` `404`/`405`/`429`/`5xx` emitted by the framework and infrastructure layers — the router's own 404 for an unmatched path and 405 for an unsupported method, the platform WAF's 429, and platform 5xx. The contractual error envelope covers application-emitted responses only.\n\n**Errors** are RFC 9457 `application/problem+json` documents with a REQUIRED `code` member from a closed, append-only registry — see the `Problem` schema and `x-problem-registry`. `validation_failed` responses carry field-level `errors[]` whose `code` values form a separate append-only namespace (currently: `tee_time_out_of_window`, `external_id_invalid`, `tee_holes_required`, `q_contains_nul`, `score_hole_mismatch`).\n\n**Rate limiting (contract §3):** every route is rate-limited fail-closed, per principal — `client:{client_id}:user:{sub}` for OAuth-client tokens, `user:{sub}` for first-party tokens, and `ip:{ip}` for pre-auth/invalid-token traffic (a dedicated pre-auth budget, D15). Budget exhaustion is `429 rate_limited` with `Retry-After` and the `X-RateLimit-Limit` / `X-RateLimit-Remaining` / `X-RateLimit-Reset` headers; limiter-infrastructure unavailability is `503 service_unavailable` with `Retry-After` (fail-closed — the surface refuses rather than running unmetered). Numeric budgets are operational values, not contractual bounds.\n\n**Base URL:** `https://api.handicappin.com/api/v1` is the only supported base (contract §1). `/api/v1` on any other host is unsupported and may be blocked without notice."
+  },
+  "servers": [
+    {
+      "url": "https://api.handicappin.com/api/v1",
+      "description": "The only supported base host (contract §1). `/api/v1` on any other host is unsupported and may be blocked without notice."
+    }
+  ],
+  "security": [
+    {
+      "bearerAuth": []
+    }
+  ],
+  "tags": [
+    {
+      "name": "health",
+      "description": "Liveness."
+    },
+    {
+      "name": "catalog",
+      "description": "Reference data — identical for every authenticated principal; authentication-only, permanently (D12)."
+    },
+    {
+      "name": "rounds",
+      "description": "The principal's own rounds."
+    }
+  ],
+  "paths": {
+    "/health": {
+      "get": {
+        "operationId": "getHealth",
+        "tags": [
+          "health"
+        ],
+        "summary": "Liveness probe for the /v1 application layer",
+        "description": "Answers exactly one question: did a request from outside the network reach the application layer and get an application-generated JSON answer back. It is NOT a dependency health check — it probes no database and no auth service. **Deliberately unauthenticated** (D10): it is the ingress canary's probe; the canary cannot hold a credential, and an authenticated probe cannot reproduce the cookie-less edge-block failure this route exists to detect. It is the sole unauthenticated endpoint. Rate-limited from the pre-auth (IP-keyed) budget; the limiter is fail-closed, so limiter unavailability answers `503` here too.",
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "The application layer answered.",
+            "headers": {
+              "X-API-Stability": {
+                "$ref": "#/components/headers/XApiStability"
+              },
+              "Cache-Control": {
+                "description": "`no-store` — a cached 200 would report the health of a cache, not of the running deployment.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailable"
+          }
+        }
+      }
+    },
+    "/courses": {
+      "get": {
+        "operationId": "searchCourses",
+        "tags": [
+          "catalog"
+        ],
+        "summary": "Search the course catalog by name",
+        "description": "The first half of the resolve a client performs before writing a round: a course name yields a `courseId`, and `GET /v1/tees?courseId=…` turns that into the `teeId` the write needs. Case-insensitive substring match on the course name; the term is trimmed before matching. Only approved catalog entries are returned. **Authentication only — no scope and no plan gate, permanently** (D12): adding either later would be a breaking change. There is no browse endpoint: `q` is required, and a client needing more than the `limit` cap should search more specifically.",
+        "x-required-scopes": [],
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "required": true,
+            "description": "Search term, 1–100 characters after trimming. Must not contain a NUL byte (field code `q_contains_nul`).",
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 100
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "description": "Maximum matches to return.",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 50,
+              "default": 10
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Matching approved catalog courses. An empty `courses` array is a valid result — no match is not an error.",
+            "headers": {
+              "X-API-Stability": {
+                "$ref": "#/components/headers/XApiStability"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CoursesResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "422": {
+            "description": "`validation_failed` — Validation failed. The request body failed validation. See `errors` for details.",
+            "headers": {
+              "X-API-Stability": {
+                "$ref": "#/components/headers/XApiStability"
+              }
+            },
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "x-problem-codes": [
+              "validation_failed"
+            ]
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailable"
+          }
+        }
+      }
+    },
+    "/tees": {
+      "get": {
+        "operationId": "listTees",
+        "tags": [
+          "catalog"
+        ],
+        "summary": "List the playable tees of one catalog course",
+        "description": "The second half of the resolve: turns a `courseId` into the `teeId` a round write references, including per-hole par, stroke index (`hcp`) and distance — the hole data `POST /v1/rounds` requires in `teePlayed.holes`. **Authentication only — no scope and no plan gate, permanently** (D12). A course that exists but is not approved is indistinguishable from one that does not exist — both are `422 course_not_found` (no existence oracle). A `200` with an empty `tees` array means the course exists but has no approved tees yet — a different condition from an unknown course, deliberately distinguishable.",
+        "x-required-scopes": [],
+        "parameters": [
+          {
+            "name": "courseId",
+            "in": "query",
+            "required": true,
+            "description": "A course id obtained from `GET /v1/courses`.",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 2147483647
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The course's approved tees (possibly empty).",
+            "headers": {
+              "X-API-Stability": {
+                "$ref": "#/components/headers/XApiStability"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TeesResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "422": {
+            "description": "`course_not_found` — Course not found. The referenced course or tee is not in the catalog.\n\n`validation_failed` — Validation failed. The request body failed validation. See `errors` for details.\n\n`course_not_found` (D14): the referenced course is not in the catalog — never `not_found`, and never an empty list. The remedy is to re-resolve the course via `GET /v1/courses`.",
+            "headers": {
+              "X-API-Stability": {
+                "$ref": "#/components/headers/XApiStability"
+              }
+            },
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "x-problem-codes": [
+              "course_not_found",
+              "validation_failed"
+            ]
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailable"
+          }
+        }
+      }
+    },
+    "/rounds": {
+      "get": {
+        "operationId": "listRounds",
+        "tags": [
+          "rounds"
+        ],
+        "summary": "List the principal's own rounds (write reconciliation)",
+        "description": "Exists for WRITE RECONCILIATION, not display: it answers \"did the round I sent get stored, and what happened to it\" — hence the `externalId` filter and the `status` / `handicapRevision` fields on every entry, and no per-hole scores. Returns only the authenticated principal's rounds, ordered `teeTime DESC, id DESC`. Quarantined rounds are included, distinguished by `status`. Requires `rounds:read` OR `rounds:write` (D11) and a completed plan selection (`403 plan_required` otherwise — D12 keeps the entitlement gate on this read). Unknown query parameters are IGNORED; the three below each may appear at most once.",
+        "x-required-scopes-any-of": [
+          "rounds:read",
+          "rounds:write"
+        ],
+        "parameters": [
+          {
+            "name": "externalId",
+            "in": "query",
+            "required": false,
+            "description": "Exact match on the client's own idempotency key (§2). Deliberately unconstrained in format — a read filter stricter than the write path would make a stored round unqueryable by the key it was stored under.",
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "description": "Page size.",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 50
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "description": "Rows to skip (offset pagination).",
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "One page of the principal's rounds.",
+            "headers": {
+              "X-API-Stability": {
+                "$ref": "#/components/headers/XApiStability"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RoundsPage"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "description": "`forbidden` — Forbidden. This token is not permitted to perform this operation.\n\n`plan_required` — Plan required. This account has not completed plan selection. The account holder must finish setup in the handicappin app before rounds can be written.\n\n`forbidden`: the token's scope permits neither `rounds:read` nor `rounds:write`. `plan_required`: the account has not completed plan selection; the account holder resolves it in the handicappin app.",
+            "headers": {
+              "X-API-Stability": {
+                "$ref": "#/components/headers/XApiStability"
+              }
+            },
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "x-problem-codes": [
+              "forbidden",
+              "plan_required"
+            ]
+          },
+          "422": {
+            "description": "`validation_failed` — Validation failed. The request body failed validation. See `errors` for details.",
+            "headers": {
+              "X-API-Stability": {
+                "$ref": "#/components/headers/XApiStability"
+              }
+            },
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "x-problem-codes": [
+              "validation_failed"
+            ]
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailable"
+          }
+        }
+      },
+      "post": {
+        "operationId": "createRound",
+        "tags": [
+          "rounds"
+        ],
+        "summary": "Submit a round",
+        "description": "Requires `rounds:write`. Returns `201 Created` **synchronously** — never `202`, never `200` on a first write, and never `403` for an over-limit round.\n\n**Idempotency (§2 — externalId-primary, replay-by-lookup).** Supply your own opaque `externalId` (e.g. your round UUID) with every submission. Retrying the identical body with the same key returns `200` with the stored round — reflecting CURRENT server state (its `status` may have become `\"quarantined\"`; its `handicapRevision` may have advanced) — in the identical shape as the 201. The same key with a DIFFERENT body is `409 idempotency_conflict`; a natural-key collision (same user, tee, tee time and nine-hole section) without a matching key is `409 duplicate_round` carrying `existingRoundId`. Without an `externalId` there is no replay: an exact duplicate is always `409 duplicate_round`.\n\n**Eventual consistency (contract §5):** `POST /v1/rounds` returns `201 Created` synchronously. The `handicapIndex` in the response is **provisional**: the authoritative handicap recomputation runs **asynchronously**, after the write commits. Until it completes, the response carries `handicapRevision: \"pending\"`, and the handicap index returned by `GET /v1/profile` or `GET /v1/rounds` may not yet reflect the round you just submitted. Do not treat any index read within moments of a write as final. `handicapRevision` becomes `\"current\"` once the authoritative value reflects this round, or `\"failed\"` if the recomputation was attempted and did not complete (the index is then stale and will not self-correct on its own — surface it as stale rather than as up to date). **Treat this field as extensible: any value you do not recognize means \"not current.\"** To converge, refetch the profile **and** the rounds list together after a submission and on app foreground; typical recomputation latency is documented separately and is not a contractual bound.\n\n**Quarantine (contract §5):** A round submitted through `POST /v1/rounds` while the account is over its free-tier round limit is **accepted and stored**, and the request succeeds with `201 Created` and `\"status\": \"quarantined\"` in the response body. A quarantined round is excluded from the handicap computation and from the account's round count until the account upgrades, at which point it is unlocked automatically — no resubmission is needed. **Treat `status` as extensible: any value you do not recognize means \"not active.\"** Quarantine is **not an error**: `POST /v1/rounds` never returns `403 Forbidden` because of the round limit, and no `round_limit_reached` error code exists on this endpoint. The only billing-related error on this surface is `plan_required` (`403`), returned when the account has not completed plan selection; the account holder resolves it in the handicappin app.",
+        "x-required-scopes": [
+          "rounds:write"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RoundSubmission"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Idempotent replay (§2 rule 2): an existing round matched `(userId, externalId)` and the submitted body is identical. The body is the stored round in the identical shape as the 201, reflecting current server state. Replay never re-runs limit checks and never mutates.",
+            "headers": {
+              "X-API-Stability": {
+                "$ref": "#/components/headers/XApiStability"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RoundResource"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "The round was stored. `handicapIndex` is provisional (`handicapRevision: \"pending\"`); an over-limit round is stored with `status: \"quarantined\"` — that is a success, not an error.",
+            "headers": {
+              "X-API-Stability": {
+                "$ref": "#/components/headers/XApiStability"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RoundResource"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`malformed_request` — Malformed request. The request body could not be parsed as JSON of the expected media type.\n\nWrong or missing `Content-Type`, or a body that is not parseable JSON. (Deliberately 400, not 415 — the registry is closed.)",
+            "headers": {
+              "X-API-Stability": {
+                "$ref": "#/components/headers/XApiStability"
+              }
+            },
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "x-problem-codes": [
+              "malformed_request"
+            ]
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "description": "`forbidden` — Forbidden. This token is not permitted to perform this operation.\n\n`plan_required` — Plan required. This account has not completed plan selection. The account holder must finish setup in the handicappin app before rounds can be written.\n\n`forbidden`: the token lacks `rounds:write`, or the body's `userId` is not the authenticated user's own id. `plan_required`: the account has not completed plan selection; the account holder resolves it in the handicappin app. There is NO `403` for an over-limit round.",
+            "headers": {
+              "X-API-Stability": {
+                "$ref": "#/components/headers/XApiStability"
+              }
+            },
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "x-problem-codes": [
+              "forbidden",
+              "plan_required"
+            ]
+          },
+          "409": {
+            "description": "`idempotency_conflict` — Idempotency conflict. This idempotency key already identifies a stored round whose contents differ from what you sent. The round exists — do not retry with the same key.\n\n`duplicate_round` — Duplicate round. A round with the same course, tee and tee time already exists for this account.\n\n`409 idempotency_conflict` means this idempotency key already identifies a stored round whose contents differ from what you sent. **The round exists** — do not retry with the same key, and do not treat this as a lost write. If you did not intend to submit different contents, the round was most likely edited in the handicappin app after you created it; treat the stored round as authoritative, stop retrying that key, and if you need its current state, re-read it from `GET /v1/rounds`.\n\n`duplicate_round` carries `existingRoundId` — a round with the same natural key (user, tee, tee time, nine-hole section) already exists and no `externalId` matched; the client decides whether it was a retry or a second genuine round entered twice.",
+            "headers": {
+              "X-API-Stability": {
+                "$ref": "#/components/headers/XApiStability"
+              }
+            },
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "x-problem-codes": [
+              "idempotency_conflict",
+              "duplicate_round"
+            ]
+          },
+          "422": {
+            "description": "`validation_failed` — Validation failed. The request body failed validation. See `errors` for details.\n\n`course_not_found` — Course not found. The referenced course or tee is not in the catalog.\n\n`validation_failed` carries field-level `errors[]` (codes include `tee_time_out_of_window`, `tee_holes_required`, `external_id_invalid`, `score_hole_mismatch`). `course_not_found`: the referenced tee did not resolve to an approved, non-archived catalog row — re-resolve via `GET /v1/courses` and `GET /v1/tees`.",
+            "headers": {
+              "X-API-Stability": {
+                "$ref": "#/components/headers/XApiStability"
+              }
+            },
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "x-problem-codes": [
+              "validation_failed",
+              "course_not_found"
+            ]
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailable"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "description": "All `/api/v1` endpoints **except `GET /v1/health`** require `Authorization: Bearer <access token>`. Health is deliberately unauthenticated — it is the ingress canary's probe, the canary cannot hold a credential, and an authenticated probe cannot reproduce the cookie-less edge-block failure it exists to detect (rationale recorded in the route header; in the OpenAPI spec the operation carries `security: []`). *[Amended 2026-08-08 — D10.]* For every other endpoint the token is a Supabase-issued access token obtained through the handicappin OAuth 2.1 authorization flow (authorization code + PKCE, consent at the app-hosted `/oauth/consent` page; refresh via `POST /auth/v1/oauth/token` with client authentication). Tokens issued to an OAuth client carry a `client_id` claim and a `scope` claim; the scope vocabulary is `rounds:read` and `rounds:write` (both stamped on every OAuth token today). `POST /v1/rounds` requires `rounds:write`; `GET /v1/rounds` requires `rounds:read` or `rounds:write`; `GET /v1/courses` and `GET /v1/tees` require authentication only — no scope, no plan — and will never gain a gate within v1. *[Amended 2026-08-08 — D11/D12.]* `/api/v1` is the only application surface that accepts such tokens: the application's own first-party surfaces (for example its tRPC endpoint) reject them outright. Note that this is not a claim of total network isolation — the underlying Supabase database API remains reachable with the same token, constrained by row-level security policies rather than by this API. Requests without a valid token receive `401` (`unauthorized`) — including tokens that have been revoked, since validation is performed server-side against the authorization server on every request, and including an OAuth-client token that arrives without a `scope` claim. An operation a token's scope does not permit receives `403` (`forbidden`). Access tokens contain no billing information. Do not request the `openid` scope."
+      }
+    },
+    "headers": {
+      "XApiStability": {
+        "description": "Stability marker (contract §4): the surface is internal/unstable until a second consumer exists. Present on every application-emitted response.",
+        "schema": {
+          "type": "string",
+          "enum": [
+            "internal"
+          ]
+        }
+      },
+      "RetryAfter": {
+        "description": "Seconds to wait before retrying. On a 503 (fail-closed limiter) this is a fixed backoff; on a 429 it is derived from the window reset.",
+        "schema": {
+          "type": "integer",
+          "minimum": 1
+        }
+      },
+      "XRateLimitLimit": {
+        "description": "The budget for the current window.",
+        "schema": {
+          "type": "integer"
+        }
+      },
+      "XRateLimitRemaining": {
+        "description": "Requests left in the current window.",
+        "schema": {
+          "type": "integer"
+        }
+      },
+      "XRateLimitReset": {
+        "description": "Window reset time, unix SECONDS.",
+        "schema": {
+          "type": "integer"
+        }
+      }
+    },
+    "responses": {
+      "Unauthorized": {
+        "description": "`unauthorized` — Unauthorized. A valid Bearer access token is required.\n\nMissing, invalid, expired or REVOKED Bearer token (validation is server-side against the authorization server on every request), or an OAuth-client token that arrived without a `scope` claim.",
+        "headers": {
+          "X-API-Stability": {
+            "$ref": "#/components/headers/XApiStability"
+          }
+        },
+        "content": {
+          "application/problem+json": {
+            "schema": {
+              "$ref": "#/components/schemas/Problem"
+            }
+          }
+        },
+        "x-problem-codes": [
+          "unauthorized"
+        ]
+      },
+      "RateLimited": {
+        "description": "`rate_limited` — Rate limited. The request budget for this principal is exhausted.\n\nThe request budget for this principal (or, pre-auth, this IP) is exhausted. Honor `Retry-After`. The `X-RateLimit-*` trio is populated from the limiter result and may be omitted when it is unavailable.",
+        "headers": {
+          "X-API-Stability": {
+            "$ref": "#/components/headers/XApiStability"
+          },
+          "Retry-After": {
+            "$ref": "#/components/headers/RetryAfter"
+          },
+          "X-RateLimit-Limit": {
+            "$ref": "#/components/headers/XRateLimitLimit"
+          },
+          "X-RateLimit-Remaining": {
+            "$ref": "#/components/headers/XRateLimitRemaining"
+          },
+          "X-RateLimit-Reset": {
+            "$ref": "#/components/headers/XRateLimitReset"
+          }
+        },
+        "content": {
+          "application/problem+json": {
+            "schema": {
+              "$ref": "#/components/schemas/Problem"
+            }
+          }
+        },
+        "x-problem-codes": [
+          "rate_limited"
+        ]
+      },
+      "InternalError": {
+        "description": "`internal_error` — Internal error. The request could not be completed.\n\nUnexpected failure. No internal detail is leaked.",
+        "headers": {
+          "X-API-Stability": {
+            "$ref": "#/components/headers/XApiStability"
+          }
+        },
+        "content": {
+          "application/problem+json": {
+            "schema": {
+              "$ref": "#/components/schemas/Problem"
+            }
+          }
+        },
+        "x-problem-codes": [
+          "internal_error"
+        ]
+      },
+      "ServiceUnavailable": {
+        "description": "`service_unavailable` — Service unavailable. A dependency is unavailable. Retry later.\n\nA dependency is unavailable — including the FAIL-CLOSED rate limiter (§3): when the limiter's infrastructure is unavailable the surface refuses rather than running unmetered. The internal reason is never disclosed. Honor `Retry-After`.",
+        "headers": {
+          "X-API-Stability": {
+            "$ref": "#/components/headers/XApiStability"
+          },
+          "Retry-After": {
+            "$ref": "#/components/headers/RetryAfter"
+          }
+        },
+        "content": {
+          "application/problem+json": {
+            "schema": {
+              "$ref": "#/components/schemas/Problem"
+            }
+          }
+        },
+        "x-problem-codes": [
+          "service_unavailable"
+        ]
+      }
+    },
+    "schemas": {
+      "Problem": {
+        "type": "object",
+        "description": "RFC 9457 problem document — the envelope of every application-emitted non-2xx response (media type `application/problem+json`). The `code` registry is CLOSED and APPEND-ONLY: new codes may be added (non-breaking); existing codes are never repurposed or removed within v1. `detail` never contains internal identifiers, stack traces, or infrastructure reasons.",
+        "properties": {
+          "type": {
+            "type": "string",
+            "format": "uri",
+            "description": "`https://api.handicappin.com/problems/{code}` — a stable identifier, not required to dereference. `about:blank` is never used."
+          },
+          "title": {
+            "type": "string",
+            "description": "Short, human-readable, fixed per code. Changing it is non-breaking; keying on it is unsupported — switch on `code`."
+          },
+          "status": {
+            "type": "integer",
+            "description": "Mirrors the HTTP status code."
+          },
+          "code": {
+            "type": "string",
+            "enum": [
+              "malformed_request",
+              "unauthorized",
+              "forbidden",
+              "plan_required",
+              "not_found",
+              "idempotency_conflict",
+              "duplicate_round",
+              "validation_failed",
+              "course_not_found",
+              "rate_limited",
+              "internal_error",
+              "service_unavailable"
+            ],
+            "description": "REQUIRED extension member — the machine key clients switch on, from the closed registry (see `x-problem-registry` at the document root for each code's status and title)."
+          },
+          "detail": {
+            "type": "string",
+            "description": "Human-readable specifics. Safe to show a developer."
+          },
+          "instance": {
+            "type": "string",
+            "description": "Request-scoped id for support correlation."
+          },
+          "errors": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProblemFieldError"
+            },
+            "description": "Present on `validation_failed` only."
+          },
+          "existingRoundId": {
+            "type": "integer",
+            "description": "Present on `duplicate_round` only: the id of the already-stored round. `idempotency_conflict` deliberately carries no round id — a key match means the client already knows which round it addressed."
+          }
+        },
+        "required": [
+          "type",
+          "title",
+          "status",
+          "code"
+        ]
+      },
+      "ProblemFieldError": {
+        "type": "object",
+        "description": "A field-level item inside `validation_failed`'s `errors[]`. `code` belongs to a separate, append-only FIELD-code namespace (distinct from the problem `code` registry). Codes emitted today: `tee_time_out_of_window`, `external_id_invalid`, `tee_holes_required`, `q_contains_nul`, `score_hole_mismatch`; any other value is the underlying zod issue code. Treat the namespace as extensible.",
+        "properties": {
+          "path": {
+            "type": "string",
+            "description": "Dotted path into the request body, e.g. `scores.3.putts`; `(root)` for a document-level issue."
+          },
+          "code": {
+            "type": "string",
+            "description": "Append-only field-level code."
+          },
+          "message": {
+            "type": "string",
+            "description": "Human-readable message."
+          }
+        },
+        "required": [
+          "path",
+          "code",
+          "message"
+        ]
+      },
+      "HealthResponse": {
+        "type": "object",
+        "description": "A fixed literal — no timestamp, no version, no dependency roll-up. It exists so the ingress canary can tell a real application JSON answer apart from an HTML challenge interstitial.",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "ok"
+            ]
+          }
+        },
+        "required": [
+          "status"
+        ]
+      },
+      "CoursesResponse": {
+        "type": "object",
+        "description": "Course search results, wrapped in an object so pagination metadata can be added later without a breaking change.",
+        "properties": {
+          "courses": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "integer"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "country": {
+                  "type": "string"
+                },
+                "city": {
+                  "type": "string"
+                },
+                "website": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "Always present; null when the course has no website on file."
+                }
+              },
+              "required": [
+                "id",
+                "name",
+                "country",
+                "city",
+                "website"
+              ]
+            }
+          }
+        },
+        "required": [
+          "courses"
+        ]
+      },
+      "TeesResponse": {
+        "type": "object",
+        "description": "The playable tees of one catalog course.",
+        "properties": {
+          "tees": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "integer"
+                },
+                "courseId": {
+                  "type": "integer"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "gender": {
+                  "type": "string",
+                  "x-extensible-enum": [
+                    "mens",
+                    "ladies"
+                  ],
+                  "description": "Tee gender designation. Treat unknown values tolerantly."
+                },
+                "distanceMeasurement": {
+                  "type": "string",
+                  "x-extensible-enum": [
+                    "meters",
+                    "yards"
+                  ],
+                  "description": "Unit of every distance field on this tee and its holes."
+                },
+                "courseRating18": {
+                  "type": "number"
+                },
+                "slopeRating18": {
+                  "type": "number"
+                },
+                "courseRatingFront9": {
+                  "type": "number"
+                },
+                "slopeRatingFront9": {
+                  "type": "number"
+                },
+                "courseRatingBack9": {
+                  "type": "number",
+                  "description": "Nine-hole ratings are included because a 9-hole round is written against the front-or-back rating, not the 18-hole one."
+                },
+                "slopeRatingBack9": {
+                  "type": "number"
+                },
+                "outPar": {
+                  "type": "integer"
+                },
+                "inPar": {
+                  "type": "integer"
+                },
+                "totalPar": {
+                  "type": "integer"
+                },
+                "outDistance": {
+                  "type": "number"
+                },
+                "inDistance": {
+                  "type": "number"
+                },
+                "totalDistance": {
+                  "type": "number"
+                },
+                "holes": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "holeNumber": {
+                        "type": "integer",
+                        "description": "1–18. Within a tee, this is the hole's identity."
+                      },
+                      "par": {
+                        "type": "integer"
+                      },
+                      "hcp": {
+                        "type": "integer",
+                        "description": "Stroke index, 1–18."
+                      },
+                      "distance": {
+                        "type": "number"
+                      }
+                    },
+                    "required": [
+                      "holeNumber",
+                      "par",
+                      "hcp",
+                      "distance"
+                    ]
+                  }
+                }
+              },
+              "required": [
+                "id",
+                "courseId",
+                "name",
+                "gender",
+                "distanceMeasurement",
+                "courseRating18",
+                "slopeRating18",
+                "courseRatingFront9",
+                "slopeRatingFront9",
+                "courseRatingBack9",
+                "slopeRatingBack9",
+                "outPar",
+                "inPar",
+                "totalPar",
+                "outDistance",
+                "inDistance",
+                "totalDistance",
+                "holes"
+              ]
+            }
+          }
+        },
+        "required": [
+          "tees"
+        ]
+      },
+      "RoundResource": {
+        "type": "object",
+        "description": "The `/v1` round resource. The `201` from `POST /v1/rounds`, its `200` idempotent replay, and every entry of `GET /v1/rounds` are this identical shape (§2 rule 2, §5). Per the tolerant-reader requirement, ignore fields you do not recognize — new fields are added without a version bump.",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "Server-assigned round id. Stable, the resource's identity."
+          },
+          "externalId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The client-supplied idempotency key (§2), or null if none was sent."
+          },
+          "status": {
+            "type": "string",
+            "x-extensible-enum": [
+              "active",
+              "quarantined"
+            ],
+            "description": "Round state (§5). `\"quarantined\"` = stored but excluded from the handicap computation and from the account's round count until the account upgrades. EXTENSIBLE: treat any value you do not recognize as \"not active\"."
+          },
+          "handicapIndex": {
+            "type": "number",
+            "description": "The handicap index as of this round — **provisional** (§5). The authoritative recomputation runs asynchronously after the write commits."
+          },
+          "handicapRevision": {
+            "type": "string",
+            "x-extensible-enum": [
+              "pending",
+              "current",
+              "failed"
+            ],
+            "description": "Recomputation state of `handicapIndex` (§5). `\"pending\"` = the authoritative recomputation has not completed and the index is provisional; `\"current\"` = it has completed and the index reflects this round; `\"failed\"` = it was attempted and did not complete (the index is stale and will not self-correct without operator action). EXTENSIBLE: treat any value you do not recognize as \"not current\". The current build emits `\"pending\"` unconditionally — detection of `\"current\"`/`\"failed\"` is reserved and not yet wired."
+          },
+          "courseId": {
+            "type": "integer"
+          },
+          "teeId": {
+            "type": "integer"
+          },
+          "teeTime": {
+            "type": "string",
+            "format": "date-time",
+            "description": "ISO 8601 UTC instant (trailing `Z`)."
+          },
+          "nineHoleSection": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "x-extensible-enum": [
+              "front",
+              "back"
+            ],
+            "description": "Which 9-hole section was played; null for an 18-hole round."
+          },
+          "notes": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "holesPlayed": {
+            "type": "integer",
+            "description": "9 or 18."
+          },
+          "totalStrokes": {
+            "type": "integer"
+          },
+          "parPlayed": {
+            "type": "integer"
+          },
+          "adjustedGrossScore": {
+            "type": "integer"
+          },
+          "adjustedPlayedScore": {
+            "type": "integer"
+          },
+          "courseHandicap": {
+            "type": "integer"
+          },
+          "scoreDifferential": {
+            "type": "number"
+          },
+          "courseRating": {
+            "type": "number",
+            "description": "Course rating LOCKED AT PLAY TIME — may differ from the tee's current rating."
+          },
+          "slopeRating": {
+            "type": "number",
+            "description": "Slope rating locked at play time. Same caveat."
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "ISO 8601 UTC instant."
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "ISO 8601 UTC instant."
+          }
+        },
+        "required": [
+          "id",
+          "externalId",
+          "status",
+          "handicapIndex",
+          "handicapRevision",
+          "courseId",
+          "teeId",
+          "teeTime",
+          "nineHoleSection",
+          "notes",
+          "holesPlayed",
+          "totalStrokes",
+          "parPlayed",
+          "adjustedGrossScore",
+          "adjustedPlayedScore",
+          "courseHandicap",
+          "scoreDifferential",
+          "courseRating",
+          "slopeRating",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "RoundsPage": {
+        "type": "object",
+        "description": "One page of the principal's rounds, newest tee time first (`teeTime DESC, id DESC`). Quarantined rounds are NOT filtered out — a round the API accepted with a 201 stays visible, distinguished by `status`.",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RoundResource"
+            }
+          },
+          "pagination": {
+            "type": "object",
+            "properties": {
+              "limit": {
+                "type": "integer"
+              },
+              "offset": {
+                "type": "integer"
+              },
+              "count": {
+                "type": "integer",
+                "description": "Entries in THIS page."
+              },
+              "hasMore": {
+                "type": "boolean",
+                "description": "Whether at least one more row exists after this page. There is no `total` — page until `hasMore` is false."
+              }
+            },
+            "required": [
+              "limit",
+              "offset",
+              "count",
+              "hasMore"
+            ]
+          }
+        },
+        "required": [
+          "data",
+          "pagination"
+        ]
+      },
+      "RoundSubmission": {
+        "description": "The `POST /v1/rounds` request body — the shared scorecard schema composed with the `/v1`-only additions. Generated from the shipped zod schema (`v1RoundSubmissionBodySchema`); invariants zod enforces beyond JSON Schema are listed here and rejected as `422 validation_failed` with the named field-level code in `errors[]`:\n- `teeTime` must lie in the window `1990-01-01T00:00:00.000Z` … now + 24 hours (D5; field code `tee_time_out_of_window`). An offset-bearing ISO 8601 date-time (e.g. `2026-07-29T16:32:00+02:00`) is accepted and canonicalized to its UTC instant before validation; a date-time with no zone designator at all is rejected.\n- `teePlayed.holes` is REQUIRED on `/v1` — all 18 holes with `par`, `hcp` and `distance` (field code `tee_holes_required`); the server derives per-hole handicap strokes from them, so client-supplied `hcpStrokes` values are ignored and re-derived.\n- `externalId` is the optional idempotency key (§2): opaque, at most 255 characters, no control characters (field code `external_id_invalid`). It is matched EXACTLY — the server never trims or case-folds it.\n- `scores` must contain exactly 9 or 18 entries; `nineHoleSection` is required for 9-hole rounds and forbidden for 18-hole rounds. Scores bind to holes by ARRAY POSITION within the played section, not by hole number.\n- `userId` must equal the authenticated principal's own user id; a mismatch is `403 forbidden`.",
+        "allOf": [
+          {
+            "type": "object",
+            "properties": {
+              "userId": {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+              },
+              "course": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "number"
+                  },
+                  "name": {
+                    "type": "string",
+                    "minLength": 3,
+                    "maxLength": 100
+                  },
+                  "approvalStatus": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "const": "pending"
+                      },
+                      {
+                        "type": "string",
+                        "const": "approved"
+                      }
+                    ]
+                  },
+                  "country": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "website": {
+                    "type": "string"
+                  },
+                  "city": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "tees": {
+                    "anyOf": [
+                      {
+                        "minItems": 1,
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "number"
+                            },
+                            "name": {
+                              "type": "string",
+                              "minLength": 1
+                            },
+                            "gender": {
+                              "type": "string",
+                              "enum": [
+                                "mens",
+                                "ladies"
+                              ]
+                            },
+                            "courseRating18": {
+                              "type": "number",
+                              "minimum": 18,
+                              "maximum": 90
+                            },
+                            "slopeRating18": {
+                              "type": "number",
+                              "minimum": 45,
+                              "maximum": 165
+                            },
+                            "courseRatingFront9": {
+                              "type": "number",
+                              "minimum": 9,
+                              "maximum": 45
+                            },
+                            "slopeRatingFront9": {
+                              "type": "number",
+                              "minimum": 45,
+                              "maximum": 165
+                            },
+                            "courseRatingBack9": {
+                              "type": "number",
+                              "minimum": 9,
+                              "maximum": 45
+                            },
+                            "slopeRatingBack9": {
+                              "type": "number",
+                              "minimum": 45,
+                              "maximum": 165
+                            },
+                            "outPar": {
+                              "type": "number",
+                              "minimum": 27,
+                              "maximum": 40
+                            },
+                            "inPar": {
+                              "type": "number",
+                              "minimum": 27,
+                              "maximum": 40
+                            },
+                            "totalPar": {
+                              "type": "number",
+                              "minimum": 54,
+                              "maximum": 80
+                            },
+                            "outDistance": {
+                              "type": "number",
+                              "minimum": 750,
+                              "maximum": 4500
+                            },
+                            "inDistance": {
+                              "type": "number",
+                              "minimum": 750,
+                              "maximum": 4500
+                            },
+                            "totalDistance": {
+                              "type": "number",
+                              "minimum": 1500,
+                              "maximum": 8700
+                            },
+                            "distanceMeasurement": {
+                              "anyOf": [
+                                {
+                                  "type": "string",
+                                  "const": "meters"
+                                },
+                                {
+                                  "type": "string",
+                                  "const": "yards"
+                                }
+                              ]
+                            },
+                            "approvalStatus": {
+                              "anyOf": [
+                                {
+                                  "type": "string",
+                                  "const": "approved"
+                                },
+                                {
+                                  "type": "string",
+                                  "const": "pending"
+                                }
+                              ]
+                            },
+                            "holes": {
+                              "anyOf": [
+                                {
+                                  "minItems": 18,
+                                  "type": "array",
+                                  "items": {
+                                    "type": "object",
+                                    "properties": {
+                                      "id": {
+                                        "type": "number"
+                                      },
+                                      "teeId": {
+                                        "type": "number"
+                                      },
+                                      "holeNumber": {
+                                        "type": "number",
+                                        "minimum": 1,
+                                        "maximum": 18
+                                      },
+                                      "par": {
+                                        "type": "number",
+                                        "minimum": 1,
+                                        "maximum": 5
+                                      },
+                                      "hcp": {
+                                        "type": "number",
+                                        "minimum": 1,
+                                        "maximum": 18
+                                      },
+                                      "distance": {
+                                        "type": "number",
+                                        "minimum": 1,
+                                        "maximum": 700
+                                      }
+                                    },
+                                    "required": [
+                                      "holeNumber",
+                                      "par",
+                                      "hcp",
+                                      "distance"
+                                    ]
+                                  }
+                                },
+                                {}
+                              ]
+                            },
+                            "courseId": {
+                              "type": "number"
+                            }
+                          },
+                          "required": [
+                            "name",
+                            "gender",
+                            "courseRating18",
+                            "slopeRating18",
+                            "courseRatingFront9",
+                            "slopeRatingFront9",
+                            "courseRatingBack9",
+                            "slopeRatingBack9",
+                            "outPar",
+                            "inPar",
+                            "totalPar",
+                            "outDistance",
+                            "inDistance",
+                            "totalDistance",
+                            "distanceMeasurement",
+                            "approvalStatus"
+                          ]
+                        }
+                      },
+                      {}
+                    ]
+                  }
+                },
+                "required": [
+                  "name",
+                  "approvalStatus",
+                  "country",
+                  "city"
+                ]
+              },
+              "teePlayed": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "number"
+                  },
+                  "name": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "gender": {
+                    "type": "string",
+                    "enum": [
+                      "mens",
+                      "ladies"
+                    ]
+                  },
+                  "courseRating18": {
+                    "type": "number",
+                    "minimum": 18,
+                    "maximum": 90
+                  },
+                  "slopeRating18": {
+                    "type": "number",
+                    "minimum": 45,
+                    "maximum": 165
+                  },
+                  "courseRatingFront9": {
+                    "type": "number",
+                    "minimum": 9,
+                    "maximum": 45
+                  },
+                  "slopeRatingFront9": {
+                    "type": "number",
+                    "minimum": 45,
+                    "maximum": 165
+                  },
+                  "courseRatingBack9": {
+                    "type": "number",
+                    "minimum": 9,
+                    "maximum": 45
+                  },
+                  "slopeRatingBack9": {
+                    "type": "number",
+                    "minimum": 45,
+                    "maximum": 165
+                  },
+                  "outPar": {
+                    "type": "number",
+                    "minimum": 27,
+                    "maximum": 40
+                  },
+                  "inPar": {
+                    "type": "number",
+                    "minimum": 27,
+                    "maximum": 40
+                  },
+                  "totalPar": {
+                    "type": "number",
+                    "minimum": 54,
+                    "maximum": 80
+                  },
+                  "outDistance": {
+                    "type": "number",
+                    "minimum": 750,
+                    "maximum": 4500
+                  },
+                  "inDistance": {
+                    "type": "number",
+                    "minimum": 750,
+                    "maximum": 4500
+                  },
+                  "totalDistance": {
+                    "type": "number",
+                    "minimum": 1500,
+                    "maximum": 8700
+                  },
+                  "distanceMeasurement": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "const": "meters"
+                      },
+                      {
+                        "type": "string",
+                        "const": "yards"
+                      }
+                    ]
+                  },
+                  "approvalStatus": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "const": "approved"
+                      },
+                      {
+                        "type": "string",
+                        "const": "pending"
+                      }
+                    ]
+                  },
+                  "holes": {
+                    "anyOf": [
+                      {
+                        "minItems": 18,
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "number"
+                            },
+                            "teeId": {
+                              "type": "number"
+                            },
+                            "holeNumber": {
+                              "type": "number",
+                              "minimum": 1,
+                              "maximum": 18
+                            },
+                            "par": {
+                              "type": "number",
+                              "minimum": 1,
+                              "maximum": 5
+                            },
+                            "hcp": {
+                              "type": "number",
+                              "minimum": 1,
+                              "maximum": 18
+                            },
+                            "distance": {
+                              "type": "number",
+                              "minimum": 1,
+                              "maximum": 700
+                            }
+                          },
+                          "required": [
+                            "holeNumber",
+                            "par",
+                            "hcp",
+                            "distance"
+                          ]
+                        }
+                      },
+                      {}
+                    ]
+                  },
+                  "courseId": {
+                    "type": "number"
+                  }
+                },
+                "required": [
+                  "name",
+                  "gender",
+                  "courseRating18",
+                  "slopeRating18",
+                  "courseRatingFront9",
+                  "slopeRatingFront9",
+                  "courseRatingBack9",
+                  "slopeRatingBack9",
+                  "outPar",
+                  "inPar",
+                  "totalPar",
+                  "outDistance",
+                  "inDistance",
+                  "totalDistance",
+                  "distanceMeasurement",
+                  "approvalStatus"
+                ]
+              },
+              "scores": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "number"
+                    },
+                    "roundId": {
+                      "type": "number"
+                    },
+                    "holeId": {
+                      "type": "number"
+                    },
+                    "strokes": {
+                      "type": "number",
+                      "minimum": 0,
+                      "maximum": 99
+                    },
+                    "hcpStrokes": {
+                      "type": "number",
+                      "minimum": 0,
+                      "maximum": 99
+                    },
+                    "putts": {
+                      "anyOf": [
+                        {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 20
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "fairwayHit": {
+                      "anyOf": [
+                        {
+                          "type": "boolean"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "penaltyStrokes": {
+                      "anyOf": [
+                        {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 10
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    }
+                  },
+                  "required": [
+                    "strokes",
+                    "hcpStrokes"
+                  ]
+                }
+              },
+              "teeTime": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+              },
+              "approvalStatus": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "const": "pending"
+                  },
+                  {
+                    "type": "string",
+                    "const": "approved"
+                  }
+                ]
+              },
+              "notes": {
+                "type": "string"
+              },
+              "nineHoleSection": {
+                "type": "string",
+                "enum": [
+                  "front",
+                  "back"
+                ]
+              }
+            },
+            "required": [
+              "userId",
+              "course",
+              "teePlayed",
+              "scores",
+              "teeTime",
+              "approvalStatus"
+            ]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "externalId": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 255
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  "x-problem-registry": {
+    "malformed_request": {
+      "status": 400,
+      "title": "Malformed request",
+      "defaultDetail": "The request body could not be parsed as JSON of the expected media type."
+    },
+    "unauthorized": {
+      "status": 401,
+      "title": "Unauthorized",
+      "defaultDetail": "A valid Bearer access token is required."
+    },
+    "forbidden": {
+      "status": 403,
+      "title": "Forbidden",
+      "defaultDetail": "This token is not permitted to perform this operation."
+    },
+    "plan_required": {
+      "status": 403,
+      "title": "Plan required",
+      "defaultDetail": "This account has not completed plan selection. The account holder must finish setup in the handicappin app before rounds can be written."
+    },
+    "not_found": {
+      "status": 404,
+      "title": "Not found",
+      "defaultDetail": "The requested resource does not exist."
+    },
+    "idempotency_conflict": {
+      "status": 409,
+      "title": "Idempotency conflict",
+      "defaultDetail": "This idempotency key already identifies a stored round whose contents differ from what you sent. The round exists — do not retry with the same key."
+    },
+    "duplicate_round": {
+      "status": 409,
+      "title": "Duplicate round",
+      "defaultDetail": "A round with the same course, tee and tee time already exists for this account."
+    },
+    "validation_failed": {
+      "status": 422,
+      "title": "Validation failed",
+      "defaultDetail": "The request body failed validation. See `errors` for details."
+    },
+    "course_not_found": {
+      "status": 422,
+      "title": "Course not found",
+      "defaultDetail": "The referenced course or tee is not in the catalog."
+    },
+    "rate_limited": {
+      "status": 429,
+      "title": "Rate limited",
+      "defaultDetail": "The request budget for this principal is exhausted."
+    },
+    "internal_error": {
+      "status": 500,
+      "title": "Internal error",
+      "defaultDetail": "The request could not be completed."
+    },
+    "service_unavailable": {
+      "status": 503,
+      "title": "Service unavailable",
+      "defaultDetail": "A dependency is unavailable. Retry later."
+    }
+  }
+}

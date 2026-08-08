@@ -158,22 +158,30 @@ export function canonicalizeTeeTimeOffset(value: unknown): unknown {
 }
 
 /**
- * The `/v1` write body.
+ * The composed body schema BEFORE the offset-canonicalizing preprocess and
+ * the holes-required refinement.
+ *
+ * Exported for exactly one consumer: the OpenAPI generator
+ * (`_lib/openapi.ts`), which converts it with `z.toJSONSchema`. The
+ * preprocess wrapper below is a `(unknown) => unknown` transform, so its
+ * JSON-schema input side is unrepresentable — this inner schema is the
+ * representable request shape. Handlers must keep parsing with
+ * `v1RoundSubmissionSchema`; this constant is not a parse entrypoint.
  *
  * `.and()` rather than `.extend()` because `v1ScorecardSchema` is a
  * `ZodEffects` (the shared schema's `.superRefine` plus D5's), which has no
  * `.extend`. The intersection parses BOTH sides and merges, so unknown keys
  * are still stripped and issues from both halves land in one `errors[]`.
  */
+export const v1RoundSubmissionBodySchema = v1ScorecardSchema.and(
+  z.object({
+    externalId: v1ExternalIdSchema.optional(),
+  })
+);
+
+/** The `/v1` write body — what `POST /v1/rounds` actually parses. */
 export const v1RoundSubmissionSchema = z
-  .preprocess(
-    canonicalizeTeeTimeOffset,
-    v1ScorecardSchema.and(
-      z.object({
-        externalId: v1ExternalIdSchema.optional(),
-      })
-    )
-  )
+  .preprocess(canonicalizeTeeTimeOffset, v1RoundSubmissionBodySchema)
   .superRefine((value, ctx) => {
     if (!value.teePlayed.holes || value.teePlayed.holes.length === 0) {
       ctx.addIssue({
