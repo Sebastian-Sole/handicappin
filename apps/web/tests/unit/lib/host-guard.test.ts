@@ -7,7 +7,12 @@
  */
 
 import { describe, test, expect } from "vitest";
-import { isAllowedHost, ALLOWED_PRODUCTION_HOSTS } from "@/lib/host-guard";
+import {
+  isAllowedHost,
+  isBlockedPublicApiRequest,
+  isPublicApiPath,
+  ALLOWED_PRODUCTION_HOSTS,
+} from "@/lib/host-guard";
 
 describe("isAllowedHost — allowed hosts", () => {
   test.each([...ALLOWED_PRODUCTION_HOSTS])(
@@ -93,4 +98,106 @@ describe("isAllowedHost — ported Host", () => {
   ])("rejects %s", (host) => {
     expect(isAllowedHost(host)).toBe(false);
   });
+});
+
+// ---------------------------------------------------------------------------
+// /v1 host scoping (api-platform contract 005-phase0-contract.md §1)
+// ---------------------------------------------------------------------------
+
+describe("isPublicApiPath", () => {
+  test.each(["/api/v1", "/api/v1/", "/api/v1/health", "/api/v1/rounds/9"])(
+    "matches %s",
+    (pathname) => {
+      expect(isPublicApiPath(pathname)).toBe(true);
+    }
+  );
+
+  test.each([
+    "/",
+    "/rounds",
+    "/api",
+    "/api/trpc/course.getCourseById",
+    "/api/v10/health", // prefix must be segment-bounded
+    "/api/v1x",
+    "/API/v1/health", // Next.js routing is case-sensitive; so is the guard
+  ])("does not match %s", (pathname) => {
+    expect(isPublicApiPath(pathname)).toBe(false);
+  });
+});
+
+describe("isBlockedPublicApiRequest — production: only api.handicappin.com serves /v1", () => {
+  const production = { vercelEnv: "production", pathname: "/api/v1/rounds" };
+
+  test.each([
+    "www.handicappin.com",
+    "handicappin.com",
+    "handicappin.vercel.app", // production .vercel.app alias is NOT a supported base host
+    "evil.com",
+    "api.handicappin.com.attacker.net",
+    "localhost:3000", // forged local Host reaching the production deployment
+  ])("blocks Host: %s", (hostHeader) => {
+    expect(isBlockedPublicApiRequest({ ...production, hostHeader })).toBe(true);
+  });
+
+  test.each([
+    null,
+    undefined,
+    "",
+    "   ",
+    "ho st/path", // embedded whitespace + path
+    "api.handicappin.com:443x", // malformed port
+  ])("blocks absent/garbage Host %j", (hostHeader) => {
+    expect(isBlockedPublicApiRequest({ ...production, hostHeader })).toBe(true);
+  });
+
+  test.each([
+    "api.handicappin.com",
+    "API.Handicappin.COM", // Host matching is case-insensitive
+    "api.handicappin.com:443",
+    "api.handicappin.com:80",
+  ])("passes Host: %s", (hostHeader) => {
+    expect(isBlockedPublicApiRequest({ ...production, hostHeader })).toBe(
+      false
+    );
+  });
+
+  test("blocks a ported API host (api.handicappin.com:8443)", () => {
+    expect(
+      isBlockedPublicApiRequest({
+        ...production,
+        hostHeader: "api.handicappin.com:8443",
+      })
+    ).toBe(true);
+  });
+
+  test("ignores non-/v1 paths entirely (www keeps serving the web app)", () => {
+    expect(
+      isBlockedPublicApiRequest({
+        vercelEnv: "production",
+        pathname: "/rounds",
+        hostHeader: "www.handicappin.com",
+      })
+    ).toBe(false);
+  });
+});
+
+describe("isBlockedPublicApiRequest — inert off the production deployment", () => {
+  test.each([
+    ["preview", "handicappin-git-feature-x.vercel.app"], // previews keep /v1
+    ["development", "localhost:3000"],
+    [undefined, "localhost:3000"], // local dev / CI / vitest: VERCEL_ENV unset
+    [undefined, "127.0.0.1:54321"],
+    ["preview", "www.handicappin.com"], // even a wrong host is not blocked off-prod
+  ] as const)(
+    "vercelEnv=%j, Host=%s is not blocked",
+    (vercelEnv, hostHeader) => {
+      expect(
+        isBlockedPublicApiRequest({
+          vercelEnv,
+          pathname: "/api/v1/health",
+          hostHeader,
+        })
+      ).toBe(false);
+    }
+  );
 });

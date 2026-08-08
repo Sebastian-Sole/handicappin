@@ -1,6 +1,7 @@
 import { Ratelimit } from "@upstash/ratelimit";
 import { Redis } from "@upstash/redis";
 import { env } from "@/env";
+import { PUBLIC_API_PATH_PREFIX, PUBLIC_API_HOST } from "@/lib/host-guard";
 import { logger } from "@/lib/logging";
 import { captureSentryError } from "@/lib/sentry-utils";
 
@@ -270,10 +271,11 @@ export const aiExtractionRateLimit = createRateLimiter(
 // Public API surface (fail-closed)
 // ---------------------------------------------------------------------------
 
-/** Path prefix of the public versioned API (route handlers land in 005/W4). */
-export const PUBLIC_API_PATH_PREFIX = "/api/v1";
-/** Grey-clouded (DNS-only) API host — fitbull's and the native app's base URL. */
-export const PUBLIC_API_HOST = "api.handicappin.com";
+// Canonical definitions live in `lib/host-guard.ts` (edge-safe, dependency-
+// free — the middleware host guard needs them and cannot import this module
+// without dragging the Upstash client into the edge bundle). Re-exported
+// here so existing importers keep working.
+export { PUBLIC_API_PATH_PREFIX, PUBLIC_API_HOST };
 
 /**
  * Is this request on the public API surface (`/api/v1` path or the
