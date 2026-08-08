@@ -63,8 +63,17 @@ import {
   readClientIdClaim,
 } from "@/lib/api/bearer-token";
 
-/** The scope the custom_access_token_hook stamps unconditionally today. */
+/**
+ * The `/v1` scope vocabulary (D11). The custom_access_token_hook stamps BOTH
+ * scopes unconditionally on every OAuth-client token (`20260808…`, previously
+ * `rounds:write` alone) — under Phase-1 fixed capability no real token is
+ * ever denied, but minting `rounds:read` as its own name is what makes a
+ * read-only OAuth client REPRESENTABLE the day per-client scopes ship.
+ * Scoped read endpoints accept either scope (see `requireAnyScope`); writes
+ * require `roundsWrite` alone.
+ */
 export const V1_SCOPES = {
+  roundsRead: "rounds:read",
   roundsWrite: "rounds:write",
 } as const;
 
@@ -285,6 +294,26 @@ export function requireScope(
   context: { instance?: string } = {}
 ): ProblemDocument | null {
   if (hasScope(principal, scope)) {
+    return null;
+  }
+  return createProblem({ code: "forbidden", instance: context.instance });
+}
+
+/**
+ * `403 forbidden` unless the principal holds AT LEAST ONE of `scopes`.
+ *
+ * D11's read gate: scoped reads accept `rounds:read` OR `rounds:write`, so a
+ * write-capable token never loses a read it could already perform (write
+ * implies read on the same resource), while a future read-only token is
+ * representable. A first-party principal passes trivially, exactly as in
+ * `requireScope` (§6 — never scope-checked).
+ */
+export function requireAnyScope(
+  principal: V1Principal,
+  scopes: readonly string[],
+  context: { instance?: string } = {}
+): ProblemDocument | null {
+  if (scopes.some((scope) => hasScope(principal, scope))) {
     return null;
   }
   return createProblem({ code: "forbidden", instance: context.instance });

@@ -31,6 +31,7 @@ import {
   problemResponse,
   rateLimitResponse,
   readJsonBody,
+  requireAnyScope,
   requireScope,
   v1EntitlementProblem,
   v1EntitlementRpcFromSupabase,
@@ -108,18 +109,18 @@ export async function GET(request: Request): Promise<Response> {
     principal = auth.principal;
 
     // ── Scope ───────────────────────────────────────────────────────────
-    // `rounds:write` is the ONLY scope that exists: the access-token hook
-    // stamps it unconditionally on every OAuth-client token
-    // (20260728090000), and there is no `rounds:read`. §10.5 of the fitbull
-    // notes records that the contract never says which scope authorizes a
-    // GET, so this is a decision, not an inherited rule.
-    //
-    // Gating on `rounds:write` rather than on nothing, because the asymmetry
-    // runs one way: RELAXING a scope requirement later is non-breaking, ADDING
-    // one to a shipped endpoint removes a capability from a live client and
-    // is not. No real token is denied today — every OAuth token carries it,
-    // and a first-party principal is never scope-checked (§6).
-    const denied = requireScope(principal, V1_SCOPES.roundsWrite, { instance });
+    // Read-OR-write (D11). The hook stamps `rounds:read rounds:write` on
+    // every OAuth-client token (20260808…, previously `rounds:write` alone),
+    // and this read accepts EITHER: `rounds:write` keeps passing so no
+    // shipped token loses a capability (relaxing a gate is non-breaking, the
+    // reverse is not), and `rounds:read` passing is what makes a read-only
+    // OAuth client possible the day per-client scopes ship. A first-party
+    // principal is never scope-checked (§6).
+    const denied = requireAnyScope(
+      principal,
+      [V1_SCOPES.roundsRead, V1_SCOPES.roundsWrite],
+      { instance }
+    );
     if (denied) return problemResponse(denied);
 
     // ── Rate limit (per-principal) ──────────────────────────────────────

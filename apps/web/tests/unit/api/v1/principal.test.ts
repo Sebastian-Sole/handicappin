@@ -44,6 +44,7 @@ const {
   V1_SCOPES,
   authenticateV1Request,
   hasScope,
+  requireAnyScope,
   requireScope,
 } = await import("@/app/api/v1/_lib/principal");
 const { decodeJwtPayload, hasClientIdClaim, isExternalOAuthClientToken } =
@@ -164,6 +165,31 @@ describe("shape 2 — client_id AND scope ⇒ OAuth principal", () => {
     expect(problem?.code).toBe("forbidden");
     expect(problem?.status).toBe(403);
     expect(problem?.instance).toBe("req_1");
+  });
+
+  test("requireAnyScope (D11 read gate): ANY listed scope suffices, none → 403", async () => {
+    // `oauthToken` carries rounds:write but NOT rounds:read — exactly every
+    // token minted before 20260808090000. The read-or-write gate must pass it.
+    const result = await authenticateV1Request(requestWith(oauthToken), {
+      validateToken: accepts,
+    });
+    if (!result.ok) throw new Error("expected ok");
+
+    expect(
+      requireAnyScope(result.principal, [
+        V1_SCOPES.roundsRead,
+        V1_SCOPES.roundsWrite,
+      ])
+    ).toBeNull();
+
+    const problem = requireAnyScope(
+      result.principal,
+      ["courses:write", "courses:admin"],
+      { instance: "req_2" }
+    );
+    expect(problem?.code).toBe("forbidden");
+    expect(problem?.status).toBe(403);
+    expect(problem?.instance).toBe("req_2");
   });
 
   test("keys the rate limiter as the (client_id, user) PAIR", async () => {

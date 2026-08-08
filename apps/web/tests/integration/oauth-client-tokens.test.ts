@@ -4,8 +4,9 @@
  * Runs the REAL Connect flow against the local Supabase stack (OAuth server
  * enabled via `supabase/config.toml` `[auth.oauth_server]`):
  *
- *   1. Hook proof (20260728090000): OAuth-client tokens carry `client_id`
- *      AND the forward-compatible `scope` claim (`rounds:write`); first-party
+ *   1. Hook proof (20260728090000, scope widened by 20260808090000 / D11):
+ *      OAuth-client tokens carry `client_id` AND the forward-compatible
+ *      `scope` claim (`rounds:read rounds:write`); first-party
  *      password-session tokens carry NEITHER.
  *   2. RLS deny-policy proof (20260728091000): a `client_id`-bearing token
  *      used DIRECTLY against PostgREST (the surface the spike proved is
@@ -378,9 +379,12 @@ describeIfLocal("OAuth client tokens (real local Supabase)", () => {
 
   // ── 1. Custom access token hook: claims contract ───────────────────────
 
-  test("OAuth token carries client_id and the rounds:write scope claim — and NO billing claims", () => {
+  test("OAuth token carries client_id and both rounds scopes — and NO billing claims", () => {
     const claims = decodeJwtPayload(oauthAccessToken);
     expect(claims.client_id).toBe(oauthClientId);
+    // D11 (20260808090000): the hook stamps BOTH scopes, so a read gate can
+    // exist that a future read-only token satisfies without `rounds:write`.
+    expect(String(claims.scope ?? "")).toContain("rounds:read");
     expect(String(claims.scope ?? "")).toContain("rounds:write");
     // `ref` is deliberately NOT asserted: local GoTrue never stamps it
     // (hosted-platform claim — verified empirically against this stack), so
