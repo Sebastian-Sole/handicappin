@@ -262,10 +262,15 @@ describe("the pre-auth IP bucket runs BEFORE token validation", () => {
       // hand-composed string here would take the limiter's string branch and
       // be re-prefixed to `user:…`.
       expect(preAuthPrincipal).toBeUndefined();
-      expect(preAuthFamily).toBe("reads");
+      // `preauth` (D15): the pre-auth stage draws from its own family, never
+      // from `reads` — the per-principal call below is the one on `reads`.
+      expect(preAuthFamily).toBe("preauth");
 
-      const [, principal] = enforcePublicApiRateLimit.mock.calls[1];
+      const [, principal, principalFamily] =
+        enforcePublicApiRateLimit.mock.calls[1];
       expect(principal).toEqual({ userId: USER_ID });
+      // Authenticated traffic is untouched by D15: still the reads family.
+      expect(principalFamily).toBe("reads");
     }
   );
 

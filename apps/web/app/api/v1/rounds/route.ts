@@ -88,17 +88,17 @@ export async function GET(request: Request): Promise<Response> {
     // (`{ userId: <that string> }`) and mis-key it. `GET /v1/health` is the
     // shipped precedent for exactly this call.
     //
-    // Family `"reads"` — the same family as the per-principal call below.
-    // The two do NOT contend: `ip:{…}` and `user:{…}` / `client:{…}:user:{…}`
-    // are disjoint key spaces, so an anonymous flood exhausts its own IP
-    // bucket and can never consume a legitimate client's budget. Inventing a
-    // `pre-auth` family would mean an env var and a budget in `env.ts` +
-    // `lib/rate-limit.ts`, both frozen shared surface, and `reads` is already
-    // defined as "Every `/v1` GET".
+    // Family `"preauth"` (D15) — the dedicated pre-auth family, NOT the
+    // `reads` family the per-principal call below draws from. Pre-auth
+    // traffic is keyed `ip:{ip}`, and a consumer whose users share a small
+    // set of egress IPs (fitbull runs on Convex) would otherwise be capped
+    // fleet-wide at a route budget sized for one principal the moment a
+    // burst of token-expiry 401s lands. Authenticated traffic never touches
+    // this family and vice versa.
     const preAuthLimit = await enforcePublicApiRateLimit(
       request,
       undefined,
-      "reads"
+      "preauth"
     );
     if (!preAuthLimit.success) {
       return rateLimitResponse(preAuthLimit, { instance });
@@ -207,26 +207,19 @@ export async function POST(request: Request): Promise<Response> {
     // `ip:{ip}`". Passing no principal is how the shipped limiter keys on the
     // IP — the same call shape `GET /v1/health` uses.
     //
-    // FAMILY CHOICE — `rounds-write`, deliberately:
-    //   - it does NOT share a budget with authenticated traffic. The bucket
-    //     key is `…:rounds-write:ip:{ip}`, a different Redis key from
-    //     `…:rounds-write:user:{sub}` and `…:client:{c}:user:{sub}`, so an
-    //     anonymous flood cannot consume any authenticated principal's
-    //     allowance. Family picks the NUMBER, not the bucket;
-    //   - 60/min rather than the reads family's 120/min because traffic that
-    //     has not yet proven an identity must not get MORE headroom than an
-    //     authenticated writer on the same route.
-    //
-    // Known limitation, reported rather than hidden: this token is spent by
-    // authenticated requests too, so a consumer whose users share a small set
-    // of egress IPs (fitbull runs on Convex) is capped fleet-wide at this
-    // family's budget for the pre-auth stage. Fixing that needs a pre-auth
-    // family with its own budget in `lib/rate-limit.ts` + `env.ts`, both of
-    // which are outside this route's scope and frozen by G0.
+    // FAMILY — `preauth` (D15), the dedicated pre-auth family. This call
+    // originally spent the `rounds-write` family's IP bucket, which had a
+    // known limitation: authenticated requests spend this pre-auth token
+    // too, so a consumer whose users share a small set of egress IPs
+    // (fitbull runs on Convex) was capped fleet-wide at 60/min for the
+    // pre-auth stage. D15 resolves that with a family of its own —
+    // `ratelimit:public-api:preauth`, budget `RATE_LIMIT_PREAUTH_PER_MIN`
+    // (default 300/min) — that authenticated per-route budgets never draw
+    // from, and vice versa.
     const preAuthLimit = await enforcePublicApiRateLimit(
       request,
       undefined,
-      "rounds-write"
+      "preauth"
     );
     if (!preAuthLimit.success) {
       return rateLimitResponse(preAuthLimit, { instance });

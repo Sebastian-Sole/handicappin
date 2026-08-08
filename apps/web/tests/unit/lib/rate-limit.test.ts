@@ -96,14 +96,16 @@ vi.mock("@/lib/logging", () => ({
 type RateLimitModule = typeof import("@/lib/rate-limit");
 
 /**
- * The four FROZEN `/v1` family budgets. Neutralized on every load so a value
- * leaking from `.env.local` can't move an assertion.
+ * The `/v1` family budgets (the four frozen route families + D15's preauth
+ * stage family). Neutralized on every load so a value leaking from
+ * `.env.local` can't move an assertion.
  */
 const V1_FAMILY_ENV_VARS = [
   "RATE_LIMIT_ROUNDS_WRITE_PER_MIN",
   "RATE_LIMIT_API_READS_PER_MIN",
   "RATE_LIMIT_COURSE_SUBMIT_PER_HOUR",
   "RATE_LIMIT_PROVISION_PER_HOUR",
+  "RATE_LIMIT_PREAUTH_PER_MIN",
 ] as const;
 
 /**
@@ -577,6 +579,7 @@ describe("per-route-family buckets", () => {
     RATE_LIMIT_API_READS_PER_MIN: "121",
     RATE_LIMIT_COURSE_SUBMIT_PER_HOUR: "11",
     RATE_LIMIT_PROVISION_PER_HOUR: "6",
+    RATE_LIMIT_PREAUTH_PER_MIN: "301",
   };
 
   function constructedFor(prefix: string) {
@@ -589,6 +592,7 @@ describe("per-route-family buckets", () => {
     const families = Object.keys(mod.PUBLIC_API_RATE_LIMIT_FAMILIES);
     expect(families.sort()).toEqual([
       "course-submit",
+      "preauth",
       "provision",
       "reads",
       "rounds-write",
@@ -599,6 +603,7 @@ describe("per-route-family buckets", () => {
     );
     expect(prefixes.sort()).toEqual([
       "ratelimit:public-api:course-submit",
+      "ratelimit:public-api:preauth",
       "ratelimit:public-api:provision",
       "ratelimit:public-api:reads",
       "ratelimit:public-api:rounds-write",
@@ -624,6 +629,7 @@ describe("per-route-family buckets", () => {
       ["ratelimit:public-api:reads", "121", "1 m"],
       ["ratelimit:public-api:course-submit", "11", "1 h"],
       ["ratelimit:public-api:provision", "6", "1 h"],
+      ["ratelimit:public-api:preauth", "301", "1 m"],
     ];
 
     for (const [prefix, limit, window] of expectations) {
@@ -694,6 +700,7 @@ describe("per-route-family buckets", () => {
     const { mod, capture } = await loadRateLimit();
 
     for (const family of ["rounds-write", "reads", "course-submit", "provision"] as const) {
+      // preauth is exercised separately below — its identifierKind is "ip".
       capture.mockClear();
       const result = await mod.enforcePublicApiRateLimit(
         publicApiRequest(),
@@ -771,6 +778,96 @@ describe("per-route-family buckets", () => {
     expect(result.failedClosed).toBe(false);
     expect(result.reason).toBeUndefined();
     expect(capture).not.toHaveBeenCalled();
+  });
+});
+
+describe("the D15 preauth family — dedicated pre-auth budget", () => {
+  const OK = { success: true, limit: 300, remaining: 299, reset: 1234 };
+
+  test("a pre-auth call (no principal) lands in ratelimit:public-api:preauth, keyed ip:{ip}", async () => {
+    const { mod } = await loadRateLimit(ENABLED_WITH_CREDS);
+    state.limit.mockResolvedValue(OK);
+
+    const result = await mod.enforcePublicApiRateLimit(
+      publicApiRequest({ "cf-connecting-ip": "203.0.113.9" }),
+      undefined,
+      "preauth"
+    );
+
+    expect(result.success).toBe(true);
+    expect(result.family).toBe("preauth");
+    expect(state.calls).toEqual([
+      { prefix: "ratelimit:public-api:preauth", identifier: "ip:203.0.113.9" },
+    ]);
+  });
+
+  test("the preauth bucket is DISJOINT from every route family: an authenticated request never touches it, and a pre-auth request never touches a route family", async () => {
+    const { mod } = await loadRateLimit(ENABLED_WITH_CREDS);
+    state.limit.mockResolvedValue(OK);
+    const request = publicApiRequest({ "cf-connecting-ip": "203.0.113.9" });
+
+    // The two calls a /v1 route actually makes, in order.
+    await mod.enforcePublicApiRateLimit(request, undefined, "preauth");
+    await mod.enforcePublicApiRateLimit(
+      request,
+      { userId: "user-1", clientId: "fitbull" },
+      "rounds-write"
+    );
+
+    expect(state.calls).toEqual([
+      { prefix: "ratelimit:public-api:preauth", identifier: "ip:203.0.113.9" },
+      {
+        prefix: "ratelimit:public-api:rounds-write",
+        identifier: "client:fitbull:user:user-1",
+      },
+    ]);
+    // No cross-contamination in either direction.
+    const preauthCalls = state.calls.filter(
+      (call) => call.prefix === "ratelimit:public-api:preauth"
+    );
+    expect(preauthCalls).toHaveLength(1);
+    expect(preauthCalls[0]?.identifier).toBe("ip:203.0.113.9");
+  });
+
+  test("RATE_LIMIT_PREAUTH_PER_MIN is the env var that drives the preauth window", async () => {
+    // Which VAR reaches which PREFIX. The 300 default itself is asserted
+    // against the real zod schema in env-rate-limit-assert.test.ts —
+    // SKIP_ENV_VALIDATION (used by loadRateLimit) bypasses zod defaults, so
+    // this suite pins the wiring with a distinct sentinel value instead.
+    await loadRateLimit({
+      ...ENABLED_WITH_CREDS,
+      RATE_LIMIT_PREAUTH_PER_MIN: "301",
+    });
+
+    const spec = state.constructed.find(
+      (entry) => entry.prefix === "ratelimit:public-api:preauth"
+    )?.window as WindowSpec | undefined;
+    expect(spec?.kind).toBe("sliding-window");
+    expect(String(spec?.limit)).toBe("301");
+    expect(spec?.window).toBe("1 m");
+  });
+
+  test("the preauth family fails CLOSED like every other family, with identifierKind 'ip'", async () => {
+    // RATE_LIMIT_ENABLED unset — limiter unavailable.
+    const { mod, capture } = await loadRateLimit();
+
+    const result = await mod.enforcePublicApiRateLimit(
+      publicApiRequest({ "x-real-ip": "203.0.113.9" }),
+      undefined,
+      "preauth"
+    );
+
+    expect(result.success).toBe(false);
+    expect(result.failedClosed).toBe(true);
+    expect(result.reason).toBe("disabled");
+    expect(result.family).toBe("preauth");
+    expect(capture.mock.calls[0]?.[1]).toMatchObject({
+      eventType: "rate-limit-fail-closed",
+      tags: { reason: "disabled", family: "preauth" },
+    });
+    expect(capture.mock.calls[0]?.[1].extra).toEqual({
+      identifierKind: "ip",
+    });
   });
 });
 

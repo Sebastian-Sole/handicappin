@@ -225,8 +225,14 @@ export async function GET(request: Request): Promise<Response> {
     // leave that round trip unmetered for callers holding no valid
     // credential at all. No principal argument, so `getIdentifier` falls
     // through to the IP key — the same call `GET /v1/health` makes. See the
-    // header for the full reasoning and the NAT trade-off.
-    const preAuth = await enforcePublicApiRateLimit(request, undefined, "reads");
+    // header for the full reasoning and the NAT trade-off. Family `preauth`
+    // (D15): pre-auth traffic has its own IP-keyed budget so a burst of
+    // 401s from a consumer's few egress IPs cannot cap a route family.
+    const preAuth = await enforcePublicApiRateLimit(
+      request,
+      undefined,
+      "preauth"
+    );
     if (!preAuth.success) return rateLimitResponse(preAuth, { instance });
 
     const auth = await authenticateV1Request(request, { instance });

@@ -130,7 +130,7 @@ describe("GET /v1/rounds — pre-auth limit runs BEFORE token validation", () =>
     expect(limiter.calls).toHaveLength(1);
   });
 
-  test("the pre-auth call is IP-keyed: no principal argument, 'reads' family", async () => {
+  test("the pre-auth call is IP-keyed: no principal argument, D15 'preauth' family", async () => {
     await GET(request());
 
     const preAuth = limiter.calls[0]!;
@@ -139,7 +139,9 @@ describe("GET /v1/rounds — pre-auth limit runs BEFORE token validation", () =>
     // would take the limiter's `string` branch (`{ userId: <that string> }`)
     // and mis-key the bucket.
     expect(preAuth.principal).toBeUndefined();
-    expect(preAuth.family).toBe("reads");
+    // `preauth` (D15), not `reads`: the pre-auth stage has its own family so
+    // 401 bursts from shared egress IPs cannot consume the reads budget.
+    expect(preAuth.family).toBe("preauth");
   });
 
   test("a fail-closed pre-auth limiter → 503, still without touching validation", async () => {

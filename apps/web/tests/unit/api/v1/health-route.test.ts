@@ -42,8 +42,8 @@ function exhausted(overrides: Record<string, unknown> = {}) {
   return {
     success: false,
     failedClosed: false,
-    family: "reads",
-    limit: 120,
+    family: "preauth",
+    limit: 300,
     remaining: 0,
     reset: NOW + 30_000,
     ...overrides,
@@ -56,7 +56,7 @@ function failedClosed(reason: string) {
     success: false,
     failedClosed: true,
     reason,
-    family: "reads",
+    family: "preauth",
     limit: 0,
     remaining: 0,
     reset: NOW + 60_000,
@@ -67,9 +67,9 @@ function allowed() {
   return {
     success: true,
     failedClosed: false,
-    family: "reads",
-    limit: 120,
-    remaining: 119,
+    family: "preauth",
+    limit: 300,
+    remaining: 299,
     reset: NOW + 60_000,
   };
 }
@@ -152,7 +152,7 @@ describe("GET /v1/health — §4 stability header", () => {
 });
 
 describe("GET /v1/health — §3 rate limiting", () => {
-  test("names the `reads` family and passes NO principal (IP-keyed, per §3)", async () => {
+  test("names the D15 `preauth` family and passes NO principal (IP-keyed, per §3)", async () => {
     enforcePublicApiRateLimit.mockResolvedValue(allowed());
     const request = healthRequest();
 
@@ -163,8 +163,9 @@ describe("GET /v1/health — §3 rate limiting", () => {
       enforcePublicApiRateLimit.mock.calls[0]!;
 
     // The family is load-bearing: omitting it falls back silently to the
-    // legacy unfamilied bucket.
-    expect(family).toBe("reads");
+    // legacy unfamilied bucket. `preauth` (D15) because this route is
+    // entirely unauthenticated — all of its traffic is pre-auth traffic.
+    expect(family).toBe("preauth");
     expect(passedRequest).toBe(request);
 
     // The route is unauthenticated, so there is no principal to pass. What it
@@ -186,7 +187,7 @@ describe("GET /v1/health — §3 rate limiting", () => {
     );
     // reset is 30s out → ceil(30) = 30.
     expect(response.headers.get("retry-after")).toBe("30");
-    expect(response.headers.get("x-ratelimit-limit")).toBe("120");
+    expect(response.headers.get("x-ratelimit-limit")).toBe("300");
     expect(response.headers.get("x-ratelimit-remaining")).toBe("0");
     expect(response.headers.get("x-ratelimit-reset")).toBe(
       String(Math.ceil((NOW + 30_000) / 1000))

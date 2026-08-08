@@ -162,8 +162,14 @@ export async function GET(request: Request): Promise<Response> {
     // `authenticateV1Request` below is a NETWORK call to GoTrue for every
     // well-FORMED token, so limiting after it leaves that round trip
     // unmetered for callers holding no valid credential. No principal
-    // argument, so `getIdentifier` falls through to the IP key.
-    const preAuth = await enforcePublicApiRateLimit(request, undefined, "reads");
+    // argument, so `getIdentifier` falls through to the IP key. Family
+    // `preauth` (D15): pre-auth traffic has its own IP-keyed budget so a
+    // burst of 401s from a consumer's few egress IPs cannot cap `reads`.
+    const preAuth = await enforcePublicApiRateLimit(
+      request,
+      undefined,
+      "preauth"
+    );
     if (!preAuth.success) return rateLimitResponse(preAuth, { instance });
 
     const auth = await authenticateV1Request(request, { instance });
