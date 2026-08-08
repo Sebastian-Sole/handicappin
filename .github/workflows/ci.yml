@@ -40,6 +40,12 @@ env:
   GOOGLE_CLIENT_SECRET: "dummy_google_client_secret"
   NEXT_PUBLIC_GOOGLE_CLIENT_ID: "dummy_google_client_id"
   OPENAI_API_KEY: "sk-dummy_openai_key"
+  # CI has no local Supabase stack, so the 21 stack-gated integration suites
+  # cannot run here. This flag makes that skip DELIBERATE: without it, the
+  # integration preflight (tests/integration/stack-preflight.ts) fails any
+  # run that would silently skip them. Remove this line if CI ever gets a
+  # local stack — the suites will then be required to actually run.
+  ALLOW_INTEGRATION_SKIP: "1"
 
 jobs:
   build-and-test:
@@ -60,7 +66,14 @@ jobs:
       - name: Lint
         run: pnpm lint
 
-      - name: Type check
+      # `next build` does NOT type-check test files (verified: a deliberate
+      # type error in tests/ builds green), so a real `tsc --noEmit` over the
+      # full tsconfig include — app code AND tests/ — is the only step that
+      # actually covers them.
+      - name: Type check (app + tests)
+        run: pnpm typecheck
+
+      - name: Build
         run: pnpm build
 
       - name: Test

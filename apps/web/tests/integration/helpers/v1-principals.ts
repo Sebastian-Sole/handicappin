@@ -114,18 +114,108 @@ export async function deleteAuthUserByEmail(email: string): Promise<void> {
 export const OAUTH_TEST_CLIENT_PREFIX = "v1-test-client-";
 
 /**
- * Delete every leftover OAuth test client whose name starts with `prefix`.
+ * A sweep must collect garbage, never live objects. Anything younger than
+ * this is presumed to belong to a run that is still in flight — Vitest runs
+ * suite files in parallel workers, and two `pnpm test:integration` processes
+ * can legitimately overlap — so the sweep leaves it alone. 30 minutes is far
+ * longer than any suite runs, and far shorter than "accumulating forever".
+ */
+export const OAUTH_TEST_CLIENT_STALE_MS = 30 * 60 * 1000;
+
+/**
+ * Mint a sweepable, per-run-unique OAuth client name:
+ * `<prefix><minted-at millis, base36>-<random>`.
+ *
+ * The minted-at token exists so `sweepStaleOAuthTestClients` can age-gate
+ * deletion even if the admin API's `created_at` is ever absent — the name
+ * itself carries when the client was born.
+ */
+export function oauthTestClientName(
+  prefix: string = OAUTH_TEST_CLIENT_PREFIX,
+  now: number = Date.now()
+): string {
+  return `${prefix}${now.toString(36)}-${randomUUID().slice(0, 8)}`;
+}
+
+/**
+ * Parse the minted-at timestamp embedded in a name produced by
+ * `oauthTestClientName`. Returns `null` for names that don't carry one
+ * (e.g. pre-timestamp-format leftovers).
+ */
+export function oauthTestClientMintedAt(
+  name: string,
+  prefix: string = OAUTH_TEST_CLIENT_PREFIX
+): number | null {
+  if (!name.startsWith(prefix)) return null;
+  const token = name.slice(prefix.length).split("-")[0];
+  if (!token || !/^[0-9a-z]+$/.test(token)) return null;
+  const millis = parseInt(token, 36);
+  return Number.isFinite(millis) && millis > 0 ? millis : null;
+}
+
+/**
+ * Decide whether one listed OAuth client is sweep-eligible garbage.
+ *
+ * Eligible only when BOTH hold:
+ *   1. its name carries `prefix` (it is a test client of this family), and
+ *   2. its age is KNOWN and exceeds `staleMs` — age comes from the admin
+ *      API's `created_at` (authoritative), falling back to the name's
+ *      embedded minted-at token if `created_at` is ever absent. A client
+ *      whose age cannot be determined either way is NOT deleted: an
+ *      unbounded leak of unparseable clients would take a code bug to
+ *      produce, while deleting a live client corrupts a concurrent run.
+ */
+export function isStaleOAuthTestClient(
+  client: { client_name?: string | null; created_at?: string | null },
+  options: {
+    prefix?: string;
+    now?: number;
+    staleMs?: number;
+  } = {}
+): boolean {
+  const {
+    prefix = OAUTH_TEST_CLIENT_PREFIX,
+    now = Date.now(),
+    staleMs = OAUTH_TEST_CLIENT_STALE_MS,
+  } = options;
+
+  const name = client.client_name;
+  if (!name || !name.startsWith(prefix)) return false;
+
+  let mintedAt: number | null = null;
+  if (client.created_at) {
+    const created = Date.parse(client.created_at);
+    if (Number.isFinite(created)) mintedAt = created;
+  }
+  if (mintedAt === null) {
+    mintedAt = oauthTestClientMintedAt(name, prefix);
+  }
+  if (mintedAt === null) return false;
+
+  return now - mintedAt > staleMs;
+}
+
+/**
+ * Delete leftover OAuth test clients whose name starts with `prefix` AND
+ * whose age exceeds `staleMs` (default 30 minutes).
  *
  * `mintOAuthPrincipal` returns a `cleanup` closure, but a closure only runs if
  * the process lives long enough to call it: a crash, a timeout kill, or a
  * failing `beforeAll` leaks the client into the local GoTrue forever. Suites
  * call this on setup so a previous run's wreckage cannot accumulate.
  *
+ * The age threshold is what makes concurrent runs safe: a prefix-only sweep
+ * used to delete clients a parallel suite (or a second `pnpm
+ * test:integration` process) had LIVE, killing its tokens mid-run. Young
+ * clients are presumed live and skipped; only genuinely stale wreckage is
+ * collected.
+ *
  * Best-effort by design — a sweep failure must never fail the suite that was
  * merely being tidy on the way in.
  */
 export async function sweepStaleOAuthTestClients(
-  prefix: string = OAUTH_TEST_CLIENT_PREFIX
+  prefix: string = OAUTH_TEST_CLIENT_PREFIX,
+  options: { staleMs?: number; now?: number } = {}
 ): Promise<number> {
   const admin = adminClient();
   let deleted = 0;
@@ -141,7 +231,12 @@ export async function sweepStaleOAuthTestClients(
       }
 
       for (const client of data.clients) {
-        if (client.client_name?.startsWith(prefix)) {
+        if (
+          isStaleOAuthTestClient(
+            { client_name: client.client_name, created_at: client.created_at },
+            { prefix, ...options }
+          )
+        ) {
           const { error: deleteError } =
             await admin.auth.admin.oauth.deleteClient(client.client_id);
           if (!deleteError) deleted += 1;
@@ -217,7 +312,7 @@ export async function mintOAuthPrincipal(options: {
   const {
     userClient,
     userId,
-    clientName = `${OAUTH_TEST_CLIENT_PREFIX}${randomUUID().slice(0, 8)}`,
+    clientName = oauthTestClientName(),
     redirectUri = "http://localhost:9999/v1-test-callback",
   } = options;
 
