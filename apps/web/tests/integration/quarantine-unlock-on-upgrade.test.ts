@@ -923,30 +923,41 @@ describeIfLocal("quarantine unlock on upgrade (T15, real local Supabase)", () =>
     userId: string,
     fn: () => Promise<T>
   ): Promise<T> {
-    await db.execute(
-      sql.raw(`
-        create or replace function public.${BLOCK_TRIGGER}() returns trigger
-        language plpgsql as $trg$
-        begin
-          raise exception 'injected failure: quarantine unlock UPDATE blocked';
-        end;
-        $trg$
-      `)
-    );
-    // The WHEN clause keeps the injection surgical: only THIS user's
-    // still-quarantined rows fail, so the seeding and assertions around it
-    // (and the other test user) are untouched. `userId` is a uuid minted by
-    // `admin.auth.admin.createUser`, and the ::uuid cast rejects anything else.
-    await db.execute(
-      sql.raw(`
-        create trigger ${BLOCK_TRIGGER}
-          before update on public.round
-          for each row
-          when (old."userId" = '${userId}'::uuid and old.quarantined = true)
-          execute function public.${BLOCK_TRIGGER}()
-      `)
-    );
     try {
+      // Re-entrant + crash-safe: a previous run that crashed between CREATE
+      // and the `finally` (or was killed mid-test) leaves the trigger behind,
+      // and a bare `create trigger` then fails every subsequent run with
+      // 42710 before any cleanup can happen. Drop leftovers first — trigger
+      // before function, so the function drop never needs CASCADE.
+      await db.execute(
+        sql.raw(`drop trigger if exists ${BLOCK_TRIGGER} on public.round`)
+      );
+      await db.execute(
+        sql.raw(`drop function if exists public.${BLOCK_TRIGGER}()`)
+      );
+      await db.execute(
+        sql.raw(`
+          create or replace function public.${BLOCK_TRIGGER}() returns trigger
+          language plpgsql as $trg$
+          begin
+            raise exception 'injected failure: quarantine unlock UPDATE blocked';
+          end;
+          $trg$
+        `)
+      );
+      // The WHEN clause keeps the injection surgical: only THIS user's
+      // still-quarantined rows fail, so the seeding and assertions around it
+      // (and the other test user) are untouched. `userId` is a uuid minted by
+      // `admin.auth.admin.createUser`, and the ::uuid cast rejects anything else.
+      await db.execute(
+        sql.raw(`
+          create trigger ${BLOCK_TRIGGER}
+            before update on public.round
+            for each row
+            when (old."userId" = '${userId}'::uuid and old.quarantined = true)
+            execute function public.${BLOCK_TRIGGER}()
+        `)
+      );
       return await fn();
     } finally {
       await db.execute(

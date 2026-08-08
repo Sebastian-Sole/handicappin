@@ -420,7 +420,7 @@ describeIfLocal("POST /v1/rounds (real local Supabase)", () => {
         expect(body).not.toHaveProperty("submittedVia");
       }, 90_000);
 
-      test("the limiter gets the principal PARTS and the 'rounds-write' family — after an IP-keyed pre-auth call", async () => {
+      test("the limiter gets the principal PARTS and the 'rounds-write' family — after an IP-keyed pre-auth call in the 'preauth' family", async () => {
         await post(
           principalFor(),
           submission({
@@ -432,9 +432,10 @@ describeIfLocal("POST /v1/rounds (real local Supabase)", () => {
 
         expect(limiter.calls).toHaveLength(2);
         // §3: pre-auth traffic is IP-keyed, and it is checked BEFORE the
-        // GoTrue round trip token validation costs.
+        // GoTrue round trip token validation costs. Family `preauth` (D15) —
+        // the shared pre-auth budget, not the route's write family.
         expect(limiter.calls[0]!.principal).toBeUndefined();
-        expect(limiter.calls[0]!.family).toBe("rounds-write");
+        expect(limiter.calls[0]!.family).toBe("preauth");
 
         const perPrincipal = limiter.calls[1]!;
         expect(perPrincipal.family).toBe("rounds-write");
