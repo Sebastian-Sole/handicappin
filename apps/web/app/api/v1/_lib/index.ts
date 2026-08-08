@@ -127,6 +127,7 @@ export {
   V1_SCOPES,
   authenticateV1Request,
   hasScope,
+  requireAnyScope,
   requireScope,
   type AuthenticateOptions,
   type AuthenticateResult,

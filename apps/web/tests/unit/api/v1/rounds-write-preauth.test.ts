@@ -163,9 +163,9 @@ describe("POST /v1/rounds pre-auth rate limit", () => {
 
   test("an OAuth token whose scope does not permit writes → 403 forbidden, before any body parse", async () => {
     // No real token is denied today — the access-token hook stamps
-    // `rounds:write` unconditionally — so this is the ONLY place the scope
-    // guard is exercised. Without it, the day a token is minted with a
-    // narrower scope, that token writes rounds anyway.
+    // `rounds:read rounds:write` unconditionally (D11) — so this is the ONLY
+    // place the scope guard is exercised. Without it, the day a token is
+    // minted with a narrower scope, that token writes rounds anyway.
     auth.user = { id: "00000000-0000-4000-8000-000000000001" };
     const token = tokenWithClaims({
       sub: "00000000-0000-4000-8000-000000000001",
