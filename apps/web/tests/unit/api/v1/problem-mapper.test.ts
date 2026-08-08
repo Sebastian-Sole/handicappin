@@ -104,12 +104,23 @@ describe("domain error → code mapping (frozen §1 table)", () => {
     expect(captureSentryError).toHaveBeenCalledTimes(1);
   });
 
-  test("ScoreHoleMismatchError is not in the table → internal_error + Sentry", () => {
-    // Deliberate and reported: §1's table does not name it, and its closing
-    // rule is "anything not in this table is internal_error + a Sentry alert".
+  test("ScoreHoleMismatchError → 422 validation_failed with score_hole_mismatch, no alert (D13)", () => {
+    // D13 added it to §1's table: client-caused (a score claims a hole outside
+    // the played section), so it must neither 500 nor page anyone — the exact
+    // behavior this suite used to pin is the defect the amendment removes.
     const problem = mapErrorToProblem(new ScoreHoleMismatchError(5, 9));
-    expect(problem.code).toBe("internal_error");
-    expect(captureSentryError).toHaveBeenCalledTimes(1);
+    expect(problem.code).toBe("validation_failed");
+    expect(problem.status).toBe(422);
+    expect(problem.errors).toEqual([
+      {
+        path: "scores",
+        code: "score_hole_mismatch",
+        message: expect.stringContaining("hole 5"),
+      },
+    ]);
+    // Both ids in the message are client-supplied values, not internals.
+    expect(problem.errors?.[0]?.message).toContain("tee 9");
+    expect(captureSentryError).not.toHaveBeenCalled();
   });
 });
 

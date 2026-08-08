@@ -73,7 +73,8 @@ export class DuplicateRoundError extends Error {
  * `holeId: undefined` (the service assigns holes positionally), so this only
  * fires for clients that claim an explicit hole — a cross-tee or
  * cross-section reference the positional insert would otherwise silently
- * mask. Maps to BAD_REQUEST in the tRPC adapter.
+ * mask. Maps to BAD_REQUEST in the tRPC adapter; the /v1 mapper returns
+ * 422 `validation_failed` with field code `score_hole_mismatch` (D13).
  */
 export class ScoreHoleMismatchError extends Error {
   constructor(
