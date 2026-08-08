@@ -81,13 +81,13 @@
  * from one bit into a report of WHICH dependency is down. Dependency health
  * belongs to internal monitoring, not to a public liveness probe.
  *
- * ── RATE LIMIT: the `reads` family, keyed by IP ───────────────────────────
+ * ── RATE LIMIT: the `preauth` family, keyed by IP ─────────────────────────
  *
- * Family `"reads"` — named explicitly, never omitted. `lib/rate-limit.ts`
- * documents that family as "Every `/v1` GET (health, courses, tees, rounds)",
- * so health is already inside its frozen definition; inventing a `health`
- * family would mean adding an env var and a budget to `env.ts` +
- * `lib/rate-limit.ts`, both of which are frozen shared surface. Omitting the
+ * Family `"preauth"` (D15) — named explicitly, never omitted. The route is
+ * entirely unauthenticated, so every request to it is pre-auth traffic by
+ * definition, and D15 gives pre-auth traffic its own IP-keyed family
+ * (`ratelimit:public-api:preauth`, `RATE_LIMIT_PREAUTH_PER_MIN`, default
+ * 300/min) so it never draws from a route family's budget. Omitting the
  * family argument instead falls back silently to the legacy unfamilied
  * `ratelimit:public-api` bucket — no type error, no test failure, just the
  * wrong budget shared with every other caller.
@@ -177,8 +177,10 @@ export async function GET(request: Request): Promise<Response> {
   const instance = crypto.randomUUID();
   try {
     // Family named; principal omitted on purpose (see the header). Both
-    // arguments fail QUIETLY if you get them wrong.
-    const limit = await enforcePublicApiRateLimit(request, undefined, "reads");
+    // arguments fail QUIETLY if you get them wrong. The route is entirely
+    // unauthenticated, so all of its traffic is pre-auth by definition —
+    // hence the D15 `preauth` family (IP-keyed, own budget), not `reads`.
+    const limit = await enforcePublicApiRateLimit(request, undefined, "preauth");
     if (!limit.success) {
       return rateLimitResponse(limit, { instance });
     }

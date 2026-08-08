@@ -59,6 +59,7 @@ async function loadEnv(overrides: Record<string, string>) {
     "RATE_LIMIT_API_READS_PER_MIN",
     "RATE_LIMIT_COURSE_SUBMIT_PER_HOUR",
     "RATE_LIMIT_PROVISION_PER_HOUR",
+    "RATE_LIMIT_PREAUTH_PER_MIN",
   ]) {
     vi.stubEnv(key, "");
   }
@@ -132,6 +133,22 @@ describe("env.ts — RATE_LIMIT_ENABLED production assertion", () => {
     expect(env.RATE_LIMIT_API_READS_PER_MIN).toBe(120);
     expect(env.RATE_LIMIT_COURSE_SUBMIT_PER_HOUR).toBe(10);
     expect(env.RATE_LIMIT_PROVISION_PER_HOUR).toBe(5);
+  });
+
+  /**
+   * D15: the dedicated pre-auth budget. Mechanism frozen; 300 is the ops
+   * default the decision names, and it must hold when the Vercel var is
+   * unset (the var is optional precisely because this default exists).
+   */
+  test("the D15 preauth budget defaults to 300/min and coerces from strings", async () => {
+    const { env } = await loadEnv({ NODE_ENV: "development" });
+    expect(env.RATE_LIMIT_PREAUTH_PER_MIN).toBe(300);
+
+    const { env: tuned } = await loadEnv({
+      NODE_ENV: "development",
+      RATE_LIMIT_PREAUTH_PER_MIN: "600",
+    });
+    expect(tuned.RATE_LIMIT_PREAUTH_PER_MIN).toBe(600);
   });
 
   test("the /v1 family budgets coerce from strings and reject non-positive values", async () => {

@@ -96,10 +96,11 @@ export const env = createEnv({
     // (`ratelimit:public-api:<family>`), keyed on the (client_id, user)
     // pair — see lib/rate-limit.ts and api-platform plans/005 §3.
     //
-    // These four names and defaults are FROZEN by the owner and already set
-    // in Vercel Production and Preview: renaming one costs a code change
+    // The first four names and defaults are FROZEN by the owner and already
+    // set in Vercel Production and Preview: renaming one costs a code change
     // plus two Vercel environment changes. Do not rename, do not add a
-    // fifth without the same coordination.
+    // sixth without the same coordination. PREAUTH is the owner-coordinated
+    // fifth (D15, locked 2026-08-08).
     //
     // COURSE_SUBMIT and PROVISION have no day-one consumer (D9 defers the
     // endpoints they guard); they are declared because they exist in Vercel.
@@ -123,6 +124,19 @@ export const env = createEnv({
       .int()
       .positive()
       .default(5),
+    // D15: the dedicated PRE-AUTH budget. Pre-auth / invalid-token traffic
+    // is keyed `ip:{ip}` and drawn from the `preauth` family
+    // (`ratelimit:public-api:preauth`), never from a route family — fitbull's
+    // requests all originate from Convex's few egress IPs, so a burst of
+    // token-expiry 401s under a shared budget would cap the entire fleet.
+    // Mechanism frozen; the number is an ops value per D6's pattern.
+    // Optional in Vercel (this code default applies), but set it in
+    // Production alongside the four vars above.
+    RATE_LIMIT_PREAUTH_PER_MIN: z.coerce
+      .number()
+      .int()
+      .positive()
+      .default(300),
 
     NODE_ENV: z
       .enum(["development", "test", "production"])
@@ -192,6 +206,7 @@ export const env = createEnv({
     RATE_LIMIT_COURSE_SUBMIT_PER_HOUR:
       process.env.RATE_LIMIT_COURSE_SUBMIT_PER_HOUR,
     RATE_LIMIT_PROVISION_PER_HOUR: process.env.RATE_LIMIT_PROVISION_PER_HOUR,
+    RATE_LIMIT_PREAUTH_PER_MIN: process.env.RATE_LIMIT_PREAUTH_PER_MIN,
     NODE_ENV: process.env.NODE_ENV,
     NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
     NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,

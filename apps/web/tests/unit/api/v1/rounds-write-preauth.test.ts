@@ -100,7 +100,7 @@ describe("POST /v1/rounds pre-auth rate limit", () => {
     auth.user = null;
   });
 
-  test("the FIRST limiter call is IP-keyed (no principal) on the writes family", async () => {
+  test("the FIRST limiter call is IP-keyed (no principal) on the D15 preauth family", async () => {
     await POST(request("a-syntactically-valid-looking.token.value"));
 
     expect(limiter.calls.length).toBeGreaterThan(0);
@@ -108,9 +108,38 @@ describe("POST /v1/rounds pre-auth rate limit", () => {
     // No principal → the shipped limiter falls back to `ip:{ip}` via the
     // CLIENT_IP_HEADERS trust order. That is the §3 pre-auth key.
     expect(first.principal).toBeUndefined();
-    // `rounds-write`, not `reads`: unproven traffic must not get MORE
-    // headroom than an authenticated writer on the same route.
-    expect(first.family).toBe("rounds-write");
+    // `preauth` (D15), not `rounds-write`: pre-auth traffic has its own
+    // fail-closed family (`ratelimit:public-api:preauth`, own env-tunable
+    // budget) so a burst of token-expiry 401s from a consumer's few egress
+    // IPs (fitbull on Convex) cannot cap the route family fleet-wide.
+    expect(first.family).toBe("preauth");
+  });
+
+  test("the per-principal call stays on rounds-write — authenticated traffic never draws from preauth", async () => {
+    auth.user = { id: "00000000-0000-4000-8000-000000000002" };
+    const token = tokenWithClaims({
+      sub: "00000000-0000-4000-8000-000000000002",
+      client_id: "fitbull-test",
+      scope: "profile:read rounds:write",
+    });
+
+    await POST(request(token));
+
+    expect(limiter.calls).toHaveLength(2);
+    // Pre-auth stage: preauth family, no principal.
+    expect(limiter.calls[0]).toEqual({ principal: undefined, family: "preauth" });
+    // Authenticated stage: same family, budget and key shape as before D15.
+    const second = limiter.calls[1]!;
+    expect(second.family).toBe("rounds-write");
+    expect(second.principal).toEqual({
+      userId: "00000000-0000-4000-8000-000000000002",
+      clientId: "fitbull-test",
+    });
+    // Exactly one preauth draw per request — authenticated traffic does not
+    // touch the preauth family a second time.
+    expect(
+      limiter.calls.filter((call) => call.family === "preauth")
+    ).toHaveLength(1);
   });
 
   test("budget exhausted → 429 WITHOUT ever validating the token", async () => {

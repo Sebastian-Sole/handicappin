@@ -46,6 +46,8 @@ const V1_ROUNDS_WRITE_LIMIT = env.RATE_LIMIT_ROUNDS_WRITE_PER_MIN;
 const V1_READS_LIMIT = env.RATE_LIMIT_API_READS_PER_MIN;
 const V1_COURSE_SUBMIT_LIMIT = env.RATE_LIMIT_COURSE_SUBMIT_PER_HOUR;
 const V1_PROVISION_LIMIT = env.RATE_LIMIT_PROVISION_PER_HOUR;
+// D15: dedicated pre-auth budget — the fifth family, a STAGE not a route.
+const V1_PREAUTH_LIMIT = env.RATE_LIMIT_PREAUTH_PER_MIN;
 
 /** Why the shared limiter infrastructure is unavailable, if it is. */
 export type RateLimiterUnavailableReason =
@@ -306,6 +308,15 @@ export function isPublicApiRequest(request: Request): boolean {
  * `course-submit` and `provision` have no day-one route (D9 defers the
  * endpoints they guard) — their limiters exist so the route PR is a one-line
  * change rather than a limiter design discussion.
+ *
+ * `preauth` (D15) is a STAGE family, not a route family: every `/v1`
+ * pre-auth / invalid-token metering call draws from it, keyed `ip:{ip}`
+ * (never a principal — `getIdentifier` only reaches the IP key when no
+ * `userId` is passed). It exists because pre-auth traffic used to spend the
+ * route families' IP buckets: fitbull's requests all leave Convex through a
+ * few egress IPs, so a burst of token-expiry 401s could cap the whole fleet
+ * at a route budget sized for a single principal. Authenticated per-route
+ * budgets never draw from this family and vice versa.
  */
 export const PUBLIC_API_RATE_LIMIT_FAMILIES = {
   /** `POST /v1/rounds` — the round write path. */
@@ -316,6 +327,8 @@ export const PUBLIC_API_RATE_LIMIT_FAMILIES = {
   "course-submit": { limit: V1_COURSE_SUBMIT_LIMIT, window: "1 h" },
   /** Deferred (D9): `POST /v1/profile/provision`. */
   provision: { limit: V1_PROVISION_LIMIT, window: "1 h" },
+  /** D15: every `/v1` pre-auth metering call, IP-keyed. Never a principal. */
+  preauth: { limit: V1_PREAUTH_LIMIT, window: "1 m" },
 } as const satisfies Record<
   string,
   { limit: number; window: "1 m" | "1 h" }

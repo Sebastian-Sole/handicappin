@@ -14,8 +14,9 @@
  *     try {
  *       // 1. PRE-AUTH limit, IP-keyed. `undefined` principal ⇒ `getIdentifier`
  *       //    falls through to `ip:{ip}`, which is what §3 prescribes for
- *       //    pre-auth / invalid-token traffic.
- *       const preAuth = await enforcePublicApiRateLimit(request, undefined, "reads");
+ *       //    pre-auth / invalid-token traffic. Family `preauth` (D15): the
+ *       //    dedicated pre-auth budget, never a route family.
+ *       const preAuth = await enforcePublicApiRateLimit(request, undefined, "preauth");
  *       if (!preAuth.success) return rateLimitResponse(preAuth, { instance });
  *
  *       // 2. Authenticate — this is the step the call above is protecting.
