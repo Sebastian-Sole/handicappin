@@ -407,7 +407,7 @@ describeIfLocal("GET /v1/rounds (real local Supabase)", () => {
         });
       }, 60_000);
 
-      test("TWO limiter calls: pre-auth IP-keyed, then per-principal — both in the 'reads' family", async () => {
+      test("TWO limiter calls: pre-auth IP-keyed in the 'preauth' family, then per-principal in the 'reads' family", async () => {
         await getRounds(principalFor());
 
         expect(limiter.calls).toHaveLength(2);
@@ -416,12 +416,14 @@ describeIfLocal("GET /v1/rounds (real local Supabase)", () => {
         //    at all ⇒ `getIdentifier` falls through to `ip:{ip}` (§3). This is
         //    what keeps an unauthenticated caller from turning a `Bearer
         //    <garbage>` into an unlimited 1:1 amplifier against GoTrue.
+        //    Family `preauth` (D15): one shared budget for ALL pre-auth /v1
+        //    traffic, not the route's own family.
         const preAuth = limiter.calls[0]!;
         expect(preAuth.principal).toBeUndefined();
-        expect(preAuth.family).toBe("reads");
+        expect(preAuth.family).toBe("preauth");
 
-        // 2. Per-principal, after auth + scope. Disjoint key space from the
-        //    IP bucket, so the two never contend despite sharing the family.
+        // 2. Per-principal, after auth + scope. Route family AND disjoint key
+        //    space from the IP bucket, so the two never contend.
         const call = limiter.calls[1]!;
         // Named family — omitting it falls back to the legacy 60/min bucket.
         expect(call.family).toBe("reads");
@@ -514,10 +516,10 @@ describeIfLocal("GET /v1/rounds (real local Supabase)", () => {
     // unauthenticated request must still be limited (§3), because deciding
     // whether it is authenticated is itself a network call to GoTrue for any
     // non-empty `Bearer` value. The per-principal call is never reached —
-    // there is no principal.
+    // there is no principal. Family `preauth` (D15), not the route family.
     expect(limiter.calls).toHaveLength(1);
     expect(limiter.calls[0]!.principal).toBeUndefined();
-    expect(limiter.calls[0]!.family).toBe("reads");
+    expect(limiter.calls[0]!.family).toBe("preauth");
   }, 60_000);
 
   test("an account that never completed plan selection → 403 plan_required", async () => {
