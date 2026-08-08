@@ -27,7 +27,6 @@
  * per-principal one (§3) — so the recorded-call indices below are paired.
  */
 import { afterAll, beforeAll, describe, expect, test, vi } from "vitest";
-import { randomUUID } from "crypto";
 import { eq, inArray } from "drizzle-orm";
 
 const enforcePublicApiRateLimit = vi.fn();
@@ -49,6 +48,7 @@ import {
   hasLocalStack,
   mintFirstPartyPrincipal,
   mintOAuthPrincipal,
+  oauthTestClientName,
   sweepStaleOAuthTestClients,
   v1Request,
   type TestPrincipal,
@@ -77,13 +77,14 @@ const EMAILS = {
  * This suite's OWN OAuth-client name prefix, deliberately NOT starting with
  * the helper's shared `v1-test-client-`.
  *
- * Vitest runs suite files in parallel, and `sweepStaleOAuthTestClients()`
- * deletes every client matching its prefix — including ones a concurrently
- * running suite has live. Sharing the default prefix with
- * `v1-scaffolding.test.ts` therefore made each run a coin flip over which
- * suite had its token's client deleted out from under it. A disjoint prefix
- * makes the two sweeps unable to reach each other's clients, while this
- * suite still reclaims its own leaks on the way in.
+ * Historical: Vitest runs suite files in parallel, and
+ * `sweepStaleOAuthTestClients()` used to delete every client matching its
+ * prefix — including ones a concurrently running suite had live — so sharing
+ * the default prefix with `v1-scaffolding.test.ts` made each run a coin flip
+ * over which suite had its token's client deleted out from under it. The
+ * sweep is now age-gated (it only collects clients older than
+ * `OAUTH_TEST_CLIENT_STALE_MS`), which fixes that for every suite; the
+ * disjoint prefix here remains as defense in depth.
  */
 const CLIENT_PREFIX = "v1-catalog-test-client-";
 
@@ -201,7 +202,7 @@ describeIfLocal("/v1 catalog reads (real local Supabase)", () => {
     oauth = await mintOAuthPrincipal({
       userClient: owner.userClient,
       userId: owner.userId,
-      clientName: `${CLIENT_PREFIX}${randomUUID().slice(0, 8)}`,
+      clientName: oauthTestClientName(CLIENT_PREFIX),
     });
 
     const other = await mintFirstPartyPrincipal(EMAILS.other);
