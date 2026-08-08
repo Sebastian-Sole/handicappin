@@ -19,6 +19,7 @@
     "email": "pnpm --filter web email",
     "gen:types": "pnpm --filter web gen:types",
     "gen:local": "pnpm --filter web gen:local",
+    "gen:openapi": "pnpm --filter web gen:openapi",
     "storybook": "pnpm --filter web storybook",
     "build:seed": "./scripts/build-seed.sh",
     "load:courses": "node scripts/load-staged-courses.mjs",
