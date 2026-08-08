@@ -13,15 +13,18 @@
  *   | SelfSubmissionError     | 403 forbidden                               |
  *   | PlanNotSelectedError    | 403 plan_required                           |
  *   | CourseResolutionError   | 422 course_not_found (stricter than tRPC)   |
+ *   | ScoreHoleMismatchError  | 422 validation_failed (stricter than tRPC)  |
  *   | DuplicateRoundError     | NOT mapped directly — §2's lookup decides   |
  *   | RoundLimitReachedError  | 500 internal_error + Sentry (unreachable)   |
  *   | RoundLimitRaceError     | 500 internal_error + Sentry (unreachable)   |
  *   | SQLSTATE 42501          | 403 forbidden + Sentry (routing defect)     |
  *
- * Anything not in that table is `internal_error` + a Sentry alert. That is
- * the frozen rule, and it is applied literally — including to
- * `ScoreHoleMismatchError`, which the table does not name (tRPC maps it to
- * BAD_REQUEST; §1 does not, so it does not become a 4xx here).
+ * Anything not in that table is `internal_error` + a Sentry alert.
+ * `ScoreHoleMismatchError` joined the table via D13 (2026-08-08): the
+ * catch-all used to send a client's bad cross-section hole reference to
+ * 500 + a Sentry page, where tRPC returns 400 for the same input. The tRPC
+ * adapter keeps BAD_REQUEST; `/v1` is stricter-and-typed, same pattern as
+ * `CourseResolutionError`.
  */
 
 import { ZodError, type ZodIssue } from "zod";
@@ -37,8 +40,16 @@ import {
   DuplicateRoundError,
   PlanNotSelectedError,
   RoundLimitReachedError,
+  ScoreHoleMismatchError,
   SelfSubmissionError,
 } from "@/server/services/scorecard/errors";
+
+/**
+ * Field-level code for D13's `ScoreHoleMismatchError` mapping. Lives in the
+ * append-only FIELD-code namespace (like `tee_time_out_of_window`), not in
+ * the closed `ProblemCode` registry.
+ */
+export const SCORE_HOLE_MISMATCH_FIELD_CODE = "score_hole_mismatch";
 
 /** SQLSTATE `insufficient_privilege` — an RLS denial. */
 export const SQLSTATE_INSUFFICIENT_PRIVILEGE = "42501";
@@ -175,6 +186,25 @@ export function mapErrorToProblem(
 
   if (error instanceof CourseResolutionError) {
     return createProblem({ code: "course_not_found", instance });
+  }
+
+  if (error instanceof ScoreHoleMismatchError) {
+    // D13: client-caused (a score claims a hole outside the played section of
+    // the tee), so 422 — never the catch-all's 500 + Sentry page. The message
+    // is authored HERE from the error's typed fields, both client-supplied
+    // ids; the path is `scores` because the service reports the offending
+    // hole, not the array index that referenced it.
+    return createProblem({
+      code: "validation_failed",
+      errors: [
+        {
+          path: "scores",
+          code: SCORE_HOLE_MISMATCH_FIELD_CODE,
+          message: `A score references hole ${error.holeId}, which does not belong to the played section of tee ${error.teeId}.`,
+        },
+      ],
+      instance,
+    });
   }
 
   if (
